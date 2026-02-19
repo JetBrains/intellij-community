@@ -2,25 +2,39 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
-import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
 
 /**
  * This class fires events to SMTRunnerEventsListener in event dispatch thread.
  *
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
+@ApiStatus.Internal
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new ConcurrentHashMap<>();
@@ -58,7 +72,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeEnded(String suiteName) {
-    myBuildTreeRunnables.add(() -> mySuitesStack.popSuite(suiteName));
+    myBuildTreeRunnables.add(() -> {
+      mySuitesStack.popSuite(suiteName);
+      myEventPublisher.onSuiteTreeEnded(myTestsRootProxy, suiteName);
+    });
     super.onSuiteTreeEnded(suiteName);
   }
 
@@ -123,6 +140,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     //fire events
     final String testName = testStartedEvent.getName();
     final String locationUrl = testStartedEvent.getLocationUrl();
+    final String metainfo = testStartedEvent.getMetainfo();
     final boolean isConfig = testStartedEvent.isConfig();
     final String fullName = getFullTestName(testName);
 
@@ -137,13 +155,13 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     SMTestProxy parentSuite = getCurrentSuite();
     SMTestProxy testProxy = findChild(parentSuite, locationUrl != null ? locationUrl : fullName, false);
 
-    if (testProxy != null && CLASS_CONFIGURATION.equals(fullName)) {
+    if (testProxy != null && TestListenerProtocol.CLASS_CONFIGURATION.equals(fullName)) {
       parentSuite = testProxy;
       testProxy = null;
     }
     if (testProxy == null) {
       // creates test
-      testProxy = new SMTestProxy(testName, false, locationUrl, testStartedEvent.getMetainfo(), false);
+      testProxy = new SMTestProxy(testName, false, locationUrl, metainfo, false);
       testProxy.setConfig(isConfig);
       if (myTreeBuildBeforeStart) testProxy.setTreeBuildBeforeStart();
 
@@ -151,6 +169,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         testProxy.setLocator(myLocator);
       }
       parentSuite.addChild(testProxy);
+    }
+    else if (metainfo != null) {
+      testProxy.setMetainfo(metainfo);
     }
     // adds to running tests map
     myRunningTestsFullNameToProxy.put(fullName, testProxy);
@@ -169,12 +190,13 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     //fire event
     final String suiteName = suiteStartedEvent.getName();
     final String locationUrl = suiteStartedEvent.getLocationUrl();
+    final String metainfo = suiteStartedEvent.getMetainfo();
 
     SMTestProxy parentSuite = getCurrentSuite();
     SMTestProxy newSuite = findChild(parentSuite, locationUrl != null ? locationUrl : suiteName, true);
     if (newSuite == null) {
       //new suite
-      newSuite = new SMTestProxy(suiteName, true, locationUrl, suiteStartedEvent.getMetainfo(), parentSuite.isPreservePresentableName());
+      newSuite = new SMTestProxy(suiteName, true, locationUrl, metainfo, parentSuite.isPreservePresentableName());
       if (myTreeBuildBeforeStart) {
         newSuite.setTreeBuildBeforeStart();
       }
@@ -184,6 +206,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       }
 
       parentSuite.addChild(newSuite);
+    }
+    else if (metainfo != null) {
+      newSuite.setMetainfo(metainfo);
     }
 
     initCurrentChildren(newSuite, true);
@@ -210,7 +235,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     }
   }
 
-  private SMTestProxy findChild(SMTestProxy parentSuite, String fullName, boolean preferSuite) {
+  @VisibleForTesting
+  public SMTestProxy findChild(SMTestProxy parentSuite, String fullName, boolean preferSuite) {
     if (myTreeBuildBeforeStart) {
       Set<SMTestProxy> acceptedProxies = new LinkedHashSet<>();
       Collection<? extends SMTestProxy> children = myCurrentChildren.get(fullName);
@@ -433,7 +459,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     fireOnTestsCountInSuite(count);
   }
 
-  protected final @NotNull SMTestProxy getCurrentSuite() {
+  @VisibleForTesting
+  public final @NotNull SMTestProxy getCurrentSuite() {
     final SMTestProxy currentSuite = mySuitesStack.getCurrentSuite();
 
     if (currentSuite != null) {
@@ -447,21 +474,25 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   }
 
-  protected String getFullTestName(final String testName) {
+  @VisibleForTesting
+  public String getFullTestName(final String testName) {
     // Test name should be unique
     return testName;
   }
 
-  protected int getRunningTestsQuantity() {
+  @TestOnly
+  public int getRunningTestsQuantity() {
     return myRunningTestsFullNameToProxy.size();
   }
 
-  protected @Nullable SMTestProxy getProxyByFullTestName(final String fullTestName) {
+  @VisibleForTesting
+  @Nullable
+  public SMTestProxy getProxyByFullTestName(final String fullTestName) {
     return myRunningTestsFullNameToProxy.get(fullTestName);
   }
 
   @TestOnly
-  protected void clearInternalSuitesStack() {
+  public void clearInternalSuitesStack() {
     mySuitesStack.clear();
   }
 

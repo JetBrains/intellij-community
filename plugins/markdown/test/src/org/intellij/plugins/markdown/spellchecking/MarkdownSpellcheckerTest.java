@@ -2,7 +2,7 @@ package org.intellij.plugins.markdown.spellchecking;
 
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 
@@ -11,7 +11,7 @@ public class MarkdownSpellcheckerTest extends BasePlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new SpellCheckingInspection());
+    myFixture.enableInspections(new GrazieSpellCheckingInspection());
   }
 
   public void testAll() {

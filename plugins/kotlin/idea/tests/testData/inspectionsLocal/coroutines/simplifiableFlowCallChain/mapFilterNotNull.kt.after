@@ -1,0 +1,12 @@
+// WITH_COROUTINES
+// IGNORE_K1
+package test
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+
+fun test(flow: Flow<Int>) {
+    flow.mapNotNull { if (it != 0) it else null }
+}

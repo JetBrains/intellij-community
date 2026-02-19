@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.application.options.ModulesCombo;
@@ -21,8 +21,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -52,6 +57,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   public ModuleClasspathCombo(Item... optionItems) {
     myOptionItems = optionItems;
     setRenderer(new ListRenderer());
+    setSwingPopup(false);
     ComboboxSpeedSearch.installSpeedSearch(this, item -> item.myModule == null ? "" : item.myModule.getName());
   }
 
@@ -64,12 +70,12 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   }
 
   private void buildModel(@NotNull Collection<? extends Module> modules) {
-    List<@NotNull Item> items = ContainerUtil.map(modules, Item::new);
-    items.sort(Comparator.comparing(o -> o.myModule.getName()));
+    List<@NotNull Item> items = ContainerUtil.sorted(ContainerUtil.map(modules, Item::new),
+    Comparator.comparing(o -> o.myModule.getName()));
     CollectionComboBoxModel<Item> model = new ModelWithOptions();
     model.add(items);
     if (myNoModule != null) {
-      model.add(new Item((Module)null));
+      model.add((Item)null);
     }
     if (myOptionItems.length > 0) {
       model.add(mySeparator);
@@ -93,8 +99,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   }
 
   @Override
-  @Nullable
-  public Module getSelectedModule() {
+  public @Nullable Module getSelectedModule() {
     Item item = (Item)getSelectedItem();
     return item != null ? item.myModule : null;
   }
@@ -102,16 +107,16 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   @Override
   public void setSelectedModule(Module module) {
     List<Item> items = ((CollectionComboBoxModel<Item>)super.getModel()).getItems();
-    setSelectedItem(ContainerUtil.find(items, item -> module == item.myModule));
+    setSelectedItem(ContainerUtil.find(items, item -> item != null && module == item.myModule));
   }
 
   @Override
-  public void setModules(Collection<? extends Module> modules) {
+  public void setModules(@NotNull Collection<? extends Module> modules) {
     buildModel(modules);
   }
 
   @Override
-  public void allowEmptySelection(String noModuleText) {
+  public void allowEmptySelection(@NotNull String noModuleText) {
     myNoModule = noModuleText;
   }
 
@@ -122,7 +127,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   }
 
   @Override
-  public void setSelectedModule(Project project, String name) {
+  public void setSelectedModule(@NotNull Project project, @NotNull String name) {
     List<Item> items = ((CollectionComboBoxModel<Item>)super.getModel()).getItems();
     Item selectedItem = ContainerUtil.find(items, item -> item.myModule != null && item.myModule.getName().equals(name));
     setSelectedItem(selectedItem);
@@ -173,7 +178,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
-      String name = value == null ? null : value.myModule == null ? myNoModule : value.myModule.getName();
+      String name = value == null || value.myModule == null ? myNoModule : value.myModule.getName();
       if (index == -1 && name != null) {
         //noinspection HardCodedStringLiteral
         append("-cp ", SimpleTextAttributes.GRAYED_ATTRIBUTES);

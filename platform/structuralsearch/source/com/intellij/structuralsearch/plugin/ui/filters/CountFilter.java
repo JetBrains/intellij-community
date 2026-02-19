@@ -1,22 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.fields.IntegerField;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.GroupLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.LayoutStyle;
 import java.util.List;
 
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("ComponentNotRegistered")
 public class CountFilter extends FilterAction {
 
   boolean myMinZero;
@@ -24,6 +27,19 @@ public class CountFilter extends FilterAction {
 
   public CountFilter() {
     super(SSRBundle.messagePointer("count.filter.name"));
+  }
+
+  @Override
+  public @NotNull String getShortText(NamedScriptableDefinition variable) {
+    if (!(variable instanceof MatchVariableConstraint constraint)) {
+      return "";
+    }
+    final int minCount = constraint.getMinCount();
+    final int maxCount = constraint.getMaxCount();
+    if (minCount == 1 && maxCount == 1) {
+      return "";
+    }
+    return SSRBundle.message("min.occurs.tooltip.message", minCount, (maxCount == Integer.MAX_VALUE) ? "∞" : maxCount);
   }
 
   @Override
@@ -60,9 +76,8 @@ public class CountFilter extends FilterAction {
     if (myTable.getMatchVariable() == null) {
       return false;
     }
-    final StructuralSearchProfile profile = myTable.getProfile();
-    myMinZero = profile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
-    myMaxUnlimited = profile.isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, nodes, completePattern, false);
+    myMinZero = isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, target);
+    myMaxUnlimited = isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, nodes, completePattern, target);
     return myMinZero || myMaxUnlimited;
   }
 
@@ -82,7 +97,7 @@ public class CountFilter extends FilterAction {
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();
@@ -97,18 +112,18 @@ public class CountFilter extends FilterAction {
 
         layout.setHorizontalGroup(
           layout.createSequentialGroup()
-                .addComponent(myMinLabel)
-                .addComponent(myMinField)
-                .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, 20)
-                .addComponent(myMaxLabel)
-                .addComponent(myMaxField)
+            .addComponent(myMinLabel)
+            .addComponent(myMinField)
+            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, 20)
+            .addComponent(myMaxLabel)
+            .addComponent(myMaxField)
         );
         layout.setVerticalGroup(
           layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(myMinLabel)
-                .addComponent(myMinField)
-                .addComponent(myMaxLabel)
-                .addComponent(myMaxField)
+            .addComponent(myMinLabel)
+            .addComponent(myMinField)
+            .addComponent(myMaxLabel)
+            .addComponent(myMaxField)
         );
         myMinField.getValueEditor().addListener(newValue -> {
           if (myMinField.getValueEditor().isValid(newValue) && myMaxField.getValue() < newValue) myMaxField.setValue(newValue);

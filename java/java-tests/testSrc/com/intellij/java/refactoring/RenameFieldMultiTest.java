@@ -14,10 +14,11 @@ public class RenameFieldMultiTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testNonCodeUsages() {
-    PsiClass aClass = myFixture.addClass("package p;\n" +
-                                         "public class A {\n" +
-                                         "  private String myField;\n" +
-                                         "}");
+    PsiClass aClass = myFixture.addClass("""
+                                           package p;
+                                           public class A {
+                                             private String myField;
+                                           }""");
     doTest(aClass, "properties");
   }
 

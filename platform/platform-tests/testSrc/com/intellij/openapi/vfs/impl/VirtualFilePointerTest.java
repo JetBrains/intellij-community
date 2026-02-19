@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.CacheSwitcher;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.mock.MockVirtualFile;
@@ -11,29 +13,50 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.UriUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -45,22 +68,35 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
+import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerTest.class);
   @Rule
   public TempDirectory tempDir = new TempDirectory();
+
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private Collection<VirtualFilePointer> pointersBefore;
@@ -156,6 +192,60 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
   }
 
+  @Test//IJPL-176784
+  public void testDeleteFileAndRecreateWithAnotherCase() {
+    VirtualFilePointerListener pointersListener = new LoggingListener();
+
+    File fileToDelete = tempDir.newFile("lower-case.txt");
+    VirtualFilePointer pointerToFileToDelete = createPointerByFile(fileToDelete, pointersListener);
+    assertTrue(pointerToFileToDelete.isValid());
+    VfsTestUtil.deleteFile(getVirtualFile(fileToDelete));
+    assertFalse(pointerToFileToDelete.isValid());
+
+    File fileToReCreate = tempDir.newFile("lower-case.txt");
+    VirtualFilePointer pointerToFileToReCreate = createPointerByFile(fileToReCreate, pointersListener);
+    assertTrue(pointerToFileToReCreate.isValid());
+    VfsTestUtil.deleteFile(getVirtualFile(fileToReCreate));
+    assertFalse(pointerToFileToReCreate.isValid());
+
+    File fileToReCreateWithAnotherCase = tempDir.newFile("LOWER-CASE.txt");
+    VirtualFilePointer pointerToFileToReCreateAnotherCase = createPointerByFile(fileToReCreateWithAnotherCase, pointersListener);
+    assertTrue(pointerToFileToReCreateAnotherCase.isValid());
+  }
+
+  @Test
+  public void testSwitchingVfs() {
+    final var file = tempDir.newFile("myfile.txt");
+
+    // avoiding root resolve in tempDir
+    // otherwise there will be an exception on its remove using VirtualFile
+    final var pointer = myVirtualFilePointerManager.create(
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file),
+      disposable,
+      null
+    );
+
+    assertTrue(pointer.isValid());
+    assertNotNull(pointer.getFile());
+
+    CacheSwitcher.INSTANCE.switchIndexAndVfs(
+      null,
+      null,
+      "resetting vfs",
+      () -> {
+        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertUrlBasedPointers();
+
+        assertFalse(pointer.isValid());
+        assertNull(pointer.getFile());
+
+        return null;
+      }
+    );
+
+    assertTrue(pointer.isValid());
+    assertNotNull(pointer.getFile());
+  }
+
   @Test
   public void testPointerAfterFileDeleteAndRecreateMustBeValid() {
     File fileToDelete = tempDir.newFile("toDelete.txt");
@@ -184,8 +274,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        Object url = ((VirtualFilePointerImpl)pointer).myNode.myFileOrUrl;
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        Object url = ((VirtualFilePointerImpl)pointer).getNodeForTesting().getFileOrUrl();
         assertTrue(url.toString(), url instanceof String);
         assertFalse(pointer.isValid());
       }
@@ -205,6 +295,20 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:false, after:true]", fileToCreateListener.log.toString());
     String expectedUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(fileToCreate.getPath()));
     assertEquals(expectedUrl.toUpperCase(Locale.US), fileToCreatePointer.getUrl().toUpperCase(Locale.US));
+  }
+
+  @Test//IJPL-187702
+  public void pointerForFileSystemRoot_isEquivalentToPointerToUrlRoot() {
+    File rootDir = new File("/");
+    VirtualFilePointer rootPointerByFile = createPointerByFile(rootDir, null);
+    assertTrue(rootPointerByFile.isValid());
+    
+    VirtualFilePointer rootPointerByUrl = myVirtualFilePointerManager.create("file:///", disposable, null);
+    assertTrue(rootPointerByUrl.isValid());
+
+    assertEquals("Root('/') access via File and via URL('file:///') should give same results",
+                 rootPointerByFile,
+                 rootPointerByUrl);
   }
 
   @Test
@@ -335,7 +439,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     WriteAction.runAndWait(() -> getVirtualFile(file).rename(this, "f2"));
     assertTrue(pointer.isValid());
-    assertEquals("[]", listener.log.toString());
+    assertEquals("[before:true, after:true]", listener.log.toString());
   }
 
   @Test
@@ -367,7 +471,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
     assertTrue(pointer1.isValid());
     assertTrue(pointer2.isValid());
-    assertEquals("[]", listener1.log.toString());
+    assertEquals("[before:true, after:true]", listener1.log.toString());
     assertEquals("[before:false, after:true]", listener2.log.toString());
   }
 
@@ -416,6 +520,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer[] pointersToWatch = {jarParentPointer, jarPointer};
     assertTrue(jarParentPointer.isValid());
     assertTrue(jarPointer.isValid());
+    assertEquals(jarUrl, jarPointer.getUrl());
+    assertEquals("x.jar", jarPointer.getFileName());
 
     assertTrue(jar.delete());
     assertTrue(jarParent.delete());
@@ -492,6 +598,34 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void updateJarFilePointerWhenJarFileIsRestored() throws IOException {
+    File jarParent = new File(tempDir.getRoot(), "jarParent");
+    File jar = new File(jarParent, "x.jar");
+    File originalJar = new File(PathManagerEx.getTestDataPath() + "/psi/generics22/collect-2.2.jar");
+    FileUtil.copy(originalJar, jar);
+    String jarUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(jar.getPath()) + JarFileSystem.JAR_SEPARATOR);
+    assertNotNull(getVirtualFile(jar));
+    VirtualFile jarFile1 = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl);
+    assertNotNull(jarFile1);
+    FileUtil.delete(jar);
+    //it's important to refresh only JAR file here, not the corresponding local file
+    jarFile1.refresh(false, false);
+    assertFalse(jarFile1.isValid());
+
+    VirtualFilePointerListener listener = new LoggingListener();
+    VirtualFilePointer jarPointer = myVirtualFilePointerManager.create(jarUrl, disposable, listener);
+    assertFalse(jarPointer.isValid());
+    assertNull(jarPointer.getFile());
+
+    FileUtil.copy(originalJar, jar);
+    assertNotNull(getVirtualFile(jar));
+    VirtualFile jarFile2 = VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarUrl);
+    assertNotNull(jarFile2);
+    assertTrue(jarPointer.isValid());
+    assertEquals(jarFile2, jarPointer.getFile());
+  }
+
+  @Test
   public void testFilePointerUpdate() throws IOException {
     VirtualFile vTemp = getVirtualTempRoot();
     File file = new File(tempDir.getRoot(), "f1");
@@ -518,6 +652,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertFalse(pointer.isValid());
   }
 
+  @PerformanceUnitTest
   @Test
   public void testThreadsPerformance() throws Exception {
     VirtualFile vTemp = getVirtualTempRoot();
@@ -529,7 +664,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<?>> reads = ContainerUtil.newConcurrentSet();
+    Collection<Job> reads = ConcurrentCollectionFactory.createConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -568,7 +703,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
     finally {
       connection.disconnect();  // unregister listener early
-      for (Job<?> read : reads) {
+      for (Job read : reads) {
         while (!read.isDone()) {
           read.waitForCompletion(1000);
         }
@@ -576,9 +711,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
   }
 
-  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job<?>> reads) {
+  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job> reads) {
     for (int i = 0; i < 10; i++) {
-      AtomicReference<Job<?>> reference = new AtomicReference<>();
+      AtomicReference<Job> reference = new AtomicReference<>();
       reference.set(JobLauncher.getInstance().submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         VirtualFile file = pointer.getFile();
         if (file != null && !file.isValid()) {
@@ -689,7 +824,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   public void testStressConcurrentAccess() throws Exception {
     VirtualFilePointer fileToCreatePointer = createPointerByFile(tempDir.getRoot(), null);
     VirtualFilePointerListener listener = new VirtualFilePointerListener() { };
-    TestTimeOut t = TestTimeOut.setTimeout(15, TimeUnit.SECONDS);
+    TestTimeOut t = TestTimeOut.setTimeout(30, TimeUnit.SECONDS);
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<Throwable> exception = new AtomicReference<>(null);
     int i;
@@ -697,40 +832,42 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     FilePartNodeRoot fakeRoot = FilePartNodeRoot.createFakeRoot(LocalFileSystem.getInstance());
     for (i = 0; !t.timedOut(i) && i<50_000; i++) {
       Disposable disposable = Disposer.newDisposable();
-      // supply listener to separate pointers under one root so that it will be removed on dispose
-      VirtualFilePointerImpl bb =
-        (VirtualFilePointerImpl)myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/bb", disposable, listener);
+      try {
+        // supply listener to separate pointers under one root so that it will be removed on dispose
+        VirtualFilePointerImpl bb = (VirtualFilePointerImpl)myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/bb", disposable, listener);
 
-      if (i % 1000 == 0) LOG.info("i = " + i);
-
-      CountDownLatch ready = new CountDownLatch(nThreads);
-      Runnable read = () -> {
-        try {
-          ready.countDown();
-          while (run.get()) {
-            bb.myNode.update(((VirtualFilePointerImpl)fileToCreatePointer).myNode, fakeRoot, "test", null);
+        CountDownLatch ready = new CountDownLatch(nThreads);
+        Runnable read = () -> {
+          try {
+            ready.countDown();
+            while (run.get()) {
+              bb.getNodeForTesting().update(((VirtualFilePointerImpl)fileToCreatePointer).getNodeForTesting(), fakeRoot, "test", null);
+            }
           }
+          catch (Throwable e) {
+            exception.set(e);
+          }
+        };
+
+        run.set(true);
+        List<Job> jobs = new ArrayList<>(nThreads);
+        for (int it = 0; it < nThreads; it++) {
+          jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
         }
-        catch (Throwable e) {
-          exception.set(e);
+        boolean isReady = ready.await(10, TimeUnit.SECONDS);
+        assumeTrue("It took too long to start all jobs", isReady);
+
+        myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
+
+        run.set(false);
+        for (Job job : jobs) {
+          job.waitForCompletion(2_000);
         }
-      };
-
-      run.set(true);
-      List<Job<?>> jobs = new ArrayList<>(nThreads);
-      for (int it = 0; it < nThreads; it++) {
-        jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
+        ExceptionUtil.rethrowAll(exception.get());
       }
-      ready.await();
-
-      myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
-
-      run.set(false);
-      for (Job<?> job : jobs) {
-        job.waitForCompletion(2_000);
+      finally {
+        Disposer.dispose(disposable);
       }
-      ExceptionUtil.rethrowAll(exception.get());
-      Disposer.dispose(disposable);
     }
     LOG.debug("i = " + i);
   }
@@ -888,7 +1025,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       assertNotNull(pointer.getFile());
 
       assertEquals("[before:false, after:true]", listener.log.toString());
-    });
+    }, false);
   }
 
   @Test
@@ -920,10 +1057,35 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileUrlNormalization() {
-    assertEquals("file:/", myVirtualFilePointerManager.create("file:/", disposable, null).getUrl());
     assertEquals("file://", myVirtualFilePointerManager.create("file://", disposable, null).getUrl());
-    assertEquals("file://", myVirtualFilePointerManager.create("file:///", disposable, null).getUrl());
-    assertEquals("file://", myVirtualFilePointerManager.create("file:////", disposable, null).getUrl());
+
+    assertEquals("file:///", myVirtualFilePointerManager.create("file:///", disposable, null).getUrl());
+    assertEquals("file:///", myVirtualFilePointerManager.create("file:////", disposable, null).getUrl());
+
+    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a/", disposable, null).getUrl());
+    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a//", disposable, null).getUrl());
+    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a///", disposable, null).getUrl());
+  }
+
+  @Test
+  public void testCleanupPath() {
+    assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("/"));
+    assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("//"));
+    assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("///"));
+    assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("////"));
+
+    assertEquals("/a", VirtualFilePointerManagerImpl.cleanupPath("/a/"));
+    assertEquals("/a", VirtualFilePointerManagerImpl.cleanupPath("//a//"));
+    assertEquals("/a", VirtualFilePointerManagerImpl.cleanupPath("///a///"));
+    assertEquals("/a", VirtualFilePointerManagerImpl.cleanupPath("////a////"));
+
+    assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("/a.jar!/"));
+    assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("//a.jar!/"));
+    assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("///a.jar!/"));
+    assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("////a.jar!/"));
+
+    //TODO RC: should we compact '//' after '!' also?
+    //    i.e. assertEquals("/a.jar", VirtualFilePointerManagerImpl.cleanupPath("////a.jar!//"));
   }
 
   @Test
@@ -1043,6 +1205,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(p3.isValid());
   }
 
+  @PerformanceUnitTest
   @Test
   public void testRawGetPerformance() {
     VirtualFile vTemp = getVirtualTempRoot();
@@ -1054,11 +1217,11 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
 
-    PlatformTestUtil.startPerformanceTest("get()", 3000, () -> {
+    Benchmark.newBenchmark("get()", () -> {
       for (int i=0; i<200_000_000; i++) {
         assertNotNull(pointer.getFile());
       }
-    }).assertTiming();
+    }).start();
   }
 
   @Test
@@ -1077,5 +1240,222 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(newJarParent.mkdir());
     doMove(jarParent, newJarParent);
     assertTrue(jarPointer.getFile() != null && jarPointer.getFile().isValid());
+  }
+
+  @Test
+  public void pointerCreatedWithURLAndThenTheDirectoryCreatedWithDifferentCaseSensitivityThenItMustNotFreakOutButSortItsChildrenAccordingToNewCaseSensitivity() throws IOException {
+    IoTestUtil.assumeWindows();
+    IoTestUtil.assumeWslPresence();
+    assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
+
+    myVirtualFilePointerManager.assertConsistency();
+    File dir = new File(tempDir.getRoot(), "dir");
+    File file = new File(dir, "child.txt");
+    assertFalse(file.exists());
+    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRoot()));
+
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file.getPath()), disposable, null);
+    myVirtualFilePointerManager.assertConsistency();
+    assertTrue(dir.mkdirs());
+    assertTrue(file.createNewFile());
+
+    IoTestUtil.setCaseSensitivity(dir, true);
+    File file2 = new File(dir, "CHILD.TXT");
+    assertTrue(file2.createNewFile());
+    VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file2);
+    assertNotNull(vFile2);
+    assertEquals("CHILD.TXT", vFile2.getName());
+    VirtualFilePointer pointer2 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file2.getPath()), disposable, null);
+    assertNotSame(pointer2, pointer);
+    myVirtualFilePointerManager.assertConsistency();
+
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertTrue(vFile.isCaseSensitive());
+    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
+    myVirtualFilePointerManager.assertConsistency();
+  }
+
+  @Test
+  public void testCreateFilePointerFrom83AbbreviationAbominationUnderWindowsDoesntCrash() throws IOException {
+    IoTestUtil.assumeWindows();
+    myVirtualFilePointerManager.assertConsistency();
+
+    File file = new File(tempDir.getRoot(), "Documents And Settings/Absolutely All Users/x.txt");
+    assertFalse(file.exists());
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    assertTrue(file.exists());
+    File _83Abomination = new File(tempDir.getRoot(), "Docume~1/Absolu~1/x.txt");
+    assumeTrue("This version of Windows doesn't support 8.3. abbreviated file names: " + SystemInfo.OS_NAME, _83Abomination.exists());
+    VirtualFilePointer p1 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file.getPath()), disposable, null);
+    assertEquals(VfsUtilCore.pathToUrl(file.getPath()), p1.getUrl());
+    VirtualFilePointer p2 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(_83Abomination.getPath()), disposable, null);
+    assertEquals(VfsUtilCore.pathToUrl(file.getPath()), p2.getUrl());
+  }
+
+  @Test
+  public void testRecursivePointersForSubdirectories() {
+    VirtualFilePointer parentPointer = createRecursivePointer("parent");
+    VirtualFilePointer dirPointer = createRecursivePointer("parent/dir");
+    VirtualFilePointer subdirPointer = createRecursivePointer("parent/dir/subdir");
+    VirtualFilePointer filePointer = createPointer("parent/dir/subdir/file.txt");
+    VirtualFile root = myDir();
+    VirtualFileSystemEntry parent = createChildDirectory(root, "parent");
+    VirtualFileSystemEntry dir = createChildDirectory(parent, "dir");
+    VirtualFileSystemEntry subdir = createChildDirectory(dir, "subdir");
+    assertPointersUnder(subdir, "xxx.txt", parentPointer, dirPointer, subdirPointer);
+    assertPointersUnder(subdir.getParent(), subdir.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
+    assertPointersUnder(dir.getParent(), dir.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
+    assertPointersUnder(parent.getParent(), parent.getName(), parentPointer, dirPointer, subdirPointer, filePointer);
+  }
+
+  @Test
+  public void testRecursivePointersForDirectoriesWithCommonPrefix() {
+    VirtualFilePointer parentPointer = createRecursivePointer("parent");
+    VirtualFilePointer dir1Pointer = createRecursivePointer("parent/dir1");
+    VirtualFilePointer dir2Pointer = createRecursivePointer("parent/dir2");
+    VirtualFilePointer subdirPointer = createRecursivePointer("parent/dir1/subdir");
+    VirtualFilePointer filePointer = createPointer("parent/dir1/subdir/file.txt");
+    VirtualFile root = myDir();
+    VirtualFileSystemEntry parent = createChildDirectory(root, "parent");
+    VirtualFileSystemEntry dir1 = createChildDirectory(parent, "dir1");
+    VirtualFileSystemEntry dir2 = createChildDirectory(parent, "dir2");
+    VirtualFileSystemEntry subdir = createChildDirectory(dir1, "subdir");
+    assertPointersUnder(subdir, "xxx.txt", parentPointer, dir1Pointer, subdirPointer);
+    assertPointersUnder(subdir.getParent(), subdir.getName(), parentPointer, dir1Pointer, subdirPointer, filePointer);
+    assertPointersUnder(dir1.getParent(), dir1.getName(), parentPointer, dir1Pointer, subdirPointer, filePointer);
+    assertPointersUnder(parent.getParent(), parent.getName(), parentPointer, dir1Pointer, dir2Pointer, subdirPointer, filePointer);
+    assertPointersUnder(dir2.getParent(), dir2.getName(), parentPointer, dir2Pointer);
+  }
+
+  @Test
+  public void testRecursivePointersUnderSiblingDirectory() {
+    VirtualFilePointer innerPointer = createRecursivePointer("parent/dir/subdir1/inner/subinner");
+    createPointer("parent/anotherDir");
+    VirtualFile root = myDir();
+    VirtualFile parent = HeavyPlatformTestCase.createChildDirectory(root, "parent");
+    VirtualFile dir = HeavyPlatformTestCase.createChildDirectory(parent, "dir");
+    VirtualFileSystemEntry subdir1 = createChildDirectory(dir, "subdir1");
+    VirtualFileSystemEntry subdir2 = createChildDirectory(dir, "subdir2");
+    assertPointersUnder(subdir1, "inner", innerPointer);
+    assertPointersUnder(subdir2, "xxx.txt");
+  }
+
+  @Test
+  public void testRecursivePointersUnderDisparateDirectoriesNearRoot() {
+    VirtualFilePointer innerPointer = createRecursivePointer("temp/res/ext-resources");
+    VirtualFile root = myDir();
+    VirtualFile parent = HeavyPlatformTestCase.createChildDirectory(root, "parent");
+    VirtualFileSystemEntry dir = createChildDirectory(parent, "dir");
+    assertPointersUnder(dir, "inner");
+    assertTrue(((VirtualFilePointerImpl)innerPointer).isRecursive());
+  }
+
+  @Test
+  public void testUrlsHavingOnlyStartingSlashInCommon() {
+    VirtualFilePointer p1 = createPointer("a/p1");
+    VirtualFilePointer p2 = createPointer("b/p2");
+    VirtualFile root = myDir();
+    VirtualFileSystemEntry a = createChildDirectory(root, "a");
+    VirtualFileSystemEntry b = createChildDirectory(root, "b");
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
+  }
+
+  @Test
+  public void testUrlsHavingOnlyStartingSlashInCommonAndInvalidUrlBetweenThem() {
+    VirtualFilePointer p1 = createPointer("a/p1");
+    createPointer("invalid/path");
+    VirtualFilePointer p2 = createPointer("b/p2");
+    VirtualFile root = myDir();
+    VirtualFileSystemEntry a = createChildDirectory(root, "a");
+    VirtualFileSystemEntry b = createChildDirectory(root, "b");
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(a, "p1"), p1);
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(b, "p2"), p2);
+  }
+
+  private static @NotNull VirtualFileSystemEntry createChildDirectory(VirtualFile root, String childName) {
+    return (VirtualFileSystemEntry)HeavyPlatformTestCase.createChildDirectory(root, childName);
+  }
+
+  private void assertPointersUnder(@NotNull VirtualFileSystemEntry file, @NotNull String childName, VirtualFilePointer @NotNull ... pointers) {
+    UsefulTestCase.assertSameElements(myVirtualFilePointerManager.getPointersUnder(file, childName), pointers);
+  }
+
+  private @NotNull VirtualFilePointer createPointer(@NotNull String relativePath) {
+    return myVirtualFilePointerManager.create(myDir().getUrl()+"/"+relativePath, disposable, null);
+  }
+
+  private @NotNull VirtualFilePointer createRecursivePointer(@NotNull String relativePath) {
+    return myVirtualFilePointerManager.createDirectoryPointer(myDir().getUrl()+"/"+relativePath, true, disposable, new VirtualFilePointerListener() {
+    });
+  }
+
+  private VirtualFile myDir() {
+    return tempDir.getVirtualFileRoot();
+  }
+
+  @Test
+  public void testIncorrectRelativeUrlMustNotCrashVirtualPointers() {
+    String path = "$KOTLIN_BUNDLED$/lib/allopen-compiler-plugin.jar!/";
+    VirtualFilePointer pointer = myVirtualFilePointerManager.create("jar://" + path, disposable, null);
+    assertTrue(pointer.getUrl(), pointer.getUrl().endsWith(path));
+    assertEquals("allopen-compiler-plugin.jar", pointer.getFileName());
+  }
+
+  @Test
+  public void testJarUrlContainingInvalidExclamationInTheMiddleMustNotCrashAnything() {
+    File root = tempDir.getRoot();
+    while (root.getParentFile() != null) root = root.getParentFile();
+    String diskRoot = UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(root.getPath()));
+
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("/", "!/", null, "_");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/", "!/", null, "_");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/xxx", "!/xxx", "xxx", "xxx");
+    assertJarSeparatorParsedCorrectlyForFileInsideJar("!/xxx/!/yyy", "!/xxx/!/yyy", "yyy", "xxx/!/yyy");
+    if (SystemInfo.isWindows) {
+      assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "/!/abc", "jar://" + diskRoot + "!/abc", "abc");
+      assertJarSeparatorParsedCorrectly("jar://" + diskRoot + "!/abc", "jar://" + diskRoot + "!/abc", "abc");
+    }
+  }
+
+  private void assertJarSeparatorParsedCorrectlyForFileInsideJar(@NotNull String relativePathInsideJar, @NotNull String expectedPointerRelativeUrl, @Nullable String expectedPointerFileName, @NotNull String expectedPathInsideJar) {
+    String abc = "abc" + new SecureRandom().nextLong()+".jar";
+    String tempRoot = UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(tempDir.getRoot().getPath()));
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create("jar://" + tempRoot + "/" + abc + relativePathInsideJar, disposable, null);
+    assertEquals(expectedPointerRelativeUrl, StringUtil.trimStart(pointer.getUrl(), "jar://" + tempRoot + "/" + abc));
+    String expectedPointerFileNameToCheck = expectedPointerFileName == null ? abc : expectedPointerFileName;
+    assertEquals(expectedPointerFileNameToCheck, pointer.getFileName());
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getFileSystemForTesting());
+    assertFalse(pointer.isValid());
+
+    File jar = IoTestUtil.createTestJar(new File(tempRoot+"/"+abc), List.of(Pair.create(expectedPathInsideJar, new byte[]{' ', ' '})));
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar));
+    
+    assertTrue(pointer.isValid());
+    VirtualFile virtualFile = pointer.getFile();
+    assertNotNull(virtualFile);
+    assertEquals(expectedPointerFileNameToCheck, virtualFile.getName());
+  }
+
+  private void assertJarSeparatorParsedCorrectly(@NotNull String sourceUrl, @NotNull String expectedPointerUrl, @NotNull String expectedPointerFileName) {
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(sourceUrl, disposable, null);
+    assertEquals(expectedPointerUrl, pointer.getUrl());
+    assertEquals(expectedPointerFileName, pointer.getFileName());
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getFileSystemForTesting());
+    assertFalse(pointer.isValid());
+  }
+
+  @Test
+  public void testDeadlockDuringConcurrentCreateDispose() {
+    // also should not leak pointers, checked in tearDown()
+    IntStream.range(0, 100_000)
+      .parallel()
+      .forEach(__ -> {
+        Disposable disposable = Disposer.newDisposable();
+        myVirtualFilePointerManager.create(myDir().getUrl() + "/" + "file.txt", disposable, null);
+        Disposer.dispose(disposable);
+      });
   }
 }

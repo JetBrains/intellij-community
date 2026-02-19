@@ -26,8 +26,14 @@ import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.util.*
-import javax.swing.*
+import java.util.EventObject
+import javax.swing.AbstractAction
+import javax.swing.AbstractCellEditor
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTable
+import javax.swing.KeyStroke
+import javax.swing.SwingConstants
 import javax.swing.event.MouseInputAdapter
 import javax.swing.table.TableCellEditor
 import kotlin.math.max
@@ -76,7 +82,7 @@ internal class CommitMessageCellEditor(
 
   private fun createCommitMessage() = CommitMessage(project, false, false, true).apply {
     editorField.addSettingsProvider { editor ->
-      editor.scrollPane.border = JBUI.Borders.empty()
+      editor.scrollPane.border = JBUI.Borders.emptyLeft(6)
       registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
       registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK))
     }
@@ -90,9 +96,11 @@ internal class CommitMessageCellEditor(
     editor.contentComponent.actionMap.put(key, closeEditorAction)
   }
 
-  override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
+  override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component? {
     val model = this.table.model
-    val commitMessageField = commitMessageForEntry.getOrPut(model.getEntry(row)) { createCommitMessage() }
+    val rebaseEntry = model.getEntry(row)
+    if (rebaseEntry !is GitRebaseEntryWithDetails) return null
+    val commitMessageField = commitMessageForEntry.getOrPut(rebaseEntry) { createCommitMessage() }
     lastUsedCommitMessageField = commitMessageField
     commitMessageField.text = model.getCommitMessage(row)
     table.setRowHeight(row, savedHeight)
@@ -116,7 +124,7 @@ internal class CommitMessageCellEditor(
 
   private fun createHint(): JLabel {
     val hint = GitBundle.message("rebase.interactive.dialog.reword.hint.text",
-                                 KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.CTRL_ENTER))
+                                 KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getCtrlEnter()))
     val hintLabel = HintUtil.createAdComponent(hint, JBUI.CurrentTheme.BigPopup.advertiserBorder(), SwingConstants.LEFT).apply {
       foreground = JBUI.CurrentTheme.BigPopup.advertiserForeground()
       background = JBUI.CurrentTheme.BigPopup.advertiserBackground()

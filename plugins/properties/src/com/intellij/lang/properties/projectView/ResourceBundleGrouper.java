@@ -1,12 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.projectView;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.CustomResourceBundle;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.ResourceBundleImpl;
+import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbAware;
@@ -31,8 +36,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull final Collection<AbstractTreeNode<?>> children, final ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, final @NotNull Collection<AbstractTreeNode<?>> children, final ViewSettings settings) {
     if (parent instanceof ResourceBundleNode) {
       return children;
     }
@@ -99,25 +103,25 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      for (AbstractTreeNode<?> selectedElement : selected) {
+  public void uiDataSnapshot(@NotNull DataSink sink, @NotNull Collection<? extends AbstractTreeNode<?>> selection) {
+    sink.lazy(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, () -> {
+      for (AbstractTreeNode<?> selectedElement : selection) {
         Object element = selectedElement.getValue();
         if (element instanceof ResourceBundle) {
           return new ResourceBundleDeleteProvider();
         }
       }
-    }
-    else if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
+      return null;
+    });
+    sink.lazy(ResourceBundle.ARRAY_DATA_KEY, () -> {
       List<ResourceBundle> selectedElements = new ArrayList<>();
-      for (AbstractTreeNode<?> node : selected) {
-        final Object value = node.getValue();
+      for (AbstractTreeNode<?> node : selection) {
+        Object value = node.getValue();
         if (value instanceof ResourceBundle) {
           selectedElements.add((ResourceBundle)value);
         }
       }
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new ResourceBundle[0]);
-    }
-    return null;
+    });
   }
 }

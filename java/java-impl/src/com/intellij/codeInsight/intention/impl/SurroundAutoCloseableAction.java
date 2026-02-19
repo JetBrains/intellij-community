@@ -1,20 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.PsiResourceVariable;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
@@ -24,7 +45,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
@@ -35,24 +55,29 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    return element.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
-           PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_7) &&
-           (findVariable(element) != null || findExpression(element) != null);
+public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction<PsiElement> {
+  public SurroundAutoCloseableAction() {
+    super(PsiElement.class);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    boolean available = element.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
+                        PsiUtil.isAvailable(JavaFeature.TRY_WITH_RESOURCES, element) &&
+                        (findVariable(element) != null || findExpression(element) != null);
+    return available ? Presentation.of(getFamilyName()) : null;
+  }
+
+  @Override
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiLocalVariable variable = findVariable(element);
     if (variable != null) {
-      processVariable(project, editor, variable);
+      processVariable(context.project(), updater, variable);
     }
     else {
       PsiExpression expression = findExpression(element);
       if (expression != null) {
-        processExpression(project, editor, expression);
+        processExpression(context.project(), updater, expression);
       }
     }
   }
@@ -117,7 +142,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
            PsiTreeUtil.findChildOfType(expression, PsiErrorElement.class) == null;
   }
 
-  private static void processVariable(Project project, Editor editor, PsiLocalVariable variable) {
+  private static void processVariable(Project project, ModPsiUpdater updater, PsiLocalVariable variable) {
     PsiExpression initializer = Objects.requireNonNull(variable.getInitializer());
     PsiElement declaration = variable.getParent();
     PsiElement codeBlock = declaration.getParent();
@@ -133,12 +158,13 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
     CommentTracker tracker = new CommentTracker();
     String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + tracker.text(initializer) + ") {}";
-    PsiTryStatement armStatement = (PsiTryStatement)tracker.replaceAndRestoreComments(declaration, text);
+    PsiTryStatement armStatement = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(text, declaration);
 
     List<PsiElement> toFormat = null;
     if (last != null) {
-      toFormat = moveStatements(last, armStatement);
+      toFormat = moveStatements(last, declaration, armStatement);
     }
+    armStatement = (PsiTryStatement)tracker.replaceAndRestoreComments(declaration, armStatement);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     PsiElement formattedElement = codeStyleManager.reformat(armStatement);
@@ -153,22 +179,22 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       if (tryBlock != null) {
         PsiJavaToken brace = tryBlock.getLBrace();
         if (brace != null) {
-          editor.getCaretModel().moveToOffset(brace.getTextOffset() + 1);
+          updater.moveCaretTo(brace.getTextOffset() + 1);
         }
       }
     }
   }
 
-  private static List<PsiElement> moveStatements(PsiElement last, PsiTryStatement statement) {
-    PsiCodeBlock tryBlock = statement.getTryBlock();
-    assert tryBlock != null : statement.getText();
-    PsiElement parent = statement.getParent();
+  private static List<PsiElement> moveStatements(PsiElement last, PsiElement declaration, PsiTryStatement armStatement) {
+    PsiCodeBlock tryBlock = armStatement.getTryBlock();
+    assert tryBlock != null : armStatement.getText();
+    PsiElement parent = declaration.getParent();
     LocalSearchScope scope = new LocalSearchScope(parent);
 
     List<PsiElement> toFormat = new SmartList<>();
     PsiElement stopAt = last.getNextSibling();
 
-    PsiElement i = statement.getNextSibling();
+    PsiElement i = declaration.getNextSibling();
     while (i != null && i != stopAt) {
       PsiElement child = i;
       i = PsiTreeUtil.skipWhitespacesAndCommentsForward(i);
@@ -188,12 +214,12 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
         if (!contained) {
           PsiLocalVariable var = (PsiLocalVariable)declared;
-          PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(declaration.getProject());
 
           String name = var.getName();
           PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement(name, var.getType(), null);
           PsiUtil.setModifierProperty((PsiLocalVariable)declarationStatement.getDeclaredElements()[0], PsiModifier.FINAL, var.hasModifierProperty(PsiModifier.FINAL));
-          toFormat.add(parent.addBefore(declarationStatement, statement));
+          toFormat.add(parent.addBefore(declarationStatement, declaration));
 
           CommentTracker commentTracker = new CommentTracker();
           PsiExpression varInit = var.getInitializer();
@@ -211,19 +237,24 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       }
     }
 
-    PsiElement first = statement.getNextSibling();
+    PsiElement first = declaration.getNextSibling();
     tryBlock.addRangeBefore(first, last, tryBlock.getRBrace());
     parent.deleteChildRange(first, last);
 
     return toFormat;
   }
 
-  private static void processExpression(Project project, Editor editor, PsiExpression expression) {
+  private static void processExpression(final Project project, ModPsiUpdater updater, PsiExpression expression) {
     PsiType type = Objects.requireNonNull(expression.getType());
+    final PsiType[] types = Stream.of(new TypeSelectorManagerImpl(project, type, expression, PsiExpression.EMPTY_ARRAY).getTypesForAll())
+      .filter(SurroundAutoCloseableAction::rightType)
+      .toArray(PsiType[]::new);
+    TypeExpression typeExpression = new TypeExpression(project, types);
+
     PsiStatement statement = (PsiStatement)expression.getParent();
 
     CommentTracker commentTracker = new CommentTracker();
-    List<String> names = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE).byType(type).byExpression(expression)
+    final List<String> names = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE).byType(type).byExpression(expression)
       .generateAll(true);
     String text = "try (" + type.getCanonicalText(true) + " " + names.get(0) + " = " + commentTracker.text(expression) + ") {}";
     PsiTryStatement tryStatement = (PsiTryStatement)commentTracker.replaceAndRestoreComments(statement, text);
@@ -233,41 +264,29 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     tryStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(tryStatement);
 
     PsiResourceList resourceList = tryStatement.getResourceList();
-    if (resourceList != null && resourceList.isPhysical()) {
-      PsiResourceVariable var = (PsiResourceVariable)resourceList.iterator().next();
-      PsiIdentifier id = var.getNameIdentifier();
+    if (resourceList != null) {
+      final PsiResourceVariable var = (PsiResourceVariable)resourceList.iterator().next();
+      final PsiIdentifier id = var.getNameIdentifier();
       PsiExpression initializer = var.getInitializer();
       if (id != null && initializer != null) {
-        type = initializer.getType();
-        PsiType[] types = Stream.of(new TypeSelectorManagerImpl(project, type, initializer, PsiExpression.EMPTY_ARRAY).getTypesForAll())
-            .filter(SurroundAutoCloseableAction::rightType)
-            .toArray(PsiType[]::new);
-        TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(var);
-        builder.replaceElement(id, new ConstantNode(var.getName()).withLookupStrings(names));
-        builder.replaceElement(var.getTypeElement(), new TypeExpression(project, types));
-        builder.run(editor, true);
+        updater.templateBuilder()
+          .field(id, new ConstantNode(var.getName()).withLookupStrings(names))
+          .field(var.getTypeElement(), typeExpression);
       }
     }
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.surround.resource.with.ARM.block");
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
-  public static class Template implements SurroundDescriptor, Surrounder {
+  public static final class Template extends ModCommandSurrounder implements SurroundDescriptor {
     private final Surrounder[] mySurrounders = {this};
 
     @Override
     public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
-      if (!PsiUtil.isLanguageLevel7OrHigher(file)) return PsiElement.EMPTY_ARRAY;
+      if (!PsiUtil.isAvailable(JavaFeature.TRY_WITH_RESOURCES, file)) return PsiElement.EMPTY_ARRAY;
       PsiElement element = file.findElementAt(endOffset);
       PsiElement target = findExpression(element);
       if (target == null) {
@@ -296,14 +315,12 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       return elements.length == 1 && (findExpression(elements[0]) != null || findVariable(elements[0]) != null);
     }
 
-    @Nullable
     @Override
-    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
+    public @NotNull ModCommand surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elements) {
       if (elements.length == 1) {
-        new SurroundAutoCloseableAction().invoke(project, editor, elements[0]);
+        return new SurroundAutoCloseableAction().perform(context, elements[0]);
       }
-
-      return null;
+      return ModCommand.nop();
     }
   }
 }

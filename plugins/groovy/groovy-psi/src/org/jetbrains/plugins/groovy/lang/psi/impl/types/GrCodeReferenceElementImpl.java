@@ -1,11 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,12 +35,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrCodeReferenceResolver;
 
 import java.util.Collection;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.doGetKind;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.getDiamondTypes;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.shouldInferTypeArguments;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAccessorName;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeReferenceElement> implements GrCodeReferenceElement {
   private static final Logger LOG = Logger.getInstance(GrCodeReferenceElementImpl.class);
@@ -71,9 +81,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
   }
 
-  @NotNull
   @Override
-  protected GrReferenceElement<GrCodeReferenceElement> createQualifiedRef(@NotNull String qName) {
+  protected @NotNull GrReferenceElement<GrCodeReferenceElement> createQualifiedRef(@NotNull String qName) {
     return GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(qName);
   }
 
@@ -98,19 +107,17 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     switch (getKind()) {
-      case PACKAGE_REFERENCE:
-      case IMPORT_REFERENCE:
+      case PACKAGE_REFERENCE, IMPORT_REFERENCE -> {
         return getTextSkipWhiteSpaceAndComments();
-      case REFERENCE:
+      }
+      case REFERENCE -> {
         final PsiElement target = resolve();
         if (target instanceof PsiTypeParameter) {
           return StringUtil.notNullize(((PsiTypeParameter)target).getName());
         }
-        else if (target instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)target;
+        else if (target instanceof PsiClass aClass) {
           String name = aClass.getQualifiedName();
           if (name == null) return "";
 
@@ -135,8 +142,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           LOG.assertTrue(target == null);
           return getTextSkipWhiteSpaceAndComments();
         }
-      default:
-        throw new IllegalStateException();
+      }
+      default -> throw new IllegalStateException();
     }
   }
 
@@ -145,8 +152,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     if (super.bindsCorrectly(element)) return true;
     if (element instanceof PsiClass) {
       final PsiElement resolved = resolve();
-      if (resolved instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)resolved;
+      if (resolved instanceof PsiMethod method) {
         if (method.isConstructor() && getManager().areElementsEquivalent(element, method.getContainingClass())) {
           return true;
         }
@@ -176,17 +182,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    switch (getKind()) {
-      case PACKAGE_REFERENCE:
-        return referencesPackage(element);
-      case REFERENCE:
-        return referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
-      case IMPORT_REFERENCE:
-        return (element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element)
-               || element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element);
-      default:
-        throw new IllegalStateException();
-    }
+    return switch (getKind()) {
+      case PACKAGE_REFERENCE -> referencesPackage(element);
+      case REFERENCE -> referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
+      case IMPORT_REFERENCE ->
+        ((element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element))
+        || (element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element))
+        || (element instanceof PsiPackage && referencesPackage(element));
+    };
   }
 
   private boolean referencesPackage(@NotNull PsiElement element) {
@@ -224,9 +227,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return false;
   }
 
-  @NotNull
   @Override
-  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+  public @NotNull Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     return TypeInferenceHelper.getTopContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
   }
 
@@ -240,9 +242,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
   }
 
-  @NotNull
   @Override
-  public CodeReferenceKind getKind() {
+  public @NotNull CodeReferenceKind getKind() {
     return doGetKind(this);
   }
 

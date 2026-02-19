@@ -1,30 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
-import com.sun.jna.*;
+import com.sun.jna.Callback;
+import com.sun.jna.Function;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
+import com.sun.jna.Pointer;
+import com.sun.jna.PointerType;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Image;
 import java.io.File;
 import java.lang.reflect.Proxy;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * @author spleaner
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
-@NonNls
-public final class Foundation {
+public final @NonNls class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
   private static final Function myObjcMsgSend;
 
@@ -62,7 +73,7 @@ public final class Foundation {
     return invokArgs;
   }
 
-  public static ID invoke(final ID id, final Pointer selector, Object... args) {
+  public static @NotNull ID invoke(final ID id, final Pointer selector, Object... args) {
     // objc_msgSend is called with the calling convention of the target method
     // on x86_64 this does not make a difference, but arm64 uses a different calling convention for varargs
     // it is therefore important to not call objc_msgSend as a vararg function
@@ -95,13 +106,11 @@ public final class Foundation {
     return invoke(cls, selector, args);
   }
 
-  public static ID invoke(final ID id, final String selector, Object... args) {
+  public static @NotNull ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
   }
 
   public static double invoke_fpret(ID receiver, Pointer selector, Object... args) {
-    // calling objc_msgSend_fpret is exclusively needed on 32bit for double return values
-    if (SystemInfo.is32Bit) return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args);
     return myObjcMsgSend.invokeDouble(prepInvoke(receiver, selector, args));
   }
 
@@ -134,12 +143,11 @@ public final class Foundation {
   }
 
   /**
-   *
-   * @param cls The class to which to add a method.
+   * @param cls          The class to which to add a method.
    * @param selectorName A selector that specifies the name of the method being added.
-   * @param impl A function which is the implementation of the new method. The function must take at least two arguments-self and _cmd.
-   * @param types An array of characters that describe the types of the arguments to the method.
-   *              See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
+   * @param impl         A function which is the implementation of the new method. The function must take at least two arguments-self and _cmd.
+   * @param types        An array of characters that describe the types of the arguments to the method.
+   *                     See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
    * @return true if the method was added successfully, otherwise false (for example, the class already contains a method implementation with that name).
    */
   public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
@@ -158,14 +166,12 @@ public final class Foundation {
     return myFoundationLibrary.class_isMetaClass(cls);
   }
 
-  @Nullable
-  public static String stringFromSelector(Pointer selector) {
+  public static @Nullable String stringFromSelector(Pointer selector) {
     ID id = myFoundationLibrary.NSStringFromSelector(selector);
     return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
-    }
+  }
 
-  @Nullable
-  public static String stringFromClass(ID aClass) {
+  public static @Nullable String stringFromClass(ID aClass) {
     ID id = myFoundationLibrary.NSStringFromClass(aClass);
     return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
   }
@@ -186,14 +192,14 @@ public final class Foundation {
     return myFoundationLibrary.objc_getMetaClass(className);
   }
 
-  public static boolean isPackageAtPath(@NotNull final String path) {
+  public static boolean isPackageAtPath(final @NotNull String path) {
     final ID workspace = invoke("NSWorkspace", "sharedWorkspace");
     final ID result = invoke(workspace, createSelector("isFilePackageAtPath:"), nsString(path));
 
     return result.booleanValue();
   }
 
-  public static boolean isPackageAtPath(@NotNull final File file) {
+  public static boolean isPackageAtPath(final @NotNull File file) {
     if (!file.isDirectory()) return false;
     return isPackageAtPath(file.getPath());
   }
@@ -206,23 +212,41 @@ public final class Foundation {
     private static final Pointer initWithBytesLengthEncodingSel = createSelector("initWithBytes:length:encoding:");
     private static final long nsEncodingUTF16LE = convertCFEncodingToNS(FoundationLibrary.kCFStringEncodingUTF16LE);
 
-    @NotNull
-    public static ID create(@NotNull String s) {
+    public static @NotNull ID create(@NotNull String s) {
       // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
       // Turns out about 10% quicker for long strings.
       if (s.isEmpty()) {
         return invoke(nsStringCls, stringSel);
       }
 
-      byte[] utf16Bytes = s.getBytes(CharsetToolkit.UTF_16LE_CHARSET);
-      return invoke(invoke(invoke(nsStringCls, allocSel),
-                           initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
-                    autoreleaseSel);
+      byte[] utf16Bytes = s.getBytes(StandardCharsets.UTF_16LE);
+      return create(utf16Bytes);
+    }
+
+    public static @NotNull ID create(@NotNull CharSequence cs) {
+      if (cs instanceof String s) {
+        return create(s);
+      }
+      if (cs.isEmpty()) {
+        return invoke(nsStringCls, stringSel);
+      }
+
+      byte[] utf16Bytes = StandardCharsets.UTF_16LE.encode(CharBuffer.wrap(cs)).array();
+      return create(utf16Bytes);
+    }
+
+    private static @NotNull ID create(byte[] utf16Bytes) {
+      ID emptyNsString = invoke(nsStringCls, allocSel);
+      ID initializedNsString = invoke(emptyNsString, initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE);
+      return invoke(initializedNsString, autoreleaseSel);
     }
   }
 
-  @NotNull
-  public static ID nsString(@Nullable String s) {
+  public static @NotNull ID nsString(@Nullable String s) {
+    return s == null ? ID.NIL : NSString.create(s);
+  }
+
+  public static @NotNull ID nsString(@Nullable CharSequence s) {
     return s == null ? ID.NIL : NSString.create(s);
   }
 
@@ -234,8 +258,7 @@ public final class Foundation {
     return invoke(invoke(invoke("NSUUID", "alloc"), "initWithUUIDString:", nsString(uuid)), "autorelease");
   }
 
-  @Nullable
-  public static String toStringViaUTF8(ID cfString) {
+  public static @Nullable String toStringViaUTF8(ID cfString) {
     if (ID.NIL.equals(cfString)) return null;
 
     int lengthInChars = myFoundationLibrary.CFStringGetLength(cfString);
@@ -248,7 +271,7 @@ public final class Foundation {
   }
 
   public static @NlsSafe @Nullable String getNSErrorText(@Nullable ID error) {
-    if (error == null || error.byteValue() == 0) return null;
+    if (error == null || error.intValue() == 0) return null;
 
     String description = toStringViaUTF8(invoke(error, "localizedDescription"));
     String recovery = toStringViaUTF8(invoke(error, "localizedRecoverySuggestion"));
@@ -256,8 +279,7 @@ public final class Foundation {
     return StringUtil.notNullize(description);
   }
 
-  @Nullable
-  public static String getEncodingName(long nsStringEncoding) {
+  public static @Nullable String getEncodingName(long nsStringEncoding) {
     long cfEncoding = myFoundationLibrary.CFStringConvertNSStringEncodingToEncoding(nsStringEncoding);
     ID pointer = myFoundationLibrary.CFStringConvertEncodingToIANACharSetName(cfEncoding);
     String name = toStringViaUTF8(pointer);
@@ -285,10 +307,6 @@ public final class Foundation {
     myFoundationLibrary.CFRetain(id);
   }
 
-  public static ID cgWindowListCreateImage(Foundation.NSRect screenBounds, int windowOption, ID windowID, int imageOption) {
-    return myFoundationLibrary.CGWindowListCreateImage(screenBounds, windowOption, windowID, imageOption);
-  }
-
   public static void cfRelease(ID... ids) {
     for (ID id : ids) {
       if (id != null) {
@@ -297,7 +315,7 @@ public final class Foundation {
     }
   }
 
-  public static ID autorelease(ID id){
+  public static ID autorelease(ID id) {
     return invoke(id, "autorelease");
   }
 
@@ -310,7 +328,7 @@ public final class Foundation {
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
 
-  static class RunnableInfo {
+  static final class RunnableInfo {
     RunnableInfo(Runnable runnable, boolean useAutoreleasePool) {
       myRunnable = runnable;
       myUseAutoreleasePool = useAutoreleasePool;
@@ -385,7 +403,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSDictionary {
+  public static final class NSDictionary {
     private final ID myDelegate;
 
     public NSDictionary(ID delegate) {
@@ -406,8 +424,7 @@ public final class Foundation {
 
     public NSArray keys() { return new NSArray(invoke(myDelegate, "allKeys")); }
 
-    @NotNull
-    public static Map<String, String> toStringMap(@Nullable ID delegate) {
+    public static @NotNull Map<String, String> toStringMap(@Nullable ID delegate) {
       Map<String, String> result = new HashMap<>();
       if (isNil(delegate)) {
         return result;
@@ -434,7 +451,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSArray {
+  public static final class NSArray {
     private final ID myDelegate;
 
     public NSArray(ID delegate) {
@@ -449,8 +466,7 @@ public final class Foundation {
       return invoke(myDelegate, "objectAtIndex:", index);
     }
 
-    @NotNull
-    public List<ID> getList() {
+    public @NotNull List<ID> getList() {
       List<ID> result = new ArrayList<>();
       for (int i = 0; i < count(); i++) {
         result.add(at(i));
@@ -459,7 +475,7 @@ public final class Foundation {
     }
   }
 
-  public static class NSData {
+  public static final class NSData {
     private final ID myDelegate;
 
     // delegate should not be nil
@@ -476,13 +492,12 @@ public final class Foundation {
       return data.getByteArray(0, length());
     }
 
-    @NotNull
-    public Image createImageFromBytes() {
+    public @NotNull Image createImageFromBytes() {
       return ImageLoader.loadFromBytes(bytes());
     }
   }
 
-  public static class NSAutoreleasePool {
+  public static final class NSAutoreleasePool {
     private final ID myDelegate;
 
     public NSAutoreleasePool() {
@@ -495,7 +510,7 @@ public final class Foundation {
   }
 
   @Structure.FieldOrder({"origin", "size"})
-  public static class NSRect extends Structure implements Structure.ByValue {
+  public static final class NSRect extends Structure implements Structure.ByValue {
     public NSPoint origin;
     public NSSize size;
 
@@ -506,9 +521,9 @@ public final class Foundation {
   }
 
   @Structure.FieldOrder({"x", "y"})
-  public static class NSPoint extends Structure implements Structure.ByValue {
-    public CGFloat x;
-    public CGFloat y;
+  public static final class NSPoint extends Structure implements Structure.ByValue {
+    public CoreGraphics.CGFloat x;
+    public CoreGraphics.CGFloat y;
 
     @SuppressWarnings("UnusedDeclaration")
     public NSPoint() {
@@ -516,15 +531,15 @@ public final class Foundation {
     }
 
     public NSPoint(double x, double y) {
-      this.x = new CGFloat(x);
-      this.y = new CGFloat(y);
+      this.x = new CoreGraphics.CGFloat(x);
+      this.y = new CoreGraphics.CGFloat(y);
     }
   }
 
   @Structure.FieldOrder({"width", "height"})
-  public static class NSSize extends Structure implements Structure.ByValue {
-    public CGFloat width;
-    public CGFloat height;
+  public static final class NSSize extends Structure implements Structure.ByValue {
+    public CoreGraphics.CGFloat width;
+    public CoreGraphics.CGFloat height;
 
     @SuppressWarnings("UnusedDeclaration")
     public NSSize() {
@@ -532,54 +547,8 @@ public final class Foundation {
     }
 
     public NSSize(double width, double height) {
-      this.width = new CGFloat(width);
-      this.height = new CGFloat(height);
-    }
-  }
-
-  public static class CGFloat implements NativeMapped {
-    private final double value;
-
-    @SuppressWarnings("UnusedDeclaration")
-    public CGFloat() {
-      this(0);
-    }
-
-    public CGFloat(double d) {
-      value = d;
-    }
-
-    @Override
-    public Object fromNative(Object o, FromNativeContext fromNativeContext) {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return new CGFloat((Float)o);
-        case 8:
-          return new CGFloat((Double)o);
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public Object toNative() {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return (float)value;
-        case 8:
-          return value;
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public Class<?> nativeType() {
-      switch (Native.LONG_SIZE) {
-        case 4:
-          return Float.class;
-        case 8:
-          return Double.class;
-      }
-      throw new IllegalStateException();
+      this.width = new CoreGraphics.CGFloat(width);
+      this.height = new CoreGraphics.CGFloat(height);
     }
   }
 
@@ -598,15 +567,13 @@ public final class Foundation {
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
   }
 
-  @NotNull
-  public static PointerType createPointerReference() {
+  public static @NotNull PointerType createPointerReference() {
     PointerType reference = new PointerByReference(new Memory(Native.POINTER_SIZE));
     reference.getPointer().clear(Native.POINTER_SIZE);
     return reference;
   }
 
-  @NotNull
-  public static ID castPointerToNSError(@NotNull PointerType pointerType) {
+  public static @NotNull ID castPointerToNSError(@NotNull PointerType pointerType) {
     return new ID(pointerType.getPointer().getLong(0));
   }
 

@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
-import com.intellij.configurationStore.StateStorageManagerKt;
-import com.intellij.openapi.Disposable;
+import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -26,20 +24,18 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     Pair<Path, Path> result = createProjectWithModule();
     Path projectDir = result.getFirst();
 
-    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir);
-    closeOnTearDown(reloaded);
+    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir, getTestRootDisposable());
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     Module module = assertOneElement(moduleManager.getModules());
     moduleManager.disposeModule(module);
     closeProject(reloaded, true);
 
-    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir);
-    closeOnTearDown(reloaded);
+    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir, getTestRootDisposable());
     assertEmpty(ModuleManager.getInstance(reloaded).getModules());
     closeProject(reloaded, false);
   }
 
-  // because of external storage, imls file can be missed on disk and it is not error
+  // because of external storage, imls file can be missed on disk, and it is not error
   public void testRemoveFailedToLoadModule() throws IOException {
     Pair<Path, Path> result = createProjectWithModule();
     Path projectDir = result.getFirst();
@@ -48,25 +44,22 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
     assertThat(moduleFile).exists();
     WriteAction.run(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(moduleFile.toString())).delete(this));
     List<ConfigurationErrorDescription> errors = new ArrayList<>();
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, getTestRootDisposable());
-    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir);
-    closeOnTearDown(reloaded);
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(getTestRootDisposable(), errors::add);
+    Project reloaded = PlatformTestUtil.loadAndOpenProject(projectDir, getTestRootDisposable());
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     assertThat(moduleManager.getModules()).hasSize(1);
     assertThat(errors).isEmpty();
     closeProject(reloaded, true);
     errors.clear();
 
-    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir);
-    closeOnTearDown(reloaded);
+    reloaded = PlatformTestUtil.loadAndOpenProject(projectDir, getTestRootDisposable());
     assertEmpty(errors);
     closeProject(reloaded, false);
   }
 
   private @NotNull Pair<Path, Path> createProjectWithModule() throws IOException {
     Path projectDir = FileUtil.createTempDirectory("project", null).toPath();
-    Project project = PlatformTestUtil.loadAndOpenProject(projectDir);
-    closeOnTearDown(project);
+    Project project = PlatformTestUtil.loadAndOpenProject(projectDir, getTestRootDisposable());
     Path moduleFile = projectDir.resolve("module.iml");
     WriteAction.run(() -> ModuleManager.getInstance(project).newModule(moduleFile.toString(), EmptyModuleType.EMPTY_MODULE));
     closeProject(project, true);
@@ -75,19 +68,8 @@ public class ModulesConfigurationTest extends HeavyPlatformTestCase {
 
   private static void closeProject(@NotNull Project project, boolean isSave) {
     if (isSave) {
-      StateStorageManagerKt.saveComponentManager(project, true);
+      StoreUtil.saveSettings(project, true);
     }
     PlatformTestUtil.forceCloseProjectWithoutSaving(project);
-  }
-
-  private void closeOnTearDown(Project project) {
-    Disposer.register(getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        if (!project.isDisposed()) {
-          PlatformTestUtil.forceCloseProjectWithoutSaving(project);
-        }
-      }
-    });
   }
 }

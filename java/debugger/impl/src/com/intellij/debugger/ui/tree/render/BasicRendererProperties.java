@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,23 +68,18 @@ public final class BasicRendererProperties implements Cloneable {
     for (Element option : element.getChildren("option")) {
       final String optionName = option.getAttributeValue("name");
       switch (optionName) {
-        case NAME_OPTION:
-          myName = option.getAttributeValue("value");
-          break;
-        case ENABLED_OPTION:
+        case NAME_OPTION -> myName = option.getAttributeValue("value");
+        case ENABLED_OPTION -> {
           // default is false
           String value = option.getAttributeValue("value");
           if (value != null) {
             myEnabled = Boolean.parseBoolean(value);
           }
-          break;
-        case CLASSNAME_OPTION:
-          myClassName = option.getAttributeValue("value");
-          break;
-        case SHOW_TYPE_OPTION:
+        }
+        case CLASSNAME_OPTION -> myClassName = option.getAttributeValue("value");
+        case SHOW_TYPE_OPTION ->
           // default is true
           myShowType = !"false".equalsIgnoreCase(option.getAttributeValue("value"));
-          break;
       }
     }
 
@@ -105,13 +100,12 @@ public final class BasicRendererProperties implements Cloneable {
     }
     if (!myShowType) {
       // default is true
-      //noinspection ConstantConditions
       JDOMExternalizerUtil.writeField(element, SHOW_TYPE_OPTION, Boolean.toString(myShowType));
     }
   }
 
   @Override
-  public BasicRendererProperties clone()  {
+  public BasicRendererProperties clone() {
     try {
       return (BasicRendererProperties)super.clone();
     }

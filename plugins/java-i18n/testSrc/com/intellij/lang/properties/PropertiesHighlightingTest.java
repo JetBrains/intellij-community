@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
-import com.intellij.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.lang.FileASTNode;
+import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -28,7 +28,6 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
   private void doTest(boolean checkWarnings) {
     myFixture.configureByFile(getTestName(false) + ".properties");
-    ((CodeInsightTestFixtureImpl)myFixture).setVirtualFileFilter(VirtualFileFilter.NONE);
     myFixture.checkHighlighting(checkWarnings, false, false);
   }
 
@@ -38,6 +37,29 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
     myFixture.enableInspections(new UnusedPropertyInspection());
     myFixture.addClass("class C { String s = \"used.prop\"; }");
     doTest(true);
+  }
+
+  public void testUnusedFileFilter() {
+    UnusedPropertyInspection inspection = new UnusedPropertyInspection();
+    inspection.fileNameMask = ".*Bundle\\.properties";
+    myFixture.enableInspections(inspection);
+    myFixture.addClass("class C { String s = \"used.prop\"; }");
+    doTest(true);
+  }
+
+  public void testInvalidEscapeSequenceFix() {
+    doQuickFixTest();
+  }
+
+  public void testInvalidEscapeSequenceFixDumbMode() {
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> { doQuickFixTest(); });
+  }
+
+  private void doQuickFixTest() {
+    myFixture.configureByFile("before" + getTestName(false) + ".properties");
+    myFixture.launchAction(myFixture.findSingleIntention(PropertiesBundle.message("unescape")));
+    myFixture.checkResultByFile("after" + getTestName(false) + ".properties");
   }
 
   public void testPropertyUsedInLibrary() throws IOException {
@@ -51,7 +73,7 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
     VirtualFile usage = myFixture.addFileToProject("lib/C.java", "class C { String s = \"used.prop\"; }").getVirtualFile();
     myFixture.addFileToProject("lib/original.properties", "used.prop=xxx");
 
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(getProject());
+    ProjectFileIndex index = ProjectFileIndex.getInstance(getProject());
     assertTrue(index.isInLibrarySource(usage));
     assertTrue(index.isInLibraryClasses(usage));
     assertFalse(index.isInSourceContent(usage));

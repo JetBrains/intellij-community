@@ -31,9 +31,6 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author Denis Zhdanov
- */
 public class BulkChangesMergerTest {
 
   @Rule

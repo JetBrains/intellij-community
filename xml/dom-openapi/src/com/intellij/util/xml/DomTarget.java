@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.TextRange;
@@ -14,9 +14,6 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class DomTarget extends DelegatePsiTarget implements PsiDeclaredTarget, PomRenameableTarget {
   private final DomElement myDomElement;
   private final TextRange myRange;
@@ -29,8 +26,7 @@ public final class DomTarget extends DelegatePsiTarget implements PsiDeclaredTar
     myNameDomElement = nameElement;
   }
 
-  @Nullable
-  public static DomTarget getTarget(@NotNull DomElement element) {
+  public static @Nullable DomTarget getTarget(@NotNull DomElement element) {
     final GenericDomValue nameElement = element.getGenericInfo().getNameDomElement(element);
     if (nameElement == null) {
       return null;
@@ -39,10 +35,8 @@ public final class DomTarget extends DelegatePsiTarget implements PsiDeclaredTar
     return getTarget(element, nameElement);
   }
 
-  @Nullable
-  public static DomTarget getTarget(DomElement element, GenericDomValue nameElement) {
-    if (nameElement instanceof GenericAttributeValue) {
-      final GenericAttributeValue genericAttributeValue = (GenericAttributeValue)nameElement;
+  public static @Nullable DomTarget getTarget(DomElement element, GenericDomValue nameElement) {
+    if (nameElement instanceof GenericAttributeValue genericAttributeValue) {
       final XmlAttributeValue attributeValue = genericAttributeValue.getXmlAttributeValue();
       if (attributeValue == null) {
         return null;
@@ -84,8 +78,7 @@ public final class DomTarget extends DelegatePsiTarget implements PsiDeclaredTar
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return myNameDomElement.getStringValue();
   }
 

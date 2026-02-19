@@ -2,56 +2,81 @@
 
 package com.intellij.history.integration.revertion;
 
+import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.Content;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.changes.*;
+import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.changes.ChangeVisitor;
+import com.intellij.history.core.changes.ContentChange;
+import com.intellij.history.core.changes.CreateEntryChange;
+import com.intellij.history.core.changes.DeleteChange;
+import com.intellij.history.core.changes.MoveChange;
+import com.intellij.history.core.changes.ROStatusChange;
+import com.intellij.history.core.changes.RenameChange;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.DocumentUndoProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class UndoChangeRevertingVisitor extends ChangeVisitor {
+@ApiStatus.Internal
+public final class UndoChangeRevertingVisitor extends ChangeVisitor {
+  private static final Logger LOG = Logger.getInstance(UndoChangeRevertingVisitor.class);
+
+  private final Project myProject;
   private final IdeaGateway myGateway;
   private final Set<DelayedApply> myDelayedApplies = new HashSet<>();
+  private final Set<String> myUnrestorablePaths = new LinkedHashSet<>();
 
   private final long myFromChangeId;
   private final long myToChangeId;
 
   private boolean isReverting;
 
-  public UndoChangeRevertingVisitor(IdeaGateway gw, @NotNull Long fromChangeId, @Nullable Long toChangeId) {
+  public UndoChangeRevertingVisitor(@Nullable Project project, IdeaGateway gw, @NotNull Long fromChangeId, @Nullable Long toChangeId) {
+    myProject = project;
     myGateway = gw;
     myFromChangeId = fromChangeId;
     myToChangeId = toChangeId == null ? -1 : toChangeId;
   }
 
-  protected boolean shouldRevert(Change c) {
+  private boolean shouldRevert(@NotNull Change c) {
     if (c.getId() == myFromChangeId) {
       isReverting = true;
     }
-    return isReverting && !(c instanceof ContentChange);
+    boolean shouldRevert = isReverting && !(c instanceof ContentChange);
+    if (shouldRevert && LOG.isDebugEnabled()) {
+      LOG.debug("Reverting " + c);
+    }
+    return shouldRevert;
   }
 
-  protected void checkShouldStop(Change c) throws StopVisitingException {
+  private void checkShouldStop(@NotNull Change c) throws StopVisitingException {
     if (c.getId() == myToChangeId) stop();
   }
 
   @Override
-  public void visit(CreateEntryChange c) throws StopVisitingException {
+  public void visit(@NotNull CreateEntryChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -68,7 +93,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(ContentChange c) throws StopVisitingException {
+  public void visit(@NotNull ContentChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       try {
         VirtualFile f = myGateway.findOrCreateFileSafely(c.getPath(), false);
@@ -82,7 +107,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(RenameChange c) throws StopVisitingException {
+  public void visit(@NotNull RenameChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -102,7 +127,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(ROStatusChange c) throws StopVisitingException {
+  public void visit(@NotNull ROStatusChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -113,7 +138,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(MoveChange c) throws StopVisitingException {
+  public void visit(@NotNull MoveChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -132,7 +157,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(DeleteChange c) throws StopVisitingException {
+  public void visit(@NotNull DeleteChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       try {
         VirtualFile parent = myGateway.findOrCreateFileSafely(Paths.getParentOf(c.getPath()), true);
@@ -145,7 +170,13 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     checkShouldStop(c);
   }
 
-  private void revertDeletion(VirtualFile parent, Entry e) throws IOException {
+  private void revertDeletion(VirtualFile parent, @NotNull Entry e) throws IOException {
+    if (!e.isDirectory() && e.hasUnavailableContent()) {
+      LOG.warn("Cannot revert deleted file '" + e.getPath() + "': content is unavailable");
+      myUnrestorablePaths.add(e.getPath());
+      return;
+    }
+
     VirtualFile f = myGateway.findOrCreateFileSafely(parent, e.getName(), e.isDirectory());
     if (e.isDirectory()) {
       for (Entry child : e.getChildren()) revertDeletion(f, child);
@@ -191,9 +222,25 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     catch (IOException e) {
       throw new RuntimeIOException(e);
     }
+
+    if (!myUnrestorablePaths.isEmpty()) {
+      ApplicationManager.getApplication().invokeLater(() -> showFilesCantBeRestoredDialog());
+    }
   }
 
-  private static abstract class DelayedApply {
+  private void showFilesCantBeRestoredDialog() {
+    int maxPaths = 5;
+    List<String> pathsToShow = myUnrestorablePaths.stream().limit(maxPaths).toList();
+    String pathsJoined = String.join("\n", pathsToShow);
+    if (myUnrestorablePaths.size() != pathsToShow.size()) {
+      pathsJoined += "\n...";
+    }
+    String message =
+      LocalHistoryBundle.message("revert.error.files.cant.be.restored", myUnrestorablePaths.size(), pathsJoined);
+    Messages.showErrorDialog(myProject, message, CommonBundle.getErrorTitle());
+  }
+
+  private abstract static class DelayedApply {
     protected VirtualFile myFile;
 
     protected DelayedApply(VirtualFile f) {
@@ -218,7 +265,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  private static class DelayedContentApply extends DelayedApply {
+  private static final class DelayedContentApply extends DelayedApply {
     private final Content myContent;
 
     DelayedContentApply(VirtualFile f, Content content) {
@@ -260,7 +307,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  public static class RuntimeIOException extends RuntimeException {
+  public static final class RuntimeIOException extends RuntimeException {
     public RuntimeIOException(Throwable cause) {
       super(cause);
     }

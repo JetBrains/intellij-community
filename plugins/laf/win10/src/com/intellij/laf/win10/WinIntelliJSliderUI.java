@@ -4,10 +4,17 @@ package com.intellij.laf.win10;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JSlider;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicSliderUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -55,7 +62,7 @@ public final class WinIntelliJSliderUI extends BasicSliderUI {
         setProperty(e, HOVER_PROPERTY, Boolean.FALSE);
       }
 
-      private void setProperty(MouseEvent e, String property, Boolean value) {
+      private static void setProperty(MouseEvent e, String property, Boolean value) {
         JComponent c = (JComponent)e.getComponent();
         c.putClientProperty(property, value);
         c.repaint();

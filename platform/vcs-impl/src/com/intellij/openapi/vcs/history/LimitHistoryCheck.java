@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.project.Project;
@@ -20,13 +6,15 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 
+@ApiStatus.Internal
 public class LimitHistoryCheck {
-  @NotNull private final Project myProject;
-  @NotNull private final String myFilePath;
+  private final @NotNull Project myProject;
+  private final @NotNull String myFilePath;
   private int myLimit;
   private int myCount;
   private boolean myWarningShown;
@@ -49,7 +37,7 @@ public class LimitHistoryCheck {
     ++myCount;
     if (isOver()) {
       if (!myWarningShown) {
-        String settingPath = isMac? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
+        String settingPath = isMac ? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
         String message = VcsBundle.message("file.history.exceeded.limit.message", myLimit, myFilePath, settingPath);
         VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
         myWarningShown = true;

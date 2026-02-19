@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.support` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-compilerPlugins-support",
+  module_name = "intellij.kotlin.compilerPlugins.support",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/base/jps",
+    "//platform/lang-api:lang",
+    "//platform/external-system-api:externalSystem",
+    "//plugins/kotlin/base/compiler-configuration",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-compilerPlugins-support_test_lib",
+  module_name = "intellij.kotlin.compilerPlugins.support",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":kotlin-compilerPlugins-support",
+    "//platform/core-api:core_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/base/jps:jps_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/external-system-api:externalSystem_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.support` end

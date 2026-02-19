@@ -15,11 +15,12 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 /**
@@ -37,9 +38,11 @@ public interface RefEntity extends UserDataHolder {
    * @return the name of the node.
    */
   @NotNull
+  @NlsSafe
   String getName();
 
   @NotNull
+  @NlsSafe
   String getQualifiedName();
 
   /**
@@ -69,6 +72,7 @@ public interface RefEntity extends UserDataHolder {
    *
    * @return the user-readable name.
    */
+  @NlsSafe
   String getExternalName();
 
   /**

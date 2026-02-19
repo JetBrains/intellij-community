@@ -3,7 +3,12 @@ package org.jetbrains.uast.values
 
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiType
-import org.jetbrains.uast.*
+import com.intellij.psi.PsiTypes
+import org.jetbrains.uast.UClassLiteralExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.name
 
 interface UConstant : UValue {
   val value: Any?
@@ -36,10 +41,10 @@ abstract class UAbstractConstant : UValueBase(), UConstant {
 enum class UNumericType(val prefix: String = "") {
   BYTE("(byte)"),
   SHORT("(short)"),
-  INT(),
+  INT,
   LONG("(long)"),
   FLOAT("(float)"),
-  DOUBLE();
+  DOUBLE;
 
   fun merge(other: UNumericType): UNumericType {
     if (this == DOUBLE || other == DOUBLE) return DOUBLE
@@ -58,12 +63,12 @@ abstract class UNumericConstant(val type: UNumericType, override val source: ULi
 }
 
 private fun PsiType.toNumeric(): UNumericType = when (this) {
-  PsiType.LONG -> UNumericType.LONG
-  PsiType.INT -> UNumericType.INT
-  PsiType.SHORT -> UNumericType.SHORT
-  PsiType.BYTE -> UNumericType.BYTE
-  PsiType.DOUBLE -> UNumericType.DOUBLE
-  PsiType.FLOAT -> UNumericType.FLOAT
+  PsiTypes.longType() -> UNumericType.LONG
+  PsiTypes.intType() -> UNumericType.INT
+  PsiTypes.shortType() -> UNumericType.SHORT
+  PsiTypes.byteType() -> UNumericType.BYTE
+  PsiTypes.doubleType() -> UNumericType.DOUBLE
+  PsiTypes.floatType() -> UNumericType.FLOAT
   else -> throw AssertionError("Conversion is impossible for type $canonicalText")
 }
 
@@ -320,7 +325,7 @@ sealed class UNaNConstant(type: UNumericType = UNumericType.DOUBLE) : UFloatCons
 class UCharConstant(override val value: Char, override val source: ULiteralExpression? = null) : UAbstractConstant() {
   override fun plus(other: UValue): UValue = when (other) {
     is UIntConstant -> UCharConstant(value + other.value)
-    is UCharConstant -> UCharConstant(value + other.value.toInt())
+    is UCharConstant -> UCharConstant(value + other.value.code)
     else -> super.plus(other)
   }
 

@@ -1,4 +1,4 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 class Test {
   interface Eff<A, B> {
     B f(A a);

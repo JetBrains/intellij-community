@@ -1,11 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.browse;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CmdCheckinClient;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
@@ -24,9 +29,6 @@ import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
   @Override
@@ -119,8 +121,7 @@ public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
     public Lock.Builder lock;
 
-    @NotNull
-    public DirectoryEntry toDirectoryEntry(@NotNull Url url, @Nullable Url repositoryUrl) throws SvnBindException {
+    public @NotNull DirectoryEntry toDirectoryEntry(@NotNull Url url, @Nullable Url repositoryUrl) throws SvnBindException {
       return new DirectoryEntry(append(url, name), repositoryUrl, PathUtil.getFileName(name), kind, commit != null ? commit.build() : null,
                                 name);
     }

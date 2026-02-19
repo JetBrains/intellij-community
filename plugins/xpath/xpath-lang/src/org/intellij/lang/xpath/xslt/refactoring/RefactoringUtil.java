@@ -30,7 +30,11 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class RefactoringUtil {
     private RefactoringUtil() {
@@ -88,7 +92,7 @@ public final class RefactoringUtil {
         return withParamTag;
     }
 
-    static abstract class DeepXPathVistor extends XmlRecursiveElementVisitor {
+    abstract static class DeepXPathVistor extends XmlRecursiveElementVisitor {
         protected DeepXPathVistor() {
         }
 
@@ -111,7 +115,7 @@ public final class RefactoringUtil {
         protected abstract void visitXPathExpression(XPathExpression expr);
 
         @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
             if (XsltSupport.isXPathAttribute(attribute)) {
                 final PsiFile[] xpathFiles = XsltSupport.getFiles(attribute);
                 for (PsiFile xpathFile : xpathFiles) {

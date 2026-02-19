@@ -1,11 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -17,11 +29,8 @@ import java.util.Set;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 final class MethodReturnTypeProvider {
-  protected static final ElementPattern<PsiElement> IN_METHOD_RETURN_TYPE =
+  static final ElementPattern<PsiElement> IN_METHOD_RETURN_TYPE =
     psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMethod.class)
       .andNot(JavaKeywordCompletion.AFTER_DOT);
 
@@ -66,7 +75,7 @@ final class MethodReturnTypeProvider {
       }
     }
     if (hasVoid && lub == null) {
-      lub = PsiType.VOID;
+      lub = PsiTypes.voidType();
     }
     if (lub instanceof PsiIntersectionType) {
       return ((PsiIntersectionType)lub).getConjuncts();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * @author ilyas
- */
 public class GrBreakStatementImpl extends GrFlowInterruptingStatementImpl implements GrBreakStatement {
   public GrBreakStatementImpl(@NotNull ASTNode node) {
     super(node);
@@ -30,8 +27,7 @@ public class GrBreakStatementImpl extends GrFlowInterruptingStatementImpl implem
   }
 
   @Override
-  @Nullable
-  public GrStatement findTargetStatement() {
+  public @Nullable GrStatement findTargetStatement() {
     return ResolveUtil.resolveLabelTargetStatement(getLabelName(), this, true);
   }
 

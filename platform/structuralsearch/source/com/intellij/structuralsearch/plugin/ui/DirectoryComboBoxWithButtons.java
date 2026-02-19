@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.impl.FindPopupPanel;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
@@ -18,7 +20,6 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,8 +29,12 @@ import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -38,7 +43,7 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class DirectoryComboBoxWithButtons extends JPanel {
-  @NotNull private final ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
+  private final @NotNull ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
     new ComponentWithBrowseButton<>(new ComboBox<>(200), null);
   private volatile boolean myUpdating = false;
 
@@ -55,7 +60,6 @@ public class DirectoryComboBoxWithButtons extends JPanel {
       final ComboBox<?> source = (ComboBox<?>)e.getSource();
       if (directory == null) {
 
-        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", "error");
         final Balloon balloon = JBPopupFactory.getInstance()
           .createHtmlTextBalloonBuilder(SSRBundle.message("popup.content.directory"), AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
@@ -64,7 +68,6 @@ public class DirectoryComboBoxWithButtons extends JPanel {
         source.requestFocus();
       }
       else {
-        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", null);
       }
       if (myCallback != null && directory != null) {
@@ -81,7 +84,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
     comboBox.setMaximumRowCount(8);
 
-    myDirectoryComboBox.addBrowseFolderListener(null, null, project, descriptor, new TextComponentAccessor<ComboBox<String>>() {
+    myDirectoryComboBox.addBrowseFolderListener(project, descriptor, new TextComponentAccessor<>() {
       @Override
       public String getText(ComboBox comboBox) {
         return comboBox.getEditor().getItem().toString();
@@ -94,7 +97,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     });
 
     final RecursiveAction recursiveDirectoryAction = new RecursiveAction();
-    final int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+    final int mnemonicModifiers = ClientSystemInfo.isMac() ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myDirectoryComboBox);
 
     add(myDirectoryComboBox, BorderLayout.CENTER);
@@ -122,15 +125,17 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
   }
 
-  public void setDirectory(@NotNull VirtualFile directory) {
+  public void setDirectory(@Nullable VirtualFile directory) {
+    if (directory == null) {
+      return;
+    }
     final String url = directory.getPresentableUrl();
     final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     comboBox.getEditor().setItem(url);
     myDirectoryComboBox.getChildComponent().setSelectedItem(url);
   }
 
-  @Nullable
-  public VirtualFile getDirectory() {
+  public @Nullable VirtualFile getDirectory() {
     final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     final String directoryName = (String)comboBox.getSelectedItem();
     if (StringUtil.isEmptyOrSpaces(directoryName)) {
@@ -163,10 +168,14 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myRecursive = state;
       myCallback.run();
     }
   }
 }
-

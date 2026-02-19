@@ -10,54 +10,61 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonTemplateRunner;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to create function to unresolved unqualified reference
  */
 public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   private final String myFunctionName;
-  private final SmartPsiElementPointer<PyCallExpression> myCallExpr;
-  private final SmartPsiElementPointer<PyReferenceExpression> myReferenceExpr;
+  private final boolean myAsync;
 
-  public UnresolvedRefCreateFunctionQuickFix(PyCallExpression element, PyReferenceExpression reference) {
-    final SmartPointerManager manager = SmartPointerManager.getInstance(element.getProject());
-    myCallExpr = manager.createSmartPsiElementPointer(element);
-    myReferenceExpr = manager.createSmartPsiElementPointer(reference);
+  public UnresolvedRefCreateFunctionQuickFix(@NotNull PyReferenceExpression reference) {
     myFunctionName = reference.getReferencedName();
+    PyCallSiteExpression callSiteExpression = as(reference.getParent(), PyCallSiteExpression.class);
+    PyPrefixExpression prefixExpression = callSiteExpression != null ? as(callSiteExpression.getParent(), PyPrefixExpression.class) : null;
+    myAsync = prefixExpression != null && prefixExpression.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", myFunctionName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.unresolved.reference.create.function");
   }
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PyCallExpression callExpr = myCallExpr.getElement();
-    final PyReferenceExpression referenceExpr = myReferenceExpr.getElement();
+    final PyReferenceExpression referenceExpr = as(descriptor.getPsiElement(), PyReferenceExpression.class);
+    final PyCallExpression callExpr = PsiTreeUtil.getParentOfType(referenceExpr, PyCallExpression.class);
 
-    if (callExpr == null || !callExpr.isValid() || referenceExpr == null || !referenceExpr.isValid()) {
+    if (referenceExpr == null || callExpr == null) {
       return;
     }
 
@@ -70,8 +77,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
         if (param instanceof PyKeywordArgument) {
           functionBuilder.parameter(((PyKeywordArgument)param).getKeyword());
         }
-        else if (param instanceof PyReferenceExpression) {
-          PyReferenceExpression refex = (PyReferenceExpression)param;
+        else if (param instanceof PyReferenceExpression refex) {
           functionBuilder.parameter(refex.getReferencedName());
         }
         else {
@@ -81,6 +87,10 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
     }
     else {
       functionBuilder.parameter("args");
+    }
+
+    if (myAsync) {
+      functionBuilder.makeAsync();
     }
 
     PyFunction function = functionBuilder.buildFunction();

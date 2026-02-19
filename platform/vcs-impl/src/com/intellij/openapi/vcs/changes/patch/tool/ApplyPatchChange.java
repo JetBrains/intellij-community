@@ -1,23 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.merge.MergeModelBase;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffGutterOperation;
+import com.intellij.diff.util.DiffGutterRenderer;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineRange;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
@@ -26,7 +18,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -37,28 +33,30 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 class ApplyPatchChange {
-  @NotNull private final ApplyPatchViewer myViewer;
+  private final @NotNull ApplyPatchViewer myViewer;
   private final int myIndex; // index in myModelChanges
 
-  @NotNull private final LineRange myPatchDeletionRange;
-  @NotNull private final LineRange myPatchInsertionRange;
-  @NotNull private final HunkStatus myStatus;
+  private final @NotNull LineRange myPatchDeletionRange;
+  private final @NotNull LineRange myPatchInsertionRange;
+  private final @NotNull HunkStatus myStatus;
 
-  @Nullable private final List<DiffFragment> myPatchInnerDifferences;
-  @NotNull private final List<DiffGutterOperation> myOperations = new ArrayList<>();
+  private final @Nullable List<DiffFragment> myPatchInnerDifferences;
+  private final @NotNull List<DiffGutterOperation> myOperations = new ArrayList<>();
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  private final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   private boolean myResolved;
 
-  ApplyPatchChange(@NotNull PatchChangeBuilder.Hunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
+  ApplyPatchChange(@NotNull PatchChangeBuilder.AppliedHunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
     myIndex = index;
     myViewer = viewer;
     myPatchDeletionRange = hunk.getPatchDeletionRange();
@@ -150,33 +148,27 @@ class ApplyPatchChange {
     return myIndex;
   }
 
-  @NotNull
-  public HunkStatus getStatus() {
+  public @NotNull HunkStatus getStatus() {
     return myStatus;
   }
 
-  @NotNull
-  public LineRange getPatchRange() {
+  public @NotNull LineRange getPatchRange() {
     return new LineRange(myPatchDeletionRange.start, myPatchInsertionRange.end);
   }
 
-  @NotNull
-  public LineRange getPatchAffectedRange() {
+  public @NotNull LineRange getPatchAffectedRange() {
     return isRangeApplied() ? myPatchInsertionRange : myPatchDeletionRange;
   }
 
-  @NotNull
-  public LineRange getPatchDeletionRange() {
+  public @NotNull LineRange getPatchDeletionRange() {
     return myPatchDeletionRange;
   }
 
-  @NotNull
-  public LineRange getPatchInsertionRange() {
+  public @NotNull LineRange getPatchInsertionRange() {
     return myPatchInsertionRange;
   }
 
-  @Nullable
-  public LineRange getResultRange() {
+  public @Nullable LineRange getResultRange() {
     ApplyPatchViewer.MyModel model = myViewer.getModel();
     int lineStart = model.getLineStart(myIndex);
     int lineEnd = model.getLineEnd(myIndex);
@@ -193,8 +185,7 @@ class ApplyPatchChange {
     myResolved = resolved;
   }
 
-  @NotNull
-  public TextDiffType getDiffType() {
+  public @NotNull TextDiffType getDiffType() {
     return DiffUtil.getDiffType(!myPatchDeletionRange.isEmpty(), !myPatchInsertionRange.isEmpty());
   }
 
@@ -202,33 +193,20 @@ class ApplyPatchChange {
     return myResolved || getStatus() == HunkStatus.ALREADY_APPLIED;
   }
 
-  @NotNull
-  @NlsContexts.Tooltip
-  private String getStatusText() {
-    switch (myStatus) {
-      case ALREADY_APPLIED:
-        return VcsBundle.message("patch.apply.already.applied.status");
-      case EXACTLY_APPLIED:
-        return VcsBundle.message("patch.apply.automatically.applied.status");
-      case NOT_APPLIED:
-        return VcsBundle.message("patch.apply.not.applied.status");
-      default:
-        throw new IllegalStateException();
-    }
+  private @NotNull @NlsContexts.Tooltip String getStatusText() {
+    return VcsBundle.message(switch (myStatus) {
+      case ALREADY_APPLIED -> "patch.apply.already.applied.status";
+      case EXACTLY_APPLIED -> "patch.apply.automatically.applied.status";
+      case NOT_APPLIED -> "patch.apply.not.applied.status";
+    });
   }
 
-  @NotNull
-  private Color getStatusColor() {
-    switch (myStatus) {
-      case ALREADY_APPLIED:
-        return JBColor.YELLOW.darker();
-      case EXACTLY_APPLIED:
-        return new JBColor(new Color(0, 180, 5), new Color(0, 147, 5));
-      case NOT_APPLIED:
-        return JBColor.RED.darker();
-      default:
-        throw new IllegalStateException();
-    }
+  private @NotNull Color getStatusColor() {
+    return switch (myStatus) {
+      case ALREADY_APPLIED -> JBColor.YELLOW.darker();
+      case EXACTLY_APPLIED -> new JBColor(new Color(0, 180, 5), new Color(0, 147, 5));
+      case NOT_APPLIED -> JBColor.RED.darker();
+    };
   }
 
   //
@@ -242,42 +220,50 @@ class ApplyPatchChange {
     if (myStatus == HunkStatus.EXACTLY_APPLIED) {
       ContainerUtil.addIfNotNull(myOperations, createOperation(OperationType.APPLY));
     }
+    else {
+      ContainerUtil.addIfNotNull(myOperations, createOperation(OperationType.COPY));
+    }
     ContainerUtil.addIfNotNull(myOperations, createOperation(OperationType.IGNORE));
   }
 
-  @Nullable
-  private DiffGutterOperation createOperation(@NotNull OperationType type) {
+  private @Nullable DiffGutterOperation createOperation(@NotNull OperationType type) {
     if (isResolved()) return null;
 
     EditorEx editor = myViewer.getPatchEditor();
-    int offset = DiffGutterOperation.lineToOffset(editor, getPatchRange().start);
+    int line = type == OperationType.COPY ? getPatchInsertionRange().start : getPatchRange().start;
+    int offset = DiffGutterOperation.lineToOffset(editor, line);
 
     return new DiffGutterOperation.Simple(editor, offset, () -> {
-      if (type == OperationType.APPLY) {
-        return createApplyRenderer();
-      }
-      else {
-        return createIgnoreRenderer();
-      }
+      return switch (type) {
+        case APPLY -> createApplyRenderer();
+        case COPY -> createCopyRenderer();
+        case IGNORE -> createIgnoreRenderer();
+      };
     });
   }
 
-  @Nullable
-  private GutterIconRenderer createApplyRenderer() {
-    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), DiffUtil.getArrowIcon(Side.RIGHT), () -> myViewer.executeCommand(
-      DiffBundle.message("merge.dialog.accept.change.command"), () -> myViewer.replaceChange(this)));
+  private @Nullable GutterIconRenderer createApplyRenderer() {
+    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), DiffUtil.getArrowIcon(Side.RIGHT),
+                              () -> myViewer.executeCommand(DiffBundle.message("merge.dialog.accept.change.command"),
+                                                            () -> myViewer.replaceChange(this)));
   }
 
-  @Nullable
-  private GutterIconRenderer createIgnoreRenderer() {
-    return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove, () -> myViewer.executeCommand(
-      DiffBundle.message("merge.dialog.ignore.change.command"), () -> myViewer.markChangeResolved(this)));
+  private @Nullable GutterIconRenderer createCopyRenderer() {
+    if (getPatchInsertionRange().isEmpty()) return null;
+    return createIconRenderer(DiffBundle.message("action.presentation.diff.copy.text"), AllIcons.Actions.Copy,
+                              () -> myViewer.executeCommand(DiffBundle.message("patch.dialog.copy.change.command"),
+                                                            () -> myViewer.copyChangeToClipboard(this)));
   }
 
-  @Nullable
-  private static GutterIconRenderer createIconRenderer(@NotNull @NlsContexts.Tooltip String text,
-                                                       @NotNull final Icon icon,
-                                                       @NotNull final Runnable perform) {
+  private @Nullable GutterIconRenderer createIgnoreRenderer() {
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove,
+                              () -> myViewer.executeCommand(DiffBundle.message("merge.dialog.ignore.change.command"),
+                                                            () -> myViewer.markChangeResolved(this)));
+  }
+
+  private static @Nullable GutterIconRenderer createIconRenderer(@NotNull @NlsContexts.Tooltip String text,
+                                                                 final @NotNull Icon icon,
+                                                                 final @NotNull Runnable perform) {
     final String tooltipText = DiffUtil.createTooltipText(text, null);
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
@@ -288,15 +274,14 @@ class ApplyPatchChange {
   }
 
   private enum OperationType {
-    APPLY, IGNORE
+    APPLY, COPY, IGNORE
   }
 
   //
   // State
   //
 
-  @NotNull
-  public State storeState() {
+  public @NotNull State storeState() {
     LineRange resultRange = getResultRange();
     return new State(
       myIndex,
@@ -351,12 +336,14 @@ class ApplyPatchChange {
 
     @Override
     public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
-      if (getResultRange() != null) myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
+      if (getResultRange() != null) {
+        e.consume();
+        myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
+      }
     }
 
-    @NotNull
     @Override
-    public String getAccessibleName() {
+    public @NotNull String getAccessibleName() {
       return VcsBundle.message("patch.apply.marker.renderer", getTooltipText());
     }
   }

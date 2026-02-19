@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.remote
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.ObjectInputStream
 import java.io.ObjectStreamClass
@@ -17,6 +18,7 @@ import java.lang.reflect.Proxy
 /**
  * Resolver, that can deserialize data nodes graph using plugin classloaders.
  */
+@ApiStatus.Internal
 class CustomClassDeserializingResolver<S : ExternalSystemExecutionSettings>(
   private val rawResolverDelegate: RawExternalSystemProjectResolver<S>,
   private val resolverDelegate: RemoteExternalSystemProjectResolver<S>
@@ -28,8 +30,7 @@ class CustomClassDeserializingResolver<S : ExternalSystemExecutionSettings>(
                                   settings: S?,
                                   resolverPolicy: ProjectResolverPolicy?): DataNode<ProjectData>? {
     val rawData = rawResolverDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, settings, resolverPolicy) ?: return null
-    val managerClassLoaders = (ExternalSystemManager.EP_NAME.iterable.asSequence()
-                               + ProjectDataService.EP_NAME.extensions.asSequence())
+    val managerClassLoaders = (ExternalSystemManager.EP_NAME.lazySequence() + ProjectDataService.EP_NAME.extensions.asSequence())
       .map { it.javaClass.classLoader }
       .toSet()
 
@@ -40,6 +41,7 @@ class CustomClassDeserializingResolver<S : ExternalSystemExecutionSettings>(
 /**
  * JDK serialization input stream, that attempts to load deserialized instance's class from a number of classloaders
  */
+@ApiStatus.Internal
 class MultiLoaderObjectInputStream(inputStream: InputStream, val loaders: Collection<ClassLoader>) : ObjectInputStream(inputStream) {
 
   override fun resolveClass(desc: ObjectStreamClass): Class<*> {

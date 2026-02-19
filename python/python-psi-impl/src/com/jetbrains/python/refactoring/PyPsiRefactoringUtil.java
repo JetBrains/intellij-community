@@ -8,16 +8,42 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyPassStatement;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStatementListContainer;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -30,9 +56,14 @@ import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-public class PyPsiRefactoringUtil {
+public final class PyPsiRefactoringUtil {
   /**
    * Adds element to statement list to the correct place according to its dependencies.
    *
@@ -40,8 +71,8 @@ public class PyPsiRefactoringUtil {
    * @param statementList where element should be inserted
    * @return inserted element
    */
-  public static <T extends PyElement> T addElementToStatementList(@NotNull final T element,
-                                                                  @NotNull final PyStatementList statementList) {
+  public static <T extends PyElement> T addElementToStatementList(final @NotNull T element,
+                                                                  final @NotNull PyStatementList statementList) {
     PsiElement before = null;
     PsiElement after = null;
     for (final PyStatement statement : statementList.getStatements()) {
@@ -79,26 +110,23 @@ public class PyPsiRefactoringUtil {
    * @param toTheBeginning whether to insert element at the beginning or at the end of the statement list
    * @return actually inserted element as for {@link PsiElement#add(PsiElement)}
    */
-  @NotNull
-  public static PsiElement addElementToStatementList(@NotNull PsiElement element,
-                                                     @NotNull PyStatementList statementList,
-                                                     boolean toTheBeginning) {
+  public static @NotNull PsiElement addElementToStatementList(@NotNull PsiElement element,
+                                                              @NotNull PyStatementList statementList,
+                                                              boolean toTheBeginning) {
     final PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(statementList);
     // If statement list is on the same line as previous element (supposedly colon), move its only statement on the next line
-    if (prevElem != null && PyUtil.onSameLine(statementList, prevElem)) {
+    if (prevElem != null && PyUtilCore.onSameLine(statementList, prevElem)) {
       final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
-      final Document document = manager.getDocument(statementList.getContainingFile());
-      if (document != null) {
-        final PyStatementListContainer container = (PyStatementListContainer)statementList.getParent();
-        manager.doPostponedOperationsAndUnblockDocument(document);
-        final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
-        // If statement list was empty initially, we need to add some anchor statement ("pass"), so that preceding new line was not
-        // parsed as following entire StatementListContainer (e.g. function). It's going to be replaced anyway.
-        final String text = statementList.getStatements().length == 0 ? indentation + PyNames.PASS : indentation;
-        document.insertString(statementList.getTextRange().getStartOffset(), text);
-        manager.commitDocument(document);
-        statementList = container.getStatementList();
-      }
+      final Document document = statementList.getContainingFile().getFileDocument();
+      final PyStatementListContainer container = (PyStatementListContainer)statementList.getParent();
+      manager.doPostponedOperationsAndUnblockDocument(document);
+      final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
+      // If statement list was empty initially, we need to add some anchor statement ("pass"), so that preceding new line was not
+      // parsed as following entire StatementListContainer (e.g. function). It's going to be replaced anyway.
+      final String text = statementList.getStatements().length == 0 ? indentation + PyNames.PASS : indentation;
+      document.insertString(statementList.getTextRange().getStartOffset(), text);
+      manager.commitDocument(document);
+      statementList = container.getStatementList();
     }
     final PsiElement firstChild = statementList.getFirstChild();
     if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
@@ -141,8 +169,7 @@ public class PyPsiRefactoringUtil {
     return element;
   }
 
-  @NotNull
-  public static List<PyFunction> getAllSuperAbstractMethods(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public static @NotNull List<PyFunction> getAllSuperAbstractMethods(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     return ContainerUtil.filter(getAllSuperMethods(cls, context), method -> isAbstractMethodForClass(method, cls, context));
   }
 
@@ -166,15 +193,15 @@ public class PyPsiRefactoringUtil {
   /**
    * Returns all super functions available through MRO.
    */
-  @NotNull
-  public static List<PyFunction> getAllSuperMethods(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+  public static @NotNull List<PyFunction> getAllSuperMethods(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
     final Map<String, PyFunction> functions = Maps.newLinkedHashMap();
     for (final PyClassLikeType type : pyClass.getAncestorTypes(context)) {
       if (type != null) {
         for (PyFunction function : PyTypeUtil.getMembersOfType(type, PyFunction.class, false, context)) {
           final String name = function.getName();
           if (name != null) {
-            if (!functions.containsKey(name) || PyiUtil.isOverload(functions.get(name), context) && !PyiUtil.isOverload(function, context)) {
+            if (!functions.containsKey(name) ||
+                PyiUtil.isOverload(functions.get(name), context) && !PyiUtil.isOverload(function, context)) {
               functions.put(name, function);
             }
           }
@@ -221,7 +248,7 @@ public class PyPsiRefactoringUtil {
     if (PyBuiltinCache.getInstance(element).isBuiltin(element)) return false;
     final PsiFileSystemItem elementSource = element instanceof PsiDirectory ? (PsiFileSystemItem)element : element.getContainingFile();
     final PsiFile file = anchor.getContainingFile();
-    if (elementSource == file) return false;
+    if (elementSource == file || elementSource == file.getOriginalFile()) return false;
     final QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(element, anchor);
     if (qname == null || !isValidQualifiedName(qname)) {
       return false;
@@ -233,9 +260,13 @@ public class PyPsiRefactoringUtil {
       containingQName = qname.removeLastComponent();
       importedName = qname.getLastComponent();
     }
-    else {
+    // See PyClassRefactoringUtil.DynamicNamedElement
+    else if (PyUtil.isTopLevel(element) || element instanceof LightElement) {
       containingQName = qname;
       importedName = getOriginalName(element);
+    }
+    else {
+      return false;
     }
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, elementSource);
     if (preferFromImport && !containingQName.getComponents().isEmpty() || !importingModuleOrPackage) {
@@ -246,8 +277,7 @@ public class PyPsiRefactoringUtil {
     }
   }
 
-  @Nullable
-  public static String getOriginalName(@NotNull PsiNamedElement element) {
+  public static @Nullable String getOriginalName(@NotNull PsiNamedElement element) {
     if (element instanceof PyFile) {
       VirtualFile virtualFile = PsiUtilBase.asVirtualFile(PyUtil.turnInitIntoDir(element));
       if (virtualFile != null) {
@@ -258,8 +288,7 @@ public class PyPsiRefactoringUtil {
     return element.getName();
   }
 
-  @Nullable
-  public static String getOriginalName(PyImportElement element) {
+  public static @Nullable String getOriginalName(PyImportElement element) {
     final QualifiedName qname = element.getImportedQName();
     if (qname != null && qname.getComponentCount() > 0) {
       return qname.getComponents().get(0);
@@ -275,10 +304,10 @@ public class PyPsiRefactoringUtil {
    * @param paramExpressions param expressions. Like "object" or "MySuperClass". Will not add any param exp. if null.
    * @param keywordArguments keyword args like "metaclass=ABCMeta". key-value pairs.  Will not add any keyword arg. if null.
    */
-  public static void addSuperClassExpressions(@NotNull final Project project,
-                                              @NotNull final PyClass clazz,
-                                              @Nullable final Collection<String> paramExpressions,
-                                              @Nullable final Collection<Pair<String, String>> keywordArguments) {
+  public static void addSuperClassExpressions(final @NotNull Project project,
+                                              final @NotNull PyClass clazz,
+                                              final @Nullable Collection<String> paramExpressions,
+                                              final @Nullable Collection<Pair<String, String>> keywordArguments) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(project);
     final LanguageLevel languageLevel = LanguageLevel.forElement(clazz);
 
@@ -320,11 +349,10 @@ public class PyPsiRefactoringUtil {
    * @param value         it's value. Like ABCMeta or 42.
    * @return newly inserted attribute
    */
-  @Nullable
-  public static PsiElement addClassAttributeIfNotExist(
-    @NotNull final PyClass aClass,
-    @NotNull final String attributeName,
-    @NotNull final String value) {
+  public static @Nullable PsiElement addClassAttributeIfNotExist(
+    final @NotNull PyClass aClass,
+    final @NotNull String attributeName,
+    final @NotNull String value) {
     if (aClass.findClassAttribute(attributeName, false, null) != null) {
       return null; //Do not add any if exist already
     }
@@ -365,8 +393,8 @@ public class PyPsiRefactoringUtil {
    * @param clazz        destination
    * @param superClasses classes to add
    */
-  public static void addSuperclasses(@NotNull final Project project,
-                                     @NotNull final PyClass clazz,
+  public static void addSuperclasses(final @NotNull Project project,
+                                     final @NotNull PyClass clazz,
                                      final PyClass @NotNull ... superClasses) {
 
     final Collection<String> superClassNames = new ArrayList<>();
@@ -380,5 +408,10 @@ public class PyPsiRefactoringUtil {
     }
 
     addSuperClassExpressions(project, clazz, superClassNames, null);
+  }
+
+  public static boolean shouldCopyAnnotations(@NotNull PsiElement copiedElement, @NotNull PsiFile destFile) {
+    return !LanguageLevel.forElement(copiedElement).isPython2() &&
+           (!PyiUtil.isInsideStub(copiedElement) || PyiUtil.isPyiFileOfPackage(destFile));
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -15,8 +16,9 @@ public interface FocusModeProvider {
    * <br>
    * For example:
    * <pre>(() ()) (() () ()) </pre>
-   * @see FocusModePassFactory#calcFocusZones
+   * @see com.intellij.openapi.fileEditor.impl.text.FocusModePassFactory#calcFocusZones(PsiFile)
    */
   @NotNull
-  List<? extends Segment> calcFocusZones(@NotNull PsiFile file);
+  @Unmodifiable
+  List<? extends Segment> calcFocusZones(@NotNull PsiFile psiFile);
 }

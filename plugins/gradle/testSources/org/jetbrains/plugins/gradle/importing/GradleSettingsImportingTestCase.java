@@ -15,20 +15,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.Registry;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.junit.runners.Parameterized;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
 
 public abstract class GradleSettingsImportingTestCase extends GradleImportingTestCase {
-  public static final String IDEA_EXT_PLUGIN_VERSION = "0.8";
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -53,7 +53,7 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
    */
   @SuppressWarnings("unused")
   protected void printProjectStructure() {
-    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    ModuleManager moduleManager = ModuleManager.getInstance(getMyProject());
     for (Module module : moduleManager.getModules()) {
       System.out.println(module);
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -69,10 +69,6 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
     }
   }
 
-  protected boolean extPluginVersionIsAtLeast(@NotNull final String version) {
-    return Version.parseVersion(IDEA_EXT_PLUGIN_VERSION).compareTo(Version.parseVersion(version)) >= 0;
-  }
-
   @NotNull
   @Override
   protected String injectRepo(String config) {
@@ -81,11 +77,10 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
 
   @NotNull
   protected String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
-    return
-      "plugins {\n" +
-      "  id \"org.jetbrains.gradle.plugin.idea-ext\" version \"" + IDEA_EXT_PLUGIN_VERSION + "\"\n" +
-      "}\n" +
-      script;
+    return createBuildScriptBuilder()
+      .withGradleIdeaExtPlugin()
+      .addPostfix(script)
+      .generate();
   }
 
   protected void assertSourceNotExists(@NotNull String moduleName, @NotNull String sourcePath) {
@@ -98,14 +93,7 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
     assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
     assertEquals(packagePrefix, sourceFolder.getPackagePrefix());
   }
-
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @Parameterized.Parameters(name = "with Gradle-{0}")
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
-  }
 }
-
 
 class TestRunConfigurationImporter implements RunConfigurationImporter {
 
@@ -150,10 +138,10 @@ class TestFacetConfigurationImporter implements FacetConfigurationImporter<Facet
 
   @NotNull
   @Override
-  public Collection<Facet> process(@NotNull Module module,
-                                   @NotNull String name,
-                                   @NotNull Map<String, Object> cfg,
-                                   @NotNull FacetManager facetManager) {
+  public @Unmodifiable Collection<Facet> process(@NotNull Module module,
+                                                 @NotNull String name,
+                                                 @NotNull Map<String, Object> cfg,
+                                                 @NotNull FacetManager facetManager) {
     myConfigs.put(name, cfg);
     return Collections.emptySet();
   }

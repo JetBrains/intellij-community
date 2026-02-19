@@ -1,25 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.NlsActions.ActionDescription;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
- * An action which has a selected state, and which toggles its selected state when performed.
+ * An action which has a "selected" state and which toggles it when performed.
  * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
+ * <p>
+ * Toggle actions are {@link KeepPopupOnPerform#IfPreferred} by default.
+ * Make it {@link KeepPopupOnPerform#IfRequested} if you want the toggle to keep its popup open only when
+ * the user explicitly requests that.
  */
 public abstract class ToggleAction extends AnAction implements Toggleable {
   public ToggleAction() {
   }
 
-  public ToggleAction(@Nullable @ActionText final String text) {
+  public ToggleAction(@Nullable @ActionText String text) {
     super(() -> text);
   }
 
@@ -27,27 +31,36 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text);
   }
 
-  public ToggleAction(@Nullable @ActionText final String text,
-                      @Nullable @ActionDescription final String description,
-                      @Nullable final Icon icon) {
+  public ToggleAction(@Nullable @ActionText String text,
+                      @Nullable @ActionDescription String description,
+                      @Nullable Icon icon) {
     super(text, description, icon);
   }
 
   public ToggleAction(@NotNull Supplier<@ActionText String> text,
                       @NotNull Supplier<@ActionDescription String> description,
-                      @Nullable final Icon icon) {
+                      @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public ToggleAction(@NotNull Supplier<@ActionText String> text, @Nullable final Icon icon) {
+  public ToggleAction(@NotNull Supplier<@ActionText String> text, @Nullable Icon icon) {
     super(text, Presentation.NULL_STRING, icon);
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
-    final boolean state = !isSelected(e);
+  @NotNull
+  @ApiStatus.Internal
+  public Presentation createTemplatePresentation() {
+    Presentation presentation = super.createTemplatePresentation();
+    presentation.setKeepPopupOnPerform(KeepPopupOnPerform.IfPreferred);
+    return presentation;
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    boolean state = !isSelected(e);
     setSelected(e, state);
-    final Presentation presentation = e.getPresentation();
+    Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, state);
   }
 
@@ -68,12 +81,12 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public abstract void setSelected(@NotNull AnActionEvent e, boolean state);
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean selected = isSelected(e);
-    final Presentation presentation = e.getPresentation();
+    Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, selected);
-    if (e.isFromContextMenu()) {
-      //force to show check marks instead of toggled icons in context menu
+    if (e.getUiKind() instanceof ActionUiKind.Popup o && !o.isSearchPopup()) {
+      // force showing check marks instead of toggle icons
       presentation.setIcon(null);
     }
   }

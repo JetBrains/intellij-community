@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +22,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.LineReader;
@@ -40,8 +40,6 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT;
 
 /**
  * Base class for java formatter tests that holds utility methods.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
@@ -59,16 +57,12 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
     boolean first = true;
     for (byte[] line : lines) {
-      try {
-        if (!first) result.append('\n');
-        if (line.length > 0 || shiftEmptyLines) {
-          StringUtil.repeatSymbol(result, ' ', i);
-        }
-        result.append(new String(line, StandardCharsets.UTF_8));
+      if (!first) result.append('\n');
+      if (line.length > 0 || shiftEmptyLines) {
+        StringUtil.repeatSymbol(result, ' ', i);
       }
-      finally {
-        first = false;
-      }
+      result.append(new String(line, StandardCharsets.UTF_8));
+      first = false;
     }
 
     return result.toString();
@@ -87,7 +81,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.HIGHEST);
   }
 
   public CommonCodeStyleSettings getSettings() {
@@ -125,7 +119,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   public void doTextTest(@NotNull Action action, @NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
     final PsiFile file = createFile("A.java", text);
-    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_15_PREVIEW);
+    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
     final Document document = manager.getDocument(file);
     if (document == null) {
@@ -176,7 +170,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
         ACTIONS.get(action).run(file, rangeToUse.getStartOffset(), rangeToUse.getEndOffset());
       }
       catch (IncorrectOperationException e) {
-        assertTrue(e.getLocalizedMessage(), false);
+        fail(e.getLocalizedMessage());
       }
     }), action == REFORMAT ? ReformatCodeProcessor.getCommandName() : "", "");
 

@@ -1,0 +1,2 @@
+This module is required to resolve all the dependencies for [Dokka CLI](https://kotlinlang.org/docs/dokka-cli.html).
+It's being used in https://github.com/JetBrains/intellij-community/tree/master/platform/build-scripts/src/org/jetbrains/intellij/build/impl/maven/Dokka.kt to generate Javadoc for Maven Central publication.

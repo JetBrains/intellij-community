@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -15,10 +14,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 
 public class AdvHighlighting14Test extends LightJavaCodeInsightFixtureTestCase {
-  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -27,161 +25,168 @@ public class AdvHighlighting14Test extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath();
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting";
   }
 
-  public void testPackageLocals() throws Exception {
-    doTest(BASE_PATH + "/packageLocals/x/sub/UsingMain.java", BASE_PATH + "/packageLocals");
+  public void testPackageLocals() {
+    doTest("/packageLocals", "/packageLocals/x/sub/UsingMain.java");
   }
 
-  public void testPackageLocalClassInTheMiddle() throws Exception {
-    doTest(BASE_PATH + "/packageLocals/x/A.java", BASE_PATH + "/packageLocals");
+  public void testPackageLocalClassInTheMiddle() {
+    doTest("/packageLocals",  "/packageLocals/x/A.java");
   }
 
-  public void testEffectiveAccessLevel() throws Exception {
-    doTest(BASE_PATH + "/accessLevel/effectiveAccess/p2/p3.java", BASE_PATH + "/accessLevel");
+  public void testEffectiveAccessLevel() {
+    doTest("/accessLevel", "/accessLevel/effectiveAccess/p2/p3.java");
   }
 
-  public void testSingleImportConflict() throws Exception {
-    doTest(BASE_PATH + "/singleImport/d.java", BASE_PATH + "/singleImport");
+  public void testSingleImportConflict() {
+    doTest("/singleImport", "/singleImport/d.java");
   }
 
-  public void testDuplicateTopLevelClass() throws Exception {
-    doTest(BASE_PATH + "/duplicateClass/A.java", BASE_PATH + "/duplicateClass");
+  public void testDuplicateTopLevelClass() {
+    doTest("/duplicateClass", "/duplicateClass/A.java");
   }
 
-  public void testDuplicateTopLevelClass2() throws Exception {
-    doTest(BASE_PATH + "/duplicateClass/java/lang/Runnable.java", BASE_PATH + "/duplicateClass");
+  public void testDuplicateTopLevelClass2() {
+    doTest("/duplicateClass", "/duplicateClass/java/lang/Runnable.java");
   }
 
-  public void testProtectedConstructorCall() throws Exception {
-    doTest(BASE_PATH + "/protectedConstructor/p2/C2.java", BASE_PATH + "/protectedConstructor");
+  public void testProtectedConstructorCall() {
+    doTest("/protectedConstructor", "/protectedConstructor/p2/C2.java");
   }
 
-  public void testProtectedConstructorCallInSamePackage() throws Exception {
-    doTest(BASE_PATH + "/protectedConstructor/samePackage/C2.java", BASE_PATH + "/protectedConstructor");
+  public void testProtectedConstructorCallInSamePackage() {
+    doTest("/protectedConstructor", "/protectedConstructor/samePackage/C2.java");
   }
 
-  public void testProtectedConstructorCallInInner() throws Exception {
-    doTest(BASE_PATH + "/protectedConstructorInInner/p2/C2.java", BASE_PATH + "/protectedConstructorInInner");
+  public void testProtectedConstructorCallInInner() {
+    doTest("/protectedConstructorInInner", "/protectedConstructorInInner/p2/C2.java");
   }
 
-  public void testArrayLengthAccessFromSubClass() throws Exception {
-    doTest(BASE_PATH + "/arrayLength/p2/SubTest.java", BASE_PATH + "/arrayLength");
+  public void testArrayLengthAccessFromSubClass() {
+    doTest("/arrayLength", "/arrayLength/p2/SubTest.java");
   }
 
-  public void testAccessibleMember() throws Exception {
-    doTest(BASE_PATH + "/accessibleMember/com/red/C.java", BASE_PATH + "/accessibleMember");
+  public void testAccessibleMember() {
+    doTest("/accessibleMember", "/accessibleMember/com/red/C.java");
   }
 
-  public void testStaticPackageLocalMember() throws Exception {
-    doTest(BASE_PATH + "/staticPackageLocalMember/p1/C.java", BASE_PATH + "/staticPackageLocalMember");
+  public void testStaticPackageLocalMember() {
+    doTest("/staticPackageLocalMember", "/staticPackageLocalMember/p1/C.java");
   }
 
-  public void testOnDemandImportConflict() throws Exception {
-    doTest(BASE_PATH + "/onDemandImportConflict/Outer.java", BASE_PATH + "/onDemandImportConflict");
+  public void testOnDemandImportConflict() {
+    doTest("/onDemandImportConflict", "/onDemandImportConflict/Outer.java");
   }
 
-  public void testPackageLocalOverride() throws Exception {
-    doTest(BASE_PATH + "/packageLocalOverride/y/C.java", BASE_PATH + "/packageLocalOverride");
+  public void testPackageLocalOverride() {
+    doTest("/packageLocalOverride", "/packageLocalOverride/y/C.java");
   }
 
-  public void testPackageLocalOverrideJustCheckThatPackageLocalMethodDoesNotGetOverridden() throws Exception {
-    doTest(BASE_PATH + "/packageLocalOverride/y/B.java", BASE_PATH + "/packageLocalOverride");
+  public void testPackageLocalOverrideJustCheckThatPackageLocalMethodDoesNotGetOverridden() {
+    doTest("/packageLocalOverride", "/packageLocalOverride/y/B.java");
   }
 
-  public void testProtectedAccessFromOtherPackage() throws Exception {
-    doTest(BASE_PATH + "/protectedAccessFromOtherPackage/a/Main.java", BASE_PATH + "/protectedAccessFromOtherPackage");
+  public void testProtectedAccessFromOtherPackage() {
+    doTest("/protectedAccessFromOtherPackage", "/protectedAccessFromOtherPackage/a/Main.java");
   }
 
-  public void testProtectedFieldAccessFromOtherPackage() throws Exception {
-    doTest(BASE_PATH + "/protectedAccessFromOtherPackage/a/A.java", BASE_PATH + "/protectedAccessFromOtherPackage");
+  public void testProtectedFieldAccessFromOtherPackage() {
+    doTest("/protectedAccessFromOtherPackage", "/protectedAccessFromOtherPackage/a/A.java");
   }
 
-  public void testPackageLocalClassInTheMiddle1() throws Exception {
-    doTest(BASE_PATH + "/foreignPackageInBetween/a/A1.java", BASE_PATH + "/foreignPackageInBetween");
+  public void testPackageLocalClassInTheMiddle1() {
+    doTest("/foreignPackageInBetween", "/foreignPackageInBetween/a/A1.java");
   }
 
-  public void testImportOnDemand() throws Exception {
-    doTest(BASE_PATH + "/importOnDemand/y/Y.java", BASE_PATH + "/importOnDemand");
+  public void testImportOnDemand() {
+    doTest("/importOnDemand", "/importOnDemand/y/Y.java");
   }
 
-  public void testImportOnDemandVsSingle() throws Exception {
-    doTest(BASE_PATH + "/importOnDemandVsSingle/y/Y.java", BASE_PATH + "/importOnDemandVsSingle");
+  public void testImportOnDemandVsSingle() {
+    doTest("/importOnDemandVsSingle", "/importOnDemandVsSingle/y/Y.java");
   }
 
-  public void testImportSingleVsSamePackage() throws Exception {
-    doTest(BASE_PATH + "/importSingleVsSamePackage/y/Y.java", BASE_PATH + "/importSingleVsSamePackage");
+  public void testImportSingleVsSamePackage() {
+    doTest("/importSingleVsSamePackage", "/importSingleVsSamePackage/y/Y.java");
   }
 
-  public void testImportSingleVsInherited() throws Exception {
-    doTest(BASE_PATH + "/importSingleVsInherited/Test.java", BASE_PATH + "/importSingleVsInherited");
+  public void testImportSingleVsInherited() {
+    doTest("/importSingleVsInherited", "/importSingleVsInherited/Test.java");
   }
 
-  public void testImportOnDemandVsInherited() throws Exception {
-    doTest(BASE_PATH + "/importOnDemandVsInherited/Test.java", BASE_PATH + "/importOnDemandVsInherited");
+  public void testImportOnDemandVsInherited() {
+    doTest("/importOnDemandVsInherited", "/importOnDemandVsInherited/Test.java");
   }
 
-  public void testOverridePackageLocal() throws Exception {
-    doTest(BASE_PATH + "/overridePackageLocal/x/y/Derived.java", BASE_PATH + "/overridePackageLocal");
+  public void testOverridePackageLocal() {
+    doTest("/overridePackageLocal", "/overridePackageLocal/x/y/Derived.java");
   }
 
-  public void testAlreadyImportedClass() throws Exception {
-    doTest(BASE_PATH + "/alreadyImportedClass/pack/AlreadyImportedClass.java", BASE_PATH + "/alreadyImportedClass");
+  public void testAlreadyImportedClass() {
+    doTest("/alreadyImportedClass", "/alreadyImportedClass/pack/AlreadyImportedClass.java");
   }
 
-  public void testNotAKeywords() throws Exception {
-    doTest(BASE_PATH + "/notAKeywords/Test.java", BASE_PATH + "/notAKeywords");
+  public void testNotAKeywords() {
+    doTest("/notAKeywords", "/notAKeywords/Test.java");
   }
 
-  public void testPackageAndClassConflict11() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash1/pkg/sub/Test.java", BASE_PATH + "/packageClassClash1");
-  }
-  
-  public void testPackageAndClassConflict21() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash2/pkg/sub/Test.java", BASE_PATH + "/packageClassClash2");
+  public void testPackageAndClassConflict1() {
+    doTest("/packageClassClash1", "/packageClassClash1/pkg/sub/Test.java", "/packageClassClash1/pkg/sub.java");
   }
 
-  public void testPackageAndClassConflict22() throws Exception {
-    doTest(BASE_PATH + "/packageClassClash2/pkg/Sub.java", BASE_PATH + "/packageClassClash2");
+  public void testPackageAndClassConflict21() {
+    doTest("/packageClassClash2", "/packageClassClash2/pkg/sub/Test.java");
   }
 
-  public void testPackageAndClassConflictNoClassInSubdir() throws Exception {
-    doTest(BASE_PATH + "/packageClassClashNoClassInDir/pkg/sub.java", BASE_PATH + "/packageClassClashNoClassInDir");
+  public void testPackageAndClassConflict22() {
+    doTest("/packageClassClash2", "/packageClassClash2/pkg/Sub.java");
   }
 
-  public void testDefaultPackageAndClassConflict() throws Exception {
-    myFixture.configureByFile(BASE_PATH + "/lang.java");
+  public void testPackageAndClassConflictNoClassInSubdir() {
+    doTest("/packageClassClashNoClassInDir", "/packageClassClashNoClassInDir/pkg/sub.java");
+  }
+
+  public void testDefaultPackageAndClassConflict() {
+    myFixture.configureByFile("/lang.java");
     myFixture.checkHighlighting(false, false, false);
   }
 
-  public void testPackageObscuring() throws Exception {
-    doTest(BASE_PATH + "/packageObscuring/main/Main.java", BASE_PATH + "/packageObscuring");
-  }
-  public void testPublicClassInRightFile() throws Exception {
-    doTest(BASE_PATH + "/publicClassInRightFile/x/X.java", BASE_PATH + "/publicClassInRightFile");
-  }
-  public void testPublicClassInRightFile2() throws Exception {
-    doTest(BASE_PATH + "/publicClassInRightFile/x/Y.java", BASE_PATH + "/publicClassInRightFile");
+  public void testPackageObscuring() {
+    doTest("/packageObscuring", "/packageObscuring/main/Main.java");
   }
 
-  private void doTest(String filePath, String dir) throws Exception {
-    File basePath = new File(getTestDataPath());
-    File currentDir = new File(basePath, dir);
-    Files.walkFileTree(currentDir.toPath(), new SimpleFileVisitor<>() {
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        File additionalFile = file.toFile();
-        String additionalPath = "/" + FileUtil.toSystemIndependentName(FileUtil.getRelativePath(basePath, additionalFile));
-        if (!filePath.equals(additionalPath)) {
-          myFixture.addFileToProject("/" + FileUtil.toSystemIndependentName(FileUtil.getRelativePath(currentDir, additionalFile)),
-                                     FileUtil.loadFile(additionalFile));
+  public void testPublicClassInRightFile() {
+    doTest("/publicClassInRightFile", "/publicClassInRightFile/x/X.java");
+  }
+
+  public void testPublicClassInRightFile2() {
+    doTest("/publicClassInRightFile", "/publicClassInRightFile/x/Y.java");
+  }
+
+  private void doTest(String dir, String @NotNull ... filePaths) {
+    try {
+      File basePath = new File(getTestDataPath());
+      File currentDir = new File(basePath, dir);
+      Files.walkFileTree(currentDir.toPath(), new SimpleFileVisitor<>() {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          File additionalFile = file.toFile();
+          String additionalPath = "/" + FileUtil.toSystemIndependentName(FileUtil.getRelativePath(basePath, additionalFile));
+          if (!Arrays.asList(filePaths).contains(additionalPath)) {
+            myFixture.addFileToProject("/" + FileUtil.toSystemIndependentName(FileUtil.getRelativePath(currentDir, additionalFile)),
+                                       FileUtil.loadFile(additionalFile));
+          }
+          return super.visitFile(file, attrs);
         }
-        return super.visitFile(file, attrs);
-      }
-    });
-    
-    myFixture.configureByFile(filePath);
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    myFixture.configureByFiles(filePaths);
     myFixture.checkHighlighting(false, false, false);
   }
 }

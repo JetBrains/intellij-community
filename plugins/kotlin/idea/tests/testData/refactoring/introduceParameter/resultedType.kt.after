@@ -1,0 +1,14 @@
+package p1
+
+import p2.Outer.Inner
+
+fun caller() {
+    called()
+}
+
+fun called(inners: Set<Inner> = setOf(Inner.V1, Inner.V2)) {
+    val typed: Set<Inner> = inners
+    println(typed)
+}
+
+// IGNORE_K1

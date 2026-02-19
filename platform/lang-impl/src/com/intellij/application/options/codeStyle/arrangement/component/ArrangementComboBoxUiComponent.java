@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.openapi.ui.ComboBox;
@@ -23,18 +9,17 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
-public class ArrangementComboBoxUiComponent extends AbstractArrangementUiComponent {
+public final class ArrangementComboBoxUiComponent extends AbstractArrangementUiComponent {
   
   private final JComboBox<ArrangementSettingsToken> myComboBox;
 
@@ -62,9 +47,8 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
     myComboBox.setPreferredSize(new Dimension(minWidth * 5 / 3, myComboBox.getPreferredSize().height));
   }
 
-  @NotNull
   @Override
-  public ArrangementSettingsToken getToken() {
+  public @NotNull ArrangementSettingsToken getToken() {
     return (ArrangementSettingsToken)myComboBox.getSelectedItem();
   }
 
@@ -73,9 +57,8 @@ public class ArrangementComboBoxUiComponent extends AbstractArrangementUiCompone
     myComboBox.setSelectedItem(data); 
   }
 
-  @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
+  public @NotNull ArrangementMatchCondition getMatchCondition() {
     ArrangementSettingsToken token = getToken();
     return new ArrangementAtomMatchCondition(token, token);
   }

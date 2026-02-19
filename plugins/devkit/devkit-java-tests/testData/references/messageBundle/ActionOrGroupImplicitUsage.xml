@@ -7,6 +7,9 @@
       <override-text place="CustomPlace"/>
     </action>
 
+    <group id="groupIdWithOverride">
+      <override-text place="CustomPlace"/>
+    </group>
 
     <action id="actionIdDuplicated"/>
     <action id="actionIdDuplicated"/>

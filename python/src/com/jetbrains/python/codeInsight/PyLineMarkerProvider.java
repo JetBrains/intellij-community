@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -19,7 +19,11 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -27,13 +31,16 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author yole
- */
-public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
+
+public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
 
   private static final class TooltipProvider implements Function<PsiElement, @NlsContexts.Tooltip String> {
     private final String myText;
@@ -52,11 +59,10 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static final Function<PsiElement, @NlsContexts.Tooltip String> ourSubclassTooltipProvider = identifier -> {
     PsiElement parent = identifier.getParent();
-    if (!(parent instanceof PyClass)) return null;
+    if (!(parent instanceof PyClass pyClass)) return null;
     final HtmlBuilder builder = new HtmlBuilder();
     builder.append(PyBundle.message("line.markers.tooltip.header.is.subclassed.by"));
     final AtomicInteger count = new AtomicInteger();
-    PyClass pyClass = (PyClass)parent;
     PyClassInheritorsSearch.search(pyClass, true).forEach(inheritor -> {
       String className = inheritor.getName();
       if (className == null) return true;
@@ -72,11 +78,10 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static final Function<PsiElement, @NlsContexts.Tooltip String> ourOverridingMethodTooltipProvider = element -> {
     PsiElement parent = element.getParent();
-    if (!(parent instanceof PyFunction)) return "";
+    if (!(parent instanceof PyFunction pyFunction)) return "";
     final HtmlBuilder builder = new HtmlBuilder();
     builder.append(PyBundle.message("line.markers.tooltip.header.is.overridden.in"));
     final AtomicInteger count = new AtomicInteger();
-    PyFunction pyFunction = (PyFunction)parent;
 
     PyClassInheritorsSearch.search(pyFunction.getContainingClass(), true).forEach(pyClass -> {
       String className = pyClass.getName();
@@ -93,29 +98,28 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     return tooManyOverrides ? PyBundle.message("line.markers.tooltip.has.overridden.methods") : builder.wrapWithHtmlBody().toString();
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> SUPER_METHOD_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> SUPER_METHOD_NAVIGATOR = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(@NotNull PsiElement nameIdentifier) {
       return PyBundle.message("line.markers.popup.title.choose.super.method", ((PyFunction)nameIdentifier.getParent()).getName());
     }
 
     @Override
-    @Nullable
-    protected Query<PsiElement> search(@NotNull PsiElement nameIdentifier, @NotNull final TypeEvalContext context) {
+    protected @Nullable Query<PsiElement> search(@NotNull PsiElement nameIdentifier, final @NotNull TypeEvalContext context) {
       if (!(nameIdentifier.getParent() instanceof PyFunction)) return null;
       return PySuperMethodsSearch.search((PyFunction)nameIdentifier.getParent(), context);
     }
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> SUPER_ATTRIBUTE_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> SUPER_ATTRIBUTE_NAVIGATOR = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(@NotNull PsiElement nameIdentifier) {
-      return PyBundle.message("line.markers.popup.title.choose.super.attribute", ((PyTargetExpression)nameIdentifier.getParent()).getName());
+      return PyBundle
+        .message("line.markers.popup.title.choose.super.attribute", ((PyTargetExpression)nameIdentifier.getParent()).getName());
     }
 
     @Override
-    @Nullable
-    protected Query<PsiElement> search(@NotNull PsiElement nameIdentifier, @NotNull TypeEvalContext context) {
+    protected @Nullable Query<PsiElement> search(@NotNull PsiElement nameIdentifier, @NotNull TypeEvalContext context) {
       if (!(nameIdentifier.getParent() instanceof PyTargetExpression)) return null;
       final List<PsiElement> result = new ArrayList<>();
       final PyClass containingClass = PsiTreeUtil.getParentOfType(nameIdentifier, PyClass.class);
@@ -131,22 +135,21 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> ourSubclassNavigator = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> ourSubclassNavigator = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(final PsiElement elt) {
       PsiElement parent = elt.getParent();
       return parent instanceof PyClass ? PyBundle.message("line.markers.popup.title.choose.subclass", ((PyClass)parent).getName()) : "";
     }
 
-    @Nullable
     @Override
-    protected Query<? extends PsiElement> search(PsiElement elt, @NotNull TypeEvalContext context) {
+    protected @Nullable Query<? extends PsiElement> search(PsiElement elt, @NotNull TypeEvalContext context) {
       PsiElement parent = elt.getParent();
       return parent instanceof PyClass ? PyClassInheritorsSearch.search((PyClass)parent, true) : null;
     }
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> ourOverridingMethodNavigator = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> ourOverridingMethodNavigator = new PyLineMarkerNavigator<>() {
     @Override
     protected @PopupTitle String getTitle(PsiElement element) {
       PsiElement parent = element.getParent();
@@ -166,8 +169,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     IElementType elementType = element.getNode().getElementType();
-    if (elementType == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction) {
-      final PyFunction function = (PyFunction)element.getParent();
+    if (elementType == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction function) {
       return getMethodMarker(element, function);
     }
     if (element instanceof PyTargetExpression && PyUtil.isClassAttribute(element)) {
@@ -203,9 +205,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     return false;
   }
 
-  @Nullable
-  private static LineMarkerInfo<PsiElement> getMethodMarker(final PsiElement identifier, final PyFunction function) {
-    if (PyUtil.isInitMethod(function)) {
+  private static @Nullable LineMarkerInfo<PsiElement> getMethodMarker(final PsiElement identifier, final PyFunction function) {
+    if (PyUtil.isConstructorLikeMethod(function)) {
       return null;
     }
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(identifier.getProject(), function.getContainingFile());
@@ -224,8 +225,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     return null;
   }
 
-  @Nullable
-  private static LineMarkerInfo<PsiElement> getAttributeMarker(PyTargetExpression element) {
+  private static @Nullable LineMarkerInfo<PsiElement> getAttributeMarker(PyTargetExpression element) {
     final String name = element.getReferencedName();
     if (name == null) {
       return null;

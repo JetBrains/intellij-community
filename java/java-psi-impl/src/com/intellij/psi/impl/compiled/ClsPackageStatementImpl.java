@@ -1,44 +1,27 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 
-class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatement {
-  static ClsPackageStatementImpl NULL_PACKAGE = new ClsPackageStatementImpl();
+public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
 
-  private final ClsFileImpl myFile;
-  private final String myPackageName;
+  private final @NotNull String myPackageName;
 
-  private ClsPackageStatementImpl() {
-    myFile = null;
-    myPackageName = null;
-  }
-
-  ClsPackageStatementImpl(@NotNull ClsFileImpl file, String packageName) {
-    myFile = file;
-    myPackageName = packageName;
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return myFile;
+  public ClsPackageStatementImpl(@NotNull PsiPackageStatementStub stub) {
+    super(stub);
+    myPackageName = stub.getPackageName();
   }
 
   @Override
@@ -48,28 +31,38 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
 
   @Override
   public PsiModifierList getAnnotationList() {
-    throw new UnsupportedOperationException("Method not implemented");
+    @SuppressWarnings("unchecked") final StubElement<PsiModifierList> child =
+      (StubElement<PsiModifierList>)getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST);
+    return child == null ? null : child.getPsi();
   }
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    throw new UnsupportedOperationException("Method not implemented");
+    PsiModifierList list = getAnnotationList();
+    return list == null ? EMPTY_ARRAY : new PsiElement[]{list}; 
   }
 
   @Override
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     return myPackageName;
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
-    if (myPackageName != null) {
+  public void appendMirrorText(final int indentLevel, final @NotNull StringBuilder buffer) {
+    if (!myPackageName.isEmpty()) { // an empty package name should not happen for a well-formed class file
+      PsiModifierList list = getAnnotationList();
+      if (list != null) {
+        for (PsiAnnotation annotation : list.getAnnotations()) {
+          appendText(annotation, indentLevel, buffer);
+          buffer.append("\n");
+        }
+      }
       buffer.append("package ").append(getPackageName()).append(';');
     }
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.PACKAGE_STATEMENT);
   }
 

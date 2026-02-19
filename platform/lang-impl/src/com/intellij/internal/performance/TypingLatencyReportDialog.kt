@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.performance
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -22,11 +23,24 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.ActionEvent
 import java.nio.file.Path
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Action
+import javax.swing.Box
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-private class TypingLatencyReportAction : AnAction() {
+internal class TypingLatencyReportAction : AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.project != null
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     TypingLatencyReportDialog(project).show()
@@ -163,21 +177,21 @@ internal class TypingLatencyReportDialog(
 
   private fun formatReportAsText(): String {
     return buildString {
-      appendln(formatHeader(false))
-      appendln()
+      appendLine(formatHeader(false))
+      appendLine()
       for (row in latencyMap.values.sortedBy { it.key.name }) {
-        appendln(formatLatency(row.key.name, row.totalLatency, row.key.details))
-        appendln("Actions:")
+        appendLine(formatLatency(row.key.name, row.totalLatency, row.key.details))
+        appendLine("Actions:")
         for (actionLatencyRecord in row.actionLatencyRecords.entries.sortedByDescending { it.value.averageLatency }) {
-          appendln("  ${formatLatency(actionLatencyRecord.key, actionLatencyRecord.value)}")
+          appendLine("  ${formatLatency(actionLatencyRecord.key, actionLatencyRecord.value)}")
         }
       }
-      appendln()
+      appendLine()
       if (threadDumps.isNotEmpty()) {
-        appendln("Thread dumps:")
+        appendLine("Thread dumps:")
         for (threadDump in threadDumps) {
-          appendln(threadDump)
-          appendln("-".repeat(40))
+          appendLine(threadDump)
+          appendLine("-".repeat(40))
         }
       }
     }

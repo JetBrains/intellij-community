@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
@@ -12,9 +12,9 @@ import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class ToggleRegex extends EditorHeaderToggleAction implements Embeddable, TooltipLinkProvider, TooltipDescriptionProvider {
+public final class ToggleRegex extends EditorHeaderToggleAction implements Embeddable, TooltipLinkProvider, TooltipDescriptionProvider {
   public ToggleRegex() {
     super(FindBundle.message("find.regex"),
           AllIcons.Actions.Regex,
@@ -36,9 +36,6 @@ public class ToggleRegex extends EditorHeaderToggleAction implements Embeddable,
   protected void setSelected(@NotNull SearchSession session, boolean selected) {
     FindModel findModel = session.getFindModel();
     findModel.setRegularExpressions(selected);
-    if (selected) {
-      findModel.setWholeWordsOnly(false);
-    }
     FindSettings.getInstance().setLocalRegularExpressions(selected);
   }
 }

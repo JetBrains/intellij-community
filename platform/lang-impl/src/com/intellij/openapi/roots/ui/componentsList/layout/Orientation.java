@@ -17,7 +17,10 @@
 package com.intellij.openapi.roots.ui.componentsList.layout;
 
 
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
 
 public abstract class Orientation {
   public static Orientation VERTICAL = new Orientation() {

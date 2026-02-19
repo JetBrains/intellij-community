@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.util;
 
@@ -13,11 +13,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.util.*;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.ThrowablePairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -27,7 +40,12 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility class, that contains various methods for testing
@@ -189,8 +207,7 @@ public abstract class TestUtils {
     file.acceptChildren(new PsiRecursiveElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof GrReferenceExpression) {
-          GrReferenceExpression psiReference = (GrReferenceExpression)element;
+        if (element instanceof GrReferenceExpression psiReference) {
 
           GrExpression qualifier = psiReference.getQualifierExpression();
           if (qualifier instanceof GrReferenceExpression) {
@@ -210,11 +227,11 @@ public abstract class TestUtils {
 
             if (consumer.getResult().isEmpty()) {
               PsiElement nameElement = psiReference.getReferenceNameElement();
-              assert nameElement != null;
+              Assert.assertNotNull(nameElement);
 
               String name = nameElement.getText();
 
-              assert name.equals(psiReference.getReferenceName());
+              Assert.assertEquals(name, psiReference.getReferenceName());
 
               int last = lastUnresolvedRef.get();
               sb.append(text, last, nameElement.getTextOffset());
@@ -231,7 +248,7 @@ public abstract class TestUtils {
       }
 
       @Override
-      public void visitFile(@NotNull PsiFile file) {
+      public void visitFile(@NotNull PsiFile psiFile) {
       }
     });
 
@@ -249,17 +266,13 @@ public abstract class TestUtils {
     PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, parent);
   }
 
-  @SuppressWarnings("unchecked")
-  @NotNull
-  public static <T> RunAll runAll(@NotNull Collection<? extends T> input,
-                                  @NotNull ThrowableConsumer<? super T, Throwable> action) {
-    List<ThrowableRunnable<Throwable>> runnables = ContainerUtil.map(input, it -> () -> action.consume(it));
-    return new RunAll(runnables.toArray(new ThrowableRunnable[0]));
+  public static <T> void runAll(@NotNull Collection<? extends T> input,
+                                @NotNull ThrowableConsumer<? super T, Throwable> action) {
+    new RunAll(ContainerUtil.map(input, it -> () -> action.consume(it))).run();
   }
 
-  @NotNull
-  public static <K, V> RunAll runAll(@NotNull Map<? extends K, ? extends V> input,
-                                     @NotNull ThrowablePairConsumer<? super K, ? super V, Throwable> action) {
-    return runAll(input.entrySet(), e -> action.consume(e.getKey(), e.getValue()));
+  public static <K, V> void runAll(@NotNull Map<? extends K, ? extends V> input,
+                                   @NotNull ThrowablePairConsumer<? super K, ? super V, Throwable> action) {
+    runAll(input.entrySet(), e -> action.consume(e.getKey(), e.getValue()));
   }
 }

@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,21 +14,19 @@ import org.jetbrains.annotations.Nullable;
  * Describes context in which live template supposed to be used.
  */
 public final class TemplateActionContext {
-  @NotNull
-  private final PsiFile myFile;
-  @Nullable
-  private final Editor myEditor;
+  private final @NotNull PsiFile myPsiFile;
+  private final @Nullable Editor myEditor;
 
   private final int myStartOffset;
   private final int myEndOffset;
   private final boolean myIsSurrounding;
 
-  private TemplateActionContext(@NotNull PsiFile file,
+  private TemplateActionContext(@NotNull PsiFile psiFile,
                                 @Nullable Editor editor,
                                 int startOffset,
                                 int endOffset,
                                 boolean isSurrounding) {
-    myFile = file;
+    myPsiFile = psiFile;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myIsSurrounding = isSurrounding;
@@ -34,7 +34,7 @@ public final class TemplateActionContext {
   }
 
   public @NotNull PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   /**
@@ -55,8 +55,8 @@ public final class TemplateActionContext {
   /**
    * @return a copy of current context with specific {@code file}
    */
-  public @NotNull TemplateActionContext withFile(@NotNull PsiFile file) {
-    return new TemplateActionContext(file, myEditor, myStartOffset, myEndOffset, myIsSurrounding);
+  public @NotNull TemplateActionContext withFile(@NotNull PsiFile psiFile) {
+    return new TemplateActionContext(psiFile, myEditor, myStartOffset, myEndOffset, myIsSurrounding);
   }
 
   /**
@@ -84,7 +84,17 @@ public final class TemplateActionContext {
 
   public static @NotNull TemplateActionContext surrounding(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     SelectionModel selectionModel = editor.getSelectionModel();
-    return create(psiFile, editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), true);
+    int start = selectionModel.getSelectionStart();
+    int end = selectionModel.getSelectionEnd();
+    PsiElement startElement = psiFile.findElementAt(start);
+    if (startElement instanceof PsiWhiteSpace) {
+      start = Math.min(startElement.getTextRange().getEndOffset(), end);
+    }
+    PsiElement endElement = psiFile.findElementAt(end);
+    if (endElement != startElement && endElement instanceof PsiWhiteSpace) {
+      end = Math.max(start, endElement.getTextRange().getStartOffset());
+    }
+    return create(psiFile, editor, start, end, true);
   }
 
   public static @NotNull TemplateActionContext create(@NotNull PsiFile psiFile,

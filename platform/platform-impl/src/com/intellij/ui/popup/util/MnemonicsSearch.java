@@ -4,12 +4,14 @@ package com.intellij.ui.popup.util;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.popup.WizardPopup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public abstract class MnemonicsSearch<T> {
   private final WizardPopup myPopup;
   private final Map<String, T> myChar2ValueMap = new HashMap<>();
@@ -21,10 +23,8 @@ public abstract class MnemonicsSearch<T> {
     @SuppressWarnings("unchecked") MnemonicNavigationFilter<T> filter = myPopup.getStep().getMnemonicNavigationFilter();
     if (filter == null) return;
     for (T each : filter.getValues()) {
-      int pos = filter.getMnemonicPos(each);
-      if (pos != -1) {
-        String text = filter.getTextFor(each);
-        String charText = text.substring(pos + 1, pos + 2);
+      String charText = filter.getMnemonicString(each);
+      if (charText != null) {
         myChar2ValueMap.put(Strings.toUpperCase(charText), each);
         myChar2ValueMap.put(Strings.toLowerCase(charText), each);
       }

@@ -18,6 +18,7 @@ package com.intellij.lang.xml;
 import com.intellij.codeInsight.template.HtmlContextType;
 import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -34,9 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class XmlSurroundDescriptor implements SurroundDescriptor {
   @Override
   public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
@@ -72,7 +70,8 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
   }
 
   protected boolean isEnabled(final TemplateImpl template) {
-    final TemplateContext context = template.getTemplateContext();
-    return context.isEnabled(new XmlContextType()) || context.isEnabled(new HtmlContextType());
+    TemplateContext context = template.getTemplateContext();
+    return context.isEnabled(TemplateContextTypes.getByClass(XmlContextType.class))
+           || context.isEnabled(TemplateContextTypes.getByClass(HtmlContextType.class));
   }
 }

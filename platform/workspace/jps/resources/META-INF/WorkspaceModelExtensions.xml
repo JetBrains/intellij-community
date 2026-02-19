@@ -1,0 +1,37 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="workspaceModel.customModuleRootsSerializer"
+                    interface="com.intellij.platform.workspace.jps.serialization.impl.CustomModuleRootsSerializer"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.customModuleComponentSerializer"
+                    interface="com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer"
+                    dynamic="true"/>
+    <extensionPoint name="workspaceModel.customFacetRelatedEntitySerializer"
+                    interface="com.intellij.platform.workspace.jps.serialization.impl.CustomFacetRelatedEntitySerializer"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.new.project.model.index.case.sensitivity" defaultValue="false" restartRequired="true"
+                 description="Enable checking FS sensitivity for paths stored at VFU index"/>
+    <registryKey key="ide.workspace.model.store.relative.paths.in.cache" defaultValue="false" restartRequired="true"
+                 description="Enables storing of relative paths instead of absolute paths in the workspace model cache"/>
+    <registryKey key="ide.workspace.model.load.cache.from.zip" defaultValue="false" restartRequired="true"
+                 description="Enables loading shared workspace model cache from ZIP archive"/>
+    <registryKey key="ide.workspace.model.use.query.cache.api" defaultValue="false" restartRequired="true"
+                 description="Enables various functionality in IDE to work via the query cache API for the workspace model"/>
+    <registryKey key="ide.workspace.model.use.reactive.api" defaultValue="false" restartRequired="true"
+                 description="Enables various functionality in IDE to work via the new reactive API for the workspace model"/>
+    <registryKey key="ide.workspace.model.use.new.api.unloaded.modules" defaultValue="false" restartRequired="true"
+                 description="Enable work of unloaded modules via reactive read"/>
+    <registryKey key="ide.workspace.model.write.external.files.directly" defaultValue="false" restartRequired="false"
+                 description="When enabled, WSM bypasses module's configuration stores on project save and writes module xml files directly
+                              to 'cache' directory (iml files are still saved through module's configuration stores)"/>
+    <registryKey key="ide.workspace.model.write.external.files.immediately" defaultValue="false" restartRequired="false"
+                 description="When enabled, WSM writes module xml files immediately when the file content is available
+                              (needs less heap because all the intermediate objects will be collected sooner).
+                              When disabled (legacy behavior) WSM will collect all the contents of all the files for
+                              each changed module, and then flush all the data in a separate pass (needs more heap to keep
+                              all the intermediate objects)."/>
+    <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.platform.workspace.jps.serialization.impl.DefaultFacetEntitySerializer" />
+  </extensions>
+</idea-plugin>

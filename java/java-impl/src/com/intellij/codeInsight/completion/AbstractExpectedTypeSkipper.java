@@ -1,33 +1,24 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
-public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
+public final class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
 
   private enum Result {
     NON_DEFAULT,
@@ -37,7 +28,7 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
   }
 
   @Override
-  public boolean skipElement(LookupElement element, CompletionLocation location) {
+  public boolean skipElement(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     return skips(element, location);
   }
 
@@ -49,16 +40,13 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
     if (location.getCompletionType() != CompletionType.SMART && !hasEmptyPrefix(location)) return Result.ACCEPT;
     if (DumbService.getInstance(location.getProject()).isDumb()) return Result.ACCEPT;
 
-    CompletionParameters parameters = location.getCompletionParameters();
+    BaseCompletionParameters parameters = location.getBaseCompletionParameters();
     PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
     if (!(expression instanceof PsiNewExpression)) return Result.ACCEPT;
 
-    final Object object = item.getObject();
-    if (!(object instanceof PsiClass)) return Result.ACCEPT;
+    if (!(item.getObject() instanceof PsiClass psiClass)) return Result.ACCEPT;
 
     if (StatisticsManager.getInstance().getUseCount(StatisticsWeigher.getBaseStatisticsInfo(item, location)) > 1) return Result.ACCEPT;
-
-    PsiClass psiClass = (PsiClass)object;
 
     int toImplement = 0;
     for (final PsiMethod method : psiClass.getMethods()) {
@@ -68,7 +56,7 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
       }
     }
 
-    toImplement += OverrideImplementExploreUtil.getMapToOverrideImplement(psiClass, true)
+    toImplement += (int)OverrideImplementExploreUtil.getMapToOverrideImplement(psiClass, true)
                                                .values()
                                                .stream()
                                                .filter(c -> ((PsiMethod)c.getElement()).hasModifierProperty(PsiModifier.ABSTRACT))
@@ -102,6 +90,6 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
   }
 
   private static boolean hasEmptyPrefix(CompletionLocation location) {
-    return location.getCompletionParameters().getPosition().getTextRange().getStartOffset() == location.getCompletionParameters().getOffset();
+    return location.getBaseCompletionParameters().getPosition().getTextRange().getStartOffset() == location.getBaseCompletionParameters().getOffset();
   }
 }

@@ -1,30 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.model.Symbol;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class ResolveCache implements Disposable {
-  private final AtomicReferenceArray<Map<?, ?>> myPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
-  private final AtomicReferenceArray<Map<?, ?>> myNonPhysicalMaps = new AtomicReferenceArray<>(4); //boolean incompleteCode, boolean isPoly
+  private final AtomicReferenceArray<Map<?, ?>> myMaps = new AtomicReferenceArray<>(8); //boolean isPhysical * boolean incompleteCode * boolean isPoly
 
   public static ResolveCache getInstance(@NotNull Project project) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
@@ -34,11 +45,6 @@ public class ResolveCache implements Disposable {
   public ResolveCache(@NotNull Project project) {
     clearCacheOnPsiChange(project.getMessageBus());
     LowMemoryWatcher.register(() -> onLowMemory(), this);
-  }
-
-  @Deprecated
-  public ResolveCache(@NotNull MessageBus bus) {
-    clearCacheOnPsiChange(bus);
   }
 
   private void clearCacheOnPsiChange(@NotNull MessageBus bus) {
@@ -51,8 +57,7 @@ public class ResolveCache implements Disposable {
   }
 
   private void onLowMemory() {
-    clearArray(myPhysicalMaps);
-    clearArray(myNonPhysicalMaps);
+    clearArray(myMaps, true);
   }
 
   @Override
@@ -65,7 +70,7 @@ public class ResolveCache implements Disposable {
   }
 
   /**
-   * Resolver which returns array of possible resolved variants instead of just one
+   * Resolver which returns an array of possible resolved variants instead of just one
    */
   @FunctionalInterface
   public interface PolyVariantResolver<T extends PsiPolyVariantReference> extends AbstractResolver<T,ResolveResult[]> {
@@ -88,13 +93,11 @@ public class ResolveCache implements Disposable {
   public interface Resolver extends AbstractResolver<PsiReference, PsiElement> {
   }
 
-  @NotNull
-  private static <K,V> Map<K, V> createWeakMap() {
+  private static @NotNull <K,V> Map<K, V> createWeakMap() {
     //noinspection deprecation
-    return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.canonicalStrategy()){
-      @NotNull
+    return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors()) {
       @Override
-      protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
+      protected @NotNull ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
         ValueReference<K, V> result;
         if (value == NULL_RESULT || value instanceof Object[] && ((Object[])value).length == 0) {
           // no use in creating SoftReference to null
@@ -113,8 +116,16 @@ public class ResolveCache implements Disposable {
       }
 
       @Override
+      public V put(K key, V value) {
+        // no use in creating SoftReference to null
+        //noinspection unchecked
+        V toStore = value == null ? (V)NULL_RESULT : value;
+        return super.put(key, toStore);
+      }
+
+      @Override
       public boolean equals(Object obj) {
-        // The map instance is used as recursion prevention key.
+        // The map instance is used as the recursion prevention key.
         // Each instance is determined by several flags: physical, incomplete, poly;
         // Each instance is unique, so we don't need to store flags to check equality.
         return this == obj;
@@ -128,31 +139,13 @@ public class ResolveCache implements Disposable {
   }
 
   public void clearCache(boolean isPhysical) {
-    if (isPhysical) {
-      clearArray(myPhysicalMaps);
-    }
-    clearArray(myNonPhysicalMaps);
+    clearArray(myMaps, isPhysical);
   }
 
-  private static void clearArray(@NotNull AtomicReferenceArray<?> array) {
-    for (int i = 0; i < array.length(); i++) {
+  private static void clearArray(@NotNull AtomicReferenceArray<?> array, boolean clearPhysical) {
+    for (int i = clearPhysical ? 0 : 4; i < array.length(); i++) {
       array.set(i, null);
     }
-  }
-
-  @Nullable
-  private <TRef extends PsiReference, TResult> TResult resolve(@NotNull final TRef ref,
-                                                               @NotNull final AbstractResolver<? super TRef, TResult> resolver,
-                                                               boolean needToPreventRecursion,
-                                                               final boolean incompleteCode,
-                                                               boolean isPoly,
-                                                               boolean isPhysical) {
-    ProgressIndicatorProvider.checkCanceled();
-    if (isPhysical) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
-    int index = getIndex(incompleteCode, isPoly);
-    return resolve(ref, getMap(isPhysical, index), needToPreventRecursion, () -> resolver.resolve(ref, incompleteCode));
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
@@ -162,34 +155,65 @@ public class ResolveCache implements Disposable {
                                                                                           boolean incompleteCode) {
     return resolveWithCaching(ref, resolver, needToPreventRecursion, incompleteCode, ref.getElement().getContainingFile());
   }
+
+  /**
+   * Optimization: do not (re)compute containing file.
+   * When the containing file is known, please prefer this method over {@link #resolveWithCaching(PsiPolyVariantReference, PolyVariantResolver, boolean, boolean)}
+   */
   public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull T ref,
                                                                                           @NotNull PolyVariantResolver<T> resolver,
                                                                                           boolean needToPreventRecursion,
                                                                                           boolean incompleteCode,
                                                                                           @NotNull PsiFile containingFile) {
-    ResolveResult[] result = resolve(ref, resolver, needToPreventRecursion, incompleteCode, true, containingFile.isPhysical());
+    boolean isPhysical = containingFile.isPhysical();
+    ProgressIndicatorProvider.checkCanceled();
+    if (isPhysical) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+    int index = getIndex(isPhysical, incompleteCode, true);
+    ResolveResult[] result = resolve(ref, getMap(index), needToPreventRecursion,
+                                     () -> ((AbstractResolver<? super @NotNull T, ResolveResult[]>)resolver).resolve(ref, incompleteCode));
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
-  public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull final T ref,
-                                                                                          @NotNull final PolyVariantContextResolver<T> resolver,
+  public <T extends PsiPolyVariantReference> ResolveResult @NotNull [] resolveWithCaching(@NotNull T ref,
+                                                                                          @NotNull PolyVariantContextResolver<T> resolver,
                                                                                           boolean needToPreventRecursion,
-                                                                                          final boolean incompleteCode,
-                                                                                          @NotNull final PsiFile containingFile) {
+                                                                                          boolean incompleteCode,
+                                                                                          @NotNull PsiFile containingFile) {
     ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    boolean physical = containingFile.isPhysical();
-    int index = getIndex(incompleteCode, true);
-    Map<T, ResolveResult[]> map = getMap(physical, index);
+    boolean isPhysical = containingFile.isPhysical();
+    int index = getIndex(isPhysical, incompleteCode, true);
+    Map<T, ResolveResult[]> map = getMap(index);
     ResolveResult[] results = resolve(ref, map, needToPreventRecursion, () -> resolver.resolve(ref, containingFile, incompleteCode));
     return results == null ? ResolveResult.EMPTY_ARRAY : results;
   }
 
-  private static <TRef extends PsiReference, TResult> TResult resolve(@NotNull TRef ref,
-                                                                      @NotNull Map<TRef, TResult> cache,
-                                                                      boolean preventRecursion,
-                                                                      @NotNull Computable<? extends TResult> resolver) {
+  @FunctionalInterface
+  @ApiStatus.Experimental
+  public interface PsiSymbolReferenceResolver<R extends @NotNull PsiSymbolReference> {
+    @NotNull Collection<? extends @NotNull Symbol> resolve(@NotNull R reference);
+  }
+
+  @ApiStatus.Experimental
+  public <R extends @NotNull PsiSymbolReference> @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(@NotNull R ref, @NotNull PsiSymbolReferenceResolver<? super R> resolver) {
+    return resolveWithCaching(ref, true, resolver);
+  }
+
+  @ApiStatus.Experimental
+  public <R extends @NotNull PsiSymbolReference>
+  @NotNull Collection<? extends @NotNull Symbol> resolveWithCaching(@NotNull R ref, boolean preventRecursion, @NotNull PsiSymbolReferenceResolver<? super R> resolver) {
+    ProgressIndicatorProvider.checkCanceled();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    boolean isPhysical = ref.getElement().isPhysical();
+    int index = getIndex(isPhysical, false, true);
+    Collection<? extends Symbol> results = resolve(ref, getMap(index), preventRecursion, () -> resolver.resolve(ref));
+    return results == null ? Collections.emptyList() : results;
+  }
+
+  private static <TRef, TResult> @Nullable TResult resolve(@NotNull TRef ref, @NotNull Map<TRef, TResult> cache, boolean preventRecursion, @NotNull Computable<? extends TResult> resolver) {
     TResult cachedResult = cache.get(ref);
     if (cachedResult != null) {
       if (IdempotenceChecker.areRandomChecksEnabled()) {
@@ -218,8 +242,7 @@ public class ResolveCache implements Disposable {
     return result;
   }
 
-  @NotNull
-  private static <R> Computable<R> loggingResolver(@NotNull Object ref, @NotNull Computable<? extends R> resolver) {
+  private static @NotNull <R> Computable<R> loggingResolver(@NotNull Object ref, @NotNull Computable<? extends R> resolver) {
     return () -> {
       if (IdempotenceChecker.isLoggingEnabled()) {
         IdempotenceChecker.logTrace("Resolving " + ref + " of " + ref.getClass());
@@ -228,7 +251,7 @@ public class ResolveCache implements Disposable {
     };
   }
 
-  private static void ensureValidResults(ResolveResult @NotNull [] result) {
+  private static void ensureValidResults(@NotNull ResolveResult @NotNull [] result) {
     for (ResolveResult resolveResult : result) {
       ensureValidPsi(resolveResult);
     }
@@ -242,43 +265,42 @@ public class ResolveCache implements Disposable {
   }
 
   // null means not cached
-  public <T extends PsiPolyVariantReference> ResolveResult @Nullable [] getCachedResults(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
-    Map<T, ResolveResult[]> map = getMap(physical, getIndex(incompleteCode, isPoly));
+  public <T extends PsiPolyVariantReference> ResolveResult @Nullable [] getCachedResults(@NotNull T ref, boolean isPhysical, boolean incompleteCode, boolean isPoly) {
+    Map<T, ResolveResult[]> map = getMap(getIndex(isPhysical, incompleteCode, isPoly));
     return map.get(ref);
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  @Nullable
-  public <TRef extends PsiReference, TResult> TResult resolveWithCaching(@NotNull TRef ref,
-                                                                         @NotNull AbstractResolver<TRef, TResult> resolver,
-                                                                         boolean needToPreventRecursion,
-                                                                         boolean incompleteCode) {
-    return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
+  public @Nullable <TRef extends PsiReference, TResult> TResult resolveWithCaching(@NotNull TRef ref,
+                                                                                   @NotNull AbstractResolver<TRef, TResult> resolver,
+                                                                                   boolean needToPreventRecursion,
+                                                                                   boolean incompleteCode) {
+    boolean isPhysical = ref.getElement().isPhysical();
+    ProgressIndicatorProvider.checkCanceled();
+    if (isPhysical) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+    }
+    int index = getIndex(isPhysical, incompleteCode, false);
+    return resolve(ref, getMap(index), needToPreventRecursion, () -> resolver.resolve(ref, incompleteCode));
   }
 
-  @NotNull
-  private <TRef extends PsiReference, TResult> Map<TRef, TResult> getMap(boolean physical, int index) {
-    AtomicReferenceArray<Map<?, ?>> array = physical ? myPhysicalMaps : myNonPhysicalMaps;
+  private <TRef, TResult> @NotNull Map<TRef, TResult> getMap(int index) {
     //noinspection unchecked
-    Map<TRef, TResult> map = (Map<TRef, TResult>)array.get(index);
-    while (map == null) {
-      Map<TRef, TResult> newMap = createWeakMap();
-      //noinspection unchecked
-      map = array.compareAndSet(index, null, newMap) ? newMap : (Map<TRef, TResult>)array.get(index);
+    AtomicReferenceArray<Map<TRef, TResult>> array = (AtomicReferenceArray<Map<TRef,TResult>>)(AtomicReferenceArray<?>)myMaps;
+    Map<TRef, TResult> map = array.get(index);
+    if (map == null) {
+      map = array.updateAndGet(index, oldMap -> oldMap == null ? createWeakMap() : oldMap);
     }
     return map;
   }
 
-  private static int getIndex(boolean incompleteCode, boolean isPoly) {
-    return (incompleteCode ? 0 : 1)*2 + (isPoly ? 0 : 1);
+  private static int getIndex(boolean isPhysical, boolean incompleteCode, boolean isPoly) {
+    return (isPhysical ? 0 : 4) + (incompleteCode ? 0 : 2) + (isPoly ? 0 : 1);
   }
 
   private static final Object NULL_RESULT = ObjectUtils.sentinel("ResolveCache.NULL_RESULT");
 
-  private static <TRef extends PsiReference, TResult> void cache(@NotNull TRef ref,
-                                                                 @NotNull Map<? super TRef, TResult> map,
-                                                                 TResult result,
-                                                                 @NotNull Computable<TResult> doResolve) {
+  private static <TRef, TResult> void cache(@NotNull TRef ref, @NotNull Map<? super TRef, TResult> map, TResult result, @NotNull Computable<? extends TResult> doResolve) {
     // optimization: less contention
     TResult cached = map.get(ref);
     if (cached != null) {
@@ -287,23 +309,14 @@ public class ResolveCache implements Disposable {
       }
       IdempotenceChecker.checkEquivalence(cached, result, ref.getClass(), doResolve);
     }
-    if (result == null) {
-      // no use in creating SoftReference to null
-      //noinspection unchecked
-      cached = (TResult)NULL_RESULT;
-    }
-    else {
-      cached = result;
-    }
-    map.put(ref, cached);
+    map.put(ref, result);
   }
 
-  @NotNull
-  private static <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
+  private static @NotNull <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
     //noinspection unchecked
     return value == NULL_RESULT ? (StrongValueReference<K, V>)NULL_VALUE_REFERENCE
-                                : value == ResolveResult.EMPTY_ARRAY ? (StrongValueReference<K, V>)EMPTY_RESOLVE_RESULT
-                                                                     : new StrongValueReference<>(value);
+           : value == ResolveResult.EMPTY_ARRAY ? (StrongValueReference<K, V>)EMPTY_RESOLVE_RESULT
+           : new StrongValueReference<>(value);
   }
 
   private static final StrongValueReference<?, ?> NULL_VALUE_REFERENCE = new StrongValueReference<>(NULL_RESULT);
@@ -317,14 +330,13 @@ public class ResolveCache implements Disposable {
       myValue = value;
     }
 
-    @NotNull
     @Override
-    public ConcurrentWeakKeySoftValueHashMap.KeyReference<K, V> getKeyReference() {
+    public @NotNull ConcurrentWeakKeySoftValueHashMap.KeyReference<K, V> getKeyReference() {
       throw new UnsupportedOperationException(); // will never GC so this method will never be called so no implementation is necessary
     }
 
     @Override
-    public V get() {
+    public @NotNull V get() {
       return myValue;
     }
   }

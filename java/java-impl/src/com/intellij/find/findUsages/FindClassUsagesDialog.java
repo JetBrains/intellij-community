@@ -1,43 +1,38 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.util.List;
+
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.CONSTRUCTOR_USAGES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.DERIVED_INTERFACES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.DERIVED_USAGES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.FIELD_USAGES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.FIND_CLASS_STARTED;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.IMPLEMENTING_CLASSES;
+import static com.intellij.find.findUsages.JavaFindUsagesCollector.METHOD_USAGES;
 
 public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsagesOptions> {
   private StateRestoringCheckBox myCbUsages;
+  private StateRestoringCheckBox myCbConstructorUsages;
   private StateRestoringCheckBox myCbMethodsUsages;
   private StateRestoringCheckBox myCbFieldsUsages;
   private StateRestoringCheckBox myCbImplementingClasses;
   private StateRestoringCheckBox myCbDerivedInterfaces;
   private StateRestoringCheckBox myCbDerivedClasses;
 
-  public FindClassUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, boolean mustOpenInNewTab,
-                               boolean isSingleFile,
-                               FindUsagesHandler handler){
+  public FindClassUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions, boolean toShowInNewTab, 
+                               boolean mustOpenInNewTab, boolean isSingleFile, FindUsagesHandler handler){
     super(element, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
   }
 
@@ -50,52 +45,57 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
   public void calcFindUsagesOptions(JavaClassFindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
 
-    if (isToChange(myCbUsages)){
+    if (isToChange(myCbUsages)) {
       options.isUsages = isSelected(myCbUsages);
     }
-    if (isToChange(myCbMethodsUsages)){
+    if (isToChange(myCbConstructorUsages)) {
+      options.isConstructorUsages = isSelected(myCbConstructorUsages);
+    }
+    if (isToChange(myCbMethodsUsages)) {
       options.isMethodsUsages = isSelected(myCbMethodsUsages);
     }
-    if (isToChange(myCbFieldsUsages)){
+    if (isToChange(myCbFieldsUsages)) {
       options.isFieldsUsages = isSelected(myCbFieldsUsages);
     }
-    if (isToChange(myCbDerivedClasses)){
+    if (isToChange(myCbDerivedClasses)) {
       options.isDerivedClasses = isSelected(myCbDerivedClasses);
     }
-    if (isToChange(myCbImplementingClasses)){
+    if (isToChange(myCbImplementingClasses)) {
       options.isImplementingClasses = isSelected(myCbImplementingClasses);
     }
-    if (isToChange(myCbDerivedInterfaces)){
+    if (isToChange(myCbDerivedInterfaces)) {
       options.isDerivedInterfaces = isSelected(myCbDerivedInterfaces);
     }
     options.isSkipImportStatements = false;
     options.isCheckDeepInheritance = true;
     options.isIncludeInherited = false;
 
-    FUCounterUsageLogger.getInstance().logEvent(EVENT_LOG_GROUP, "find.class.started", createFeatureUsageData(options));
+    FIND_CLASS_STARTED.log(myPsiElement.getProject(), createFeatureUsageData(options));
   }
 
   @Override
-  protected FeatureUsageData createFeatureUsageData(JavaClassFindUsagesOptions options) {
-    FeatureUsageData data = super.createFeatureUsageData(options);
-    data.addData("methodUsages", options.isMethodsUsages);
-    data.addData("fieldUsages", options.isFieldsUsages);
-    data.addData("derivedUsages", options.isDerivedClasses);
-    data.addData("implementingClasses", options.isImplementingClasses);
-    data.addData("derivedInterfaces", options.isDerivedInterfaces);
+  protected List<EventPair<?>> createFeatureUsageData(JavaClassFindUsagesOptions options) {
+    List<EventPair<?>> data = super.createFeatureUsageData(options);
+    data.add(CONSTRUCTOR_USAGES.with(options.isConstructorUsages));
+    data.add(METHOD_USAGES.with(options.isMethodsUsages));
+    data.add(FIELD_USAGES.with(options.isFieldsUsages));
+    data.add(DERIVED_USAGES.with(options.isDerivedClasses));
+    data.add(IMPLEMENTING_CLASSES.with(options.isImplementingClasses));
+    data.add(DERIVED_INTERFACES.with(options.isDerivedInterfaces));
     return data;
   }
 
   @Override
   protected JPanel createFindWhatPanel() {
     JPanel findWhatPanel = new JPanel();
-
-    findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("find.what.group")));
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
     myCbUsages = addCheckboxToPanel(JavaBundle.message("find.what.usages.checkbox"), getFindUsagesOptions().isUsages, findWhatPanel, true);
 
     PsiClass psiClass = (PsiClass)getPsiElement();
+    if (!psiClass.isInterface()) {
+      myCbConstructorUsages = addCheckboxToPanel(JavaBundle.message("find.what.constructor.usages.checkbox"), getFindUsagesOptions().isConstructorUsages, findWhatPanel, true);
+    }
     myCbMethodsUsages = addCheckboxToPanel(JavaBundle.message("find.what.methods.usages.checkbox"), getFindUsagesOptions().isMethodsUsages, findWhatPanel, true);
 
     if (!psiClass.isAnnotationType()) {
@@ -114,21 +114,25 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
   @Override
   protected void update() {
     if(myCbToSearchForTextOccurrences != null){
-      if (isSelected(myCbUsages)){
-        myCbToSearchForTextOccurrences.makeSelectable();
-      }
-      else{
-        myCbToSearchForTextOccurrences.makeUnselectable(false);
-      }
+      updateStateOnUsagesStateChange(myCbToSearchForTextOccurrences);
     }
 
     boolean hasSelected = isSelected(myCbUsages) ||
-      isSelected(myCbFieldsUsages) ||
-      isSelected(myCbMethodsUsages) ||
-      isSelected(myCbImplementingClasses) ||
-      isSelected(myCbDerivedInterfaces) ||
-      isSelected(myCbDerivedClasses);
+                          isSelected(myCbConstructorUsages) ||
+                          isSelected(myCbMethodsUsages) ||
+                          isSelected(myCbFieldsUsages) ||
+                          isSelected(myCbDerivedClasses) ||
+                          isSelected(myCbImplementingClasses) ||
+                          isSelected(myCbDerivedInterfaces);
     setOKActionEnabled(hasSelected);
   }
 
+  protected void updateStateOnUsagesStateChange(StateRestoringCheckBox dependantCb) {
+    if (isSelected(myCbUsages)){
+      dependantCb.makeSelectable();
+    }
+    else{
+      dependantCb.makeUnselectable(false);
+    }
+  }
 }

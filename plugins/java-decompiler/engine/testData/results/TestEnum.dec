@@ -18,10 +18,10 @@ public enum TestEnum {
    }// 32
 
    private TestEnum() {
-      this("?", (TestEnum.Type)null);// 36
+      this("?", (Type)null);// 36
    }
 
-   private TestEnum(@Deprecated String var3, TestEnum.Type var4) {
+   private TestEnum(@Deprecated String var3, Type var4) {
       this.s = var3;// 37
    }
 
@@ -50,13 +50,20 @@ class 'pkg/TestEnum' {
 
    method '<init> (Ljava/lang/String;I)V' {
       3      20
+      4      20
       5      20
       6      20
+      7      20
+      8      20
       9      21
    }
 
    method '<init> (Ljava/lang/String;ILjava/lang/String;Lpkg/TestEnum$Type;)V' {
+      6      24
+      7      24
       8      24
+      9      24
+      a      24
       b      25
    }
 }

@@ -15,10 +15,12 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
+@ApiStatus.Internal
 class FileChannelBackedWriteBuffer(
   private val channel: FileChannel,
   private val closeOutput: Boolean = false

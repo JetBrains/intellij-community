@@ -1,42 +1,36 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.ArrayUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-/**
- * @author yole
- */
+
 @SuppressWarnings("TestOnlyProblems")
 public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl implements JavaCodeInsightTestFixture {
+  private final FileTreeAccessFilter myVirtualFileFilter;
+
   public JavaCodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture) {
     super(projectFixture, tempDirFixture);
+    myVirtualFileFilter = new FileTreeAccessFilter();
+    super.setVirtualFileFilter(myVirtualFileFilter);
   }
 
   @Override
@@ -46,7 +40,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   }
 
   @Override
-  public PsiClass addClass(@NotNull @NonNls final String classText) {
+  public PsiClass addClass(@NonNls @NotNull @Language("JAVA") String classText) {
     assertInitialized();
 
     String rootPath = getTempDirPath();
@@ -69,7 +63,7 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return psiClass;
   }
 
-  private PsiClass addClass(@NonNls final String rootPath, @NotNull @NonNls final String classText) {
+  private PsiClass addClass(final @NonNls String rootPath, @NonNls @NotNull @Language("JAVA") String classText) {
     final String qName =
       ReadAction.compute(() -> {
         final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
@@ -82,19 +76,21 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   }
 
   @Override
-  @NotNull
-  public PsiClass findClass(@NotNull @NonNls final String name) {
+  public @NotNull PsiClass findClass(final @NotNull @NonNls String name) {
     PsiClass aClass = getJavaFacade().findClass(name, GlobalSearchScope.allScope(getProject()));
     Assert.assertNotNull("Class " + name + " not found", aClass);
     return aClass;
   }
 
   @Override
-  @NotNull
-  public PsiPackage findPackage(@NotNull @NonNls final String name) {
+  public @NotNull PsiPackage findPackage(final @NotNull @NonNls String name) {
     final PsiPackage aPackage = getJavaFacade().findPackage(name);
     Assert.assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
   }
 
+  @Override
+  public void allowTreeAccessForFile(@NotNull VirtualFile file) {
+    myVirtualFileFilter.allowTreeAccessForFile(file);
+  }
 }

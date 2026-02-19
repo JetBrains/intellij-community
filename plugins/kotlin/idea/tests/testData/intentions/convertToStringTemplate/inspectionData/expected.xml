@@ -1,0 +1,32 @@
+<problems>
+    <problem>
+        <file>simple.kt</file>
+        <line>3</line>
+        <description>'String' concatenation can be converted to a template</description>
+    </problem>
+    <problem>
+        <file>noBracesSimpleFollowedByDot.kt</file>
+        <line>5</line>
+        <description>'String' concatenation can be converted to a template</description>
+    </problem>
+    <problem>
+        <file>specialCharsInCharLiteral.kt</file>
+        <line>3</line>
+        <description>'String' concatenation can be converted to a template</description>
+    </problem>
+    <problem>
+        <file>doesNotCorruptExistingTemplate.kt</file>
+        <line>6</line>
+        <description>'String' concatenation can be converted to a template</description>
+    </problem>
+    <problem>
+        <file>unescapeSingleQuote.kt</file>
+        <line>2</line>
+        <description>'String' concatenation can be converted to a template</description>
+    </problem>
+    <problem>
+        <file>noBracesForLastSimpleExpression.kt</file>
+        <line>5</line>
+        <description>'String' concatenation can be converted to a template</description>
+    </problem>
+</problems>

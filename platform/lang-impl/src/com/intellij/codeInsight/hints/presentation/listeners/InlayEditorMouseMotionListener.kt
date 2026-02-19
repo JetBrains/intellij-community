@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation.listeners
 
 import com.intellij.codeInsight.hints.presentation.InputHandler
@@ -14,14 +14,14 @@ class InlayEditorMouseMotionListener : EditorMouseMotionListener {
     if (e.isConsumed) return
     val event = e.mouseEvent
     if (e.area != EditorMouseEventArea.EDITING_AREA) {
-      activeContainer?.mouseExited()
+      exitMouseInActiveContainer()
       activeContainer = null
       return
     }
     val inlay = e.inlay
     val container = inlay?.renderer
     if (activeContainer != container) {
-      activeContainer?.mouseExited()
+      exitMouseInActiveContainer()
       if (container == null) {
         activeContainer = null
       }
@@ -31,8 +31,12 @@ class InlayEditorMouseMotionListener : EditorMouseMotionListener {
     }
     if (container !is InputHandler) return
     val bounds = inlay.bounds ?: return
-    val inlayPoint = Point(bounds.x, bounds.y)
-    val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
+    val translatedInlayPoint = container.translatePoint(Point(bounds.x, bounds.y))
+    val translated = Point(event.x - translatedInlayPoint.x, event.y - translatedInlayPoint.y)
     container.mouseMoved(event, translated)
+  }
+
+  private fun exitMouseInActiveContainer() {
+    activeContainer?.mouseExited()
   }
 }

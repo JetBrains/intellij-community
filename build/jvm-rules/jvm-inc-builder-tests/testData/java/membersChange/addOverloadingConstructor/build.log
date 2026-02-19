@@ -1,0 +1,17 @@
+================ Step #1 =================
+Cleaning output files:
+  A.class
+End of files
+Compiling files:
+  java/membersChange/addOverloadingConstructor/a/A.java
+End of files
+Cleaning output files:
+  ASub.class
+  C.class
+End of files
+Compiling files:
+  java/membersChange/addOverloadingConstructor/a/ASub.java
+  java/membersChange/addOverloadingConstructor/a/C.java
+End of files
+------------------------------------------
+Exit code: ERROR

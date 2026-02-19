@@ -1,17 +1,20 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -19,56 +22,41 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private @IntentionName String myText;
+import java.util.function.Consumer;
 
+public class ReplaceGetClassWithClassLiteralFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   public ReplaceGetClassWithClassLiteralFix(PsiMethodCallExpression expression) {
     super(expression);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiClass aClass = PsiTreeUtil.getParentOfType(startElement, PsiClass.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
+    PsiClass aClass = PsiTreeUtil.getParentOfType(call, PsiClass.class);
     assert aClass != null;
-    PsiExpression classLiteral = JavaPsiFacade.getElementFactory(project).createExpressionFromText(aClass.getName() + ".class", startElement);
-    new CommentTracker().replaceAndRestoreComments(startElement, classLiteral);
+    PsiExpression classLiteral = JavaPsiFacade.getElementFactory(context.project()).createExpressionFromText(aClass.getName() + ".class", call);
+    new CommentTracker().replaceAndRestoreComments(call, classLiteral);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    PsiClass aClass = PsiTreeUtil.getParentOfType(startElement, PsiClass.class);
-    if (aClass == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call) {
+    PsiClass aClass = PsiTreeUtil.getParentOfType(call, PsiClass.class);
+    if (aClass == null) return null;
     String className = aClass.getName();
-    if (className == null) return false;
-    myText = CommonQuickFixBundle.message("fix.replace.with.x", className + "." + PsiKeyword.CLASS);
-    return super.isAvailable(project, file, startElement, endElement);
+    if (className == null) return null;
+    return Presentation.of(CommonQuickFixBundle.message("fix.replace.with.x", className + "." + JavaKeywords.CLASS)).withPriority(
+      PriorityAction.Priority.HIGH);
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return myText;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("replace.get.class.with.class.literal");
   }
 
-  public static void registerFix(PsiMethodCallExpression callExpression, HighlightInfo errorResult) {
+  public static void registerFix(PsiMethodCallExpression callExpression, @NotNull Consumer<? super CommonIntentionAction> info) {
     if (callExpression.getMethodExpression().getQualifierExpression() == null) {
       PsiMethod method = callExpression.resolveMethod();
       if (method != null && PsiTypesUtil.isGetClass(method)) {
-        QuickFixAction.registerQuickFixAction(errorResult, new ReplaceGetClassWithClassLiteralFix(callExpression));
+        info.accept(new ReplaceGetClassWithClassLiteralFix(callExpression));
       }
     }
   }

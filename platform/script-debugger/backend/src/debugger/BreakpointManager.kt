@@ -16,9 +16,10 @@
 package org.jetbrains.debugger
 
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
-import java.util.*
 
+@ApiStatus.Internal
 interface BreakpointManager {
   enum class MUTE_MODE {
     ALL,
@@ -30,13 +31,6 @@ interface BreakpointManager {
 
   val regExpBreakpointSupported: Boolean
     get() = false
-
-  @Deprecated("use another overload")
-  fun setBreakpoint(target: BreakpointTarget,
-                    line: Int,
-                    condition: String? = null): Breakpoint {
-    throw UnsupportedOperationException()
-  }
 
   fun setBreakpoint(target: BreakpointTarget,
                     line: Int,
@@ -86,13 +80,4 @@ interface BreakpointManager {
   interface SetBreakpointResult
   data class BreakpointExist(val existingBreakpoint: Breakpoint) : SetBreakpointResult
   data class BreakpointCreated(val breakpoint: Breakpoint, val isRegistered: Promise<out Breakpoint>) : SetBreakpointResult
-}
-
-interface BreakpointListener : EventListener {
-  fun resolved(breakpoint: Breakpoint)
-
-  fun errorOccurred(breakpoint: Breakpoint, errorMessage: String?)
-
-  fun nonProvisionalBreakpointRemoved(breakpoint: Breakpoint) {
-  }
 }

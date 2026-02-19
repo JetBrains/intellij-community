@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -14,22 +14,21 @@ import java.util.List;
 
 public class XmlEnumeratedReferenceSet extends ReferenceSetBase<XmlEnumeratedValueReference> {
 
-  private final XmlEnumerationDescriptor myDescriptor;
+  protected final XmlEnumerationDescriptor myDescriptor;
 
   public XmlEnumeratedReferenceSet(@NotNull XmlElement element, XmlEnumerationDescriptor descriptor) {
     super(ElementManipulators.getValueText(element),element, ElementManipulators.getOffsetInElement(element), ' ');
     myDescriptor = descriptor;
   }
 
-  @Nullable
   @Override
-  protected XmlEnumeratedValueReference createReference(TextRange range, int index) {
+  protected @Nullable XmlEnumeratedValueReference createReference(TextRange range, int index) {
     return new XmlEnumeratedValueReference((XmlElement)getElement(), myDescriptor, range);
   }
 
   @Override
   public List<XmlEnumeratedValueReference> getReferences() {
     if (myDescriptor.isList()) return super.getReferences();
-    return Collections.singletonList(new XmlEnumeratedValueReference((XmlElement)getElement(), myDescriptor));
+    return Collections.singletonList(createReference(null, 0));
   }
 }

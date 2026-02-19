@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -7,31 +7,35 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
- * @author yole
+ * Provides simple directory-oriented generators, which usually used in small IDEs, where there is only one module
+ * {@link com.intellij.ide.util.projectWizard.AbstractNewProjectStep}
+ * {@link com.intellij.ide.util.projectWizard.ProjectSettingsStepBase}
+ * {@link com.intellij.ide.util.projectWizard.CustomStepProjectGenerator}
+ * {@link HideableProjectGenerator}
+ * 
  */
 public interface DirectoryProjectGenerator<T> {
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  default String getDescription() {
+  default @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
     return null;
   }
 
-  @Nullable
-  default String getHelpId() {
+  default @Nullable String getHelpId() {
     return null;
   }
 
+  /**
+   * @deprecated unused
+   */
   // to be removed in 2017.3
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017.3")
+  @Deprecated(forRemoval = true)
   default boolean isPrimaryGenerator() {
     return true;
   }
@@ -40,22 +44,14 @@ public interface DirectoryProjectGenerator<T> {
   @NlsContexts.Label
   String getName();
 
-  @NotNull
-  default NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
-    return new NotNullLazyValue<ProjectGeneratorPeer<T>>() {
-      @NotNull
-      @Override
-      protected ProjectGeneratorPeer<T> compute() {
-        return createPeer();
-      }
-    };
+  default @NotNull NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+    return NotNullLazyValue.lazy(this::createPeer);
   }
 
   /**
    * Creates new peer - new project settings and UI for them
    */
-  @NotNull
-  default ProjectGeneratorPeer<T> createPeer() {
+  default @NotNull ProjectGeneratorPeer<T> createPeer() {
     return new GeneratorPeerImpl<>();
   }
 
@@ -65,6 +61,7 @@ public interface DirectoryProjectGenerator<T> {
   @Nullable
   Icon getLogo();
 
+  @RequiresEdt
   void generateProject(@NotNull Project project,
                        @NotNull VirtualFile baseDir,
                        @NotNull T settings,

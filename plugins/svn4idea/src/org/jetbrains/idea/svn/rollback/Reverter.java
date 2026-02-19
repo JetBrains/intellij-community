@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -9,7 +9,13 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnFileSystemListener;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ErrorCode;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertiesMap;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
@@ -17,13 +23,17 @@ import org.jetbrains.idea.svn.properties.PropertyData;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class Reverter {
 
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull SvnVcs myVcs;
   private final ProgressTracker myHandler;
   private final @NotNull List<? super VcsException> myExceptions;
   private final List<CopiedAsideInfo> myFromToModified;
@@ -157,9 +167,8 @@ public class Reverter {
     }
   }
 
-  @NotNull
-  private static ProgressTracker createRevertHandler(final @NotNull List<? super VcsException> exceptions,
-                                                     @NotNull final RollbackProgressListener listener) {
+  private static @NotNull ProgressTracker createRevertHandler(final @NotNull List<? super VcsException> exceptions,
+                                                              final @NotNull RollbackProgressListener listener) {
     return new ProgressTracker() {
       @Override
       public void consume(ProgressEvent event) {
@@ -181,9 +190,8 @@ public class Reverter {
     };
   }
 
-  @NotNull
-  private static PropertyConsumer createPropertyHandler(@NotNull final Map<File, PropertiesMap> properties,
-                                                        @NotNull final UnversionedAndNotTouchedFilesGroupCollector collector) {
+  private static @NotNull PropertyConsumer createPropertyHandler(final @NotNull Map<File, PropertiesMap> properties,
+                                                                 final @NotNull UnversionedAndNotTouchedFilesGroupCollector collector) {
     return new PropertyConsumer() {
       @Override
       public void handleProperty(File path, PropertyData property) {

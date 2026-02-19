@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
@@ -15,7 +19,7 @@ import java.util.Set;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public final class ChainSearchTarget {
-  private static final Set<String> EXCLUDED_PACKAGES = ContainerUtil.set("java.lang", "java.util.function");
+  private static final Set<String> EXCLUDED_PACKAGES = Set.of("java.lang", "java.util.function");
 
   private final String myClassQName;
   private final byte[] myAcceptedArrayKinds;
@@ -61,19 +65,15 @@ public final class ChainSearchTarget {
            this;
   }
 
-  @Nullable
-  public static ChainSearchTarget create(PsiType type) {
-    if (type instanceof PsiArrayType) {
-      return create((PsiArrayType)type);
-    }
-    else if (type instanceof PsiClassType) {
-      return create((PsiClassType)type);
-    }
-    return null;
+  public static @Nullable ChainSearchTarget create(@Nullable PsiType type) {
+    return switch (type) {
+      case PsiArrayType arrayType -> create(arrayType);
+      case PsiClassType classType -> create(classType);
+      case null, default -> null;
+    };
   }
 
-  @Nullable
-  private static ChainSearchTarget create(PsiArrayType arrayType) {
+  private static @Nullable ChainSearchTarget create(PsiArrayType arrayType) {
     // only 1-dim arrays accepted
     PsiType componentType = arrayType.getComponentType();
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
@@ -83,8 +83,7 @@ public final class ChainSearchTarget {
     return new ChainSearchTarget(targetQName, new byte[] {SignatureData.ARRAY_ONE_DIM}, arrayType);
   }
 
-  @Nullable
-  private static ChainSearchTarget create(PsiClassType classType) {
+  private static @Nullable ChainSearchTarget create(PsiClassType classType) {
     PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
     if (resolvedClass == null) return null;
     byte iteratorKind = SignatureData.ZERO_DIM;

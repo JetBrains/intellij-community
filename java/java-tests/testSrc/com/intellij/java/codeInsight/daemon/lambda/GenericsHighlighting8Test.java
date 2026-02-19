@@ -1,36 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +30,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
     enableInspectionTool(new UnusedImportInspection());
+    enableInspectionTool(new JavacQuirksInspection());
   }
 
   @Override
@@ -619,7 +605,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA55510() {
-    doTest();
+    doTest(true);
   }
 
   public void testIDEA27185(){
@@ -644,7 +630,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA108287() {
-    doTest();
+    doTest(true);
   }
 
   public void testIDEA77128() {
@@ -805,7 +791,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
    private void doTest(boolean warnings) {
-     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+     IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_8);
      IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
      doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
    }
@@ -1051,15 +1037,41 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
-    String expected = "<html><body><table>" +
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 8px 4px;color: " + greyed + "'>Required type:</td>" +
-                      "<td style='padding: 0px 4px 8px 0px;'><font color=\"" + toolTipForeground + "\">Generic</font></td><td style='padding: 0px 0px 8px 0px;'>&lt;<font color=\"" + toolTipForeground + "\">? extends Number</font>,</td><td style='padding: 0px 0px 8px 0px;'><font color=\"" + toolTipForeground + "\">Number</font>,</td><td style='padding: 0px 0px 8px 0px;'><font color=\"" + toolTipForeground + "\">Integer</font>&gt;</td></tr>" +
-                      "<tr><td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
-                      "<td style='padding: 0px 4px 0px 0px;'><font color=\"" + toolTipForeground + "\">Generic</font></td><td style='padding: 0px 0px 0px 0px;'>&lt;<font color=\"" + toolTipForeground + "\">Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color=\"" + red + "\">Integer</font>,</td><td style='padding: 0px 0px 0px 0px;'><font color=\"" + toolTipForeground + "\">Integer</font>&gt;</td></tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">Generic</span></td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'>&lt;<span style=\"color: " + toolTipForeground + "\">? extends Number</span>,</td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'><span style=\"color: " + toolTipForeground + "\">Number</span>,</td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'><span style=\"color: " + toolTipForeground + "\">Integer</span>&gt;</td></tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + toolTipForeground + "\">Generic</span></td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'>&lt;<span style=\"color: " + toolTipForeground + "\">Integer</span>,</td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'><span style=\"color: " + red + "\">Integer</span>,</td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'><span style=\"color: " + toolTipForeground + "\">Integer</span>&gt;</td>" +
+                      "</tr>" +
+                      "</table></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testTooltipNotEnoughArguments() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
+                      "<tr>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">int</span></td></tr>" +
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + red + "\">String</span></td></tr>" +
                       "</table>" +
-                      "</body></html>";
+                      "</html>";
 
     doHighlighting()
       .stream()
@@ -1071,17 +1083,17 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
-    String expected = "<html><body><table>" +
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 8px 4px;color: " + greyed+ "'>Required type:</td>" +
-                      "<td style='padding: 0px 4px 8px 0px;'><font color=\"" + toolTipForeground + "\">String...</font></td>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: " + toolTipForeground + "\">String</span></td>" +
                       "</tr>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
-                      "<td style='padding: 0px 4px 0px 0px;'><font color=\"" + red + "\">int</font></td>" +
+                      "<td style=\"padding: 0px 16px 0px 4px; color: " + greyed + "\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: " + red + "\">int</span></td>" +
                       "</tr>" +
-                      "</table></body></html>";
+                      "</table></html>";
 
     doHighlighting()
       .stream()
@@ -1093,19 +1105,18 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
     String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
                                                   .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
                                                   .getBackgroundColor());
-    int fontSize = StartupUiUtil.getLabelFont().getSize() - (SystemInfo.isWindows ? 0 : 1);
-    String expected = "<html><body><table>" +
-                      "<tr><td/><td style=\"color: " + greyed + "; padding-left: 16px; padding-right: 24px;\">Required type</td>" +
-                      "<td style=\"color: " + greyed + "; padding-right: 28px;\">Provided</td></tr>" +
-                      "<tr><td><table><tr><td style=\"color: " + greyed + "; font-size:" + fontSize + "pt; padding:1px 4px 1px 4px;background-color: " + paramBgColor + ";\">list:</td></tr></table></td>" +
-                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><font color=\"" + toolTipForeground + "\">String...</font></td>" +
-                      "<td style=\"padding-right: 28px;\"><font color=\"" + red + "\">int</font></td></tr>" +
-                      "<tr><td/><td style=\"padding-left: 16px; padding-right: 24px;\"/><td style=\"padding-right: 28px;\"><font color=\"" + red + "\">int</font></td></tr>" +
-                      "</table></body></html>";
+    String expected = "<html><table>" +
+                      "<tr><td/><td style=\"padding-left: 16px; padding-right: 24px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding-right: 28px; color: " + greyed + "\">Provided:</td></tr>" +
+                      "<tr><td><table><tr><td style=\"padding:1px 4px 1px 4px; color: " + greyed + "; background-color: " + paramBgColor + "\">list:</td></tr></table></td>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><span style=\"color: " + toolTipForeground + "\">String...</span></td>" +
+                      "<td style=\"padding-right: 28px;\"><span style=\"color: " + red + "\">int</span></td></tr>" +
+                      "<tr><td/><td style=\"padding-left: 16px; padding-right: 24px;\"/><td style=\"padding-right: 28px;\"><span style=\"color: " + red + "\">int</span></td></tr>" +
+                      "</table></html>";
 
     doHighlighting()
       .stream()
@@ -1117,19 +1128,15 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
-    String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
-      .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
-      .getBackgroundColor());
-    int fontSize = StartupUiUtil.getLabelFont().getSize() - (SystemInfo.isWindows ? 0 : 1);
-    String expected = "<html><body><table>" +
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 8px 4px;color: " + greyed + "'>Required type:</td>" +
-                      "<td style='padding: 0px 4px 8px 0px;'><font color=\"" + toolTipForeground + "\">CharSequence...</font></td>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: "+greyed+"\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: "+toolTipForeground+"\">CharSequence</span></td>" +
                       "</tr>" +
-                      "<tr><td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
-                      "<td style='padding: 0px 4px 0px 0px;'><font color=\"" + red + "\">int</font></td></tr>" +
-                      "</table></body></html>";
+                      "<tr><td style=\"padding: 0px 16px 0px 4px; color: "+greyed+"\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: "+red+"\">int</span></td></tr>" +
+                      "</table></html>";
 
     doHighlighting()
       .stream()
@@ -1141,18 +1148,18 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
-    String expected = "<html><body><table>" +
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
+    String expected = "<html><table>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 8px 4px;color: " + greyed + "'>Required type:</td>" +
-                      "<td style='padding: 0px 4px 8px 0px;'><font color=\"" + toolTipForeground + "\">Class</font></td>" +
-                      "<td style='padding: 0px 0px 8px 0px;'>&lt;<font color=\"" + toolTipForeground + "\">capture of ?</font>&gt;</td>" +
+                      "<td style=\"padding: 0px 16px 8px 4px; color: "+greyed+"\">Required type:</td>" +
+                      "<td style=\"padding: 0px 4px 8px 0px;\"><span style=\"color: "+toolTipForeground+"\">Class</span></td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'>&lt;<span style=\"color: "+toolTipForeground+"\">capture of ?</span>&gt;</td>" +
                       "</tr>" +
                       "<tr>" +
-                      "<td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
-                      "<td style='padding: 0px 4px 0px 0px;'><font color=\"" + toolTipForeground + "\">Class</font></td>" +
-                      "<td style='padding: 0px 0px 0px 0px;'>&lt;<font color=\"" + red + "\">capture of ?</font>&gt;</td></tr>" +
-                      "</table></body></html>";
+                      "<td style=\"padding: 0px 16px 0px 4px; color: "+greyed+"\">Provided:</td>" +
+                      "<td style=\"padding: 0px 4px 0px 0px;\"><span style=\"color: "+toolTipForeground+"\">Class</span></td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'>&lt;<span style=\"color: "+red+"\">capture of ?</span>&gt;</td></tr>" +
+                      "</table></html>";
 
     doHighlighting()
       .stream()
@@ -1164,25 +1171,24 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String red = ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground());
     String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
       .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       .getBackgroundColor());
-    int fontSize = StartupUiUtil.getLabelFont().getSize() - (SystemInfo.isWindows ? 0 : 1);
-    String expected = "<html><body><table>" +
+    String expected = "<html><table>" +
                       "<tr>" +
                       "<td/>" +
-                      "<td style=\"color: " + greyed + "; padding-left: 16px; padding-right: 24px;\">Required type</td>" +
-                      "<td style=\"color: " + greyed + "; padding-right: 28px;\">Provided</td></tr>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px; color: " + greyed + "\">Required type:</td>" +
+                      "<td style=\"padding-right: 28px; color: " + greyed + "\">Provided:</td></tr>" +
                       "<tr>" +
-                      "<td><table><tr><td style=\"color: " + greyed + "; font-size:" + fontSize + "pt; padding:1px 4px 1px 4px;background-color: " + paramBgColor + ";\">integerList:</td></tr></table></td>" + 
-                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><font color=\"" + toolTipForeground + "\">List&lt;Integer&gt;</font></td>" +
-                      "<td style=\"padding-right: 28px;\"><font color=\"" + toolTipForeground + "\">List</font>&lt;<font color=\"" + red + "\">String</font>&gt;</td></tr>" +
+                      "<td><table><tr><td style=\"padding:1px 4px 1px 4px; color: " + greyed + "; background-color: " + paramBgColor + "\">integerList:</td></tr></table></td>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><span style=\"color: " + toolTipForeground + "\">List&lt;Integer&gt;</span></td>" +
+                      "<td style=\"padding-right: 28px;\"><span style=\"color: " + toolTipForeground + "\">List</span>&lt;<span style=\"color: " + red + "\">String</span>&gt;</td></tr>" +
                       "<tr>" +
-                      "<td><table><tr><td style=\"color: " + greyed + "; font-size:" + fontSize + "pt; padding:1px 4px 1px 4px;background-color: " + paramBgColor + ";\">stringList:</td></tr></table></td>" + 
-                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><font color=\"" + toolTipForeground+ "\">List&lt;String&gt;</font></td>" +
-                      "<td style=\"padding-right: 28px;\"><font color=\"" + toolTipForeground + "\">List</font>&lt;<font color=\"" + red + "\">Integer</font>&gt;</td></tr>" +
-                      "</table></body></html>";
+                      "<td><table><tr><td style=\"padding:1px 4px 1px 4px; color: " + greyed + "; background-color: " + paramBgColor + "\">stringList:</td></tr></table></td>" +
+                      "<td style=\"padding-left: 16px; padding-right: 24px;\"><span style=\"color: " + toolTipForeground + "\">List&lt;String&gt;</span></td>" +
+                      "<td style=\"padding-right: 28px;\"><span style=\"color: " + toolTipForeground + "\">List</span>&lt;<span style=\"color: " + red + "\">Integer</span>&gt;</td></tr>" +
+                      "</table></html>";
 
     doHighlighting()
       .stream()
@@ -1191,9 +1197,17 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testBridgeMethodOverriding() { doTest(); }
+  public void testClassLiteralType() { doTest(); }
   public void testNestedWildcardsWithImplicitBounds() { doTest(); }
   public void testCallOnRawWithExplicitTypeArguments() { doTest(); }
   public void testNoCaptureConversionDuringDetectingSupertypesDeepInHierarchy() { doTest(); }
   public void testLowerBoundAssignabilityCheck() { doTest(); }
   public void testIgnoreErasureForProperTypeBound() { doTest(); }
+  public void testInferenceErrorAttribution() {doTest();}
+  public void testLocalClassParameters() {doTest();}
+  public void testRawAtFBoundAtNew() { doTest(); }
+  public void testUnboxingTrivialGeneric(){doTest();}
+  
+  @TestFor(issues = "IDEA-378878")
+  public void testWildcardAfterMethodRef() { doTest(); }
 }

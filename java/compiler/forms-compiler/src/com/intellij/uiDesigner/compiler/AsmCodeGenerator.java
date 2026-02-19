@@ -1,36 +1,70 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.FontDescriptor;
+import com.intellij.uiDesigner.lw.IButtonGroup;
+import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwContainer;
+import com.intellij.uiDesigner.lw.LwIntroComponentProperty;
+import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
+import com.intellij.uiDesigner.lw.LwNestedForm;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.LwScrollPane;
+import com.intellij.uiDesigner.lw.LwSplitPane;
+import com.intellij.uiDesigner.lw.LwTabbedPane;
+import com.intellij.uiDesigner.lw.LwToolBar;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.shared.BorderType;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.FieldVisitor;
 import org.jetbrains.org.objectweb.asm.Label;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.ListModel;
 import javax.swing.border.Border;
-import java.awt.*;
-import java.io.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
-/**
- * @author yole
- */
-public class AsmCodeGenerator {
+public final class AsmCodeGenerator {
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
   private final LwRootContainer myRootContainer;
   private final InstrumentationClassFinder myFinder;
   private final List<FormErrorInfo> myErrors;
   private final List<FormErrorInfo> myWarnings;
 
-  private final Map<String, Integer> myIdToLocalMap = new HashMap<String, Integer>();
+  private final Map<String, Integer> myIdToLocalMap = new HashMap<>();
 
   private static final String CONSTRUCTOR_NAME = "<init>";
   private String myClassToBind;
@@ -38,9 +72,9 @@ public class AsmCodeGenerator {
 
   private Method myGetFontMethod;
 
-  private static final Map<String, LayoutCodeGenerator> myContainerLayoutCodeGenerators = new HashMap<String, LayoutCodeGenerator>();
-  private static final Map<Class<? extends LwContainer>, LayoutCodeGenerator> myComponentLayoutCodeGenerators = new HashMap<Class<? extends LwContainer>, LayoutCodeGenerator>();
-  private static final Map<String, PropertyCodeGenerator> myPropertyCodeGenerators = new LinkedHashMap<String, PropertyCodeGenerator>();  // need LinkedHashMap for deterministic iteration
+  private static final Map<String, LayoutCodeGenerator> myContainerLayoutCodeGenerators = new HashMap<>();
+  private static final Map<Class<? extends LwContainer>, LayoutCodeGenerator> myComponentLayoutCodeGenerators = new HashMap<>();
+  private static final Map<String, PropertyCodeGenerator> myPropertyCodeGenerators = new LinkedHashMap<>();  // need LinkedHashMap for deterministic iteration
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
   public static final String GET_ROOT_COMPONENT_METHOD_NAME = "$$$getRootComponent$$$";
   public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";
@@ -104,8 +138,8 @@ public class AsmCodeGenerator {
     myRootContainer = rootContainer;
     myFinder = finder;
 
-    myErrors = new ArrayList<FormErrorInfo>();
-    myWarnings = new ArrayList<FormErrorInfo>();
+    myErrors = new ArrayList<>();
+    myWarnings = new ArrayList<>();
     myClassWriter = classWriter;
   }
   
@@ -123,33 +157,24 @@ public class AsmCodeGenerator {
       return;
     }
 
-    FileInputStream fis;
     try {
       byte[] patchedData;
-      fis = new FileInputStream(classFile);
-      try {
+      try(FileInputStream fis = new FileInputStream(classFile)) {
         patchedData = patchClass(fis);
         if (patchedData == null) {
           return;
         }
       }
-      finally {
-        fis.close();
-      }
 
-      FileOutputStream fos = new FileOutputStream(classFile);
-      try {
+      try (FileOutputStream fos = new FileOutputStream(classFile)) {
         fos.write(patchedData);
-      }
-      finally {
-        fos.close();
       }
     }
     catch (IOException e) {
-      myErrors.add(new FormErrorInfo(null, "Cannot read or write class file " + classFile.getPath() + ": " + e.toString()));
+      myErrors.add(new FormErrorInfo(null, "Cannot read or write class file " + classFile.getPath() + ": " + e));
     }
     catch(IllegalStateException e) {
-      myErrors.add(new FormErrorInfo(null, "Unexpected data in form file when patching class " + classFile.getPath() + ": " + e.toString()));
+      myErrors.add(new FormErrorInfo(null, "Unexpected data in form file when patching class " + classFile.getPath() + ": " + e));
     }
   }
 
@@ -233,8 +258,8 @@ public class AsmCodeGenerator {
   class FormClassVisitor extends ClassVisitor implements GetFontMethodProvider {
     private String myClassName;
     private String mySuperName;
-    private final Map<String, String> myFieldDescMap = new HashMap<String, String>();
-    private final Map<String, Integer> myFieldAccessMap = new HashMap<String, Integer>();
+    private final Map<String, String> myFieldDescMap = new HashMap<>();
+    private final Map<String, Integer> myFieldAccessMap = new HashMap<>();
     private boolean myHaveCreateComponentsMethod = false;
     private int myCreateComponentsAccess;
     private final boolean myExplicitSetupCall;
@@ -293,7 +318,7 @@ public class AsmCodeGenerator {
     @Override
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       myFieldDescMap.put(name, desc);
-      myFieldAccessMap.put(name, new Integer(access));
+      myFieldAccessMap.put(name, Integer.valueOf(access));
       return super.visitField(access, name, desc, signature, value);
     }
 
@@ -316,7 +341,7 @@ public class AsmCodeGenerator {
 
       final String rootBinding = myRootContainer.getComponent(0).getBinding();
       if (rootBinding != null && myFieldDescMap.containsKey(rootBinding)) {
-        buildGetRootComponenMethod();
+        buildGetRootComponentMethod();
       }
 
       if (myGetFontMethod != null) {
@@ -331,7 +356,7 @@ public class AsmCodeGenerator {
       super.visitEnd();
     }
 
-    private void buildGetRootComponenMethod() {
+    private void buildGetRootComponentMethod() {
       final Type componentType = Type.getType(JComponent.class);
       final Method method = new Method(GET_ROOT_COMPONENT_METHOD_NAME, componentType, new Type[0]);
       GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC, method, null, null, cv);
@@ -398,7 +423,7 @@ public class AsmCodeGenerator {
       Type componentType = typeFromClassName(className);
       int componentLocal = generator.newLocal(componentType);
 
-      myIdToLocalMap.put(lwComponent.getId(), new Integer(componentLocal));
+      myIdToLocalMap.put(lwComponent.getId(), Integer.valueOf(componentLocal));
 
       InstrumentationClassFinder.PseudoClass componentClass = getComponentClass(className, myFinder);
       validateFieldBinding(lwComponent, componentClass);
@@ -419,10 +444,7 @@ public class AsmCodeGenerator {
             componentType = Type.getType(componentClass.getDescriptor());
           }
         }
-        catch (ClassNotFoundException e) {
-          throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
-        }
-        catch (IOException e) {
+        catch (ClassNotFoundException | IOException e) {
           throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
         }
       }
@@ -461,7 +483,7 @@ public class AsmCodeGenerator {
         if (lwComponent instanceof LwNestedForm) {
           componentLocal = getNestedFormComponent(generator, componentClass, componentLocal);
         }
-        parentCodeGenerator.generateComponentLayout(lwComponent, generator, componentLocal, parentLocal);
+        parentCodeGenerator.generateComponentLayout(lwComponent, generator, componentLocal, parentLocal, myClassName);
       }
 
       if (lwComponent instanceof LwContainer) {
@@ -567,10 +589,7 @@ public class AsmCodeGenerator {
             continue;
           }
         }
-        catch (IOException e) {
-          throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
-        }
-        catch (ClassNotFoundException e) {
+        catch (IOException | ClassNotFoundException e) {
           throw new CodeGenerationException(lwComponent.getId(), e.getMessage(), e);
         }
 
@@ -632,11 +651,10 @@ public class AsmCodeGenerator {
                                           final InstrumentationClassFinder.PseudoClass componentClass,
                                           final GeneratorAdapter generator,
                                           final int componentLocal) throws CodeGenerationException {
-      for (Object o : lwComponent.getDelegeeClientProperties().entrySet()) {
-        Map.Entry e = (Map.Entry)o;
+      for (Map.Entry<String, Object> e : lwComponent.getDelegeeClientProperties().entrySet()) {
         generator.loadLocal(componentLocal);
 
-        generator.push((String)e.getKey());
+        generator.push(e.getKey());
 
         Object value = e.getValue();
         if (value instanceof StringDescriptor) {
@@ -751,10 +769,7 @@ public class AsmCodeGenerator {
             }
           }
         }
-        catch (IOException e) {
-          throw new CodeGenerationException(rootContainer.getId(), e.getMessage(), e);
-        }
-        catch (ClassNotFoundException e) {
+        catch (IOException | ClassNotFoundException e) {
           throw new CodeGenerationException(rootContainer.getId(), e.getMessage(), e);
         }
       }

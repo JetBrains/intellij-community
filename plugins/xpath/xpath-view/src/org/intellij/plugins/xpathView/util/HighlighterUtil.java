@@ -30,7 +30,13 @@ import com.intellij.psi.xml.XmlTag;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.xpathView.Config;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -125,9 +131,8 @@ public final class HighlighterUtil {
     public static RangeHighlighter highlightNode(Editor editor, final PsiElement node, TextAttributes attrs, Config cfg) {
         TextRange range;
         final PsiElement realElement;
-        if ((node instanceof XmlTag) && cfg.isHighlightStartTagOnly()) {
-            XmlTag tag = (XmlTag)node;
-            realElement = MyPsiUtil.getNameElement(tag);
+        if ((node instanceof XmlTag tag) && cfg.isHighlightStartTagOnly()) {
+          realElement = MyPsiUtil.getNameElement(tag);
             range = realElement.getTextRange();
         } else {
             range = node.getTextRange();
@@ -149,10 +154,10 @@ public final class HighlighterUtil {
         return rangeHighlighter;
     }
 
-    private static Object formatTooltip(Editor e, PsiElement element) {
+    private static String formatTooltip(Editor e, PsiElement element) {
         if (!(element instanceof XmlTag)) {
           final String text = element.getText();
-          if ((text == null || text.length() == 0) && MyPsiUtil.isNameElement(element)) {
+          if ((text == null || text.isEmpty()) && MyPsiUtil.isNameElement(element)) {
             final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, true);
             if (tag != null) {
               return tag.getName();

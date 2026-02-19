@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -18,13 +19,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
@@ -32,8 +35,10 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
   @Override
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath));
-    ServiceContainerUtil.registerComponentImplementation(myProject, FileEditorManager.class, FileEditorManagerImpl.class);
+    myProject = PlatformTestUtil.loadAndOpenProject(Path.of(projectPath), getTestRootDisposable());
+    FileEditorManagerImpl editorManager = new FileEditorManagerImpl(myProject, ((ComponentManagerEx)myProject).getCoroutineScope());
+    ServiceContainerUtil.registerServiceInstance(myProject, FileEditorManager.class, editorManager);
+    ((ComponentManagerImpl)myProject).replaceServiceInstance(FileEditorManager.class, editorManager, getTestRootDisposable());
   }
 
   @Override
@@ -65,6 +70,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
     fileA.navigate(true);
     Editor editorA = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), a), true);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EditorTestUtil.waitForLoading(editorA);
 
     assertNotNull(editorA);
     CodeInsightTestFixtureImpl.instantiateAndRun(fileA, editorA, new int[] {Pass.EXTERNAL_TOOLS}, false);
@@ -82,6 +88,5 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
 
     FileEditor[] allEditors = FileEditorManager.getInstance(getProject()).getAllEditors();
     assertEquals(2, allEditors.length);
-
   }
 }

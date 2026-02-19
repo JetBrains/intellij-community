@@ -2,32 +2,49 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.SpeedSearchFilter;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.TableCellState;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.EventListenerList;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.EventObject;
 import java.util.List;
 
-/**
- * @author spleaner
- */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
+  private final TableCellState myCellState = new TableCellState();
   private final T[] myValues;
   private WeakReference<ListPopup> myPopupRef;
   private ChangeEvent myChangeEvent = null;
@@ -56,7 +73,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     if (myValues != null) {
       String oldText = getText();
       Icon oldIcon = getIcon();
-      for (T v : myValues) {
+      for (int i = 0, limit = getPreferredSizeMaxValues(); i < myValues.length && i < limit; i++) {
+        T v = myValues[i];
         setText(getTextFor(v));
         setIcon(getIconFor(v));
 
@@ -70,6 +88,10 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     return size;
+  }
+
+  protected int getPreferredSizeMaxValues() {
+    return Integer.MAX_VALUE;
   }
 
   @Override
@@ -117,6 +139,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     @SuppressWarnings("unchecked") T t = (T)value;
+    myCellState.collectState(table, isSelected, hasFocus, row, column);
+    myCellState.updateRenderer(this);
     customizeComponent(t, table, isSelected);
     return this;
   }
@@ -125,9 +149,13 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     @SuppressWarnings("unchecked") T t = (T)value;
     myValue = t;
+    myCellState.collectState(table, isSelected, true, row, column);
+    myCellState.updateRenderer(this);
     customizeComponent(t, table, true);
 
-    SwingUtilities.invokeLater(() -> showPopup(t, row));
+    var popupLocation = table.getCellRect(row, column, true);
+    popupLocation.y += table.getRowHeight();
+    SwingUtilities.invokeLater(() -> showPopup(t, row, new RelativePoint(table, popupLocation.getLocation())));
 
     return this;
   }
@@ -136,14 +164,15 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return true;
   }
 
-  private void showPopup(T value, int row) {
+  private void showPopup(T value, int row, @NotNull RelativePoint location) {
     List<T> filtered = ContainerUtil.findAll(myValues, t -> isApplicable(t, row));
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<>(this, filtered, value));
     popup.addListener(this);
     popup.setRequestFocus(false);
 
     myPopupRef = new WeakReference<>(popup);
-    popup.showUnderneathOf(this);
+    PopupUtil.setPopupToggleComponent(popup, this);
+    popup.show(location);
   }
 
   @Override
@@ -155,8 +184,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     setOpaque(true);
     setText(value == null ? "" : getTextFor(value));
     setIcon(value == null ? null : getIconFor(value));
-    setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-    setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
   }
 
   @Override
@@ -177,6 +204,11 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   private void stopCellEditing(T value) {
     myValue = value;
     stopCellEditing();
+  }
+
+  @TestOnly
+  public void chooseItem(int idx) {
+    stopCellEditing(myValues[idx]);
   }
 
   @Override

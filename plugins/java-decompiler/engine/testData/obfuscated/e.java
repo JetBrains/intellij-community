@@ -67,7 +67,7 @@ class e<K, V> implements a<K, V> {
          throw var5;
       }
 
-      var10000 = Math.round(100.0D * (double)var1 / (double)(var1 + var3));
+      var10000 = Math.round(100.0 * (double)var1 / (double)(var1 + var3));
       return var10000;
    }
 
@@ -87,7 +87,7 @@ class e<K, V> implements a<K, V> {
    }
 
    public V a(K var1) {
-      return this.a(var1, this.c);
+      return (V)this.a(var1, this.c);
    }
 
    public boolean c(K var1) {

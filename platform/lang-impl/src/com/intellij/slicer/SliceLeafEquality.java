@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -7,14 +7,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.tree.AstBufferUtil;
-import gnu.trove.TObjectHashingStrategy;
-import it.unimi.dsi.fastutil.Hash;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SliceLeafEquality implements Hash.Strategy<PsiElement>, TObjectHashingStrategy<PsiElement> {
-  @NotNull
-  protected PsiElement substituteElement(@NotNull PsiElement element) {
+public class SliceLeafEquality implements HashingStrategy<PsiElement> {
+  protected @NotNull PsiElement substituteElement(@NotNull PsiElement element) {
     return element;
   }
 
@@ -27,11 +25,6 @@ public class SliceLeafEquality implements Hash.Strategy<PsiElement>, TObjectHash
                                                          : AstBufferUtil.getTextSkippingWhitespaceComments(elementToCompare.getNode());
     });
     return Comparing.hashcode(text);
-  }
-
-  @Override
-  public int computeHashCode(PsiElement object) {
-    return hashCode(object);
   }
 
   @Override

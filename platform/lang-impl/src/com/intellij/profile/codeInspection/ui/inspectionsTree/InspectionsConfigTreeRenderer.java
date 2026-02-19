@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
@@ -8,6 +8,9 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -15,12 +18,19 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.renderer.DefaultTreeRenderer;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTree;
+import java.awt.Color;
+import java.awt.Component;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer {
+@Internal
+public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer implements UiInspectorTreeRendererContextProvider {
   protected abstract String getFilter();
 
   @Override
@@ -32,8 +42,7 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
                                                 int row,
                                                 boolean hasFocus) {
     final SimpleColoredComponent component = new SimpleColoredComponent();
-    if (!(value instanceof InspectionConfigTreeNode)) return component;
-    InspectionConfigTreeNode node = (InspectionConfigTreeNode)value;
+    if (!(value instanceof InspectionConfigTreeNode node)) return component;
 
     boolean reallyHasFocus = ((TreeTableTree)tree).getTreeTable().hasFocus();
     Color background = UIUtil.getTreeBackground(selected, reallyHasFocus);
@@ -59,17 +68,25 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
     return component;
   }
 
-  @Nullable
-  private static @NlsContexts.Label String getHint(final Descriptor descriptor) {
+  private static @Nullable @NlsContexts.Label String getHint(final Descriptor descriptor) {
     final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
 
-    if (toolWrapper.getTool() instanceof InspectionToolWrapperWithHint) {
-      return ((InspectionToolWrapperWithHint)toolWrapper.getTool()).getHint();
-    }
     if (toolWrapper instanceof LocalInspectionToolWrapper ||
         toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).worksInBatchModeOnly()) {
       return null;
     }
     return InspectionsBundle.message("inspection.tool.availability.in.tree.node1");
+  }
+
+  @Override
+  public @NotNull List<PropertyBean> getUiInspectorContext(@NotNull JTree tree, @Nullable Object value, int row) {
+    if (value instanceof InspectionConfigTreeNode.Tool toolNode) {
+      List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Inspection Key", toolNode.getKey().getID(), true));
+      result.add(new PropertyBean("Inspection tool Class",
+                                  UiInspectorUtil.getClassPresentation(toolNode.getDefaultDescriptor().getToolWrapper().getTool()), true));
+      return result;
+    }
+    return Collections.emptyList();
   }
 }

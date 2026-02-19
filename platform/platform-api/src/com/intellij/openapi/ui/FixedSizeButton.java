@@ -1,14 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import java.awt.Dimension;
 
 /**
  * This class represents non-resizable, non-focusable button with the
@@ -24,16 +27,10 @@ public class FixedSizeButton extends JButton {
 
   private FixedSizeButton(int size, JComponent component) {
     Icon icon = AllIcons.General.Ellipsis;
-    if (icon != null) {
-      // loading may fail at design time
-      setIcon(icon);
-    }
-    else {
-      setText(".");
-    }
+    setIcon(icon);
     mySize = size;
     myComponent = component;
-    setMargin(JBUI.emptyInsets());
+    setMargin(JBInsets.emptyInsets());
     setDefaultCapable(false);
     setFocusable(false);
     if (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula()) {

@@ -1,0 +1,10 @@
+// FILE: before.kt
+// IGNORE_K1
+class Foo<T>(val foo: T)
+
+fun foo() {
+    val f = Foo(4)
+    f.foo<caret>
+}
+// FILE: after.kt
+public actual class <caret>Int private constructor() : Number(), Comparable<Int> {

@@ -1,0 +1,64 @@
+SHELL_SCRIPT
+  PsiComment(Comment)('#error markers must be present, but the incomplete if should be parsed without remaining elements')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    UNTIL_COMMAND
+      PsiElement(until)('until')
+      COMPOUND_LIST
+        PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+          PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      DO_BLOCK
+        PsiElement(do)('do')
+        COMPOUND_LIST
+          PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+            PsiElement(;)(';')
+        PsiWhiteSpace(' ')
+        PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    UNTIL_COMMAND
+      PsiElement(until)('until')
+      PsiWhiteSpace(' ')
+      COMPOUND_LIST
+        GENERIC_COMMAND_DIRECTIVE
+          LITERAL
+            PsiElement(word)('a')
+        PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      DO_BLOCK
+        PsiElement(do)('do')
+        COMPOUND_LIST
+          PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+            PsiElement(;)(';')
+        PsiWhiteSpace(' ')
+        PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    UNTIL_COMMAND
+      PsiElement(until)('until')
+      COMPOUND_LIST
+        PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+          PsiElement(;)(';')
+      PsiWhiteSpace(' ')
+      DO_BLOCK
+        PsiElement(do)('do')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          GENERIC_COMMAND_DIRECTIVE
+            LITERAL
+              PsiElement(word)('a')
+          PsiElement(;)(';')
+        PsiWhiteSpace(' ')
+        PsiElement(done)('done')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        PsiElement(STRING_CONTENT)('Example text')
+        PsiElement(CLOSE_QUOTE)('"')

@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="smallSampleLibRelease" type="repository">
+    <properties maven-id="org.example.repository.library.utils.test:smallSampleLib:1.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/example/repository/library/utils/test/smallSampleLib/1.0/smallSampleLib-1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

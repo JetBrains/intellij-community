@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
@@ -10,13 +11,25 @@ import com.intellij.util.Matrix;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -25,10 +38,16 @@ import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.io.File;
 
-public class ColorBlindnessInternalAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class ColorBlindnessInternalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     new ColorDialog(event).show();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -71,9 +90,8 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       setTitle("ColorBlindness");
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myCombo;
     }
 
@@ -115,8 +133,7 @@ public class ColorBlindnessInternalAction extends DumbAwareAction {
       myCombo.addItemListener(event -> {
         if (ItemEvent.SELECTED == event.getStateChange()) {
           Object object = event.getItem();
-          if (object instanceof FilterItem) {
-            FilterItem item = (FilterItem)object;
+          if (object instanceof FilterItem item) {
             if (item.myFilter instanceof MutableFilter) {
               showSlider(myFirstSlider, listener);
               showSlider(mySecondSlider, listener);

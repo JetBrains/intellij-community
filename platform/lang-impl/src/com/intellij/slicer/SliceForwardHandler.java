@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -12,10 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
-class SliceForwardHandler extends SliceHandler {
+final class SliceForwardHandler extends SliceHandler {
   SliceForwardHandler() {
     super(false);
   }
@@ -28,8 +28,8 @@ class SliceForwardHandler extends SliceHandler {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
 
     Project myProject = element.getProject();
-    final SliceForwardForm form = new SliceForwardForm();
-    form.init(storedSettingsBean.showDereferences);
+    final SliceForwardAdditionalUi ui = new SliceForwardAdditionalUi();
+    ui.getMyShowDerefs().setSelected(storedSettingsBean.showDereferences);
 
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
     analysisUIOptions.loadState(storedSettingsBean.analysisUIOptions);
@@ -38,8 +38,8 @@ class SliceForwardHandler extends SliceHandler {
     BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, LangBundle.message("separator.analyze.scope"), myProject,
                                                                    items, analysisUIOptions, true) {
       @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
-        return form.getComponent();
+      protected JComponent getAdditionalActionSettings(@NotNull Project project) {
+        return ui.getPanel();
       }
     };
     if (!dialog.showAndGet()) {
@@ -47,14 +47,14 @@ class SliceForwardHandler extends SliceHandler {
     }
 
     storedSettingsBean.analysisUIOptions.loadState(analysisUIOptions);
-    storedSettingsBean.showDereferences = form.isToShowDerefs();
+    storedSettingsBean.showDereferences = ui.getMyShowDerefs().isSelected();
 
     AnalysisScope scope = dialog.getScope(analysisScope);
 
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = scope;
     params.dataFlowToThis = myDataFlowToThis;
-    params.showInstanceDereferences = form.isToShowDerefs();
+    params.showInstanceDereferences = ui.getMyShowDerefs().isSelected();
     return params;
   }
 }

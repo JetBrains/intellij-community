@@ -1,26 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.ui.ActiveComponent;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
-public class CompositeActiveComponent implements ActiveComponent {
+public final class CompositeActiveComponent implements ActiveComponent {
   private final ActiveComponent[] myComponents;
   private final JPanel myComponent;
 
   public CompositeActiveComponent(ActiveComponent @NotNull ... components) {
     myComponents = components;
-
-    myComponent = new JPanel(new FlowLayout(FlowLayout.CENTER, JBUIScale.scale(2), JBUIScale.scale(2)));
-    myComponent.setBorder(null);
-    myComponent.setOpaque(false);
-    for (ActiveComponent component : components) {
-      myComponent.add(component.getComponent());
-    }
+    myComponent = CompositeActiveComponentPanelKt.createPanel(components);
   }
 
   @Override
@@ -30,9 +23,8 @@ public class CompositeActiveComponent implements ActiveComponent {
     }
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 }

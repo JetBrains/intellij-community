@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.Referencing;
+import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +40,7 @@ public interface Extension extends DomElement {
 
   @NotNull
   @Attribute(OS_ATTRIBUTE)
-  GenericAttributeValue<IdeaPluginDescriptorImpl.OS> getOs();
+  GenericAttributeValue<ExtensionDescriptor.Os> getOs();
 
   /**
    * @return extension declaration or {@code null} if unresolved
@@ -48,6 +53,15 @@ public interface Extension extends DomElement {
            fieldName.equals("className") ||
            fieldName.equals("serviceInterface") ||
            fieldName.equals("serviceImplementation") ||
+           fieldName.equals("class") ||
+           fieldName.endsWith("ClassName") ||
            (fieldName.endsWith("Class") && !fieldName.equals("forClass"));
+  }
+
+  /**
+   * @return whether the field is any known class name field.
+   */
+  static boolean isClassNameField(@NotNull @NonNls String fieldName) {
+    return isClassField(fieldName) || fieldName.equals("forClass");
   }
 }

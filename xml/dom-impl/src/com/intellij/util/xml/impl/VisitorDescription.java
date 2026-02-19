@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.ReflectionUtil;
@@ -11,13 +11,10 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author peter
- */
 public final class VisitorDescription {
   private final Class<? extends DomElementVisitor> myVisitorClass;
   private final ClassMap<Method> myMethods = new ClassMap<>(new ConcurrentHashMap<>());
-  @NonNls private static final String VISIT = "visit";
+  private static final @NonNls String VISIT = "visit";
 
   public VisitorDescription(final Class<? extends DomElementVisitor> visitorClass) {
     myVisitorClass = visitorClass;
@@ -31,7 +28,7 @@ public final class VisitorDescription {
         continue;
       }
       final String methodName = method.getName();
-      if (VISIT.equals(methodName) || methodName.startsWith(VISIT) /*&& domClass.getSimpleName().equals(methodName.substring(VISIT.length()))*/) {
+      if (/*VISIT.equals(methodName) ||*/ methodName.startsWith(VISIT) /*&& domClass.getSimpleName().equals(methodName.substring(VISIT.length()))*/) {
         method.setAccessible(true);
         myMethods.put(domClass, method);
       }

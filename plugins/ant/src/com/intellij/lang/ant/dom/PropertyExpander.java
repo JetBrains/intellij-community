@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -87,8 +92,7 @@ public class PropertyExpander {
     }
   }
 
-  @NotNull
-  public String getResult() {
+  public @NotNull String getResult() {
     return myResolver.getResult();
   }
 

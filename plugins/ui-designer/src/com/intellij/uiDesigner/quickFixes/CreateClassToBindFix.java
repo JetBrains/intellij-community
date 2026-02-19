@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.CommonBundle;
@@ -12,27 +12,29 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CreateClassToBindFix extends QuickFix{
   private static final Logger LOG = Logger.getInstance(CreateClassToBindFix.class);
 
   private final String myClassName;
 
-  public CreateClassToBindFix(final GuiEditor editor, @NotNull final String className) {
+  public CreateClassToBindFix(final GuiEditor editor, final @NotNull String className) {
     super(editor, UIDesignerBundle.message("action.create.class", className), null);
     myClassName = className;
   }
@@ -59,11 +61,10 @@ public final class CreateClassToBindFix extends QuickFix{
           final int indexOfLastDot = myClassName.lastIndexOf('.');
           final String packageName = myClassName.substring(0, indexOfLastDot != -1 ? indexOfLastDot : 0);
           final PsiDirectory psiDirectory;
-          if(packageName.length() > 0){
+          if(!packageName.isEmpty()){
             final PackageWrapper packageWrapper = new PackageWrapper(PsiManager.getInstance(project), packageName);
             try {
-              psiDirectory = RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);
-              LOG.assertTrue(psiDirectory != null);
+              psiDirectory = CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, sourceRoot);
             }
             catch (final IncorrectOperationException e) {
               ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(

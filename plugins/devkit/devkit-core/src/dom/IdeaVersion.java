@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -22,6 +28,10 @@ public interface IdeaVersion extends DomElement {
   @Convert(BuildNumberConverter.class)
   GenericAttributeValue<BuildNumber> getUntilBuild();
 
+  @NotNull
+  @Stubbed
+  @Convert(BuildNumberConverter.class)
+  GenericAttributeValue<BuildNumber> getStrictUntilBuild();
 
   /**
    * @deprecated Use {@link #getSinceBuild()}
@@ -40,21 +50,18 @@ public interface IdeaVersion extends DomElement {
 
   class BuildNumberConverter extends Converter<BuildNumber> {
 
-    @Nullable
     @Override
-    public BuildNumber fromString(@Nullable String s, ConvertContext context) {
+    public @Nullable BuildNumber fromString(@Nullable String s, @NotNull ConvertContext context) {
       return s == null ? null : BuildNumber.fromStringOrNull(s);
     }
 
-    @Nullable
     @Override
-    public String toString(@Nullable BuildNumber number, ConvertContext context) {
+    public @Nullable String toString(@Nullable BuildNumber number, @NotNull ConvertContext context) {
       return number == null ? null : number.asString();
     }
 
-    @Nullable
     @Override
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    public @Nullable String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
       return DevKitBundle.message("inspections.plugin.xml.invalid.build.number", s);
     }
   }

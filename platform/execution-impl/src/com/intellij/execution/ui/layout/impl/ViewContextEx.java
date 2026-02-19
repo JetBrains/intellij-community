@@ -20,7 +20,9 @@ import com.intellij.execution.ui.layout.GridCell;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public interface ViewContextEx extends ViewContext {
   RunnerLayout getLayoutSettings();
 

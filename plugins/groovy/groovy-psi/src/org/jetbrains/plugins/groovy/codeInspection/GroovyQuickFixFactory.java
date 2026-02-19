@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -19,9 +21,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
+import java.util.List;
+
 public abstract class GroovyQuickFixFactory {
   public static GroovyQuickFixFactory getInstance() {
-    return ServiceManager.getService(GroovyQuickFixFactory.class);
+    return ApplicationManager.getApplication().getService(GroovyQuickFixFactory.class);
   }
 
   public abstract IntentionAction createDynamicMethodFix(GrReferenceExpression expression, PsiType[] types);
@@ -50,7 +54,7 @@ public abstract class GroovyQuickFixFactory {
 
   public abstract GroovyFix createRenameFix();
 
-  public abstract GroovyFix createReplaceWithImportFix();
+  public abstract LocalQuickFix createReplaceWithImportFix();
 
   public abstract LocalQuickFix createGrMoveToDirFix(@NlsSafe String actual);
 
@@ -68,9 +72,13 @@ public abstract class GroovyQuickFixFactory {
 
   public abstract IntentionAction createInvestigateFix(@DetailedDescription String reason);
 
-  public abstract GroovyFix createMultipleAssignmentFix(int size);
+  public abstract LocalQuickFix createMultipleAssignmentFix(int size);
 
-  public abstract GroovyFix createSpreadArgumentFix(int size);
+  public abstract LocalQuickFix createSpreadArgumentFix(int size);
 
-  public abstract GroovyFix createMapConstructorFix();
+  public abstract LocalQuickFix createMapConstructorFix();
+
+  public abstract LocalQuickFix createQualifyExpressionFix();
+
+  public abstract LocalQuickFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement);
 }

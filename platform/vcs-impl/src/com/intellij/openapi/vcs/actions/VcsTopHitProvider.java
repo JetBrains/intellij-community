@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.ActionsTopHitProvider;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class VcsTopHitProvider extends ActionsTopHitProvider {
+final class VcsTopHitProvider extends ActionsTopHitProvider {
   private static final String[][] ACTION_MATRIX = {
      {"his", "history ", "Vcs.ShowTabbedFileHistory"},
      {"upd", "update ", "Vcs.UpdateProject"},
@@ -20,6 +20,8 @@ public class VcsTopHitProvider extends ActionsTopHitProvider {
      {"comm", "commit ", "ChangesView.ToggleCommitUi"},
      {"reve", "revert ", "ChangesView.Revert"},
      {"roll", "rollback ", "ChangesView.Revert"},
+     {"reve", "revert ", "ChangesView.RevertFiles"},
+     {"roll", "rollback ", "ChangesView.RevertFiles"},
      {"compare", "compare ", "Compare.SameVersion"},
      {"create p", "create patch ", "ChangesView.CreatePatch"},
      {"pat", "patch ", "ChangesView.CreatePatch"},

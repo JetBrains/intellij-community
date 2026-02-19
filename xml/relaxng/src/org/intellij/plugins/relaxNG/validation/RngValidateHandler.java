@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.actions.validate.ValidateXmlHandler;
 import com.thaiopensource.util.PropertyMapBuilder;
@@ -35,7 +34,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;
@@ -62,8 +61,7 @@ public class RngValidateHandler implements ValidateXmlHandler {
     return getRngSchema(file) != null;
   }
 
-  @Nullable
-  private static XmlFile getRngSchema(XmlFile file) {
+  private static @Nullable XmlFile getRngSchema(XmlFile file) {
     final RngElementDescriptor descriptor = getRootDescriptor(file);
     if (descriptor == null) return null;
 
@@ -109,7 +107,7 @@ public class RngValidateHandler implements ValidateXmlHandler {
                 () -> {
                   helper.close();
                   WindowManager.getInstance().getStatusBar(project).setInfo(
-                    XmlBundle.message("xml.validate.no.errors.detected.status.message"));
+                    RelaxngBundle.message("xml.validate.no.errors.detected.status.message"));
                 }
               );
             }

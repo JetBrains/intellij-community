@@ -1,10 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -17,9 +29,8 @@ public class PsiJavaModuleReferenceImpl extends PsiReferenceBase.Poly<PsiJavaMod
     super(element, new TextRange(0, element.getTextLength()), false);
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getElement().getReferenceText();
   }
 

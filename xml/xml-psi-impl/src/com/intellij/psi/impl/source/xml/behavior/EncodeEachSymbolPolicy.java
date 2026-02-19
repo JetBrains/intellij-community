@@ -17,13 +17,13 @@ package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.CharTable;
 
 public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
@@ -53,26 +53,20 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
     return dummyParent.getFirstChildNode();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static TreeElement createCharEntity(char ch, CharTable charTable) {
-    switch (ch) {
-      case '<':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&lt;");
-      case '\'':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&apos;");
-      case '"':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&quot;");
-      case '>':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&gt;");
-      case '&':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&amp;");
-      case '\u00a0':
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&nbsp;");
-
-      default:
+    CharSequence entityText = switch (ch) {
+      case '<' -> "&lt;";
+      case '\'' -> "&apos;";
+      case '"' -> "&quot;";
+      case '>' -> "&gt;";
+      case '&' -> "&amp;";
+      case '\u00a0' -> "&nbsp;";
+      default -> {
         final String charEncoding = "&#" + (int)ch + ";";
-        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, charTable.intern(charEncoding));
-    }
+        yield charTable.intern(charEncoding);
+      }
+    };
+    return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, entityText);
   }
 
   private static boolean toCode(String str) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.ide.wizard.AbstractWizard;
@@ -8,15 +9,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
-import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Nikolay.Tropin
@@ -53,7 +58,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
 
   protected final Builder<C, M, I> myBuilder;
 
-  public static abstract class Builder<C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>> {
+  public abstract static class Builder<C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>> {
     protected abstract C getPsiClass();
     protected abstract List<I> getClassFields();
     protected abstract HashMap<M, I> getFieldsToHashCode();
@@ -65,6 +70,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
     protected abstract void updateNonNullMemberInfos(Collection<? extends I> equalsMemberInfos);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   public AbstractGenerateEqualsWizard(Project project, Builder<C, M, I> builder) {
     super(JavaBundle.message("generate.equals.hashcode.wizard.title"), project);
     myBuilder = builder;
@@ -119,7 +125,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
   }
 
   @Override
-  protected String getHelpID() {
+  protected String getHelpId() {
     return "editing.altInsert.equals";
   }
 
@@ -157,6 +163,11 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
     }
 
     return true;
+  }
+
+  @TestOnly
+  public Set<Map.Entry<M,I>> getFieldsToNonNull() {
+    return new LinkedHashSet<>(myFieldsToNonNull.entrySet());
   }
 
   @Override

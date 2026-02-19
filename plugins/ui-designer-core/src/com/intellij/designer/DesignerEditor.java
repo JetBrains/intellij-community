@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.module.Module;
@@ -27,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -45,16 +30,14 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
 
   protected abstract Module findModule(Project project, VirtualFile file);
 
-  @NotNull
-  protected abstract DesignerEditorPanel createDesignerPanel(Project project, Module module, VirtualFile file);
+  protected abstract @NotNull DesignerEditorPanel createDesignerPanel(Project project, Module module, VirtualFile file);
 
   public final DesignerEditorPanel getDesignerPanel() {
     return myDesignerPanel;
   }
 
-  @NotNull
   @Override
-  public final JComponent getComponent() {
+  public final @NotNull JComponent getComponent() {
     return myDesignerPanel;
   }
 
@@ -63,9 +46,8 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
     return myDesignerPanel.getPreferredFocusedComponent();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return DesignerBundle.message("design");
   }
 
@@ -95,8 +77,7 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
   }
 
   @Override
-  @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     return myDesignerPanel.createState();
   }
 
@@ -110,10 +91,5 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
-
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
   }
 }

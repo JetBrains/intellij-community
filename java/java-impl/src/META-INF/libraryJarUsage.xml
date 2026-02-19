@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryJar.FUSLibraryJarUsagesCollector"/>
-  </extensions>
-</idea-plugin>
-

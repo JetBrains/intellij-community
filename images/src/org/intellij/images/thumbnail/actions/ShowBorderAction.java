@@ -2,6 +2,7 @@
 package org.intellij.images.thumbnail.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -13,23 +14,28 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public class ShowBorderAction extends ToggleAction implements DumbAware {
-    public static final String PROP_NAME = "ImagePlugin.borderVisible";
+  public static final String PROP_NAME = "ImagePlugin.borderVisible";
 
-    public static boolean isBorderVisible() {
-        return PropertiesComponent.getInstance().getBoolean(PROP_NAME, false);
-    }
+  public static boolean isBorderVisible() {
+    return PropertiesComponent.getInstance().getBoolean(PROP_NAME, false);
+  }
 
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-        return isBorderVisible();
-    }
+  @Override
+  public boolean isSelected(@NotNull AnActionEvent e) {
+    return isBorderVisible();
+  }
 
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
-        PropertiesComponent.getInstance().setValue(PROP_NAME, state);
-        if (decorator != null) {
-            decorator.setBorderVisible(state);
-        }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
+    ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
+    PropertiesComponent.getInstance().setValue(PROP_NAME, state);
+    if (decorator != null) {
+      decorator.setBorderVisible(state);
     }
+  }
 }

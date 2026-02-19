@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -27,8 +26,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,15 +43,15 @@ import static com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder.createMarku
  * Interoperability with the following applications was tested:
  * MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail, Mac Keynote.
  */
+@ApiStatus.Internal
 public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
   private static final Logger LOG = Logger.getInstance(TextWithMarkupProcessor.class);
 
   private List<RawTextWithMarkup> myResult;
 
-  @NotNull
   @Override
-  public List<RawTextWithMarkup> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
-    if (!RichCopySettings.getInstance().isEnabled() || !(editor instanceof EditorEx)) {
+  public @NotNull List<RawTextWithMarkup> collectTransferableData(@NotNull PsiFile file, @NotNull Editor editor, int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
+    if (!RichCopySettings.getInstance().isEnabled()) {
       return Collections.emptyList();
     }
 
@@ -74,7 +75,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       }
       logInitial(editor, startOffsets, endOffsets, indentSymbolsToStrip, firstLineStartOffset);
       CharSequence text = editor.getDocument().getCharsSequence();
-      highlighter = ((EditorEx)editor).getHighlighter();
+      highlighter = editor.getHighlighter();
       if (editorColorsScheme != schemeToUse) {
         highlighter.setColorScheme(schemeToUse);
       }
@@ -132,7 +133,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     return Collections.emptyList();
   }
 
-  void createResult(SyntaxInfo syntaxInfo, Editor editor) {
+  @VisibleForTesting
+  protected void createResult(SyntaxInfo syntaxInfo, Editor editor) {
     myResult = new ArrayList<>(2);
     myResult.add(new HtmlTransferableData(syntaxInfo, EditorUtil.getTabSize(editor)));
     myResult.add(new RtfTransferableData(syntaxInfo));
@@ -168,7 +170,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       buffer.append("    region #").append(i).append(": ").append(start).append('-').append(end).append(", text at range ")
         .append(lineStart).append('-').append(lineEnd).append(": \n'").append(text.subSequence(lineStart, lineEnd)).append("'\n");
     }
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
     LOG.debug(String.format(
@@ -219,23 +221,21 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     return Pair.create(startOffsetToUse, maximumCommonIndent);
   }
 
-  final static class RawTextSetter implements CopyPastePreProcessor {
+  static final class RawTextSetter implements CopyPastePreProcessor {
     private final TextWithMarkupProcessor myProcessor;
 
     RawTextSetter() {
       myProcessor = CopyPastePostProcessor.EP_NAME.findExtensionOrFail(TextWithMarkupProcessor.class);
     }
 
-    @Nullable
     @Override
-    public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+    public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
       myProcessor.setRawText(text);
       return null;
     }
 
-    @NotNull
     @Override
-    public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+    public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
       return text;
     }
 

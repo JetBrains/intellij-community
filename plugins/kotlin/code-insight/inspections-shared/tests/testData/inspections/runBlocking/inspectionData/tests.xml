@@ -1,0 +1,193 @@
+<tests>
+  <test name="runBlocking direct child of async primitive">
+    <input_files>
+      <input_file path="DirectlyNested.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.runBlocking" file="DirectlyNested.kt" offset="77"/>
+        <trace_element fq_name="--> runBlocking" file="DirectlyNested.kt" offset="103"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="DirectlyNested.fun2" file="DirectlyNested.kt" offset="151"/>
+        <trace_element fq_name="--> runBlocking" file="DirectlyNested.kt" offset="168"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.launch" file="DirectlyNested.kt" offset="228"/>
+        <trace_element fq_name="--> runBlocking" file="DirectlyNested.kt" offset="249"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="DirectlyNested.fun4" file="DirectlyNested.kt" offset="297"/>
+        <trace_element fq_name="--> runBlocking" file="DirectlyNested.kt" offset="343"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.launch" file="DirectlyNested.kt" offset="438"/>
+        <trace_element fq_name="--> runBlocking" file="DirectlyNested.kt" offset="463"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.async" file="DirectlyNested.kt" offset="547"/>
+        <trace_element fq_name="--> runBlocking" file="DirectlyNested.kt" offset="567"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="runBlocking trough function calls in same file">
+    <input_files>
+      <input_file path="SameFileThroughFunctions.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="SameFileThroughFunctions.fun1" file="SameFileThroughFunctions.kt" offset="79"/>
+        <trace_element fq_name="SameFileThroughFunctions.fun2" file="SameFileThroughFunctions.kt" offset="96"/>
+        <trace_element fq_name="SameFileThroughFunctions.fun3" file="SameFileThroughFunctions.kt" offset="135"/>
+        <trace_element fq_name="--> runBlocking" file="SameFileThroughFunctions.kt" offset="174"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="Detection over two files">
+    <input_files>
+      <input_file path="File1ThroughFunctions.kt"/>
+      <input_file path="File2ThroughFunctions.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.runBlocking" file="File2ThroughFunctions.kt" offset="84"/>
+        <trace_element fq_name="File2ThroughFunctions.fun2" file="File2ThroughFunctions.kt" offset="110"/>
+        <trace_element fq_name="File1ThroughFunctions.fun1" file="File2ThroughFunctions.kt" offset="183"/>
+        <trace_element fq_name="--> runBlocking" file="File1ThroughFunctions.kt" offset="84"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="Single sub method runBlocking, call to virtual function" strictness="all">
+    <input_files>
+      <input_file path="SingleSubA.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.runBlocking" file="SingleSubA.kt"/>
+        <trace_element fq_name="virtualFunctions.singlesubA.SubClass.bar" file="SingleSubA.kt"/>
+        <trace_element fq_name="--> runBlocking" file="SingleSubA.kt"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="Single sub method runBlocking, call to implemented function">
+    <input_files>
+      <input_file path="SingleSubB.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.runBlocking" file="SingleSubB.kt"/>
+        <trace_element fq_name="virtualFunctions.singlesubB.SubClass.bar" file="SingleSubB.kt"/>
+        <trace_element fq_name="--> runBlocking" file="SingleSubB.kt"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="Interface(Declared) -> Sub -> SubSub (runBlocking, Initialized)" strictness="all">
+    <input_files>
+      <input_file path="SubSubOnlyFirst.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.runBlocking" file="SubSubOnlyFirst.kt"/>
+        <trace_element fq_name="virtualFunctions.subSubOnlyFirst.SubSubClass.bar" file="SubSubOnlyFirst.kt"/>
+        <trace_element fq_name="--> runBlocking" file="SubSubOnlyFirst.kt"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="Interface(Declared) -> SubRight || SubLeft (runBlocking, Initialized)" strictness="all">
+    <input_files>
+      <input_file path="TwoSubOnlyLeft.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="kotlinx.coroutines.runBlocking" file="TwoSubOnlyLeft.kt"/>
+        <trace_element fq_name="virtualFunctions.twoSubOnlyLeft.SubClassLeft.bar" file="TwoSubOnlyLeft.kt"/>
+        <trace_element fq_name="--> runBlocking" file="TwoSubOnlyLeft.kt"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="Interface(Declared) -> Sub (Initialized) -> SubSub (runBlocking)">
+    <input_files>
+      <input_file path="SubSubOnlyFirstFP.kt"/>
+    </input_files>
+  </test>
+  <test name="Interface(Declared) -> SubRight(Initialized) || SubLeft (runBlocking)">
+    <input_files>
+      <input_file path="TwoSubOnlyLeftFP.kt"/>
+    </input_files>
+  </test>
+  <test name="Inline fun lambda arg">
+    <input_files>
+      <input_file path="InlineLambda.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambda.foo" file="InlineLambda.kt" offset="94"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambda.kt" offset="141"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambda.foo" file="InlineLambda.kt" offset="94"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambda.kt" offset="180"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambda.foo" file="InlineLambda.kt" offset="94"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambda.kt" offset="213"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="Inline fun lambda arg indirect async context">
+    <input_files>
+      <input_file path="InlineLambdaIndirect.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect.startFoo" file="InlineLambdaIndirect.kt" offset="106"/>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect.foo" file="InlineLambdaIndirect.kt" offset="127"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambdaIndirect.kt" offset="199"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect.startFoo" file="InlineLambdaIndirect.kt" offset="106"/>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect.foo" file="InlineLambdaIndirect.kt" offset="127"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambdaIndirect.kt" offset="238"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect.startFoo" file="InlineLambdaIndirect.kt" offset="106"/>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect.foo" file="InlineLambdaIndirect.kt" offset="127"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambdaIndirect.kt" offset="271"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="Inline fun lambda arg indirect runBlocking calls">
+    <input_files>
+      <input_file path="InlineLambdaIndirect2.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect2.foo" file="InlineLambdaIndirect2.kt" offset="103"/>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect2.indirectRunBlocking1" file="InlineLambdaIndirect2.kt" offset="150"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambdaIndirect2.kt" offset="454"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect2.foo" file="InlineLambdaIndirect2.kt" offset="103"/>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect2.indirectRunBlocking2" file="InlineLambdaIndirect2.kt" offset="195"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambdaIndirect2.kt" offset="524"/>
+      </problem>
+      <problem>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect2.foo" file="InlineLambdaIndirect2.kt" offset="103"/>
+        <trace_element fq_name="lambdas.InlineLambdaIndirect2.indirectRunBlocking3" file="InlineLambdaIndirect2.kt" offset="234"/>
+        <trace_element fq_name="--> runBlocking" file="InlineLambdaIndirect2.kt" offset="594"/>
+      </problem>
+    </problems>
+  </test>
+  <test name="RunBlocking in function call in coroutineScope">
+    <input_files>
+      <input_file path="NestedThroughCallInCorScope.kt"/>
+    </input_files>
+    <problems>
+      <problem>
+        <trace_element fq_name="NestedThroughCallInCorScope.m" file="NestedThroughCallInCorScope.kt"/>
+        <trace_element fq_name="NestedThroughCallInCorScope.extracted" file="NestedThroughCallInCorScope.kt"/>
+        <trace_element fq_name="--> runBlocking" file="NestedThroughCallInCorScope.kt"/>
+      </problem>
+    </problems>
+  </test>
+</tests>

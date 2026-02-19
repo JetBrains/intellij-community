@@ -4,6 +4,7 @@ package com.intellij.openapi.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.IdeBundle;
+import com.intellij.java.JavaPluginDisposable;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -12,21 +13,38 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.PanelWithButtons;
+import com.intellij.ui.RightAlignedLabelUI;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -55,7 +73,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
     ExcludeEntryDescription[] descriptions = myConfiguration.getExcludeEntryDescriptions();
     disposeMyDescriptions();
     for (ExcludeEntryDescription description : descriptions) {
-      myExcludeEntryDescriptions.add(description.copy(myProject));
+      myExcludeEntryDescriptions.add(description.copy(JavaPluginDisposable.getInstance(myProject)));
     }
     ((AbstractTableModel)myExcludedEntriesPanel.myExcludedTable.getModel()).fireTableDataChanged();
   }
@@ -76,9 +94,8 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
   public void apply() {
     myConfiguration.removeAllExcludeEntryDescriptions();
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
-      myConfiguration.addExcludeEntryDescription(description.copy(myProject));
+      myConfiguration.addExcludeEntryDescription(description.copy(JavaPluginDisposable.getInstance(myProject)));
     }
-    FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
   }
 
   @Override
@@ -115,6 +132,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
 
     ExcludedEntriesPanel() {
       initPanel();
+      putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     }
 
     @Override
@@ -157,10 +175,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
     }
 
     private void addPath(FileChooserDescriptor descriptor) {
-      int selected = -1 /*myExcludedTable.getSelectedRow() + 1*/;
-      if(selected < 0) {
-        selected = myExcludeEntryDescriptions.size();
-      }
+      int selected  = myExcludeEntryDescriptions.size();
       int savedSelected = selected;
       VirtualFile[] chosen = FileChooser.chooseFiles(descriptor, myProject, null);
       for (final VirtualFile chosenFile : chosen) {
@@ -169,10 +184,10 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
         }
         ExcludeEntryDescription description;
         if (chosenFile.isDirectory()) {
-          description = new ExcludeEntryDescription(chosenFile, true, false, myProject);
+          description = new ExcludeEntryDescription(chosenFile, true, false, JavaPluginDisposable.getInstance(myProject));
         }
         else {
-          description = new ExcludeEntryDescription(chosenFile, false, true, myProject);
+          description = new ExcludeEntryDescription(chosenFile, false, true, JavaPluginDisposable.getInstance(myProject));
         }
         myExcludeEntryDescriptions.add(selected, description);
         selected++;
@@ -302,6 +317,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
       };
 
       myExcludedTable = new JBTable(dataModel);
+      myExcludedTable.setShowGrid(false);
       myExcludedTable.setEnableAntialiasing(true);
 
       myExcludedTable.getEmptyText().setText(JavaCompilerBundle.message("no.excludes"));

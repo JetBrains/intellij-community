@@ -9,7 +9,12 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
-import com.intellij.codeInsight.template.postfix.templates.*;
+import com.intellij.codeInsight.template.postfix.templates.ForAscendingPostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.InstanceofExpressionPostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider;
+import com.intellij.codeInsight.template.postfix.templates.NotNullCheckPostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.SwitchStatementPostfixTemplate;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NeedsIndex;
@@ -231,7 +236,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
 
     myFixture.configureByText("a.java", "class Foo { ps<caret> } class psvClass {}");
     type("v");
-    myFixture.assertPreferredCompletionItems(0, "psvm", "psvClass");
+    myFixture.assertPreferredCompletionItems(0, "psvm", "psvma", "psvClass");
 
     myFixture.configureByText("a.xml", "CARBON C<caret>");
     myFixture.completeBasic();

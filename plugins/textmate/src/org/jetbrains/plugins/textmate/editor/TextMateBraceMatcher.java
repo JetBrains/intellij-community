@@ -8,6 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 public class TextMateBraceMatcher implements BraceMatcher {
 
@@ -20,18 +22,16 @@ public class TextMateBraceMatcher implements BraceMatcher {
   public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     if (iterator.getStart() == iterator.getEnd()) return false;
     IElementType tokenType = iterator.getTokenType();
-    String currentSelector = tokenType != null ? tokenType.toString() : null;
-    return TextMateEditorUtils.getHighlightingPairForLeftChar(fileText.charAt(iterator.getStart()), currentSelector) != null;
+    TextMateScope currentSelector = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
+    return TextMateEditorUtils.findRightHighlightingPair(iterator.getStart(), fileText, currentSelector) != null;
   }
 
   @Override
   public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
-    int end = iterator.getEnd();
-    if (end == 0 || end == iterator.getStart()) return false;
-
+    if (iterator.getEnd() == iterator.getStart()) return false;
     IElementType tokenType = iterator.getTokenType();
-    String currentSelector = tokenType != null ? tokenType.toString() : null;
-    return TextMateEditorUtils.getHighlightingPairForRightChar(fileText.charAt(end - 1), currentSelector) != null;
+    TextMateScope currentSelector = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
+    return TextMateEditorUtils.findLeftHighlightingPair(iterator.getEnd(), fileText, currentSelector) != null;
   }
 
   @Override
@@ -44,9 +44,8 @@ public class TextMateBraceMatcher implements BraceMatcher {
     return false;
   }
 
-  @Nullable
   @Override
-  public IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
+  public @Nullable IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
     return null;
   }
 
@@ -56,7 +55,7 @@ public class TextMateBraceMatcher implements BraceMatcher {
   }
 
   @Override
-  public int getCodeConstructStart(@NotNull PsiFile file, int openingBraceOffset) {
+  public int getCodeConstructStart(@NotNull PsiFile psiFile, int openingBraceOffset) {
     return openingBraceOffset;
   }
 }

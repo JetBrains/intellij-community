@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,25 +29,19 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   private volatile Charset myCharset;
   private final Object LOCK = new Object();
 
-  public VcsVirtualFile(@NotNull String path,
-                        @Nullable VcsFileRevision revision,
-                        @NotNull VirtualFileSystem fileSystem) {
-    super(path, fileSystem);
+  public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision) {
+    super(parent, name);
     myFileRevision = revision;
   }
 
-  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem fileSystem) {
-    super(parent, name, fileSystem);
+  public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull FilePath path, @Nullable VcsFileRevision revision) {
+    super(parent, path);
     myFileRevision = revision;
   }
 
-  public VcsVirtualFile(@NotNull String path,
-                        byte @NotNull [] content,
-                        @Nullable String revision,
-                        @NotNull VirtualFileSystem fileSystem) {
-    this(path, null, fileSystem);
-    myContent = content;
-    setRevision(revision);
+  public VcsVirtualFile(@NotNull FilePath path, @Nullable VcsFileRevision revision) {
+    super(path);
+    myFileRevision = revision;
   }
 
   @Override
@@ -60,7 +55,13 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     return myContent;
   }
 
-  private void loadContent() throws IOException {
+  /**
+   * Note that {@link com.intellij.openapi.vcs.vfs.VcsVirtualFile#contentsToByteArray()} can be called from any thread, while
+   * loading content is performed from the disc.
+   * To prevent slow operations on EDT, this method should be called preemptively from a background thread.
+   */
+  @ApiStatus.Internal
+  public void loadContent() throws IOException {
     assert myFileRevision != null;
     if (myContent != null) return;
 
@@ -71,8 +72,8 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
         setRevision(VcsUtil.getShortRevisionString(myFileRevision.getRevisionNumber()));
         myContent = content;
         myContentLoadFailed = false;
-        if (myContent != null) {
-          myCharset = new CharsetToolkit(myContent).guessEncoding(myContent.length);
+        if (myContent != null && myContent.length !=0) {
+          myCharset = new CharsetToolkit(myContent, Charset.defaultCharset(), false).guessEncoding(myContent.length);
         }
       }
     }
@@ -87,14 +88,16 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     }
   }
 
-  @Nullable
-  public VcsFileRevision getFileRevision() {
+  public void setContent(byte[] content) {
+    myContent = content;
+  }
+
+  public @Nullable VcsFileRevision getFileRevision() {
     return myFileRevision;
   }
 
-  @NotNull
   @Override
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     if (myCharset != null) return myCharset;
     return super.getCharset();
   }

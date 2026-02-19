@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.application.WriteAction;
@@ -20,7 +6,11 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.libraries.Library;
@@ -28,6 +18,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.JpsFileEntitySource;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeUtils;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,31 +38,24 @@ import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import java.io.IOException;
+import java.util.function.Function;
 
-/**
- * @author Vladislav.Kaznacheev
- */
-public class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
-  @NotNull
+final class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   @Override
-  @NonNls
-  public String getID() {
+  public @NotNull @NonNls String getID() {
     return JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID;
   }
 
-  @NotNull
   @Override
-  @Nls
-  public String getDescription() {
+  public @NotNull @Nls String getDescription() {
     return getDescr();
   }
 
   @Override
-  public void assertCompatible(@NotNull final ModuleRootModel model) throws ConfigurationException {
+  public void assertCompatible(final @NotNull ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
-      if (entry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libraryEntry) {
         if (libraryEntry.isModuleLevel()) {
           final Library library = libraryEntry.getLibrary();
           if (library == null ||
@@ -90,12 +82,28 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   @Override
   public void detach(@NotNull Module module) {
     EclipseModuleManagerImpl.getInstance(module).setDocumentSet(null);
+    updateEntitySource(module, source -> ((EclipseProjectFile)source).getInternalSource());
   }
 
-  @NotNull
+  private static void updateEntitySource(Module module, Function<? super EntitySource, ? extends EntitySource> updateSource) {
+    ModuleBridge moduleBridge = (ModuleBridge)module;
+    EntityStorage moduleEntityStorage = moduleBridge.getEntityStorage().getCurrent();
+    ModuleEntity moduleEntity = ModuleBridgeUtils.findModuleEntity(moduleBridge, moduleEntityStorage);
+    if (moduleEntity != null) {
+      EntitySource entitySource = moduleEntity.getEntitySource();
+      ModuleManagerBridgeImpl.Companion
+        .changeModuleEntitySource(moduleBridge, moduleEntityStorage, updateSource.apply(entitySource), moduleBridge.getDiff());
+    }
+  }
+
   @Override
-  public ClasspathConverter createConverter(@NotNull Module module) {
-    return new EclipseClasspathConverter(module);
+  public void attach(@NotNull ModuleRootModel model) {
+    updateEntitySource(model.getModule(), source -> {
+      VirtualFileUrlManager virtualFileUrlManager = WorkspaceModel.getInstance(model.getModule().getProject()).getVirtualFileUrlManager();
+      String contentRoot = getContentRoot(model);
+      String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
+      return new EclipseProjectFile(virtualFileUrlManager.getOrCreateFromUrl(classpathFileUrl), (JpsFileEntitySource)source);
+    });
   }
 
   @Override
@@ -112,8 +120,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
   }
 
-  @NotNull
-  static CachedXmlDocumentSet getFileCache(@NotNull Module module) {
+  static @NotNull CachedXmlDocumentSet getFileCache(@NotNull Module module) {
     EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     CachedXmlDocumentSet fileCache = moduleManager != null ? moduleManager.getDocumentSet() : null;
     if (fileCache == null) {
@@ -150,7 +157,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
   }
 
-  public static String getDescr() {
+  public static @Nls String getDescr() {
     return EclipseBundle.message("eclipse.classpath.storage.description");
   }
 }

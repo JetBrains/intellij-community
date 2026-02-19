@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableBase;
@@ -13,8 +14,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 /**
  * @author Dmitry Avdeev
@@ -32,9 +34,8 @@ public abstract class FrameworkBasedOptionsStep<T extends FrameworkSupportProvid
     LibrariesContainer container = LibrariesContainerFactory.createContainer(myContext.getProject());
     myBuilder = builder;
     myFrameworkSupportModel = new FrameworkSupportModelBase(context.getProject(), myBuilder, container) {
-      @NotNull
       @Override
-      public String getBaseDirectoryForLibrariesPath() {
+      public @NotNull String getBaseDirectoryForLibrariesPath() {
         return StringUtil.notNullize(builder.getContentEntryPath());
       }
     };
@@ -51,7 +52,7 @@ public abstract class FrameworkBasedOptionsStep<T extends FrameworkSupportProvid
 
     myPanel = new JPanel(new BorderLayout(0, 4));
     myPanel.add(myConfigurable.getComponent(), BorderLayout.CENTER);
-    updateDataModel();
+    myFrameworkSupportModel.fireWizardStepUpdated();
   }
 
   protected abstract FrameworkSupportConfigurableBase createConfigurable(T provider, FrameworkSupportModelBase model);

@@ -4,11 +4,9 @@ package com.intellij.openapi.fileEditor;
 public enum FileEditorPolicy {
 
   /**
-   * Place created editor before default IDE editor (if any).
+   * Place a created editor before the default IDE editor (if any).
    */
-  /*
-   * should be the first declaration
-   */
+  // should be the first declaration
   PLACE_BEFORE_DEFAULT_EDITOR,
 
   /**
@@ -17,15 +15,26 @@ public enum FileEditorPolicy {
   NONE,
 
   /**
-   * Do not create default IDE editor (if any) for the file.
+   * Do not create the default IDE editor (if any) for the file.
+   * <p></p>
+   * It is recommended to use {@link FileEditorPolicy#HIDE_OTHER_EDITORS} instead.
    */
   HIDE_DEFAULT_EDITOR,
 
   /**
-   * Place created editor after the default IDE editor (if any).
+   * Hide other editors (if any) for the file.
+   * If at least one instance of {@code FileEditorProvider} with such policy exists for the file,
+   * then the editor(s) related to such instance(s) of {@code FileEditorProvider} will be created,
+   * but the editors for other instances (if any) of {@code FileEditorProvider} will not.
+   *
+   * @see FileEditorProvider
+   * @see FileEditorProvider#getPolicy()
    */
-  /*
-   * should be the last declaration
+  HIDE_OTHER_EDITORS,
+
+  /**
+   * Place the created editor after the default IDE editor (if any).
    */
+  // should be the last declaration
   PLACE_AFTER_DEFAULT_EDITOR
 }

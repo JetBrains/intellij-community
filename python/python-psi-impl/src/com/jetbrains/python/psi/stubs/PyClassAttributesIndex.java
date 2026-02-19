@@ -20,19 +20,17 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
+public final class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String, PyClass> KEY = StubIndexKey.createIndexKey("Py.class.attributes");
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PyClass> getKey() {
+  public @NotNull StubIndexKey<String, PyClass> getKey() {
     return KEY;
   }
 
   public static Collection<PyClass> find(@NotNull String name, @NotNull Project project) {
     return StubIndex.getElements(KEY, name, project, GlobalSearchScope.allScope(project), PyClass.class);
   }
-
 
 
   public static Collection<PyTargetExpression> findClassAndInstanceAttributes(
@@ -48,7 +46,7 @@ public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
       }
 
       PyTargetExpression instAttr = clazz.findInstanceAttribute(name, false);
-      if (instAttr != null){
+      if (instAttr != null) {
         ret.add(instAttr);
       }
 
@@ -64,11 +62,10 @@ public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
    * <p/>
    * This method <b>must not</b> access the AST because it is being called during stub indexing.
    */
-  @NotNull
-  public static List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
+  public static @NotNull List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
     List<PsiNamedElement> members = ContainerUtil.concat(pyClass.getInstanceAttributes(),
-                                                               pyClass.getClassAttributes(),
-                                                               Arrays.asList(pyClass.getMethods()));
+                                                         pyClass.getClassAttributes(),
+                                                         Arrays.asList(pyClass.getMethods()));
     return ContainerUtil.mapNotNull(members, expression -> expression.getName());
   }
 }

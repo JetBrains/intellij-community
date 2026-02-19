@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.platform.ml.impl.jar
+  modules:
+  - name: intellij.platform.ml.impl
+  library: ngram-slp
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/ngram-slp/0/ngram-slp-0.jar

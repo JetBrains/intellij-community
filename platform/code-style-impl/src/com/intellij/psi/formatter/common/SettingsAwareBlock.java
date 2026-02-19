@@ -19,9 +19,6 @@ import com.intellij.formatting.Block;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Denis Zhdanov
- */
 public interface SettingsAwareBlock extends Block {
   
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -25,6 +25,6 @@ public final class LexicalNodesFilter implements NodeFilter {
   public boolean accepts(PsiElement element) {
     if (element == null) return false;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
-    return profile != null && profile.getLexicalNodesFilter().accepts(element);
+    return profile != null && !profile.isMatchNode(element);
   }
 }

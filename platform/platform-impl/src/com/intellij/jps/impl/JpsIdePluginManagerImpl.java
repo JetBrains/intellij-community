@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jps.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
@@ -17,8 +18,9 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +41,23 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceConfigurationError;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class JpsIdePluginManagerImpl extends JpsPluginManager {
+  public static final ExtensionPointName<JpsPluginBean> EP_NAME = new ExtensionPointName<>("com.intellij.jps.plugin");
   private final List<PluginDescriptor> myExternalBuildPlugins = new CopyOnWriteArrayList<>();
   private final AtomicInteger myModificationStamp = new AtomicInteger(0);
   private final boolean myFullyLoaded;
@@ -53,16 +66,16 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     Application application = ApplicationManager.getApplication();
     myFullyLoaded = application != null;
     if (!myFullyLoaded) {
-      //this may happen e.g. in tests if some test is executed before Application is initialized; in that case the created instance won't be cached
-      //and will be reinitialized next time
+      // this may happen, e.g., in tests if some test is executed before Application is initialized;
+      // in that case the created instance won't be cached and will be reinitialized next time
       return;
     }
 
     ExtensionsArea rootArea = application.getExtensionArea();
-    //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
-    if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
+    //todo get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
+    if (rootArea.hasExtensionPoint(EP_NAME)) {
       final Ref<Boolean> initial = new Ref<>(Boolean.TRUE);
-      JpsPluginBean.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<JpsPluginBean>() {
+      EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull JpsPluginBean extension, @NotNull PluginDescriptor pluginDescriptor) {
           if (initial.get()) {
@@ -136,12 +149,14 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     if (jpsServiceManager instanceof JpsServiceManagerImpl) {
       ((JpsServiceManagerImpl)jpsServiceManager).cleanupExtensionCache();
     }
+    SourceRootTypeRegistryImpl.getInstance().clearCache();
   }
 
   private void handlePluginAdded(@NotNull PluginDescriptor pluginDescriptor) {
     if (myExternalBuildPlugins.contains(pluginDescriptor)) {
       return;
     }
+    SourceRootTypeRegistryImpl.getInstance().clearCache();
     Set<String> before = new HashSet<>();
     for (JpsModelSerializerExtension extension : loadExtensions(JpsModelSerializerExtension.class)) {
       for (JpsModuleSourceRootPropertiesSerializer<?> serializer : extension.getModuleSourceRootPropertiesSerializers()) {
@@ -167,7 +182,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  private static void replaceWithUnknownRootType(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> unregisteredSerializers) {
+  private static void replaceWithUnknownRootType(Project project, Collection<? extends JpsModuleSourceRootPropertiesSerializer<?>> unregisteredSerializers) {
     if (unregisteredSerializers.isEmpty()) {
       return;
     }
@@ -196,7 +211,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  private static void updateCustomRootTypes(Project project, Collection<JpsModuleSourceRootPropertiesSerializer<?>> registeredSerializers) {
+  private static void updateCustomRootTypes(Project project, Collection<? extends JpsModuleSourceRootPropertiesSerializer<?>> registeredSerializers) {
     if (registeredSerializers.isEmpty()) {
       return;
     }
@@ -208,8 +223,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
       Map<SourceFolder, Pair<JpsModuleSourceRootPropertiesSerializer<?>, Element>> foldersToUpdate = new HashMap<>();
       for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
         for (SourceFolder folder : contentEntry.getSourceFolders()) {
-          if (folder.getRootType() instanceof UnknownSourceRootType) {
-            UnknownSourceRootType type = (UnknownSourceRootType)folder.getRootType();
+          if (folder.getRootType() instanceof UnknownSourceRootType type) {
             JpsModuleSourceRootPropertiesSerializer<?> serializer = serializers.get(type.getUnknownTypeId());
             if (serializer != null) {
               UnknownSourceRootTypeProperties<?> properties = folder.getJpsElement().getProperties(type);
@@ -234,8 +248,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  @Nullable
-  private static <P extends JpsElement> Element serializeProperties(SourceFolder root, @NotNull JpsModuleSourceRootPropertiesSerializer<P> serializer) {
+  private static @Nullable <P extends JpsElement> Element serializeProperties(SourceFolder root, @NotNull JpsModuleSourceRootPropertiesSerializer<P> serializer) {
     P properties = root.getJpsElement().getProperties(serializer.getType());
     if (properties != null) {
       Element sourceElement = new Element(JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG);
@@ -260,18 +273,19 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     return myModificationStamp.get();
   }
 
-  @NotNull
   @Override
-  public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
+  public @NotNull <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
     return loadExtensions(extensionClass, null);
   }
 
-  @NotNull
-  private <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass, @Nullable Predicate<? super PluginDescriptor> filter) {
+  private @NotNull <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass, @Nullable Predicate<? super PluginDescriptor> filter) {
     Set<ClassLoader> loaders = new LinkedHashSet<>();
     for (PluginDescriptor plugin : myExternalBuildPlugins) {
       if (filter == null || filter.test(plugin)) {
-        ContainerUtil.addIfNotNull(loaders, plugin.getPluginClassLoader());
+        ClassLoader element = plugin.getPluginClassLoader();
+        if (element != null) {
+          loaders.add(element);
+        }
       }
     }
     if (loaders.isEmpty()) {
@@ -280,11 +294,11 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     return loadExtensionsFrom(loaders, extensionClass);
   }
 
-  @NotNull
-  private static <T> Collection<T> loadExtensionsFrom(@NotNull Collection<ClassLoader> loaders, @NotNull Class<T> extensionClass) {
+  private static @NotNull <T> Collection<T> loadExtensionsFrom(@NotNull Collection<? extends ClassLoader> loaders, @NotNull Class<T> extensionClass) {
     if (loaders.isEmpty()) {
-      return Collections.emptyList();
+      return List.of();
     }
+
     @NonNls String resourceName = "META-INF/services/" + extensionClass.getName();
     Set<Class<T>> classes = new LinkedHashSet<>();
     Set<String> loadedUrls = new HashSet<>();
@@ -305,7 +319,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     List<T> extensions = new ArrayList<>();
     for (Class<T> aClass : classes) {
       try {
-        extensions.add(extensionClass.cast(aClass.newInstance()));
+        extensions.add(extensionClass.cast(aClass.getDeclaredConstructor().newInstance()));
       }
       catch (Exception e) {
         throw new ServiceConfigurationError("Class " + aClass.getName() + " cannot be instantiated", e);

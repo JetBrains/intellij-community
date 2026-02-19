@@ -1,123 +1,115 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
-import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.SmartList
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.util.function.Consumer
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-// A way to remove obsolete component data.
-internal val OBSOLETE_STORAGE_EP = ExtensionPointName<ObsoleteStorageBean>("com.intellij.obsoleteStorage")
-
+@ApiStatus.Internal
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
-  @Suppress("DEPRECATION")
-  private val settingsSavingComponents = ContainerUtil.createLockFreeCopyOnWriteList<com.intellij.openapi.components.SettingsSavingComponent>()
-
-  protected abstract val serviceContainer: ComponentManagerImpl
+  protected abstract val serviceContainer: ComponentManagerEx
 
   private val asyncSettingsSavingComponents = SynchronizedClearableLazy {
     val result = mutableListOf<SettingsSavingComponent>()
-    serviceContainer.processServices(Consumer {
-      if (it is SettingsSavingComponent) {
-        result.add(it)
+    // filter for class is not used, as we process only created services
+    for (instance in serviceContainer.instances()) {
+      if (instance is SettingsSavingComponent) {
+        result.add(instance)
       }
-    })
+      else if (instance is @Suppress("DEPRECATION", "removal") com.intellij.openapi.components.SettingsSavingComponent) {
+        result.add(object : SettingsSavingComponent {
+          override suspend fun save() {
+            withContext(Dispatchers.EDT) {
+              @Suppress("removal")
+              instance.save()
+            }
+          }
+        })
+      }
+    }
     result
   }
 
-  final override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
-    @Suppress("DEPRECATION")
-    if (component is com.intellij.openapi.components.SettingsSavingComponent) {
-      settingsSavingComponents.add(component)
-    }
-    else if (component is SettingsSavingComponent) {
+  final override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId, parentScope: CoroutineScope? ) {
+    if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }
-
-    super.initComponent(component, serviceDescriptor, pluginId)
+    super.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId, parentScope = parentScope)
   }
 
-  final override fun unloadComponent(component: Any) {
+  override fun unloadComponent(component: Any) {
     if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }
     super.unloadComponent(component)
   }
 
-  internal suspend fun saveSettingsSavingComponentsAndCommitComponents(result: SaveResult, forceSavingAllSettings: Boolean,
-                                                                       saveSessionProducerManager: SaveSessionProducerManager) {
-    coroutineScope {
-      // expects EDT
-      launch(AppUIExecutor.onUiThread().expireWith(serviceContainer).coroutineDispatchingContext()) {
-        @Suppress("Duplicates")
-        val errors = SmartList<Throwable>()
-        for (settingsSavingComponent in settingsSavingComponents) {
-          runAndCollectException(errors) {
-            settingsSavingComponent.save()
-          }
-        }
-        result.addErrors(errors)
-      }
-
-      launch {
-        val errors = SmartList<Throwable>()
-        for (settingsSavingComponent in asyncSettingsSavingComponents.value) {
-          runAndCollectException(errors) {
-            settingsSavingComponent.save()
-          }
-        }
-        result.addErrors(errors)
-      }
-    }
-
-    // SchemeManager (old settingsSavingComponent) must be saved before saving components (component state uses scheme manager in an ipr project, so, we must save it before)
-    // so, call sequentially it, not inside coroutineScope
-    commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionProducerManager)
+  override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
+    val sessionManager = createSaveSessionProducerManager()
+    saveSettingsAndCommitComponents(saveResult = saveResult, forceSavingAllSettings = forceSavingAllSettings, sessionManager = sessionManager)
+    sessionManager.save(saveResult, collectVfsEventsDuringSave)
   }
 
-  override fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
-    // ensure that this task will not interrupt regular saving
-    LOG.runAndLogException {
-      commitObsoleteComponents(session, false)
+  internal suspend fun saveSettingsAndCommitComponents(
+    saveResult: SaveResult,
+    forceSavingAllSettings: Boolean,
+    sessionManager: SaveSessionProducerManager
+  ) {
+    coroutineScope {
+      for (settingsSavingComponent in asyncSettingsSavingComponents.value) {
+        launch {
+          try {
+            settingsSavingComponent.save()
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            saveResult.addError(e)
+          }
+        }
+      }
     }
 
-    super.commitComponents(isForce, session, errors)
+    // SchemeManager (asyncSettingsSavingComponent) must be saved before saving components
+    // (component state uses scheme manager in an ipr project, so, we must save it before) so, call it sequentially
+    commitComponents(isForce = forceSavingAllSettings, sessionManager = sessionManager, saveResult = saveResult)
+  }
+
+  final override suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
+    // ensure that this task will not interrupt regular saving
+    runCatching {
+      commitObsoleteComponents(session = sessionManager, isProjectLevel = false)
+    }.getOrLogException(LOG)
+    super.commitComponents(isForce = isForce, sessionManager = sessionManager, saveResult = saveResult)
   }
 
   internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
-    for (bean in OBSOLETE_STORAGE_EP.iterable) {
-      if (bean.isProjectLevel != isProjectLevel) {
-        continue
-      }
-
-      val storage = (storageManager as StateStorageManagerImpl).getOrCreateStorage(bean.file ?: continue, RoamingType.DISABLED)
+    val storageManager = storageManager as? StateStorageManagerImpl ?: return
+    for (item in ObsoleteStorageBean.EP_NAME.filterableLazySequence()) {
+      val bean = item.instance ?: continue
+      if (bean.isProjectLevel != isProjectLevel) continue
+      val collapsedPath = bean.file ?: continue
+      val storage = storageManager.getOrCreateStorage(collapsedPath, roamingType = RoamingType.DISABLED, usePathMacroManager = false)
       for (componentName in bean.components) {
-        session.getProducer(storage)?.setState(null, componentName, null)
+        session.getProducer(storage)?.setState(component = null, componentName = componentName, pluginId = item.pluginDescriptor.pluginId, state = null)
       }
     }
   }
-}
 
-private inline fun <T> runAndCollectException(errors: MutableList<Throwable>, runnable: () -> T): T? {
-  try {
-    return runnable()
-  }
-  catch (e: ProcessCanceledException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    errors.add(e)
-    return null
+  final override fun release() {
+    asyncSettingsSavingComponents.drop()
+    super.release()
   }
 }

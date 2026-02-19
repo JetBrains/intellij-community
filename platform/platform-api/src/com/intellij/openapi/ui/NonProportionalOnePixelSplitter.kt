@@ -11,7 +11,7 @@ import com.intellij.ui.OnePixelSplitter
 import org.jetbrains.annotations.NonNls
 import javax.swing.SwingUtilities
 
-class NonProportionalOnePixelSplitter(
+open class NonProportionalOnePixelSplitter(
   vertical: Boolean,
   @NonNls private val proportionKey: String,
   private val defaultProportion: Float = 0.5f,
@@ -29,7 +29,7 @@ class NonProportionalOnePixelSplitter(
   private val minSize get() = if (orientation) minimumSize.height else minimumSize.width
 
   // hack
-  var maxRetryCount = 100
+  private var maxRetryCount = 100
 
   private var addNotifyTimestamp: Long = 0
 

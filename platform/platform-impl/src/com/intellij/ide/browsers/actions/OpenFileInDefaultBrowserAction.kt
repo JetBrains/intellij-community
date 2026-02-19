@@ -3,14 +3,20 @@ package com.intellij.ide.browsers.actions
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.browsers.*
-import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.ide.browsers.BrowserLauncherAppless
+import com.intellij.ide.browsers.DefaultBrowserPolicy
+import com.intellij.ide.browsers.WebBrowser
+import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.ide.browsers.WebBrowserXmlService
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class OpenFileInDefaultBrowserAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val result = BaseOpenInBrowserAction.doUpdate(e) ?: return
+    val result = BaseOpenInBrowserAction.Handler.doUpdate(e) ?: return
 
     var description = templatePresentation.description
     if (WebBrowserXmlService.getInstance().isHtmlFile(result.file)) {
@@ -25,13 +31,17 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
       presentation.icon = it.icon
     }
 
-    if (ActionPlaces.isPopupPlace(e.place)) {
+    if (e.isFromContextMenu) {
       presentation.isVisible = presentation.isEnabled
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
-    BaseOpenInBrowserAction.openInBrowser(e, findUsingBrowser())
+    BaseOpenInBrowserAction.Handler.openInBrowser(e, findUsingBrowser())
   }
 }
 

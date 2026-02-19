@@ -15,13 +15,14 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstDecoratable;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * TODO: Add description
- * User: dcheryasov
+ * Indicates a language construct that can be decorated, primarily class and function definitions.
  */
-public interface PyDecoratable {
+public interface PyDecoratable extends PyAstDecoratable, PyElement {
+  @Override
   @Nullable
   PyDecoratorList getDecoratorList();
 }

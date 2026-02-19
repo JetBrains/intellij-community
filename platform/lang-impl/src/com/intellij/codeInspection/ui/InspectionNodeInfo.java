@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionEP;
@@ -13,36 +13,41 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.DescriptionEditorPane;
+import com.intellij.profile.codeInspection.ui.DescriptionEditorPaneKt;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
-import com.intellij.ui.components.panels.StatelessCardLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.MouseEvent;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionNodeInfo extends JPanel {
-  private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
+public final class InspectionNodeInfo extends JPanel {
+  private static final Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
 
-  public InspectionNodeInfo(@NotNull final InspectionTree tree,
-                            @NotNull final Project project) {
+  @ApiStatus.Internal
+  public InspectionNodeInfo(final @NotNull InspectionTree tree,
+                            final @NotNull Project project) {
     setLayout(new GridBagLayout());
     setBorder(JBUI.Borders.emptyTop(11));
-    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(false);
+    final InspectionToolWrapper<?, ?> toolWrapper = tree.getSelectedToolWrapper(false);
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     boolean enabled = currentProfile.getTools(toolWrapper.getShortName(), project).isEnabled();
@@ -64,11 +69,7 @@ public class InspectionNodeInfo extends JPanel {
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new JBInsets(0, 12, 5, 16),
                                0, 0));
 
-    JEditorPane description = new JEditorPane();
-    description.setContentType(UIUtil.HTML_MIME);
-    description.setEditable(false);
-    description.setOpaque(false);
-    description.setBackground(UIUtil.getLabelBackground());
+    DescriptionEditorPane description = new DescriptionEditorPane();
     description.addHyperlinkListener(SingleInspectionProfilePanel.createSettingsHyperlinkListener(project));
     String descriptionText = toolWrapper.loadDescription();
     if (descriptionText == null) {
@@ -77,13 +78,11 @@ public class InspectionNodeInfo extends JPanel {
     }
     final String toolDescription =
       stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
-    SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
+    DescriptionEditorPaneKt.readHTMLWithCodeHighlighting(description, toolDescription, toolWrapper.getLanguage());
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
-    int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;
-    pane.setMaximumSize(new Dimension(maxWidth, Integer.MAX_VALUE));
     pane.setAlignmentX(0);
 
-    add(StatelessCardLayout.wrap(pane),
+    add(pane,
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new JBInsets(0, 10, 0, 0), 0, 0));
 
@@ -130,17 +129,8 @@ public class InspectionNodeInfo extends JPanel {
 
   public static @InspectionMessage String stripUIRefsFromInspectionDescription(@InspectionMessage @NotNull String description) {
     final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
-    if (descriptionEnd < 0) {
-      final Pattern pattern = Pattern.compile(".*Use.*(the (panel|checkbox|checkboxes|field|button|controls).*below).*", Pattern.DOTALL);
-      final Matcher matcher = pattern.matcher(description);
-      int startFindIdx = 0;
-      while (matcher.find(startFindIdx)) {
-        final int end = matcher.end(1);
-        startFindIdx = end;
-        description = description.substring(0, matcher.start(1)) + " inspection settings " + description.substring(end);
-      }
-    } else {
-      description = description.substring(0, descriptionEnd);
+    if (descriptionEnd >= 0) {
+      return description.substring(0, descriptionEnd);
     }
     return description;
   }

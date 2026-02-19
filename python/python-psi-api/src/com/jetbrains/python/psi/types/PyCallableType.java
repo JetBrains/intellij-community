@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +15,6 @@ import java.util.List;
 /**
  * A type instances of which can possibly be called. For example, a class definition can be called, and the result of a call is a class
  * instance.
- *
- * @author yole
  */
 public interface PyCallableType extends PyType {
   /**
@@ -42,7 +28,6 @@ public interface PyCallableType extends PyType {
    * Returns the return type of a function independent of a call site.
    *
    * For example, it may return a generic type.
-   * @param context
    */
   @Nullable
   PyType getReturnType(@NotNull TypeEvalContext context);
@@ -58,18 +43,64 @@ public interface PyCallableType extends PyType {
    *
    * @return list of parameter info null if not applicable.
    */
-  @Nullable
-  default List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+  default @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return null;
   }
 
-  @Nullable
-  default PyCallable getCallable() {
+  /**
+   * Returns the parameters type as a variadic type.
+   * This method provides a unified way to handle different forms of callable parameters:
+   * <ul>
+   * <li>{@link PyCallableParameterListType} for regular parameter lists</li>
+   * <li>{@link PyParamSpecType} for a single ParamSpec parameter type <code>Callable[P, R]</code></li>
+   * <li>{@link PyConcatenateType} for a single Concatenate type <code>Callable[Concatenate[T1, T2, P], R]</code></li>
+   * </ul>
+   * @return the parameters type, or null if not applicable
+   */
+  @ApiStatus.Experimental
+  default @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
     return null;
   }
 
+  @Override
   @Nullable
-  default PyFunction.Modifier getModifier() {
+  default String getName() {
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(null);
+    List<PyCallableParameter> parameters = getParameters(context);
+    PyType returnType = getReturnType(context);
+    return String.format("(%s) -> %s",
+                         parameters != null ?
+                         StringUtil.join(parameters,
+                                         param -> {
+                                           if (param != null) {
+                                             final StringBuilder builder = new StringBuilder();
+                                             final String name = param.getName();
+                                             final PyType type = param.getType(context);
+                                             if (name != null) {
+                                               builder.append(name);
+                                               builder.append(": ");
+                                             }
+                                             builder.append(type != null ? type.getName() : PyNames.ANY_TYPE);
+                                             return builder.toString();
+                                           }
+                                           return PyNames.ANY_TYPE;
+                                         },
+                                         ", ") :
+                         "...",
+                         returnType != null ? returnType.getName() : PyNames.ANY_TYPE);
+  }
+
+  default @Nullable PyCallable getCallable() {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  default PyCallableType dropSelf(@NotNull TypeEvalContext context) {
+    return this;
+  }
+
+  default @Nullable PyFunction.Modifier getModifier() {
     return null;
   }
 
@@ -80,5 +111,10 @@ public interface PyCallableType extends PyType {
    */
   default int getImplicitOffset() {
     return 0;
+  }
+
+  @Override
+  default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyCallableType(this);
   }
 }

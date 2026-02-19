@@ -3,7 +3,8 @@ package com.intellij.util.ui;
 
 import org.junit.Test;
 
-import javax.swing.*;
+import javax.swing.JEditorPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.StyledDocument;
 
 import static org.junit.Assert.assertNotNull;
@@ -17,11 +18,11 @@ public class JBHtmlEditorKitTest {
     SwingUtilities.invokeAndWait(() -> {
       JEditorPane pane = new JEditorPane();
 
-      pane.setEditorKit(new JBHtmlEditorKit(false, false));
+      pane.setEditorKit(HTMLEditorKitBuilder.simple());
       pane.setText(htmlWithCssReference);
       assertNotNull(((StyledDocument)pane.getDocument()).getStyle("body")); // style SHOULD be loaded from referenced file in this case
 
-      pane.setEditorKit(new JBHtmlEditorKit(false, true));
+      pane.setEditorKit(new HTMLEditorKitBuilder().withoutContentCss().build());
       pane.setText(htmlWithCssReference);
       assertNull(((StyledDocument)pane.getDocument()).getStyle("body")); // style SHOULD NOT be loaded from referenced file in this case
     });

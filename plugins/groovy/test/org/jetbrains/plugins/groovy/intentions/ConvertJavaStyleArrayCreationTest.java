@@ -29,4 +29,16 @@ public class ConvertJavaStyleArrayCreationTest extends GrIntentionTestCase{
   public void testConversion() {
     doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
   }
+
+  public void testConversionWithDoubleNestedArrayInitializer() {
+    doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
+  }
+
+  public void testWhitespacesAndNewLinesAreIgnored() {
+    doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
+  }
+
+  public void testTrailingComma() {
+    doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
+  }
 }

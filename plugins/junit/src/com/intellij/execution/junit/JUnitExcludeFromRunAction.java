@@ -31,6 +31,6 @@ public class JUnitExcludeFromRunAction extends AbstractExcludeFromRunAction<JUni
   @Override
   protected boolean isPatternBasedConfiguration(RunConfiguration configuration) {
     return configuration instanceof JUnitConfiguration &&
-           ((JUnitConfiguration)configuration).getPersistentData().TEST_OBJECT == JUnitConfiguration.TEST_PATTERN;
+           JUnitConfiguration.TEST_PATTERN.equals(((JUnitConfiguration)configuration).getPersistentData().TEST_OBJECT);
   }
 }

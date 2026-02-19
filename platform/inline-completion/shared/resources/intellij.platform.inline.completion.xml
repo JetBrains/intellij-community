@@ -1,0 +1,26 @@
+<idea-plugin visibility="internal" package="com.intellij.codeInsight.inline.completion">
+
+  <extensions defaultExtensionNs="com.intellij">
+    <inline.completion.handlerInitializer
+      order="last"
+      implementation="com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializerImpl"/>
+    <inline.completion.editorInsertHandler
+      order="last"
+      implementation="com.intellij.codeInsight.inline.completion.InlineCompletionEditorInsertHandlerImpl"/>
+
+    <registryKey key="inline.completion.rem.dev.use.rhizome"
+                 description="Use Rhizome DB for inline completion implementation in RemDev"
+                 restartRequired="true"
+                 defaultValue="true"/>
+
+    <editorTypedHandler implementationClass="com.intellij.codeInsight.inline.completion.InlineCompletionTypedHandler"
+                        id="inline.completion" order="after lookup"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.inline.completion.shortcutHintListener"
+      interface="com.intellij.codeInsight.inline.completion.shortcut.InlineCompletionShortcutHintListener"
+      dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

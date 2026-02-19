@@ -1,0 +1,7 @@
+class Tester {
+    public Tester(String minimumSize) {}
+}
+
+interface ActionToolbar {
+    String foo = "foo";
+}

@@ -1,30 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.List;
+import java.util.Optional;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.postOrder;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
-/**
- * @author ven
- */
-public class DFAEngine<E> {
-
+public final class DFAEngine<E> {
   private final Instruction[] myFlow;
-  private final DfaInstance<? super E> myDfa;
+  private final DfaInstance<E> myDfa;
   private final Semilattice<E> mySemilattice;
 
   private WorkCounter myCounter = null;
 
-  public DFAEngine(Instruction @NotNull [] flow, @NotNull DfaInstance<? super E> dfa, @NotNull Semilattice<E> semilattice) {
+  public DFAEngine(Instruction @NotNull [] flow, @NotNull DfaInstance<E> dfa, @NotNull Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
@@ -40,9 +43,8 @@ public class DFAEngine<E> {
       }
     }
 
-    @NotNull
     @Override
-    public Deque<CallInstruction> callStack(@NotNull Instruction instruction) {
+    public @NotNull Deque<CallInstruction> callStack(@NotNull Instruction instruction) {
       return myEnv.get(instruction.num());
     }
 
@@ -52,22 +54,19 @@ public class DFAEngine<E> {
     }
   }
 
-  @NotNull
-  public List<E> performForceDFA() {
+  public @NotNull List<@Nullable E> performForceDFA() {
     List<E> result = performDFA(false);
     assert result != null;
     return result;
   }
 
-  @Nullable
-  public List<E> performDFAWithTimeout() {
+  public @Nullable List<@Nullable E> performDFAWithTimeout() {
     return performDFA(true);
   }
 
-  @Nullable
-  private List<E> performDFA(boolean timeout) {
+  private @Nullable List<@Nullable E> performDFA(boolean timeout) {
     final int n = myFlow.length;
-    final List<E> info = new ArrayList<>(Collections.nCopies(n, mySemilattice.initial()));
+    final List<Optional<E>> info = getEmptyInfo(n);
     final CallEnvironment env = new MyCallEnvironment(n);
 
     final WorkList workList = new WorkList(n, getFlowOrder());
@@ -77,19 +76,25 @@ public class DFAEngine<E> {
       if (timeout && checkCounter()) return null;
       final int num = workList.next();
       final Instruction curr = myFlow[num];
-      final E oldE = info.get(num);                      // saved outbound state
-      final List<E> ins = getPrevInfos(curr, info, env); // states from all inbound edges
-      final E newE = mySemilattice.join(ins);            // inbound state
-      myDfa.fun(newE, curr);                             // newly modified outbound state
-      if (!mySemilattice.eq(newE, oldE)) {               // if outbound state changed
-        info.set(num, newE);                             // save new state
+      final Optional<E> oldE = info.get(num);                        // saved outbound state
+      final List<E> ins = getPrevInfos(curr, info, env);             // states from all inbound edges
+      final E jointE = mySemilattice.join(ins);                      // inbound state
+      final E newE = myDfa.fun(jointE, curr);                        // new outbound state
+      if (oldE.isEmpty() || !mySemilattice.eq(newE, oldE.get())) {   // if outbound state changed
+        info.set(num, Optional.of(newE));                            // save new state
         for (Instruction next : getNext(curr, env)) {
           workList.offer(next.num());
         }
       }
     }
+    return ContainerUtil.map(info, e -> e.orElse(null));
+  }
 
-    return info;
+  private @NotNull List<Optional<E>> getEmptyInfo(int n) {
+    //noinspection unchecked
+    Optional<E>[] optionals = new Optional[n];
+    Arrays.fill(optionals, Optional.empty());
+    return Arrays.asList(optionals);
   }
 
   private int @NotNull [] getFlowOrder() {
@@ -101,22 +106,20 @@ public class DFAEngine<E> {
     }
   }
 
-  @NotNull
-  private List<E> getPrevInfos(@NotNull Instruction instruction, @NotNull List<E> info, @NotNull CallEnvironment env) {
-    List<E> prevInfos = new ArrayList<>();
+  private @NotNull List<E> getPrevInfos(@NotNull Instruction instruction, @NotNull List<Optional<E>> info, @NotNull CallEnvironment env) {
+    List<E> prevInfos = new SmartList<>();
     for (Instruction i : getPrevious(instruction, env)) {
-      prevInfos.add(info.get(i.num()));
+      Optional<E> prevInfo = info.get(i.num());
+      prevInfo.ifPresent(e -> prevInfos.add(e));
     }
     return prevInfos;
   }
 
-  @NotNull
-  private Iterable<Instruction> getPrevious(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
+  private @NotNull Iterable<Instruction> getPrevious(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
     return myDfa.isForward() ? instruction.predecessors(env) : instruction.successors(env);
   }
 
-  @NotNull
-  private Iterable<Instruction> getNext(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
+  private @NotNull Iterable<Instruction> getNext(@NotNull Instruction instruction, @NotNull CallEnvironment env) {
     return myDfa.isForward() ? instruction.successors(env) : instruction.predecessors(env);
   }
 

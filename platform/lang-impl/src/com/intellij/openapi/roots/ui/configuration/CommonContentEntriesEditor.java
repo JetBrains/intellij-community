@@ -1,10 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -20,6 +26,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,21 +37,32 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.roots.ToolbarPanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +75,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   /**
    * @deprecated Use {@link #getName()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final String NAME = "Sources";
 
   protected ContentEntryTreeEditor myRootTreeEditor;
@@ -97,13 +115,9 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
       }
     };
     final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    fileManager.addVirtualFileManagerListener(fileManagerListener);
-    registerDisposable(new Disposable() {
-      @Override
-      public void dispose() {
-        fileManager.removeVirtualFileManagerListener(fileManagerListener);
-      }
-    });
+    Disposable disposable = Disposer.newDisposable();
+    fileManager.addVirtualFileManagerListener(fileManagerListener, disposable);
+    registerDisposable(disposable);
   }
 
   public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, JpsModuleSourceRootType<?>... rootTypes) {
@@ -112,7 +126,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   @Override
   protected ModifiableRootModel getModel() {
-    return myState.getRootModel();
+    return myState.getModifiableRootModel();
   }
 
   @Override
@@ -154,11 +168,12 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     final AddContentEntryAction action = new AddContentEntryAction();
     action.registerCustomShortcutSet(KeyEvent.VK_C, InputEvent.ALT_DOWN_MASK, mainPanel);
     group.add(action);
+    group.addAll(getAdditionalContentEntryEditorToolbarActions());
 
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
     myEditorsPanel.setBackground(UIUtil.getListBackground());
     JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel, true);
-    final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group);
+    final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group, "ContentEntryEditorToolbar", myEditorsPanel);
     int border = myWithBorders ? 1 : 0;
     toolbarPanel.setBorder(new CustomLineBorder(1, 0, border, border));
 
@@ -174,14 +189,15 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     splitter.setSecondComponent(toolbarPanel);
     JPanel contentPanel = new JPanel(new GridBagLayout());
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureContentEntries", myRootTreeEditor.getEditingActionsGroup(), true);
+    actionToolbar.setTargetComponent(myRootTreeEditor.myTree);
     contentPanel.add(new JLabel(ProjectBundle.message("label.text.mark.as")),
                      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, JBInsets.create(0, 10), 0, 0));
     contentPanel.add(actionToolbar.getComponent(),
                      new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                            JBUI.emptyInsets(), 0, 0));
+                                            JBInsets.emptyInsets(), 0, 0));
     contentPanel.add(splitter,
                      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                            JBUI.emptyInsets(), 0, 0));
+                                            JBInsets.emptyInsets(), 0, 0));
 
     mainPanel.add(contentPanel, BorderLayout.CENTER);
 
@@ -195,18 +211,20 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     if (model != null) {
       final ContentEntry[] contentEntries = model.getContentEntries();
       if (contentEntries.length > 0) {
-        for (final ContentEntry contentEntry : contentEntries) {
+        ContentEntry[] sortedContentRoots = ArrayUtil.newArray(ContentEntry.class, contentEntries.length);
+        System.arraycopy(contentEntries, 0, sortedContentRoots, 0, contentEntries.length);
+        Arrays.sort(sortedContentRoots, Comparator.comparing(ContentEntry::getUrl));
+        for (final ContentEntry contentEntry : sortedContentRoots) {
           addContentEntryPanel(contentEntry.getUrl());
         }
-        selectContentEntry(contentEntries[0].getUrl(), false);
+        selectContentEntry(sortedContentRoots[0].getUrl(), false);
       }
     }
 
     return mainPanel;
   }
 
-  @Nullable
-  protected JPanel createBottomControl(Module module) {
+  protected @Nullable JPanel createBottomControl(Module module) {
     return null;
   }
 
@@ -215,6 +233,11 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull List<AnAction> getAdditionalContentEntryEditorToolbarActions() {
+    return Collections.emptyList();
   }
 
   protected Module getModule() {
@@ -292,13 +315,11 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
   }
 
-  @Nullable
-  private String getNextContentEntry(final String contentEntryUrl) {
+  private @Nullable String getNextContentEntry(final String contentEntryUrl) {
     return getAdjacentContentEntry(contentEntryUrl, 1);
   }
 
-  @Nullable
-  private String getAdjacentContentEntry(final String contentEntryUrl, int delta) {
+  private @Nullable String getAdjacentContentEntry(final String contentEntryUrl, int delta) {
     final ContentEntry[] contentEntries = getModel().getContentEntries();
     for (int idx = 0; idx < contentEntries.length; idx++) {
       ContentEntry entry = contentEntries[idx];
@@ -327,21 +348,19 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   private boolean isAlreadyAdded(VirtualFile file) {
     final VirtualFile[] contentRoots = getModel().getContentRoots();
-    for (VirtualFile contentRoot : contentRoots) {
-      if (contentRoot.equals(file)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(file, contentRoots);
   }
 
   protected void addContentEntryPanels(ContentEntry[] contentEntriesArray) {
-    for (ContentEntry contentEntry : contentEntriesArray) {
+    ContentEntry[] sortedContentRoots = ArrayUtil.newArray(ContentEntry.class, contentEntriesArray.length);
+    System.arraycopy(contentEntriesArray, 0, sortedContentRoots, 0, contentEntriesArray.length);
+    Arrays.sort(sortedContentRoots, Comparator.comparing(ContentEntry::getUrl));
+    for (ContentEntry contentEntry : sortedContentRoots) {
       addContentEntryPanel(contentEntry.getUrl());
     }
     myEditorsPanel.revalidate();
     myEditorsPanel.repaint();
-    selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1].getUrl(), false);
+    selectContentEntry(sortedContentRoots[sortedContentRoots.length - 1].getUrl(), false);
   }
 
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
@@ -404,7 +423,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
   }
 
-  private class AddContentEntryAction extends IconWithTextAction implements DumbAware {
+  private final class AddContentEntryAction extends IconWithTextAction implements DumbAware {
     private final FileChooserDescriptor myDescriptor;
 
     AddContentEntryAction() {
@@ -430,8 +449,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
       });
     }
 
-    @Nullable
-    private ContentEntry getContentEntry(final String url) {
+    private @Nullable ContentEntry getContentEntry(final String url) {
       final ContentEntry[] entries = getModel().getContentEntries();
       for (final ContentEntry entry : entries) {
         if (entry.getUrl().equals(url)) return entry;
@@ -466,25 +484,26 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
                                     contentEntryFile.getPresentableUrl()));
           }
         }
-        // check if the same root is configured for another module
-        final Module[] modules = myModulesProvider.getModules();
-        for (final Module module : modules) {
-          if (myModuleName.equals(module.getName())) {
-            continue;
-          }
-          ModuleRootModel rootModel = myModulesProvider.getRootModel(module);
-          LOG.assertTrue(rootModel != null);
-          final VirtualFile[] moduleContentRoots = rootModel.getContentRoots();
-          for (VirtualFile moduleContentRoot : moduleContentRoots) {
-            if (file.equals(moduleContentRoot)) {
-              throw new Exception(
-                ProjectBundle.message("module.paths.add.content.duplicate.error", file.getPresentableUrl(), module.getName()));
+        if (!CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
+          // check if the same root is configured for another module
+          final Module[] modules = myModulesProvider.getModules();
+          for (final Module module : modules) {
+            if (myModuleName.equals(module.getName())) {
+              continue;
+            }
+            ModuleRootModel rootModel = myModulesProvider.getRootModel(module);
+            LOG.assertTrue(rootModel != null);
+            final VirtualFile[] moduleContentRoots = rootModel.getContentRoots();
+            for (VirtualFile moduleContentRoot : moduleContentRoots) {
+              if (file.equals(moduleContentRoot)) {
+                throw new Exception(
+                  ProjectBundle.message("module.paths.add.content.duplicate.error", file.getPresentableUrl(), module.getName()));
+              }
             }
           }
         }
       }
     }
-
   }
 
   public static @NlsContexts.ConfigurableName String getName() {

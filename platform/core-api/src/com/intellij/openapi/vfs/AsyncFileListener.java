@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +14,8 @@ import java.util.List;
 /**
  * An alternative to {@link com.intellij.openapi.vfs.newvfs.BulkFileListener} that allows
  * for moving parts of VFS event processing to background thread and thus reduce the duration
- * of UI freezes. Asynchronous listeners should preferably be registered as "vfs.asyncListener" extensions.
- * If that's too inconvenient, manual registration via {@link VirtualFileManager#addAsyncFileListener} is possible.<p></p>
+ * of UI freezes. Asynchronous listeners should preferably be registered as {@code com.intellij.vfs.asyncListenerBackgroundable} extensions.
+ * If that's too inconvenient, manual registration via {@link VirtualFileManager#addAsyncFileListenerBackgroundable} is possible.<p></p>
  *
  * <h3>Migration of synchronous listeners:</h3>
  *
@@ -68,7 +69,7 @@ public interface AsyncFileListener {
    */
   @Contract(pure = true)
   @Nullable
-  ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events);
+  ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events);
 
   interface ChangeApplier {
     /**
@@ -76,22 +77,30 @@ public interface AsyncFileListener {
      * to apply modifications based on the information calculated during {@link #prepareChange}.<p></p>
      *
      * Although it's guaranteed that no write actions happen between {@link #prepareChange} and invoking all {@link ChangeApplier}s,
-     * another listener might already have changed something (e.g. send PSI events, increase modification trackers, etc)
+     * another listener might already have changed something (e.g. send PSI events, increase modification trackers, etc.)
      * by the time this implementation is executed, so be prepared. And if your listener depends on state not synchronized via read-write actions,
      * it can be changed by this moment as well.
      */
+    @RequiresWriteLock
+    // can be executed on any thread
     default void beforeVfsChange() {}
 
     /**
      * This method is called in write action after the VFS events are delivered and applied, and allows
      * to apply modifications based on the information calculated during {@link #prepareChange}.
      * The implementations should be as fast as possible.<p></p>
-     *
+     * <p>
+     * <b> In the future versions of IntelliJ Platform, this listener may start running on background threads.
+     * You can use {@link VirtualFileManager#addAsyncFileListenerBackgroundable} to run this listener on background thread unconditionally.
+     * </b>
+     * <p>
      * If you process events passed into {@link #prepareChange} here, remember that an event might be superseded by further events
      * from the same list. For example, the {@link VFileEvent#getFile()} may be invalid (if it was deleted by that further event),
      * {@link VFileCreateEvent#getFile()} may return null, property value in
      * {@link com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent} may be already outdated, etc.
      */
+    @RequiresWriteLock
+    // can be executed on any thread
     default void afterVfsChange() {}
   }
 }

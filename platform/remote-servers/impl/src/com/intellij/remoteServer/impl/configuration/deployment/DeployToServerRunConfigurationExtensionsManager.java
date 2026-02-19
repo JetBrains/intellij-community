@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configuration.RunConfigurationExtensionsManager;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,17 +15,23 @@ public class DeployToServerRunConfigurationExtensionsManager
   }
 
   public static DeployToServerRunConfigurationExtensionsManager getInstance() {
-    return ServiceManager.getService(DeployToServerRunConfigurationExtensionsManager.class);
+    return ApplicationManager.getApplication().getService(DeployToServerRunConfigurationExtensionsManager.class);
   }
 
   public void patchDeploymentTask(@NotNull DeploymentTask<?> deploymentTask) {
     RunProfile runProfile = deploymentTask.getExecutionEnvironment().getRunProfile();
-    if (runProfile instanceof DeployToServerRunConfiguration<?, ?>) {
-      DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)runProfile;
+    if (runProfile instanceof DeployToServerRunConfiguration<?, ?> runConfiguration) {
       processApplicableExtensions(runConfiguration, next -> {
         next.patchDeploymentTask(runConfiguration, deploymentTask);
         return null;
       });
     }
+  }
+
+  public void extendCreatedConfiguration(DeployToServerRunConfiguration<?, ?> configuration) {
+    processApplicableExtensions(configuration, next -> {
+      next.extendCreatedConfiguration(configuration);
+      return null;
+    });
   }
 }

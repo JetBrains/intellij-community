@@ -1,24 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,10 +21,10 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaRainbowVisitor extends RainbowVisitor {
+public final class JavaRainbowVisitor extends RainbowVisitor {
   @Override
-  public boolean suitableForFile(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile;
+  public boolean suitableForFile(@NotNull PsiFile psiFile) {
+    return psiFile instanceof PsiJavaFile;
   }
 
   @Override
@@ -53,8 +48,7 @@ public class JavaRainbowVisitor extends RainbowVisitor {
     }
   }
 
-  @Nullable
-  private HighlightInfo getRainbowSymbolKey(@NotNull PsiElement context, PsiElement rainbowElement, PsiElement resolved) {
+  private @Nullable HighlightInfo getRainbowSymbolKey(@NotNull PsiElement context, PsiElement rainbowElement, PsiElement resolved) {
     if (rainbowElement == null || resolved == null) {
       return null;
     }
@@ -72,8 +66,7 @@ public class JavaRainbowVisitor extends RainbowVisitor {
   }
 
   @Override
-  @NotNull
-  public HighlightVisitor clone() {
+  public @NotNull HighlightVisitor clone() {
     return new JavaRainbowVisitor();
   }
 }

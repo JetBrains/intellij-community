@@ -1,0 +1,5 @@
+jewel:
+  EqualityMembersRule:
+    active: true
+  MissingApiStatusAnnotationRule:
+    active: true

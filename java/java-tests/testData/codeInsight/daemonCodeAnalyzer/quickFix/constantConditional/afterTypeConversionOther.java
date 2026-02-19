@@ -1,4 +1,4 @@
-// "Simplify" "true"
+// "Simplify" "true-preview"
 class Test {
   public static void main(String[] args) {
     foo((String) null, (int) 0);

@@ -1,85 +1,153 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
+import com.intellij.ide.projectView.impl.nodes.NodeWithMeasurableExpand;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.DirtyUI;
+import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.toolWindow.ToolWindowHeader;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
-import com.intellij.util.ObjectUtils;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Point;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ProjectViewTree extends DnDAwareTree {
-  private static final Logger LOG = Logger.getInstance(ProjectViewTree.class);
+public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataProvider, SpeedSearchSupply.SpeedSearchLocator {
 
-  /**
-   * @deprecated use another constructor instead
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  protected ProjectViewTree(Project project, TreeModel model) {
-    this(model);
-  }
+  private @Nullable ProjectViewDirectoryExpandDurationMeasurer expandMeasurer;
 
   public ProjectViewTree(TreeModel model) {
     super((TreeModel)null);
+
+    // not required for Project View, and on start-up, if an editor component is not yet added, it can show confusing "Nothing to show"
+    // a proper fix — wait ~300ms before showing empty status text, or investigating why "Project View" is rendered in the whole area,
+    // including editor, are not safe for 231 and should be addressed separate
+    getEmptyText().setText("");
+
     setLargeModel(true);
     setModel(model);
     setCellRenderer(createCellRenderer());
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
+
+    ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_FILTER, node -> {
+      var obj = TreeUtil.getUserObject(node);
+      if (obj instanceof BasePsiNode<?> pvNode) {
+        var file = pvNode.getVirtualFile();
+        // true means "don't expand", so we put the condition inside !(),
+        // expressing inside the "it's a directory, and not a hidden one (starting with a dot)" condition
+        // (the file == null check is to stay on the safe side and expand if we don't know what it is)
+        return !(file == null || (file.isDirectory() && !file.getName().startsWith(".")));
+      }
+      else if (obj instanceof AbstractTreeNode<?> abstractTreeNode) {
+        return !abstractTreeNode.isAutoExpandAllowed();
+      }
+      else {
+        return false;
+      }
+    });
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.SPEED_SEARCH_LOCATOR, this);
+  }
+
+  @Override
+  public void setModel(TreeModel newModel) {
+    var expandMeasurer = this.expandMeasurer;
+    if (expandMeasurer != null) {
+      expandMeasurer.detach(); // The entire model has changed, that expansion is not going to happen.
+    }
+    super.setModel(newModel);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void startMeasuringExpandDuration(@NotNull TreePath path) {
+    var model = getModel();
+    if (model == null) {
+      return;
+    }
+    var value = TreeUtil.getUserObject(path.getLastPathComponent());
+    if (!(value instanceof NodeWithMeasurableExpand)) {
+      return;
+    }
+    var expandMeasurer = this.expandMeasurer;
+    if (expandMeasurer != null) {
+      expandMeasurer.detach();
+    }
+    expandMeasurer = new ProjectViewDirectoryExpandDurationMeasurer(model, path, () -> {
+      this.expandMeasurer = null;
+    });
+    expandMeasurer.start();
+    this.expandMeasurer = expandMeasurer;
+  }
+
+  @Override
+  public void expandPath(TreePath path) {
+    super.expandPath(path);
+    var expandMeasurer = this.expandMeasurer;
+    if (expandMeasurer != null) {
+      expandMeasurer.checkExpanded(path);
+    }
   }
 
   /**
    * @return custom renderer for tree nodes
    */
-  @NotNull
-  protected TreeCellRenderer createCellRenderer() {
+  protected @NotNull TreeCellRenderer createCellRenderer() {
     return new ProjectViewRenderer();
-  }
-
-  /**
-   * @deprecated Not every tree employs {@link DefaultMutableTreeNode} so
-   * use {@link #getSelectionPaths()} or {@link TreeUtil#getSelectedPathIfOne(JTree)} directly.
-   */
-  @Deprecated
-  public DefaultMutableTreeNode getSelectedNode() {
-    TreePath path = TreeUtil.getSelectedPathIfOne(this);
-    return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
-  }
-
-  @Override
-  public void setToggleClickCount(int count) {
-    if (count != 2) LOG.info(new IllegalStateException("setToggleClickCount: unexpected count = " + count));
-    super.setToggleClickCount(count);
   }
 
   @Override
   public boolean isFileColorsEnabled() {
     return isFileColorsEnabledFor(this);
+  }
+
+  @Override
+  public @Nullable RelativeRectangle getSizeAndLocation(JComponent target) {
+    if (target == this) {
+      InternalDecoratorImpl tw = UIUtil.getParentOfType(InternalDecoratorImpl.class, this);
+      if (tw != null) {
+        ToolWindowHeader header = UIUtil.findComponentOfType(tw, ToolWindowHeader.class);
+        if (header != null) {
+          RelativePoint rp = new RelativePoint(header, new Point(-JBUI.scale(1), 0));
+          Dimension d = new Dimension(header.getWidth() + 2 * JBUI.scale(1), header.getHeight());
+          return new RelativeRectangle(rp, d);
+        }
+      }
+    }
+    return null;
   }
 
   public static boolean isFileColorsEnabledFor(JTree tree) {
@@ -94,64 +162,28 @@ public class ProjectViewTree extends DnDAwareTree {
     return enabled;
   }
 
-  @DirtyUI
-  @Nullable
   @Override
-  public Color getFileColorFor(Object object) {
-    if (object instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+  public @Nullable Color getFileColorFor(Object object) {
+    if (object instanceof DefaultMutableTreeNode node) {
       object = node.getUserObject();
     }
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode<?> node = (AbstractTreeNode<?>)object;
-      Object value = node.getValue();
-      if (value instanceof PsiElement) {
-        return getColorForElement((PsiElement)value);
-      }
-    }
-    if (object instanceof ProjectViewNode) {
-      ProjectViewNode<?> node = (ProjectViewNode<?>)object;
-      VirtualFile file = node.getVirtualFile();
-      if (file != null) {
-        Project project = node.getProject();
-        if (project != null && !project.isDisposed()) {
-          Color color = VfsPresentationUtil.getFileBackgroundColor(project, file);
-          if (color != null) return color;
-        }
-      }
+    if (object instanceof PresentableNodeDescriptor) {
+      return ((PresentableNodeDescriptor<?>)object).getPresentation().getBackground();
     }
     return null;
   }
 
-  @Nullable
-  public static Color getColorForElement(@Nullable PsiElement psi) {
-    Color color = null;
-    if (psi != null) {
-      if (!psi.isValid()) return null;
-
-      Project project = psi.getProject();
-      final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
-
-      if (file != null) {
-        color = VfsPresentationUtil.getFileBackgroundColor(project, file);
-      }
-      else if (psi instanceof PsiDirectory) {
-        color = VfsPresentationUtil.getFileBackgroundColor(project, ((PsiDirectory)psi).getVirtualFile());
-      }
-      else if (psi instanceof PsiDirectoryContainer) {
-        final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
-        for (PsiDirectory dir : dirs) {
-          Color c = VfsPresentationUtil.getFileBackgroundColor(project, dir.getVirtualFile());
-          if (c != null && color == null) {
-            color = c;
-          }
-          else if (c != null) {
-            color = null;
-            break;
-          }
-        }
-      }
+  public static @Nullable Color getColorForElement(@Nullable PsiElement psi) {
+    if (psi == null || !psi.isValid()) {
+      return null;
     }
-    return color;
+    Project project = psi.getProject();
+    return FilePresentationService.getInstance(project).getFileBackgroundColor(psi);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  protected boolean isHorizontalAutoAlignEnabled() {
+    return Registry.is("ide.project.view.auto.align.horizontally");
   }
 }

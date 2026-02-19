@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.graph
 
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 
 class InferenceUnitGraphBuilder {
 
@@ -64,7 +65,7 @@ class InferenceUnitGraphBuilder {
     }
     for ((unit, index) in unitIndexMap) {
       inferenceNodes.add(InferenceUnitNode(unit, superTypesMap[index], subTypesMap[index],
-                                           fixedInstantiations[unit] ?: PsiType.NULL,
+                                           fixedInstantiations[unit] ?: PsiTypes.nullType(),
                                            direct = unit in directUnits))
     }
     return InferenceUnitGraph(inferenceNodes)

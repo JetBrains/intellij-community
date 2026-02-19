@@ -7,7 +7,9 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.fixtures.BareTestFixture;
+import org.jetbrains.annotations.TestOnly;
 
+@TestOnly
 public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture {
   @Override
   public void setUp() throws Exception {
@@ -20,7 +22,7 @@ public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
-      ()-> JarFileSystemImpl.cleanupForNextTest(),
+      () -> JarFileSystemImpl.cleanupForNextTest(),
       () -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null)),
       () -> super.tearDown()
     ).run();

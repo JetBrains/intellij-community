@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.lw.FontDescriptor;
@@ -14,16 +15,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.lang.reflect.Method;
 
-/**
- * @author yole
- */
+
 public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   private final FontRenderer myFontRenderer = new FontRenderer();
   private FontEditor myFontEditor;
-  @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroFontProperty_";
+  private static final @NonNls String CLIENT_PROPERTY_KEY_PREFIX = "IntroFontProperty_";
 
   public IntroFontProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
@@ -35,12 +34,12 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
   }
 
   @Override
-  @NotNull public PropertyRenderer<FontDescriptor> getRenderer() {
+  public @NotNull PropertyRenderer<FontDescriptor> getRenderer() {
     return myFontRenderer;
   }
 
   @Override
-  @Nullable public PropertyEditor<FontDescriptor> getEditor() {
+  public @Nullable PropertyEditor<FontDescriptor> getEditor() {
     if (myFontEditor == null) {
       myFontEditor = new FontEditor(getName());
     }
@@ -72,7 +71,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), null);
   }
 
-  public static String descriptorToString(final FontDescriptor value) {
+  public static @NlsSafe String descriptorToString(final FontDescriptor value) {
     if (value == null) {
       return "";
     }
@@ -101,7 +100,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
       }
     }
     String result = builder.toString().trim();
-    if (result.length() > 0) {
+    if (!result.isEmpty()) {
       return result;
     }
     return UIDesignerBundle.message("font.default");

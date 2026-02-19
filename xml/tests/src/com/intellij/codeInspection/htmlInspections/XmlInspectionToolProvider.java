@@ -1,28 +1,23 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.daemon.impl.analysis.*;
+import com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownAnchorTargetInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.HtmlUnknownTargetInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitorBasedInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.xml.util.*;
+import com.intellij.xml.util.CheckDtdReferencesInspection;
+import com.intellij.xml.util.CheckEmptyTagInspection;
+import com.intellij.xml.util.CheckTagEmptyBodyInspection;
+import com.intellij.xml.util.CheckValidXmlInScriptBodyInspection;
+import com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection;
+import com.intellij.xml.util.XmlDuplicatedIdInspection;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class XmlInspectionToolProvider implements InspectionToolProvider {
   @Override
   public Class @NotNull [] getInspectionClasses() {
@@ -42,6 +37,7 @@ public class XmlInspectionToolProvider implements InspectionToolProvider {
       XmlUnusedNamespaceInspection.class,
       XmlHighlightVisitorBasedInspection.class,
       XmlPathReferenceInspection.class,
+      XmlUnresolvedReferenceInspection.class,
       HtmlUnknownTargetInspection.class,
       HtmlUnknownAnchorTargetInspection.class
     };

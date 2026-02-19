@@ -19,9 +19,6 @@ import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 class EventsTestListener implements PsiTreeChangeListener {
   StringBuffer myBuffer = new StringBuffer();
 

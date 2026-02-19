@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.assertions
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.readChars
 import com.intellij.util.io.write
 import org.assertj.core.api.ListAssert
@@ -24,7 +24,7 @@ internal interface SnapshotFileUsageListener {
   fun beforeMatch(file: Path)
 }
 
-internal val snapshotFileUsageListeners = ContainerUtil.newConcurrentSet<SnapshotFileUsageListener>()
+internal val snapshotFileUsageListeners: MutableSet<SnapshotFileUsageListener> = ConcurrentCollectionFactory.createConcurrentSet<SnapshotFileUsageListener>()
 
 class ListAssertEx<ELEMENT>(actual: List<ELEMENT>?) : ListAssert<ELEMENT>(actual) {
   fun toMatchSnapshot(snapshotFile: Path) {
@@ -42,7 +42,7 @@ fun dumpData(data: Any): String {
   return yaml.dump(data)
 }
 
-private class DumpRepresenter : Representer() {
+private class DumpRepresenter : Representer(DumperOptions()) {
   init {
     representers.put(Pattern::class.java, RepresentDump())
   }
@@ -61,7 +61,7 @@ internal fun loadSnapshotContent(snapshotFile: Path, convertLineSeparators: Bool
   return content
 }
 
-@Throws(FileComparisonFailure::class)
+@Throws(FileComparisonFailedError::class)
 fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolean = isUpdateSnapshotIfMismatch(), writeIfNotFound: Boolean = true) {
   val actualContent = if (actual is CharSequence) getNormalizedActualContent(actual) else dumpData(actual).trimEnd()
 
@@ -73,7 +73,7 @@ fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolea
       throw e
     }
 
-    println("Write a new snapshot ${snapshotFile.fileName}")
+    println("Write a new snapshot: ${snapshotFile.fileName}")
     snapshotFile.write(actualContent)
     return
   }
@@ -83,14 +83,18 @@ fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolea
   }
 
   if (updateIfMismatch) {
-    System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
-    snapshotFile.write(StringBuilder(actualContent))
+    println("UPDATED snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(actualContent)
   }
   else {
+    val firstMismatch = StringUtil.commonPrefixLength(actualContent, expected)
+
     @Suppress("SpellCheckingInspection")
-    throw FileComparisonFailure(
-      "Received value does not match stored snapshot ${snapshotFile.fileName}.\nInspect your code changes or run with `-Dtest.update.snapshots` to update",
-      expected.toString(), actualContent.toString(), snapshotFile.toString())
+    val message = "Received value does not match stored snapshot '${snapshotFile.fileName}' at ${firstMismatch}.\n" +
+                  "Expected: '${expected.contextAround(firstMismatch, 10)}'\n" +
+                  "Actual  : '${actualContent.contextAround(firstMismatch, 10)}'\n" +
+                  "Inspect your code changes or run with `-Dtest.update.snapshots` to update"
+    throw FileComparisonFailedError(message, expected.toString(), actualContent.toString(), snapshotFile.toString())
   }
 }
 
@@ -110,3 +114,6 @@ private fun isUpdateSnapshotIfMismatch(): Boolean {
   val value = System.getProperty("test.update.snapshots")
   return value != null && (value.isEmpty() || value.toBoolean())
 }
+
+private fun CharSequence.contextAround(offset: Int, context: Int): String =
+  substring((offset - context).coerceAtLeast(0), (offset + context).coerceAtMost(length))

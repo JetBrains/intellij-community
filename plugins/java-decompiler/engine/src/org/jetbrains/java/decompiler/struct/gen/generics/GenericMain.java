@@ -1,15 +1,19 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.jetbrains.java.decompiler.util.TextUtil;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
+import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class GenericMain {
+public final class GenericMain {
 
   private static final String[] typeNames = {
     "byte",
@@ -22,7 +26,7 @@ public class GenericMain {
     "boolean",
   };
 
-  public static GenericClassDescriptor parseClassSignature(String signature) {
+  public static GenericClassDescriptor parseClassSignature(String qualifiedName, String signature) {
     String original = signature;
     try {
       GenericClassDescriptor descriptor = new GenericClassDescriptor();
@@ -30,14 +34,22 @@ public class GenericMain {
       signature = parseFormalParameters(signature, descriptor.fparameters, descriptor.fbounds);
 
       String superCl = GenericType.getNextType(signature);
-      descriptor.superclass = new GenericType(superCl);
+      descriptor.superclass = GenericType.parse(superCl);
 
       signature = signature.substring(superCl.length());
-      while (signature.length() > 0) {
+      while (!signature.isEmpty()) {
         String superIf = GenericType.getNextType(signature);
-        descriptor.superinterfaces.add(new GenericType(superIf));
+        descriptor.superinterfaces.add(GenericType.parse(superIf));
         signature = signature.substring(superIf.length());
       }
+
+      StringBuilder buf = new StringBuilder();
+      buf.append('L').append(qualifiedName).append('<');
+      for (String t : descriptor.fparameters) {
+        buf.append('T').append(t).append(';');
+      }
+      buf.append(">;");
+      descriptor.genericType = (GenericType)GenericType.parse(buf.toString());
 
       return descriptor;
     }
@@ -49,7 +61,7 @@ public class GenericMain {
 
   public static GenericFieldDescriptor parseFieldSignature(String signature) {
     try {
-      return new GenericFieldDescriptor(new GenericType(signature));
+      return new GenericFieldDescriptor(GenericType.parse(signature));
     }
     catch (RuntimeException e) {
       DecompilerContext.getLogger().writeMessage("Invalid signature: " + signature, IFernflowerLogger.Severity.WARN);
@@ -61,29 +73,29 @@ public class GenericMain {
     String original = signature;
     try {
       List<String> typeParameters = new ArrayList<>();
-      List<List<GenericType>> typeParameterBounds = new ArrayList<>();
+      List<List<VarType>> typeParameterBounds = new ArrayList<>();
       signature = parseFormalParameters(signature, typeParameters, typeParameterBounds);
 
       int to = signature.indexOf(")");
       String parameters = signature.substring(1, to);
       signature = signature.substring(to + 1);
 
-      List<GenericType> parameterTypes = new ArrayList<>();
-      while (parameters.length() > 0) {
+      List<VarType> parameterTypes = new ArrayList<>();
+      while (!parameters.isEmpty()) {
         String par = GenericType.getNextType(parameters);
-        parameterTypes.add(new GenericType(par));
+        parameterTypes.add(GenericType.parse(par));
         parameters = parameters.substring(par.length());
       }
 
       String ret = GenericType.getNextType(signature);
-      GenericType returnType = new GenericType(ret);
+      VarType returnType = GenericType.parse(ret);
       signature = signature.substring(ret.length());
 
-      List<GenericType> exceptionTypes = new ArrayList<>();
-      if (signature.length() > 0) {
+      List<VarType> exceptionTypes = new ArrayList<>();
+      if (!signature.isEmpty()) {
         String[] exceptions = signature.split("\\^");
         for (int i = 1; i < exceptions.length; i++) {
-          exceptionTypes.add(new GenericType(exceptions[i]));
+          exceptionTypes.add(GenericType.parse(exceptions[i]));
         }
       }
 
@@ -95,7 +107,7 @@ public class GenericMain {
     }
   }
 
-  private static String parseFormalParameters(String signature, List<? super String> parameters, List<? super List<GenericType>> bounds) {
+  private static String parseFormalParameters(String signature, List<String> parameters, List<List<VarType>> bounds) {
     if (signature.charAt(0) != '<') {
       return signature;
     }
@@ -106,14 +118,13 @@ public class GenericMain {
     loop:
     while (index < signature.length()) {
       switch (signature.charAt(index)) {
-        case '<':
-          counter++;
-          break;
-        case '>':
+        case '<' -> counter++;
+        case '>' -> {
           counter--;
           if (counter == 0) {
             break loop;
           }
+        }
       }
 
       index++;
@@ -122,13 +133,13 @@ public class GenericMain {
     String value = signature.substring(1, index);
     signature = signature.substring(index + 1);
 
-    while (value.length() > 0) {
+    while (!value.isEmpty()) {
       int to = value.indexOf(":");
 
       String param = value.substring(0, to);
       value = value.substring(to + 1);
 
-      List<GenericType> lstBounds = new ArrayList<>();
+      List<VarType> lstBounds = new ArrayList<>();
 
       while (true) {
         if (value.charAt(0) == ':') {
@@ -137,11 +148,11 @@ public class GenericMain {
         }
 
         String bound = GenericType.getNextType(value);
-        lstBounds.add(new GenericType(bound));
+        lstBounds.add(GenericType.parse(bound));
         value = value.substring(bound.length());
 
 
-        if (value.length() == 0 || value.charAt(0) != ':') {
+        if (value.isEmpty() || value.charAt(0) != ':') {
           break;
         }
         else {
@@ -156,14 +167,16 @@ public class GenericMain {
     return signature;
   }
 
-  public static String getGenericCastTypeName(GenericType type) {
-    StringBuilder s = new StringBuilder(getTypeName(type));
-    TextUtil.append(s, "[]", type.arrayDim);
-    return s.toString();
+  public static String getGenericCastTypeName(GenericType type, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    List<TypeAnnotationWriteHelper> arrayTypeAnnWriteHelpers = ExprProcessor.arrayPath(type, typeAnnWriteHelpers);
+    List<TypeAnnotationWriteHelper> nonArrayTypeAnnWriteHelpers = ExprProcessor.nonArrayPath(type, typeAnnWriteHelpers);
+    StringBuilder sb = new StringBuilder(getTypeName(type, nonArrayTypeAnnWriteHelpers));
+    ExprProcessor.writeArray(sb, type.getArrayDim(), arrayTypeAnnWriteHelpers);
+    return sb.toString();
   }
 
-  private static String getTypeName(GenericType type) {
-    int tp = type.type;
+  private static String getTypeName(GenericType type, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    int tp = type.getType();
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       return typeNames[tp];
     }
@@ -171,72 +184,74 @@ public class GenericMain {
       return "void";
     }
     else if (tp == CodeConstants.TYPE_GENVAR) {
-      return type.value;
+      StringBuilder sb = new StringBuilder();
+      ExprProcessor.writeTypeAnnotationBeforeType(type, sb, typeAnnWriteHelpers);
+      sb.append(type.getValue());
+      return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
-      StringBuilder buffer = new StringBuilder();
-      appendClassName(type, buffer);
-      return buffer.toString();
+      StringBuilder sb = new StringBuilder();
+      type.appendCastName(sb, typeAnnWriteHelpers);
+      return sb.toString();
     }
 
     throw new RuntimeException("Invalid type: " + type);
   }
 
-  private static void appendClassName(GenericType type, StringBuilder buffer) {
-    List<GenericType> enclosingClasses = type.getEnclosingClasses();
-
-    if (enclosingClasses.isEmpty()) {
-      String name = type.value.replace('/', '.');
-      buffer.append(DecompilerContext.getImportCollector().getShortName(name));
-    }
-    else {
-      for (GenericType tp : enclosingClasses) {
-        if (buffer.length() == 0) {
-          buffer.append(DecompilerContext.getImportCollector().getShortName(tp.value.replace('/', '.')));
-        }
-        else {
-          buffer.append(tp.value);
-        }
-
-        appendTypeArguments(tp, buffer);
-        buffer.append('.');
-      }
-
-      buffer.append(type.value);
-    }
-
-    appendTypeArguments(type, buffer);
+  public static List<TypeAnnotationWriteHelper> getGenericTypeAnnotations(
+    int argIndex,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
+    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      StructTypePathEntry entry = typeAnnWriteHelper.getPaths().peek();
+      boolean inGeneric = entry != null && entry.getTypeArgumentIndex() == argIndex
+                          && entry.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getId();
+      if (inGeneric) typeAnnWriteHelper.getPaths().pop();
+      return inGeneric;
+    }).collect(Collectors.toList());
   }
 
-  private static void appendTypeArguments(GenericType type, StringBuilder buffer) {
-    if (!type.getArguments().isEmpty()) {
-      buffer.append('<');
-
-      for (int i = 0; i < type.getArguments().size(); i++) {
-        if (i > 0) {
-          buffer.append(", ");
-        }
-
-        int wildcard = type.getWildcards().get(i);
-        switch (wildcard) {
-          case GenericType.WILDCARD_UNBOUND:
-            buffer.append('?');
-            break;
-          case GenericType.WILDCARD_EXTENDS:
-            buffer.append("? extends ");
-            break;
-          case GenericType.WILDCARD_SUPER:
-            buffer.append("? super ");
-            break;
-        }
-
-        GenericType genPar = type.getArguments().get(i);
-        if (genPar != null) {
-          buffer.append(getGenericCastTypeName(genPar));
-        }
+  public static List<TypeAnnotationWriteHelper> writeTypeAnnotationBeforeWildCard(
+    StringBuilder sb,
+    VarType type,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
+    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
+      if ((type instanceof GenericType genericType && genericType.getWildcard() != GenericType.WILDCARD_NO ||
+           type == null) && path == null) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
       }
+      if (type != null && type.getArrayDim() == typeAnnWriteHelper.getPaths().size() && type.getArrayDim() == typeAnnWriteHelper.arrayPathCount()) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
+      }
+      return true;
+    }).collect(Collectors.toList());
+  }
 
-      buffer.append(">");
-    }
+  public static List<TypeAnnotationWriteHelper> writeTypeAnnotationAfterWildCard(
+    StringBuilder sb,
+    VarType type,
+    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+  ) {
+    typeAnnWriteHelpers.forEach(typeAnnWriteHelper -> { // remove all wild card path entries
+      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
+      boolean isWildCard = path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getId();
+      if (isWildCard) typeAnnWriteHelper.getPaths().pop();
+    });
+    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
+      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
+      if (type.getArrayDim() == 0 && path == null) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
+      }
+      if (type.getArrayDim() == typeAnnWriteHelper.getPaths().size() && type.getArrayDim() == typeAnnWriteHelper.arrayPathCount()) {
+        typeAnnWriteHelper.writeTo(sb);
+        return false;
+      }
+      return true;
+    }).collect(Collectors.toList());
   }
 }

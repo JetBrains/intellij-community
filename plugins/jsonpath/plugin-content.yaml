@@ -1,0 +1,3 @@
+- name: lib/jsonpath.jar
+  modules:
+  - name: intellij.jsonpath

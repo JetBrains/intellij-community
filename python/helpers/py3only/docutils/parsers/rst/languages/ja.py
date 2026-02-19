@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# $Id: ja.py 7119 2011-09-02 13:00:23Z milde $
+# $Id: ja.py 9030 2022-03-05 23:28:32Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Japanese-language mappings for language-dependent features of
@@ -47,12 +46,12 @@ directives = {
     '表': 'table',
     'csv表': 'csv-table',
     'リスト表': 'list-table',
-    #u'質問': 'questions',
-    #u'問答': 'questions',
-    #u'faq': 'questions',
+    # '質問': 'questions',
+    # '問答': 'questions',
+    # 'faq': 'questions',
     'math (translation required)': 'math',
     'メタ': 'meta',
-    #u'イメージマプ': 'imagemap',
+    # 'イメージマプ': 'imagemap',
     'イメージ': 'image',
     '画像': 'image',
     'フィグア': 'figure',
@@ -73,14 +72,14 @@ directives = {
     'ディフォルトロール': 'default-role',
     '既定役': 'default-role',
     'タイトル': 'title',
-    '題': 'title',                    # 題名　件名
+    '題': 'title',                       # 題名　件名
     '目次': 'contents',
     '節数': 'sectnum',
     'ヘッダ': 'header',
     'フッタ': 'footer',
-    #u'脚注': 'footnotes',             # 脚註?
-    #u'サイテーション': 'citations',　　　# 出典　引証　引用
-    'ターゲットノート': 'target-notes', # 的注　的脚注
+    # '脚注': 'footnotes',                # 脚註?
+    # 'サイテーション': 'citations',　　　# 出典　引証　引用
+    'ターゲットノート': 'target-notes',  # 的注　的脚注
     }
 """Japanese name to registered (in directives/__init__.py) directive name
 mapping."""
@@ -114,6 +113,7 @@ roles = {
     'uri参照': 'uri-reference',
     'uri': 'uri-reference',
     'url': 'uri-reference',
-    '生': 'raw',}
+    '生': 'raw',
+    }
 """Mapping of Japanese role names to canonical role names for interpreted
 text."""

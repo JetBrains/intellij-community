@@ -1,0 +1,50 @@
+// FILE: first.before.kt
+// "Import operator 'Some.invoke'" "true"
+// ERROR: Expression 'some' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
+
+package test
+
+import some.Foo
+
+class Unrelated
+
+operator fun Unrelated.invoke(i: String) {}
+operator fun Unrelated.invoke(i: Int) {}
+
+fun testing(f: Foo) {
+    f.<caret>some()
+}
+//-----------------------
+
+
+// FILE: second.kt
+package some
+
+public class Some
+
+public class Foo {
+    val some: Some = Some()
+}
+
+operator fun Some.invoke(s: String) {}
+//-----------------------
+
+
+// FILE: first.after.kt
+// "Import operator 'Some.invoke'" "true"
+// ERROR: Expression 'some' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
+
+package test
+
+import some.Foo
+import some.invoke
+
+class Unrelated
+
+operator fun Unrelated.invoke(i: String) {}
+operator fun Unrelated.invoke(i: Int) {}
+
+fun testing(f: Foo) {
+    f.<caret>some()
+}
+//-----------------------

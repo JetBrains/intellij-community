@@ -1,0 +1,26 @@
+// PROBLEM: Suspicious cascading 'if' expression
+// FIX: Replace 'if' with 'when' (changes semantics)
+// IGNORE_K1
+fun translateNumber(n: Int, a: Int): String {
+    return when {
+        a == 1 -> {
+            "one"
+        }
+
+        n == 2 -> {
+            "two"
+        }
+
+        n == 3 -> {
+            "three"
+        }
+
+        n == 4 -> {
+            "four"
+        }
+
+        else -> {
+            "???"
+        }
+    } + 1
+}

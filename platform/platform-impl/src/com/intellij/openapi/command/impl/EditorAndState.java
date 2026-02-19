@@ -1,31 +1,50 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-class EditorAndState {
-  private final FileEditorState myState;
-  private final VirtualFile myVirtualFile;
+final class EditorAndState {
 
-  EditorAndState(FileEditor editor, FileEditorState state) {
-    myVirtualFile = editor.getFile();
-    myState = state;
+  static @Nullable EditorAndState getStateFor(@Nullable Project project, @NotNull CurrentEditorProvider editorProvider) {
+    FileEditor editor = editorProvider.getCurrentEditor(project);
+    if (editor != null && editor.isValid()) {
+      FileEditorState state = editor.getState(FileEditorStateLevel.UNDO);
+      return new EditorAndState(editor, state);
+    }
+    return null;
   }
 
-  public boolean canBeAppliedTo(FileEditor editor) {
-    if (editor == null) return false;
-    if (!Objects.equals(myVirtualFile, editor.getFile())) return false;
-    if (myState == null) return false;
+  private final @NotNull FileEditorState editorState;
+  private final VirtualFile virtualFile;
+
+  EditorAndState(@NotNull FileEditor editor, @NotNull FileEditorState state) {
+    virtualFile = editor.getFile();
+    editorState = state;
+  }
+
+  boolean canBeAppliedTo(@Nullable FileEditor editor) {
+    if (editor == null || !Objects.equals(virtualFile, editor.getFile())) {
+      return false;
+    }
     FileEditorState currentState = editor.getState(FileEditorStateLevel.UNDO);
-    return myState.getClass() == currentState.getClass();
+    return editorState.getClass() == currentState.getClass();
   }
 
-  public FileEditorState getState() {
-    return myState;
+  @NotNull FileEditorState getState() {
+    return editorState;
+  }
+
+  @Override
+  public String toString() {
+    return editorState.toString();
   }
 }

@@ -1,14 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XNavigatable;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
@@ -18,7 +25,7 @@ import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.net.URI;
 import java.util.List;
 
@@ -120,14 +127,14 @@ public class XsltStackFrame extends XStackFrame {
       Icon icon = null;
       if (myVariable.isGlobal()) {
         if (kind == Debugger.Variable.Kind.VARIABLE) {
-          icon = PlatformIcons.FIELD_ICON;
+          icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field);
         } else {
           icon = PlatformIcons.PROPERTY_ICON;
         }
       } else if (kind == Debugger.Variable.Kind.VARIABLE) {
-        icon = PlatformIcons.VARIABLE_ICON;
+        icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
       } else if (kind == Debugger.Variable.Kind.PARAMETER) {
-        icon = PlatformIcons.PARAMETER_ICON;
+        icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
       }
 
       final Value v = myVariable.getValue();
@@ -141,8 +148,7 @@ public class XsltStackFrame extends XStackFrame {
 
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {
-      if (myVariable.getValue().getValue() instanceof Value.NodeSet) {
-        final Value.NodeSet set = (Value.NodeSet)myVariable.getValue().getValue();
+      if (myVariable.getValue().getValue() instanceof Value.NodeSet set) {
         final XValueChildrenList list = new XValueChildrenList();
         for (final Value.Node n : set.getNodes()) {
           list.add(n.myXPath, new NodeValue(n));

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.lang.LangBundle;
@@ -13,20 +13,18 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.OptionalExclusionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class UnmarkRootAction extends MarkRootActionBase {
   @Override
   protected void doUpdate(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
-    if (!Registry.is("ide.hide.excluded.files") && !selection.mySelectedExcludeRoots.isEmpty()
-        && selection.mySelectedDirectories.isEmpty() && selection.mySelectedRoots.isEmpty()) {
+    if (!Registry.is("ide.hide.excluded.files") && module != null && canCancelExclusion(selection, module)) {
       e.getPresentation().setEnabledAndVisible(true);
       e.getPresentation().setText(LangBundle.messagePointer("mark.as.unmark.excluded"));
       return;
@@ -38,8 +36,15 @@ public class UnmarkRootAction extends MarkRootActionBase {
     if (text != null) e.getPresentation().setText(text);
   }
 
-  @Nullable
-  protected @ActionText String getActionText(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
+  private static boolean canCancelExclusion(@NotNull RootsSelection selection, @NotNull Module module) {
+    return selection.mySelectedRoots.isEmpty() &&
+           selection.mySelectedExcludeRoots.size() + selection.mySelectedDirectories.size() > 0 &&
+           ContainerUtil.all(selection.mySelectedDirectories, dir -> {
+             return OptionalExclusionUtil.canCancelExclusion(module.getProject(), dir);
+           });
+  }
+
+  protected @Nullable @ActionText String getActionText(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
     Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = getHandlersForSelectedRoots(selection);
 
     if (!selectedRootHandlers.isEmpty()) {
@@ -55,8 +60,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
     return null;
   }
 
-  @NotNull
-  private static Set<ModuleSourceRootEditHandler<?>> getHandlersForSelectedRoots(@NotNull RootsSelection selection) {
+  private static @NotNull Set<ModuleSourceRootEditHandler<?>> getHandlersForSelectedRoots(@NotNull RootsSelection selection) {
     Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = new HashSet<>();
     for (SourceFolder root : selection.mySelectedRoots) {
       ContainerUtil.addIfNotNull(selectedRootHandlers, ModuleSourceRootEditHandler.getEditHandler(root.getRootType()));
@@ -71,6 +75,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
 
   @Override
   protected void modifyRoots(@NotNull VirtualFile file, @NotNull ContentEntry entry) {
+    OptionalExclusionUtil.cancelExclusion(entry.getRootModel().getModule().getProject(), file);
     for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
       if (file.equals(excludeFolder.getFile())) {
         entry.removeExcludeFolder(excludeFolder);

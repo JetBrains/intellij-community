@@ -1,14 +1,23 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.lib.IntermediateOperation
-import com.intellij.debugger.streams.resolve.AppendResolver
-import com.intellij.debugger.streams.resolve.IntervalMapResolver
-import com.intellij.debugger.streams.resolve.PairMapResolver
-import com.intellij.debugger.streams.resolve.PrependResolver
-import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctByKeyHandler
+import com.intellij.debugger.streams.core.lib.IntermediateOperation
+import com.intellij.debugger.streams.core.lib.impl.CollapseOperation
+import com.intellij.debugger.streams.core.lib.impl.ConcatOperation
+import com.intellij.debugger.streams.core.lib.impl.DistinctOperation
+import com.intellij.debugger.streams.core.lib.impl.FilterOperation
+import com.intellij.debugger.streams.core.lib.impl.FlatMappingOperation
+import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
+import com.intellij.debugger.streams.core.lib.impl.MappingOperation
+import com.intellij.debugger.streams.core.lib.impl.OrderBasedOperation
+import com.intellij.debugger.streams.core.lib.impl.SortedOperation
+import com.intellij.debugger.streams.core.resolve.AppendResolver
+import com.intellij.debugger.streams.core.resolve.IntervalMapResolver
+import com.intellij.debugger.streams.core.resolve.PairMapResolver
+import com.intellij.debugger.streams.core.resolve.PrependResolver
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctByKeyHandler
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctKeysHandler
-import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctValuesHandler
 
 
@@ -36,7 +45,7 @@ class StreamExLibrarySupport
     addIntermediateOperationsSupport(*sortedOperations("sortedBy", "sortedByInt", "sortedByDouble", "sortedByLong", "reverseSorted"))
 
     addIntermediateOperationsSupport(
-      DistinctOperation("distinct", { num, call,dsl ->
+      DistinctOperation("distinct", { num, call, dsl ->
         val arguments = call.arguments
         if (arguments.isEmpty() || arguments[0].type == "int") {
           return@DistinctOperation DistinctTraceHandler(num, call, dsl)

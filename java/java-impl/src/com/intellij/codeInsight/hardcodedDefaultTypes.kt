@@ -15,15 +15,19 @@
  */
 package com.intellij.codeInsight
 
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.MultiMap
 
-/**
- * @author peter
- */
 private data class MethodArgument(val methodName: String, val paramIndex: Int)
 
 private interface DefaultTypeProvider {
@@ -91,7 +95,7 @@ private fun isDefinedInClass(method: PsiMethod, className: String): Boolean =
   method.containingClass?.qualifiedName == className ||
   DeepestSuperMethodsSearch.search(method).findAll().any { it.containingClass?.qualifiedName == className }
 
-fun getDefaultType(method: PsiMethod, substitutor: PsiSubstitutor, argIndex: Int, argument: PsiExpression): PsiType? {
+public fun getDefaultType(method: PsiMethod, substitutor: PsiSubstitutor, argIndex: Int, argument: PsiExpression): PsiType? {
   for (provider in providers[MethodArgument(method.name, argIndex)]) {
     return provider.getDefaultType(method, substitutor, argument) ?: continue
   }

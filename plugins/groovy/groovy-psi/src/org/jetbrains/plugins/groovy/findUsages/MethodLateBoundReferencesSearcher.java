@@ -11,7 +11,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.RequestResultProcessor;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.Processor;
@@ -25,10 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * @author ven
- */
-public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+public final class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
 
   public MethodLateBoundReferencesSearcher() {
     super(true);
@@ -70,11 +71,10 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
     collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, searchTarget, new RequestResultProcessor("groovy.lateBound") {
       @Override
       public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull Processor<? super PsiReference> consumer) {
-        if (!(element instanceof GrReferenceExpression)) {
+        if (!(element instanceof GrReferenceExpression ref)) {
           return true;
         }
 
-        final GrReferenceExpression ref = (GrReferenceExpression)element;
         if (!name.equals(ref.getReferenceName()) || PsiUtil.isLValue(ref)) {
           return true;
         }

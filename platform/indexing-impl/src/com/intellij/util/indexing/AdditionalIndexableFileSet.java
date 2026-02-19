@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -8,21 +8,23 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public class AdditionalIndexableFileSet implements IndexableFileSet {
-  @Nullable
-  private final Project myProject;
-  private final Supplier<IndexableSetContributor[]> myExtensions;
+@Internal
+public final class AdditionalIndexableFileSet implements IndexableFileSet {
+  private final @Nullable Project myProject;
+  private final Supplier<List<IndexableSetContributor>> myExtensions;
 
   private final CachedValue<AdditionalIndexableRoots> myAdditionalIndexableRoots;
 
-  public AdditionalIndexableFileSet(@Nullable Project project, IndexableSetContributor @NotNull ... extensions) {
+  public AdditionalIndexableFileSet(@Nullable Project project, @NotNull List<IndexableSetContributor> extensions) {
     myProject = project;
     myExtensions = () -> extensions;
     myAdditionalIndexableRoots = new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(collectFilesAndDirectories(),
@@ -31,24 +33,33 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
 
   public AdditionalIndexableFileSet(@Nullable Project project) {
     myProject = project;
-    myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensions();
+    myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensionList();
     myAdditionalIndexableRoots = new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(collectFilesAndDirectories(),
                                                                                               VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
                                                                                               IndexableSetContributorModificationTracker.getInstance()));
   }
 
-  @NotNull
-  private AdditionalIndexableFileSet.AdditionalIndexableRoots collectFilesAndDirectories() {
-    Set<VirtualFile> files = new THashSet<>();
-    Set<VirtualFile> directories = new THashSet<>();
+  private @NotNull AdditionalIndexableFileSet.AdditionalIndexableRoots collectFilesAndDirectories() {
+    Set<VirtualFile> files = new HashSet<>();
+    Set<VirtualFile> directories = new HashSet<>();
     for (IndexableSetContributor contributor : myExtensions.get()) {
       for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
-        (root.isDirectory() ? directories : files).add(root);
+        if (root.isDirectory()) {
+          directories.add(root);
+        }
+        else {
+          files.add(root);
+        }
       }
       if (myProject != null) {
         Set<VirtualFile> projectRoots = IndexableSetContributor.getProjectRootsToIndex(contributor, myProject);
         for (VirtualFile root : projectRoots) {
-          (root.isDirectory() ? directories : files).add(root);
+          if (root.isDirectory()) {
+            directories.add(root);
+          }
+          else {
+            files.add(root);
+          }
         }
       }
     }
@@ -58,18 +69,10 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   @Override
   public boolean isInSet(@NotNull VirtualFile file) {
     AdditionalIndexableRoots additionalIndexableRoots = myAdditionalIndexableRoots.getValue();
-    return VfsUtilCore.isUnder(file, additionalIndexableRoots.directories) || additionalIndexableRoots.files.contains(file);
+    return additionalIndexableRoots.files.contains(file) ||
+           VfsUtilCore.isUnderFiles(file, additionalIndexableRoots.directories);
   }
 
-  private static final class AdditionalIndexableRoots {
-    @NotNull
-    private final Set<VirtualFile> files;
-    @NotNull
-    private final Set<VirtualFile> directories;
-
-    private AdditionalIndexableRoots(@NotNull Set<VirtualFile> files, @NotNull Set<VirtualFile> directories) {
-      this.files = files;
-      this.directories = directories;
-    }
+  private record AdditionalIndexableRoots(@NotNull Set<VirtualFile> files, @NotNull Set<VirtualFile> directories) {
   }
 }

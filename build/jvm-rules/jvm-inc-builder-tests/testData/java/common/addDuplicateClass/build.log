@@ -1,0 +1,13 @@
+================ Step #1 =================
+Compiling files:
+  java/common/addDuplicateClass/b/pkg/Constants.java
+End of files
+Cleaning output files:
+  pkg/Constants.class
+End of files
+Compiling files:
+  java/common/addDuplicateClass/a/pkg/Constants.java
+  java/common/addDuplicateClass/b/pkg/Constants.java
+End of files
+------------------------------------------
+Exit code: ERROR

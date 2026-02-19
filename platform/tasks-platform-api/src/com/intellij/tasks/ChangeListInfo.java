@@ -5,8 +5,9 @@ package com.intellij.tasks;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
@@ -37,9 +38,7 @@ public class ChangeListInfo {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ChangeListInfo)) return false;
-
-    ChangeListInfo that = (ChangeListInfo)o;
+    if (!(o instanceof ChangeListInfo that)) return false;
 
     return Objects.equals(id, that.id);
   }

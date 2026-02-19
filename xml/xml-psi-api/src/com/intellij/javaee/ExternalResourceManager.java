@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,9 +15,9 @@ public abstract class ExternalResourceManager extends SimpleModificationTracker 
     return ApplicationManager.getApplication().getService(ExternalResourceManager.class);
   }
 
-  public abstract void addResource(@NotNull @NonNls String url, @NonNls String location);
+  public abstract void addResource(@NotNull @NonNls String url, @NonNls @NotNull String location);
 
-  public abstract void addResource(@NotNull @NonNls String url, @NonNls @Nullable String version, @NonNls String location);
+  public abstract void addResource(@NotNull @NonNls String url, @NonNls @Nullable String version, @NotNull @NonNls String location);
 
   public abstract void removeResource(@NotNull String url);
 
@@ -33,8 +33,7 @@ public abstract class ExternalResourceManager extends SimpleModificationTracker 
 
   public abstract String getResourceLocation(@NotNull @NonNls String url, @NotNull Project project);
 
-  @Nullable
-  public abstract PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, @Nullable String version);
+  public abstract @Nullable PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, @Nullable String version);
 
   public abstract String[] getResourceUrls(@Nullable FileType fileType, boolean includeStandard);
 

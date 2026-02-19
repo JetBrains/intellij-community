@@ -1,10 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GrGeneratedConstructorUtils")
 
 package org.jetbrains.plugins.groovy.lang.resolve.ast
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PropertyUtilBase
@@ -13,11 +19,16 @@ import groovy.transform.Undefined
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferBooleanAttribute
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferStringAttribute
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasCodeModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
-import java.util.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR
 
 val constructorGeneratingAnnotations: List<String> = listOf(
   GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR,
@@ -50,13 +61,14 @@ fun getIdentifierList(annotation: PsiAnnotation, @NlsSafe attributeName: String)
  * This function prevents evaluation of constant expressions inside attributes,
  * because this evaluation may trigger a recursion within the `TransformationContext`
  */
-private fun inferStringArrayValueShallow(anno: PsiAnnotation, attributeName: String): List<String>? =
+private fun inferStringArrayValueShallow(anno: PsiAnnotation, attributeName: String): List<String> =
   anno.findAttributeValue(attributeName)?.getArrayValue(GrAnnotationUtil::getString) ?: emptyList()
 
 
 /**
  * For specific annotation (@MapConstructor/@TupleConstructor) this class computes all actually affected members
  */
+@ConsistentCopyVisibility
 data class AffectedMembersCache internal constructor(private val order: List<PsiNamedElement>,
                                                      private val hasPropertyOptions: Boolean,
                                                      private val referencedFromExcludes: List<PsiNamedElement>) {
@@ -89,7 +101,8 @@ data class AffectedMembersCache internal constructor(private val order: List<Psi
 
 fun getAffectedMembersCache(annotation: PsiAnnotation): AffectedMembersCache = CachedValuesManager.getCachedValue(annotation) {
   val cache = computeAffectedMembersCache(annotation)
-  CachedValueProvider.Result(cache, annotation)
+  val affectedMembers = cache.getAllAffectedMembers()
+  CachedValueProvider.Result(cache, annotation, *affectedMembers.toTypedArray())
 }
 
 private fun computeAffectedMembersCache(annotation: PsiAnnotation): AffectedMembersCache {
@@ -158,7 +171,7 @@ private fun acceptClass(clazz: PsiClass,
   val (properties, setters, fields) = getGroupedClassMembers(clazz)
 
   fun addParameter(origin: PsiField) {
-    if (!includeStatic && origin.hasModifierProperty(PsiModifier.STATIC)) return
+    if (!includeStatic && hasCodeModifierProperty(origin, PsiModifier.STATIC)) return
     collector.add(origin)
   }
 
@@ -170,14 +183,14 @@ private fun acceptClass(clazz: PsiClass,
 
   if (includeBeans) {
     for (method in setters) {
-      if (!includeStatic && method.hasModifierProperty(PsiModifier.STATIC)) continue
+      if (!includeStatic && hasCodeModifierProperty(method, PsiModifier.STATIC)) continue
       collector.add(method)
     }
   }
 
   if (includeFields) {
     for (field in fields) {
-      if (annotation.hasQualifiedName(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) && field.hasModifierProperty(GrModifier.FINAL) && field.initializer != null) continue
+      if (annotation.hasQualifiedName(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) && hasCodeModifierProperty(field, GrModifier.FINAL) && field.initializer != null) continue
       addParameter(field)
     }
   }
@@ -210,7 +223,11 @@ fun getGroupedClassMembers(psiClass: PsiClass): Triple<List<PsiField>, List<PsiM
   }
 
   val methods: Array<out PsiMethod> = if (psiClass is GrTypeDefinition) psiClass.codeMethods else psiClass.methods
-  val propertySetters = PropertyUtilBase.getAllProperties(true, false, methods)
+  val propertySetters = methods.filterIsInstance<GrMethod>().filter {
+    hasCodeModifierProperty(it, PsiModifier.PUBLIC) &&
+    !hasCodeModifierProperty(it, PsiModifier.STATIC) &&
+    PropertyUtilBase.isSimplePropertySetter(it)
+  }.map { PropertyUtilBase.getPropertyName(it) to it }.toMap()
   val fieldNames = allFields.map(PsiField::getName)
   val setters: List<PsiMethod> = propertySetters.filterKeys { !fieldNames.contains(it) }.values.toList()
 

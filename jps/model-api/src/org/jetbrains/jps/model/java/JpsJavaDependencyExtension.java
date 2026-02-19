@@ -15,16 +15,19 @@
  */
 package org.jetbrains.jps.model.java;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 
 public interface JpsJavaDependencyExtension extends JpsElement {
   boolean isExported();
 
+  @ApiStatus.Internal
   void setExported(boolean exported);
 
   @NotNull
   JpsJavaDependencyScope getScope();
 
+  @ApiStatus.Internal
   void setScope(@NotNull JpsJavaDependencyScope scope);
 }

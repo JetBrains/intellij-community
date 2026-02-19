@@ -6,10 +6,20 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MenuItemLayoutHelper;
 import com.intellij.util.ui.UIUtilities;
 
-import javax.swing.*;
+import javax.swing.ButtonModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.MenuElement;
+import javax.swing.MenuSelectionManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicMenuItemUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 /**
@@ -130,7 +140,7 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
 
   protected void paintAccText(Graphics g, MenuItemLayoutHelper lh,
                               MenuItemLayoutHelper.LayoutResult lr) {
-    if (!lh.getAccText().equals("")) {
+    if (!lh.getAccText().isEmpty()) {
       ButtonModel model = lh.getMenuItem().getModel();
       g.setFont(lh.getAccFontMetrics().getFont());
       if (!model.isEnabled()) {
@@ -171,7 +181,7 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
 
   protected void paintText(Graphics g, MenuItemLayoutHelper lh,
                            MenuItemLayoutHelper.LayoutResult lr) {
-    if (!lh.getText().equals("")) {
+    if (!lh.getText().isEmpty()) {
       if (lh.getHtmlView() != null) {
         // Text is HTML
         lh.getHtmlView().paint(g, lr.getTextRect());

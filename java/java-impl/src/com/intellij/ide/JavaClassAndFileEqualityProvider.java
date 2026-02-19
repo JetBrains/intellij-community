@@ -1,15 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
-import com.intellij.ide.actions.searcheverywhere.*;
+import com.intellij.ide.actions.searcheverywhere.AbstractEqualityProvider;
+import com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
+public final class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
 
   @Override
   protected boolean areEqual(@NotNull SearchEverywhereFoundElementInfo newItemInfo,
@@ -18,14 +25,13 @@ public class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
     PsiElement alreadyFoundPsi = PsiElementsEqualityProvider.toPsi(alreadyFoundItemInfo.getElement());
 
     return newElementPsi != null && alreadyFoundPsi != null
-           && isClassAndFile(newItemInfo, alreadyFoundItemInfo)
+           && newElementPsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)
+           && alreadyFoundPsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)
+           && isClassAndFile(newElementPsi, alreadyFoundPsi)
            && isSameFile(newElementPsi, alreadyFoundPsi);
   }
 
-  private static boolean isClassAndFile(@NotNull SearchEverywhereFoundElementInfo newItemInfo, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItemInfo) {
-    Object newElement = newItemInfo.getElement();
-    Object oldElement = alreadyFoundItemInfo.getElement();
-
+  private static boolean isClassAndFile(@NotNull PsiElement newElement, @NotNull PsiElement oldElement) {
     return isClass(newElement) && isFile(oldElement)
            || isClass(oldElement) && isFile(newElement);
   }
@@ -44,8 +50,7 @@ public class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
     return newItemFile != null && newItemFile.equals(foundItemFile);
   }
 
-  @Nullable
-  private static VirtualFile convertToFileIsPossible(@NotNull PsiElement element) {
+  private static @Nullable VirtualFile convertToFileIsPossible(@NotNull PsiElement element) {
     if (element instanceof VirtualFile) {
       return  (VirtualFile) element;
     } else if (element instanceof PsiFile) {

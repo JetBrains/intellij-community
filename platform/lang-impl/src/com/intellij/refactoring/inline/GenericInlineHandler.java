@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -7,16 +6,13 @@ import com.intellij.find.FindBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -27,19 +23,24 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
-/**
- * @author ven
- */
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class GenericInlineHandler {
-
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);
 
   public static boolean invoke(final PsiElement element, @Nullable Editor editor, final InlineHandler languageSpecific) {
@@ -95,6 +96,7 @@ public final class GenericInlineHandler {
         }
 
         Consumer<ProgressIndicator> perform = indicator -> {
+          indicator.setIndeterminate(false);
           for (int i = 0; i < usages.length; i++) {
             indicator.setFraction((double) i / usages.length);
             inlineReference(usages[i], element, inliners);
@@ -104,13 +106,8 @@ public final class GenericInlineHandler {
             languageSpecific.removeDefinition(element, settings);
           }
         };
-
-        if (Registry.is("run.refactorings.under.progress")) {
-          ((ApplicationImpl)ApplicationManager.getApplication())
-            .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
-        } else {
-          perform.consume(new EmptyProgressIndicator());
-        }
+        ApplicationManagerEx.getApplicationEx()
+          .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
       });
     return true;
   }
@@ -144,7 +141,7 @@ public final class GenericInlineHandler {
   public static Map<Language, InlineHandler.Inliner> initInliners(PsiElement elementToInline,
                                                                   UsageInfo[] usagesIn,
                                                                   InlineHandler.Settings settings,
-                                                                  MultiMap<PsiElement, String> conflicts,
+                                                                  MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                                   Language... emptyInliners) {
     ArrayList<PsiReference> refs = new ArrayList<>();
     for (UsageInfo info : usagesIn) {
@@ -161,9 +158,8 @@ public final class GenericInlineHandler {
     Map<Language, InlineHandler.Inliner> inliners = initializeInliners(elementToInline, settings, refs);
     for (Language language : emptyInliners) {
       inliners.put(language, new InlineHandler.Inliner() {
-        @Nullable
         @Override
-        public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
+        public @Nullable MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
           return null;
         }
 
@@ -179,10 +175,10 @@ public final class GenericInlineHandler {
     return inliners;
   }
 
-  public static void collectConflicts(final PsiReference reference,
-                                      final PsiElement element,
-                                      final Map<Language, InlineHandler.Inliner> inliners,
-                                      final MultiMap<PsiElement, String> conflicts) {
+  public static void collectConflicts(PsiReference reference,
+                                      PsiElement element,
+                                      Map<Language, InlineHandler.Inliner> inliners,
+                                      MultiMap<PsiElement, @DialogMessage String> conflicts) {
     final PsiElement referenceElement = reference.getElement();
     final Language language = referenceElement.getLanguage();
     final InlineHandler.Inliner inliner = inliners.get(language);
@@ -195,7 +191,8 @@ public final class GenericInlineHandler {
       }
     }
     else {
-      conflicts.putValue(referenceElement, "Cannot inline reference from " + language.getDisplayName());
+      conflicts.putValue(referenceElement,
+                         RefactoringBundle.message("dialog.message.cannot.inline.reference.from.0", language.getDisplayName()));
     }
   }
 

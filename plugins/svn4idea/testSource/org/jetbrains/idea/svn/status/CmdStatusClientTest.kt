@@ -2,11 +2,11 @@
 package org.jetbrains.idea.svn.status
 
 import com.intellij.testFramework.TestDataPath
-import com.intellij.util.io.readText
 import org.jetbrains.idea.svn.api.AbstractSvnClientTest
 import org.jetbrains.idea.svn.api.Revision
 import org.junit.Test
 import java.io.File
+import kotlin.io.path.readText
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.fail

@@ -3,23 +3,33 @@
  */
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.AutoCompletionContext
+import com.intellij.codeInsight.completion.AutoCompletionDecision
+import com.intellij.codeInsight.completion.CompletionContributor
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.*
+import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.extensions.afterDefInMethod
 import com.jetbrains.python.extensions.inParameterList
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PySubscriptionExpression
-import com.jetbrains.python.psi.PyTargetExpression
-import com.jetbrains.python.psi.types.PyClassType
 
-class PyDataclassCompletionContributor : CompletionContributor() {
+class PyDataclassCompletionContributor : CompletionContributor(), DumbAware {
 
   override fun handleAutoCompletionPossibility(context: AutoCompletionContext): AutoCompletionDecision = autoInsertSingleItem(context)
 
@@ -40,28 +50,26 @@ class PyDataclassCompletionContributor : CompletionContributor() {
       if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
-        cls.processClassLevelDeclarations { element, _ ->
-          if (element is PyTargetExpression && element.annotationValue != null) {
-            val name = element.name
-            val annotationValue = element.annotation?.value as? PySubscriptionExpression
-
-            if (name != null && annotationValue != null) {
-              val type = typeEvalContext.getType(element)
-
-              if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
-                val typeHint = annotationValue.indexExpression.let { if (it == null) "" else ": ${it.text}" }
-                postInitParameters.add(name + typeHint)
-              }
+        PyDataclassTypeProvider.getInitVars(cls, dataclassParameters, typeEvalContext).orEmpty().forEach {
+          val name = it.targetExpression.name
+          val typeHint = PyTypingTypeProvider.getAnnotationValue(it.targetExpression, typeEvalContext)
+          if (name != null && typeHint is PySubscriptionExpression) {
+            val indexExpression = typeHint.indexExpression
+            val parameterString = if (indexExpression != null) {
+              "${name}: ${indexExpression.text}"
             }
+            else {
+              name
+            }
+            postInitParameters.add(parameterString)
           }
-
-          true
         }
 
-        addMethodToResult(result, cls, typeEvalContext, DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
+        addMethodToResult(result, cls, typeEvalContext,
+                          Dataclasses.DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
       }
       else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-        addMethodToResult(result, cls, typeEvalContext, DUNDER_ATTRS_POST_INIT)
+        addMethodToResult(result, cls, typeEvalContext, Attrs.DUNDER_POST_INIT)
       }
     }
   }

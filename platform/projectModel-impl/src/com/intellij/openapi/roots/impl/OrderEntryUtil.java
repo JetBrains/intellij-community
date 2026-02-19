@@ -1,9 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
@@ -20,8 +29,7 @@ import java.util.List;
 public final class OrderEntryUtil {
   private OrderEntryUtil() { }
 
-  @Nullable
-  public static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @Nullable Library library) {
+  public static @Nullable LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @Nullable Library library) {
     if (library == null) return null;
     for (OrderEntry orderEntry : model.getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)orderEntry).getLibrary())) {
@@ -32,8 +40,7 @@ public final class OrderEntryUtil {
     return null;
   }
 
-  @Nullable
-  public static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @NotNull String libraryName) {
+  public static @Nullable LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @NotNull String libraryName) {
     for (OrderEntry orderEntry : model.getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry) {
         final String libName = ((LibraryOrderEntry)orderEntry).getLibraryName();
@@ -45,8 +52,7 @@ public final class OrderEntryUtil {
     return null;
   }
 
-  @Nullable
-  public static ModuleOrderEntry findModuleOrderEntry(@NotNull ModuleRootModel model, @Nullable Module module) {
+  public static @Nullable ModuleOrderEntry findModuleOrderEntry(@NotNull ModuleRootModel model, @Nullable Module module) {
     if (module == null) return null;
 
     for (OrderEntry orderEntry : model.getOrderEntries()) {
@@ -57,8 +63,7 @@ public final class OrderEntryUtil {
     return null;
   }
 
-  @Nullable
-  public static JdkOrderEntry findJdkOrderEntry(@NotNull ModuleRootModel model, @Nullable Sdk sdk) {
+  public static @Nullable JdkOrderEntry findJdkOrderEntry(@NotNull ModuleRootModel model, @Nullable Sdk sdk) {
     if (sdk == null) return null;
 
     for (OrderEntry orderEntry : model.getOrderEntries()) {
@@ -70,25 +75,17 @@ public final class OrderEntryUtil {
   }
 
   public static boolean equals(OrderEntry orderEntry1, OrderEntry orderEntry2) {
-    if (orderEntry1 instanceof JdkOrderEntry && orderEntry2 instanceof JdkOrderEntry) {
-      final JdkOrderEntry jdkOrderEntry1 = (JdkOrderEntry)orderEntry1;
-      final JdkOrderEntry jdkOrderEntry2 = (JdkOrderEntry)orderEntry2;
+    if (orderEntry1 instanceof JdkOrderEntry jdkOrderEntry1 && orderEntry2 instanceof JdkOrderEntry jdkOrderEntry2) {
       return Comparing.equal(jdkOrderEntry1.getJdk(), jdkOrderEntry2.getJdk()) &&
              Comparing.strEqual(jdkOrderEntry1.getJdkName(), jdkOrderEntry2.getJdkName());
     }
-    if (orderEntry1 instanceof LibraryOrderEntry && orderEntry2 instanceof LibraryOrderEntry) {
-      final LibraryOrderEntry jdkOrderEntry1 = (LibraryOrderEntry)orderEntry1;
-      final LibraryOrderEntry jdkOrderEntry2 = (LibraryOrderEntry)orderEntry2;
+    if (orderEntry1 instanceof LibraryOrderEntry jdkOrderEntry1 && orderEntry2 instanceof LibraryOrderEntry jdkOrderEntry2) {
       return Comparing.equal(jdkOrderEntry1.getLibrary(), jdkOrderEntry2.getLibrary());
     }
-    if (orderEntry1 instanceof ModuleSourceOrderEntry && orderEntry2 instanceof ModuleSourceOrderEntry) {
-      final ModuleSourceOrderEntry jdkOrderEntry1 = (ModuleSourceOrderEntry)orderEntry1;
-      final ModuleSourceOrderEntry jdkOrderEntry2 = (ModuleSourceOrderEntry)orderEntry2;
+    if (orderEntry1 instanceof ModuleSourceOrderEntry jdkOrderEntry1 && orderEntry2 instanceof ModuleSourceOrderEntry jdkOrderEntry2) {
       return Comparing.equal(jdkOrderEntry1.getOwnerModule(), jdkOrderEntry2.getOwnerModule());
     }
-    if (orderEntry1 instanceof ModuleOrderEntry && orderEntry2 instanceof ModuleOrderEntry) {
-      final ModuleOrderEntry jdkOrderEntry1 = (ModuleOrderEntry)orderEntry1;
-      final ModuleOrderEntry jdkOrderEntry2 = (ModuleOrderEntry)orderEntry2;
+    if (orderEntry1 instanceof ModuleOrderEntry jdkOrderEntry1 && orderEntry2 instanceof ModuleOrderEntry jdkOrderEntry2) {
       return Comparing.equal(jdkOrderEntry1.getModule(), jdkOrderEntry2.getModule());
     }
     return false;
@@ -194,6 +191,20 @@ public final class OrderEntryUtil {
     model.rearrangeOrderEntries(newEntries);
   }
 
+  /**
+   * Moves last {@code length} entries in {@code model} to {@code toIndex}.
+   * The first of moved entries will be at {@code toIndex}, the second - at {@code toIndex + 1}, etc.
+   */
+  public static void moveLastOrderEntries(@NotNull ModifiableRootModel model, int toIndex, int length) {
+    OrderEntry[] entries = model.getOrderEntries();
+    if (toIndex < 0 || length <= 0 || toIndex + length > entries.length) return;
+    OrderEntry[] newEntries = new OrderEntry[entries.length];
+    System.arraycopy(entries, 0, newEntries, 0, toIndex);
+    System.arraycopy(entries, entries.length - length, newEntries, toIndex, length);
+    System.arraycopy(entries, toIndex, newEntries, toIndex + length, entries.length - toIndex - length);
+    model.rearrangeOrderEntries(newEntries);
+  }
+
   public static <T extends OrderEntry> void processOrderEntries(@NotNull Module module,
                                                                 @NotNull Class<? extends T> orderEntryClass,
                                                                 @NotNull Processor<? super T> processor) {
@@ -207,8 +218,7 @@ public final class OrderEntryUtil {
     }
   }
 
-  @NotNull
-  public static DependencyScope intersectScopes(@NotNull DependencyScope scope1, @NotNull DependencyScope scope2) {
+  public static @NotNull DependencyScope intersectScopes(@NotNull DependencyScope scope1, @NotNull DependencyScope scope2) {
     if (scope1 == scope2) return scope1;
     if (scope1 == DependencyScope.COMPILE) return scope2;
     if (scope2 == DependencyScope.COMPILE) return scope1;
@@ -216,13 +226,11 @@ public final class OrderEntryUtil {
     return scope1;
   }
 
-  @NotNull
-  public static List<Library> getModuleLibraries(@NotNull ModuleRootModel model) {
+  public static @NotNull List<Library> getModuleLibraries(@NotNull ModuleRootModel model) {
     OrderEntry[] orderEntries = model.getOrderEntries();
     List<Library> libraries = new ArrayList<>();
     for (OrderEntry orderEntry : orderEntries) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry entry = (LibraryOrderEntry)orderEntry;
+      if (orderEntry instanceof LibraryOrderEntry entry) {
         if (entry.isModuleLevel()) {
           libraries.add(entry.getLibrary());
         }

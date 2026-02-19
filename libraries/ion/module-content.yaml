@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ion.jar
+  modules:
+  - name: intellij.libraries.ion
+    libraries:
+      ion:
+      - name: $MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1/ion-java-1.jar

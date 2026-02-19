@@ -21,16 +21,16 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class VcsDependentHistoryComponents {
-  private final ColumnInfo[] myColumns;
+  private final ColumnInfo<?, ?>[] myColumns;
   private final @Nullable Consumer<VcsFileRevision> myRevisionListener;
   private final @Nullable JComponent myDetailsComponent;
 
   private final @Nullable EditorNotificationPanel myNotificationPanel;
 
-  public VcsDependentHistoryComponents(ColumnInfo[] columns, @Nullable Consumer<VcsFileRevision> revisionListener, @Nullable JComponent detailsComponent,
+  public VcsDependentHistoryComponents(ColumnInfo<?, ?>[] columns, @Nullable Consumer<VcsFileRevision> revisionListener, @Nullable JComponent detailsComponent,
                                        @Nullable EditorNotificationPanel notificationPanel) {
     myColumns = columns;
     myRevisionListener = revisionListener;
@@ -38,7 +38,7 @@ public class VcsDependentHistoryComponents {
     myNotificationPanel = notificationPanel;
   }
 
-  public VcsDependentHistoryComponents(ColumnInfo[] columns, @Nullable Consumer<VcsFileRevision> revisionListener, @Nullable JComponent detailsComponent) {
+  public VcsDependentHistoryComponents(ColumnInfo<?, ?>[] columns, @Nullable Consumer<VcsFileRevision> revisionListener, @Nullable JComponent detailsComponent) {
     this(columns, revisionListener, detailsComponent, null);
   }
 

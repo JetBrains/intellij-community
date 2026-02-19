@@ -1,0 +1,11 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: `Generate Product Layouts` or `bazel run //platform/buildScripts:plugin-model-tool` -->
+<!-- Source: see moduleSet("rd.common") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.rd.ide.model.generated"/>
+    <module name="intellij.rd.platform"/>
+    <module name="intellij.rd.ui"/>
+  </content>
+</idea-plugin>

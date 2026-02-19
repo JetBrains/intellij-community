@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.JavaTestUtil;
@@ -15,11 +15,17 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CommonProcessors;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 
 public class IdCacheTest extends JavaCodeInsightTestCase {
   private VirtualFile myRootDir;
@@ -35,7 +41,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
   }
 
   public void testBuildCache() {
-    checkCache(CacheManager.getInstance(myProject), TodoCacheManager.SERVICE.getInstance(myProject));
+    checkCache(CacheManager.getInstance(myProject), TodoCacheManager.getInstance(myProject));
   }
 
   public void testLoadCacheNoTodo() {
@@ -48,7 +54,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
   public void testUpdateCache1() throws Exception {
     createChildData(myRootDir, "4.java");
     Thread.sleep(1000);
-    checkCache(CacheManager.getInstance(myProject), TodoCacheManager.SERVICE.getInstance(myProject));
+    checkCache(CacheManager.getInstance(myProject), TodoCacheManager.getInstance(myProject));
   }
 
   public void testUpdateCache2() {
@@ -59,7 +65,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final CacheManager cache = CacheManager.getInstance(myProject);
-    final TodoCacheManager todocache = TodoCacheManager.SERVICE.getInstance(myProject);
+    final TodoCacheManager todocache = TodoCacheManager.getInstance(myProject);
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
     checkResult(new String[] {"1.java"}, convert(cache.getFilesWithWord("xxx", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{}, convert(cache.getFilesWithWord("a", UsageSearchContext.ANY, scope, false)));
@@ -68,7 +74,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     checkResult(new String[]{"2.java", "3.java"}, convert(cache.getFilesWithWord("d", UsageSearchContext.ANY,scope, false)));
     checkResult(new String[]{"3.java"}, convert(cache.getFilesWithWord("e", UsageSearchContext.ANY,scope, false)));
 
-    checkResult(new String[]{"3.java"}, convert(todocache.getFilesWithTodoItems()));
+    checkResult(new String[]{"3.java"}, convert(getFilesWithTodoItems(todocache)));
     assertEquals(0, todocache.getTodoCount(myRootDir.findChild("1.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(0, todocache.getTodoCount(myRootDir.findChild("2.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(2, todocache.getTodoCount(myRootDir.findChild("3.java"), TodoIndexPatternProvider.getInstance()));
@@ -79,7 +85,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     delete(child);
 
     final CacheManager cache2 = CacheManager.getInstance(myProject);
-    final TodoCacheManager todocache2 = TodoCacheManager.SERVICE.getInstance(myProject);
+    final TodoCacheManager todocache2 = TodoCacheManager.getInstance(myProject);
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
     checkResult(ArrayUtilRt.EMPTY_STRING_ARRAY, convert(cache2.getFilesWithWord("xxx", UsageSearchContext.ANY, scope, false)));
     checkResult(ArrayUtilRt.EMPTY_STRING_ARRAY, convert(cache2.getFilesWithWord("a", UsageSearchContext.ANY, scope, false)));
@@ -88,7 +94,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     checkResult(new String[]{"2.java", "3.java"}, convert(cache2.getFilesWithWord("d", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"3.java"}, convert(cache2.getFilesWithWord("e", UsageSearchContext.ANY, scope, false)));
 
-    checkResult(new String[]{"3.java"}, convert(todocache2.getFilesWithTodoItems()));
+    checkResult(new String[]{"3.java"}, convert(getFilesWithTodoItems(todocache2)));
     assertEquals(0, todocache2.getTodoCount(myRootDir.findChild("2.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(2, todocache2.getTodoCount(myRootDir.findChild("3.java"), TodoIndexPatternProvider.getInstance()));
   }
@@ -104,10 +110,11 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     TodoPattern pattern = new TodoPattern("newtodo", TodoAttributesUtil.createDefault(), true);
     TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns();
     TodoConfiguration.getInstance().setTodoPatterns(new TodoPattern[]{pattern});
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
 
     try{
-      final TodoCacheManager todocache = TodoCacheManager.SERVICE.getInstance(myProject);
-      checkResult(new String[]{"2.java"}, convert(todocache.getFilesWithTodoItems()));
+      final TodoCacheManager todocache = TodoCacheManager.getInstance(myProject);
+      checkResult(new String[]{"2.java"}, convert(getFilesWithTodoItems(todocache)));
       assertEquals(0, todocache.getTodoCount(myRootDir.findChild("1.java"), TodoIndexPatternProvider.getInstance()));
       assertEquals(1, todocache.getTodoCount(myRootDir.findChild("2.java"), TodoIndexPatternProvider.getInstance()));
       assertEquals(0, todocache.getTodoCount(myRootDir.findChild("3.java"), TodoIndexPatternProvider.getInstance()));
@@ -119,7 +126,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
 
   public void testFileModification() {
     final CacheManager cache = CacheManager.getInstance(myProject);
-    final TodoCacheManager todocache = TodoCacheManager.SERVICE.getInstance(myProject);
+    final TodoCacheManager todocache = TodoCacheManager.getInstance(myProject);
     checkCache(cache, todocache);
 
     VirtualFile child = myRootDir.findChild("1.java");
@@ -138,7 +145,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     checkResult(new String[]{"2.java", "3.java"}, convert(cache.getFilesWithWord("d", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"3.java"}, convert(cache.getFilesWithWord("e", UsageSearchContext.ANY, scope, false)));
 
-    checkResult(new String[]{"3.java"}, convert(todocache.getFilesWithTodoItems()));
+    checkResult(new String[]{"3.java"}, convert(getFilesWithTodoItems(todocache)));
     assertEquals(0, todocache.getTodoCount(myRootDir.findChild("1.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(0, todocache.getTodoCount(myRootDir.findChild("2.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(2, todocache.getTodoCount(myRootDir.findChild("3.java"), TodoIndexPatternProvider.getInstance()));
@@ -146,7 +153,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
 
   public void testFileDeletion() {
     final CacheManager cache = CacheManager.getInstance(myProject);
-    final TodoCacheManager todocache = TodoCacheManager.SERVICE.getInstance(myProject);
+    final TodoCacheManager todocache = TodoCacheManager.getInstance(myProject);
     checkCache(cache, todocache);
 
     VirtualFile child = myRootDir.findChild("1.java");
@@ -160,14 +167,14 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     checkResult(new String[]{"2.java", "3.java"}, convert(cache.getFilesWithWord("d", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"3.java"}, convert(cache.getFilesWithWord("e", UsageSearchContext.ANY, scope, false)));
 
-    checkResult(new String[]{"3.java"}, convert(todocache.getFilesWithTodoItems()));
+    checkResult(new String[]{"3.java"}, convert(getFilesWithTodoItems(todocache)));
     assertEquals(0, todocache.getTodoCount(myRootDir.findChild("2.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(2, todocache.getTodoCount(myRootDir.findChild("3.java"), TodoIndexPatternProvider.getInstance()));
   }
 
   public void testFileCreation() {
     final CacheManager cache = CacheManager.getInstance(myProject);
-    final TodoCacheManager todocache = TodoCacheManager.SERVICE.getInstance(myProject);
+    final TodoCacheManager todocache = TodoCacheManager.getInstance(myProject);
     checkCache(cache, todocache);
 
     VirtualFile child = createChildData(myRootDir, "4.java");
@@ -182,7 +189,7 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     checkResult(new String[]{"2.java", "3.java"}, convert(cache.getFilesWithWord("d", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"3.java"}, convert(cache.getFilesWithWord("e", UsageSearchContext.ANY, scope, false)));
 
-    checkResult(new String[]{"1.java", "3.java", "4.java"}, convert(todocache.getFilesWithTodoItems()));
+    checkResult(new String[]{"1.java", "3.java", "4.java"}, convert(getFilesWithTodoItems(todocache)));
     assertEquals(1, todocache.getTodoCount(myRootDir.findChild("1.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(0, todocache.getTodoCount(myRootDir.findChild("2.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(2, todocache.getTodoCount(myRootDir.findChild("3.java"), TodoIndexPatternProvider.getInstance()));
@@ -204,11 +211,17 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
     checkResult(new String[]{"2.java", "3.java"}, convert(cache.getFilesWithWord("d", UsageSearchContext.ANY, scope, false)));
     checkResult(new String[]{"3.java"}, convert(cache.getFilesWithWord("e", UsageSearchContext.ANY, scope, false)));
 
-    checkResult(new String[]{"1.java", "3.java"}, convert(todocache.getFilesWithTodoItems()));
+    checkResult(new String[]{"1.java", "3.java"}, convert(getFilesWithTodoItems(todocache)));
     assertEquals(1, todocache.getTodoCount(myRootDir.findChild("1.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(0, todocache.getTodoCount(myRootDir.findChild("2.java"), TodoIndexPatternProvider.getInstance()));
     assertEquals(2, todocache.getTodoCount(myRootDir.findChild("3.java"), TodoIndexPatternProvider.getInstance()));
   }
+  
+  private static PsiFile @NotNull [] getFilesWithTodoItems(@NotNull TodoCacheManager todocache) {
+    HashSet<PsiFile> files = new HashSet<>();
+    todocache.processFilesWithTodoItems(new CommonProcessors.CollectProcessor<>(files));
+    return PsiUtilCore.toPsiFileArray(files);
+  } 
 
   private static VirtualFile[] convert(PsiFile[] psiFiles) {
     final VirtualFile[] files = new VirtualFile[psiFiles.length];
@@ -220,13 +233,8 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
 
   private static void checkResult(String[] expected, VirtualFile[] result){
     assertEquals(expected.length, result.length);
-
     Arrays.sort(expected);
-    Arrays.sort(result, (o1, o2) -> {
-      VirtualFile file1 = o1;
-      VirtualFile file2 = o2;
-      return file1.getName().compareTo(file2.getName());
-    });
+    Arrays.sort(result, Comparator.comparing(VirtualFile::getName));
 
     for(int i = 0; i < expected.length; i++){
       String name = expected[i];

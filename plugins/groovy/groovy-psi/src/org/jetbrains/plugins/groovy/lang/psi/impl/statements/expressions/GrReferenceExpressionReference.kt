@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 
 import com.intellij.lang.java.beans.PropertyKind
@@ -8,8 +8,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrSuperReferenceResolver.resolveSuperExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrThisReferenceResolver.resolveThisExpression
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.getRValue
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.util.isPropertyName
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
@@ -18,8 +18,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorAwareProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*
-import java.util.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.BINDING
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.FIELD
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.PROPERTY
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.VARIABLE
+import java.util.EnumSet
 
 abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 
@@ -69,7 +72,7 @@ private fun GrReferenceExpression.handleSpecialCases(): Collection<GroovyResolve
     GroovyElementTypes.KW_THIS -> return resolveThisExpression(this)
     GroovyElementTypes.KW_SUPER -> return resolveSuperExpression(this)
     GroovyElementTypes.KW_CLASS -> {
-      if (!PsiUtil.isCompileStatic(this) && qualifier?.type == null) {
+      if (!isCompileStatic(this) && qualifier?.type == null) {
         return emptyList()
       }
     }

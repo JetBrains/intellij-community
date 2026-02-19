@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl;
 
@@ -6,11 +6,17 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Objects;
 
+@ApiStatus.Internal
 public abstract class FacetModelBase implements FacetModel {
   private volatile Map<FacetTypeId<?>, Collection<Facet<?>>> myType2Facets;
   private volatile Map<FacetAndType, Collection<Facet<?>>> myChildFacets;
@@ -43,8 +49,7 @@ public abstract class FacetModelBase implements FacetModel {
   }
 
   @Override
-  @NotNull
-  public <F extends Facet<?>> Collection<F> getFacetsByType(@NotNull Facet<?> underlyingFacet, FacetTypeId<F> typeId) {
+  public @NotNull <F extends Facet<?>> Collection<F> getFacetsByType(@NotNull Facet<?> underlyingFacet, FacetTypeId<F> typeId) {
     if (myChildFacets == null) {
       MultiMap<FacetAndType, Facet<?>> children = new MultiMap<>();
       for (Facet<?> facet : getAllFacets()) {
@@ -55,20 +60,21 @@ public abstract class FacetModelBase implements FacetModel {
       }
       myChildFacets = children.freezeValues();
     }
+    Map<FacetAndType, Collection<Facet<?>>> childFacets = myChildFacets;
+    if (childFacets == null) return Collections.emptyList();
+
     //noinspection unchecked
-    Collection<F> facets = (Collection<F>)myChildFacets.get(new FacetAndType(underlyingFacet, typeId));
+    Collection<F> facets = (Collection<F>)childFacets.get(new FacetAndType(underlyingFacet, typeId));
     return facets != null ? facets : Collections.emptyList();
   }
 
   @Override
-  @NotNull
-  public String getFacetName(@NotNull Facet<?> facet) {
+  public @NotNull String getFacetName(@NotNull Facet<?> facet) {
     return facet.getName();
   }
 
   @Override
-  @Nullable
-  public <F extends Facet<?>> F findFacet(final FacetTypeId<F> type, final String name) {
+  public @Nullable <F extends Facet<?>> F findFacet(final FacetTypeId<F> type, final String name) {
     final Collection<F> fs = getFacetsByType(type);
     for (F f : fs) {
       if (f.getName().equals(name)) {
@@ -79,22 +85,19 @@ public abstract class FacetModelBase implements FacetModel {
   }
 
   @Override
-  @Nullable
-  public <F extends Facet<?>> F getFacetByType(@NotNull final Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
+  public @Nullable <F extends Facet<?>> F getFacetByType(final @NotNull Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
     final Collection<F> fs = getFacetsByType(underlyingFacet, typeId);
     return fs.isEmpty() ? null : fs.iterator().next();
   }
 
   @Override
-  @Nullable
-  public <F extends Facet<?>> F getFacetByType(FacetTypeId<F> typeId) {
+  public @Nullable <F extends Facet<?>> F getFacetByType(FacetTypeId<F> typeId) {
     final Collection<F> facets = getFacetsByType(typeId);
     return facets.isEmpty() ? null : facets.iterator().next();
   }
 
   @Override
-  @NotNull
-  public <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
+  public @NotNull <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
     if (myType2Facets == null) {
       MultiMap<FacetTypeId<?>, Facet<?>> typeToFacets = new MultiMap<>();
       for (Facet<?> facet : getAllFacets()) {
@@ -103,8 +106,11 @@ public abstract class FacetModelBase implements FacetModel {
       myType2Facets = typeToFacets.freezeValues();
     }
 
+    Map<FacetTypeId<?>, Collection<Facet<?>>> facetsByType = myType2Facets;
+    if (facetsByType == null) return Collections.emptyList();
+
     @SuppressWarnings("unchecked")
-    Collection<F> facets = (Collection<F>)myType2Facets.get(typeId);
+    Collection<F> facets = (Collection<F>)facetsByType.get(typeId);
     return facets != null ? facets : Collections.emptyList();
   }
 

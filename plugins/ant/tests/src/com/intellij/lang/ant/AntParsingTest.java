@@ -6,11 +6,17 @@ import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.xml.XmlASTFactory;
+import com.intellij.lang.xml.XmlSyntaxDefinitionExtension;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
+import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
 import com.intellij.psi.xml.StartTagEndTokenProvider;
+import com.intellij.psi.xml.XmlElementTypeConverterExtension;
 import com.intellij.testFramework.ParsingTestCase;
+
+import static com.intellij.xml.testFramework.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
 
 public class AntParsingTest extends ParsingTestCase {
 
@@ -21,7 +27,10 @@ public class AntParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    registerXmlElementTypeServices(getApplication(), getTestRootDisposable());
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
+    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), XMLLanguage.INSTANCE, new XmlSyntaxDefinitionExtension());
+    addExplicitExtension(ElementTypeConverters.getInstance(), XMLLanguage.INSTANCE, new XmlElementTypeConverterExtension());
     registerExtensionPoint(new ExtensionPointName<>("com.intellij.xml.startTagEndToken"),
                            StartTagEndTokenProvider.class);
   }
@@ -155,7 +164,7 @@ public class AntParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
-   public void testBuildNumber() {
+  public void testBuildNumber() {
     doTest(true);
   }
 }

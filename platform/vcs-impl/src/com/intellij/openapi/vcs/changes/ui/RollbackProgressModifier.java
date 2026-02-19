@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -15,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class RollbackProgressModifier implements RollbackProgressListener {
   private final Set<String> myTakenPaths;
   private final double myTotal;
@@ -63,12 +65,12 @@ public class RollbackProgressModifier implements RollbackProgressListener {
   }
 
   @Override
-  public void accept(@NotNull final Change change) {
+  public void accept(final @NotNull Change change) {
     acceptImpl(ChangesUtil.getFilePath(change).getPath());
   }
 
   @Override
-  public void accept(@NotNull final FilePath filePath) {
+  public void accept(final @NotNull FilePath filePath) {
     acceptImpl(filePath.getPath());
   }
 

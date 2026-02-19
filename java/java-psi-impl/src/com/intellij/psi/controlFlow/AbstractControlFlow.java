@@ -2,16 +2,16 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 abstract class AbstractControlFlow implements ControlFlow {
   // Low 4 bytes = start; high 4 bytes = end 
-  final @NotNull Object2LongOpenHashMap<PsiElement> myElementToOffsetMap;
+  final @NotNull Object2LongMap<PsiElement> myElementToOffsetMap;
 
-  AbstractControlFlow(@NotNull Object2LongOpenHashMap<PsiElement> map) {
+  AbstractControlFlow(@NotNull Object2LongMap<PsiElement> map) {
     myElementToOffsetMap = map;
   }
 
@@ -25,6 +25,7 @@ abstract class AbstractControlFlow implements ControlFlow {
     return (int)(myElementToOffsetMap.getOrDefault(element, -1L) >>> 32);
   }
 
+  @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
     List<Instruction> instructions = getInstructions();

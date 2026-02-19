@@ -1,0 +1,38 @@
+LineBreakpoint created at nestedWithContexts2.kt:11
+LineBreakpoint created at nestedWithContexts2.kt:14
+LineBreakpoint created at nestedWithContexts2.kt:18
+Run Java
+Connected to the target VM
+nestedWithContexts2.kt:11
+vvv stack trace vvv
+  invokeSuspend:11, NestedWithContexts2Kt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:8, NestedWithContexts2Kt
+  main:-1, NestedWithContexts2Kt
+^^^ stack trace ^^^
+nestedWithContexts2.kt:14
+vvv stack trace vvv
+  invokeSuspend:14, NestedWithContexts2Kt$main$1$1
+  invokeSuspend:12, NestedWithContexts2Kt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:8, NestedWithContexts2Kt
+  main:-1, NestedWithContexts2Kt
+^^^ stack trace ^^^
+nestedWithContexts2.kt:18
+vvv stack trace vvv
+  invokeSuspend:18, NestedWithContexts2Kt$main$1$1$1
+  invokeSuspend:15, NestedWithContexts2Kt$main$1$1
+  invokeSuspend:12, NestedWithContexts2Kt$main$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:8, NestedWithContexts2Kt
+  main:-1, NestedWithContexts2Kt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

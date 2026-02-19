@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.annotations.NotNull;
 
 public class WordSelectioner extends AbstractWordSelectioner {
@@ -14,7 +13,7 @@ public class WordSelectioner extends AbstractWordSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    if (e instanceof PsiComment || e instanceof PsiWhiteSpace) {
+    if (e instanceof PsiComment) {
       return false;
     }
     for (Condition<PsiElement> filter : EP_NAME.getExtensionList()) {

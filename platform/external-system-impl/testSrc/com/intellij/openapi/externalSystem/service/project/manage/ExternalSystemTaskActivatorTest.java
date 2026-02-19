@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -11,13 +12,10 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
-import com.intellij.openapi.externalSystem.test.TestExternalProjectSettings;
-import com.intellij.openapi.externalSystem.test.TestExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.test.TestExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemOperationTestUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -26,23 +24,26 @@ import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.externalSystem.testFramework.TestExternalProjectSettings;
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemExecutionSettings;
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.ProjectTaskRunner;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Collections;
-import java.util.List;
 
-import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.*;
-import static com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.AFTER_COMPILE;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.AFTER_REBUILD;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.BEFORE_COMPILE;
+import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.BEFORE_REBUILD;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX;
-import static java.util.Collections.emptyList;
+import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
 
 public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
   private static final Key<StringBuilder> TASKS_TRACE = KeyWithDefaultValue.create("tasks trace", StringBuilder::new);
@@ -52,26 +53,26 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
   @Override
   public void setUp() throws Exception {
     edt(() -> super.setUp());
-    TestExternalSystemManager testExternalSystemManager = new MyTestExternalSystemManager();
-    List<ExternalSystemManager<?, ?, ?, ?, ?>> externalSystemManagers = ContainerUtil.concat(ExternalSystemManager.EP_NAME.getExtensionList(), Collections.singletonList(testExternalSystemManager));
-    ExtensionTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, externalSystemManagers, getTestRootDisposable());
-    ExtensionTestUtil.maskExtensions(ConfigurationType.CONFIGURATION_TYPE_EP,
-                                     Collections.<ConfigurationType>singletonList(new TestTaskConfigurationType()), getTestRootDisposable());
-    ExtensionTestUtil.maskExtensions(ProjectTaskRunner.EP_NAME, emptyList(), getTestRootDisposable());
+
+    ExtensionTestUtil.addExtensions(ExternalSystemManager.EP_NAME, Collections.singletonList(new MyTestExternalSystemManager()), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(ConfigurationType.CONFIGURATION_TYPE_EP, Collections.singletonList(new TestTaskConfigurationType()), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(ProjectTaskRunner.EP_NAME, Collections.emptyList(), getTestRootDisposable());
+
     registryValue = Registry.get(TEST_EXTERNAL_SYSTEM_ID.getId() + USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX);
     registryValue.setValue(true);
 
     String projectPath = "/project/path";
     TestExternalProjectSettings projectSettings = new TestExternalProjectSettings();
     projectSettings.setExternalProjectPath(projectPath);
-    ExternalSystemUtil
-      .linkExternalProject(TEST_EXTERNAL_SYSTEM_ID, projectSettings, myProject, null, false, ProgressExecutionMode.MODAL_SYNC);
+    ExternalSystemOperationTestUtil.waitForProjectActivity(myProject, () ->
+      ExternalSystemUtil.linkExternalProject(projectSettings, new ImportSpecBuilder(myProject, TEST_EXTERNAL_SYSTEM_ID))
+    );
   }
 
   @Override
   public void tearDown() throws Exception {
     if (registryValue != null) {
-      Registry.removeKey(registryValue.getKey());
+      registryValue.setValue(false);
       registryValue = null;
     }
     edt(() -> super.tearDown());
@@ -84,7 +85,6 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
 
   public void testBeforeAfterBuildTasks() {
     Module module = ModuleManager.getInstance(myProject).findModuleByName(TEST_MODULE_NAME);
-    ExternalProjectsManagerImpl.getInstance(myProject).init();
     addTaskTrigger("beforeBuildTask1", BEFORE_COMPILE, module);
     addTaskTrigger("beforeBuildTask2", BEFORE_COMPILE, module);
     addTaskTrigger("afterBuildTask1", AFTER_COMPILE, module);
@@ -136,7 +136,7 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public Class<? extends ExternalSystemTaskManager<TestExternalSystemExecutionSettings>> getTaskManagerClass() {
+    public @NotNull Class<? extends ExternalSystemTaskManager<TestExternalSystemExecutionSettings>> getTaskManagerClass() {
       return TestTaskManager.class;
     }
   }
@@ -167,22 +167,24 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
   public static class TestTaskManager implements ExternalSystemTaskManager<TestExternalSystemExecutionSettings> {
 
     @Override
-    public void executeTasks(@NotNull ExternalSystemTaskId id,
-                             @NotNull List<String> taskNames,
-                             @NotNull String projectPath,
-                             @Nullable TestExternalSystemExecutionSettings settings,
-                             @Nullable String jvmParametersSetup,
-                             @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+    public void executeTasks(
+      @NotNull String projectPath,
+      @NotNull ExternalSystemTaskId id,
+      @NotNull TestExternalSystemExecutionSettings settings,
+      @NotNull ExternalSystemTaskNotificationListener listener
+    ) throws ExternalSystemException {
       StringBuilder builder = TASKS_TRACE.get(id.findProject());
-      if (builder.length() != 0) {
+      if (!builder.isEmpty()) {
         builder.append(",");
       }
-      builder.append(StringUtil.join(taskNames, ","));
+      builder.append(StringUtil.join(settings.getTasks(), ","));
     }
 
     @Override
-    public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
-      throws ExternalSystemException {
+    public boolean cancelTask(
+      @NotNull ExternalSystemTaskId id,
+      @NotNull ExternalSystemTaskNotificationListener listener
+    ) throws ExternalSystemException {
       return false;
     }
   }

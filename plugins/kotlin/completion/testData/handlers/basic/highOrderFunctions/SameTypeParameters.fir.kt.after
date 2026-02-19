@@ -1,0 +1,10 @@
+// FIR_COMPARISON
+fun foo(f: (Int, Int, Int) -> Unit) {
+}
+
+fun main() {
+    foo { i, i1, i2 -> <caret> }
+}
+
+// ELEMENT: foo
+// TAIL_TEXT: " { f: (Int, Int, Int) -> Unit } (<root>)"

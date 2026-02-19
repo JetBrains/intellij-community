@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -12,7 +13,9 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -29,7 +32,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     this(project, preselect, true, true);
   }
 
-  public PackageSetChooserCombo(final Project project, @Nullable final String preselect, final boolean enableBrowseButton, final boolean useCombo) {
+  public PackageSetChooserCombo(final Project project, final @Nullable String preselect, final boolean enableBrowseButton, final boolean useCombo) {
     super(useCombo ? new JComboBox() : new JBComboBoxTableCellEditorComponent(), null);
     myProject = project;
 
@@ -44,7 +47,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
         public void actionPerformed(ActionEvent e) {
           final NamedScope scope;
           if (component instanceof JComboBox) {
-            scope = (NamedScope)((JComboBox)component).getSelectedItem();
+            scope = (NamedScope)((JComboBox<?>)component).getSelectedItem();
           }
           else {
             scope = (NamedScope)((JBComboBoxTableCellEditorComponent)component).getEditorValue();
@@ -102,7 +105,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
         for (int i = 0; i < model.getSize(); i++) {
           final NamedScope descriptor = (NamedScope)model.getElementAt(i);
           if (preselect.equals(descriptor.getScopeId())) {
-            ((JComboBox)component).setSelectedIndex(i);
+            ((JComboBox<?>)component).setSelectedIndex(i);
             break;
           }
         }
@@ -140,20 +143,19 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     return model.toArray(NamedScope.EMPTY_ARRAY);
   }
 
-  @Nullable
-  public NamedScope getSelectedScope() {
+  public @Nullable NamedScope getSelectedScope() {
     final JComponent component = getChildComponent();
     if (component instanceof JComboBox) {
-      int idx = ((JComboBox)component).getSelectedIndex();
+      int idx = ((JComboBox<?>)component).getSelectedIndex();
       if (idx < 0) return null;
-      return (NamedScope)((JComboBox)component).getSelectedItem();
+      return (NamedScope)((JComboBox<?>)component).getSelectedItem();
     }
     else {
       return (NamedScope)((JBComboBoxTableCellEditorComponent)component).getEditorValue();
     }
   }
 
-  private class EditUnnamedScopesDialog extends DialogWrapper {
+  private final class EditUnnamedScopesDialog extends DialogWrapper {
     private PackageSet myScope;
     private final ScopeEditorPanel myPanel;
 
@@ -163,11 +165,11 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
       myPanel = new ScopeEditorPanel(myProject, DependencyValidationManager.getInstance(myProject));
       init();
       myPanel.reset(myScope, null);
+      Disposer.register(getDisposable(), myPanel);
     }
 
     @Override
-    @Nullable
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myPanel.getPanel();
     }
 

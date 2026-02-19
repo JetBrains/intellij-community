@@ -1,23 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Version implements Comparable<Version> {
+import java.io.Serializable;
+
+public final class Version implements Comparable<Version>, Serializable {
   public final int major;
   public final int minor;
   public final int bugfix;
 
-  public Version(int major, int minor, int bugfix) {
-    this.bugfix = bugfix;
-    this.minor = minor;
-    this.major = major;
+  public Version(int major, int minor) {
+    this(major, minor, 0);
   }
 
-  @Nullable
-  public static Version parseVersion(@NotNull String versionString) {
+  public Version(int major, int minor, int bugfix) {
+    this.major = major;
+    this.minor = minor;
+    this.bugfix = bugfix;
+  }
+
+  /**
+   * Returns a new version without a bugfix.
+   */
+  public @NotNull Version withoutBugfix() {
+    return bugfix == 0 ? this : new Version(major, minor, 0);
+  }
+
+  public static @Nullable Version parseVersion(@NotNull String versionString) {
     String[] versions = versionString.split("\\.");
     String version = versions[0];
     int major = parseNumber(version, -1);
@@ -38,7 +51,7 @@ public class Version implements Comparable<Version> {
     return new Version(major, minor, patch);
   }
 
-  private static int parseNumber(String num, int def) {
+  private static int parseNumber(String num, @SuppressWarnings("SameParameterValue") int def) {
     return StringUtil.parseInt(num.replaceFirst("(\\d+).*", "$1"), def);
   }
 
@@ -114,14 +127,17 @@ public class Version implements Comparable<Version> {
   /**
    * @return compact string representation in the following form: "n.n", "n.n.n", e.g 1.0, 1.1.0
    */
-  public @NlsSafe String toCompactString() {
-    return toCompactString(major, minor, bugfix);
+  public @NotNull @NlsSafe String toCompactString() {
+    String result = major + "." + minor;
+    if (bugfix > 0) result += "." + bugfix;
+    return result;
   }
 
+  /** @deprecated use {@link #toCompactString()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static String toCompactString(int major, int minor, int bugfix) {
-    String res = major + "." + minor;
-    if (bugfix > 0) res += "." + bugfix;
-    return res;
+    return new Version(major, minor, bugfix).toCompactString();
   }
 
   @Override

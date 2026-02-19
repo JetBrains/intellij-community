@@ -1,0 +1,1 @@
+interface My<caret>Interface

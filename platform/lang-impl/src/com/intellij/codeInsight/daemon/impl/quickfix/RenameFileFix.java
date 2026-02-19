@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-/*
- * @author ven
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -36,6 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/**
+ * @deprecated use {@link RenameFileModCommand}
+ */
+@Deprecated
 public class RenameFileFix implements IntentionAction, LocalQuickFix {
   private final String myNewFileName;
 
@@ -47,54 +35,61 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return CodeInsightBundle.message("rename.file.fix");
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getText();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CodeInsightBundle.message("rename.file.fix");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiFile file = descriptor.getPsiElement().getContainingFile();
-    if (isAvailable(project, null, file)) {
-      WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, file));
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
+    if (isAvailable(project, null, psiFile)) {
+      WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, psiFile));
     }
   }
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (file == null || !file.isValid()) return false;
-    VirtualFile vFile = file.getVirtualFile();
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (psiFile == null || !psiFile.isValid()) return false;
+    VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null) return false;
-    final VirtualFile parent = vFile.getParent();
+    VirtualFile parent = vFile.getParent();
     if (parent == null) return false;
-    final VirtualFile newVFile = parent.findChild(myNewFileName);
+    VirtualFile newVFile = parent.findChild(myNewFileName);
     return newVFile == null || newVFile.equals(vFile);
   }
 
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    VirtualFile vFile = psiFile.getVirtualFile();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     FileDocumentManager.getInstance().saveDocument(document);
     try {
-      vFile.rename(file.getManager(), myNewFileName);
+      vFile.rename(psiFile.getManager(), myNewFileName);
     }
     catch (IOException e) {
       MessagesEx.error(project, e.getMessage()).showLater();
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return IntentionPreviewInfo.rename(previewDescriptor.getPsiElement().getContainingFile(), myNewFileName);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return IntentionPreviewInfo.rename(psiFile, myNewFileName);
   }
 
   @Override

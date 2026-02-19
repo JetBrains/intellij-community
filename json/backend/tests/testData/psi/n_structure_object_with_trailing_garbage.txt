@@ -1,0 +1,14 @@
+JsonFile: n_structure_object_with_trailing_garbage.json
+  JsonObject
+    PsiElement({)('{')
+    JsonProperty
+      JsonStringLiteral
+        PsiElement(DOUBLE_QUOTED_STRING)('"a"')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      JsonBooleanLiteral
+        PsiElement(true)('true')
+    PsiElement(})('}')
+  PsiWhiteSpace(' ')
+  JsonStringLiteral
+    PsiElement(DOUBLE_QUOTED_STRING)('"x"')

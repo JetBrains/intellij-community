@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.br
 import com.intellij.openapi.util.text.HtmlChunk.text
 import com.intellij.openapi.util.text.StringUtil
@@ -16,12 +17,12 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.Consumer
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -31,8 +32,13 @@ import com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitBranch
 import git4idea.GitRevisionNumber
-import git4idea.GitUtil.*
-import git4idea.GitVcs
+import git4idea.GitUtil.CHERRY_PICK_HEAD
+import git4idea.GitUtil.HEAD
+import git4idea.GitUtil.MERGE_HEAD
+import git4idea.GitUtil.REBASE_HEAD
+import git4idea.GitUtil.getHead
+import git4idea.GitUtil.getRepositories
+import git4idea.GitUtil.getRepositoriesForFiles
 import git4idea.changes.GitChangeUtils
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitHistoryUtils
@@ -45,13 +51,12 @@ import git4idea.rebase.GitRebaseUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.Nls
-import java.util.*
 import javax.swing.JPanel
 
 internal open class GitDefaultMergeDialogCustomizer(
   private val project: Project
 ) : MergeDialogCustomizer() {
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
+  override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>): @NlsContexts.Label String {
     val repos = getRepositoriesForFiles(project, files)
       .ifEmpty { getRepositories(project).filter { it.stagingAreaHolder.allConflicts.isNotEmpty() } }
 
@@ -69,7 +74,13 @@ internal open class GitDefaultMergeDialogCustomizer(
     if (rebaseOntoBranches.isNotEmpty()) {
       val singleCurrentBranch = getSingleCurrentBranchName(repos)
       val singleOntoBranch = rebaseOntoBranches.toSet().singleOrNull()
-      return getDescriptionForRebase(singleCurrentBranch, singleOntoBranch?.branchName, singleOntoBranch?.hash)
+      val singleRepo = repos.singleOrNull()
+      return getDescriptionForRebase(
+        singleRepo,
+        singleCurrentBranch,
+        singleOntoBranch?.branchName,
+        singleOntoBranch?.hash,
+      )
     }
 
     val cherryPickCommitDetails = repos.mapNotNull { loadCherryPickCommitDetails(it) }
@@ -80,7 +91,7 @@ internal open class GitDefaultMergeDialogCustomizer(
         cherryPickCommitDetails.size, text(cherryPickCommitDetails.single().shortHash).code(),
         (singleCherryPick != null).toInt(),
         text(singleCherryPick?.authorName ?: ""),
-        HtmlBuilder().append(br()).append(text(singleCherryPick?.commitMessage ?: "").code())
+        HtmlBuilder().append(br()).append(CommitMessagePreview.asHtmlChunk (singleCherryPick?.commitMessage ?: ""))
       )
     }
 
@@ -88,23 +99,23 @@ internal open class GitDefaultMergeDialogCustomizer(
   }
 
   override fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList {
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file) ?: return DEFAULT_CUSTOMIZER_LIST
-    return when (repository.state) {
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file)
+    return when (repository?.state) {
       Repository.State.MERGING -> getMergeTitleCustomizerList(repository, file)
       Repository.State.REBASING -> getRebaseTitleCustomizerList(repository, file)
       Repository.State.GRAFTING -> getCherryPickTitleCustomizerList(repository, file)
-      else -> DEFAULT_CUSTOMIZER_LIST
-    }
+      else -> null
+    } ?: GitMergeDialogCustomizerHelper.getDefaultCustomizers(project, file)
   }
 
-  private fun getCherryPickTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
-    val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return DEFAULT_CUSTOMIZER_LIST
+  private fun getCherryPickTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList? {
+    val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
     val mergeBase = GitHistoryUtils.getMergeBase(
       repository.project,
       repository.root,
       CHERRY_PICK_HEAD,
       HEAD
-    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+    )?.rev ?: return null
     val leftTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
       GitBundle.message("merge.dialog.diff.left.title.cherry.pick.label.text"),
       repository,
@@ -117,23 +128,23 @@ internal open class GitDefaultMergeDialogCustomizer(
       file,
       cherryPickHead.asString()
     )
-    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+    return GitMergeDialogCustomizerHelper.getCustomizers(project, file, leftTitleCustomizer, rightTitleCustomizer)
   }
 
   @NlsSafe
   private fun getFirstBranch(branches: Collection<String>): String = branches.first()
 
-  private fun getMergeTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
-    val currentBranchHash = getHead(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+  private fun getMergeTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList? {
+    val currentBranchHash = getHead(repository) ?: return null
     val currentBranchPresentable = repository.currentBranchName ?: currentBranchHash.toShortString()
-    val mergeBranch = resolveMergeBranch(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+    val mergeBranch = resolveMergeBranch(repository) ?: return null
     val mergeBranchHash = mergeBranch.hash
     val mergeBase = GitHistoryUtils.getMergeBase(
       repository.project,
       repository.root,
       currentBranchHash.asString(),
       mergeBranchHash.asString()
-    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+    )?.rev ?: return null
 
     val leftTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
       html("merge.dialog.diff.title.changes.from.branch.label.text", text(currentBranchPresentable).bold()),
@@ -147,21 +158,21 @@ internal open class GitDefaultMergeDialogCustomizer(
       file,
       Pair(mergeBase, mergeBranchHash.asString())
     )
-    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+    return GitMergeDialogCustomizerHelper.getCustomizers(project, file, leftTitleCustomizer, rightTitleCustomizer)
   }
 
-  private fun getRebaseTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
-    val currentBranchHash = getHead(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+  private fun getRebaseTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList? {
+    val currentBranchHash = getHead(repository) ?: return null
     val rebasingBranchPresentable = repository.currentBranchName ?: currentBranchHash.toShortString()
-    val upstreamBranch = resolveRebaseOntoBranch(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+    val upstreamBranch = resolveRebaseOntoBranch(repository) ?: return null
     val upstreamBranchHash = upstreamBranch.hash
-    val rebaseHead = tryResolveRef(repository, REBASE_HEAD) ?: return DEFAULT_CUSTOMIZER_LIST
+    val rebaseHead = tryResolveRef(repository, REBASE_HEAD) ?: return null
     val mergeBase = GitHistoryUtils.getMergeBase(
       repository.project,
       repository.root,
       REBASE_HEAD,
       upstreamBranchHash.asString()
-    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+    )?.rev ?: return null
     val leftTitle = html(
       "merge.dialog.diff.left.title.rebase.label.text",
       rebaseHead.toShortString(),
@@ -176,40 +187,59 @@ internal open class GitDefaultMergeDialogCustomizer(
         html("merge.dialog.diff.right.title.rebase.without.branch.label.text")
       }
     val rightTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(rightTitle, repository, file, Pair(mergeBase, HEAD))
-    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+    return GitMergeDialogCustomizerHelper.getCustomizers(project, file, leftTitleCustomizer, rightTitleCustomizer)
   }
 
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {
-    val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
-
-    val shortDetails = GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), repository.root,
-                                                  listOf(cherryPickHead.asString()))
-
-    val result = shortDetails.singleOrNull() ?: return null
-    return CherryPickDetails(cherryPickHead.toShortString(), result.author.name, result.subject)
+    val result = GitLogUtil.collectMetadata(project, repository.root, listOf(CHERRY_PICK_HEAD)).singleOrNull() ?: return null
+    return CherryPickDetails(result.id.toShortString(), result.author.name, result.fullMessage)
   }
 
   private data class CherryPickDetails(@NlsSafe val shortHash: String, @NlsSafe val authorName: String, @NlsSafe val commitMessage: String)
 }
 
-internal fun getDescriptionForRebase(@NlsSafe rebasingBranch: String?, @NlsSafe baseBranch: String?, baseHash: Hash?): String =
-  when {
-    baseBranch != null -> html(
+@NlsContexts.Label
+internal fun getDescriptionForRebase(repository: GitRepository?, @NlsSafe rebasingBranch: String?, @NlsSafe baseBranch: String?, baseHash: Hash?): String {
+  val description = when {
+    baseBranch != null -> GitBundle.message(
       "merge.dialog.description.rebase.with.onto.branch.label.text",
       (rebasingBranch != null).toInt(), text(rebasingBranch ?: "").bold(),
       text(baseBranch).bold(),
       (baseHash != null).toInt(), baseHash?.toShortString() ?: ""
     )
-    baseHash != null -> html(
+    baseHash != null -> GitBundle.message(
       "merge.dialog.description.rebase.with.hash.label.text",
       (rebasingBranch != null).toInt(), text(rebasingBranch ?: "").bold(),
       text(baseHash.toShortString()).bold()
     )
-    else -> html(
+    else -> GitBundle.message(
       "merge.dialog.description.rebase.without.onto.info.label.text",
       (rebasingBranch != null).toInt(), text(rebasingBranch ?: "").bold()
     )
   }
+
+  val conflictOnCommit =
+    if (repository != null) GitLogUtil.collectMetadata(repository.project, repository.root, listOf(REBASE_HEAD)).singleOrNull()
+    else null
+
+  return if (conflictOnCommit == null) HtmlChunk.raw(description).toString()
+  else appendCommitMessageToRebaseConflictDescription(description, conflictOnCommit)
+}
+
+private fun appendCommitMessageToRebaseConflictDescription(description: @Nls String, conflictOnCommit: VcsCommitMetadata): @NlsSafe String {
+  val currentCommitDetails = GitBundle.message(
+    "merge.dialog.description.rebase.conflict.current.commit",
+    text(conflictOnCommit.id.toShortString()).code(),
+    conflictOnCommit.author.name
+  )
+
+  return HtmlBuilder()
+    .append(HtmlChunk.raw("$description. $currentCommitDetails"))
+    .br()
+    .append(CommitMessagePreview.asHtmlChunk(conflictOnCommit.fullMessage))
+    .wrapWith(HtmlChunk.html())
+    .toString()
+}
 
 internal fun getDefaultLeftPanelTitleForBranch(@NlsSafe branchName: String): String =
   html("merge.dialog.diff.left.title.default.branch.label.text", text(branchName).bold())
@@ -263,7 +293,7 @@ private fun tryResolveRef(repository: GitRepository, @NlsSafe ref: String): Hash
     val revision = GitRevisionNumber.resolve(repository.project, repository.root, ref)
     return HashImpl.build(revision.asString())
   }
-  catch (e: VcsException) {
+  catch (_: VcsException) {
     return null
   }
 }
@@ -289,8 +319,8 @@ internal fun getTitleWithCommitDetailsCustomizer(
   @NlsSafe commit: String
 ) = DiffEditorTitleCustomizer {
   getTitleWithShowDetailsAction(title) {
-    val dlg = ChangeListViewerDialog(repository.project)
-    dlg.loadChangesInBackground {
+    val panel = LoadingCommittedChangeListPanel(repository.project)
+    panel.loadChangesInBackground {
       val changeList = GitChangeUtils.getRevisionChanges(
         repository.project,
         repository.root,
@@ -299,8 +329,10 @@ internal fun getTitleWithCommitDetailsCustomizer(
         false,
         false
       )
-      ChangeListViewerDialog.ChangelistData(changeList, file)
+      LoadingCommittedChangeListPanel.ChangelistData(changeList, file)
     }
+
+    val dlg = ChangeListViewerDialog(repository.project, panel)
     dlg.title = StringUtil.stripHtml(title, false)
     dlg.isModal = true
     dlg.show()
@@ -321,7 +353,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
         readFullDetails(
           repository.project,
           repository.root,
-          Consumer { commit ->
+          { commit ->
             val commitMetadata = VcsCommitMetadataImpl(
               commit.id, commit.parents, commit.commitTime, commit.root, commit.subject,
               commit.author, commit.fullMessage, commit.committer, commit.authorTime)
@@ -344,7 +376,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
 internal fun getTitleWithShowDetailsAction(@Nls title: String, action: () -> Unit): JPanel =
   BorderLayoutPanel()
     .addToCenter(JBLabel(title).setCopyable(true))
-    .addToRight(LinkLabel.create(GitBundle.message("merge.dialog.customizer.show.details.link.label"), action))
+    .addToRight(ActionLink(GitBundle.message("merge.dialog.customizer.show.details.link.label")) { action() })
 
 private fun Boolean.toInt() = if (this) 1 else 0
 
@@ -388,4 +420,17 @@ private class MergeConflictMultipleCommitInfoDialog(
 private data class RefInfo(val hash: Hash, @NlsSafe val branchName: String?) {
   @NlsSafe
   val presentable: String = branchName ?: hash.toShortString()
+}
+
+private object CommitMessagePreview {
+  private const val MAX_LINES = 3
+
+  fun asHtmlChunk(commitMessage: @NlsSafe String): HtmlChunk.Element =
+    HtmlChunk.text(trimMessage(commitMessage)).code()
+
+  private fun trimMessage(commitMessage: @NlsSafe String): @NlsSafe String {
+    val lines = commitMessage.lines()
+    return if (lines.size <= MAX_LINES) commitMessage
+    else lines.take(MAX_LINES).dropLastWhile { it.isBlank() }.joinToString("\n") + StringUtil.THREE_DOTS
+  }
 }

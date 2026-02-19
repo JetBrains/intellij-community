@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.platform.images.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "copyright_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "copyright",
+  module_name = "intellij.platform.images.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":copyright_resources"],
+  deps = [
+    "//images",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//plugins/copyright",
+    "//platform/core-api:core",
+    "//xml/xml-psi-impl:psi-impl",
+  ]
+)
+
+jvm_library(
+  name = "copyright_test_lib",
+  module_name = "intellij.platform.images.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":copyright",
+    "//images:images_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/copyright:copyright_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.images.copyright` end

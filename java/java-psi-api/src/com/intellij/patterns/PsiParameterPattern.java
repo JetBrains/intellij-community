@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiElement;
@@ -22,14 +22,14 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
       @Override
       public boolean processValues(PsiParameter t,
                                    ProcessingContext context,
-                                   PairProcessor<PsiMethod, ProcessingContext> processor) {
+                                   PairProcessor<? super PsiMethod, ? super ProcessingContext> processor) {
         PsiElement scope = t.getDeclarationScope();
         if (!(scope instanceof PsiMethod)) return true;
         return processor.process((PsiMethod)scope, context);
       }
 
       @Override
-      public boolean accepts(@NotNull final PsiParameter t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull PsiParameter t, final ProcessingContext context) {
         if (!super.accepts(t, context)) return false;
         PsiMethod psiMethod = (PsiMethod)t.getDeclarationScope();
 
@@ -45,7 +45,7 @@ public class PsiParameterPattern extends PsiModifierListOwnerPattern<PsiParamete
       @Override
       public boolean processValues(PsiParameter t,
                                    ProcessingContext context,
-                                   PairProcessor<PsiMethod, ProcessingContext> processor) {
+                                   PairProcessor<? super PsiMethod, ? super ProcessingContext> processor) {
         PsiElement scope = t.getDeclarationScope();
         if (!(scope instanceof PsiMethod)) return true;
         return processor.process((PsiMethod)scope, context);

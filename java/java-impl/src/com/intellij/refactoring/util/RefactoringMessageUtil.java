@@ -1,9 +1,11 @@
 
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,8 +23,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class RefactoringMessageUtil {
 
-  @Nls
-  public static String getIncorrectIdentifierMessage(String identifierName) {
+  public static @Nls String getIncorrectIdentifierMessage(String identifierName) {
     return JavaRefactoringBundle.message("0.is.not.a.legal.java.identifier", identifierName);
   }
 
@@ -31,6 +32,10 @@ public final class RefactoringMessageUtil {
    * an error message, if cannot create a class
    */
   public static @Nls(capitalization = Sentence) @Nullable String checkCanCreateClass(PsiDirectory destinationDirectory, String className) {
+    return checkCanCreateClass(destinationDirectory, className, JavaFileType.INSTANCE);
+  }
+
+  public static @Nls(capitalization = Sentence) @Nullable String checkCanCreateClass(PsiDirectory destinationDirectory, String className, FileType fileType) {
     PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(destinationDirectory);
     VirtualFile file = destinationDirectory.getVirtualFile();
     for (PsiClass aClass : classes) {
@@ -39,7 +44,7 @@ public final class RefactoringMessageUtil {
                                              file.getPresentableUrl(), UsageViewUtil.getType(aClass), className);
       }
     }
-    @NonNls String fileName = className + ".java";
+    @NonNls String fileName = className + "." + fileType.getDefaultExtension();
     return checkCanCreateFile(destinationDirectory, fileName);
   }
 

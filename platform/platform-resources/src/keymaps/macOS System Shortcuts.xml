@@ -4,14 +4,20 @@
     <keyboard-shortcut first-keystroke="meta F9"/>
   </action>
 
+  <action id="Vcs.QuickListPopupAction">
+    <keyboard-shortcut first-keystroke="ctrl C"/>
+  </action>
+
   <action id="EditorDelete">
     <keyboard-shortcut first-keystroke="DELETE"/>
     <keyboard-shortcut first-keystroke="ctrl D"/>
   </action>
 
   <action id="Debug">
-    <keyboard-shortcut first-keystroke="ctrl meta D"/>
+    <keyboard-shortcut first-keystroke="shift alt D"/>
   </action>
+
+  <action id="hg4idea.QFold"/>
 
   <!--
   <action id="RecentFiles">
@@ -25,18 +31,6 @@
 
   <action id="GotoPrevElementUnderCaretUsage">
     <keyboard-shortcut first-keystroke="meta alt shift E"/>
-  </action>
-
-  <action id="Vcs.QuickListPopupAction">
-    <keyboard-shortcut first-keystroke="ctrl G"/>
-  </action>
-
-  <action id="SelectNextOccurrence">
-    <keyboard-shortcut first-keystroke="ctrl alt G"/>
-  </action>
-
-  <action id="UnselectPreviousOccurrence">
-    <keyboard-shortcut first-keystroke="ctrl alt shift G"/>
   </action>
 
   <action id="EditorBackSpace">
@@ -76,6 +70,9 @@
     <keyboard-shortcut first-keystroke="ctrl meta K"/>
     <keyboard-shortcut first-keystroke="meta F3"/>
   </action>
+  <action id="ShowTypeBookmarks">
+    <keyboard-shortcut first-keystroke="meta alt F3"/>
+  </action>
 
   <action id="ToggleBookmarkWithMnemonic">
     <keyboard-shortcut first-keystroke="shift ctrl alt K"/>
@@ -83,8 +80,15 @@
   </action>
 
   <action id="EvaluateExpression">
-    <keyboard-shortcut first-keystroke="meta shift L"/>
+    <keyboard-shortcut first-keystroke="meta ctrl L"/>
     <keyboard-shortcut first-keystroke="alt F8"/>
+  </action>
+
+  <action id="Vcs.MoveChangedLinesToChangelist">
+    <keyboard-shortcut first-keystroke="ctrl meta M"/>
+  </action>
+  <action id="ChangesView.Move">
+    <keyboard-shortcut first-keystroke="ctrl meta M"/>
   </action>
 
   <action id="Generate">
@@ -139,11 +143,11 @@
   </action>
 
   <action id="Run">
-    <keyboard-shortcut first-keystroke="ctrl meta R"/>
+    <keyboard-shortcut first-keystroke="alt shift R"/>
   </action>
 
   <action id="RerunTests">
-    <keyboard-shortcut first-keystroke="shift alt R"/>
+    <keyboard-shortcut first-keystroke="ctrl meta R"/>
   </action>
 
   <action id="Refactorings.QuickListPopupAction">
@@ -207,8 +211,12 @@
     <keyboard-shortcut first-keystroke="ctrl shift V"/>
   </action>
 
+  <action id="QuickImplementations">
+    <keyboard-shortcut first-keystroke="meta Y"/>
+  </action>
+
   <action id="Synchronize">
-    <keyboard-shortcut first-keystroke="meta shift Y"/>
+    <keyboard-shortcut first-keystroke="meta ctrl Y"/>
   </action>
 
   <action id="CopyElement">
@@ -303,8 +311,8 @@
   </action>
 
   <action id="GotoRelated">
-    <keyboard-shortcut first-keystroke="control alt HOME"/>
     <keyboard-shortcut first-keystroke="ctrl meta DOWN"/>
+    <keyboard-shortcut first-keystroke="control alt HOME"/>
   </action>
 
   <action id="Back">
@@ -337,7 +345,7 @@
     <keyboard-shortcut first-keystroke="F7"/>
   </action>
 
-  <action id="EditorDecreaseFontSize">
+  <action id="EditorDecreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="meta shift MINUS"/>
   </action>
 
@@ -345,7 +353,7 @@
     <keyboard-shortcut first-keystroke="shift alt MINUS"/>
   </action>
 
-  <action id="EditorIncreaseFontSize">
+  <action id="EditorIncreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="meta shift PLUS"/>
   </action>
 
@@ -374,7 +382,7 @@
   </action>
 
   <action id="StepOut">
-    <keyboard-shortcut first-keystroke="meta shift QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
     <keyboard-shortcut first-keystroke="shift F8"/>
   </action>
 
@@ -393,7 +401,7 @@
   </action>
 
   <action id="ToggleLineBreakpoint">
-    <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
+    <keyboard-shortcut first-keystroke="ctrl QUOTE"/>
     <keyboard-shortcut first-keystroke="meta F8"/>
   </action>
 
@@ -431,4 +439,21 @@
     <keyboard-shortcut first-keystroke="meta F2"/>
   </action>
 
+  <action id="CommentByBlockComment">
+    <keyboard-shortcut first-keystroke="meta alt SLASH"/>
+    <keyboard-shortcut first-keystroke="meta alt DIVIDE"/>
+    <keyboard-shortcut first-keystroke="control shift SLASH"/>
+    <keyboard-shortcut first-keystroke="control shift DIVIDE"/>
+  </action>
+
+  <action id="EditorLookupUp"/>
+  <action id="EditorLookupDown"/>
+
+  <action id="ShowContent">
+    <keyboard-shortcut first-keystroke="shift meta alt DOWN"/>
+  </action>
+
+  <action id="TextSearchAction">
+    <keyboard-shortcut first-keystroke="shift ctrl alt E"/>
+  </action>
 </keymap>

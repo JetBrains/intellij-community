@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure.filtered;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
@@ -23,8 +10,14 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -64,7 +57,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   private void addToCache(FilteringNode node, boolean duplicate) {
     Object delegate = node.getDelegate();
     Object[] delegates = myBaseStructure.getChildElements(delegate);
-    if (delegates == null || delegates.length == 0 || duplicate) {
+    if (delegates.length == 0 || duplicate) {
       myLeaves.add(node);
     } else {
       ArrayList<FilteringNode> nodes = new ArrayList<>(delegates.length);
@@ -104,6 +97,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
   }
 
+  public @Unmodifiable List<FilteringNode> getVisibleLeaves() {
+    return ContainerUtil.filter(myLeaves, node -> node.state == State.VISIBLE);
+  }
+
   private State getState(@NotNull FilteringNode node) {
     return myFilter.shouldBeShowing(node.getDelegate()) ? State.VISIBLE : State.HIDDEN;
   }
@@ -123,9 +120,8 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     return myDescriptors2Nodes.get(nodeObject);
   }
 
-  @NotNull
   @Override
-  public FilteringNode getRootElement() {
+  public @NotNull FilteringNode getRootElement() {
     return myRoot;
   }
 
@@ -150,8 +146,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return element instanceof FilteringNode ? (FilteringNode)element : new FilteringNode((SimpleNode)parentDescriptor, element);
   }
 
@@ -165,9 +160,8 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     return myBaseStructure.hasSomethingToCommit();
   }
 
-  @NotNull
   @Override
-  public ActionCallback asyncCommit() {
+  public @NotNull ActionCallback asyncCommit() {
     return myBaseStructure.asyncCommit();
   }
 
@@ -212,29 +206,21 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     @Override
-    public boolean isHighlightableContentNode(@NotNull final PresentableNodeDescriptor kid) {
-      return myDelegate instanceof PresentableNodeDescriptor && ((PresentableNodeDescriptor)myDelegate).isHighlightableContentNode(kid);
-    }
-
-
-
-    @Override
-    protected void updateFileStatus() {
-      // DO NOTHING
+    public boolean isHighlightableContentNode(final @NotNull PresentableNodeDescriptor kid) {
+      return myDelegate instanceof PresentableNodeDescriptor && ((PresentableNodeDescriptor<?>)myDelegate).isHighlightableContentNode(kid);
     }
 
     @Override
-    protected void doUpdate() {
-      clearColoredText();
-      if (myDelegate instanceof PresentableNodeDescriptor) {
-        PresentableNodeDescriptor node = (PresentableNodeDescriptor)myDelegate;
+    protected void doUpdate(@NotNull PresentationData presentation) {
+      presentation.clearText();
+      if (myDelegate instanceof PresentableNodeDescriptor<?> node) {
         node.update();
-        apply(node.getPresentation());
+        presentation.applyFrom(node.getPresentation());
       } else if (myDelegate != null) {
-        NodeDescriptor descriptor = myBaseStructure.createDescriptor(myDelegate, getParentDescriptor());
+        NodeDescriptor<?> descriptor = myBaseStructure.createDescriptor(myDelegate, getParentDescriptor());
         descriptor.update();
-        setUniformIcon(descriptor.getIcon());
-        setPlainText(myDelegate.toString());
+        presentation.setIcon(descriptor.getIcon());
+        presentation.setPresentableText(myDelegate.toString());
       }
     }
 

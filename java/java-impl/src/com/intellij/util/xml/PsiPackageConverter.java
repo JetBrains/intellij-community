@@ -15,7 +15,11 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PackageReferenceSet;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -27,13 +31,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiPackageConverter extends Converter<PsiPackage> implements CustomReferenceConverter<PsiPackage> {
   @Override
-  public PsiPackage fromString(@Nullable @NonNls String s, final ConvertContext context) {
+  public PsiPackage fromString(@Nullable @NonNls String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
     return JavaPsiFacade.getInstance(context.getPsiManager().getProject()).findPackage(s);
   }
 
   @Override
-  public String toString(@Nullable PsiPackage psiPackage, final ConvertContext context) {
+  public String toString(@Nullable PsiPackage psiPackage, final @NotNull ConvertContext context) {
     return psiPackage == null ? null : psiPackage.getQualifiedName();
   }
 

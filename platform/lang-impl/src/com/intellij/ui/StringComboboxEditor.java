@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -19,12 +19,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
 
 /**
  * ComboBox with Editor and Strings as item
- *
- * @author dsl
  */
 public class StringComboboxEditor extends EditorComboBoxEditor {
   public static final Key<JComboBox> COMBO_BOX_KEY = Key.create("COMBO_BOX_KEY");
@@ -51,7 +49,7 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
   }
 
   @Override
-  protected void onEditorCreate(final EditorEx editor) {
+  protected void onEditorCreate(final @NotNull EditorEx editor) {
     Disposer.register(((EditorImpl)editor).getDisposable(), new Disposable() {
       @Override
       public void dispose() {
@@ -60,9 +58,8 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
     });
   }
 
-  @NotNull
   @Override
-  public Object getItem() {
+  public @NotNull Object getItem() {
     return ((Document)super.getItem()).getText();
   }
 

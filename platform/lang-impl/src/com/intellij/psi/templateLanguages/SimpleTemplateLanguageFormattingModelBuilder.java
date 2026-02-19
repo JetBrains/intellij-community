@@ -1,7 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.Spacing;
+import com.intellij.formatting.Wrap;
+import com.intellij.formatting.WrapType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.psi.FileViewProvider;
@@ -14,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingModelBuilder{
   @Override
   public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
@@ -40,7 +44,7 @@ public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingM
       }
 
       @Override
-      public Spacing getSpacing(final Block child1, @NotNull final Block child2) {
+      public Spacing getSpacing(final Block child1, final @NotNull Block child2) {
         return Spacing.getReadOnlySpacing();
       }
 

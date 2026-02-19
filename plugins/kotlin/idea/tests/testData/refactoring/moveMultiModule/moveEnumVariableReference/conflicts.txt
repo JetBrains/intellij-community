@@ -1,0 +1,2 @@
+Class a.EnumContainer, referenced in parameter enumContainer, will not be accessible in module B
+Function EnumContainer.foo(), referenced in function a.refer(EnumContainer), will not be accessible in module B

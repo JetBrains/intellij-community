@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xnon-local-break-continue
+
+fun bar() {
+    for (i in 0..10) {
+        fun baz() {
+            while (true) {
+                break
+            }
+        }
+    }
+}

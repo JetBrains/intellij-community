@@ -6,6 +6,9 @@ import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
 import com.intellij.codeInsight.navigation.ClassImplementationsSearch;
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -17,32 +20,37 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase {
   public void testFromCompletion() {
     @Language("JAVA")
-    String text = "public class Foo {\n" +
-                  "    private final String text;\n" +
-                  "\n" +
-                  "    public Foo(String text) {\n" +
-                  "//        this.text = text;\n" +
-                  "    }\n" +
-                  "\n" +
-                  "    public Foo(int i) {\n" +
-                  "    }\n" +
-                  "\n" +
-                  "    public static void main(String[] args) {\n" +
-                  "        final Foo foo = new Foo(\"\");\n" +
-                  "        foo.to<caret>\n" +
-                  "    }\n" +
-                  "\n" +
-                  "    @Override\n" +
-                  "    public String toString() {\n" +
-                  "        return \"text\";\n" +
-                  "    }\n" +
-                  "    public void totttt(){}" +
-                  "}";
+    String text = """
+      public class Foo {
+          private final String text;
+
+          public Foo(String text) {
+      //        this.text = text;
+          }
+
+          public Foo(int i) {
+          }
+
+          public static void main(String[] args) {
+              final Foo foo = new Foo("");
+              foo.to<caret>
+          }
+
+          @Override
+          public String toString() {
+              return "text";
+          }
+          public void totttt(){}}""";
     myFixture.configureByText("a.java", text);
     myFixture.completeBasic();
 
@@ -52,29 +60,32 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     assert element != null;
     final String newText = ImplementationViewComponent.getNewText(element);
 
-    assertEquals("    @Override\n" +
-                 "    public String toString() {\n" +
-                 "        return \"text\";\n" +
-                 "    }", newText);
+    assertEquals("""
+                       @Override
+                       public String toString() {
+                           return "text";
+                       }\
+                   """, newText);
   }
 
   public void testFromEditor() {
     @Language("JAVA")
-    String text = "public class Foo {\n" +
-                  "    private final String text;\n" +
-                  "\n" +
-                  "    public Foo(String text) {\n" +
-                  "//        this.text = text;\n" +
-                  "    }\n" +
-                  "\n" +
-                  "    public Foo(int i) {\n" +
-                  "    }\n" +
-                  "\n" +
-                  "    @Override\n" +
-                  "    public String to<caret>String() {\n" +
-                  "        return \"text\";\n" +
-                  "    }\n" +
-                  "}";
+    String text = """
+      public class Foo {
+          private final String text;
+
+          public Foo(String text) {
+      //        this.text = text;
+          }
+
+          public Foo(int i) {
+          }
+
+          @Override
+          public String to<caret>String() {
+              return "text";
+          }
+      }""";
     myFixture.configureByText("a.java", text);
     PsiElement element =
       TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
@@ -82,10 +93,12 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     assert element != null;
     final String newText = ImplementationViewComponent.getNewText(element);
 
-    assertEquals("    @Override\n" +
-                 "    public String toString() {\n" +
-                 "        return \"text\";\n" +
-                 "    }", newText);
+    assertEquals("""
+                       @Override
+                       public String toString() {
+                           return "text";
+                       }\
+                   """, newText);
   }
 
   private static Collection<PsiElement> getClassImplementations(final PsiClass psiClass) {
@@ -104,28 +117,29 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
 
   public void testInnerClasses() {
     @Language("JAVA")
-    String text = "abstract class AF<caret>oo{\n" +
-                  "    abstract boolean aaa();\n" +
-                  "    static class AFoo1 extends AFoo {\n" +
-                  "        @Override\n" +
-                  "        boolean aaa() {\n" +
-                  "            return false;\n" +
-                  "        }\n" +
-                  "    }\n" +
-                  "    static class AFoo3 extends AFoo {\n" +
-                  "        @Override\n" +
-                  "        boolean aaa() {\n" +
-                  "            return false;\n" +
-                  "        }\n" +
-                  "    }\n" +
-                  "    static class AFoo2 extends AFoo {\n" +
-                  "        @Override\n" +
-                  "        boolean aaa() {\n" +
-                  "            return false;\n" +
-                  "        }\n" +
-                  "    }\n" +
-                  "    \n" +
-                  "}";
+    String text = """
+      abstract class AF<caret>oo{
+          abstract boolean aaa();
+          static class AFoo1 extends AFoo {
+              @Override
+              boolean aaa() {
+                  return false;
+              }
+          }
+          static class AFoo3 extends AFoo {
+              @Override
+              boolean aaa() {
+                  return false;
+              }
+          }
+          static class AFoo2 extends AFoo {
+              @Override
+              boolean aaa() {
+                  return false;
+              }
+          }
+         \s
+      }""";
     myFixture.configureByText("a.java", text);
     PsiClass psiClass =
       (PsiClass)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
@@ -139,10 +153,10 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     try {
       final String[] visibleFiles = component.getVisibleFiles();
       assertTrue(visibleFiles.length > 0);
-      assertEquals(visibleFiles[0], "a.java (AFoo)");
+      assertEquals("AFoo", visibleFiles[0]);
       Arrays.sort(visibleFiles);
       Assert.assertArrayEquals(Arrays.toString(visibleFiles),
-                               new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"}, visibleFiles);
+                               new String[]{"AFoo", "AFoo1 in AFoo", "AFoo2 in AFoo", "AFoo3 in AFoo"}, visibleFiles);
     }
     finally {
       component.removeNotify();
@@ -151,19 +165,23 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
 
   @NotNull
   private ImplementationViewComponent createImplementationView(List<? extends PsiElement> elements) {
-    return new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);
+    ThrowableComputable<List<PsiImplementationViewElement>, RuntimeException> computableViewElements =
+      () -> ReadAction.compute(() -> ContainerUtil.map(elements, PsiImplementationViewElement::new));
+    List<PsiImplementationViewElement> viewElements = ProgressManager.getInstance().runProcessWithProgressSynchronously(computableViewElements, "", false, getProject());
+    return new ImplementationViewComponent(viewElements, 0);
   }
 
   public void testFunctionalInterface() {
     @Language("JAVA")
-    String text = "interface AF<caret>oo{\n" +
-                  "    boolean aaa();\n" +
-                  "}\n" +
-                  "class AFooImpl {\n" +
-                  "        {\n" +
-                  "             AFoo a = () -> {return false;};\n" +
-                  "        }\n" +
-                  "}";
+    String text = """
+      interface AF<caret>oo{
+          boolean aaa();
+      }
+      class AFooImpl {
+              {
+                   AFoo a = () -> {return false;};
+              }
+      }""";
     myFixture.configureByText("a.java", text);
     PsiClass psiClass =
       (PsiClass)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
@@ -174,15 +192,16 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
+    assertContent(component, new String[]{"AFoo", "a"});
   }
 
   public void testInterfaceConstants() {
     @Language("JAVA")
-    String text = "interface AF<caret>oo{\n" +
-                  "    AFoo IMPL = new AFoo(){};\n" +
-                  "    boolean aaa();\n" +
-                  "}";
+    String text = """
+      interface AF<caret>oo{
+          AFoo IMPL = new AFoo(){};
+          boolean aaa();
+      }""";
     myFixture.configureByText("a.java", text);
     PsiClass psiClass =
       (PsiClass)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
@@ -193,19 +212,20 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     all.add(psiClass);
     all.addAll(classes);
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java (Anonymous in IMPL in AFoo)"});
+    assertContent(component, new String[]{"AFoo", "Anonymous in IMPL in AFoo"});
   }
 
   public void testInterfaceMethodOfFunctionalInterface() {
     @Language("JAVA")
-    String text = "interface AFoo{\n" +
-                  "    boolean a<caret>aa();\n" +
-                  "}\n" +
-                  "class AFooImpl {\n" +
-                  "        {\n" +
-                  "             AFoo a = () -> {return false;};\n" +
-                  "        }\n" +
-                  "}";
+    String text = """
+      interface AFoo{
+          boolean a<caret>aa();
+      }
+      class AFooImpl {
+              {
+                   AFoo a = () -> {return false;};
+              }
+      }""";
     myFixture.configureByText("a.java", text);
     PsiMethod psiMethod =
       (PsiMethod)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
@@ -216,7 +236,7 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     all.add(psiMethod);
     all.addAll(methods);
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java"});
+    assertContent(component, new String[]{"AFoo", "a"});
   }
 
   public void testOnVarKeyword() {
@@ -227,15 +247,15 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
   
   public void testDefaultMethodOfFunctionalInterface() {
     @Language("JAVA")
-    String text = "interface AFoo{\n" +
-                  "    default boolean a<caret>aa(){}\n" +
-                  "    boolean bbb();" +
-                  "}\n" +
-                  "class AFooImpl {\n" +
-                  "        {\n" +
-                  "             AFoo a = () -> {return false;};\n" +
-                  "        }\n" +
-                  "}";
+    String text = """
+      interface AFoo{
+          default boolean a<caret>aa(){}
+          boolean bbb();}
+      class AFooImpl {
+              {
+                   AFoo a = () -> {return false;};
+              }
+      }""";
     myFixture.configureByText("a.java", text);
     PsiMethod psiMethod =
       (PsiMethod)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
@@ -246,33 +266,34 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     all.add(psiMethod);
     all.addAll(methods);
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)"});
+    assertContent(component, new String[]{"AFoo"});
   }
 
   public void testMethodsInInnerClasses() {
     @Language("JAVA")
-    String text = "abstract class AFoo{\n" +
-                  "    abstract boolean a<caret>aa();\n" +
-                  "    static class AFoo1 extends AFoo {\n" +
-                  "        @Override\n" +
-                  "        boolean aaa() {\n" +
-                  "            return false;\n" +
-                  "        }\n" +
-                  "    }\n" +
-                  "    static class AFoo3 extends AFoo {\n" +
-                  "        @Override\n" +
-                  "        boolean aaa() {\n" +
-                  "            return false;\n" +
-                  "        }\n" +
-                  "    }\n" +
-                  "    static class AFoo2 extends AFoo {\n" +
-                  "        @Override\n" +
-                  "        boolean aaa() {\n" +
-                  "            return false;\n" +
-                  "        }\n" +
-                  "    }\n" +
-                  "    \n" +
-                  "}";
+    String text = """
+      abstract class AFoo{
+          abstract boolean a<caret>aa();
+          static class AFoo1 extends AFoo {
+              @Override
+              boolean aaa() {
+                  return false;
+              }
+          }
+          static class AFoo3 extends AFoo {
+              @Override
+              boolean aaa() {
+                  return false;
+              }
+          }
+          static class AFoo2 extends AFoo {
+              @Override
+              boolean aaa() {
+                  return false;
+              }
+          }
+         \s
+      }""";
     myFixture.configureByText("a.java", text);
       PsiMethod psiMethod =
         (PsiMethod)TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.getInstance().getAllAccepted());
@@ -286,7 +307,7 @@ public class ImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase
     //make sure they are in predefined order
     Collections.sort(all, Comparator.comparing(o -> o.getContainingClass().getQualifiedName()));
     final ImplementationViewComponent component = createImplementationView(all);
-    assertContent(component, new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"});
+    assertContent(component, new String[]{"AFoo", "AFoo1 in AFoo", "AFoo2 in AFoo", "AFoo3 in AFoo"});
   }
 
   private static void assertContent(ImplementationViewComponent component, String[] expects) {

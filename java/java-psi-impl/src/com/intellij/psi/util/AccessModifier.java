@@ -1,14 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -17,13 +29,12 @@ import java.util.List;
  */
 public enum AccessModifier {
   PUBLIC(PsiModifier.PUBLIC), PROTECTED(PsiModifier.PROTECTED), PACKAGE_LOCAL(PsiModifier.PACKAGE_LOCAL), PRIVATE(PsiModifier.PRIVATE);
-  public static final List<AccessModifier> ALL_MODIFIERS = ContainerUtil.immutableList(values());
-  
-  private static final List<AccessModifier> PUBLIC_PACKAGE = ContainerUtil.immutableList(PUBLIC, PACKAGE_LOCAL);
-  private static final List<AccessModifier> PUBLIC_PRIVATE = ContainerUtil.immutableList(PUBLIC, PRIVATE);
+  public static final @Unmodifiable List<AccessModifier> ALL_MODIFIERS = Arrays.asList(values());
 
-  @NotNull @PsiModifier.ModifierConstant
-  private final String myModifier;
+  private static final @Unmodifiable List<AccessModifier> PUBLIC_PACKAGE = Arrays.asList(PUBLIC, PACKAGE_LOCAL);
+  private static final @Unmodifiable List<AccessModifier> PUBLIC_PRIVATE = Arrays.asList(PUBLIC, PRIVATE);
+
+  @PsiModifier.ModifierConstant private final @NotNull String myModifier;
 
   AccessModifier(@PsiModifier.ModifierConstant @NotNull String modifier) {
     myModifier = modifier;
@@ -32,8 +43,8 @@ public enum AccessModifier {
   /**
    * @return a {@link PsiModifier} string constant which corresponds to this access modifier.
    */
-  @NotNull @PsiModifier.ModifierConstant
-  public String toPsiModifier() {
+  @PsiModifier.ModifierConstant
+  public @NotNull String toPsiModifier() {
     return myModifier;
   }
 
@@ -53,8 +64,7 @@ public enum AccessModifier {
    * @return a corresponding access modifier
    */
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  public static AccessModifier fromKeyword(@Nullable PsiKeyword keyword) {
+  public static @Nullable AccessModifier fromKeyword(@Nullable PsiKeyword keyword) {
     return keyword == null ? null : fromPsiModifier(keyword.getText());
   }
 
@@ -65,8 +75,7 @@ public enum AccessModifier {
    * @return an access modifier or null if supplied string doesn't correspond to any access modifier.
    */
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  public static AccessModifier fromPsiModifier(@Nullable String modifier) {
+  public static @Nullable AccessModifier fromPsiModifier(@Nullable String modifier) {
     if (modifier == null) return null;
     switch (modifier) {
       case PsiModifier.PUBLIC:
@@ -100,14 +109,11 @@ public enum AccessModifier {
   }
 
   @Override
-  public String toString() {
-    String psiModifier = toPsiModifier();
-    return psiModifier.equals(PACKAGE_LOCAL.myModifier) ? "package-private" : psiModifier;
+  public @Nls String toString() {
+    return JavaPsiBundle.visibilityPresentation(toPsiModifier());
   }
 
-  @NotNull
-  public static List<AccessModifier> getAvailableModifiers(PsiMember member) {
-    if (member == null) return Collections.emptyList();
+  public static @NotNull @Unmodifiable List<AccessModifier> getAvailableModifiers(@NotNull PsiMember member) {
     PsiClass containingClass = member.getContainingClass();
     if (member instanceof PsiField) {
       if (member instanceof PsiEnumConstant || containingClass == null || containingClass.isInterface()) return Collections.emptyList();
@@ -122,12 +128,10 @@ public enum AccessModifier {
       if (JavaPsiRecordUtil.isCompactConstructor(method) ||
           JavaPsiRecordUtil.isExplicitCanonicalConstructor(method) ||
           method instanceof LightRecordCanonicalConstructor) {
-        if (PsiUtil.getLanguageLevel(member) != LanguageLevel.JDK_14_PREVIEW) {
-          PsiModifierList list = containingClass.getModifierList();
-          if (list != null) {
-            AccessModifier classModifier = fromModifierList(list);
-            return ContainerUtil.filter(ALL_MODIFIERS, m -> !classModifier.isWeaker(m));
-          }
+        PsiModifierList list = containingClass.getModifierList();
+        if (list != null) {
+          AccessModifier classModifier = fromModifierList(list);
+          return ContainerUtil.filter(ALL_MODIFIERS, m -> !classModifier.isWeaker(m));
         }
         return Collections.singletonList(PUBLIC);
       }
@@ -151,8 +155,7 @@ public enum AccessModifier {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static AccessModifier getMinAccess(PsiMethod method) {
+  private static @NotNull AccessModifier getMinAccess(PsiMethod method) {
     if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) return PRIVATE;
     HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
     AccessModifier lowest = PRIVATE;

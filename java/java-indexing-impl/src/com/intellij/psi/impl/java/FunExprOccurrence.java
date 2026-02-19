@@ -1,24 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java;
 
-import com.google.common.base.MoreObjects;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.impl.search.ApproximateResolver;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -36,10 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
-public class FunExprOccurrence {
+public final class FunExprOccurrence {
   private final int argIndex;
   private final List<? extends ReferenceChainLink> referenceContext;
 
@@ -51,14 +46,7 @@ public class FunExprOccurrence {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof FunExprOccurrence)) return false;
-
-    FunExprOccurrence that = (FunExprOccurrence)o;
-
-    if (argIndex != that.argIndex) return false;
-    if (!referenceContext.equals(that.referenceContext)) return false;
-
-    return true;
+    return o instanceof FunExprOccurrence that && argIndex == that.argIndex && referenceContext.equals(that.referenceContext);
   }
 
   @Override
@@ -68,10 +56,7 @@ public class FunExprOccurrence {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-      .add("argIndex", argIndex)
-      .add("chain", referenceContext)
-      .toString();
+    return "FunExprOccurrence(argIndex=" + argIndex + ", chain=" + referenceContext + ")";
   }
 
   void serialize(DataOutput out) throws IOException {
@@ -92,14 +77,14 @@ public class FunExprOccurrence {
     }
   }
 
-  @NotNull
-  private static ReferenceChainLink deserializeLink(DataInput in) throws IOException {
+  private static @NotNull ReferenceChainLink deserializeLink(DataInput in) throws IOException {
     String referenceName = IOUtil.readUTF(in);
     boolean isCall = in.readBoolean();
     return new ReferenceChainLink(referenceName, isCall, isCall ? DataInputOutputUtil.readINT(in) : -1);
   }
 
-  public ThreeState checkHasTypeLight(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile) {
+  public ThreeState checkHasTypeLight(@NotNull List<? extends PsiClass> samClasses, @NotNull VirtualFile placeFile,
+                                      @NotNull Project project) {
     if (referenceContext.isEmpty()) return ThreeState.UNSURE;
 
     Set<PsiClass> qualifiers = null;
@@ -116,7 +101,7 @@ public class FunExprOccurrence {
         // probably fully qualified name: skip to possible class name (right before the first call)
         continue;
       }
-      List<? extends PsiMember> candidates = qualifiers == null ? link.getGlobalMembers(placeFile, samClasses.get(0).getProject())
+      List<? extends PsiMember> candidates = qualifiers == null ? link.getGlobalMembers(placeFile, project)
                                                                 : link.getSymbolMembers(qualifiers);
       if (candidates == null) {
         continue;

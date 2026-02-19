@@ -1,12 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.WrapElementIterator;
-import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,22 +13,22 @@ import java.util.List;
 /**
  * {@link WrapElementIterator} extension that also calculates widths of elements.
  */
+@ApiStatus.Internal
 public final class WrapElementMeasuringIterator extends WrapElementIterator {
   private final EditorView myView;
-  private final Document myDocument;
   private final List<Inlay<?>> inlineInlays;
   private final List<Inlay<?>> afterLineEndInlays;
 
   private int inlineInlayIndex;
   private int afterLineEndInlayIndex;
 
-  public WrapElementMeasuringIterator(@NotNull EditorView view, int startOffset, int endOffset) {
+  public WrapElementMeasuringIterator(@NotNull EditorView view, int startOffset, int endOffset,
+                                      List<Inlay<?>> inlineInlays,
+                                      List<Inlay<?>> afterLineEndInlays) {
     super(view.getEditor(), startOffset, endOffset);
     myView = view;
-    myDocument = view.getEditor().getDocument();
-    inlineInlays = view.getEditor().getInlayModel().getInlineElementsInRange(startOffset, endOffset);
-    afterLineEndInlays = view.getEditor().getInlayModel().getAfterLineEndElementsInRange(
-      DocumentUtil.getLineStartOffset(startOffset, myDocument), endOffset);
+    this.inlineInlays = inlineInlays;
+    this.afterLineEndInlays = afterLineEndInlays;
   }
 
   public float getElementEndX(float startX) {

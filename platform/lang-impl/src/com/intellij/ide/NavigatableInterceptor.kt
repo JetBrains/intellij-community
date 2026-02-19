@@ -4,8 +4,10 @@ package com.intellij.ide
 import com.intellij.pom.Navigatable
 import com.intellij.pom.NavigatableWithText
 import com.intellij.util.containers.map2Array
+import org.jetbrains.annotations.ApiStatus
 
-class NavigatableInterceptor(val baseNavigatable: Navigatable, val callback: (Navigatable, Boolean) -> Unit) : NavigatableWithText {
+@ApiStatus.Internal
+class NavigatableInterceptor(private val baseNavigatable: Navigatable, val callback: (Navigatable, Boolean) -> Unit) : NavigatableWithText {
   override fun navigate(requestFocus: Boolean) {
     callback(baseNavigatable, requestFocus)
     baseNavigatable.navigate(requestFocus)

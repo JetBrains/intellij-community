@@ -17,14 +17,28 @@ package org.intellij.plugins.xslt.run.rt;
 
 import org.xml.sax.SAXParseException;
 
-import javax.xml.transform.*;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.SourceLocator;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -98,7 +112,7 @@ public final class XSLTRunner implements XSLTMain {
                         if (out != null) {
                             result = new StreamResult(new ForkedOutputStream(new OutputStream[]{ socketStream, fileStream }));
                         } else {
-                            result = new StreamResult(new OutputStreamWriter(socketStream, "UTF-8"));
+                            result = new StreamResult(new OutputStreamWriter(socketStream, StandardCharsets.UTF_8));
                         }
                     } catch (SocketTimeoutException ignored) {
                         System.err.println("Plugin did not connect to runner within timeout. Run aborted.");
@@ -124,6 +138,7 @@ public final class XSLTRunner implements XSLTMain {
                 }
 
                 Runtime.getRuntime().addShutdownHook(new Thread("XSLT runner") {
+                  @Override
                   public void run() {
                     try {
                       final Writer out = result.getWriter();
@@ -154,6 +169,7 @@ public final class XSLTRunner implements XSLTMain {
         }
     }
 
+    @Override
     public TransformerFactory createTransformerFactory() throws Exception {
         return createTransformerFactoryStatic();
     }
@@ -167,6 +183,7 @@ public final class XSLTRunner implements XSLTMain {
         }
     }
 
+    @Override
     public void start(Transformer transformer, Source source, Result result) throws TransformerException {
         transformer.transform(source, result);
     }
@@ -179,11 +196,7 @@ public final class XSLTRunner implements XSLTMain {
 
         try {
             return (XSLTMain)Class.forName(mainClass).newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new AssertionError(e);
-        } catch (IllegalAccessException e) {
-            throw new AssertionError(e);
-        } catch (InstantiationException e) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new AssertionError(e);
         }
     }
@@ -197,15 +210,18 @@ public final class XSLTRunner implements XSLTMain {
             myTrouble = trouble;
         }
 
+        @Override
         public void warning(TransformerException exception) {
             handleException(exception, "WARNING");
         }
 
+        @Override
         public void error(TransformerException exception) {
             handleException(exception, "ERROR");
             myTrouble[0] = true;
         }
 
+        @Override
         public void fatalError(TransformerException exception) {
             handleException(exception, "FATAL");
             myTrouble[0] = true;
@@ -258,18 +274,22 @@ public final class XSLTRunner implements XSLTMain {
 
                 messages[0] = sae.getMessage();
                 locators[0] = new SourceLocator() {
+                    @Override
                     public int getColumnNumber() {
                         return sae.getColumnNumber();
                     }
 
+                    @Override
                     public int getLineNumber() {
                         return sae.getLineNumber();
                     }
 
+                    @Override
                     public String getPublicId() {
                       return null;
                     }
 
+                    @Override
                     public String getSystemId() {
                         return sae.getSystemId();
                     }
@@ -296,24 +316,28 @@ public final class XSLTRunner implements XSLTMain {
             outs = out;
         }
 
+        @Override
         public void write(byte[] b, int off, int len) throws IOException {
           for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
             outs[i].write(b, off, len);
           }
         }
 
+        @Override
         public void write(int b) throws IOException {
           for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
             outs[i].write(b);
           }
         }
 
+        @Override
         public void flush() throws IOException {
           for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
             outs[i].flush();
           }
         }
 
+        @Override
         public void close() throws IOException {
           for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
             outs[i].close();

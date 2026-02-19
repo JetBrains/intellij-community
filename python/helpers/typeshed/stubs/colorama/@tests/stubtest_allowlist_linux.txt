@@ -1,0 +1,4 @@
+# These are only available on Windows:
+colorama.winterm.WinColor
+colorama.winterm.WinStyle
+colorama.winterm.WinTerm

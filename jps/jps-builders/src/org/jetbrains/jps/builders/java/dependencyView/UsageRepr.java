@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -12,11 +13,14 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author: db
- */
 final class UsageRepr {
   private static final byte FIELD_USAGE = 0x0;
   private static final byte FIELD_ASSIGN_USAGE = 0x1;
@@ -38,11 +42,11 @@ final class UsageRepr {
 
   }
 
-  public static abstract class Usage implements RW.Savable, Streamable {
+  public abstract static class Usage implements RW.Savable, Streamable {
     public abstract int getOwner();
   }
 
-  public static abstract class FMUsage extends Usage {
+  public abstract static class FMUsage extends Usage {
     public final int myName;
     public final int myOwner;
 
@@ -198,8 +202,13 @@ final class UsageRepr {
 
     private MethodUsage(final DependencyContext context, final int name, final int owner, final String descriptor) {
       super(name, owner);
-      myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
-      myReturnType = TypeRepr.getType(context, Type.getReturnType(descriptor));
+      try {
+        myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
+        myReturnType = TypeRepr.getType(context, Type.getReturnType(descriptor));
+      }
+      catch (IllegalArgumentException e) {
+        throw new BuildDataCorruptedException(new IOException("Unexpected method descriptor '" + descriptor + "'", e));
+      }
     }
 
     private MethodUsage(final DependencyContext context, final DataInput in) {
@@ -261,7 +270,7 @@ final class UsageRepr {
     }
   }
 
-  public static class MetaMethodUsage extends FMUsage {
+  public static final class MetaMethodUsage extends FMUsage {
 
     public MetaMethodUsage(final int n, final int o) {
       super(n, o);
@@ -280,14 +289,9 @@ final class UsageRepr {
     void kindToStream(final PrintStream stream) {
       stream.println("MetaMethodUsage:");
     }
-
-    @Override
-    public void toStream(DependencyContext context, PrintStream stream) {
-      super.toStream(context, stream);
-    }
   }
 
-  public static class ImportStaticMemberUsage extends FMUsage {
+  public static final class ImportStaticMemberUsage extends FMUsage {
 
     public ImportStaticMemberUsage(final int n, final int o) {
       super(n, o);
@@ -305,11 +309,6 @@ final class UsageRepr {
     @Override
     void kindToStream(final PrintStream stream) {
       stream.println("ImportStaticMemberUsage:");
-    }
-
-    @Override
-    public void toStream(DependencyContext context, PrintStream stream) {
-      super.toStream(context, stream);
     }
   }
 
@@ -472,7 +471,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ClassAsGenericBoundUsage extends ClassUsage {
+  public static final class ClassAsGenericBoundUsage extends ClassUsage {
     public ClassAsGenericBoundUsage(int className) {
       super(className);
     }
@@ -558,7 +557,7 @@ final class UsageRepr {
     }
   }
 
-  public static class ClassNewUsage extends ClassExtendsUsage {
+  public static final class ClassNewUsage extends ClassExtendsUsage {
     public ClassNewUsage(int className) {
       super(className);
     }
@@ -592,12 +591,12 @@ final class UsageRepr {
   public static final class AnnotationUsage extends Usage {
     public static final DataExternalizer<ElemType> elementTypeExternalizer = new DataExternalizer<ElemType>() {
       @Override
-      public void save(@NotNull final DataOutput out, final ElemType value) throws IOException {
+      public void save(final @NotNull DataOutput out, final ElemType value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.ordinal());
       }
 
       @Override
-      public ElemType read(@NotNull final DataInput in) throws IOException {
+      public ElemType read(final @NotNull DataInput in) throws IOException {
         final int ordinal = DataInputOutputUtil.readINT(in);
         for (ElemType value : ElemType.values()) {
           if (value.ordinal() == ordinal) {
@@ -609,9 +608,10 @@ final class UsageRepr {
     };
 
     final TypeRepr.ClassType myType;
-    final TIntHashSet myUsedArguments;
+    final IntSet myUsedArguments;
     final Set<ElemType> myUsedTargets;
 
+    // this method is only relevant when the AnnotationUsage object is used as a query (annotation usage selector)
     public boolean satisfies(final AnnotationUsage annotationUsage) {
       if (!myType.equals(annotationUsage.myType)) {
         return false;
@@ -620,10 +620,8 @@ final class UsageRepr {
       boolean argumentsSatisfy = false;
 
       if (myUsedArguments != null) {
-        final TIntHashSet arguments = new TIntHashSet(myUsedArguments.toArray());
-
-        arguments.removeAll(annotationUsage.myUsedArguments.toArray());
-
+        IntSet arguments = new IntOpenHashSet(myUsedArguments);
+        arguments.removeAll(annotationUsage.myUsedArguments);  // need to find annotation usages that do not mention arguments this annotation uses
         argumentsSatisfy = !arguments.isEmpty();
       }
 
@@ -631,16 +629,14 @@ final class UsageRepr {
 
       if (myUsedTargets != null) {
         final Collection<ElemType> targets = EnumSet.copyOf(myUsedTargets);
-
         targets.retainAll(annotationUsage.myUsedTargets);
-
         targetsSatisfy = !targets.isEmpty();
       }
 
       return argumentsSatisfy || targetsSatisfy;
     }
 
-    private AnnotationUsage(final TypeRepr.ClassType type, final TIntHashSet usedArguments, final Set<ElemType> targets) {
+    private AnnotationUsage(final TypeRepr.ClassType type, final IntSet usedArguments, final Set<ElemType> targets) {
       this.myType = type;
       this.myUsedArguments = usedArguments;
       this.myUsedTargets = targets;
@@ -651,7 +647,7 @@ final class UsageRepr {
 
       try {
         myType = (TypeRepr.ClassType)externalizer.read(in);
-        myUsedArguments = RW.read(new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR), in);
+        myUsedArguments = RW.read(new IntOpenHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR), in);
         myUsedTargets = RW.read(elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
       }
       catch (IOException e) {
@@ -709,7 +705,6 @@ final class UsageRepr {
       if (myUsedArguments != null) {
         myUsedArguments.forEach(value -> {
           arguments.add(context.getValue(value));
-          return true;
         });
       }
 
@@ -775,10 +770,10 @@ final class UsageRepr {
     return context.getUsage(new ClassNewUsage(name));
   }
 
-  public static Usage createAnnotationUsage(final DependencyContext context,
-                                            final TypeRepr.ClassType type,
-                                            final TIntHashSet usedArguments,
-                                            final Set<ElemType> targets) {
+  public static Usage createAnnotationUsage(DependencyContext context,
+                                            TypeRepr.ClassType type,
+                                            IntSet usedArguments,
+                                            Set<ElemType> targets) {
     return context.getUsage(new AnnotationUsage(type, usedArguments, targets));
   }
 
@@ -789,7 +784,7 @@ final class UsageRepr {
   public static DataExternalizer<Usage> externalizer(final DependencyContext context) {
     return new DataExternalizer<Usage>() {
       @Override
-      public void save(@NotNull final DataOutput out, final Usage value) throws IOException {
+      public void save(final @NotNull DataOutput out, final Usage value) {
         value.save(out);
       }
 

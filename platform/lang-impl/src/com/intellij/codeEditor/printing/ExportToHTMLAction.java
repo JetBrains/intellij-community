@@ -1,19 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JOptionPane;
 import java.nio.file.NoSuchFileException;
 
-public class ExportToHTMLAction extends AnAction {
+@ApiStatus.Internal
+public final class ExportToHTMLAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -44,5 +51,10 @@ public class ExportToHTMLAction extends AnAction {
         presentation.setEnabledAndVisible(true);
       }
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

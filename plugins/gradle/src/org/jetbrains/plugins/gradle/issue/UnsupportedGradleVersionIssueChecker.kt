@@ -1,93 +1,110 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.issue
 
-import com.intellij.build.BuildConsoleUtils.getMessageTitle
 import com.intellij.build.issue.BuildIssue
-import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix
-import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleUtil
-import java.util.*
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
+import org.jetbrains.plugins.gradle.util.GradleBundle
 
 /**
  * Provides the check for errors caused by dropped support in Gradle tooling API of the old Gradle versions
  *
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 class UnsupportedGradleVersionIssueChecker : GradleIssueChecker {
 
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val rootCause = getRootCauseAndLocation(issueData.error).first
-    val rootCauseText = rootCause.toString()
-    var gradleVersionUsed: GradleVersion? = null
+    val gradleVersion = getGradleVersion(issueData)
+
+    when {
+      isGradleUnsupportedByIdea(issueData) -> {
+        return UnsupportedGradleVersionIssue(gradleVersion, issueData.projectPath)
+      }
+      isOldGradleClasspathInfererIssue(rootCause) -> {
+        return UnsupportedGradleVersionIssue(gradleVersion, issueData.projectPath)
+      }
+      isModelBuilderApiUnsupported(rootCause) -> {
+        return UnsupportedGradleVersionIssue(gradleVersion, issueData.projectPath)
+      }
+      isGradleUnsupportedByToolingApi(rootCause) -> {
+        return UnsupportedGradleVersionIssue(gradleVersion, issueData.projectPath)
+      }
+      else -> {
+        return null
+      }
+    }
+  }
+
+  private fun getGradleVersion(issueData: GradleIssueData): GradleVersion? {
     if (issueData.buildEnvironment != null) {
-      gradleVersionUsed = GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
+      return GradleVersion.version(issueData.buildEnvironment.gradle.gradleVersion)
     }
-
-    if (!rootCauseText.startsWith("org.gradle.tooling.UnsupportedVersionException: ")) {
-      return null
+    if (issueData.error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException) {
+      return issueData.error.gradleVersion
     }
+    return null
+  }
 
-    val errorMessagePrefix = "org.gradle.tooling.UnsupportedVersionException: Support for builds using Gradle versions older than "
-    val isVeryOldGradleVersion = rootCauseText.endsWith(
-      "does not support the ModelBuilder API. Support for this is available in Gradle 1.2 and all later versions.")
-    if (!rootCauseText.startsWith(errorMessagePrefix) && !isVeryOldGradleVersion) {
-      return null
-    }
+  private fun isGradleUnsupportedByIdea(issueData: GradleIssueData): Boolean {
+    return issueData.error is GradleExecutionHelper.UnsupportedGradleVersionByIdeaException
+  }
 
-    val minRequiredVersionCandidate: String
-    if (isVeryOldGradleVersion) minRequiredVersionCandidate = "2.6"
-    else minRequiredVersionCandidate = rootCauseText.substringAfter(errorMessagePrefix).substringBefore(" ", "")
-    val gradleMinimumVersionRequired = try {
-      GradleVersion.version(minRequiredVersionCandidate)
-    }
-    catch (e: IllegalArgumentException) {
-      GradleVersion.current()
-    }
+  private fun isOldGradleClasspathInfererIssue(rootCause: Throwable): Boolean {
+    val message = rootCause.message ?: return false
+    if (!message.startsWith("Cannot determine classpath for resource")) return false
+    return rootCause.stackTrace.find { it.className == "org.gradle.tooling.internal.provider.ClasspathInferer" } != null
+  }
 
-    val quickFixes: MutableList<BuildIssueQuickFix>
-    quickFixes = ArrayList()
+  private fun isModelBuilderApiUnsupported(rootCause: Throwable): Boolean {
+    return rootCause.toString().endsWith(UNSUPPORTED_MODEL_BUILDER_API_EXCEPTION_TEXT)
+  }
 
-    val str = if (isVeryOldGradleVersion) {
-      "Support for builds using Gradle versions older than 2.6 was removed. You should upgrade your Gradle build to use Gradle 2.6 or later."
+  private fun isGradleUnsupportedByToolingApi(rootCause: Throwable): Boolean {
+    return rootCause.toString().startsWith(UNSUPPORTED_VERSION_EXCEPTION_MESSAGE_PREFIX)
+  }
+
+  companion object {
+    private const val UNSUPPORTED_MODEL_BUILDER_API_EXCEPTION_TEXT =
+      "does not support the ModelBuilder API. Support for this is available in Gradle 1.2 and all later versions."
+    private const val UNSUPPORTED_VERSION_EXCEPTION_MESSAGE_PREFIX =
+      "org.gradle.tooling.UnsupportedVersionException: Support for builds using Gradle versions older than "
+  }
+}
+
+private class UnsupportedGradleVersionIssue(gradleVersion: GradleVersion?, projectPath: String) : ConfigurableGradleBuildIssue() {
+  init {
+    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
+    val recommendedGradleVersion = GradleJvmSupportMatrix.getRecommendedGradleVersionByIdea()
+    setTitle(GradleBundle.message("gradle.build.issue.gradle.unsupported.title"))
+    if (gradleVersion == null) {
+      addDescription(GradleBundle.message("gradle.build.issue.gradle.unsupported.unknown.description"))
+      addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
+      addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
     }
     else {
-      rootCause.message
+      addDescription(GradleBundle.message("gradle.build.issue.gradle.unsupported.description", gradleVersion.version))
+      addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
+      addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
+      if (oldestSupportedGradleVersion < recommendedGradleVersion) {
+        addDescription(GradleBundle.message("gradle.build.issue.gradle.supported.description", oldestSupportedGradleVersion.version))
+        addGradleVersionQuickFix(projectPath, oldestSupportedGradleVersion)
+      }
     }
-    val issueDescription = StringBuilder(str)
-    issueDescription.append("\n\nPossible solution:\n")
-    val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(issueData.projectPath)
-    if (wrapperPropertiesFile == null || isVeryOldGradleVersion || gradleVersionUsed != null && gradleVersionUsed.baseVersion < gradleMinimumVersionRequired) {
-      val gradleVersionFix = GradleVersionQuickFix(issueData.projectPath, gradleMinimumVersionRequired, true)
-      issueDescription.append(
-        " - <a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${gradleMinimumVersionRequired.version} version " +
-        "and re-import the project</a>\n")
-      quickFixes.add(gradleVersionFix)
-    }
-    else {
-      val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(issueData.projectPath, "distributionUrl")
-      val reimportQuickFix = ReimportQuickFix(issueData.projectPath, GradleConstants.SYSTEM_ID)
-      issueDescription.append(" - <a href=\"${wrapperSettingsOpenQuickFix.id}\">Open Gradle wrapper settings</a>, " +
-                              "upgrade version to ${gradleMinimumVersionRequired.version} or newer and <a href=\"${reimportQuickFix.id}\">reload the project</a>\n")
-      quickFixes.add(wrapperSettingsOpenQuickFix)
-      quickFixes.add(reimportQuickFix)
-    }
+  }
+}
 
-    val description = issueDescription.toString()
-    val title = getMessageTitle(description)
-    return object : BuildIssue {
-      override val title: String = title
-      override val description: String = description
-      override val quickFixes = quickFixes
-      override fun getNavigatable(project: Project): Navigatable? = null
-    }
+@ApiStatus.Internal
+class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: String) : ConfigurableGradleBuildIssue() {
+  init {
+    val recommendedGradleVersion = GradleJvmSupportMatrix.getRecommendedGradleVersionByIdea()
+    setTitle(GradleBundle.message("gradle.build.issue.gradle.deprecated.title"))
+    addDescription(GradleBundle.message("gradle.build.issue.gradle.deprecated.description", gradleVersion.version))
+    addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", recommendedGradleVersion.version))
+    addGradleVersionQuickFix(projectPath, recommendedGradleVersion)
   }
 }

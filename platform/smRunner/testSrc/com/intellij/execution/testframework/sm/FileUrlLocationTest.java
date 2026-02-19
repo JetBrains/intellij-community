@@ -38,11 +38,13 @@ public class FileUrlLocationTest extends BasePlatformTestCase {
       Collections.singletonList(ModuleRootManager.getInstance(getModule()).getContentRoots()[0].getUrl()));
      VirtualFile file = myFixture.configureByText(
       "my_example_spec.xml",
-      "\n" +
-      "<describe>\n" +
-      "    <a id='1'></a>\n" +
-      "</describe>\n" +
-      "\n").getVirtualFile();
+      """
+
+        <describe>
+            <a id='1'></a>
+        </describe>
+
+        """).getVirtualFile();
 
     doTest(1, file.getPath(), 2, -1);
   }
@@ -50,11 +52,13 @@ public class FileUrlLocationTest extends BasePlatformTestCase {
   public void testSpecNavigation() {
     VirtualFile file = myFixture.configureByText(
       "my_example_spec.xml",
-      "\n" +
-      "<describe>\n" +
-      "    <a id='1'></a>\n" +
-      "</describe>\n" +
-      "\n").getVirtualFile();
+      """
+
+        <describe>
+            <a id='1'></a>
+        </describe>
+
+        """).getVirtualFile();
 
     doTest(1, file.getPath(), 2, -1);
     doTest(16, file.getPath(), 3, -1);

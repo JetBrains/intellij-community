@@ -13,16 +13,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
+import java.util.LinkedList
+import java.util.Queue
 
 fun createVariableMap(method: GrMethod): Map<String, SpockVariableDescriptor> {
   return method.block?.let(::createVariableMap) ?: emptyMap()
 }
 
 private fun createVariableMap(methodBlock: GrOpenBlock): Map<String, SpockVariableDescriptor> {
-  val statements = LinkedList<GrStatement>(methodBlock.statements.asList())
+  val statements: LinkedList<GrStatement> = LinkedList(methodBlock.statements.asList())
   val whereBlockStart = findWhereBlockStart(statements) ?: return emptyMap()
 
   val result = HashMap<String, SpockVariableDescriptor>()

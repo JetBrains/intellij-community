@@ -1,10 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaDocumentedElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -72,8 +89,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
     };
   }
 
-  @NotNull
-  public static List<PsiNamedElement> getAllParameters(@NotNull PsiDocComment comment) {
+  public static @NotNull List<PsiNamedElement> getAllParameters(@NotNull PsiDocComment comment) {
     List<PsiNamedElement> allParams = new ArrayList<>();
     PsiJavaDocumentedElement owner = comment.getOwner();
     if (owner instanceof PsiMethod) {
@@ -95,8 +111,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
     return PsiUtilCore.getElementType(getFirstChild()) == JavaDocTokenType.DOC_TAG_VALUE_LT;
   }
 
-  @Nullable
-  public ASTNode getValueToken() {
+  public @Nullable ASTNode getValueToken() {
     return findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
   }
 

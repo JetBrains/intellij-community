@@ -1,18 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M6
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M7
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaInspectionTestCase
 import org.intellij.lang.annotations.Language
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/unusedServiceImplementations/"
 
@@ -89,7 +88,7 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
     else
       addFile("my/ext/MyServiceExt.java", implText, EXT)
 
-    val moduleEntryPoint = EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensions.find { it is Java9ModuleEntryPoint }
+    val moduleEntryPoint = EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensionList.find { it is Java9ModuleEntryPoint }
     val wasSelected = moduleEntryPoint?.isSelected ?: true
 
     try {

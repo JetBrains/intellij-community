@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -26,7 +26,7 @@ public final class ProblemsViewPanel extends NewErrorTreeViewPanel {
 
   @Override
   protected void addExtraPopupMenuActions(DefaultActionGroup group) {
-    group.add(new ExcludeFromCompileAction(myProject) {
+    group.add(new ExcludeFromCompileAction(project) {
       @Override
       protected @Nullable VirtualFile getFile() {
         return getSelectedFile();

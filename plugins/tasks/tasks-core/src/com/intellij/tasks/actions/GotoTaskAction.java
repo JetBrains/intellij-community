@@ -1,10 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.util.gotoByName.*;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.ChooseByNameModel;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -17,7 +26,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.core.TaskSymbol;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -26,7 +35,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
 import java.awt.event.ActionEvent;
 
 /**
@@ -44,7 +55,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   }
 
   @Override
-  protected void gotoActionPerformed(@NotNull final AnActionEvent e) {
+  protected void gotoActionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
     perform(project);
@@ -80,20 +91,20 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("GoToTask", group, true);
-    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    actionToolbar.updateActionsImmediately();
+    actionToolbar.setTargetComponent(actionToolbar.getComponent());
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     actionToolbar.getComponent().setFocusable(false);
     actionToolbar.getComponent().setBorder(null);
     popup.setToolArea(actionToolbar.getComponent());
     popup.setMaximumListSizeLimit(PAGE_SIZE);
     popup.setListSizeIncreasing(PAGE_SIZE);
 
-    showNavigationPopup(new GotoActionCallback<Object>() {
+    showNavigationPopup(new GotoActionCallback<>() {
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
         TaskManager taskManager = TaskManager.getManager(project);
-        if (element instanceof TaskPsiElement) {
-          Task task = ((TaskPsiElement)element).getTask();
+        if (element instanceof TaskSymbol) {
+          Task task = ((TaskSymbol)element).getTask();
           LocalTask localTask = taskManager.findTask(task.getId());
           if (localTask != null) {
             taskManager.activateTask(localTask, !shiftPressed.get());
@@ -122,7 +133,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
     protected GotoTaskPopupModel(@NotNull Project project) {
       super(project, TaskBundle.message("enter.task.name"), null);
-      myListCellRenderer = new TaskCellRenderer(project);
+      myListCellRenderer = TaskUiUtil.getTaskCellRenderer(project);
     }
 
     @Override
@@ -135,16 +146,15 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    @NotNull
     @Override
-    public ListCellRenderer getListCellRenderer() {
+    public @NotNull ListCellRenderer getListCellRenderer() {
       return myListCellRenderer;
     }
 
     @Override
     public String getElementName(@NotNull Object element) {
-      if (element instanceof TaskPsiElement) {
-        return TaskUtil.getTrimmedSummary(((TaskPsiElement)element).getTask());
+      if (element instanceof TaskSymbol) {
+        return TaskUtil.getTrimmedSummary(((TaskSymbol)element).getTask());
       }
       else if (element == CREATE_NEW_TASK_ACTION) {
         return CREATE_NEW_TASK_ACTION.getActionText();

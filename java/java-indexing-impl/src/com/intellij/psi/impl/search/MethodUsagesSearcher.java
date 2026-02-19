@@ -1,11 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.search.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -44,7 +53,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     SearchRequestCollector collector = p.getOptimizer();
 
     SearchScope searchScope = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(p::getEffectiveSearchScope);
-    if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
+    if (SearchScope.isEmptyScope(searchScope)) {
       return;
     }
 
@@ -70,17 +79,18 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     DumbService.getInstance(p.getProject()).runReadActionInSmartMode(()-> {
       PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(methodName[0], false);
 
+      PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(p.getProject());
       short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_COMMENTS | UsageSearchContext.IN_FOREIGN_LANGUAGES;
       for (PsiMethod m : methods) {
-        SearchScope methodUseScope = PsiSearchHelper.getInstance(p.getProject()).getUseScope(m);
+        SearchScope methodUseScope = psiSearchHelper.getUseScope(m);
         collector.searchWord(methodName[0], searchScope.intersectWith(methodUseScope), searchContext, true, m,
                              getTextOccurrenceProcessor(new PsiMethod[] {m}, aClass, strictSignatureSearch));
       }
 
-      SearchScope accessScope = methods[0].getUseScope();
+      SearchScope accessScope = psiSearchHelper.getUseScope(methods[0]);
       for (int i = 1; i < methods.length; i++) {
         PsiMethod method1 = methods[i];
-        accessScope = accessScope.union(method1.getUseScope());
+        accessScope = accessScope.union(psiSearchHelper.getUseScope(method1));
       }
       SearchScope restrictedByAccessScope = searchScope.intersectWith(accessScope);
       SimpleAccessorReferenceSearcher.addPropertyAccessUsages(method, restrictedByAccessScope, collector);
@@ -88,8 +98,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     });
   }
 
-  @NotNull
-  protected MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod @NotNull [] methods, @NotNull PsiClass aClass, boolean strictSignatureSearch) {
+  protected @NotNull MethodTextOccurrenceProcessor getTextOccurrenceProcessor(PsiMethod @NotNull [] methods, @NotNull PsiClass aClass, boolean strictSignatureSearch) {
     return new MethodTextOccurrenceProcessor(aClass, strictSignatureSearch, methods);
   }
 }

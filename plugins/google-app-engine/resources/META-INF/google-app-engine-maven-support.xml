@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <importer implementation="com.intellij.appengine.maven.AppEngineFacetImporter"/>
-  </extensions>
-</idea-plugin>

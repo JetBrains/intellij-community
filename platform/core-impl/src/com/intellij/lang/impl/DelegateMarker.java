@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl;
 
 import com.intellij.lang.PsiBuilder;
@@ -22,22 +8,19 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class DelegateMarker implements PsiBuilder.Marker {
-  @NotNull
-  private final PsiBuilder.Marker myDelegate;
+public class DelegateMarker implements PsiBuilder.Marker {
+  private final @NotNull PsiBuilder.Marker myDelegate;
 
   public DelegateMarker(@NotNull PsiBuilder.Marker delegate) {
     myDelegate = delegate;
   }
 
-  @NotNull
-  public PsiBuilder.Marker getDelegate() {
+  public @NotNull PsiBuilder.Marker getDelegate() {
     return myDelegate;
   }
 
-  @NotNull
   @Override
-  public PsiBuilder.Marker precede() {
+  public @NotNull PsiBuilder.Marker precede() {
     return myDelegate.precede();
   }
 
@@ -84,5 +67,40 @@ public abstract class DelegateMarker implements PsiBuilder.Marker {
   @Override
   public void setCustomEdgeTokenBinders(@Nullable WhitespacesAndCommentsBinder left, @Nullable WhitespacesAndCommentsBinder right) {
     myDelegate.setCustomEdgeTokenBinders(left, right);
+  }
+
+  @Override
+  public int getStartIndex() {
+    return myDelegate.getStartIndex();
+  }
+
+  @Override
+  public int getEndIndex() {
+    return myDelegate.getEndIndex();
+  }
+
+  @Override
+  public @Nullable String getErrorMessage() {
+    return myDelegate.getErrorMessage();
+  }
+
+  @Override
+  public boolean isCollapsed() {
+    return myDelegate.isCollapsed();
+  }
+
+  @Override
+  public IElementType getTokenType() {
+    return myDelegate.getTokenType();
+  }
+
+  @Override
+  public int getStartOffset() {
+    return myDelegate.getStartOffset();
+  }
+
+  @Override
+  public int getEndOffset() {
+    return myDelegate.getEndOffset();
   }
 }

@@ -32,15 +32,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantTypeConversion extends XPathInspection {
-    @NonNls
-    private static final String SHORT_NAME = "RedundantTypeConversion";
+    private static final @NonNls String SHORT_NAME = "RedundantTypeConversion";
 
     public boolean CHECK_ANY = false;
 
   @Override
-    @NotNull
-    @NonNls
-    public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
         return SHORT_NAME;
     }
 
@@ -93,7 +90,7 @@ public class RedundantTypeConversion extends XPathInspection {
             }
         }
 
-      private boolean isSameType(XPathExpression expression, XPathType convertedType) {
+      private static boolean isSameType(XPathExpression expression, XPathType convertedType) {
         XPathType type = ExpectedTypeUtil.mapType(expression, expression.getType());
         while (type instanceof XPath2SequenceType) {
           type = ((XPath2SequenceType)type).getType();

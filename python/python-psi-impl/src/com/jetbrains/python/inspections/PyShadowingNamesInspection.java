@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
@@ -29,9 +30,16 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,21 +48,19 @@ import java.util.Arrays;
 /**
  * Warns about shadowing names defined in outer scopes.
  *
- * @author vlan
  */
-public class PyShadowingNamesInspection extends PyInspection {
+public final class PyShadowingNamesInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -110,11 +116,12 @@ public class PyShadowingNamesInspection extends PyInspection {
                   return;
                 }
                 if (Arrays.stream(PyInspectionExtension.EP_NAME.getExtensions())
-                          .anyMatch(o -> o.ignoreShadowed(resolved))) {
+                  .anyMatch(o -> o.ignoreShadowed(resolved))) {
                   return;
                 }
                 registerProblem(problemElement, PyPsiBundle.message("INSP.shadows.name.from.outer.scope", name),
-                                ProblemHighlightType.WEAK_WARNING, null, PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement));
+                                ProblemHighlightType.WEAK_WARNING, null,
+                                LocalQuickFix.notNullElements(PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement)));
                 return;
               }
             }

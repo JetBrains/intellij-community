@@ -5,10 +5,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -97,126 +97,112 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
   }
 
   public void testMalformedSequence4() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("\u001B\nHello,", ProcessOutputTypes.STDOUT)
-        .addExpected("\u001B\nHello,", STDOUT_KEY),
-      new ColoredText("\u001B[31mWorld", ProcessOutputTypes.STDOUT)
-        .addExpected("World", "38;5;1m")
-    ));
+    check(false, List.of(new ColoredText("\u001B\nHello,", ProcessOutputTypes.STDOUT)
+                           .addExpected("\u001B\nHello,", STDOUT_KEY),
+                         new ColoredText("\u001B[31mWorld", ProcessOutputTypes.STDOUT)
+                           .addExpected("World", "38;5;1m")));
   }
 
   public void testMalformedSequence5() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("\u001BHello,", ProcessOutputTypes.STDOUT)
-        .addExpected("\u001BHello,", STDOUT_KEY)
-    ));
+    check(false, List.of(new ColoredText("\u001BHello,", ProcessOutputTypes.STDOUT)
+      .addExpected("\u001BHello,", STDOUT_KEY)));
   }
 
   public void testMalformedSequence6() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("\u001B[Hello,", ProcessOutputTypes.STDOUT)
-        .addExpected("ello,", STDOUT_KEY)
-    ));
+    check(false, List.of(new ColoredText("\u001B[Hello,", ProcessOutputTypes.STDOUT)
+      .addExpected("ello,", STDOUT_KEY)));
   }
 
   public void testMalformedSequence7() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT)
-        .addExpected("something[", STDOUT_KEY)
-        .addExpected("\u001B]asdf[", STDOUT_KEY)
-    ));
+    check(false, List.of(new ColoredText("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT)
+      .addExpected("something[", STDOUT_KEY)
+      .addExpected("\u001B]asdf[", STDOUT_KEY)));
   }
 
   public void testIncompleteEscapeSequence1() {
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("\u001B", ProcessOutputTypes.STDOUT),
-      new ColoredText("[33m Hello\u001B[3", ProcessOutputTypes.STDOUT)
-        .addExpected(" Hello", "38;5;3m"),
-      new ColoredText("4m, Work!", ProcessOutputTypes.STDOUT)
-        .addExpected(", Work!", "38;5;4m")
-    ));
+    check(true, List.of(new ColoredText("\u001B", ProcessOutputTypes.STDOUT),
+                        new ColoredText("[33m Hello\u001B[3", ProcessOutputTypes.STDOUT)
+                          .addExpected(" Hello", "38;5;3m"),
+                        new ColoredText("4m, Work!", ProcessOutputTypes.STDOUT)
+                          .addExpected(", Work!", "38;5;4m")));
   }
 
   public void testIncompleteEscapeSequence2() {
 
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("\u001B[1m\u001B[33m<" +
-                      "\u001B[34mnamespace" +
-                      "\u001B[1m", ProcessOutputTypes.STDOUT)
-        .addExpected("<", "1;38;5;3m")
-        .addExpected("namespace", "1;38;5;4m"),
-      new ColoredText("\u001B[33m:abcd" +
-                      "\u001B[0m" +
-                      "\u001B[1;33m>" +
-                      "\u001B[0m0" +
-                      "\u001B[1;33m</" +
-                      "\u001B[34mnamespace" +
-                      "\u001B[1;33m:abcd" +
-                      "\u001B[0;1;33m>" +
-                      "\u001B[0m",
-                      ProcessOutputTypes.STDOUT)
-        .addExpected(":abcd", "1;38;5;3m")
-        .addExpected(">", "1;38;5;3m")
-        .addExpected("0", STDOUT_KEY)
-        .addExpected("</", "1;38;5;3m")
-        .addExpected("namespace", "1;38;5;4m")
-        .addExpected(":abcd", "1;38;5;3m")
-        .addExpected(">", "1;38;5;3m")
-    ));
+    check(true, List.of(new ColoredText("\u001B[1m\u001B[33m<" +
+                                        "\u001B[34mnamespace" +
+                                        "\u001B[1m", ProcessOutputTypes.STDOUT)
+                          .addExpected("<", "1;38;5;3m")
+                          .addExpected("namespace", "1;38;5;4m"),
+                        new ColoredText("\u001B[33m:abcd" +
+                                        "\u001B[0m" +
+                                        "\u001B[1;33m>" +
+                                        "\u001B[0m0" +
+                                        "\u001B[1;33m</" +
+                                        "\u001B[34mnamespace" +
+                                        "\u001B[1;33m:abcd" +
+                                        "\u001B[0;1;33m>" +
+                                        "\u001B[0m",
+                                        ProcessOutputTypes.STDOUT)
+                          .addExpected(":abcd", "1;38;5;3m")
+                          .addExpected(">", "1;38;5;3m")
+                          .addExpected("0", STDOUT_KEY)
+                          .addExpected("</", "1;38;5;3m")
+                          .addExpected("namespace", "1;38;5;4m")
+                          .addExpected(":abcd", "1;38;5;3m")
+                          .addExpected(">", "1;38;5;3m")));
   }
 
   public void testIncompleteEscapeSequence3() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText("\u001B[1m\u001B[31m red" +
-                      "\u001B[0m normal" +
-                      "\u001B[1m\u001B[32m green" +
-                      "\u001B", ProcessOutputTypes.STDOUT)
-        .addExpected(" red", "1;38;5;1m")
-        .addExpected(" normal", STDOUT_KEY)
-        .addExpected(" green", "1;38;5;2m"),
-      new ColoredText("[0m\n", ProcessOutputTypes.STDOUT)
-        .addExpected("\n", STDOUT_KEY)
-    ));
+    check(false, List.of(new ColoredText("\u001B[1m\u001B[31m red" +
+                                         "\u001B[0m normal" +
+                                         "\u001B[1m\u001B[32m green" +
+                                         "\u001B", ProcessOutputTypes.STDOUT)
+                           .addExpected(" red", "1;38;5;1m")
+                           .addExpected(" normal", STDOUT_KEY)
+                           .addExpected(" green", "1;38;5;2m"),
+                         new ColoredText("[0m\n", ProcessOutputTypes.STDOUT)
+                           .addExpected("\n", STDOUT_KEY)));
   }
 
   public void testStderr() {
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("\u001B[33m Hello,", ProcessOutputTypes.STDOUT)
-        .addExpected(" Hello,", "38;5;3m"),
-      new ColoredText("World!\n", ProcessOutputTypes.STDERR)
-        .addExpected("World!\n", STDERR_KEY),
-      new ColoredText("\u001B[41m Changed stderr background", ProcessOutputTypes.STDERR)
-        .addExpected(" Changed stderr background", "48;5;1m"),
-      new ColoredText("Unchanged stdout background", ProcessOutputTypes.STDOUT)
-        .addExpected("Unchanged stdout background", "38;5;3m")
-    ));
+    check(true, List.of(new ColoredText("\u001B[33m Hello,", ProcessOutputTypes.STDOUT)
+                          .addExpected(" Hello,", "38;5;3m"),
+                        new ColoredText("World!\n", ProcessOutputTypes.STDERR)
+                          .addExpected("World!\n", STDERR_KEY),
+                        new ColoredText("\u001B[41m Changed stderr background", ProcessOutputTypes.STDERR)
+                          .addExpected(" Changed stderr background", "48;5;1m"),
+                        new ColoredText("Unchanged stdout background", ProcessOutputTypes.STDOUT)
+                          .addExpected("Unchanged stdout background", "38;5;3m")));
   }
 
   public void testReset() {
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("Hello \u001B[33m Colored \u001B[0m Normal", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello ", STDOUT_KEY)
-        .addExpected(" Colored ", "38;5;3m")
-        .addExpected(" Normal", STDOUT_KEY)
-    ));
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("Hello \u001B[33;41m Colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello ", STDOUT_KEY)
-        .addExpected(" Colored ", "48;5;1;38;5;3m")
-        .addExpected(" Normal", STDOUT_KEY)
-    ));
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("Hello \u001B[33;41;m Not colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello ", STDOUT_KEY)
-        .addExpected(" Not colored ", STDOUT_KEY)
-        .addExpected(" Normal", STDOUT_KEY)
-    ));
-    check(true, ContainerUtil.newArrayList(
-      new ColoredText("Hello \u001B[33;41m Colored \u001B[;m Normal", ProcessOutputTypes.STDOUT)
-        .addExpected("Hello ", STDOUT_KEY)
-        .addExpected(" Colored ", "48;5;1;38;5;3m")
-        .addExpected(" Normal", STDOUT_KEY)
-    ));
+    check(true, List.of(new ColoredText("Hello \u001B[33m Colored \u001B[0m Normal", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello ", STDOUT_KEY)
+      .addExpected(" Colored ", "38;5;3m")
+      .addExpected(" Normal", STDOUT_KEY)));
+    check(true, List.of(new ColoredText("Hello \u001B[33;41m Colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello ", STDOUT_KEY)
+      .addExpected(" Colored ", "48;5;1;38;5;3m")
+      .addExpected(" Normal", STDOUT_KEY)));
+    check(true, List.of(new ColoredText("Hello \u001B[33;41;m Not colored \u001B[m Normal", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello ", STDOUT_KEY)
+      .addExpected(" Not colored ", STDOUT_KEY)
+      .addExpected(" Normal", STDOUT_KEY)));
+    check(true, List.of(new ColoredText("Hello \u001B[33;41m Colored \u001B[;m Normal", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello ", STDOUT_KEY)
+      .addExpected(" Colored ", "48;5;1;38;5;3m")
+      .addExpected(" Normal", STDOUT_KEY)));
+  }
+
+  public void testDECKPAM() {
+    check(false, List.of(new ColoredText("\u001B=Hello", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello", STDOUT_KEY)));
+  }
+
+  public void testDECKPNM() {
+    check(false, List.of(new ColoredText("\u001B>Hello", ProcessOutputTypes.STDOUT)
+      .addExpected("Hello", STDOUT_KEY)));
   }
 
   private static void check(@NotNull ColoredText text) {
@@ -226,8 +212,12 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
   private static void check(boolean testCharByCharProcessing, @NotNull List<ColoredText> texts) {
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
     List<Pair<String, String>> actualColoredChunks = new ArrayList<>();
-    AnsiEscapeDecoder.ColoredTextAcceptor acceptor = (text, attributes) ->
-      actualColoredChunks.add(Pair.create(text, StringUtil.trimStart(attributes.toString(), "\u001b[0;")));
+    AnsiEscapeDecoder.ColoredTextAcceptor acceptor = (text, attributes) -> {
+      ProcessOutputType processOutputType = (ProcessOutputType)attributes;
+      String escapeSequence = processOutputType.getEscapeSequence();
+      String outputType = escapeSequence != null ? escapeSequence : processOutputType.getBaseOutputType().toString();
+      actualColoredChunks.add(Pair.create(text, StringUtil.trimStart(outputType, "\u001b[0;")));
+    };
     for (ColoredText text : texts) {
       decoder.escapeText(text.myRawText, text.myOutputType, acceptor);
     }
@@ -298,19 +288,20 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
     };
   }
 
+  @PerformanceUnitTest
   public void testPerformance() {
     Process testProcess = createTestProcess();
 
     //noinspection CodeBlock2Expr
     withProcessHandlerFrom(testProcess, handler -> {
-      PlatformTestUtil.startPerformanceTest("ansi color", 8_500, () -> {
+      Benchmark.newBenchmark("ansi color", () -> {
         for (int i = 0; i < 2_000_000; i++) {
           handler.notifyTextAvailable(i + "Chrome 35.0.1916 (Linux): Executed 0 of 1\u001B[32m SUCCESS\u001B[39m (0 secs / 0 secs)\n",
                                       ProcessOutputTypes.STDOUT);
           handler.notifyTextAvailable(i + "Plain\u001B[32mGreen\u001B[39mNormal\u001B[1A\u001B[2K\u001B[31mRed\u001B[39m\n",
                                       ProcessOutputTypes.SYSTEM);
         }
-      }).assertTiming();
+      }).start();
     });
   }
 

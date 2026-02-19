@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -9,17 +9,23 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,11 +70,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   @Override
   public ToStringRenderer clone() {
     final ToStringRenderer cloned = (ToStringRenderer)super.clone();
-    final ClassFilter[] classFilters = (myClassFilters.length > 0)? new ClassFilter[myClassFilters.length] : ClassFilter.EMPTY_ARRAY;
-    for (int idx = 0; idx < classFilters.length; idx++) {
-      classFilters[idx] = myClassFilters[idx].clone();
-    }
-    cloned.myClassFilters = classFilters;
+    cloned.myClassFilters = ClassFilter.deepCopyOf(myClassFilters);
     return cloned;
   }
 
@@ -84,7 +86,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     if (value instanceof ObjectReference) {
       DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
     }
-    BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
+    BatchEvaluator.getBatchEvaluator(evaluationContext).invoke(new ToStringCommand(evaluationContext, value) {
       @Override
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(
@@ -104,9 +106,8 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     return XDebuggerUIConstants.getCollectingDataMessage();
   }
 
-  @NotNull
   @Override
-  public String getLinkText() {
+  public @NotNull String getLinkText() {
     return JavaDebuggerBundle.message("message.node.toString");
   }
 
@@ -135,7 +136,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   private static CompletableFuture<Boolean> overridesToStringAsync(Type type) {
-    if (!Registry.is("debugger.async.jdi")) {
+    if (!DebuggerUtilsAsync.isAsyncEnabled()) {
       return CompletableFuture.completedFuture(overridesToString(type));
     }
     if (type instanceof ClassType) {
@@ -143,9 +144,10 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
         if (t instanceof ReferenceType) {
           return DebuggerUtilsAsync.methods((ReferenceType)t)
             .thenApply(methods -> {
-              return methods.stream().anyMatch(m -> !m.isAbstract() &&
-                                                    DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
-                                                    !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
+              return ContainerUtil.exists(methods,
+                                          m -> !m.isAbstract() &&
+                                               DebuggerUtilsEx.methodMatches(m, "toString", "()Ljava/lang/String;") &&
+                                               !CommonClassNames.JAVA_LANG_OBJECT.equals(m.declaringType().name()));
             });
         }
         return CompletableFuture.completedFuture(false);
@@ -171,17 +173,15 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void readExternal(Element element) {
     super.readExternal(element);
 
     ON_DEMAND = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ON_DEMAND"));
     USE_CLASS_FILTERS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
-    myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
+    myClassFilters = DebuggerSettingsUtils.readFilters(element.getChildren("filter"));
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
 
@@ -191,7 +191,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     if (USE_CLASS_FILTERS) {
       JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", "true");
     }
-    DebuggerUtilsEx.writeFilters(element, "filter", myClassFilters);
+    DebuggerSettingsUtils.writeFilters(element, "filter", myClassFilters);
   }
 
   public ClassFilter[] getClassFilters() {
@@ -224,23 +224,5 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   @Override
   public boolean hasOverhead() {
     return true;
-  }
-
-  /**
-   * for kotlin compatibility only
-   * @deprecated to be removed in IDEA 2021
-   */
-  @Deprecated
-  @Override
-  public boolean isApplicable(Type type) {
-    if (!(type instanceof ReferenceType)) {
-      return false;
-    }
-
-    if (JAVA_LANG_STRING.equals(type.name())) {
-      return false; // do not render 'String' objects for performance reasons
-    }
-
-    return overridesToString(type);
   }
 }

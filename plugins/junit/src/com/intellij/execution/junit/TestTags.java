@@ -1,22 +1,38 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JUnitBundle;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collections;
 
 class TestTags extends TestObject {
@@ -41,9 +57,8 @@ class TestTags extends TestObject {
     parseAsJavaExpression(tags);
   }
 
-  @Nullable
   @Override
-  public SourceScope getSourceScope() {
+  public @Nullable SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getScope().getSourceScope(getConfiguration());
   }
@@ -92,13 +107,26 @@ class TestTags extends TestObject {
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
-    //tags written automatically inside
-    addClassesListToJavaParameters(Collections.emptyList(), s -> "", "", true, javaParameters);
+    JUnitConfiguration configuration = getConfiguration();
+    Module module = configuration.getConfigurationModule().getModule();
+    createTempFiles(javaParameters);
+    if (module != null && configuration.getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
+      try {
+        ReadAction.run(() -> JUnitStarter.printClassesList(composeDirectoryFilter(module), "", configuration.getPersistentData().getTags().replaceAll(" ", ""), "", myTempFile));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    else {
+      //tags written automatically inside
+      ReadAction.run(() -> addClassesListToJavaParameters(Collections.emptyList(), s -> "", "", false, javaParameters));
+    }
     return javaParameters;
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(final PsiElement element) {
     return null;
   }
 }

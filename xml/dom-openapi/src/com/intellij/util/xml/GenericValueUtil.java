@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gregory.Shrago
@@ -34,24 +35,21 @@ public final class GenericValueUtil {
     return false;
   }
 
-  @NotNull
-  public static <T> Collection<T> getValueCollection(final Collection<? extends GenericValue<? extends T>> collection, Collection<T> result) {
+  public static @NotNull <T> Collection<T> getValueCollection(final Collection<? extends GenericValue<? extends T>> collection, Collection<T> result) {
     for (GenericValue<? extends T> o : collection) {
       ContainerUtil.addIfNotNull(result, o.getValue());
     }
     return result;
   }
 
-  @NotNull
-  public static Collection<String> getStringCollection(final Collection<? extends GenericValue> collection, Collection<String> result) {
+  public static @NotNull Collection<String> getStringCollection(final Collection<? extends GenericValue> collection, Collection<String> result) {
     for (GenericValue o : collection) {
       ContainerUtil.addIfNotNull(result, o.getStringValue());
     }
     return result;
   }
 
-  @NotNull
-  public static Collection<String> getClassStringCollection(final Collection<? extends GenericValue> collection, Collection<String> result) {
+  public static @NotNull Collection<String> getClassStringCollection(final Collection<? extends GenericValue> collection, Collection<String> result) {
     for (GenericValue o : collection) {
       final String value = o.getStringValue();
       if (value != null) {

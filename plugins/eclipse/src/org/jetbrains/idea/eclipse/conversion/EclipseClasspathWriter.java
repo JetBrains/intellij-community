@@ -1,11 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ExportableOrderEntry;
+import com.intellij.openapi.roots.InheritedJdkOrderEntry;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.NativeLibraryOrderRootType;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -23,22 +34,13 @@ import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EclipseClasspathWriter {
+public final class EclipseClasspathWriter {
   public static final Logger LOG = Logger.getInstance(EclipseClasspathWriter.class);
 
   private final Map<String, Element> myOldEntries = new HashMap<>();
 
-  @NotNull
-  public Element writeClasspath(@Nullable Element oldRoot, @NotNull ModuleRootModel model) {
+  public @NotNull Element writeClasspath(@NotNull ModuleRootModel model) {
     Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
-    if (oldRoot != null) {
-      for (Element oldChild : oldRoot.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
-        String oldKind = oldChild.getAttributeValue(EclipseXml.KIND_ATTR);
-        String oldPath = oldChild.getAttributeValue(EclipseXml.PATH_ATTR);
-        myOldEntries.put(oldKind + getJREKey(oldPath), oldChild);
-      }
-    }
-
     for (OrderEntry orderEntry : model.getOrderEntries()) {
       createClasspathEntry(orderEntry, classpathElement, model);
     }
@@ -61,14 +63,14 @@ public class EclipseClasspathWriter {
       }
     }
     for (String support : eclipseModuleManager.getUsedCons()) {
-      addOrderEntry(EclipseXml.CON_KIND, support, classpathElement, eclipseModuleManager.getSrcPlace(support));
+      addOrderEntry(EclipseXml.CON_KIND, support, classpathElement, eclipseModuleManager.getSrcPlace(support), myOldEntries);
     }
     setAttributeIfAbsent(addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement), EclipseXml.PATH_ATTR, EclipseXml.BIN_DIR);
 
     return classpathElement;
   }
 
-  private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, @NotNull final ModuleRootModel model) throws ConversionException {
+  private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, final @NotNull ModuleRootModel model) throws ConversionException {
     EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule());
     if (entry instanceof ModuleSourceOrderEntry) {
       boolean shouldPlaceSeparately = eclipseModuleManager.isExpectedModuleSourcePlace(ArrayUtil.find(model.getOrderEntries(), entry));
@@ -84,21 +86,20 @@ public class EclipseClasspathWriter {
             }
           }
           int index = eclipseModuleManager.getSrcPlace(srcUrl);
-          addOrderEntry(EclipseXml.SRC_KIND, relativePath, classpathRoot, shouldPlaceSeparately && index != -1 ? index : -1);
+          addOrderEntry(EclipseXml.SRC_KIND, relativePath, classpathRoot, shouldPlaceSeparately && index != -1 ? index : -1, myOldEntries);
         }
       }
     }
     else if (entry instanceof ModuleOrderEntry) {
       final String path = '/' + ((ModuleOrderEntry)entry).getModuleName();
-      final Element oldElement = getOldElement(EclipseXml.SRC_KIND, path);
+      final Element oldElement = getOldElement(EclipseXml.SRC_KIND, path, myOldEntries);
       Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, path, classpathRoot);
       if (oldElement == null) {
         setAttributeIfAbsent(orderEntry, EclipseXml.COMBINEACCESSRULES_ATTR, EclipseXml.FALSE_VALUE);
       }
       setExported(orderEntry, ((ExportableOrderEntry)entry));
     }
-    else if (entry instanceof LibraryOrderEntry) {
-      final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+    else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
       final String libraryName = libraryOrderEntry.getLibraryName();
       if (libraryOrderEntry.isModuleLevel()) {
         final String[] files = libraryOrderEntry.getRootUrls(OrderRootType.CLASSES);
@@ -172,7 +173,7 @@ public class EclipseClasspathWriter {
 
             EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, model);
 
-            final String[] nativeRoots = libraryOrderEntry.getUrls(NativeLibraryOrderRootType.getInstance());
+            final String[] nativeRoots = libraryOrderEntry.getRootUrls(NativeLibraryOrderRootType.getInstance());
             if (nativeRoots.length > 0) {
               EJavadocUtil.setupAttributes(orderEntry, nativeRoot -> EPathUtil.collapse2EclipsePath(nativeRoot, model), EclipseXml.DLL_LINK, nativeRoots);
             }
@@ -222,11 +223,15 @@ public class EclipseClasspathWriter {
   }
 
   private Element addOrderEntry(String kind, String path, Element classpathRoot) {
-    return addOrderEntry(kind, path, classpathRoot, -1);
+    return addOrderEntry(kind, path, classpathRoot, myOldEntries);
   }
 
-  private Element addOrderEntry(@NotNull String kind, String path, Element classpathRoot, int index) {
-    Element element = getOldElement(kind, path);
+  public static Element addOrderEntry(String kind, String path, Element classpathRoot, Map<String, Element> oldEntries) {
+    return addOrderEntry(kind, path, classpathRoot, -1, oldEntries);
+  }
+
+  public static Element addOrderEntry(@NotNull String kind, String path, Element classpathRoot, int index, Map<String, Element> oldEntries) {
+    Element element = getOldElement(kind, path, oldEntries);
     if (element != null) {
       Element clonedElement = element.clone();
       if (index == -1 || index >= classpathRoot.getContentSize()) {
@@ -252,19 +257,23 @@ public class EclipseClasspathWriter {
     return orderEntry;
   }
 
-  private Element getOldElement(@NotNull String kind, String path) {
-    return myOldEntries.get(kind + getJREKey(path));
+  public static Element getOldElement(@NotNull String kind, String path, Map<String, Element> entries) {
+    return entries.get(kind + getJREKey(path));
   }
 
-  private static String getJREKey(String path) {
+  public static String getJREKey(String path) {
     return path.startsWith(EclipseXml.JRE_CONTAINER) ? EclipseXml.JRE_CONTAINER : path;
   }
 
   private static void setExported(Element orderEntry, ExportableOrderEntry dependency) {
-    setOrRemoveAttribute(orderEntry, EclipseXml.EXPORTED_ATTR, dependency.isExported() ? EclipseXml.TRUE_VALUE : null);
+    setExported(orderEntry, dependency.isExported());
   }
 
-  private static void setOrRemoveAttribute(@NotNull Element element, @NotNull String name, @Nullable String value) {
+  public static void setExported(Element orderEntry, boolean exported) {
+    setOrRemoveAttribute(orderEntry, EclipseXml.EXPORTED_ATTR, exported ? EclipseXml.TRUE_VALUE : null);
+  }
+
+  public static void setOrRemoveAttribute(@NotNull Element element, @NotNull String name, @Nullable String value) {
     if (value == null) {
       element.removeAttribute(name);
     }
@@ -273,7 +282,7 @@ public class EclipseClasspathWriter {
     }
   }
 
-  private static void setAttributeIfAbsent(@NotNull Element element, String name, String value) {
+  public static void setAttributeIfAbsent(@NotNull Element element, String name, String value) {
     if (element.getAttribute(name) == null) {
       element.setAttribute(name, value);
     }

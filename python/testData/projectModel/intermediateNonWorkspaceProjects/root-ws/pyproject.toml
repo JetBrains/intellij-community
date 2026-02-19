@@ -1,0 +1,13 @@
+[project]
+name = "root-ws"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10.5"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "root-ws-direct-member",
+    "intermediate-non-ws/root-ws-member",
+]

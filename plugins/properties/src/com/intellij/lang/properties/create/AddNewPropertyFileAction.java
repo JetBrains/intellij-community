@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.create;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.projectView.ResourceBundleAwareNode;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,7 +19,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AddNewPropertyFileAction extends AnAction {
  protected AddNewPropertyFileAction() {
-    super(PropertiesBundle.messagePointer("add.property.files.to.resource.bundle.dialog.action.title"), AllIcons.FileTypes.Properties);
+    super(PropertiesBundle.messagePointer("add.property.files.to.resource.bundle.dialog.action.title"),
+          null,
+          () -> AllIcons.FileTypes.Properties);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -36,8 +44,7 @@ public class AddNewPropertyFileAction extends AnAction {
     new CreateResourceBundleDialogComponent.Dialog(project, null, resourceBundle).show();
   }
 
-  @Nullable
-  private static ResourceBundle getResourceBundle(@NotNull AnActionEvent e) {
+  private static @Nullable ResourceBundle getResourceBundle(@NotNull AnActionEvent e) {
     final Navigatable[] data = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
     if (data == null || data.length != 1) return null;
     if (!(data[0] instanceof ResourceBundleAwareNode)) return null;

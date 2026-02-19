@@ -1,0 +1,62 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.sessions
+
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class AgentSessionsOpenModeRoutingTest {
+  @Test
+  fun dedicatedModeRoutesToDedicatedFrameWhenSourceProjectIsOpen() {
+    val route = resolveAgentChatOpenRoute(
+      openInDedicatedFrame = true,
+      hasOpenSourceProject = true,
+    )
+
+    assertEquals(AgentChatOpenRoute.DedicatedFrame, route)
+  }
+
+  @Test
+  fun dedicatedModeRoutesToDedicatedFrameWhenSourceProjectIsClosed() {
+    val route = resolveAgentChatOpenRoute(
+      openInDedicatedFrame = true,
+      hasOpenSourceProject = false,
+    )
+
+    assertEquals(AgentChatOpenRoute.DedicatedFrame, route)
+  }
+
+  @Test
+  fun currentProjectModeRoutesToOpenProjectWhenAlreadyOpen() {
+    val route = resolveAgentChatOpenRoute(
+      openInDedicatedFrame = false,
+      hasOpenSourceProject = true,
+    )
+
+    assertEquals(AgentChatOpenRoute.CurrentProject, route)
+  }
+
+  @Test
+  fun currentProjectModeRoutesToOpenSourceProjectWhenClosedAndPathValid() {
+    val route = resolveAgentChatOpenRoute(
+      openInDedicatedFrame = false,
+      hasOpenSourceProject = false,
+    )
+
+    assertEquals(AgentChatOpenRoute.OpenSourceProject, route)
+  }
+
+  @Test
+  fun threadAndSubAgentUseTheSameRouteDecision() {
+    val threadRoute = resolveAgentChatOpenRoute(
+      openInDedicatedFrame = false,
+      hasOpenSourceProject = false,
+    )
+    val subAgentRoute = resolveAgentChatOpenRoute(
+      openInDedicatedFrame = false,
+      hasOpenSourceProject = false,
+    )
+
+    assertEquals(AgentChatOpenRoute.OpenSourceProject, threadRoute)
+    assertEquals(threadRoute, subAgentRoute)
+  }
+}

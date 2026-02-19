@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.RepositoryLocation;
@@ -9,21 +9,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RepositoryLocationGroup implements RepositoryLocation {
-  private final String myPresentableString;
+  private final @NotNull String myPresentableString;
   private final List<RepositoryLocation> myLocations;
 
-  public RepositoryLocationGroup(@NonNls final String presentableString) {
+  public RepositoryLocationGroup(@NonNls @NotNull String presentableString) {
     myPresentableString = presentableString;
     myLocations = new ArrayList<>();
   }
 
   @Override
-  @NonNls
-  public String toPresentableString() {
+  public @NonNls @NotNull String toPresentableString() {
     return myPresentableString;
   }
 
-  public void add(@NotNull final RepositoryLocation location) {
+  public void add(final @NotNull RepositoryLocation location) {
     for (int i = 0; i < myLocations.size(); i++) {
       final RepositoryLocation t = myLocations.get(i);
       if (t.getKey().compareTo(location.getKey()) >= 0) {
@@ -35,8 +34,7 @@ public class RepositoryLocationGroup implements RepositoryLocation {
   }
 
   @Override
-  @NonNls
-  public String getKey() {
+  public @NonNls String getKey() {
     final StringBuilder sb = new StringBuilder(myPresentableString);
     // they are ordered
     for (RepositoryLocation location : myLocations) {

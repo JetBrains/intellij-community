@@ -1,10 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -22,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 /**
  * @author Medvedev Max
@@ -32,29 +41,26 @@ public class TypeProvider {
   public TypeProvider() {
   }
 
-  @NotNull
-  public PsiType getReturnType(@NotNull PsiMethod method) {
+  public @NotNull PsiType getReturnType(@NotNull PsiMethod method) {
     if (method instanceof GrMethod) {
       GrTypeElement typeElement = ((GrMethod)method).getReturnTypeElementGroovy();
       if (typeElement != null) return typeElement.getType();
     }
     final PsiType smartReturnType = PsiUtil.getSmartReturnType(method);
-    if (smartReturnType != null && !PsiType.NULL.equals(smartReturnType)) return smartReturnType;
+    if (smartReturnType != null && !PsiTypes.nullType().equals(smartReturnType)) return smartReturnType;
 
-    if (PsiType.NULL.equals(smartReturnType) && PsiUtil.isVoidMethod(method)) return PsiType.VOID;
+    if (PsiTypes.nullType().equals(smartReturnType) && PsiUtil.isVoidMethod(method)) return PsiTypes.voidType();
 
     //todo make smarter. search for usages and infer type from them
     return TypesUtil.getJavaLangObject(method);
   }
 
-  @NotNull
-  public PsiType getVarType(@NotNull PsiVariable variable) {
+  public @NotNull PsiType getVarType(@NotNull PsiVariable variable) {
     if (variable instanceof PsiParameter) return getParameterType((PsiParameter)variable);
     return getVariableTypeInner(variable);
   }
 
-  @NotNull
-  private static PsiType getVariableTypeInner(@NotNull PsiVariable variable) {
+  private static @NotNull PsiType getVariableTypeInner(@NotNull PsiVariable variable) {
     PsiType type = null;
     if (variable instanceof GrVariable) {
       type = ((GrVariable)variable).getDeclaredType();
@@ -68,8 +74,7 @@ public class TypeProvider {
     return type;
   }
 
-  @NotNull
-  public PsiType getParameterType(@NotNull PsiParameter parameter) {
+  public @NotNull PsiType getParameterType(@NotNull PsiParameter parameter) {
     if (!(parameter instanceof GrParameter)) {
       PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof GrAccessorMethod) {
@@ -96,7 +101,7 @@ public class TypeProvider {
 
     final GrParameter[] parameters = method.getParameters();
 
-    final TIntArrayList paramInds = new TIntArrayList(parameters.length);
+    final IntList paramInds = new IntArrayList(parameters.length);
     final PsiType[] types = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
       if (parameters[i].getTypeElementGroovy() == null) {
@@ -118,30 +123,27 @@ public class TypeProvider {
           final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, call);
 
           if (argInfos == null) return true;
-          paramInds.forEach(i -> {
+          paramInds.forEach((IntConsumer)i -> {
             PsiType type = GrClosureSignatureUtil.getTypeByArg(argInfos[i], manager, resolveScope);
             types[i] = TypesUtil.getLeastUpperBoundNullable(type, types[i], manager);
-            return true;
           });
         }
         return true;
       });
     }
-    paramInds.forEach(i -> {
-      if (types[i] == null || types[i] == PsiType.NULL) {
+    paramInds.forEach((IntConsumer)i -> {
+      if (types[i] == null || types[i] == PsiTypes.nullType()) {
         types[i] = parameters[i].getType();
       }
-      return true;
     });
     inferredTypes.put(method, types);
     return types;
   }
 
-  @NotNull
-  public PsiType getReturnType(GrClosableBlock closure) {
+  public @NotNull PsiType getReturnType(GrClosableBlock closure) {
     final PsiType returnType = closure.getReturnType();
-    if (PsiType.NULL.equals(returnType) && PsiUtil.isBlockReturnVoid(closure)) {
-      return PsiType.VOID;
+    if (PsiTypes.nullType().equals(returnType) && PsiUtil.isBlockReturnVoid(closure)) {
+      return PsiTypes.voidType();
     }
 
     if (returnType == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.Template;
@@ -7,33 +7,33 @@ import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.openapi.util.Condition;
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.*;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.isArray;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.isIterable;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.isNumber;
 
-public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTemplate {
-  /**
-   * @deprecated use {@link JavaPostfixTemplatesUtils}
-   */
-  @Deprecated public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
-    element -> IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
-    
+public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,
                                       @NotNull JavaPostfixTemplateProvider provider) {
     super(templateName, templateText, example,
           ContainerUtil.newHashSet(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition(),
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition(),
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(
-                                     CommonClassNames.JAVA_LANG_ITERABLE)),
+                                     CommonClassNames.JAVA_UTIL_LIST)),
           LanguageLevel.JDK_1_3, true, provider);
   }
 
@@ -45,15 +45,16 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
     template.addVariable("index", index, index, true);
 
     PsiExpression expr = (PsiExpression)element;
-    String bound = getExpressionBound(expr);
-    if (bound != null) {
-      template.addVariable("bound", new TextExpression(bound), false);
-      template.addVariable("type", new TextExpression(suggestIndexType(expr)), false);
-    }
+    DumbService.getInstance(element.getProject()).withAlternativeResolveEnabled(() -> {
+      String bound = getExpressionBound(expr);
+      if (bound != null) {
+        template.addVariable("bound", new TextExpression(bound), false);
+        template.addVariable("type", new TextExpression(suggestIndexType(expr)), false);
+      }
+    });
   }
 
-  @Nullable
-  protected String getExpressionBound(@NotNull PsiExpression expr) {
+  protected @Nullable String getExpressionBound(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
     if (isNumber(type)) {
       return expr.getText();
@@ -67,13 +68,16 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
     return null;
   }
 
-  @NotNull
-  private static String suggestIndexType(@NotNull PsiExpression expr) {
+  private static @NotNull String suggestIndexType(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
+    if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
+         PsiUtil.isAvailable(JavaFeature.LVTI, expr)) {
+      return JavaKeywords.VAR;
+    }
     if (isNumber(type)) {
       return type.getCanonicalText();
     }
-    return "int";
+    return JavaKeywords.INT;
   }
 
   @Override

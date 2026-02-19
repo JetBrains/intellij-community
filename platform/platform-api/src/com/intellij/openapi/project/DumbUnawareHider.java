@@ -1,16 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 
-/**
- * @author peter
- */
 public final class DumbUnawareHider extends JBPanelWithEmptyText {
   private final JComponent myDumbUnawareContent;
 
@@ -21,8 +18,7 @@ public final class DumbUnawareHider extends JBPanelWithEmptyText {
     add(dumbUnawareContent, BorderLayout.CENTER);
   }
 
-  @NotNull
-  public JComponent getContent() {
+  public @NotNull JComponent getContent() {
     return myDumbUnawareContent;
   }
 

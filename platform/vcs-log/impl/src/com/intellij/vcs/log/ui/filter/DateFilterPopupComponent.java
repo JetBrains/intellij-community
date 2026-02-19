@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -20,40 +20,37 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.function.Supplier;
 
-class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, FilterModel<VcsLogDateFilter>> {
+public class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, FilterModel<VcsLogDateFilter>> {
 
-  DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
+  public DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
     super(VcsLogBundle.messagePointer("vcs.log.date.filter.label"), filterModel);
   }
 
-  @NotNull
   @Override
-  @Nls
-  protected String getText(@NotNull VcsLogDateFilter filter) {
+  protected @NotNull @Nls String getText(@NotNull VcsLogDateFilter filter) {
     Date after = filter.getAfter();
     Date before = filter.getBefore();
     if (after != null && before != null) {
-      return DateFormatUtil.formatDate(after) + "-" + DateFormatUtil.formatDate(before);
+      return DateFormatUtil.formatDate(after) + '-' + DateFormatUtil.formatDate(before);
     }
     else if (after != null) {
       return VcsLogBundle.message("vcs.log.date.filter.since", DateFormatUtil.formatDate(after));
     }
     else if (before != null) {
-      return VcsLogBundle.message("vcs.log.date.filter.since", DateFormatUtil.formatDate(before));
+      return VcsLogBundle.message("vcs.log.date.filter.until", DateFormatUtil.formatDate(before));
     }
     else {
-      return ALL.get();
+      return getEmptyFilterValue();
     }
   }
 
-  @Nullable
   @Override
-  protected String getToolTip(@NotNull VcsLogDateFilter filter) {
+  protected @Nullable String getToolTip(@NotNull VcsLogDateFilter filter) {
     return null;
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     Calendar cal = Calendar.getInstance();
     cal.setTime(new Date());
     cal.add(Calendar.DAY_OF_YEAR, -1);
@@ -61,15 +58,14 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
     cal.add(Calendar.DAY_OF_YEAR, -6);
     Date oneWeekBefore = cal.getTime();
 
-    return new DefaultActionGroup(createAllAction(),
-                                  new SelectAction(),
+    return new DefaultActionGroup(new SelectAction(),
                                   new DateAction(oneDayBefore, VcsLogBundle.messagePointer("vcs.log.date.filter.action.last.day")),
                                   new DateAction(oneWeekBefore, VcsLogBundle.messagePointer("vcs.log.date.filter.action.last.week")));
   }
 
   private class DateAction extends DumbAwareAction {
 
-    @NotNull private final Date mySince;
+    private final @NotNull Date mySince;
 
     protected DateAction(@NotNull Date since, @NotNull Supplier<String> text) {
       super(text);
@@ -90,7 +86,7 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final DateFilterComponent dateComponent = new DateFilterComponent(false, DateFormatUtil.getDateFormat().getDelegate());
+      DateFilterComponent dateComponent = new DateFilterComponent();
       VcsLogDateFilter currentFilter = myFilterModel.getFilter();
       if (currentFilter != null) {
         if (currentFilter.getBefore() != null) {
@@ -107,7 +103,10 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter, Fi
       db.setPreferredFocusComponent(dateComponent.getPanel());
       db.setTitle(VcsLogBundle.message("vcs.log.date.filter.select.period.dialog.title"));
       if (DialogWrapper.OK_EXIT_CODE == db.show()) {
-        myFilterModel.setFilter(VcsLogFilterObject.fromDates(dateComponent.getAfter(), dateComponent.getBefore()));
+        VcsLogDateFilter dateFilter = VcsLogFilterObject.fromDates(dateComponent.getAfter(), dateComponent.getBefore());
+        if (dateFilter.getAfter() != null || dateFilter.getBefore() != null) {
+          myFilterModel.setFilter(dateFilter);
+        }
       }
     }
   }

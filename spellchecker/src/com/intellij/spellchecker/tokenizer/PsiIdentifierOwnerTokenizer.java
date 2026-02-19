@@ -13,7 +13,7 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
   public static final PsiIdentifierOwnerTokenizer INSTANCE = new PsiIdentifierOwnerTokenizer();
 
   @Override
-  public void tokenize(@NotNull PsiNameIdentifierOwner element, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiNameIdentifierOwner element, @NotNull TokenConsumer consumer) {
     PsiElement identifier = element.getNameIdentifier();
     if (identifier == null) {
       return;

@@ -10,22 +10,24 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
   private static final List<String> PLATFORM_WIDE_ACTIONS = Arrays.asList(
     "TestGestureAction",
     "Synchronize",
     "SaveAll",
-    "MaintenanceAction",
     "ShowProjectStructureSettings",
     "FocusEditor",
     "SearchEverywhere",
     "Terminal.SmartCommandExecution.Run",
-    "Terminal.SmartCommandExecution.Debug"
+    "Terminal.SmartCommandExecution.Debug",
+    "UiInspector",
+    "CopyUiLabel"
   );
 
   public void testActionsWithShortcuts() throws Exception {
@@ -39,7 +41,7 @@ public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
     }
 
     ActionManager mgr = ActionManager.getInstance();
-    ArrayList<AnAction> failed = new ArrayList<>();
+    ArrayList<String> failed = new ArrayList<>();
     for (String id : ids) {
       AnAction action = mgr.getAction(id);
       if (action == null) {
@@ -48,11 +50,8 @@ public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
       }
       Method updateMethod = action.getClass().getMethod("update", AnActionEvent.class);
       if (updateMethod.getDeclaringClass() == AnAction.class) {
-        failed.add(action);
+        failed.add(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
       }
-    }
-    for (AnAction action : failed) {
-      System.err.println(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
     }
 
     assertEmpty("The following actions have shortcuts, but don't have update() method redefined", failed);

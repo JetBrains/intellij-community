@@ -1,22 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -41,23 +51,21 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
     myName = method.getName();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return QuickFixBundle.message("fix.parameter.type.text",
                                   myName,
                                   myParameterType.getCanonicalText() );
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("fix.parameter.type.family");
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
@@ -69,8 +77,8 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
   }
 
   @Override
-  public void invoke(@NotNull final Project project,
-                     @NotNull final PsiFile file,
+  public void invoke(final @NotNull Project project,
+                     final @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
@@ -84,17 +92,14 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
       }
 
       final PsiMethod finalMethod = method;
-      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(project,
-                                                                        finalMethod,
-                                                                        false, null,
-                                                                        finalMethod.getName(),
-                                                                        finalMethod.getReturnType(),
-                                                                        getNewParametersInfo(finalMethod));
+      var processor = JavaRefactoringFactory.getInstance(project)
+        .createChangeSignatureProcessor(finalMethod, false, null, finalMethod.getName(), finalMethod.getReturnType(),
+                                        getNewParametersInfo(finalMethod), null, null, null, null);
 
       processor.run();
 
 
-      UndoUtil.markPsiFileForUndo(file);
+      UndoUtil.markPsiFileForUndo(psiFile);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -129,5 +134,16 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
       result.add(ParameterInfoImpl.createNew().withName(newParameter.getName()).withType(newParameter.getType()));
     }
     return result.toArray(new ParameterInfoImpl[0]);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    final PsiMethod method = PsiTreeUtil.findSameElementInCopy((PsiMethod)getStartElement(), psiFile);
+    PsiTypeElement typeElement = method.getParameterList().getParameters()[myIndex].getTypeElement();
+    if (typeElement == null) return IntentionPreviewInfo.EMPTY;
+    PsiElementFactory factory = PsiElementFactory.getInstance(project);
+    PsiTypeElement newTypeElement = factory.createTypeElement(myParameterType);
+    typeElement.replace(newTypeElement);
+    return IntentionPreviewInfo.DIFF;
   }
 }

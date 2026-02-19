@@ -1,0 +1,17 @@
+// FILE: build.gradle.kts
+// "EXPECTED-SUGGESTION": "commonMain"
+plugins {
+    kotlin("multiplatform") version "2.0.0"
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jvm()
+    sourceSets {
+        comM<caret>
+    }
+}
+

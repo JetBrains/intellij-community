@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +14,6 @@ import java.util.List;
 
 /**
  * Represents a Java annotation.
- *
- * @author ven
  */
 public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   /**
@@ -106,17 +103,15 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   /**
    * @return the target of {@link #getNameReferenceElement()}, if it's an {@code @interface}, otherwise null
    */
-  @Nullable
-  default PsiClass resolveAnnotationType() {
+  default @Nullable PsiClass resolveAnnotationType() {
     PsiJavaCodeReferenceElement element = getNameReferenceElement();
     PsiElement declaration = element == null ? null : element.resolve();
     if (!(declaration instanceof PsiClass) || !((PsiClass)declaration).isAnnotationType()) return null;
     return (PsiClass)declaration;
   }
 
-  @NotNull
   @Override
-  default List<JvmAnnotationAttribute> getAttributes() {
+  default @NotNull List<JvmAnnotationAttribute> getAttributes() {
     return Arrays.asList(getParameterList().getAttributes());
   }
 
@@ -127,14 +122,4 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   default boolean hasQualifiedName(@NotNull String qualifiedName) {
     return qualifiedName.equals(getQualifiedName());
   }
-
-  /**
-   * @deprecated don't use or override; it's temporarily left for compatibility with older plugins
-   */
-  @Nullable
-  @Deprecated
-  default PsiMetaData getMetaData() {
-    return null;
-  }
-
 }

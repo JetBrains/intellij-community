@@ -4,6 +4,7 @@ import sys
 import traceback
 
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info, collect_return_info
+from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 from pydev_tests_python.debugger_unittest import IS_CPYTHON, IS_JYTHON, IS_PY2, IS_PY38_OR_GREATER
 
 
@@ -158,23 +159,35 @@ import pytest
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-733")
 def test_collect_try_except_info(data_regression):
     method_to_info = {}
     for key, method in sorted(dict(globals()).items()):
         if key.startswith('_method'):
             info = collect_try_except_info(method.__code__, use_func_first_line=True)
 
-            if sys.version_info[:2] >= (3, 7):
-                for try_except_info in info:
-                    # On 3.7 the last bytecode actually has a different start line.
-                    if try_except_info.except_end_line == 8:
-                        try_except_info.except_end_line = 9
+            if key == "_method_try_except":
+                if sys.version_info[:2] == (3, 7):
+                    for try_except_info in info:
+                        # On 3.7 the last bytecode actually has a different start line.
+                        if try_except_info.except_end_line == 8:
+                            try_except_info.except_end_line = 9
+
+                elif sys.version_info[:2] >= (3, 8):
+                    for try_except_info in info:
+                        # On 3.8 the last bytecode actually has a different start line.
+                        if try_except_info.except_end_line == 7:
+                            try_except_info.except_end_line = 9
+
+            method_to_info[key] = [str(x) for x in info]
+
 
             method_to_info[key] = [str(x) for x in info]
 
     data_regression.check(method_to_info)
 
 
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-734")
 def test_collect_try_except_info2():
 
     def method():

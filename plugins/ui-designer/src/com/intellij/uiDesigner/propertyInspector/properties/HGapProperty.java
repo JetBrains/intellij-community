@@ -1,21 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.FlowLayout;
+import java.awt.LayoutManager;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- * @author yole
- */
+@Service(Service.Level.PROJECT)
 public final class HGapProperty extends AbstractIntProperty<RadContainer> {
   public static HGapProperty getInstance(Project project) {
-    return ServiceManager.getService(project, HGapProperty.class);
+    return project.getService(HGapProperty.class);
   }
 
   public HGapProperty(){
@@ -24,20 +23,16 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
 
   @Override
   public Integer getValue(final RadContainer component){
-    if (component.getLayout() instanceof BorderLayout) {
-      BorderLayout layout = (BorderLayout) component.getLayout();
+    if (component.getLayout() instanceof BorderLayout layout) {
       return layout.getHgap();
     }
-    if (component.getLayout() instanceof FlowLayout) {
-      FlowLayout layout = (FlowLayout) component.getLayout();
+    if (component.getLayout() instanceof FlowLayout layout) {
       return layout.getHgap();
     }
-    if (component.getLayout() instanceof CardLayout) {
-      CardLayout layout = (CardLayout) component.getLayout();
+    if (component.getLayout() instanceof CardLayout layout) {
       return layout.getHgap();
     }
-    if (component.getLayout() instanceof AbstractLayout) {
-      final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
+    if (component.getLayout() instanceof AbstractLayout layoutManager) {
       return layoutManager.getHGap();
     }
     return null;
@@ -45,16 +40,13 @@ public final class HGapProperty extends AbstractIntProperty<RadContainer> {
 
   @Override
   protected void setValueImpl(final RadContainer component, final Integer value) throws Exception{
-    if (component.getLayout() instanceof BorderLayout) {
-      BorderLayout layout = (BorderLayout) component.getLayout();
+    if (component.getLayout() instanceof BorderLayout layout) {
       layout.setHgap(value.intValue());
     }
-    else if (component.getLayout() instanceof FlowLayout) {
-      FlowLayout layout = (FlowLayout) component.getLayout();
+    else if (component.getLayout() instanceof FlowLayout layout) {
       layout.setHgap(value.intValue());
     }
-    else if (component.getLayout() instanceof CardLayout) {
-      CardLayout layout = (CardLayout) component.getLayout();
+    else if (component.getLayout() instanceof CardLayout layout) {
       layout.setHgap(value.intValue());
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
@@ -14,7 +14,7 @@ import java.util.List;
 
 public class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
-  implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
+  implements Weighted, ConfigurableGroup, Configurable.NoScroll {
 
   private final String myId;
   private final @NlsContexts.ConfigurableName String myDisplayName;
@@ -22,7 +22,7 @@ public class SortedConfigurableGroup
   private final String myHelpTopic;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
-  List<Configurable> myList = new ArrayList<>();
+  List<@NotNull Configurable> myList = new ArrayList<>();
 
   public SortedConfigurableGroup(@NonNls @NotNull String id,
                                  @NlsContexts.ConfigurableName @NotNull String displayName,
@@ -37,7 +37,7 @@ public class SortedConfigurableGroup
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     myList.sort(COMPARATOR);
     Configurable[] result = myList.toArray(new Configurable[0]);
     myList.clear();
@@ -65,6 +65,7 @@ public class SortedConfigurableGroup
     return myDisplayName;
   }
 
+  @Override
   public @NlsContexts.DetailedDescription String getDescription() {
     return myDescription;
   }

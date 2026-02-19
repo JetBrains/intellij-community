@@ -1,7 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.common;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingContext;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
@@ -22,13 +28,12 @@ import java.util.List;
 public abstract class InjectedLanguageBlockBuilder {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageBlockBuilder.class);
 
-  @NotNull
-  public Block createInjectedBlock(@NotNull ASTNode node,
-                                   @NotNull Block originalBlock,
-                                   Indent indent,
-                                   int offset,
-                                   TextRange range,
-                                   @NotNull Language language) {
+  public @NotNull Block createInjectedBlock(@NotNull ASTNode node,
+                                            @NotNull Block originalBlock,
+                                            Indent indent,
+                                            int offset,
+                                            TextRange range,
+                                            @NotNull Language language) {
     return new InjectedLanguageBlockWrapper(originalBlock, offset, range, indent, language);
   }
 
@@ -144,7 +149,7 @@ public abstract class InjectedLanguageBlockBuilder {
                                            Indent indent,
                                            int offset,
                                            TextRange injectedEditableRange,
-                                           List<PsiLanguageInjectionHost.Shred> shreds) {
+                                           List<? extends PsiLanguageInjectionHost.Shred> shreds) {
     addInjectedLanguageBlockWrapper(result, injectedFile.getNode(), indent, offset, injectedEditableRange);
   }
 
@@ -159,6 +164,14 @@ public abstract class InjectedLanguageBlockBuilder {
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, childPsi);
     LOG.assertTrue(builder != null);
     final FormattingModel childModel = builder.createModel(FormattingContext.create(childPsi, getSettings()));
+    if (!childPsi.getTextRange().contains(childModel.getRootBlock().getTextRange())) {
+      LOG.error("Invalid formatter model created for injected language fragment. Node rage: " + childPsi.getTextRange() +
+                "; created model range: " + childModel.getRootBlock().getTextRange() +
+                "; builder: " + builder.getClass().getName() +
+                "; injected language: " + childLanguage.getID() +
+                "; file: " + childPsi.getContainingFile().getName());
+      return;
+    }
     Block original = childModel.getRootBlock();
 
     if (original.isLeaf() && !injectedNode.getText().trim().isEmpty() || !original.getSubBlocks().isEmpty()) {

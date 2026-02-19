@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.Editor;
@@ -17,7 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
- * @see BasePlatformTestCase for light tests
+ * This is a "heavy" JUnit 3-compatible {@link UsefulTestCase} which is based around a {@link CodeInsightTestFixture}.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/light-and-heavy-tests.html">Light and Heavy Tests (IntelliJ Platform Docs)</a>
+ * @see BasePlatformTestCase for "light" tests
  */
 public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<?>> extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
@@ -66,7 +70,7 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
     }
   }
 
-  protected void tuneFixture(T moduleBuilder) {}
+  protected void tuneFixture(T moduleBuilder) { }
 
   /**
    * Return relative path to the test data. Path is relative to the
@@ -74,8 +78,7 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
    *
    * @return relative path to the test data.
    */
-  @NonNls
-  protected String getBasePath() {
+  protected @NonNls String getBasePath() {
     return "";
   }
 
@@ -84,8 +87,7 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
    *
    * @return absolute path to the test data.
    */
-  @NonNls
-  protected final String getTestDataPath() {
+  protected final @NonNls String getTestDataPath() {
     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
     return path.replace(File.separatorChar, '/') + getBasePath();
   }

@@ -18,11 +18,8 @@ package com.intellij.psi.meta;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author peter
- */
 public interface PsiPresentableMetaData extends PsiMetaData {
   @Nullable
   @Nls

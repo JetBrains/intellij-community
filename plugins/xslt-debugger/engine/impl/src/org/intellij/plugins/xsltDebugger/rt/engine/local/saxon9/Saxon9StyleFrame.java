@@ -16,7 +16,11 @@
 
 package org.intellij.plugins.xsltDebugger.rt.engine.local.saxon9;
 
-import net.sf.saxon.expr.*;
+import net.sf.saxon.expr.ComponentBinding;
+import net.sf.saxon.expr.Expression;
+import net.sf.saxon.expr.PackageData;
+import net.sf.saxon.expr.StackFrame;
+import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.expr.instruct.GlobalVariable;
 import net.sf.saxon.expr.instruct.SlotManager;
 import net.sf.saxon.expr.instruct.TraceExpression;
@@ -48,23 +52,23 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
     myXPathContext = xPathContext;
   }
 
+  @Override
   public String getInstruction() {
     return myElement.getExpressionName();
   }
 
+  @Override
   public Value eval(String expr) throws Debugger.EvaluationException {
     assert isValid();
 
     Saxon9TraceListener.MUTED = true;
     try {
       return createValue(new ExpressionFacade(myElement));
-    } catch (AssertionError e) {
+    } catch (AssertionError | Exception e) {
       debug(e);
       throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
-    } catch (Exception e) {
-      debug(e);
-      throw new Debugger.EvaluationException(e.getMessage() != null ? e.getMessage() : e.toString());
-    } finally {
+    }
+    finally {
       Saxon9TraceListener.MUTED = false;
     }
   }
@@ -84,6 +88,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
     return new SequenceValue(value, it, itemType);
   }
 
+  @Override
   public List<Debugger.Variable> getVariables() {
     assert isValid();
 
@@ -101,7 +106,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
   }
 
   private ArrayList<Debugger.Variable> collectVariables() {
-    final ArrayList<Debugger.Variable> variables = new ArrayList<Debugger.Variable>();
+    final ArrayList<Debugger.Variable> variables = new ArrayList<>();
 
     Iterable<PackageData> packages = myXPathContext.getController().getExecutable().getPackages();
     for (PackageData data : packages) {
@@ -167,6 +172,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myItemType = itemType;
     }
 
+    @Override
     public Object getValue() {
       try {
         return myValue != null ? myValue.getStringValue() : null;
@@ -176,6 +182,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       }
     }
 
+    @Override
     public Type getType() {
       return new ObjectType(myItemType.toString());
     }
@@ -195,10 +202,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myItemType = type;
     }
 
+    @Override
     public Object getValue() {
       return myValue;
     }
 
+    @Override
     public Type getType() {
       return new ObjectType(myItemType.toString() + "+");
     }
@@ -217,10 +226,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myExpression = expression;
     }
 
+    @Override
     public ItemType getItemType(TypeHierarchy hierarchy) {
       return myExpression.getItemType();
     }
 
+    @Override
     public SequenceIterator iterate(XPathContext context) throws XPathException {
       return myExpression.iterate(context);
     }
@@ -233,10 +244,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myVariable = variable;
     }
 
+    @Override
     public ItemType getItemType(TypeHierarchy hierarchy) {
       return myVariable.getRequiredType().getPrimaryType();
     }
 
+    @Override
     public SequenceIterator iterate(XPathContext context) throws XPathException {
       List<ComponentBinding> bindings = context.getCurrentComponent().getComponentBindings();
       if (bindings.size() <= myVariable.getBinderySlotNumber()) return EmptyIterator.emptyIterator();
@@ -252,6 +265,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myValue = value;
     }
 
+    @Override
     public ItemType getItemType(TypeHierarchy hierarchy) {
       if (myValue instanceof FloatValue) {
         return ((FloatValue)myValue).getItemType();
@@ -262,6 +276,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       return AnyItemType.getInstance();
     }
 
+    @Override
     public SequenceIterator iterate(XPathContext context) {
       return myValue.iterate();
     }
@@ -276,10 +291,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myFacade = facade;
     }
 
+    @Override
     public Object getValue() {
       return " - error: " + myError + " - ";
     }
 
+    @Override
     public Type getType() {
       return new ObjectType(myFacade.getItemType(myXPathContext.getConfiguration().getTypeHierarchy()).toString());
     }

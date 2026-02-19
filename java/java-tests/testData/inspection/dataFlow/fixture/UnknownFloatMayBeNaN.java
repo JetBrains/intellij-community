@@ -1,8 +1,12 @@
 class Fun {
   public static void main(String[] args) throws Exception {
     float f1 = Float.parseFloat("NaN");
-    if (f1 == f1) {
+    if (<warning descr="Condition 'f1 == f1' is always 'false'">f1 == f1</warning>) {
       System.err.println("ELVIS LIVES!");
+    }
+    float f3 = getFloat();
+    if (f3 == f3) {
+      System.out.println("ELVIS LIVES!");
     }
     float f2 = Float.NaN;
     // Warning:  Condition 'f2 == f2' is always 'false'
@@ -12,4 +16,5 @@ class Fun {
     }
   }
 
+  private static native float getFloat();
 }

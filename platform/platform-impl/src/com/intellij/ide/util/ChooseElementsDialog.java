@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
@@ -7,18 +7,29 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
 
 public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
@@ -44,6 +55,11 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     initializeDialog(items, title, sort);
   }
 
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.medium();
+  }
+
   /**
    * @return true if elements should have checkboxes
    * @see #getMarkedElements()
@@ -55,9 +71,9 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
   private void initializeDialog(final List<? extends T> items, @NlsContexts.DialogTitle String title, boolean sort) {
     setTitle(title);
-    myChooser = new ElementsChooser<T>(canElementsBeMarked()) {
+    myChooser = new ElementsChooser<>(canElementsBeMarked()) {
       @Override
-      protected String getItemText(@NotNull final T item) {
+      protected String getItemText(final @NotNull T item) {
         return ChooseElementsDialog.this.getItemText(item);
       }
     };
@@ -86,16 +102,18 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     init();
   }
 
-  @NotNull
-  public List<T> showAndGetResult() {
+  public @NotNull List<T> showAndGetResult() {
     show();
     return getChosenElements();
   }
 
   protected abstract @NlsContexts.ListItem String getItemText(T item);
 
-  @Nullable
-  protected abstract Icon getItemIcon(T item);
+  protected abstract @Nullable Icon getItemIcon(T item);
+
+  protected @Nullable Color getItemBackgroundColor(T item) {
+    return null;
+  }
 
   /**
    * Override this method and return non-null value to specify location of {@code item}.
@@ -105,8 +123,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return null; // default implementation
   }
 
-  @NotNull
-  public List<T> getChosenElements() {
+  public @NotNull List<T> getChosenElements() {
     return isOK() ? myChooser.getSelectedElements() : Collections.emptyList();
   }
 
@@ -157,15 +174,18 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   private ElementsChooser.ElementProperties createElementProperties(final T item) {
     return new ElementsChooser.ElementProperties() {
       @Override
-      @Nullable
-      public Icon getIcon() {
+      public @Nullable Icon getIcon() {
         return getItemIcon(item);
       }
 
       @Override
-      @Nullable
-      public @Nls String getLocation() {
+      public @Nullable @Nls String getLocation() {
         return getItemLocation(item);
+      }
+
+      @Override
+      public @Nullable Color getBackgroundColor() {
+        return getItemBackgroundColor(item);
       }
     };
   }

@@ -1,24 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -30,21 +32,31 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import com.intellij.util.containers.SoftFactoryMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jetCheck.GenerationEnvironment;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
@@ -55,19 +67,34 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-/**
- * @author peter
- */
 public final class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance(MadTestingUtil.class);
   private static final boolean USE_ROULETTE_WHEEL = true;
+
+  public static @NotNull ImperativeCommand assertNoErrorLoggedIn(@NotNull ImperativeCommand command) {
+    return (env) -> {
+      TestLoggerKt.assertNoErrorLogged(() -> command.performCommand(env));
+    };
+  }
 
   public static void restrictChangesToDocument(Document document, Runnable r) {
     letSaveAllDocumentsPassIfAny();
@@ -135,6 +162,7 @@ public final class MadTestingUtil {
         new RunAll(
           () -> PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(),
           () -> FileEditorManagerEx.getInstanceEx(project).closeAllFiles(),
+          () -> EditorHistoryManager.getInstance(project).removeAllFiles(),
           () -> FileDocumentManager.getInstance().saveAllDocuments(),
           () -> revertVfs(label, project),
           () -> documentManager.commitAllDocuments(),
@@ -168,10 +196,9 @@ public final class MadTestingUtil {
    * "HighlightVisitorInternal" inspection has error-level by default and highlights the first token from erroneous range,
    * which is not very stable and also masks other warning-level inspections available on the same token.
    *
-   * @param disposable when this is disposed, reverts to the previous project inspection profile
    * @param except short names of inspections to disable
    */
-  public static void enableAllInspections(@NotNull Project project, String... except) {
+  public static void enableAllInspections(@NotNull Project project, @NotNull Language fileLanguage, String @NotNull... except) {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
     profile.enableAllTools(project);
@@ -181,8 +208,26 @@ public final class MadTestingUtil {
     for (String shortId : except) {
       disableInspection(project, profile, shortId);
     }
+    replaceProfile(project, profile, fileLanguage);
+  }
+
+  public static void enableDefaultInspections(@NotNull Project project, @NotNull Language fileLanguage) {
+    InspectionProfileImpl profile = new InspectionProfileImpl("defaultInspections");
+    InspectionsKt.runInInitMode(() -> {
+      replaceProfile(project, profile, fileLanguage);
+      return null;
+    });
+  }
+
+  private static void replaceProfile(@NotNull Project project, @NotNull InspectionProfileImpl profile, @NotNull Language fileLanguage) {
     // instantiate all tools to avoid extension loading in inconvenient moment
-    profile.getAllEnabledInspectionTools(project).forEach(state -> state.getTool().getTool());
+    profile.getAllEnabledInspectionTools(project).forEach(state -> {
+      InspectionToolWrapper<?, ?> wrapper = state.getTool();
+      String inspectionLanguage = wrapper.getLanguage();
+      if (inspectionLanguage == null || fileLanguage.isKindOf(inspectionLanguage)) {
+        wrapper.getTool();
+      }
+    });
 
     ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
     manager.addProfile(profile);
@@ -202,7 +247,7 @@ public final class MadTestingUtil {
     }
   }
 
-  private static Generator<File> randomFiles(String rootPath, FileFilter fileFilter) {
+  public static Generator<File> randomFiles(String rootPath, FileFilter fileFilter) {
     return randomFiles(rootPath, fileFilter, USE_ROULETTE_WHEEL);
   }
 
@@ -224,7 +269,7 @@ public final class MadTestingUtil {
     Function<GenerationEnvironment, File> generator =
       useRouletteWheel ? new RouletteWheelFileGenerator(root, interestingIdeaFiles) : new FileGenerator(root, interestingIdeaFiles);
     return Generator.from(generator)
-      .suchThat(new Predicate<File>() {
+      .suchThat(new Predicate<>() {
         @Override
         public boolean test(File file) {
           return file != null;
@@ -243,11 +288,23 @@ public final class MadTestingUtil {
    * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
    * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
    */
-  @NotNull
-  public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
+  public static @NotNull Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
                                                                  FileFilter fileFilter,
                                                                  Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
     return performOnFileContents(fixture, rootPath, fileFilter, (env, vFile) ->
+      env.executeCommands(Generator.from(data -> data.generate(actions.apply(fixture.getPsiManager().findFile(vFile))))));
+  }
+
+  /**
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions on those files (e.g. invoke completion/intentions or random editing).
+   * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
+   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
+   */
+  public static @NotNull Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
+                                                                 FileFilter fileFilter,
+                                                                 @Nullable Predicate<PsiFile> psiFileFilter,
+                                                                 Function<? super PsiFile, ? extends Generator<? extends MadTestingAction>> actions) {
+    return performOnFileContents(fixture, rootPath, fileFilter, psiFileFilter,(env, vFile) ->
       env.executeCommands(Generator.from(data -> data.generate(actions.apply(fixture.getPsiManager().findFile(vFile))))));
   }
 
@@ -256,14 +313,28 @@ public final class MadTestingUtil {
    * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
    * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
    */
-  @NotNull
-  public static Supplier<MadTestingAction> performOnFileContents(CodeInsightTestFixture fixture,
-                                                                  String rootPath,
-                                                                  FileFilter fileFilter,
-                                                                  BiConsumer<ImperativeCommand.Environment, VirtualFile> action) {
+  public static @NotNull Supplier<MadTestingAction> performOnFileContents(CodeInsightTestFixture fixture,
+                                                                 String rootPath,
+                                                                 FileFilter fileFilter,
+                                                                 BiConsumer<? super ImperativeCommand.Environment, ? super VirtualFile> action) {
+
+    return performOnFileContents(fixture, rootPath, fileFilter, null, action);
+  }
+
+  /**
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and invokes {@code action} on those files.
+   * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
+   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment.
+   * @param psiFileFilter can be used to filter based on psi or project structure
+   */
+  public static @NotNull Supplier<MadTestingAction> performOnFileContents(CodeInsightTestFixture fixture,
+                                                                 String rootPath,
+                                                                 FileFilter fileFilter,
+                                                                 @Nullable Predicate<PsiFile> psiFileFilter,
+                                                                 BiConsumer<? super ImperativeCommand.Environment, ? super VirtualFile> action) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
-    return () -> env -> new RunAll()
-      .append(() -> {
+    return () -> assertNoErrorLoggedIn(env -> new RunAll(
+      () -> {
         File ioFile = env.generateValue(randomFiles, "Working with %s");
         VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
         PsiFile psiFile = fixture.getPsiManager().findFile(vFile);
@@ -272,36 +343,43 @@ public final class MadTestingUtil {
           System.err.println("Can't check " + vFile + " due to incorrect file type: " + psiFile + " of " + psiFile.getClass());
           return;
         }
+        if (psiFileFilter != null && !psiFileFilter.test(psiFile)) {
+          return;
+        }
         action.accept(env, vFile);
-      })
-      .append(() -> WriteAction.run(() -> {
+      },
+      () -> WriteAction.run(() -> {
         for (VirtualFile file : Objects.requireNonNull(fixture.getTempDirFixture().getFile("")).getChildren()) {
           file.delete(fixture);
         }
-      }))
-      .append(() -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments())
-      .append(() -> UIUtil.dispatchAllInvocationEvents())
-      .run();
+      }),
+      () -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments(),
+      () -> UIUtil.dispatchAllInvocationEvents()
+    ).run())::performCommand;
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
-    return !name.equals("gen") && // https://youtrack.jetbrains.com/issue/IDEA-175404
-           !name.equals("reports") && // no idea what this is
-           !name.equals("android") && // no 'android' repo on agents in some builds
-           !containsBinariesOnly(name) &&
-           !name.endsWith("system") && !name.endsWith("config"); // temporary stuff from tests or debug IDE
+    return !name.equals("gen") // https://youtrack.jetbrains.com/issue/IDEA-175404
+           && !name.equals("reports") // no idea what this is
+           && !name.equals("android") // no 'android' repo on agents in some builds
+           && canContainSources(name)
+           && !name.endsWith("system")
+           && !name.endsWith("config") // temporary stuff from tests or debug IDE
+           && !name.equals("build")    // the dir is too deep and has almost no sources, descending there is a waste of time
+    ;
   }
 
-  private static boolean containsBinariesOnly(@NotNull String name) {
-    return name.equals("jdk") ||
-           name.equals("jre") ||
-           name.equals("lib") ||
-           name.equals("bin") ||
-           name.equals("out");
+  private static boolean canContainSources(@NotNull String name) {
+    return !name.equals("jdk")
+           && !name.equals("jre")
+           && !name.equals("lib")
+           && !name.equals("bin")
+           && !name.equals("out")
+           && !name.startsWith(".")  // .gradle/.git/.idea have too many irrelevant files but no sources
+      ;
   }
 
-  @NotNull
-  private static VirtualFile copyFileToProject(File ioFile, CodeInsightTestFixture fixture, String rootPath) {
+  private static @NotNull VirtualFile copyFileToProject(File ioFile, CodeInsightTestFixture fixture, String rootPath) {
     try {
       String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
@@ -327,8 +405,7 @@ public final class MadTestingUtil {
    * Generates actions checking that incremental reparse produces the same PSI as full reparse. This check makes sense
    * in languages employing {@link com.intellij.psi.tree.ILazyParseableElementTypeBase}.
    */
-  @NotNull
-  public static Generator<MadTestingAction> randomEditsWithReparseChecks(@NotNull PsiFile file) {
+  public static @NotNull Generator<MadTestingAction> randomEditsWithReparseChecks(@NotNull PsiFile file) {
     return Generator.sampledFrom(
       new InsertString(file),
       new DeleteRange(file),
@@ -342,8 +419,7 @@ public final class MadTestingUtil {
    * @return function returning generator of actions checking that
    * read accessors on all PSI elements in the file don't throw exceptions when invoked.
    */
-  @NotNull
-  public static Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(@NotNull Condition<? super Method> skipCondition) {
+  public static @NotNull Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithPsiAccessorChecks(@NotNull Condition<? super Method> skipCondition) {
     return file -> Generator.sampledFrom(
       new InsertString(file),
       new DeleteRange(file),
@@ -361,8 +437,7 @@ public final class MadTestingUtil {
     return ContainerUtil.exists(viewProvider.getAllFiles(), file -> SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isNotEmpty());
   }
 
-  @NotNull
-  public static String getPositionDescription(int offset, Document document) {
+  public static @NotNull String getPositionDescription(int offset, Document document) {
     int line = document.getLineNumber(offset);
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
@@ -373,24 +448,17 @@ public final class MadTestingUtil {
     }
     String suffix = StringUtil.shortenTextWithEllipsis(document.getText(new TextRange(offset, end)), 30, 0);
     String text = prefix + "|" + suffix;
-    return offset + "(" + line + ":" + column + ") [" + text + "]";
+    return offset + "(" + (line + 1) + ":" + (column + 1) + ") [" + text + "]";
   }
 
-  @NotNull
-  static String getIntentionDescription(IntentionAction action) {
+  static @NotNull String getIntentionDescription(IntentionAction action) {
     return getIntentionDescription(action.getText(), action);
   }
 
-  @NotNull
-  static String getIntentionDescription(String intentionName, IntentionAction action) {
+  static @NotNull String getIntentionDescription(String intentionName, IntentionAction action) {
     IntentionAction actual = IntentionActionDelegate.unwrap(action);
     String family = actual.getFamilyName();
-    Class<?> aClass = actual.getClass();
-    if (actual instanceof QuickFixWrapper) {
-      LocalQuickFix fix = ((QuickFixWrapper)actual).getFix();
-      family = fix.getFamilyName();
-      aClass = fix.getClass();
-    }
+    Class<?> aClass = ReportingClassSubstitutor.getClassToReport(action);
     return "'" + intentionName + "' (family: '" + family + "'; class: '" + aClass.getName() + "')";
   }
 
@@ -403,19 +471,14 @@ public final class MadTestingUtil {
      */
     for (boolean roulette : new boolean[]{true, false}) {
       out.println("Testing " + (roulette ? "roulette" : "plain") + " generator");
-      TObjectLongHashMap<String> fileMap = new TObjectLongHashMap<>();
+      ObjectIntMap<String> fileMap = new ObjectIntHashMap<>();
       Generator<File> generator = randomFiles(root.getPath(), filter, roulette);
       MadTestingAction action = env -> {
         long lastTime = System.nanoTime(), startTime = lastTime;
         for (int iteration = 1; iteration <= iterationCount; iteration++) {
           File file = env.generateValue(generator, null);
           assert filter.accept(file);
-          if (!fileMap.containsKey(file.getPath())) {
-            fileMap.put(file.getPath(), 1);
-          }
-          else {
-            fileMap.increment(file.getPath());
-          }
+          fileMap.put(file.getPath(), fileMap.getOrDefault(file.getPath(), 0)+1);
           long curTime = System.nanoTime();
           if (iteration <= 10) {
             out.print("#" + iteration + " = " + (curTime - lastTime) / 1_000_000 + "ms");
@@ -437,18 +500,17 @@ public final class MadTestingUtil {
     }
   }
 
-  @NotNull
-  private static String getHistogramReport(TObjectLongHashMap<String> fileMap, int iteration) {
+  private static @NotNull String getHistogramReport(ObjectIntMap<String> fileMap, int iteration) {
     long[] stops = {1, 2, 3, 5, 10, 20, 30, 50, 100, 200, Long.MAX_VALUE};
     int[] histogram = new int[stops.length];
-    fileMap.forEachValue(count -> {
+    for (ObjectIntMap.Entry<String> entry : fileMap.entries()) {
+      int count = entry.getValue();
       int pos = Arrays.binarySearch(stops, count);
       if (pos < 0) {
         pos = -pos - 1;
       }
       histogram[pos]++;
-      return true;
-    });
+    }
     StringBuilder report = new StringBuilder();
     for (int i = 0; i < stops.length; i++) {
       String range = i == 0 || stops[i - 1] == stops[i] - 1 ? String.valueOf(stops[i]) :
@@ -475,8 +537,7 @@ public final class MadTestingUtil {
       return generateRandomFile(data, myRoot, new HashSet<>());
     }
 
-    @Nullable
-    private File generateRandomFile(GenerationEnvironment data, File file, Set<? super File> exhausted) {
+    private @Nullable File generateRandomFile(GenerationEnvironment data, File file, Set<? super File> exhausted) {
       while (true) {
         File[] children = file.listFiles(f -> !exhausted.contains(f) && containsAtLeastOneFileDeep(f) && myFilter.accept(f));
         if (children == null) {
@@ -487,8 +548,8 @@ public final class MadTestingUtil {
           return null;
         }
 
-        List<File> toChoose = preferDirs(data, children);
-        toChoose.sort(Comparator.comparing(File::getName));
+        List<File> toChoose = ContainerUtil.sorted(preferDirs(data, children),
+        Comparator.comparing(File::getName));
         File chosen = data.generate(Generator.sampledFrom(toChoose));
         File generated = generateRandomFile(data, chosen, exhausted);
         if (generated != null) {
@@ -501,7 +562,7 @@ public final class MadTestingUtil {
       return FS_TRAVERSAL.fun(root).find(f -> f.isFile()) != null;
     }
 
-    private static List<File> preferDirs(GenerationEnvironment data, File[] children) {
+    private static @Unmodifiable List<File> preferDirs(GenerationEnvironment data, File[] children) {
       List<File> files = new ArrayList<>();
       List<File> dirs = new ArrayList<>();
       for (File child : children) {
@@ -521,15 +582,21 @@ public final class MadTestingUtil {
     private final File myRoot;
     private final FileFilter myFilter;
     private static final File[] EMPTY_DIRECTORY = new File[0];
-    private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<File, File[]>() {
+    private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<>() {
       @Override
-      protected File[] create(File f) {
+      protected File[] create(@NotNull File f) {
         File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));
-        return files != null && files.length == 0 ? EMPTY_DIRECTORY : files;
+        if (files == null) {
+          return null;
+        }
+        if (files.length == 0) {
+          return EMPTY_DIRECTORY;
+        }
+        return files;
       }
     };
 
-    private RouletteWheelFileGenerator(File root, FileFilter filter) {
+    private RouletteWheelFileGenerator(@NotNull File root, @NotNull FileFilter filter) {
       myRoot = root;
       myFilter = filter;
     }
@@ -539,8 +606,7 @@ public final class MadTestingUtil {
       return generateRandomFile(data, myRoot, new HashSet<>());
     }
 
-    @Nullable
-    private File generateRandomFile(GenerationEnvironment data, File file, Set<File> exhausted) {
+    private @Nullable File generateRandomFile(GenerationEnvironment data, File file, Set<File> exhausted) {
       File[] children = myChildrenCache.get(file);
       if (children == null) {
         return file;

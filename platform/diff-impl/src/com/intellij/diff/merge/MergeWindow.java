@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
@@ -13,17 +14,24 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
+@ApiStatus.Internal
 public abstract class MergeWindow {
   private static final Logger LOG = Logger.getInstance(MergeWindow.class);
 
-  @Nullable private final Project myProject;
-  @NotNull private final DiffDialogHints myHints;
+  private final @Nullable Project myProject;
+  private final @NotNull DiffDialogHints myHints;
 
   private MergeRequestProcessor myProcessor;
   private WindowWrapper myWrapper;
@@ -45,8 +53,10 @@ public abstract class MergeWindow {
       .setProject(myProject)
       .setParent(myHints.getParent())
       .setDimensionServiceKey(dialogGroupKey)
+      .setInitialSize(JBUI.DialogSizes.extraLarge())
+      .setMaximizable(true)
       .setPreferredFocusedComponent(() -> myProcessor.getPreferredFocusedComponent())
-      .setOnShowCallback(() -> initProcessor(myProcessor))
+      .setOnShowCallback(() -> WriteIntentReadAction.run(() -> initProcessor(myProcessor)))
       .setOnCloseHandler(() -> myProcessor.checkCloseAction())
       .build();
     myWrapper.setImages(DiffUtil.DIFF_FRAME_ICONS.getValue());
@@ -65,8 +75,7 @@ public abstract class MergeWindow {
     myWrapper.show();
   }
 
-  @NotNull
-  private MergeRequestProcessor createProcessor() {
+  private @NotNull MergeRequestProcessor createProcessor() {
     return new MergeRequestProcessor(myProject) {
       @Override
       public void closeDialog() {
@@ -78,9 +87,8 @@ public abstract class MergeWindow {
         myWrapper.setTitle(title);
       }
 
-      @Nullable
       @Override
-      protected JRootPane getRootPane() {
+      protected @Nullable JRootPane getRootPane() {
         RootPaneContainer container = ObjectUtils.tryCast(myWrapper.getWindow(), RootPaneContainer.class);
         return container != null ? container.getRootPane() : null;
       }
@@ -104,7 +112,7 @@ public abstract class MergeWindow {
   }
 
   public static class ForRequest extends MergeWindow {
-    @NotNull private final MergeRequest myMergeRequest;
+    private final @NotNull MergeRequest myMergeRequest;
 
     public ForRequest(@Nullable Project project, @NotNull MergeRequest mergeRequest, @NotNull DiffDialogHints hints) {
       super(project, hints);
@@ -119,7 +127,7 @@ public abstract class MergeWindow {
   }
 
   public static class ForProducer extends MergeWindow {
-    @NotNull private final MergeRequestProducer myMergeRequestProducer;
+    private final @NotNull MergeRequestProducer myMergeRequestProducer;
 
     public ForProducer(@Nullable Project project, @NotNull MergeRequestProducer mergeRequestProducer, @NotNull DiffDialogHints hints) {
       super(project, hints);

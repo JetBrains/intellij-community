@@ -1,0 +1,7 @@
+version = "8.2.*"
+upstream_repository = "https://github.com/lincolnloop/python-qrcode"
+# must be a version of Pillow that is py.typed
+requires = ["Pillow>=10.3.0"]
+
+[tool.stubtest]
+extras = ["pil"]

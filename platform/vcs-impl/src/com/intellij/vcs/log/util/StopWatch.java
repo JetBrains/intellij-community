@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,8 +13,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-@NonNls
-public final class StopWatch {
+import static com.intellij.vcs.log.util.StopWatchScopeKt.StopWatchScope;
+
+public final @NonNls class StopWatch {
 
   private static final Logger LOG = Logger.getInstance(StopWatch.class);
 
@@ -21,17 +24,19 @@ public final class StopWatch {
   private static final String M_SEC_FORMAT = "%03d";
 
   private final long myStartTime;
-  @NotNull private final String myOperation;
-  @NotNull private final Map<VirtualFile, Long> myDurationPerRoot;
+
+  private final Span mySpan;
+  private final @NotNull String myOperation;
+  private final @NotNull Map<VirtualFile, Long> myDurationPerRoot;
 
   private StopWatch(@NotNull String operation) {
+    mySpan = TelemetryManager.getInstance().getTracer(StopWatchScope).spanBuilder(operation).startSpan();
     myOperation = operation;
     myStartTime = System.currentTimeMillis();
     myDurationPerRoot = new HashMap<>();
   }
 
-  @NotNull
-  public static StopWatch start(@NonNls @NotNull String operation) {
+  public static @NotNull StopWatch start(@NonNls @NotNull String operation) {
     return new StopWatch(operation);
   }
 
@@ -54,6 +59,7 @@ public final class StopWatch {
   }
 
   public void report(@NotNull Logger logger) {
+    mySpan.end();
     String message = myOperation + " took " + formatTime(System.currentTimeMillis() - myStartTime);
     if (myDurationPerRoot.size() > 1) {
       message += "\n" + StringUtil.join(myDurationPerRoot.entrySet(),
@@ -65,8 +71,7 @@ public final class StopWatch {
   /**
    * 1h 1m 1.001s
    */
-  @NotNull
-  public static String formatTime(long time) {
+  public static @NotNull String formatTime(long time) {
     if (time < 1000 * UNITS[0]) {
       return time + "ms";
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -12,7 +12,8 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -25,21 +26,21 @@ import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
 
-public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider, Disposable {
+public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements UiDataProvider, Disposable {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
 
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(() -> {
     try {
       final DebuggerContextImpl context = getContext();
-      if(context.getDebuggerSession() != null) {
+      if (context.getDebuggerSession() != null) {
         getTree().rebuild(context);
       }
     }
     catch (VMDisconnectedException ignored) {
     }
-
   }, 100);
 
   protected DebuggerTree myTree;
@@ -53,16 +54,15 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu popupMenu = createPopupMenu();
         if (popupMenu != null) {
-          myTree.myTipManager.registerPopup(popupMenu.getComponent()).show(comp, x, y);
+          popupMenu.getComponent().show(comp, x, y);
         }
       }
     };
     myTree.addMouseListener(popupHandler);
 
     setFocusTraversalPolicy(new IdeFocusTraversalPolicy() {
-      @Nullable
       @Override
-      protected Project getProject() {
+      protected @Nullable Project getProject() {
         return project;
       }
 
@@ -125,11 +125,8 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DATA_KEY, this);
   }
 
   @Override

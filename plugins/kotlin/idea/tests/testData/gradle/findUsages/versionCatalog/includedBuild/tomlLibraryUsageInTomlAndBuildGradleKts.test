@@ -1,0 +1,23 @@
+// FILE: includedBuild1/gradle/libs.versions.toml
+##"EXPECTED-FIND_USAGE-FILE_TEXT": "includedBuild1/build.gradle.kts libs.some.test.library"
+##"EXPECTED-FIND_USAGE-FILE_TEXT": "includedBuild1/gradle/libs.versions.toml "some_test-library""
+[libraries]
+some_te<caret>st-library = { module = "org.junit.jupiter:junit-jupiter"}
+
+[bundles]
+mybundle = ["some_test-library"]
+
+// FILE: includedBuild1/build.gradle.kts
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    testImplementation(libs.some.test.library)
+}
+
+// FILE: settings.gradle.kts
+// this is the settings file for the root build of a composite build
+includeBuild("includedBuild1")

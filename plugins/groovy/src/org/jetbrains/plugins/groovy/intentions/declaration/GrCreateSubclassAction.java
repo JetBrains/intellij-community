@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -20,7 +20,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 /**
  * @author Max Medvedev
  */
-public class GrCreateSubclassAction extends CreateSubclassAction {
+public final class GrCreateSubclassAction extends CreateSubclassAction {
   private static final Logger LOG = Logger.getInstance(GrCreateSubclassAction.class);
 
   @Override
@@ -55,8 +63,7 @@ public class GrCreateSubclassAction extends CreateSubclassAction {
     }
   }
 
-  @Nullable
-  public static PsiClass createSubclassGroovy(final GrTypeDefinition psiClass, final PsiDirectory targetDirectory, final String className) {
+  public static @Nullable PsiClass createSubclassGroovy(final GrTypeDefinition psiClass, final PsiDirectory targetDirectory, final String className) {
     final Project project = psiClass.getProject();
     final Ref<GrTypeDefinition> targetClass = new Ref<>();
 

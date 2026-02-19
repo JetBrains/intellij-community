@@ -2,10 +2,18 @@
 package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility.Possible
-import git4idea.test.*
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertCommitted
+import git4idea.test.assertLastMessage
+import git4idea.test.assertLatestHistory
+import git4idea.test.assertMessage
+import git4idea.test.assertStagedChanges
+import git4idea.test.findGitLogProvider
+import git4idea.test.message
 import org.junit.Assume.assumeTrue
 
 class GitRewordTest : GitSingleRepoTest() {
@@ -18,6 +26,34 @@ class GitRewordTest : GitSingleRepoTest() {
 
     val newMessage = "Correct message"
     GitRewordOperation(repo, commit, newMessage).execute()
+
+    assertLastMessage(newMessage, "Message reworded incorrectly")
+  }
+
+  fun `test reword initial commit via rebase`() {
+    val initialHash = git("log --pretty=%H").trim()
+    file("a").create("initial").addCommit("Wrong message")
+
+    val initialCommit = VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(initialHash)).first()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, initialCommit, newMessage).execute()
+
+    assertMessage(newMessage, repo.message("HEAD^"), "Message reworded incorrectly")
+  }
+
+  fun `test reword initial commit via amend`() {
+    val initialHash = git("log --pretty=%H").trim()
+    val initialCommit = VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(initialHash)).first()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, initialCommit, newMessage).execute()
 
     assertLastMessage(newMessage, "Message reworded incorrectly")
   }
@@ -148,5 +184,23 @@ class GitRewordTest : GitSingleRepoTest() {
     val actualMessage = git("log HEAD --no-walk --pretty=%B")
     assertTrue("Message reworded incorrectly. Expected:\n[$newMessage] Actual:\n[$actualMessage]",
                StringUtil.equalsIgnoreWhitespaces(newMessage, actualMessage))
+  }
+
+
+  // IDEA-254399
+  fun `test reword via rebase with spaces at the beginning`() {
+    val commit = file("a").create("initial").addCommit("  \t    Wrong message").details()
+    file("b").create().addCommit("One more commit")
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, commit, newMessage).execute()
+
+    repo.assertLatestHistory(
+      "One more commit",
+      newMessage
+    )
   }
 }

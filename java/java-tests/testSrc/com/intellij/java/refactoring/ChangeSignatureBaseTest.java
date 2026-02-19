@@ -1,22 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
-import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
+public abstract class ChangeSignatureBaseTest extends LightJavaCodeInsightTestCase {
   protected PsiElementFactory myFactory;
 
   @NotNull
@@ -37,10 +43,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
     super.tearDown();
   }
 
-  protected void doTest(@Nullable String returnType,
-                        final String @Nullable [] parameters,
-                        final String @Nullable [] exceptions,
-                        boolean delegate) {
+  protected void doTest(@Nullable String returnType, String @Nullable [] parameters, String @Nullable [] exceptions, boolean delegate) {
     GenParams genParams = parameters == null ? new SimpleParameterGen() : method -> {
       ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
       for (int i = 0; i < parameters.length; i++) {
@@ -103,10 +106,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
                         boolean skipConflict) {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
-    PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    if (targetElement instanceof PsiClass) {
-      targetElement = JavaPsiRecordUtil.findCanonicalConstructor((PsiClass)targetElement);
-    }
+    PsiElement targetElement = getTargetElement();
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     PsiType newType = newReturnType != null ? myFactory.createTypeFromText(newReturnType, method) : method.getReturnType();
@@ -127,6 +127,10 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
       }
     }.run();
     checkResultByFile(basePath + "_after.java");
+  }
+
+  protected @Nullable PsiElement getTargetElement() {
+    return TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
   }
 
   protected String getRelativePath() {

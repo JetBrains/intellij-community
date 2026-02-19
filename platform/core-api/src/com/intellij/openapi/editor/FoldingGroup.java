@@ -1,28 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * {@link com.intellij.openapi.editor.FoldRegion}s with same FoldingGroup instances expand and collapse together.
- *
- * @author peter
  */
 public final class FoldingGroup {
   private static final AtomicLong ourCounter = new AtomicLong();
 
-  @NonNls private final String myDebugName;
+  private final @NonNls @NotNull String myDebugName;
   private final long myId;
 
-  private FoldingGroup(@NonNls String debugName) {
+  private FoldingGroup(@NonNls @NotNull String debugName) {
     myDebugName = debugName;
     myId = ourCounter.incrementAndGet();
   }
 
-  public static FoldingGroup newGroup(@NonNls String debugName) {
+  @Contract("_ -> new")
+  public static @NotNull FoldingGroup newGroup(@NonNls @NotNull String debugName) {
     return new FoldingGroup(debugName);
   }
 
@@ -45,7 +46,7 @@ public final class FoldingGroup {
 
   @Override
   public int hashCode() {
-    return (int)(myId ^ (myId >>> 32));
+    return Long.hashCode(myId);
   }
 
   @Override

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -26,42 +13,46 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.util.indexing.*;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author yole
- */
-public class FormClassIndex extends ScalarIndexExtension<String> {
-  @NonNls public static final ID<String, Void> NAME = ID.create("com.intellij.uiDesigner.FormClassIndex");
+
+public final class FormClassIndex extends ScalarIndexExtension<String> {
+  public static final @NonNls ID<String, Void> NAME = ID.create("com.intellij.uiDesigner.FormClassIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
-  @NotNull
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
   @Override
-  @NotNull
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(GuiFormFileType.INSTANCE);
   }
 
@@ -77,8 +68,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
-    @NotNull
-    public Map<String, Void> map(@NotNull final FileContent inputData) {
+    public @NotNull Map<String, Void> map(final @NotNull FileContent inputData) {
       String className = null;
       try {
         className = Utils.getBoundClassName(inputData.getContentAsText().toString());
@@ -100,26 +90,28 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   public static List<PsiFile> findFormsBoundToClass(final Project project,
                                                     final String className,
                                                     final GlobalSearchScope scope) {
-    return ReadAction.compute(() -> {
-      final Collection<VirtualFile> files;
-      try {
-        files = FileBasedIndex.getInstance().getContainingFiles(NAME, className,
-                                                                GlobalSearchScope.projectScope(project).intersectWith(scope));
-      }
-      catch (IndexNotReadyException e) {
-        return Collections.emptyList();
-      }
-      if (files.isEmpty()) return Collections.emptyList();
-      List<PsiFile> result = new ArrayList<>();
-      for (VirtualFile file : files) {
-        if (!file.isValid()) continue;
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        if (psiFile != null) {
-          result.add(psiFile);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-648610")) {
+      return ReadAction.compute(() -> {
+        final Collection<VirtualFile> files;
+        try {
+          files = FileBasedIndex.getInstance().getContainingFiles(NAME, className,
+                                                                  GlobalSearchScope.projectScope(project).intersectWith(scope));
         }
-      }
-      return result;
-    });
+        catch (IndexNotReadyException e) {
+          return Collections.emptyList();
+        }
+        if (files.isEmpty()) return Collections.emptyList();
+        List<PsiFile> result = new ArrayList<>();
+        for (VirtualFile file : files) {
+          if (!file.isValid()) continue;
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+          if (psiFile != null) {
+            result.add(psiFile);
+          }
+        }
+        return result;
+      });
+    }
   }
 
   public static List<PsiFile> findFormsBoundToClass(Project project, @NotNull PsiClass psiClass) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -6,32 +6,38 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
-import com.intellij.designer.model.*;
+import com.intellij.designer.model.ErrorInfo;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.Property;
+import com.intellij.designer.model.PropertyContext;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.CopyProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.TextTransferable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JViewport;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import java.awt.*;
+import java.awt.Dimension;
 import java.awt.datatransfer.Transferable;
 import java.util.Collections;
 import java.util.List;
 
-public class RadPropertyTable extends PropertyTable implements DataProvider, ComponentSelectionListener {
+public class RadPropertyTable extends PropertyTable implements UiDataProvider, ComponentSelectionListener {
   private final MyCopyProvider myCopyProvider = new MyCopyProvider();
 
   private final Project myProject;
@@ -83,16 +89,10 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (myDesigner != null) {
-      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
-        return myDesigner.getEditor();
-      }
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && !isEditing()) {
-        return myCopyProvider;
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myDesigner == null) return;
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myDesigner.getEditor());
+    sink.set(PlatformDataKeys.COPY_PROVIDER, isEditing() ? null : myCopyProvider);
   }
 
   @Override
@@ -101,8 +101,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   }
 
   @Override
-  @NotNull
-  protected TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
+  protected @NotNull TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
     return SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
   }
 
@@ -155,8 +154,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
     }
   }
 
-  @Nullable
-  private String getCurrentKey() {
+  private @Nullable String getCurrentKey() {
     PropertyTableTab tab = myPropertyTablePanel.getCurrentTab();
     return tab == null ? null : tab.getKey();
   }
@@ -186,6 +184,11 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   }
 
   private class MyCopyProvider implements CopyProvider {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
 
     @Override
     public void performCopy(@NotNull DataContext dataContext) {

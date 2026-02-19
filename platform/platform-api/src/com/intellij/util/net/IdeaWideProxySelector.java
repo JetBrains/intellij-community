@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
-import com.github.markusbernhardt.proxy.ProxySearch;
-import com.github.markusbernhardt.proxy.selector.misc.BufferedProxySelector;
-import com.github.markusbernhardt.proxy.selector.pac.PacProxySelector;
-import com.github.markusbernhardt.proxy.selector.pac.UrlPacScriptSource;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.proxy.CommonProxy;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -19,10 +19,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jetbrains.annotations.NotNull;
 
+/** @deprecated use {@link JdkProxyProvider#getProxySelector()} or {@link IdeProxySelector} */
+@SuppressWarnings({"removal", "unused"})
+@Deprecated(forRemoval = true)
 public final class IdeaWideProxySelector extends ProxySelector {
-  private final static Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
+  private static final Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
+  private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
+
+  private static volatile long ourProxyAutoDetectDurationMs = -1L;
 
   private final HttpConfigurable myHttpConfigurable;
   private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<>();
@@ -33,7 +38,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
 
   @Override
   public List<Proxy> select(@NotNull URI uri) {
-    LOG.debug("IDEA-wide proxy selector asked for " + uri.toString());
+    LOG.debug("IDEA-wide proxy selector asked for " + uri);
 
     String scheme = uri.getScheme();
     if (!("http".equals(scheme) || "https".equals(scheme))) {
@@ -60,14 +65,24 @@ public final class IdeaWideProxySelector extends ProxySelector {
     }
 
     if (myHttpConfigurable.USE_PROXY_PAC) {
-      return selectUsingPac(uri);
+      // https://youtrack.jetbrains.com/issue/IDEA-262173
+      String oldDocumentBuilderFactory =
+        System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+      try {
+        return selectUsingPac(uri);
+      }
+      catch (Throwable e) {
+        LOG.error("Cannot select using PAC", e);
+      }
+      finally {
+        SystemProperties.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, oldDocumentBuilderFactory);
+      }
     }
 
     return CommonProxy.NO_PROXY_LIST;
   }
 
-  @NotNull
-  private List<Proxy> selectUsingPac(@NotNull URI uri) {
+  private @NotNull List<Proxy> selectUsingPac(@NotNull URI uri) {
     // It is important to avoid resetting Pac based ProxySelector unless option was changed
     // New instance will download configuration file and interpret it before making the connection
     String pacUrlForUse = myHttpConfigurable.USE_PAC_URL && !StringUtil.isEmpty(myHttpConfigurable.PAC_URL) ? myHttpConfigurable.PAC_URL : null;
@@ -77,15 +92,11 @@ public final class IdeaWideProxySelector extends ProxySelector {
     }
 
     if (pair == null) {
-      ProxySelector newProxySelector;
+      var searchStartMs = System.currentTimeMillis();
+      ProxySelector newProxySelector = NetUtils.getProxySelector(pacUrlForUse);
       if (pacUrlForUse == null) {
-        ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
-        // cache 32 urls for up to 10 min
-        proxySearch.setPacCacheSettings(32, 10 * 60 * 1000, BufferedProxySelector.CacheScope.CACHE_SCOPE_HOST);
-        newProxySelector = proxySearch.getProxySelector();
-      }
-      else {
-        newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourProxyAutoDetectDurationMs = System.currentTimeMillis() - searchStartMs;
       }
 
       pair = Pair.create(newProxySelector, pacUrlForUse);
@@ -112,15 +123,24 @@ public final class IdeaWideProxySelector extends ProxySelector {
   @Override
   public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     if (myHttpConfigurable.USE_PROXY_PAC) {
+      // FIXME bug here! scheme is never used in proxy code, uri.getScheme() -> null
       myHttpConfigurable.removeGeneric(new CommonProxy.HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
       LOG.debug("generic proxy credentials (if were saved) removed");
       return;
     }
 
     final InetSocketAddress isa = sa instanceof InetSocketAddress ? (InetSocketAddress) sa : null;
-    if (myHttpConfigurable.USE_HTTP_PROXY && isa != null && Objects.equals(myHttpConfigurable.PROXY_HOST, isa.getHostName())) {
+    if (myHttpConfigurable.USE_HTTP_PROXY && isa != null && Objects.equals(myHttpConfigurable.PROXY_HOST, isa.getHostString())) {
       LOG.debug("connection failed message passed to http configurable");
       myHttpConfigurable.LAST_ERROR = ioe.getMessage();
     }
+  }
+
+  /**
+   * @return duration that proxy auto-detection took (ms), or -1 in case automatic proxy detection wasn't triggered
+   */
+  @ApiStatus.Internal
+  public static long getProxyAutoDetectDurationMs() {
+    return ourProxyAutoDetectDurationMs;
   }
 }

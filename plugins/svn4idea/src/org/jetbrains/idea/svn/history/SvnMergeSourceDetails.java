@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ModalityState;
@@ -23,12 +23,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +61,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   }
 
   public static void showMe(final Project project, final SvnFileRevision revision, final VirtualFile file) {
-    if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
+    if (ModalityState.nonModal().equals(ModalityState.current())) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     final ContentManager contentManager = toolWindow.getContentManager();
 
@@ -66,7 +69,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     // TODO: Temporary memory leak fix - rewrite this part not to create dialog if only createCenterPanel(), but not show() is invoked
     Disposer.register(project, dialog.getDisposable());
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(dialog.createCenterPanel(),
+    Content content = ContentFactory.getInstance().createContent(dialog.createCenterPanel(),
         SvnBundle.message("merge.source.details.title", (file == null) ? revision.getURL().toDecodedString() : file.getName(), revision.getRevisionNumber().asString()), true);
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
 
@@ -77,8 +80,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return null;
   }
 
@@ -99,10 +101,10 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   }
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
-    private final static int ourMaxWidth = 100;
+    private static final int ourMaxWidth = 100;
 
     @Override
-    public void customizeCellRenderer(final JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       final Object value,
                                       final boolean selected,
                                       final boolean expanded,
@@ -132,7 +134,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
       append(", " + formatPrettyDateTime(revision.getRevisionDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
-    private @Nls @NotNull String getTruncatedSuffix() {
+    private static @Nls @NotNull String getTruncatedSuffix() {
       return "(" + ELLIPSIS + ")";
     }
   }
@@ -205,8 +207,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
     }
 
     @Override
-    @Nls
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return getBannerSlogan();
     }
 

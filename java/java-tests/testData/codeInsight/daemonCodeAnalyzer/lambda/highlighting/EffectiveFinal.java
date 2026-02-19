@@ -69,6 +69,15 @@ public class XXX {
          int y;
          foo(() -> <error descr="Variable used in lambda expression should be final or effectively final">y</error>=1);
      }
+     
+     void m9() {
+         int x = 42;
+         for (int i = 0; i < 2; i++) {
+           x = x + 42;
+         }
+         int y = 5;
+         foo(() -> y);
+     }
 }
 
 class Sample {

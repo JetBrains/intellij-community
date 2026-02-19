@@ -25,17 +25,15 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
+public final class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.result.increment.or.decrement.expression.used");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

@@ -1,32 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.AsyncStackTraceProvider;
+import com.intellij.debugger.engine.AsyncStacksUtils;
+import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaStackFrame;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.SyntheticMethodBreakpoint;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.Evaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
-import com.sun.jdi.*;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.Location;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
@@ -101,7 +118,9 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
 
   public static void createAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+    if (Registry.is("debugger.async.stacks.via.breakpoints", false)) {
+      DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+    }
   }
 
   public static void clearCaches(DebugProcessImpl debugProcess) {
@@ -149,8 +168,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     bpts.add(breakpoint);
   }
 
-  @Nullable
-  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+  public static @Nullable List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
     if (ContainerUtil.isEmpty(capturedStacks)) {
@@ -163,7 +181,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     try {
       Location location = frame.location();
       String className = location.declaringType().name();
-      String methodName = location.method().name();
+      String methodName = DebuggerUtilsEx.getLocationMethodName(location);
 
       for (StackCapturingLineBreakpoint b : captureBreakpoints) {
         String insertClassName = b.myCapturePoint.myInsertClassName;
@@ -188,12 +206,11 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     return null;
   }
 
-  @Nullable
-  public static List<StackFrameItem> getRelatedStack(@Nullable ObjectReference key, @Nullable DebugProcessImpl process) {
+  public static @Nullable List<StackFrameItem> getRelatedStack(@Nullable ObjectReference key, @Nullable DebugProcessImpl process) {
     if (process != null && key != null) {
       Map<Object, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
       if (data != null) {
-        return data.get(key);
+        return data.get(getKey(key));
       }
     }
     return null;
@@ -206,7 +223,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
   private static class MyEvaluator {
     private final String myExpression;
     private ExpressionEvaluator myEvaluator;
-    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = ContainerUtil.createWeakMap();
+    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = new WeakHashMap<>();
 
     MyEvaluator(String expression) {
       myExpression = expression;
@@ -233,9 +250,9 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
       if (evaluator == null) {
         @SuppressWarnings("ConstantConditions")
         Location location = context.getFrameProxy().location();
-        evaluator = myEvaluatorCache.get(location);
+        evaluator = location == null ? null : myEvaluatorCache.get(location);
         if (evaluator == null && !StringUtil.isEmpty(myExpression)) {
-          evaluator = ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
+          evaluator = ReadAction.compute(() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);
             PsiElement contextElement = ContextUtil.getContextElement(sourcePosition);
             return EvaluatorBuilderImpl.build(
@@ -256,10 +273,9 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
     }
   }
 
-  public static class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
-    @Nullable
+  public static final class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
     @Override
-    public List<StackFrameItem> getAsyncStackTrace(@NotNull JavaStackFrame stackFrame, @NotNull SuspendContextImpl suspendContext) {
+    public @Nullable List<StackFrameItem> getAsyncStackTrace(@NotNull JavaStackFrame stackFrame, @NotNull SuspendContextImpl suspendContext) {
       return getRelatedStack(stackFrame.getStackFrameProxy(), suspendContext);
     }
   }

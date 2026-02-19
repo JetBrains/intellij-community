@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.tracing.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tracing-rt",
+  module_name = "intellij.platform.tracing.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = ["@lib//:jetbrains-annotations"]
+)
+
+jvm_library(
+  name = "tracing-rt_test_lib",
+  module_name = "intellij.platform.tracing.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [":tracing-rt"]
+)
+### auto-generated section `build intellij.platform.tracing.rt` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.generator;
 
 import com.intellij.lang.Language;
@@ -24,13 +24,19 @@ import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
+import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class SpellCheckerDictionaryGenerator {
   private static final Logger LOG = Logger.getInstance(SpellCheckerDictionaryGenerator.class);
@@ -79,11 +85,11 @@ public abstract class SpellCheckerDictionaryGenerator {
         generate(dict, progressIndicator);
         progressIndicator.setFraction(i / (dictionaries.size() + 1.));
       }
-    }, "Generating Dictionaries", true, myProject);
+    }, SpellCheckerBundle.message("dictionary.generator.progress.title"), true, myProject);
   }
 
   private void generate(@NotNull String dict, ProgressIndicator progressIndicator) {
-    progressIndicator.setText("Processing dictionary: " + dict);
+    progressIndicator.setText(SpellCheckerBundle.message("dictionary.generator.processing.title", dict));
     generateDictionary(myProject, myDict2FolderMap.get(dict), myDictOutputFolder + "/" + dict + ".dic", progressIndicator);
   }
 
@@ -94,7 +100,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     // Collect stuff
     ApplicationManager.getApplication().runReadAction(() -> {
       for (VirtualFile folder : folderPaths) {
-        progressIndicator.setText2("Scanning folder: " + folder.getPath());
+        progressIndicator.setText2(SpellCheckerBundle.message("dictionary.generator.scanning.folder.title", folder.getPath()));
         final PsiManager manager = PsiManager.getInstance(project);
         processFolder(seenNames, manager, folder);
       }
@@ -110,7 +116,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     final ArrayList<String> names = new ArrayList<>(seenNames);
     Collections.sort(names);
     for (String name : names) {
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append("\n");
       }
       builder.append(name);
@@ -146,7 +152,7 @@ public abstract class SpellCheckerDictionaryGenerator {
 
   protected abstract void processFile(PsiFile file, HashSet<String> seenNames);
 
-  protected void process(@NotNull final PsiElement element, @NotNull final HashSet<String> seenNames) {
+  protected void process(final @NotNull PsiElement element, final @NotNull HashSet<String> seenNames) {
     final int endOffset = element.getTextRange().getEndOffset();
 
     // collect leafs  (spell checker inspection works with leafs)
@@ -169,9 +175,9 @@ public abstract class SpellCheckerDictionaryGenerator {
     }
   }
 
-  protected void processLeafsNames(@NotNull final PsiElement leafElement, @NotNull final HashSet<String> seenNames) {
-    final Language language = leafElement.getLanguage();
-    SpellCheckingInspection.tokenize(leafElement, language, new TokenConsumer() {
+  protected void processLeafsNames(final @NotNull PsiElement leafElement, final @NotNull HashSet<String> seenNames) {
+    Language language = leafElement.getLanguage();
+    SpellCheckingInspection.tokenize(leafElement, new TokenConsumer() {
       @Override
       public void consumeToken(PsiElement element,
                                final String text,
@@ -184,7 +190,7 @@ public abstract class SpellCheckerDictionaryGenerator {
           addSeenWord(seenNames, word, language);
         });
       }
-    });
+    }, null);
   }
 
   protected void addSeenWord(HashSet<String> seenNames, String word, Language language) {

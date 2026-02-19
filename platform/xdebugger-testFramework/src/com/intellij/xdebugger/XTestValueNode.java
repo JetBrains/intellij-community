@@ -10,9 +10,8 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.concurrent.Semaphore;
-import java.util.function.BiFunction;
 
 public class XTestValueNode extends XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl {
   public @Nullable Icon myIcon;
@@ -43,10 +42,7 @@ public class XTestValueNode extends XValueNodePresentationConfigurator.Configura
   }
 
   public void waitFor(long timeoutInMillis) {
-    waitFor(timeoutInMillis, XDebuggerTestUtil::waitFor);
-  }
-  public void waitFor(long timeoutInMillis, BiFunction<? super Semaphore, ? super Long, Boolean> waitFunction) {
-    if (!waitFunction.apply(myFinished, timeoutInMillis)) {
+    if (!XDebuggerTestUtil.waitFor(myFinished, timeoutInMillis)) {
       throw new AssertionError("Waiting timed out");
     }
   }

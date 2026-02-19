@@ -1,25 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.componentTree;
 
 import com.intellij.designer.actions.DesignerActionPanel;
-import com.intellij.designer.designSurface.*;
+import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.ComponentSelectionListener;
+import com.intellij.designer.designSurface.ComponentTargetFilter;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.designSurface.FeedbackLayer;
+import com.intellij.designer.designSurface.FeedbackTreeLayer;
+import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,13 +40,13 @@ import java.util.List;
 public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, TreeSelectionListener {
   private final EventListenerList myListenerList = new EventListenerList();
   private final ComponentTree myTree;
-  private final AbstractTreeBuilder myTreeBuilder;
+  private final StructureTreeModel<TreeContentProvider> myTreeModel;
   private final DesignerActionPanel myActionPanel;
   private boolean myCanvasSelection;
 
-  public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder, DesignerActionPanel actionPanel) {
+  public TreeEditableArea(ComponentTree tree, StructureTreeModel<TreeContentProvider> model, DesignerActionPanel actionPanel) {
     myTree = tree;
-    myTreeBuilder = treeBuilder;
+    myTreeModel = model;
     myActionPanel = actionPanel;
     hookSelection();
   }
@@ -73,14 +83,13 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   @Override
   public void valueChanged(TreeSelectionEvent e) {
-    if (!myTreeBuilder.isSelectionBeingAdjusted() && ApplicationManager.getApplication().isDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       fireSelectionChanged();
     }
   }
 
-  @NotNull
   @Override
-  public List<RadComponent> getSelection() {
+  public @NotNull List<RadComponent> getSelection() {
     return new ArrayList<>(getRawSelection());
   }
 
@@ -96,16 +105,16 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   @Override
   public void deselect(@NotNull RadComponent component) {
-    Collection<RadComponent> selection = getRawSelection();
+    Collection<RadComponent> selection = new ArrayList<>(getRawSelection());
     selection.remove(component);
     setRawSelection(selection);
   }
 
   @Override
   public void appendSelection(@NotNull RadComponent component) {
-    Collection<RadComponent> selection = getRawSelection();
-    selection.add(component);
-    setRawSelection(selection);
+    List<RadComponent> selection = getRawSelection();
+
+    setRawSelection(ContainerUtil.append(selection, component));
   }
 
   @Override
@@ -115,7 +124,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   @Override
   public void deselect(@NotNull Collection<RadComponent> components) {
-    Collection<RadComponent> selection = getRawSelection();
+    Collection<RadComponent> selection = new ArrayList<>(getRawSelection());
     selection.removeAll(components);
     setRawSelection(selection);
   }
@@ -129,33 +138,47 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   public void scrollToSelection() {
   }
 
-  private Collection<RadComponent> getRawSelection() {
-    return myTreeBuilder.getSelectedElements(RadComponent.class);
+  private @Unmodifiable List<RadComponent> getRawSelection() {
+    return TreeUtil.collectSelectedObjectsOfType(myTree, RadComponent.class);
   }
 
   private void setRawSelection(@Nullable Object value) {
+    Runnable finish = () -> {
+      hookSelection();
+      fireSelectionChanged();
+    };
+
     unhookSelection();
-    myTreeBuilder.queueUpdate();
 
-    if (value == null) {
-      myTreeBuilder.select(ArrayUtilRt.EMPTY_OBJECT_ARRAY, null);
-      myTree.clearSelection();
-    }
-    else if (value instanceof RadComponent) {
-      myTreeBuilder.select(value);
-    }
-    else {
-      Collection collection = (Collection)value;
-      myTreeBuilder.select(collection.toArray(), null);
-      if (collection.isEmpty()) {
+    myTreeModel.invalidateAsync().thenRun(() -> {
+      if (value == null) {
         myTree.clearSelection();
+        finish.run();
       }
-    }
+      else if (value instanceof RadComponent) {
+        myTreeModel.select(value, myTree, path -> finish.run());
+      }
+      else {
+        List<TreePath> selection = new ArrayList<>();
+        for (Object element : (Collection)value) {
+          if (element instanceof RadComponent component) {
+            TreePath path = getPath(component);
+            if (path != null) {
+              selection.add(path);
+            }
+          }
+        }
 
-    myTreeBuilder.queueUpdate();
-    hookSelection();
-    fireSelectionChanged();
-  }
+        if (selection.isEmpty()) {
+          myTree.clearSelection();
+        }
+        else {
+          TreeUtil.selectPaths(myTree, selection);
+        }
+        finish.run();
+      }
+    });
+ }
 
   public boolean isCanvasSelection() {
     return myCanvasSelection;
@@ -180,9 +203,8 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   public void setDescription(@Nullable String text) {
   }
 
-  @NotNull
   @Override
-  public JComponent getNativeComponent() {
+  public @NotNull JComponent getNativeComponent() {
     return myTree;
   }
 
@@ -260,9 +282,11 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   //////////////////////////////////////////////////////////////////////////////////////////
 
   private TreePath getPath(@NotNull RadComponent component) {
-    // TODO: I don't know better way gets tree path for element
-    DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(component);
-    return node == null ? null : new TreePath(node.getPath());
+    if (myTreeModel.getRoot() instanceof DefaultMutableTreeNode root) {
+      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, component);
+      return node == null ? null : new TreePath(node.getPath());
+    }
+    return null;
   }
 
   @Override
@@ -272,7 +296,8 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
       if (feedback == INSERT_SELECTION) {
         myTree.scrollPathToVisible(path);
         if (!myTree.isExpanded(path)) {
-          myTreeBuilder.expand(component, null);
+          myTreeModel.expand(component, myTree, p -> {
+          });
         }
       }
       else {

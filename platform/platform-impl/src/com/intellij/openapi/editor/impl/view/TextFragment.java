@@ -1,19 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics2D;
 import java.util.function.Consumer;
 
 /**
  * Fragment of text using a common font
  */
-abstract class TextFragment implements LineFragment {
+@ApiStatus.Internal
+public abstract class TextFragment implements LineFragment {
   final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
+  private final @Nullable EditorView myView;
 
-  TextFragment(int charCount) {
+  TextFragment(int charCount, @Nullable EditorView view) {
     assert charCount > 0;
+    this.myView = view;
     myCharPositions = new float[charCount]; // populated by subclasses' constructors
   }
 
@@ -24,9 +30,8 @@ abstract class TextFragment implements LineFragment {
 
   abstract boolean isRtl();
 
-  @NotNull
   @Override
-  public LineFragment subFragment(int startOffset, int endOffset) {
+  public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
     assert startOffset >= 0;
     assert endOffset <= myCharPositions.length;
     assert startOffset < endOffset;
@@ -53,6 +58,20 @@ abstract class TextFragment implements LineFragment {
   @Override
   public int visualToLogicalColumn(float startX, int startColumn, int column) {
     return column;
+  }
+
+  boolean isGridCellAlignmentEnabled() {
+    return myView != null && myView.getEditor().getCharacterGrid() != null;
+  }
+
+  float adjustedWidth(int codePoint) {
+    assert myView != null;
+    // in the grid mode all font styles should have identical widths
+    return myView.getCodePointWidth(codePoint, Font.PLAIN);
+  }
+
+  static boolean isTooClose(float width, float newWidth) {
+    return Math.abs(width - newWidth) < 0.001;
   }
 
   private final class TextFragmentWindow implements LineFragment {
@@ -116,7 +135,7 @@ abstract class TextFragment implements LineFragment {
     }
 
     @Override
-    public int[] xToVisualColumn(float startX, float x) {
+    public int @NotNull [] xToVisualColumn(float startX, float x) {
       int startColumnInParent = visualColumnToParent(0);
       float parentStartX = startX - TextFragment.this.visualColumnToX(0, startColumnInParent);
       int[] parentColumn = TextFragment.this.xToVisualColumn(parentStartX, x);
@@ -142,13 +161,12 @@ abstract class TextFragment implements LineFragment {
     }
 
     @Override
-    public Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
+    public @NotNull Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
       return TextFragment.this.draw(x, y, visualOffsetToParent(startOffset), visualOffsetToParent(endOffset));
     }
 
-    @NotNull
     @Override
-    public LineFragment subFragment(int startOffset, int endOffset) {
+    public @NotNull LineFragment subFragment(int startOffset, int endOffset) {
       return TextFragment.this.subFragment(startOffset + myStartOffset, endOffset + myStartOffset);
     }
   }

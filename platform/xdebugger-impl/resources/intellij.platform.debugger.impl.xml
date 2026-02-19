@@ -1,0 +1,38 @@
+<!--
+  This file contains only v2 dependencies.
+  All new extensions, actions, services, extension points, etc. should go to intellij.platform.debugger.impl.content.xml
+-->
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.miglayout.swing"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.rpc.topics"/>
+    <module name="intellij.platform.util.ex"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <xi:include href="intellij.platform.debugger.impl.content.xml"/>
+</idea-plugin>

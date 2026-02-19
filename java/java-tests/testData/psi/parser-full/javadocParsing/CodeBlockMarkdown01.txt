@@ -1,0 +1,30 @@
+PsiJavaFile:CodeBlockMarkdown01.java
+  PsiDocComment
+    PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+    PsiWhiteSpace(' ')
+    PsiMarkdownCodeBlock:
+      PsiDocToken:DOC_CODE_FENCE('```')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' backtick Code block')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_CODE_FENCE('```')
+    PsiWhiteSpace('\n')
+    PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+    PsiDocToken:DOC_COMMENT_DATA(' ')
+    PsiMarkdownCodeBlock:
+      PsiDocToken:DOC_CODE_FENCE('~~~')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' squigly code block')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_CODE_FENCE('~~~')
+    PsiWhiteSpace('\n')
+    PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+    PsiDocToken:DOC_COMMENT_DATA(' out of code block')
+  PsiImportList
+    <empty list>

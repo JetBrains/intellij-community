@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
@@ -11,11 +11,9 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.function.BiFunction;
 
-/**
- * @author peter
- */
+
 public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLinkHandler> {
   public static final ExtensionPointName<TooltipLinkHandlerEP> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.linkHandler");
 
@@ -25,41 +23,44 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
   @Attribute("handlerClass")
   public String handlerClassName;
 
-  @Nullable
   @Override
-  protected String getImplementationClassName() {
+  protected @Nullable String getImplementationClassName() {
     return handlerClassName;
   }
 
-  public static boolean handleLink(@NotNull final String ref, @NotNull final Editor editor) {
-    return EP_NAME.computeSafeIfAny(ep -> {
-      if (ref.startsWith(ep.prefix)) {
-        String refSuffix = ref.substring(ep.prefix.length());
-        return ep.getInstance().handleLink(refSuffix.replaceAll("<br/>", "\n"), editor);
-      }
-      return null;
-    }) == Boolean.TRUE;
+  public static boolean handleLink(@NotNull String ref, @NotNull Editor editor) {
+    Boolean handled = withHandler(
+      ref,
+      (handler, refSuffix) -> handler.handleLink(refSuffix.replaceAll("<br/>", "\n"), editor)
+    );
+    return Boolean.TRUE == handled;
   }
 
-  @Nullable
-  public static @InspectionMessage String getDescription(@NotNull final String ref, @NotNull final Editor editor) {
+  public static @Nullable @InspectionMessage String getDescription(@NotNull String ref, @NotNull Editor editor) {
+    return withHandler(
+      ref,
+      (handler, refSuffix) -> handler.getDescription(refSuffix, editor)
+    );
+  }
+
+  public static @NotNull String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
+    String title = withHandler(
+      ref,
+      (handler, refSuffix) -> handler.getDescriptionTitle(refSuffix, editor)
+    );
+    return title != null ? title : IdeBundle.message("inspection.message.inspection.info");
+  }
+
+  private static <T> @Nullable T withHandler(
+    @NotNull String ref,
+    @NotNull BiFunction<@NotNull TooltipLinkHandler, @NotNull String, @Nullable T> func
+  ) {
     return EP_NAME.computeSafeIfAny(ep -> {
       if (ref.startsWith(ep.prefix)) {
         String refSuffix = ref.substring(ep.prefix.length());
-        return ep.getInstance().getDescription(refSuffix, editor);
+        return func.apply(ep.getInstance(), refSuffix);
       }
       return null;
     });
-  }
-
-  @NotNull
-  public static String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
-    return Objects.requireNonNull(EP_NAME.computeSafeIfAny(ep -> {
-      if (ref.startsWith(ep.prefix)) {
-        String refSuffix = ref.substring(ep.prefix.length());
-        return ep.getInstance().getDescriptionTitle(refSuffix, editor);
-      }
-      return IdeBundle.message("inspection.message.inspection.info");
-    }));
   }
 }

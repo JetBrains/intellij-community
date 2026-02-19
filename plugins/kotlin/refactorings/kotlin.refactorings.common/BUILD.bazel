@@ -1,0 +1,103 @@
+### auto-generated section `build kotlin.refactorings.common` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kotlin-refactorings-common",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
+)
+
+jvm_library(
+  name = "kotlin-refactorings-common",
+  module_name = "kotlin.refactorings.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-refactorings-common",
+  deps = [
+    "//java/java-indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/foldings",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//plugins/kotlin/base/psi",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/kotlin/base/util",
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/openapi:java",
+    "//platform/platform-impl:ide-impl",
+    "//platform/usageView",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/analysis",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/code-insight",
+    "//plugins/kotlin/base/kdoc",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/code-insight/utils",
+    "//libraries/guava",
+    "//plugins/kotlin/kotlin.searching/base",
+    "//plugins/kotlin/formatter",
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic"]
+)
+
+jvm_library(
+  name = "kotlin-refactorings-common_test_lib",
+  module_name = "kotlin.refactorings.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kotlin-refactorings-common",
+  runtime_deps = [
+    ":kotlin-refactorings-common",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/foldings:foldings_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//plugins/kotlin/base/util:util_test_lib",
+    "//java/java-psi-api:psi_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//java/java-impl-refactorings:impl-refactorings_test_lib",
+    "//java/openapi:java_test_lib",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/usageView:usageView_test_lib",
+    "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//plugins/kotlin/base/analysis:analysis_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/code-insight:code-insight_test_lib",
+    "//plugins/kotlin/base/kdoc:kdoc_test_lib",
+    "//java/java-impl:impl_test_lib",
+    "//plugins/kotlin/code-insight/utils:utils_test_lib",
+    "//libraries/guava:guava_test_lib",
+    "//plugins/kotlin/kotlin.searching/base:base_test_lib",
+    "//plugins/kotlin/formatter:formatter_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.refactorings.common` end

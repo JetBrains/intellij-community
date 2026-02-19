@@ -1,0 +1,44 @@
+{
+  "language": "Java",
+  "projectPath": "../ml-eval/ultimate",
+  "outputDir": "bin/ml-eval-insight-java-output",
+  "strategy": {
+    "collectContextOnly": false,
+    "insightsFilePath": "/Users/Petr.Surkov/PycharmProjects/insightsLlmc2markdown/dataset/aggregated.csv"
+  },
+  "actions": {
+    "evaluationRoots": [
+      "build/src/PatchBuilderBuildTarget.java",
+      "community/platform/core-api/src/com/intellij/util/SlowOperations.java",
+      "community/platform/core-impl/src/com/intellij/openapi/editor/impl/DocumentImpl.java",
+      "community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorImpl.java",
+      "community/platform/platform-impl/src/com/intellij/openapi/editor/impl/EditorSizeAdjustmentStrategy.java",
+      "dbe/database/impl/src/schemaEditor/ui/DbCollectionEditor.java",
+      "phpstorm/php/src/com/jetbrains/php/PhpWorkaroundUtil.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/inspections/PhpDeprecationInspection.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/inspections/PhpFqnInspectionBase.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/inspections/PhpPassByRefInspection.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/psi/resolve/types/PhpTypeAnalyserVisitor.java",
+      "phpstorm/php/src/com/jetbrains/php/lang/psi/resolve/types/PhpTypeInfo.java",
+      "phpstorm/php/src/com/jetbrains/php/mockery/PhpMockeryExpectedMethodReferenceContributor.java",
+      "plugins/JavaScriptLanguage/src/com/intellij/lang/javascript/linter/jshint/JSHintUtil.java",
+      "plugins/async/intellij.performanceTesting.async.core/src/com/jetbrains/performancePlugin/profilers/async/core/AsyncProfilerCommandBuilder.java"
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 1000,
+    "filesLimit": 1000,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Java_FLCC_-_INSIGHTS",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

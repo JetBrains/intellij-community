@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.Facet;
@@ -25,7 +25,11 @@ import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCase {
   private FrameworkSupportModelBase myFrameworkSupportModel;
@@ -112,8 +116,7 @@ public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCa
     myFrameworkSupportModel.setSelectedVersion(frameworkType.getId(), version);
   }
 
-  @NotNull
-  protected <F extends Facet> F getFacet(FacetTypeId<F> id) {
+  protected @NotNull <F extends Facet> F getFacet(FacetTypeId<F> id) {
     final F facet = FacetManager.getInstance(myModule).getFacetByType(id);
     assertNotNull(id + " facet not found", facet);
     return facet;

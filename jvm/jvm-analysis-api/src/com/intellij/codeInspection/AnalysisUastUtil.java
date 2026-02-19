@@ -1,17 +1,39 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UBinaryExpression;
+import org.jetbrains.uast.UBlockExpression;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UCallableReferenceExpression;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UFile;
+import org.jetbrains.uast.UIdentifier;
+import org.jetbrains.uast.ULambdaExpression;
+import org.jetbrains.uast.ULocalVariable;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UReturnExpression;
+import org.jetbrains.uast.UThisExpression;
+import org.jetbrains.uast.UastContextKt;
 
 @ApiStatus.Internal
 public final class AnalysisUastUtil {
-  @Nullable
-  public static UCallExpression getUCallExpression(@NotNull PsiElement element) {
+  public static @Nullable UCallExpression getUCallExpression(@NotNull PsiElement element) {
     UCallExpression callExpression = UastContextKt.toUElement(element, UCallExpression.class);
     if (callExpression == null) {
       return null;
@@ -23,8 +45,7 @@ public final class AnalysisUastUtil {
     return callExpression;
   }
 
-  @Nullable
-  public static PsiElement getMethodIdentifierSourcePsi(@NotNull UCallExpression callExpression) {
+  public static @Nullable PsiElement getMethodIdentifierSourcePsi(@NotNull UCallExpression callExpression) {
     UIdentifier methodIdentifier = callExpression.getMethodIdentifier();
     if (methodIdentifier == null) {
       return null;
@@ -32,25 +53,21 @@ public final class AnalysisUastUtil {
     return methodIdentifier.getSourcePsi();
   }
 
-  @Nullable
-  public static String getExpressionReturnTypePsiClassFqn(@NotNull UCallExpression expression) {
+  public static @Nullable String getExpressionReturnTypePsiClassFqn(@NotNull UCallExpression expression) {
     return getTypeClassFqn(expression.getReturnType());
   }
 
-  @Nullable
-  public static PsiClass getTypePsiClass(@Nullable PsiType type) {
+  public static @Nullable PsiClass getTypePsiClass(@Nullable PsiType type) {
     type = GenericsUtil.eliminateWildcards(type);
     if (!(type instanceof PsiClassType)) return null;
     return ((PsiClassType)type).rawType().resolve();
   }
 
-  @Nullable
-  public static String getExpressionReceiverTypeClassFqn(@NotNull UCallExpression expression) {
+  public static @Nullable String getExpressionReceiverTypeClassFqn(@NotNull UCallExpression expression) {
     return getTypeClassFqn(expression.getReceiverType());
   }
 
-  @Nullable
-  public static String getTypeClassFqn(@Nullable PsiType type) {
+  public static @Nullable String getTypeClassFqn(@Nullable PsiType type) {
     if (type == null) return null;
     return type.getCanonicalText().replaceAll("<.*?>", ""); // workaround
     //TODO https://youtrack.jetbrains.com/issue/KT-25024
@@ -59,8 +76,7 @@ public final class AnalysisUastUtil {
     //return psiClass.getQualifiedName();
   }
 
-  @Nullable
-  public static String getCallableReferenceClassFqn(@NotNull UCallableReferenceExpression expression) {
+  public static @Nullable String getCallableReferenceClassFqn(@NotNull UCallableReferenceExpression expression) {
     //TODO why getQualifierType() -> null for Java?
     String classFqn = getTypeClassFqn(expression.getQualifierType());
     if (classFqn != null) return classFqn;
@@ -119,7 +135,7 @@ public final class AnalysisUastUtil {
     return false;
   }
 
-  public static PsiType getContainingMethodOrLambdaReturnType(UCallExpression expression) {
+  public static PsiType getContainingMethodOrLambdaReturnType(UExpression expression) {
     UElement parent = expression.getUastParent();
     while (parent != null) {
       if (parent instanceof UMethod) {
@@ -133,15 +149,6 @@ public final class AnalysisUastUtil {
         if (functionalInterfaceType != null) {
           return LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
         }
-
-        // if `functionalInterfaceType` will return proper type for Kotlin (after KT-25297 is fixed) then this part could be dropped
-        UElement lambdaParent = parent.getUastParent();
-        if (lambdaParent instanceof UCallExpression) {
-          PsiParameter lambdaParameter = UastUtils.getParameterForArgument(((UCallExpression)lambdaParent), ((ULambdaExpression)parent));
-          if (lambdaParameter == null) return null;
-          return LambdaUtil.getFunctionalInterfaceReturnType(lambdaParameter.getType());
-        }
-
         return null;
       }
       if (parent instanceof UClass) {

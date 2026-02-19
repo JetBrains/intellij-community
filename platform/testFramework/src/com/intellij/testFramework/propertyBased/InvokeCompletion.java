@@ -19,14 +19,20 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +40,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainText;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -46,11 +56,15 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author peter
- */
 public class InvokeCompletion extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance(InvokeCompletion.class);
   private final CompletionPolicy myPolicy;
@@ -160,15 +174,16 @@ public class InvokeCompletion extends ActionOnFile {
       ((LookupImpl)lookup).finishLookup(completionChar, item);
     } else {
       EditorActionManager.getInstance();
-      TypedAction.getInstance().actionPerformed(editor, completionChar, ((EditorImpl)lookup.getTopLevelEditor()).getDataContext());
+      TypedAction.getInstance().actionPerformed(editor, completionChar, EditorUtil.getEditorDataContext(lookup.getTopLevelEditor()));
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   private boolean checkHighlightingErrorsAtCaret(Editor editor, Environment env, String expectedVariant) {
     Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), hostEditor);
     int caretOffset = hostEditor.getCaretModel().getOffset();
-    boolean hasErrors = ContainerUtil.exists(infos, i -> i.getStartOffset() <= caretOffset && caretOffset <= i.getEndOffset());
+    boolean hasErrors = ContainerUtil.exists(infos, i -> i.containsInclusive(caretOffset));
     if (hasErrors) {
       env.logMessage("Found syntax errors at the completion point, skipping expected completion check for '" + expectedVariant + "'");
       return false;
@@ -185,7 +200,7 @@ public class InvokeCompletion extends ActionOnFile {
     return expectedEnd == caretOffset && getFile().getText().substring(0, caretOffset).endsWith(expectedVariant);
   }
 
-  private void checkNoDuplicates(List<LookupElement> items) {
+  private void checkNoDuplicates(List<? extends LookupElement> items) {
     Map<List<?>, LookupElement> presentations = new HashMap<>();
     for (LookupElement item : items) {
       LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);
@@ -200,7 +215,10 @@ public class InvokeCompletion extends ActionOnFile {
                                         p.isStrikeout());
       var prev = presentations.put(info, item);
       if (prev != null && !myPolicy.areDuplicatesOk(prev, item)) {
-        TestCase.fail("Duplicate suggestions: " + p);
+        Function<LookupElement, String> itemInfoFn = it ->
+          it + ";" + Stream.iterate(it, Objects::nonNull, i -> i instanceof LookupElementDecorator<?> dec ? dec.getDelegate() : null)
+            .map(i -> i.getClass().getName()).collect(Collectors.joining("->"));
+        TestCase.fail("Duplicate suggestions: " + p + "(item1: " + itemInfoFn.apply(prev) + "; item2:" + itemInfoFn.apply(item) + ")");
       }
     }
   }

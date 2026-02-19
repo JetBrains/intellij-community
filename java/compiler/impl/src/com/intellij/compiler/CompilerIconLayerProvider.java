@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Iconable;
@@ -28,12 +13,10 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author yole
- */
-public class CompilerIconLayerProvider implements IconLayerProvider {
+
+public final class CompilerIconLayerProvider implements IconLayerProvider {
   @Override
   public Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
     VirtualFile vFile = null;
@@ -53,15 +36,14 @@ public class CompilerIconLayerProvider implements IconLayerProvider {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getLayerDescription() {
+  public @NotNull String getLayerDescription() {
     return JavaCompilerBundle.message("node.excluded.flag.tooltip");
   }
 
   public static boolean isExcluded(final VirtualFile vFile, final Project project) {
     return vFile != null
-           && ServiceManager.getService(project, FileIndexFacade.class).isInSource(vFile)
+           && FileIndexFacade.getInstance(project).isInSource(vFile)
            && CompilerConfiguration.getInstance(project).isExcludedFromCompilation(vFile);
   }
 }

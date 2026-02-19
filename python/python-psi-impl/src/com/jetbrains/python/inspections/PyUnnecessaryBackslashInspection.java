@@ -24,7 +24,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveUnnecessaryBackslashQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PySetLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,19 +43,18 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Inspection to highlight backslashes in places where line continuation is implicit (inside (), [], {}).
  */
-public class PyUnnecessaryBackslashInspection extends PyInspection {
+public final class PyUnnecessaryBackslashInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -60,8 +69,9 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
 
     @Override
     public void visitPyTupleExpression(@NotNull PyTupleExpression node) {
-      if (node.getParent() instanceof PyParenthesizedExpression)
+      if (node.getParent() instanceof PyParenthesizedExpression) {
         findProblem(node);
+      }
     }
 
     @Override
@@ -106,7 +116,7 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
       }
     }
 
-    private void findProblem(@Nullable final PsiElement expression) {
+    private void findProblem(final @Nullable PsiElement expression) {
       final PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(expression, PsiWhiteSpace.class);
       if (children != null) {
         for (PsiWhiteSpace ws : children) {
@@ -117,6 +127,5 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
         }
       }
     }
-
   }
 }

@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
@@ -12,8 +12,14 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -37,9 +43,8 @@ class TestClass extends TestObject {
     options.add(StringUtil.getPackageName(getConfiguration().getPersistentData().getMainClassName()));
   }
 
-  @NotNull
   @Override
-  protected String getForkMode() {
+  protected @NotNull String getForkMode() {
     String forkMode = super.getForkMode();
     return JUnitConfiguration.FORK_KLASS.equals(forkMode) ? JUnitConfiguration.FORK_REPEAT : forkMode;
   }
@@ -54,8 +59,16 @@ class TestClass extends TestObject {
   }
 
   @Override
-  public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
-    return RefactoringListeners.getClassOrPackageListener(element, configuration.myClass);
+  public RefactoringElementListener getListener(final PsiElement element) {
+    String name = getConfiguration().getPersistentData().MAIN_CLASS_NAME;
+    if (element instanceof PsiNamedElement namedElement) {
+      // do not react on unrelated refactorings
+      String elementName = namedElement.getName();
+      if (elementName == null || name == null || !name.contains(elementName)) {
+        return null;
+      }
+    }
+    return RefactoringListeners.getClassOrPackageListener(element, getConfiguration().myClass);
   }
 
   @Override
@@ -81,8 +94,9 @@ class TestClass extends TestObject {
     final String testClassName = getConfiguration().getPersistentData().getMainClassName();
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final PsiClass testClass = configurationModule.checkModuleAndClassName(testClassName, JUnitBundle.message("no.test.class.specified.error.text"));
-    if (!JUnitUtil.isTestClass(testClass)) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));
+    TestFramework framework = TestFrameworks.detectFramework(testClass);
+    if (framework == null || !framework.isTestClass(testClass)) {
+      throw new RuntimeConfigurationWarning(JUnitBundle.message("class.not.test.error.message", testClassName));
     }
   }
 }

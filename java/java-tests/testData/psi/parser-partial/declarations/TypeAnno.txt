@@ -130,21 +130,20 @@ PsiJavaFile:TypeAnno.java
               PsiWhiteSpace(' ')
               PsiKeyword:instanceof('instanceof')
               PsiWhiteSpace(' ')
-              PsiTypeTestPattern
-                PsiTypeElement:@F C
-                  PsiAnnotation
-                    PsiJavaToken:AT('@')
-                    PsiJavaCodeReferenceElement:F
-                      PsiIdentifier:F('F')
-                      PsiReferenceParameterList
-                        <empty list>
-                    PsiAnnotationParameterList
-                      <empty list>
-                  PsiWhiteSpace(' ')
-                  PsiJavaCodeReferenceElement:C
-                    PsiIdentifier:C('C')
+              PsiTypeElement:@F C
+                PsiAnnotation
+                  PsiJavaToken:AT('@')
+                  PsiJavaCodeReferenceElement:F
+                    PsiIdentifier:F('F')
                     PsiReferenceParameterList
                       <empty list>
+                  PsiAnnotationParameterList
+                    <empty list>
+                PsiWhiteSpace(' ')
+                PsiJavaCodeReferenceElement:C
+                  PsiIdentifier:C('C')
+                  PsiReferenceParameterList
+                    <empty list>
           PsiJavaToken:SEMICOLON(';')
         PsiWhiteSpace('\n    ')
         PsiDeclarationStatement

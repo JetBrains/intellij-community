@@ -1,30 +1,33 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public interface FileContent extends IndexedFile {
+  /**
+   * For binary files this is exactly the bytes from the file.
+   * <p>
+   * For text files content is normalized: new lines are converted to "\n", if the file contains BOM (e.g. FF FE), it will be dropped.
+   * <p>
+   * The following invariant holds true:
+   * <pre>
+   *   getContent() == getContentAsText().toString().getBytes(charset)
+   * </pre>
+   * where {@code charset} is either detected, or forced (e.g. by FileType)
+   *
+   * @return normalized contents of the file as bytes
+   */
   byte @NotNull [] getContent();
 
-  @NotNull
-  CharSequence getContentAsText();
+  /**
+   * For text files content is normalized: new lines are converted to "\n", if the file contains BOM (e.g. FF FE), it will be dropped.
+   *  <p>
+   * Throws exception for binary files
+   *
+   * @return normalized contents of the file as CharSequence
+   */
+  @NotNull CharSequence getContentAsText();
 
-  @NotNull
-  PsiFile getPsiFile();
+  @NotNull PsiFile getPsiFile();
 }

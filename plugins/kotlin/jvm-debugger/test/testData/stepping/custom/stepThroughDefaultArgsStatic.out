@@ -1,0 +1,12 @@
+LineBreakpoint created at stepThroughDefaultArgsStatic.kt:19
+Run Java
+Connected to the target VM
+stepThroughDefaultArgsStatic.kt:19
+stepThroughDefaultArgsStatic.kt:4
+stepThroughDefaultArgsStatic.kt:6
+stepThroughDefaultArgsStatic.kt:8
+stepThroughDefaultArgsStatic.kt:9
+stepThroughDefaultArgsStatic.kt:19
+Disconnected from the target VM
+
+Process finished with exit code 0

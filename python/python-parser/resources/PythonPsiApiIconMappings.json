@@ -1,0 +1,15 @@
+{
+  "icons": {
+    "com": {
+      "jetbrains": {
+        "python": {
+          "parser": {
+            "expui": {
+              "python.svg": "icons/com/jetbrains/python/parser/pythonFile.svg"
+            }
+          }
+        }
+      }
+    }
+  }
+}

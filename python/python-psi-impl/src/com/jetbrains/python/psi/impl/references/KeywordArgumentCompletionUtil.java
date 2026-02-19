@@ -6,23 +6,48 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class KeywordArgumentCompletionUtil {
+public final class KeywordArgumentCompletionUtil {
   public static void collectFunctionArgNames(PyElement element,
                                              List<? super LookupElement> ret,
-                                             @NotNull final TypeEvalContext context,
+                                             final @NotNull TypeEvalContext context,
                                              final boolean addEquals) {
     PyCallExpression callExpr = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpr != null) {
@@ -51,10 +76,9 @@ public class KeywordArgumentCompletionUtil {
     }
   }
 
-  @NotNull
-  private static List<String> collectParameterNamesFromType(@NotNull PyCallableType type,
-                                                            @NotNull PyCallExpression callSite,
-                                                            @NotNull TypeEvalContext context) {
+  private static @NotNull List<String> collectParameterNamesFromType(@NotNull PyCallableType type,
+                                                                     @NotNull PyCallExpression callSite,
+                                                                     @NotNull TypeEvalContext context) {
     List<String> result = new ArrayList<>();
     if (type.isCallable()) {
       final List<PyCallableParameter> parameters = type.getParameters(context);
@@ -82,7 +106,7 @@ public class KeywordArgumentCompletionUtil {
   }
 
   private static PsiElement getElementByChain(@NotNull PyReferenceExpression callee, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.implicitContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.implicitContext(context);
     final QualifiedResolveResult result = callee.followAssignmentsChain(resolveContext);
     return result.getElement();
   }
@@ -91,16 +115,16 @@ public class KeywordArgumentCompletionUtil {
     return ContainerUtil.indexOf(parameters, parameter -> parameter.getParameter() instanceof PySlashParameter);
   }
 
-  private static void addKeywordArgumentVariantsForFunction(@NotNull final PyCallExpression callExpr,
-                                                            @NotNull final PyFunction function,
-                                                            @NotNull final List<String> ret,
-                                                            @NotNull final Set<PyCallable> visited,
-                                                            @NotNull final TypeEvalContext context) {
+  private static void addKeywordArgumentVariantsForFunction(final @NotNull PyCallExpression callExpr,
+                                                            final @NotNull PyFunction function,
+                                                            final @NotNull List<String> ret,
+                                                            final @NotNull Set<PyCallable> visited,
+                                                            final @NotNull TypeEvalContext context) {
     if (visited.contains(function)) {
       return;
     }
 
-    boolean needSelf = function.getContainingClass() != null && function.getModifier() != PyFunction.Modifier.STATICMETHOD;
+    boolean needSelf = function.getContainingClass() != null && function.getModifier() != PyAstFunction.Modifier.STATICMETHOD;
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
 
     List<PyCallableParameter> parameters = function.getParameters(context);
@@ -209,8 +233,7 @@ public class KeywordArgumentCompletionUtil {
       else if (node.isCalleeText("__init__")) {
         kwArgsTransit = false;
         for (PyExpression e : node.getArguments()) {
-          if (e instanceof PyStarArgument) {
-            PyStarArgument kw = (PyStarArgument)e;
+          if (e instanceof PyStarArgument kw) {
             if (Objects.equals(myKwArgs.getName(), kw.getFirstChild().getNextSibling().getText())) {
               kwArgsTransit = true;
               break;
@@ -234,7 +257,6 @@ public class KeywordArgumentCompletionUtil {
     /**
      * is name of kwargs parameter the same as transmitted to __init__ call
      *
-     * @return
      */
     public boolean isKwArgsTransit() {
       return kwArgsTransit;

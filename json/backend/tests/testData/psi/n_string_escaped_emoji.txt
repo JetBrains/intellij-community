@@ -1,0 +1,6 @@
+JsonFile: n_string_escaped_emoji.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\🌀"')
+    PsiElement(])(']')

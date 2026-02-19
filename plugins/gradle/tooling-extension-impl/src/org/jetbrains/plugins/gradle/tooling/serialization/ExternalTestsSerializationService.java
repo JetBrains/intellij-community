@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -20,7 +20,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.OBJECT_ID_FIELD;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.assertNotNull;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.createIonWriter;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readInt;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.readStringSet;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeString;
+import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.writeStrings;
 
 /**
  * @author Vladislav.Soroka
@@ -32,24 +39,16 @@ public final class ExternalTestsSerializationService implements SerializationSer
   @Override
   public byte[] write(ExternalTestsModel testsModel, Class<? extends ExternalTestsModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, testsModel);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public ExternalTestsModel read(byte[] object, Class<? extends ExternalTestsModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -104,8 +103,7 @@ public final class ExternalTestsSerializationService implements SerializationSer
     });
   }
 
-  @Nullable
-  private static ExternalTestsModel read(final IonReader reader, final ReadContext context) {
+  private static @Nullable ExternalTestsModel read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     ExternalTestsModel model =
@@ -122,7 +120,7 @@ public final class ExternalTestsSerializationService implements SerializationSer
   }
 
   private static List<ExternalTestSourceMapping> readTestSourceMappings(IonReader reader, ReadContext context) {
-    List<ExternalTestSourceMapping> list = new ArrayList<ExternalTestSourceMapping>();
+    List<ExternalTestSourceMapping> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     ExternalTestSourceMapping testSourceMapping;
@@ -133,8 +131,7 @@ public final class ExternalTestsSerializationService implements SerializationSer
     return list;
   }
 
-  @Nullable
-  private static ExternalTestSourceMapping readTestSourceMapping(final IonReader reader, ReadContext context) {
+  private static @Nullable ExternalTestSourceMapping readTestSourceMapping(final IonReader reader, ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     ExternalTestSourceMapping dependency =
@@ -144,7 +141,7 @@ public final class ExternalTestsSerializationService implements SerializationSer
           DefaultExternalTestSourceMapping mapping = new DefaultExternalTestSourceMapping();
           mapping.setTestName(readString(reader, "testName"));
           mapping.setTestTaskPath(assertNotNull(readString(reader, "testTaskPath")));
-          mapping.setSourceFolders(readStringSet(reader));
+          mapping.setSourceFolders(readStringSet(reader, null));
           return mapping;
         }
       });
@@ -153,14 +150,14 @@ public final class ExternalTestsSerializationService implements SerializationSer
   }
 
   private static class ReadContext {
-    private final IntObjectMap<ExternalTestsModel> objectMap = new IntObjectMap<ExternalTestsModel>();
-    private final IntObjectMap<ExternalTestSourceMapping> testSourceMapping = new IntObjectMap<ExternalTestSourceMapping>();
+    private final IntObjectMap<ExternalTestsModel> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<ExternalTestSourceMapping> testSourceMapping = new IntObjectMap<>();
   }
 
   private static class WriteContext {
-    private final ObjectCollector<ExternalTestsModel, IOException> objectCollector = new ObjectCollector<ExternalTestsModel, IOException>();
+    private final ObjectCollector<ExternalTestsModel, IOException> objectCollector = new ObjectCollector<>();
     private final ObjectCollector<ExternalTestSourceMapping, IOException> mappingCollector =
-      new ObjectCollector<ExternalTestSourceMapping, IOException>();
+      new ObjectCollector<>();
   }
 }
 

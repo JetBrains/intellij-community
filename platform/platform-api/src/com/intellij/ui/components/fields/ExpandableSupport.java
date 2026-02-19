@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
@@ -14,13 +16,20 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorListener;
-import java.awt.*;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -32,6 +41,11 @@ import static java.beans.EventHandler.create;
 import static java.util.Collections.singletonList;
 import static javax.swing.KeyStroke.getKeyStroke;
 
+/**
+ * Internal implementation that provides some shared functionality
+ * for {@link ExpandableTextField} and for {@code ExpandableEditorSupport},
+ * which allows similar behavior for {@code EditorTextField} (one-line editor).
+ */
 @Internal
 public abstract class ExpandableSupport<Source extends JComponent> implements Expandable {
   private final Source source;
@@ -55,8 +69,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
    * @param onShow a string converter from the source to the popup content
    * @return a specific content to create the popup
    */
-  @NotNull
-  protected abstract Content prepare(@NotNull Source source, @NotNull Function<? super String, String> onShow);
+  protected abstract @NotNull Content prepare(@NotNull Source source, @NotNull Function<? super String, String> onShow);
 
   protected interface Content {
     /**
@@ -170,47 +183,51 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
           return false;
         }
       }).createPopup();
-    popup.show(new RelativePoint(location));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      popup.show(new RelativePoint(location));
+    }
   }
 
-  @NotNull
-  public Extension createCollapseExtension() {
+  public @NotNull Extension createCollapseExtension() {
     return Extension.create(AllIcons.General.CollapseComponent,
                             AllIcons.General.CollapseComponentHover,
                             createTooltipText(IdeBundle.message("action.collapse"), "CollapseExpandableComponent"),
+                            true,
                             this::collapse);
   }
 
-  @NotNull
-  public Extension createExpandExtension() {
+  public @NotNull Extension createExpandExtension() {
     return Extension.create(AllIcons.General.ExpandComponent,
                             AllIcons.General.ExpandComponentHover,
                             createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"),
+                            true,
                             this::expand);
   }
 
-  @NotNull
-  public static JLabel createLabel(@NotNull Extension extension) {
-    return new JLabel(extension.getIcon(false)) {{
-      setToolTipText(extension.getTooltip());
-      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseEntered(MouseEvent event) {
-          setIcon(extension.getIcon(true));
-        }
+  public static @NotNull JLabel createLabel(@NotNull Extension extension) {
+    JLabel label = new JLabel(extension.getIcon(false));
+    label.setToolTipText(extension.getTooltip());
+    label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    label.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent event) {
+        label.setIcon(extension.getIcon(true));
+      }
 
-        @Override
-        public void mouseExited(MouseEvent event) {
-          setIcon(extension.getIcon(false));
-        }
+      @Override
+      public void mouseExited(MouseEvent event) {
+        label.setIcon(extension.getIcon(false));
+      }
 
-        @Override
-        public void mouseClicked(MouseEvent event) {
-          Runnable action = extension.getActionOnClick();
-          if (action != null) action.run();
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        Runnable action = extension.getActionOnClick();
+        if (action == null) return;
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          action.run();
         }
-      });
-    }};
+      }
+    });
+    return label;
   }
 }

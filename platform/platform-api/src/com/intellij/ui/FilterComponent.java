@@ -1,23 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
 public abstract class FilterComponent extends JPanel {
   private final SearchTextField myFilter;
-  private final Alarm myUpdateAlarm = new Alarm();
+  private final SingleEdtTaskScheduler updateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private final boolean myOnTheFly;
 
   public FilterComponent(@NonNls String propertyName, int historySize) {
@@ -73,7 +77,7 @@ public abstract class FilterComponent extends JPanel {
     });
 
     myFilter.setHistorySize(historySize);
-    AccessibleContextUtil.setName(myFilter.getTextEditor(), "Message text filter");
+    AccessibleContextUtil.setName(myFilter.getTextEditor(), UIBundle.message("filter.component.accessible.name"));
     add(myFilter, BorderLayout.CENTER);
   }
 
@@ -87,8 +91,7 @@ public abstract class FilterComponent extends JPanel {
 
   private void onChange() {
     if (myOnTheFly) {
-      myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(() -> onlineFilter(), 100, ModalityState.stateForComponent(myFilter));
+      updateAlarm.cancelAndRequest(100, ModalityState.stateForComponent(myFilter), () -> onlineFilter());
     }
   }
 
@@ -130,13 +133,13 @@ public abstract class FilterComponent extends JPanel {
     filter();
   }
 
-  protected void userTriggeredFilter() {
+  public void userTriggeredFilter() {
     myFilter.addCurrentTextToHistory();
     filter();
   }
 
   public void dispose() {
-    myUpdateAlarm.cancelAllRequests();
+    updateAlarm.dispose();
   }
 
   protected void setHistory(List<String> strings) {

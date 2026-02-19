@@ -28,18 +28,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspection {
+public final class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.synchronization.on.non.final.field.ref");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -52,10 +50,9 @@ public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspecti
         return;
       }
       final PsiElement referent = ((PsiReference) lock).resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField) referent;
       if (field.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }

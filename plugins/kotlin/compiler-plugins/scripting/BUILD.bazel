@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.kotlin.compilerPlugins.scripting` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "scripting_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scripting",
+  module_name = "intellij.kotlin.compilerPlugins.scripting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":scripting_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/kotlin/base/facet",
+    "//plugins/kotlin/gradle/gradle-java",
+    "//platform/lang-api:lang",
+    "//plugins/gradle:gradle-common",
+  ]
+)
+
+jvm_library(
+  name = "scripting_test_lib",
+  module_name = "intellij.kotlin.compilerPlugins.scripting",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":scripting",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/kotlin/base/facet:facet_test_lib",
+    "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//plugins/gradle:gradle-common_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.compilerPlugins.scripting` end

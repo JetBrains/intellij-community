@@ -15,13 +15,12 @@
  */
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.NavigatablePsiElement;
+import com.jetbrains.python.ast.PyAstElement;
 
-public interface PyElement extends NavigatablePsiElement {
+public interface PyElement extends PyAstElement {
 
   /**
    * An empty array to return cheaply without allocating it anew.
    */
   PyElement[] EMPTY_ARRAY = new PyElement[0];
-
 }

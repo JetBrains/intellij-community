@@ -1,13 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView;
 
-import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.util.treeView.smartTree.Filter;
+import com.intellij.ide.util.treeView.smartTree.Grouper;
+import com.intellij.ide.util.treeView.smartTree.NodeProvider;
+import com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.ElementStatusTracker;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
@@ -17,6 +23,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -113,19 +120,24 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     if (myEditor == null) return null;
 
     PsiFile file = getPsiFile();
-    if (!file.isValid()) return null;
+    if (file == null || !file.isValid()) return null;
 
     int offset = myEditor.getCaretModel().getOffset();
     Object o1 = findAcceptableElement(file.getViewProvider().findElementAt(offset, file.getLanguage()));
     Object o2 = offset == 0 ? o1 : findAcceptableElement(file.getViewProvider().findElementAt(offset - 1, file.getLanguage()));
-    if (o1 != o2 && o1 instanceof PsiElement && o2 instanceof PsiElement) {
-      if (PsiTreeUtil.isAncestor((PsiElement)o1, (PsiElement)o2, false)) return o2;
-    }
+    if (o1 != o2 && o1 instanceof PsiElement e1 && o2 instanceof PsiElement e2 && PsiTreeUtil.isAncestor(e1, e2, false)) return o2;
     return o1;
   }
 
-  @Nullable
-  protected Object findAcceptableElement(PsiElement element) {
+  @Override
+  public @NotNull FileStatus getElementStatus(Object element) {
+    if (myEditor == null || myPsiFile == null) return FileStatus.NOT_CHANGED;
+    if (!(element instanceof PsiElement psiElement)) return FileStatus.NOT_CHANGED;
+    if (!psiElement.isValid() || psiElement.getContainingFile() != myPsiFile) return FileStatus.NOT_CHANGED;
+    return ElementStatusTracker.getInstance(myPsiFile.getProject()).getElementStatus(psiElement);
+  }
+
+  protected @Nullable Object findAcceptableElement(PsiElement element) {
     while (element != null && !(element instanceof PsiFile)) {
       if (isSuitable(element)) return element;
       element = element.getParent();
@@ -137,10 +149,16 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return myPsiFile;
   }
 
+  public boolean isValid() {
+    return myPsiFile != null && myPsiFile.isValid();
+  }
+
   protected boolean isSuitable(final PsiElement element) {
-    if (element == null) return false;
-    final Class[] suitableClasses = getSuitableClasses();
-    for (Class suitableClass : suitableClasses) {
+    if (element == null) {
+      return false;
+    }
+    Class<?>[] suitableClasses = getSuitableClasses();
+    for (Class<?> suitableClass : suitableClasses) {
       if (ReflectionUtil.isAssignable(suitableClass, element.getClass())) return true;
     }
     return false;
@@ -161,9 +179,9 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    * When determining the current editor element, the PSI tree is walked up until an element
    * matching one of these classes is found.
    *
-   * @return the list of classes
+   * @return the array of classes
    */
-  protected Class @NotNull [] getSuitableClasses() {
+  protected Class<?> @NotNull [] getSuitableClasses() {
     return ArrayUtil.EMPTY_CLASS_ARRAY;
   }
 
@@ -186,14 +204,13 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     return Filter.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public Collection<NodeProvider> getNodeProviders() {
+  public @NotNull @Unmodifiable Collection<NodeProvider<?>> getNodeProviders() {
     return Collections.emptyList();
   }
 
   @Override
-  public boolean isEnabled(@NotNull NodeProvider provider) {
+  public boolean isEnabled(@NotNull NodeProvider<?> provider) {
     return false;
   }
 }

@@ -1,0 +1,5 @@
+// WITH_STDLIB
+
+fun foo() {
+    listOf(1).forEach()<caret> {  }
+}

@@ -1,7 +1,34 @@
 <html>
 <body>
-This inspection detects calls of <code>VirtualFile.getChildren()</code> inside recursive methods.
-Such code may cause dead loops when iterating over cyclic symlinks -
-so please use <code>VfsUtilCore.visitChildrenRecursively()</code> instead.
+Reports usage of <code>VirtualFile.getChildren()</code> inside recursive methods.
+<p>
+  This may cause endless loops when iterating over cyclic symlinks.
+  Use <code>VfsUtilCore.visitChildrenRecursively()</code> instead.
+</p>
+<pre><code lang="java">
+void processDirectory(VirtualFile dir) {
+  for (VirtualFile file : dir.getChildren()) { // bad
+    if (!file.isDirectory()) {
+      processFile(file);
+    } else {
+      processDirectory(file); // recursive call
+    }
+  }
+}
+</code>
+</pre>
+<pre><code lang="java">
+void processDirectory(VirtualFile dir) {
+  VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor&lt;Void>() { // good
+    @Override
+    public boolean visitFile(@NotNull VirtualFile file) {
+      if (!file.isDirectory()) {
+        processFile(file);
+      }
+      return true;
+    }
+  });
+}
+</code></pre>
 </body>
 </html>

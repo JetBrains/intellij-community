@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging;
 
 import com.intellij.lang.ASTNode;
@@ -15,9 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
 
-/**
- * @author ilyas
- */
 public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefinitionStub> implements GrPackageDefinition, StubBasedPsiElement<GrPackageDefinitionStub> {
 
   public GrPackageDefinitionImpl(@NotNull ASTNode node) {
@@ -54,8 +51,7 @@ public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefiniti
   }
 
   @Override
-  @NotNull
-  public GrModifierList getAnnotationList() {
+  public @NotNull GrModifierList getAnnotationList() {
     return getStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST);
   }
 

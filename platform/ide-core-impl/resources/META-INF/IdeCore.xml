@@ -1,0 +1,37 @@
+<!--suppress PluginXmlRegistrationCheck -->
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
+    <!-- The platform skips such listeners on dynamic loading/unloading of plugins assuming it is safe -->
+    <extensionPoint name="dynamicApplicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="true"/>
+
+    <extensionPoint name="applicationActivity" interface="com.intellij.ide.ApplicationActivity" dynamic="false"/>
+    <extensionPoint name="registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean" dynamic="true"/>
+    <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
+    <extensionPoint name="registry.managed" interface="com.intellij.openapi.util.registry.ManagedRegistry" dynamic="false"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <activityTracker implementation="com.intellij.util.MergingUpdateQueueActivityTracker"/>
+    <applicationService serviceInterface="com.intellij.util.ui.update.MergingUpdateQueueTracker"
+                        serviceImplementation="com.intellij.util.MergingUpdateQueueTrackerImpl"/>
+    <applicationService serviceInterface="com.intellij.util.download.eel.EelDownloadableFileService"
+                        serviceImplementation="com.intellij.util.download.impl.eel.EelDownloadableFileServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.util.download.DownloadableFileService"
+                        serviceImplementation="com.intellij.util.download.impl.DownloadableFileServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.notification.NotificationGroupManager"
+                        serviceImplementation="com.intellij.notification.impl.NotificationGroupManagerImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
+    <applicationSettings service="com.intellij.ide.GeneralSettings"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable" client="all"/>
+    <applicationSettings service="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
+
+    <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization" open="true"/>
+    <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization" open="true"/>
+    
+    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
+                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
+  </extensions>
+</idea-plugin>

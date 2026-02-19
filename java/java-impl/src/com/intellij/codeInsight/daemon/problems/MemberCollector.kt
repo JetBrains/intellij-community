@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 
-class MemberCollector(private val memberFilter: (PsiMember) -> Boolean) : JavaRecursiveElementVisitor() {
+public class MemberCollector(private val memberFilter: (PsiMember) -> Boolean) : JavaRecursiveElementWalkingVisitor() {
 
   private val members = mutableListOf<PsiMember>()
 
@@ -24,8 +30,8 @@ class MemberCollector(private val memberFilter: (PsiMember) -> Boolean) : JavaRe
     if (memberFilter(psiEnumConstant)) members.add(psiEnumConstant)
   }
 
-  companion object {
-    fun collectMembers(psiElement: PsiElement, filter: (PsiMember) -> Boolean): List<PsiMember> {
+  public companion object {
+    public fun collectMembers(psiElement: PsiElement, filter: (PsiMember) -> Boolean): List<PsiMember> {
       val collector = MemberCollector(filter)
       psiElement.accept(collector)
       return collector.members

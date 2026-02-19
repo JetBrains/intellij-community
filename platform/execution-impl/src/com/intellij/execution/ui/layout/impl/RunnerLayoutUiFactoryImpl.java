@@ -5,8 +5,10 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class RunnerLayoutUiFactoryImpl extends RunnerLayoutUi.Factory {
   private final Project myProject;
 
@@ -16,9 +18,8 @@ public final class RunnerLayoutUiFactoryImpl extends RunnerLayoutUi.Factory {
     RunContentManager.getInstance(project);
   }
 
-  @NotNull
   @Override
-  public RunnerLayoutUi create(@NotNull final String runnerId, @NotNull final String runnerTitle, @NotNull final String sessionName, @NotNull final Disposable parent) {
+  public @NotNull RunnerLayoutUi create(final @NotNull String runnerId, final @NotNull String runnerTitle, final @NotNull String sessionName, final @NotNull Disposable parent) {
     return new RunnerLayoutUiImpl(myProject, parent, runnerId, runnerTitle, sessionName);
   }
 }

@@ -1,15 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.Disposable;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A "root" class in compiler subsystem - allows one to register a custom compiler or a compilation task, register/unregister a compilation listener
@@ -26,8 +27,6 @@ import java.util.Set;
 public abstract class CompilerManager {
   public static final Key<RunConfiguration> RUN_CONFIGURATION_KEY = Key.create("RUN_CONFIGURATION");
   public static final Key<String> RUN_CONFIGURATION_TYPE_ID_KEY = Key.create("RUN_CONFIGURATION_TYPE_ID");
-
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Compiler");
 
   /**
    * Returns the compiler manager instance for the specified project.
@@ -39,6 +38,11 @@ public abstract class CompilerManager {
     return project.getService(CompilerManager.class);
   }
 
+  @ApiStatus.Internal
+  public static @NotNull NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Compiler");
+  }
+
   public abstract boolean isCompilationActive();
 
   /**
@@ -46,30 +50,15 @@ public abstract class CompilerManager {
    *
    * @deprecated use {@link CompileTask} extension instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addCompiler(@NotNull Compiler compiler);
-
-  /**
-   * Registers a custom translating compiler. Input and output filetype sets allow compiler manager
-   * to sort translating compilers so that output of one compiler will be used as input for another one
-   *
-   * @param compiler compiler implementation
-   * @param inputTypes a set of filetypes that compiler accepts as input
-   * @param outputTypes a set of filetypes that compiler can generate
-   *
-   * @deprecated this method is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
-   * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
-   * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
-   */
-  @Deprecated
-  public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 
   /**
    * Unregisters a custom compiler.
    *
    * @deprecated use {@link CompileTask} extension instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeCompiler(@NotNull Compiler compiler);
 
   /**
@@ -86,17 +75,8 @@ public abstract class CompilerManager {
    * @param type the type for which the Compile action is enabled.
    * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addCompilableFileType(@NotNull FileType type);
-
-  /**
-   * Unregisters the type as a compilable type so that Compile action will be disabled on files of this type.
-   *
-   * @param type the type for which the Compile action is disabled.
-   * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
-   */
-  @Deprecated
-  public abstract void removeCompilableFileType(@NotNull FileType type);
 
   /**
    * Checks if files of the specified type can be compiled by one of registered compilers.
@@ -120,7 +100,7 @@ public abstract class CompilerManager {
    * Registers a compiler task  that will be executed after the compilation.
    * @deprecated Use {@code compiler.task} extension point instead (see {@link CompileTask} for details).
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addAfterTask(@NotNull CompileTask task);
 
   /**
@@ -128,24 +108,14 @@ public abstract class CompilerManager {
    *
    * @return all tasks to be executed before compilation.
    */
-  @NotNull
-  public abstract List<CompileTask> getBeforeTasks();
-
-  /**
-   * @deprecated Use {@link #getAfterTaskList}
-   */
-  @Deprecated
-  public CompileTask @NotNull [] getAfterTasks() {
-    return getAfterTaskList().toArray(new CompileTask[0]);
-  }
+  public abstract @NotNull List<CompileTask> getBeforeTasks();
 
   /**
    * Returns the list of all tasks to be executed after compilation.
    *
    * @return all tasks to be executed after compilation.
    */
-  @NotNull
-  public abstract List<CompileTask> getAfterTaskList();
+  public abstract @NotNull List<CompileTask> getAfterTaskList();
 
   /**
    * Compile a set of files.
@@ -201,7 +171,8 @@ public abstract class CompilerManager {
 
   /**
    * Compile all modified files and all files that depend on them from the scope given.
-   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored. All modules must belong to the same project
+   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored.
+   * All modules must belong to the same project.
    *
    * @param scope    a scope to be compiled
    * @param callback a notification callback, or null if no notifications needed
@@ -209,22 +180,44 @@ public abstract class CompilerManager {
   public abstract void make(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
-   * Same as {@link #make(CompileScope, CompileStatusNotification)} but with modal progress window instead of background progress
+   * Same as {@link #make(CompileScope, CompileStatusNotification)} but with a modal progress window instead of background progress.
    */
   public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
-   * Checks if compile scope given is up-to-date
-   * @param scope
-   * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted
+   * Checks if compile scope given is up-to-date.
+   * If called from a non-EDT thread which is currently running under some progress, the method reuses the calling thread and executes under thread's ProgressIndicator.
+   * Otherwise, it spawns a new background thread with a new ProgressIndicator which performs the check. The calling thread will be still blocked waiting until the check is completed
+   * @param scope - a compilation scope to be checked
+   * @return true if build with the specified scope wouldn't do anything or false if something is to be compiled or deleted
    */
   public abstract boolean isUpToDate(@NotNull CompileScope scope);
+
+  /**
+   * Checks if compile scope given is up-to-date.
+   * This method reuses the calling thread and executes under the specified progress indicator
+   * @param scope - a compilation scope to be checked
+   * @param progress progress indicator to be used for reporting
+   * @return true if build with the specified scope wouldn't do anything or false if something is to be compiled or deleted
+   */
+  public abstract boolean isUpToDate(@NotNull CompileScope scope, @NotNull ProgressIndicator progress);
+
   /**
    * Rebuild the whole project from scratch. Compiler excludes are honored.
    *
    * @param callback a notification callback, or null if no notifications needed
    */
   public abstract void rebuild(@Nullable CompileStatusNotification callback);
+
+
+  /**
+   * Same as rebuild, but build system directory is forcibly removed from the IDE to ensure the build starts on the clean state
+   *
+   * @param callback a notification callback, or null if no notifications needed
+   */
+  public void rebuildClean(@Nullable CompileStatusNotification callback) {
+    rebuild(callback); // default implementation
+  }
 
   /**
    * Execute a custom compile task.
@@ -247,12 +240,6 @@ public abstract class CompilerManager {
    * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
    */
   @Deprecated
-  public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable);
-
-  /**
-   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
-   */
-  @Deprecated
   public abstract void removeCompilationStatusListener(@NotNull CompilationStatusListener listener);
 
   /**
@@ -266,18 +253,23 @@ public abstract class CompilerManager {
   /*
    * Convenience methods for creating frequently-used compile scopes
    */
-  @NotNull
-  public abstract CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
-  @NotNull
-  public abstract CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules);
-  @NotNull
-  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules);
-  @NotNull
-  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies);
-  @NotNull
-  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
-  @NotNull
-  public abstract CompileScope createProjectCompileScope(@NotNull Project project);
+  public abstract @NotNull CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
+
+  public @NotNull CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
+    return createModulesCompileScope(new Module[] {module}, includeDependentModules);
+  }
+
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
+    return createModulesCompileScope(modules, includeDependentModules, false);
+  }
+
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
+    return createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies, true);
+  }
+
+  public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests);
+  public abstract @NotNull CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
+  public abstract @NotNull CompileScope createProjectCompileScope(@NotNull Project project);
 
   public abstract void setValidationEnabled(ModuleType<?> moduleType, boolean enabled);
 
@@ -292,6 +284,5 @@ public abstract class CompilerManager {
                                                           Collection<? extends File> files,
                                                           File outputDir) throws IOException, CompilationException;
 
-  @Nullable
-  public abstract File getJavacCompilerWorkingDir();
+  public abstract @Nullable File getJavacCompilerWorkingDir();
 }

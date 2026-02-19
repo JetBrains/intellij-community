@@ -25,7 +25,6 @@
 package com.intellij.openapi.vcs.changes.ignore.lang;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
@@ -47,11 +46,6 @@ import org.jetbrains.annotations.NotNull;
 public class IgnoreParserDefinition implements ParserDefinition {
   public static final class Lazy {
     /**
-     * Whitespaces.
-     */
-    public static final TokenSet WHITE_SPACES = TokenSet.WHITE_SPACE;
-
-    /**
      * Regular comment started with #
      */
     public static final TokenSet COMMENTS = TokenSet.create(IgnoreTypes.COMMENT);
@@ -70,7 +64,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
   /**
    * Element type of the node describing a file in the specified language.
    */
-  public static final IFileElementType FILE = new IFileElementType(Language.findInstance(IgnoreLanguage.class));
+  public static final IFileElementType FILE = new IFileElementType(IgnoreLanguage.INSTANCE);
 
   /**
    * Returns the lexer for lexing files in the specified project. This lexer does not need to support incremental
@@ -79,9 +73,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @param project the project to which the lexer is connected.
    * @return the lexer instance.
    */
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new IgnoreLexerAdapter();
   }
 
@@ -92,7 +85,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the parser instance.
    */
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new IgnoreParser();
   }
 
@@ -102,23 +95,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the file node element type.
    */
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE;
-  }
-
-  /**
-   * Returns the set of token types which are treated as whitespace by the PSI builder. Tokens of those types are
-   * automatically skipped by PsiBuilder. Whitespace elements on the bounds of nodes built by PsiBuilder are
-   * automatically excluded from the text range of the nodes. <p><strong>It is strongly advised you return TokenSet
-   * that only contains {@link com.intellij.psi.TokenType#WHITE_SPACE}, which is suitable for all the languages unless
-   * you really need to use special whitespace token</strong>
-   *
-   * @return the set of whitespace token types.
-   */
-  @NotNull
-  @Override
-  public TokenSet getWhitespaceTokens() {
-    return Lazy.WHITE_SPACES;
   }
 
   /**
@@ -128,9 +106,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    *
    * @return the set of comment token types.
    */
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return Lazy.COMMENTS;
   }
 
@@ -140,9 +117,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    *
    * @return the set of string literal element types.
    */
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
@@ -154,9 +130,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @param node the node for which the PSI element should be returned.
    * @return the PSI element matching the element type of the AST node.
    */
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     return IgnoreTypes.Factory.createElement(node);
   }
 
@@ -167,7 +142,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @return the PSI file element.
    */
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     if (viewProvider.getBaseLanguage() instanceof IgnoreLanguage) {
       return ((IgnoreLanguage)viewProvider.getBaseLanguage()).createFile(viewProvider);
     }

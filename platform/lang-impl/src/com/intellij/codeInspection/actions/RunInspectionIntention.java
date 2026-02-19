@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -11,7 +11,12 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolsSupplier;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +45,7 @@ public final class RunInspectionIntention implements IntentionAction, HighPriori
   private final String myShortName;
 
   public RunInspectionIntention(@NotNull HighlightDisplayKey key) {
-    myShortName = key.toString();
+    myShortName = key.getShortName();
   }
 
   @Override
@@ -54,23 +59,23 @@ public final class RunInspectionIntention implements IntentionAction, HighPriori
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName) != null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return LocalInspectionToolWrapper.findTool2RunInBatch(project, psiFile, myShortName) != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final Module module = psiFile != null ? ModuleUtilCore.findModuleForPsiElement(psiFile) : null;
     AnalysisScope analysisScope = new AnalysisScope(project);
-    if (file != null) {
-      PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    if (psiFile != null) {
+      PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile);
       final VirtualFile virtualFile = topLevelFile.getVirtualFile();
-      if (file.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()) {
+      if (psiFile.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()) {
         analysisScope = new AnalysisScope(topLevelFile);
       }
     }
 
-    selectScopeAndRunInspection(myShortName, analysisScope, module, file, project);
+    selectScopeAndRunInspection(myShortName, analysisScope, module, psiFile, project);
   }
 
   public static void selectScopeAndRunInspection(@NotNull String toolShortName,
@@ -117,7 +122,7 @@ public final class RunInspectionIntention implements IntentionAction, HighPriori
     LinkedHashSet<InspectionToolWrapper<?, ?>> allWrappers = new LinkedHashSet<>();
     allWrappers.add(toolWrapper);
     rootProfile.collectDependentInspections(toolWrapper, allWrappers, project);
-    List<InspectionToolWrapper<?, ?>> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
+    List<InspectionToolWrapper<?, ?>> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.getFirst()) : new ArrayList<>(allWrappers);
     InspectionProfileImpl model = new InspectionProfileImpl(toolWrapper.getDisplayName(), new InspectionToolsSupplier.Simple(toolWrappers), rootProfile);
     for (InspectionToolWrapper wrapper : toolWrappers) {
       model.enableTool(wrapper.getShortName(), project);

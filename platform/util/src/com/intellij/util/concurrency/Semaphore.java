@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -6,7 +6,32 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
-public class Semaphore {
+/**
+ * A semaphore implementation throwing {@link ProcessCanceledException} instead of {@link InterruptedException}
+ *
+ * This implementation is suitable when you need wait for one or several events to occur.
+ * Note that {@link #waitFor} does not acquire permit.<p>
+ * The typical usage is:
+ * <pre>
+ * {@code
+ *   Semaphore semaphore = new Semaphore();
+ *   semaphore.down();
+ *
+ *   new Thread(() -> {
+ *     doTheJob();        // the job is done here
+ *     semaphore.up();
+ *   }).start();
+ *
+ *   semaphore.waitFor(); // wait for the job to finish
+ * }
+ * </pre>
+ *
+ * Use {@link Semaphore#down} to remove a permit from the semaphore <p>
+ * Use {@link Semaphore#up} to return a permit to the semaphore <p>
+ * Use {@link Semaphore#waitFor} to wait until the semaphore gets at least one permit. waitFor blocks until there is one.
+ * Note that it does not perform a ` down ` operation.
+ */
+public final class Semaphore {
   /**
    * Creates Semaphore in an up state
    */
@@ -81,7 +106,9 @@ public class Semaphore {
     sync.acquireSharedInterruptibly(1);
   }
 
-  // true if semaphore became free
+  /**
+   * @return true if semaphore became free
+   */
   public boolean waitFor(final long msTimeout) {
     try {
       return waitForUnsafe(msTimeout);
@@ -91,7 +118,9 @@ public class Semaphore {
     }
   }
 
-  // true if semaphore became free
+  /**
+   * @return true if semaphore became free
+   */
   public boolean waitForUnsafe(long msTimeout) throws InterruptedException {
     if (sync.tryAcquireShared(1) >= 0) return true;
     return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(msTimeout));

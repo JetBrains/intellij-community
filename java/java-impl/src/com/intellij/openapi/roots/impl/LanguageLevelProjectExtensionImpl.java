@@ -1,30 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.java.workspace.entities.JavaProjectSettingsEntity;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
-import org.jdom.Element;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,82 +28,130 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * @author anna
  */
-public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
-  private static final String LANGUAGE_LEVEL = "languageLevel";
-  private static final String DEFAULT_ATTRIBUTE = "default";
+public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+  private record LanguageLevelExtensionState(
+    @Nullable LanguageLevel myLanguageLevel,
+    @Nullable Boolean myDefault
+  ) {
+  }
+
+  private static final Logger LOG = Logger.getInstance(LanguageLevelProjectExtensionImpl.class);
 
   private final Project myProject;
-  private LanguageLevel myLanguageLevel;
   private LanguageLevel myCurrentLevel;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
-    setDefault(project.isDefault() ? true : null);
+
+    myProject.getMessageBus().simpleConnect().subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
+      @Override
+      public void changed(@NotNull VersionedStorageChange event) {
+        if (!event.getChanges(ProjectSettingsEntity.class).isEmpty()) {
+          projectSdkChanged(ProjectRootManager.getInstance(myProject).getProjectSdk());
+        }
+      }
+    });
   }
 
   public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {
     return (LanguageLevelProjectExtensionImpl)getInstance(project);
   }
 
-  private void readExternal(final Element element) {
-    String level = element.getAttributeValue(LANGUAGE_LEVEL);
-    if (level == null) {
-      myLanguageLevel = null;
+  private static @Nullable LanguageLevel readLanguageLevel(@Nullable String level) {
+    if (level != null) {
+      for (LanguageLevel languageLevel : LanguageLevel.getEntries()) {
+        if (level.equals(languageLevel.name())) {
+          return languageLevel;
+        }
+      }
+      return JavaRelease.getHighest();
     }
     else {
-      myLanguageLevel = readLanguageLevel(level);
-    }
-    String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
-    setDefault(aDefault == null ? null : Boolean.parseBoolean(aDefault));
-  }
-
-  private static LanguageLevel readLanguageLevel(String level) {
-    for (LanguageLevel languageLevel : LanguageLevel.values()) {
-      if (level.equals(languageLevel.name())) {
-        return languageLevel;
-      }
-    }
-    return LanguageLevel.HIGHEST;
-  }
-
-  private void writeExternal(final Element element) {
-    if (myLanguageLevel != null) {
-      element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
-    }
-
-    if (!myProject.isDefault()) {
-      Boolean aBoolean = getDefault();
-      if (aBoolean != null) {
-        element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
-      }
+      return null;
     }
   }
 
   @Override
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return getLanguageLevelOrDefault();
   }
 
-  @NotNull
-  private LanguageLevel getLanguageLevelOrDefault() {
-    return ObjectUtils.chooseNotNull(myLanguageLevel, LanguageLevel.HIGHEST);
+  private @NotNull LanguageLevel getLanguageLevelOrDefault() {
+    LanguageLevelExtensionState ll = getLanguageLevelInternal();
+    return ObjectUtils.chooseNotNull(ll.myLanguageLevel, JavaRelease.getHighest());
   }
 
   @Override
+  @RequiresWriteLock(generateAssertion = false)
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
-    // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value, because our default (LanguageLevel.HIGHEST) is changed every java release
-    if (myLanguageLevel != languageLevel) {
-      myLanguageLevel = languageLevel;
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Language level may only be updated under write action. " +
+                   "Please acquire write action before invoking setLanguageLevel.");
+
+    // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value because our default (JavaRelease.getHighest())
+    // is changed every java release
+    LanguageLevelExtensionState currentLevel = getLanguageLevelInternal();
+    if (currentLevel.myLanguageLevel != languageLevel) {
+      setLanguageLevelInternal(languageLevel, false);
       languageLevelsChanged();
+    }
+  }
+
+  @RequiresWriteLock(generateAssertion = false)
+  private void setLanguageLevelInternal(@Nullable LanguageLevel languageLevel, @Nullable Boolean isDefault) {
+    ThreadingAssertions.assertWriteAccess();
+
+    WorkspaceModel workspaceModel = WorkspaceModel.getInstance(myProject);
+    workspaceModel.updateProjectModel("setLanguageLevelInternal: " + languageLevel + " default: " + isDefault, mutableStorage -> {
+      JavaEntitiesWsmUtils.addOrModifyJavaProjectSettingsEntity(myProject, mutableStorage, entity -> {
+        var ll = languageLevel != null ? languageLevel.name() : null;
+        entity.setLanguageLevelId(ll);
+        entity.setLanguageLevelDefault(isDefault);
+      });
+      return Unit.INSTANCE;
+    });
+  }
+
+  private @NotNull LanguageLevelExtensionState getLanguageLevelInternal() {
+    JavaProjectSettingsEntity entity = JavaEntitiesWsmUtils.getSingleEntity(WorkspaceModel.getInstance(myProject).getCurrentSnapshot(), JavaProjectSettingsEntity.class);
+
+    if (entity != null) {
+      LanguageLevel llParsed = readLanguageLevel(entity.getLanguageLevelId());
+      return new LanguageLevelExtensionState(llParsed, entity.getLanguageLevelDefault());
+    }
+    else {
+      return new LanguageLevelExtensionState(null, null);
+    }
+  }
+
+
+  @Override
+  public @Nullable Boolean getDefault() {
+    return getLanguageLevelInternal().myDefault;
+  }
+
+  @Override
+  @RequiresWriteLock(generateAssertion = false)
+  public void setDefault(@Nullable Boolean newDefault) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Language level may only be updated under write action. " +
+                   "Please acquire write action before invoking setDefault.");
+    LanguageLevelExtensionState current = getLanguageLevelInternal();
+    if (current.myDefault != newDefault) {
+      setLanguageLevelInternal(current.myLanguageLevel, newDefault);
     }
   }
 
   @Override
   public void languageLevelsChanged() {
-    if (!myProject.isDefault()) {
-      ProjectRootManager.getInstance(myProject).incModificationCount();
-      JavaLanguageLevelPusher.pushLanguageLevel(myProject);
+    languageLevelsChanged(myProject);
+  }
+
+  public static void languageLevelsChanged(@NotNull Project project) {
+    if (!project.isDefault()) {
+      project.getMessageBus().syncPublisher(LANGUAGE_LEVEL_CHANGED_TOPIC).onLanguageLevelsChanged();
+      ProjectRootManager.getInstance(project).incModificationCount();
+      JavaLanguageLevelPusher.pushLanguageLevel(project);
     }
   }
 
@@ -116,6 +160,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
       if (version != null) {
         setLanguageLevel(version.getMaxLanguageLevel());
+        setDefault(true);
       }
     }
   }
@@ -130,30 +175,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
 
   @TestOnly
   public void resetDefaults() {
-    myLanguageLevel = null;
-    setDefault(null);
+    setLanguageLevelInternal(null, null);
   }
 
-  public static class MyProjectExtension extends ProjectExtension {
-    private final LanguageLevelProjectExtensionImpl myInstance;
-
-    public MyProjectExtension(final Project project) {
-      myInstance = ((LanguageLevelProjectExtensionImpl)getInstance(project));
-    }
-
-    @Override
-    public void readExternal(@NotNull Element element) {
-      myInstance.readExternal(element);
-    }
-
-    @Override
-    public void writeExternal(@NotNull Element element) {
-      myInstance.writeExternal(element);
-    }
-
-    @Override
-    public void projectSdkChanged(@Nullable Sdk sdk) {
-      myInstance.projectSdkChanged(sdk);
-    }
-  }
 }

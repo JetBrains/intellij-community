@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
 import com.intellij.ide.structureView.impl.java.JavaLambdaNodeProvider;
 import com.intellij.ide.ui.UISettings;
@@ -13,7 +12,18 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import org.jetbrains.annotations.NotNull;
@@ -22,71 +32,72 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.List;
 
-import static com.intellij.psi.util.PsiFormatUtilBase.*;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_NAME;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_PARAMETERS;
+import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_TYPE;
+import static com.intellij.psi.util.PsiFormatUtilBase.TYPE_AFTER;
 
 /**
  * @author anna
  */
 public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
-  private final List<NodeProvider<?>> myNodeProviders = ImmutableList.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
+  private static final List<NodeProvider<?>> myNodeProviders = List.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
 
-  @Nullable
   @Override
-  public String getPresentableText(Object object) {
+  public @Nullable String getPresentableText(Object object) {
     return getPresentableText(object, false);
   }
 
   @Override
   public String getPresentableText(final Object object, boolean forPopup) {
-    if (object instanceof PsiMember) {
-      if (forPopup && object instanceof PsiMethod) {
-        return PsiFormatUtil.formatMethod((PsiMethod)object,
+    if (object instanceof PsiMember member) {
+      if (forPopup && object instanceof PsiMethod method) {
+        return PsiFormatUtil.formatMethod(method,
                                           PsiSubstitutor.EMPTY,
                                           SHOW_NAME | TYPE_AFTER | SHOW_PARAMETERS,
                                           SHOW_TYPE);
       }
-      return ElementDescriptionUtil.getElementDescription((PsiElement)object, UsageViewShortNameLocation.INSTANCE);
+      return ElementDescriptionUtil.getElementDescription(member, UsageViewShortNameLocation.INSTANCE);
     }
-    else if (object instanceof PsiPackage) {
-      final String name = ((PsiPackage)object).getName();
+    else if (object instanceof PsiPackage psiPackage) {
+      final String name = psiPackage.getName();
       return name != null ? name : JavaBundle.message("dependencies.tree.node.default.package.abbreviation");
     }
-    else if (object instanceof PsiDirectory && JrtFileSystem.isRoot(((PsiDirectory)object).getVirtualFile())) {
+    else if (object instanceof PsiDirectory directory && JrtFileSystem.isRoot(directory.getVirtualFile())) {
       return JavaBundle.message("jrt.node.short");
     }
     else if (object instanceof PsiLambdaExpression) {
-      return "Lambda";
+      return JavaBundle.message("lambda.tree.node.presentation");
     }
     return null;
   }
 
   @Override
   public PsiElement getParent(final PsiElement psiElement) {
-    if (psiElement instanceof PsiPackage) {
-      final PsiPackage parentPackage = ((PsiPackage)psiElement).getParentPackage();
-      if (parentPackage != null && parentPackage.getQualifiedName().length() > 0) {
+    if (psiElement instanceof PsiPackage psiPackage) {
+      final PsiPackage parentPackage = psiPackage.getParentPackage();
+      if (parentPackage != null && !parentPackage.getQualifiedName().isEmpty()) {
         return parentPackage;
       }
+    }
+    if (psiElement != null && psiElement.getParent() instanceof PsiImplicitClass psiImplicitClass) {
+      return psiImplicitClass.getParent();
     }
     return super.getParent(psiElement);
   }
 
-  @Nullable
   @Override
-  public PsiElement adjustElement(@NotNull final PsiElement psiElement) {
+  public @Nullable PsiElement adjustElement(final @NotNull PsiElement psiElement) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(psiElement.getProject()).getFileIndex();
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) {
       final VirtualFile file = containingFile.getVirtualFile();
       if (file != null &&
           (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibrary(file))) {
-        if (psiElement instanceof PsiJavaFile) {
-          final PsiJavaFile psiJavaFile = (PsiJavaFile)psiElement;
-          if (psiJavaFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
-            final PsiClass[] psiClasses = psiJavaFile.getClasses();
-            if (psiClasses.length == 1) {
-              return psiClasses[0];
-            }
+        if (psiElement instanceof PsiJavaFile psiJavaFile && psiJavaFile.getViewProvider().getBaseLanguage() == JavaLanguage.INSTANCE) {
+          final PsiClass[] psiClasses = psiJavaFile.getClasses();
+          if (psiClasses.length == 1 && !(psiClasses[0] instanceof PsiImplicitClass)) {
+            return psiClasses[0];
           }
         }
         if (!UISettings.getInstance().getShowMembersInNavigationBar() && psiElement instanceof PsiClass) {
@@ -100,22 +111,20 @@ public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
     return psiElement;
   }
 
-  @NotNull
   @Override
-  protected Language getLanguage() {
+  protected @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
-  @NotNull
   @Override
-  protected List<NodeProvider<?>> getApplicableNodeProviders() {
+  protected @NotNull List<NodeProvider<?>> getApplicableNodeProviders() {
     return myNodeProviders;
   }
 
   @Override
   protected boolean acceptParentFromModel(@Nullable PsiElement psiElement) {
-    if (psiElement instanceof PsiJavaFile) {
-      return ((PsiJavaFile) psiElement).getClasses().length > 1;
+    if (psiElement instanceof PsiJavaFile javaFile) {
+      return javaFile.getClasses().length > 1;
     }
     return true;
   }

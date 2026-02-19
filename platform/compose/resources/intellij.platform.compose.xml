@@ -1,0 +1,19 @@
+<idea-plugin visibility="public">
+  <module value="com.intellij.modules.compose"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true"
+                 description="Allows changing how ComposePanel is rendered using rendering on Graphics (when `true`, it provides smooth Swing interop) or on native AWT texture (when `false`). Works only in internal mode"
+                 key="compose.swing.render.on.graphics"/>
+    <search.traverseUiHelper implementation="com.intellij.platform.compose.ComposeTraverseUiHelper"/>
+
+    <applicationActivity implementation="com.intellij.platform.compose.SkikoPreloader"/>
+    <undoManagerProvider implementation="com.intellij.platform.compose.ComposeUndoManagerProvider"/>
+  </extensions>
+
+  <dependencies>
+    <module name="intellij.platform.jewel.foundation"/>
+    <module name="intellij.platform.jewel.ui"/>
+    <module name="intellij.platform.jewel.ideLafBridge"/>
+  </dependencies>
+</idea-plugin>

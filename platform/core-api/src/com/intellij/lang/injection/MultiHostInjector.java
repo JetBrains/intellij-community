@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.injection;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -16,21 +18,31 @@ import java.util.List;
  * (completion, highlighting, navigation) become available there.
  * </p>
  *
+ * <p>For a more high-level API consider implementing
+ * {@link com.intellij.lang.injection.general.LanguageInjectionContributor LanguageInjectionContributor} and/or
+ * {@link com.intellij.lang.injection.general.LanguageInjectionPerformer LanguageInjectionPerformer}.</p>
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/language-injection.html">IntelliJ Platform Docs</a>
  * @see com.intellij.psi.PsiLanguageInjectionHost
  * @see MultiHostRegistrar
+ * @see com.intellij.lang.injection.general.LanguageInjectionContributor
  */
-public interface MultiHostInjector {
-  ProjectExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = new ProjectExtensionPointName<>("com.intellij.multiHostInjector");
+public interface MultiHostInjector extends PossiblyDumbAware {
+  ProjectExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.multiHostInjector");
 
   /**
-   * Provides list of places to inject a language to.
+   * Provides the list of places to inject a language to.
    * <p>
    * For example, to inject "RegExp" language to Java string literal, you can override this method with something like this:
    * <code><pre>
    * class MyRegExpToJavaInjector implements MultiHostInjector {
    *   void getLanguagesToInject(MultiHostRegistrar registrar, PsiElement context) {
    *     if (context instanceof PsiLiteralExpression && looksLikeAGoodPlaceToInject(context)) {
-   *       registrar.startInjecting(REGEXP_LANG).addPlace(null,null,context,innerRangeStrippingQuotes(context));
+   *       registrar
+   *         .startInjecting(REGEXP_LANG)
+   *         .addPlace(null,null,context,innerRangeStrippingQuotes(context))
+   *         .doneInjecting();
    *     }
    *   }
    * }
@@ -76,6 +88,6 @@ public interface MultiHostInjector {
   /**
    * @return PSI element types to feed to {@link #getLanguagesToInject(MultiHostRegistrar, PsiElement)}.
    */
-  @NotNull
+  @NotNull @Unmodifiable
   List<? extends Class<? extends PsiElement>> elementsToInjectIn();
 }

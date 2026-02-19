@@ -18,7 +18,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Hani Suleiman
@@ -111,10 +118,9 @@ public class TestData implements Cloneable
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof TestData)) {
+    if (!(obj instanceof TestData data)) {
       return false;
     } else {
-      TestData data = (TestData) obj;
       return Objects.equals(TEST_OBJECT, data.TEST_OBJECT)
              && Objects.equals(getMainClassName(), data.getMainClassName())
              && Objects.equals(getPackageName(), data.getPackageName())

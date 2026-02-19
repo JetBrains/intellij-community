@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tools;
 
@@ -6,17 +6,25 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.NopProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.util.ExecutionErrorDialog;
+import com.intellij.execution.wsl.WSLCommandLineOptions;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.macro.MacroPathConverter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
@@ -25,26 +33,33 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.eel.provider.utils.JEelUtils;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class Tool implements SchemeElement {
   private static final Logger LOG = Logger.getInstance(Tool.class);
 
-  @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
+  public static final @NonNls String ACTION_ID_PREFIX = "Tool_";
 
-  public static final String DEFAULT_GROUP_NAME = "External Tools";
+  public static final @Nls String DEFAULT_GROUP_NAME = ToolsBundle.message("external.tools");
   protected static final ProcessEvent NOT_STARTED_EVENT = new ProcessEvent(new NopProcessHandler(), -1);
   private @NlsSafe String myName;
   private String myDescription;
-  @NotNull private String myGroup = DEFAULT_GROUP_NAME;
+  private @NotNull String myGroup = DEFAULT_GROUP_NAME;
 
   // These 4 fields and everything related are effectively not used anymore, see IDEA-190856.
   // Let's keep them for a while for compatibility in case we have to reconsider.
@@ -77,9 +92,7 @@ public class Tool implements SchemeElement {
     return myDescription;
   }
 
-  @NlsSafe
-  @NotNull
-  public String getGroup() {
+  public @NlsSafe @NotNull String getGroup() {
     return myGroup;
   }
 
@@ -225,12 +238,12 @@ public class Tool implements SchemeElement {
     myOutputFilters = new ArrayList<>(Arrays.asList(source.getOutputFilters()));
   }
 
+  @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof Tool)) {
+    if (!(obj instanceof Tool source)) {
       return false;
     }
 
-    Tool source = (Tool)obj;
     return
       Objects.equals(myName, source.myName) &&
       Objects.equals(myDescription, source.myDescription) &&
@@ -250,8 +263,7 @@ public class Tool implements SchemeElement {
       Comparing.equal(myOutputFilters, source.myOutputFilters);
   }
 
-  @NotNull
-  public String getActionId() {
+  public @NotNull String getActionId() {
     StringBuilder name = new StringBuilder(getActionIdPrefix());
     name.append(myGroup);
     name.append('_');
@@ -265,7 +277,7 @@ public class Tool implements SchemeElement {
     if (listener != null) listener.processTerminated(NOT_STARTED_EVENT);
   }
 
-  public void execute(AnActionEvent event, DataContext dataContext, long executionId, @Nullable final ProcessListener processListener) {
+  public void execute(AnActionEvent event, DataContext dataContext, long executionId, final @Nullable ProcessListener processListener) {
     if (!executeIfPossible(event, dataContext, executionId, processListener)) {
       notifyCouldNotStart(processListener);
     }
@@ -274,7 +286,7 @@ public class Tool implements SchemeElement {
   public boolean executeIfPossible(AnActionEvent event,
                                    DataContext dataContext,
                                    long executionId,
-                                   @Nullable final ProcessListener processListener) {
+                                   final @Nullable ProcessListener processListener) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
@@ -296,6 +308,13 @@ public class Tool implements SchemeElement {
                 processHandler.addProcessListener(processListener);
               }
             }
+
+            @Override
+            public void processNotStarted(@Nullable Throwable error) {
+              if (processListener != null) {
+                processListener.processNotStarted();
+              }
+            }
           });
         if (environment.getState() == null) {
           return false;
@@ -309,7 +328,8 @@ public class Tool implements SchemeElement {
         if (commandLine == null) {
           return false;
         }
-        OSProcessHandler handler = new OSProcessHandler(commandLine);
+        OSProcessHandler handler =
+          UtilKt.runToolOnBgtWithModality(project, commandLine, myName != null ? myName : commandLine.getExePath());
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
         if (processListener != null) {
           handler.addProcessListener(processListener);
@@ -319,13 +339,13 @@ public class Tool implements SchemeElement {
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
+      notifyCouldNotStart(processListener);
       return false;
     }
     return true;
   }
 
-  @Nullable
-  public GeneralCommandLine createCommandLine(DataContext dataContext) {
+  public @Nullable GeneralCommandLine createCommandLine(DataContext dataContext) {
     if (StringUtil.isEmpty(getWorkingDirectory())) {
       setWorkingDirectory("$ProjectFileDir$");
     }
@@ -334,26 +354,37 @@ public class Tool implements SchemeElement {
                                      ? new PtyCommandLine().withConsoleMode(true)
                                      : new GeneralCommandLine();
     try {
-      String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, dataContext);
+      String exePathStr = MacroManager.getInstance().expandMacrosInString(getProgram(), true, dataContext);
+      exePathStr = MacroManager.getInstance().expandMacrosInString(exePathStr, false, dataContext);
+      if (exePathStr == null) return null;
+
       String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
-      String exePath = MacroManager.getInstance().expandMacrosInString(getProgram(), true, dataContext);
+      final String workDirExpanded = MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext);
+      final var workDirPath = !StringUtil.isEmpty(workDirExpanded) ? Path.of(workDirExpanded) : null;
+      if (workDirPath != null) {
+        commandLine.withWorkingDirectory(workDirPath);
+      }
+
+      Path exePath = Path.of(exePathStr);
+      DataContext paramContext = SimpleDataContext
+        .builder()
+        .add(MacroManager.PATH_CONVERTER_KEY, new EelMacroPathConverter())
+        .add(MacroManager.CONTEXT_PATH, getContextPath(exePath, workDirPath))
+        .setParent(dataContext)
+        .build();
+
+      String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, paramContext);
 
       commandLine.getParametersList().addParametersString(
-        MacroManager.getInstance().expandMacrosInString(paramString, false, dataContext));
-      final String workDirExpanded = MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext);
-      if (!StringUtil.isEmpty(workDirExpanded)) {
-        commandLine.setWorkDirectory(workDirExpanded);
-      }
-      exePath = MacroManager.getInstance().expandMacrosInString(exePath, false, dataContext);
-      if (exePath == null) return null;
+        MacroManager.getInstance().expandMacrosInString(paramString, false, paramContext));
 
-      File exeFile = new File(exePath);
-      if (exeFile.isDirectory() && exeFile.getName().endsWith(".app")) {
-        commandLine.setExePath("open");
-        commandLine.getParametersList().prependAll("-a", exePath);
+      if (Files.isDirectory(exePath) && exePath.getFileName().endsWith(".app")) {
+        commandLine.withExePath("open");
+        commandLine.getParametersList().prependAll("-a", exePath.toString());
       }
       else {
-        commandLine.setExePath(exePath);
+        var eelPath = JEelUtils.toEelPath(exePath);
+        commandLine.withExePath(eelPath != null ? eelPath.toString() : exePathStr);
       }
     }
     catch (Macro.ExecutionCancelledException ignored) {
@@ -363,7 +394,7 @@ public class Tool implements SchemeElement {
   }
 
   @Override
-  public void setGroupName(@NotNull final String name) {
+  public void setGroupName(final @NotNull String name) {
     setGroup(name);
   }
 
@@ -372,9 +403,8 @@ public class Tool implements SchemeElement {
     return getName();
   }
 
-  @NotNull
   @Override
-  public SchemeElement copy() {
+  public @NotNull SchemeElement copy() {
     Tool copy = new Tool();
     copy.copyFrom(this);
     return copy;
@@ -387,5 +417,52 @@ public class Tool implements SchemeElement {
 
   public String getActionIdPrefix() {
     return ACTION_ID_PREFIX;
+  }
+
+  /**
+   * @deprecated Consider using EelAPI, this method is not needed then
+   */
+  @Deprecated
+  public static @NotNull GeneralCommandLine createWslCommandLine(@Nullable Project project,
+                                                                 @NotNull WSLDistribution wsl,
+                                                                 @NotNull GeneralCommandLine cmd,
+                                                                 @Nullable String linuxWorkingDir,
+                                                                 @NotNull String linuxExePath) throws ExecutionException {
+    cmd.setExePath(linuxExePath);
+    WSLCommandLineOptions wslOptions = new WSLCommandLineOptions();
+    if (StringUtil.isNotEmpty(linuxWorkingDir)) {
+      wslOptions.setRemoteWorkingDirectory(linuxWorkingDir);
+    }
+    // Working directory as well as all parameters were computed with MacroPathConverter, so they are
+    // paths in linux. Reset working directory in command line, because linux directory is not valid
+    // in windows, and we will fail to start process with it.
+    cmd.setWorkDirectory((String)null);
+    // run command in interactive shell so that shell rc files are executed and configure proper environment
+    wslOptions.setExecuteCommandInInteractiveShell(true);
+    return wsl.patchCommandLine(cmd, project, wslOptions);
+  }
+
+  private static class EelMacroPathConverter implements MacroPathConverter {
+
+    @Override
+    public @NotNull String convertPath(@NotNull String path) {
+      if (!path.isEmpty()) {
+        var eelPath = JEelUtils.toEelPath(Path.of(path));
+        if (eelPath != null) return eelPath.toString();
+      }
+      return path;
+    }
+
+    @Override
+    public @NotNull String convertPathList(@NotNull String pathList) {
+      List<String> paths = StringUtil.split(pathList, File.pathSeparator);
+      return Strings.join(ContainerUtil.map(paths, p -> convertPath(p)), ":");
+    }
+  }
+
+  private static @Nullable Path getContextPath(@NotNull Path cmd, @Nullable Path workDir) {
+    if(JEelUtils.toEelPath(cmd) != null) return cmd;
+    if (workDir != null && JEelUtils.toEelPath(workDir) != null) return workDir;
+    return null;
   }
 }

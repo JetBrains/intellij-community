@@ -1,37 +1,44 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.customizeActions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
-public class CombinePropertiesFilesAction extends AnAction {
-
+public final class CombinePropertiesFilesAction extends AnAction {
   public CombinePropertiesFilesAction() {
     super(PropertiesBundle.messagePointer("combine.properties.files.title"), AllIcons.FileTypes.Properties);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final List<PropertiesFile> initialPropertiesFiles = getPropertiesFiles(e);
     final List<PropertiesFile> propertiesFiles = initialPropertiesFiles == null ? new ArrayList<>()
                                                                                 : new ArrayList<>(initialPropertiesFiles);
@@ -65,12 +72,17 @@ public class CombinePropertiesFilesAction extends AnAction {
 
       final ResourceBundle resourceBundle = resourceBundleManager.combineToResourceBundleAndGet(propertiesFiles, newBaseName);
       FileEditorManager.getInstance(project).openFile(new ResourceBundleAsVirtualFile(resourceBundle), true);
-      ProjectView.getInstance(project).refresh();
+      ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.PLUGIN_PROPERTIES);
     }
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     final Collection<PropertiesFile> propertiesFiles = getPropertiesFiles(e);
     final List<ResourceBundle> resourceBundles = getResourceBundles(e);
     int elementCount = 0;
@@ -83,15 +95,13 @@ public class CombinePropertiesFilesAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(elementCount > 1);
   }
 
-  @Nullable
-  private static List<ResourceBundle> getResourceBundles(@NotNull AnActionEvent e) {
+  private static @Nullable List<ResourceBundle> getResourceBundles(@NotNull AnActionEvent e) {
     final ResourceBundle[] resourceBundles = e.getData(ResourceBundle.ARRAY_DATA_KEY);
-    return resourceBundles == null ? null : ContainerUtil.newArrayList(resourceBundles);
+    return resourceBundles == null ? null : List.of(resourceBundles);
   }
 
-  @Nullable
-  private static List<PropertiesFile> getPropertiesFiles(@NotNull AnActionEvent e) {
-    final PsiElement[] psiElements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
+  private static @Nullable List<PropertiesFile> getPropertiesFiles(@NotNull AnActionEvent e) {
+    final PsiElement[] psiElements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
     if (psiElements == null || psiElements.length == 0) {
       return null;
     }
@@ -124,18 +134,11 @@ public class CombinePropertiesFilesAction extends AnAction {
     }
 
     @Override
-    public boolean canClose(final String newBaseName) {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public String getErrorText(String inputString) {
+    public @Nullable String getErrorText(String inputString) {
       return checkInput(inputString) ? null : PropertiesBundle.message("combine.properties.files.validation.error", checkBaseName(inputString).getFailedFile());
     }
 
-    @Nullable
-    private BaseNameError checkBaseName(final String baseNameCandidate) {
+    private @Nullable BaseNameError checkBaseName(final String baseNameCandidate) {
       for (PropertiesFile propertiesFile : myPropertiesFiles) {
         final String name = propertiesFile.getVirtualFile().getName();
         if (name.startsWith(baseNameCandidate) &&

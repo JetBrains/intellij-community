@@ -1,0 +1,33 @@
+- name: dist.all/lib/intellij.libraries.ktor.client.jar
+  projectLibraries:
+  - name: kotlinx-serialization-json-io
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1/kotlinx-serialization-json-io-jvm-1.jar
+  - name: ktor-client-core
+    files:
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/3/ktor-client-core-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3/ktor-http-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3/ktor-http-cio-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3/ktor-events-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3/ktor-websocket-serialization-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3/ktor-serialization-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3/ktor-websockets-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3/ktor-sse-jvm-3.jar
+  - name: ktor-client-java
+    files:
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/3/ktor-client-java-jvm-3.jar
+  - name: ktor-serialization-kotlinx-json
+    files:
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/3/ktor-serialization-kotlinx-json-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/3/ktor-serialization-kotlinx-jvm-3.jar
+  modules:
+  - name: intellij.libraries.ktor.client
+    libraries:
+      ktor-client-encoding:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-encoding-jvm/3/ktor-client-encoding-jvm-3.jar
+      ktor-client-content-negotiation:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-content-negotiation-jvm/3/ktor-client-content-negotiation-jvm-3.jar
+      ktor-client-auth:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-auth-jvm/3/ktor-client-auth-jvm-3.jar
+      ktor-client-logging:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3/ktor-client-logging-jvm-3.jar

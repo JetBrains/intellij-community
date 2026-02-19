@@ -51,6 +51,7 @@ public class XmlTextFilter implements ElementFilter {
     return false;
   }
 
+  @Override
   public String toString(){
     String ret = "(";
     for(int i = 0; i < myValue.length; i++){

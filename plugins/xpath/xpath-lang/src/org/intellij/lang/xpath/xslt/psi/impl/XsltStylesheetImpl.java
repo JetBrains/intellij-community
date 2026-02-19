@@ -20,15 +20,18 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.*;
+import org.intellij.lang.xpath.xslt.psi.XsltFunction;
+import org.intellij.lang.xpath.xslt.psi.XsltParameter;
+import org.intellij.lang.xpath.xslt.psi.XsltStylesheet;
+import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.util.IncludeAwareMatcher;
 import org.intellij.lang.xpath.xslt.util.ParamMatcher;
 import org.intellij.lang.xpath.xslt.util.TemplateMatcher;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltStylesheetImpl extends XsltElementImpl implements XsltStylesheet {
-
-  public XsltStylesheetImpl(XmlTag target) {
+final class XsltStylesheetImpl extends XsltElementImpl implements XsltStylesheet {
+  XsltStylesheetImpl(XmlTag target) {
     super(target);
   }
 

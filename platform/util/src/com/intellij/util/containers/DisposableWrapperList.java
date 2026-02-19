@@ -23,7 +23,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
@@ -35,7 +44,7 @@ import java.util.function.Predicate;
  * @param <E> the type of elements held in this list
  */
 public final class DisposableWrapperList<E> extends AbstractList<E> {
-  @NotNull private final List<DisposableWrapper> myWrappedList = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<DisposableWrapper> myWrappedList = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public DisposableWrapperList() {
   }
@@ -58,8 +67,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
    * @return the disposable object representing the added element. Disposal of this object removes the element from
    *     the list. Conversely, removal of the element from the list triggers disposal of its disposable object.
    */
-  @NotNull
-  public Disposable add(@NotNull E element, @NotNull Disposable parentDisposable) {
+  public @NotNull Disposable add(@NotNull E element, @NotNull Disposable parentDisposable) {
     DisposableWrapper disposableWrapper = createDisposableWrapper(element, parentDisposable);
     myWrappedList.add(disposableWrapper);
     return disposableWrapper;
@@ -74,8 +82,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
    * @return the disposable object representing the added element. Disposal of this object removes the element from
    *     the list. Conversely, removal of the element from the list triggers disposal of its disposable object.
    */
-  @NotNull
-  public Disposable add(int index, @NotNull E element, @NotNull Disposable parentDisposable) {
+  public @NotNull Disposable add(int index, @NotNull E element, @NotNull Disposable parentDisposable) {
     DisposableWrapper disposableWrapper = createDisposableWrapper(element, parentDisposable);
     myWrappedList.add(index, disposableWrapper);
     return disposableWrapper;
@@ -113,8 +120,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @Override
-  @Nullable
-  public E remove(int index) {
+  public @Nullable E remove(int index) {
     DisposableWrapper removedWrapper = myWrappedList.remove(index);
     return unwrapAndDispose(removedWrapper);
   }
@@ -162,8 +168,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @Override
-  @NotNull
-  public Iterator<E> iterator() {
+  public @NotNull Iterator<E> iterator() {
     return new DisposableWrapperListIterator(0);
   }
 
@@ -231,32 +236,27 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
   }
 
   @Override
-  @NotNull
-  public ListIterator<E> listIterator() {
+  public @NotNull ListIterator<E> listIterator() {
     return new DisposableWrapperListIterator(0);
   }
 
   @Override
-  @NotNull
-  public ListIterator<E> listIterator(int index) {
+  public @NotNull ListIterator<E> listIterator(int index) {
     return new DisposableWrapperListIterator(index);
   }
 
   @Override
-  @NotNull
-  public List<E> subList(int fromIndex, int toIndex) {
+  public @NotNull List<E> subList(int fromIndex, int toIndex) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  private DisposableWrapper createDisposableWrapper(@NotNull E element, @NotNull Disposable parentDisposable) {
+  private @NotNull DisposableWrapper createDisposableWrapper(@NotNull E element, @NotNull Disposable parentDisposable) {
     DisposableWrapper disposableWrapper = new DisposableWrapper(element, true);
     Disposer.register(parentDisposable, disposableWrapper);
     return disposableWrapper;
   }
 
-  @NotNull
-  private Collection<DisposableWrapper> wrapAll(@NotNull Collection<? extends E> collection) {
+  private @NotNull Collection<DisposableWrapper> wrapAll(@NotNull Collection<? extends E> collection) {
     if (collection.isEmpty()) {
       return Collections.emptyList();
     }
@@ -267,8 +267,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
     return result;
   }
 
-  @Nullable
-  private E unwrapAndDispose(@Nullable DisposableWrapper disposableWrapper) {
+  private @Nullable E unwrapAndDispose(@Nullable DisposableWrapper disposableWrapper) {
     if (disposableWrapper == null) {
       return null;
     }
@@ -277,9 +276,8 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
     return unwrapped;
   }
 
-  private class DisposableWrapper extends AtomicBoolean implements Disposable {
-    @NotNull
-    private final E delegate;
+  private final class DisposableWrapper extends AtomicBoolean implements Disposable {
+    private final @NotNull E delegate;
     private boolean removeFromContainer;
 
     DisposableWrapper(@NotNull E obj) {
@@ -342,8 +340,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
       }
     }
 
-    @NotNull
-    private String classInfo(@NotNull E o) {
+    private @NotNull String classInfo(@NotNull E o) {
       try {
         return o + " (" + o.getClass() + "; super interfaces: " + Arrays.toString(o.getClass().getInterfaces()) +")";
       }
@@ -354,9 +351,9 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
     }
   }
 
-  private class DisposableWrapperListIterator implements ListIterator<E> {
-    @NotNull private final ListIterator<DisposableWrapper> myDelegate;
-    @Nullable private DisposableWrapper myLastReturned;
+  private final class DisposableWrapperListIterator implements ListIterator<E> {
+    private final @NotNull ListIterator<DisposableWrapper> myDelegate;
+    private @Nullable DisposableWrapper myLastReturned;
 
     DisposableWrapperListIterator(int initialCursor) {
       myDelegate = myWrappedList.listIterator(initialCursor);

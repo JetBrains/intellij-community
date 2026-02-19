@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -13,29 +13,35 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 public final class RegExpReplacementUtil {
 
-  /**
-   * Dummy text that never needs escaping
-   */
-  private static final String DUMMY = "a";
-
   private RegExpReplacementUtil() {}
 
   public static void replaceInContext(@NotNull PsiElement element, @NotNull String text) {
+    replaceInContext(element, text, null);
+  }
+
+  public static void replaceInContext(@NotNull PsiElement element, @NotNull String text, TextRange range) {
     final PsiFile file = element.getContainingFile();
     text = escapeForContext(text, file);
     final Document document = file.getViewProvider().getDocument();
     assert document != null;
     final TextRange replaceRange = element.getTextRange();
-    document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), text);
+    final int startOffset = replaceRange.getStartOffset();
+    if (range != null) {
+      document.replaceString(startOffset + range.getStartOffset(), startOffset + range.getEndOffset(), text);
+    }
+    else {
+      document.replaceString(startOffset, replaceRange.getEndOffset(), text);
+    }
   }
 
-  private static String escapeForContext(String text, PsiFile file) {
+  public static String escapeForContext(String text, PsiFile file) {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
     if (injectedLanguageManager.isInjectedFragment(file)) {
       final PsiElement context = file.getContext();
@@ -43,11 +49,9 @@ public final class RegExpReplacementUtil {
       if (manipulator != null) {
         // use element manipulator to process escape sequences correctly for all supported languages
         final PsiElement copy = context.copy(); // create a copy to avoid original element modifications
-        final PsiElement newElement = manipulator.handleContentChange(copy, DUMMY + text);
+        final PsiElement newElement = manipulator.handleContentChange(copy, text);
         if (newElement != null) {
-          final String newElementText = newElement.getText();
-          final TextRange newRange = manipulator.getRangeInElement(newElement);
-          return newElementText.substring(newRange.getStartOffset() + DUMMY.length(), newRange.getEndOffset());
+          return manipulator.getRangeInElement(newElement).substring(newElement.getText());
         }
       }
       if (RegExpElementImpl.isLiteralExpression(context)) {
@@ -59,5 +63,13 @@ public final class RegExpReplacementUtil {
       }
     }
     return text;
+  }
+
+  public static void flipLeftRight(@Nullable PsiElement left, @Nullable PsiElement right) {
+    if (left == null || right == null) return;
+    final PsiElement copyLeft = left.copy();
+    final PsiElement copyRight = right.copy();
+    left.replace(copyRight);
+    right.replace(copyLeft);
   }
 }

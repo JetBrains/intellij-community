@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.BuildConsoleUtils.getMessageTitle
@@ -13,29 +13,25 @@ import com.intellij.build.issue.quickfix.OpenFileQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.util.PlatformUtils
-import com.intellij.util.io.isFile
 import com.intellij.util.text.nullize
-import org.gradle.initialization.BuildLayoutParameters
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
+import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.nio.file.Paths
-import java.util.*
 import java.util.function.BiPredicate
 import java.util.function.Consumer
+import kotlin.io.path.isRegularFile
 
 /**
  * This issue checker provides quick fixes to deal with known startup issues of the Gradle daemon.
- *
- * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-class GradleDaemonStartupIssueChecker : GradleIssueChecker {
-
+internal class GradleDaemonStartupIssueChecker : GradleIssueChecker {
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val rootCause = getRootCauseAndLocation(issueData.error).first
     val rootCauseText = rootCause.toString()
@@ -43,25 +39,20 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
       return null
     }
 
-    // JDK compatibility issues should be handled by org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker
-    if(rootCauseText.contains("FAILURE: Build failed with an exception.")) {
-      return null
-    }
-
     val quickFixDescription = StringBuilder()
     val quickFixes = ArrayList<BuildIssueQuickFix>()
     val projectGradleProperties = Paths.get(issueData.projectPath, "gradle.properties")
-    if (projectGradleProperties.isFile()) {
+    if (projectGradleProperties.isRegularFile()) {
       val openFileQuickFix = OpenFileQuickFix(projectGradleProperties, "org.gradle.jvmargs")
       quickFixDescription.append(" - <a href=\"${openFileQuickFix.id}\">gradle.properties</a> in project root directory\n")
       quickFixes.add(openFileQuickFix)
     }
 
-    val gradleUserHomeDir = BuildLayoutParameters().gradleUserHomeDir
+    val gradleUserHomeDir = issueData.buildEnvironment?.gradle?.gradleUserHome ?: gradleUserHomeDir()
     val commonGradleProperties = Paths.get(gradleUserHomeDir.path, "gradle.properties")
-    if (commonGradleProperties.isFile()) {
+    if (commonGradleProperties.isRegularFile()) {
       val openFileQuickFix = OpenFileQuickFix(commonGradleProperties, "org.gradle.jvmargs")
-      quickFixDescription.append(" - <a href=\"${openFileQuickFix.id}\">gradle.properties</a> in in GRADLE_USER_HOME directory\n")
+      quickFixDescription.append(" - <a href=\"${openFileQuickFix.id}\">gradle.properties</a> in GRADLE_USER_HOME directory\n")
       quickFixes.add(openFileQuickFix)
     }
 
@@ -103,7 +94,7 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
 
     if (failureCause == "startup failed:") {
       val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
-      val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file.path}': ${location.startLine + 1}: ", "") //NON-NLS
+      val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file?.path ?: ""}': ${location.startLine + 1}: ", "") //NON-NLS
                                   .nullize()?.substringBeforeLast(" @ ") ?: return false //NON-NLS
       val locationPart = locationLine.substringAfterLast(" @ ")
       val matchResult = GradleConsoleFilter.LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)

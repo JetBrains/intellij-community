@@ -1,0 +1,13 @@
+*f:com.intellij.history.ActivityId
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.history.ActivityId
+- bs:copy$default(com.intellij.history.ActivityId,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.history.ActivityId
+- equals(java.lang.Object):Z
+- f:getKind():java.lang.String
+- f:getProviderId():java.lang.String
+- hashCode():I
+*:com.intellij.history.ActivityPresentationProvider
+- getIcon(java.lang.String):javax.swing.Icon
+- a:getId():java.lang.String

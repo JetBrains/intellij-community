@@ -1,19 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public final class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
   private final boolean myPlural;
 
@@ -26,9 +29,8 @@ public final class DeleteTypeDescriptionLocation extends ElementDescriptionLocat
 
   private static final ElementDescriptionProvider ourDefaultProvider = new DefaultProvider();
 
-  @NotNull
   @Override
-  public ElementDescriptionProvider getDefaultProvider() {
+  public @NotNull ElementDescriptionProvider getDefaultProvider() {
     return ourDefaultProvider;
   }
 
@@ -36,9 +38,9 @@ public final class DeleteTypeDescriptionLocation extends ElementDescriptionLocat
     return myPlural;
   }
 
-  private static class DefaultProvider implements ElementDescriptionProvider {
+  private static final class DefaultProvider implements ElementDescriptionProvider {
     @Override
-    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
+    public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
       if (location instanceof DeleteTypeDescriptionLocation) {
         final boolean plural = ((DeleteTypeDescriptionLocation)location).isPlural();
         final int count = plural ? 2 : 1;

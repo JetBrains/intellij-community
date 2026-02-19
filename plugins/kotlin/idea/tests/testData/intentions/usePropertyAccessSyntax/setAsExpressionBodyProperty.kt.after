@@ -1,0 +1,6 @@
+// WITH_STDLIB
+var Thread.otherName: String
+    get() = getName()
+    set(value) {
+        name = value
+    }

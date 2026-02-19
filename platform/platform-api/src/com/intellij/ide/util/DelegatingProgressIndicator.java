@@ -1,9 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.StandardProgressIndicator;
+import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,14 +19,22 @@ import org.jetbrains.annotations.NotNull;
 public class DelegatingProgressIndicator implements WrappedProgressIndicator, StandardProgressIndicator {
   private final ProgressIndicator myIndicator;
 
+  @Obsolete
   public DelegatingProgressIndicator(@NotNull ProgressIndicator indicator) {
     myIndicator = indicator;
     ProgressManager.assertNotCircular(indicator);
   }
 
+  @Obsolete
   public DelegatingProgressIndicator() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    myIndicator = indicator == null ? new EmptyProgressIndicator() : indicator;
+    if (indicator == null) {
+      myIndicator = new EmptyProgressIndicator();
+    }
+    else {
+      myIndicator = indicator;
+      ProgressManager.assertNotCircular(indicator);
+    }
   }
 
   @Override
@@ -104,8 +118,7 @@ public class DelegatingProgressIndicator implements WrappedProgressIndicator, St
   }
 
   @Override
-  @NotNull
-  public ModalityState getModalityState() {
+  public @NotNull ModalityState getModalityState() {
     return myIndicator.getModalityState();
   }
 
@@ -133,9 +146,8 @@ public class DelegatingProgressIndicator implements WrappedProgressIndicator, St
     return myIndicator;
   }
 
-  @NotNull
   @Override
-  public ProgressIndicator getOriginalProgressIndicator() {
+  public @NotNull ProgressIndicator getOriginalProgressIndicator() {
     return myIndicator;
   }
 

@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.internal;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class DiffFiles {
   public static void main(String[] args) throws Exception {

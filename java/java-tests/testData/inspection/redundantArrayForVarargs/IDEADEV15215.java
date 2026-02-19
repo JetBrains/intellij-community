@@ -15,6 +15,6 @@ public class IDEADEV15215 {
 
     
     public static void extra(String... args) {
-      extra(<warning descr="Redundant array creation for calling varargs method">new String[]{"vvv","aaa"}</warning>);
+      extra(<warning descr="Redundant array creation for calling varargs method">new String[]</warning>{"vvv","aaa"});
     }
 }

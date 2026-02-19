@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,9 +10,6 @@ import org.jetbrains.idea.svn.config.SvnIniFile;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ProxyModule extends BaseCommandRuntimeModule {
 
   public ProxyModule(@NotNull CommandRuntime runtime) {
@@ -35,14 +32,13 @@ public class ProxyModule extends BaseCommandRuntimeModule {
       InetSocketAddress address = (InetSocketAddress)proxy.address();
 
       command.put("--config-option");
-      command.put(String.format("servers:%s:http-proxy-host=%s", hostGroup, address.getHostName()));
+      command.put(String.format("servers:%s:http-proxy-host=%s", hostGroup, address.getHostString()));
       command.put("--config-option");
       command.put(String.format("servers:%s:http-proxy-port=%s", hostGroup, address.getPort()));
     }
   }
 
-  @NotNull
-  private String ensureGroupForHost(@NotNull Command command, @NotNull String host) {
+  private @NotNull String ensureGroupForHost(@NotNull Command command, @NotNull String host) {
     SvnIniFile configFile = new SvnIniFile(myAuthenticationService.getSpecialConfigDir());
     String groupName = SvnIniFile.getGroupForHost(host, configFile);
 

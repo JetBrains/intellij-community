@@ -4,7 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 
-class EditSourceNotInEditorAction : EditSourceAction() {
+internal class EditSourceNotInEditorAction : EditSourceAction() {
   override fun update(e: AnActionEvent) {
     if (e.getData(CommonDataKeys.EDITOR) != null) {
       e.presentation.isEnabledAndVisible = false

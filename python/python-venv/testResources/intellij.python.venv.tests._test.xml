@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.community.junit5Tests.framework._test"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.python.venv"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

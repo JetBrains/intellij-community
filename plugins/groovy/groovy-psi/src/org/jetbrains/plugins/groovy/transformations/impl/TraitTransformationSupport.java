@@ -1,14 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -19,9 +22,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class TraitTransformationSupport implements AstTransformationSupport {
+public final class TraitTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
@@ -30,20 +37,21 @@ public class TraitTransformationSupport implements AstTransformationSupport {
 
     if (codeClass.isTrait() && codeClass.getQualifiedName() != null) {
       for (GrField field : codeClass.getCodeFields()) {
-        context.addField(new GrTraitField(field, codeClass, PsiSubstitutor.EMPTY));
+        context.addField(new GrTraitField(field, codeClass, PsiSubstitutor.EMPTY, context));
       }
     }
 
     process(context, (trait, substitutor) -> {
       if (trait instanceof GrTypeDefinition) {
         for (PsiMethod method : trait.getMethods()) {
-          if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) &&
+          if ((((GrTypeDefinition)trait).isTrait() || method.getModifierList().hasExplicitModifier(PsiModifier.DEFAULT)) &&
+              !method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) &&
               !method.getModifierList().hasExplicitModifier(PsiModifier.PRIVATE)) {
             context.addMethods(getExpandingMethods(codeClass, method, substitutor));
           }
         }
         for (GrField field : ((GrTypeDefinition)trait).getCodeFields()) {
-          context.addField(new GrTraitField(field, codeClass, substitutor));
+          context.addField(new GrTraitField(field, codeClass, substitutor, context));
         }
       }
       else if (trait instanceof ClsClassImpl) {
@@ -51,7 +59,7 @@ public class TraitTransformationSupport implements AstTransformationSupport {
           context.addMethods(getExpandingMethods(codeClass, method, substitutor));
         }
         for (GrField field : GrTraitUtil.getCompiledTraitFields((ClsClassImpl)trait)) {
-          context.addField(new GrTraitField(field, codeClass, substitutor));
+          context.addField(new GrTraitField(field, codeClass, substitutor, context));
         }
       }
     });
@@ -72,6 +80,9 @@ public class TraitTransformationSupport implements AstTransformationSupport {
     while (!stack.isEmpty()) {
       Pair<PsiClass, PsiSubstitutor> current = stack.pop();
       PsiClass currentClass = current.first;
+      if (currentClass == context.getCodeClass()) {
+        continue;
+      }
       PsiSubstitutor currentSubstitutor = current.second;
       if (!visited.add(currentClass)) continue;
       if (GrTraitUtil.isTrait(currentClass)) {
@@ -84,10 +95,9 @@ public class TraitTransformationSupport implements AstTransformationSupport {
     }
   }
 
-  @NotNull
-  private static List<PsiMethod> getExpandingMethods(@NotNull PsiClass containingClass,
-                                                     @NotNull PsiMethod method,
-                                                     @NotNull PsiSubstitutor substitutor) {
+  private static @NotNull List<PsiMethod> getExpandingMethods(@NotNull PsiClass containingClass,
+                                                              @NotNull PsiMethod method,
+                                                              @NotNull PsiSubstitutor substitutor) {
     List<PsiMethod> result = new SmartList<>();
     for (PsiMethod expanded : GrClassImplUtil.expandReflectedMethods(method)) {
       result.add(new GrTraitMethod(containingClass, expanded, substitutor));

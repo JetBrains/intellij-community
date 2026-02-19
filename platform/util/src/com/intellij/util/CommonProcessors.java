@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.FastUtilHashingStrategies;
+import com.intellij.util.containers.HashingStrategy;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +14,6 @@ import java.util.Set;
 
 /**
  * Common {@link Processor} collect/find implementations.
- * .
- * @author max
  */
 public final class CommonProcessors {
   public static class CollectProcessor<T> implements Processor<T> {
@@ -45,14 +43,12 @@ public final class CommonProcessors {
       return myCollection.toArray(a);
     }
 
-    @NotNull
-    public Collection<T> getResults() {
+    public @NotNull Collection<T> getResults() {
       return myCollection;
     }
   }
 
-  @NotNull
-  public static <T> Processor<T> notNullProcessor(@NotNull final Processor<? super T> processor) {
+  public static @NotNull <T> Processor<T> notNullProcessor(final @NotNull Processor<? super T> processor) {
     return processor::process;
   }
 
@@ -74,8 +70,7 @@ public final class CommonProcessors {
       return myCollection.toArray(a);
     }
 
-    @NotNull
-    public Collection<T> getResults() {
+    public @NotNull Collection<T> getResults() {
       return myCollection;
     }
   }
@@ -85,12 +80,13 @@ public final class CommonProcessors {
     private final Processor<? super T> myDelegate;
 
     public UniqueProcessor(@NotNull Processor<? super T> delegate) {
-      this(delegate, ContainerUtil.canonicalStrategy());
+      myDelegate = delegate;
+      processed = new HashSet<>();
     }
 
-    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
+    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull HashingStrategy<? super @NotNull T> strategy) {
       myDelegate = delegate;
-      processed = new THashSet<>(strategy);
+      processed = new ObjectOpenCustomHashSet<>(FastUtilHashingStrategies.adaptAsNotNull(strategy));
     }
 
     @Override
@@ -116,13 +112,11 @@ public final class CommonProcessors {
       return myValue != null;
     }
 
-    @Nullable
-    public T getFoundValue() {
+    public @Nullable T getFoundValue() {
       return myValue;
     }
 
-    @Nullable
-    public T reset() {
+    public @Nullable T reset() {
       T prev = myValue;
       myValue = null;
       return prev;
@@ -162,11 +156,12 @@ public final class CommonProcessors {
   }
 
   /**
+   * @deprecated use {@code x -> { processX(x); return true; } } code instead
    * @return processor processing all elements.
    * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning {@code false} value.
    */
-  @NotNull
-  public static <T> Processor<T> processAll(@NotNull final Consumer<? super T> consumer) {
+  @Deprecated
+  public static @NotNull <T> Processor<T> processAll(final @NotNull Consumer<? super T> consumer) {
     return t -> {
       consumer.consume(t);
       return true;
@@ -176,14 +171,12 @@ public final class CommonProcessors {
   private static final Processor<Object> FALSE = __ -> false;
   private static final Processor<Object> TRUE = __ -> true;
 
-  @NotNull
-  public static <T> Processor<T> alwaysFalse() {
+  public static @NotNull <T> Processor<T> alwaysFalse() {
     //noinspection unchecked
     return (Processor<T>)FALSE;
   }
 
-  @NotNull
-  public static <T> Processor<T> alwaysTrue() {
+  public static @NotNull <T> Processor<T> alwaysTrue() {
     //noinspection unchecked
     return (Processor<T>)TRUE;
   }

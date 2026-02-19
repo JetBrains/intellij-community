@@ -1,12 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiLabelReference;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +35,8 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     return (PsiIdentifier)findPsiChildByType(JavaTokenType.IDENTIFIER);
   }
 
-  @Nullable
   @Override
-  public PsiStatement findExitedStatement() {
+  public @Nullable PsiStatement findExitedStatement() {
     PsiIdentifier label = getLabelIdentifier();
     if (label != null) {
       PsiLabeledStatement labeled = PsiImplUtil.findEnclosingLabeledStatement(this, label.getText());

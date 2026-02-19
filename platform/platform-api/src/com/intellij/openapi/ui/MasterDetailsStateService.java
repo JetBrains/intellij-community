@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -12,18 +15,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+@SuppressWarnings("LightServiceMigrationCode")
 @State(name = "masterDetails", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
   private final Map<String, ComponentState> myStates = new HashMap<>();
 
   public static MasterDetailsStateService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, MasterDetailsStateService.class);
+    return project.getService(MasterDetailsStateService.class);
   }
 
-  @Nullable
-  public MasterDetailsState getComponentState(@NotNull @NonNls String key, Class<? extends MasterDetailsState> stateClass) {
+  public @Nullable MasterDetailsState getComponentState(@NotNull @NonNls String key, Class<? extends MasterDetailsState> stateClass) {
     ComponentState state = myStates.get(key);
     if (state == null) return null;
     final Element settings = state.mySettings;

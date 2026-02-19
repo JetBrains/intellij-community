@@ -1,0 +1,6 @@
+class Declaration() {
+}
+fun call() {
+    val declaration = Declaration()
+    val str = "cd".length
+}

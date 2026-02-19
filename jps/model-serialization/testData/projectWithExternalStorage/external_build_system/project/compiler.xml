@@ -1,0 +1,7 @@
+<project>
+  <component name="ExternalCompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="externalStorage.java8.main" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

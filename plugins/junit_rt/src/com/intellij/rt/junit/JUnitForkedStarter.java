@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.junit;
 
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -6,10 +6,10 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JUnitForkedStarter {
+public final class JUnitForkedStarter {
 
   public static void main(String[] args) throws Exception {
-    List<String> argList = new ArrayList<String>();
+    List<String> argList = new ArrayList<>();
     for (String arg : args) {
       final int count = RepeatCount.getCount(arg);
       if (count != 0) {
@@ -21,7 +21,7 @@ public class JUnitForkedStarter {
     args = argList.toArray(new String[0]);
     final String[] childTestDescription = {args[0]};
     final String argentName = args[1];
-    final ArrayList<String> listeners = new ArrayList<String>();
+    final ArrayList<String> listeners = new ArrayList<>();
     for (int i = 2, argsLength = args.length; i < argsLength; i++) {
       listeners.add(args[i]);
     }

@@ -29,12 +29,12 @@ public class Main {
   }
 
   private void collect2() {
-      List<List<? extends CharSequence>> list = new ArrayList<>();
+      List<List<? extends CharSequence>> result = new ArrayList<>();
       for (CharSequence charSequence : getListExtends()) {
-          List<? extends CharSequence> charSequences = asList(charSequence);
-          list.add(charSequences);
+          List<? extends CharSequence> list = asList(charSequence);
+          result.add(list);
       }
-      List<? extends List<? extends CharSequence>> res2 = list;
+      List<? extends List<? extends CharSequence>> res2 = result;
     System.out.println(res2);
   }
 
@@ -45,8 +45,8 @@ public class Main {
       MyList<? extends List<? extends CharSequence>> res2 =
               new MyList<>();
       for (CharSequence charSequence : getListExtends()) {
-          List<? extends CharSequence> charSequences = asList(charSequence);
-          res2.add(charSequences);
+          List<? extends CharSequence> list = asList(charSequence);
+          res2.add(list);
       }
       System.out.println(res2);
   }

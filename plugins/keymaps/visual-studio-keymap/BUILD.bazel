@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.keymap.visualStudio` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "keymap-visualStudio_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "keymap-visualStudio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":keymap-visualStudio_resources"]
+)
+
+jvm_library(
+  name = "keymap-visualStudio_test_lib",
+  module_name = "intellij.keymap.visualStudio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":keymap-visualStudio"]
+)
+### auto-generated section `build intellij.keymap.visualStudio` end

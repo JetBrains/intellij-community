@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -30,7 +30,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.HttpConfigurable;
@@ -41,7 +47,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -50,15 +56,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 public final class FetchExtResourceAction extends BaseExtResourceAction {
   private static final Logger LOG = Logger.getInstance(FetchExtResourceAction.class);
-  @NonNls private static final String HTML_MIME = "text/html";
-  @NonNls private static final String HTTP_PROTOCOL = "http://";
-  @NonNls private static final String HTTPS_PROTOCOL = "https://";
-  @NonNls private static final String FTP_PROTOCOL = "ftp://";
-  @NonNls private static final String EXT_RESOURCES_FOLDER = "extResources";
+  private static final @NonNls String HTML_MIME = "text/html";
+  private static final @NonNls String HTTP_PROTOCOL = "http://";
+  private static final @NonNls String HTTPS_PROTOCOL = "https://";
+  private static final @NonNls String FTP_PROTOCOL = "ftp://";
+  private static final @NonNls String EXT_RESOURCES_FOLDER = "extResources";
   private final boolean myForceResultIsValid;
   private static final String KEY = "xml.intention.fetch.name";
 
@@ -89,8 +103,8 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
     return uri.startsWith(HTTP_PROTOCOL) || uri.startsWith(FTP_PROTOCOL) || uri.startsWith(HTTPS_PROTOCOL);
   }
 
-  public static String findUrl(PsiFile file, int offset, String uri) {
-    final PsiElement currentElement = file.findElementAt(offset);
+  public static String findUrl(PsiFile psiFile, int offset, String uri) {
+    final PsiElement currentElement = psiFile.findElementAt(offset);
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
 
     if (attribute != null) {
@@ -147,10 +161,10 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
   }
 
   @Override
-  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor)
+  protected void doInvoke(final @NotNull PsiFile psiFile, final int offset, final @NotNull String uri, final Editor editor)
     throws IncorrectOperationException {
-    final String url = findUrl(file, offset, uri);
-    final Project project = file.getProject();
+    final String url = findUrl(psiFile, offset, uri);
+    final Project project = psiFile.getProject();
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, XmlBundle.message(
       "xml.intention.fetch.progress.fetching.resource")) {
@@ -160,7 +174,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
           try {
             HttpConfigurable.getInstance().prepareURL(url);
             fetchDtd(project, uri, url, indicator);
-            ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(project).restart(file));
+            ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(project).restart(psiFile, this));
             return;
           }
           catch (IOException ex) {
@@ -282,7 +296,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
   }
 
   private static VirtualFile findFileByPath(final String resPath,
-                                            @Nullable final String dtdUrl,
+                                            final @Nullable String dtdUrl,
                                             Project project) {
     final Ref<VirtualFile> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
@@ -330,12 +344,11 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
     });
   }
 
-  @Nullable
-  private String fetchOneFile(final ProgressIndicator indicator,
-                                     final String resourceUrl,
-                                     final Project project,
-                                     String extResourcesPath,
-                                     @Nullable String refname) throws IOException {
+  private @Nullable String fetchOneFile(final ProgressIndicator indicator,
+                                        final String resourceUrl,
+                                        final Project project,
+                                        String extResourcesPath,
+                                        @Nullable String refname) throws IOException {
     SwingUtilities.invokeLater(
       () -> indicator.setText(XmlBundle.message("xml.intention.fetch.progress.fetching", resourceUrl))
     );
@@ -423,8 +436,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
             }
           }
         }
-        else if (element instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)element;
+        else if (element instanceof XmlTag tag) {
           String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
 
           if (schemaLocation != null) {
@@ -467,15 +479,15 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
   }
 
   public static Set<String> extractEmbeddedFileReferences(final VirtualFile vFile,
-                                                          @Nullable final VirtualFile contextVFile,
+                                                          final @Nullable VirtualFile contextVFile,
                                                           final PsiManager psiManager,
                                                           final String url) {
     return ReadAction.compute(() -> {
-      PsiFile file = psiManager.findFile(vFile);
+      PsiFile psiFile = psiManager.findFile(vFile);
 
-      if (file instanceof XmlFile) {
+      if (psiFile instanceof XmlFile) {
         PsiFile contextFile = contextVFile != null ? psiManager.findFile(contextVFile) : null;
-        return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile : null, url);
+        return extractEmbeddedFileReferences((XmlFile)psiFile, contextFile instanceof XmlFile ? (XmlFile)contextFile : null, url);
       }
 
       return Collections.emptySet();
@@ -487,8 +499,7 @@ public final class FetchExtResourceAction extends BaseExtResourceAction {
     String contentType;
   }
 
-  @Nullable
-  private static FetchResult fetchData(final Project project, final String dtdUrl, final ProgressIndicator indicator) throws IOException {
+  private static @Nullable FetchResult fetchData(final Project project, final String dtdUrl, final ProgressIndicator indicator) throws IOException {
     try {
       return HttpRequests.request(dtdUrl).accept("text/xml,application/xml,text/html,*/*").connect(request -> {
         FetchResult result = new FetchResult();

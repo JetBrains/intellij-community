@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -20,7 +23,7 @@ public class FindUsages15Test extends JavaPsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(myJavaFacade.getProject(), LanguageLevel.JDK_1_5);
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages15/" + getTestName(true);
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     createTestProjectStructure(root);
@@ -52,7 +55,7 @@ public class FindUsages15Test extends JavaPsiTestCase {
     assertEquals(1, references.length);
     final PsiElement element = references[0].getElement();
     final PsiClass refClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    assertEquals(refClass.getName(), "GenericClassDerived");
+    assertEquals("GenericClassDerived", refClass.getName());
   }
 
   public void testFindRawOverriddenUsages () {

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMUtil;
@@ -19,8 +20,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+@Service
 public final class Properties {
   private static final Logger LOG = Logger.getInstance(Properties.class);
 
@@ -30,7 +36,7 @@ public final class Properties {
   private final Map<String, Set<String>> myClass2DeprecatedProperties;
 
   public static Properties getInstance() {
-    return ServiceManager.getService(Properties.class);
+    return ApplicationManager.getApplication().getService(Properties.class);
   }
 
   public Properties() {
@@ -44,10 +50,7 @@ public final class Properties {
         loadState(JDOMUtil.load(inputStream));
       }
     }
-    catch (JDOMException e) {
-      LOG.error(e);
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       LOG.error(e);
     }
   }
@@ -55,7 +58,7 @@ public final class Properties {
   /**
    * @return it is possible that properties do not exist in class; returned values are ones specified in config. Never null
    */
-  public boolean isExpertProperty(final Module module, @NotNull final Class aClass, final String propertyName) {
+  public boolean isExpertProperty(final Module module, final @NotNull Class aClass, final String propertyName) {
     for (Class c = aClass; c != null; c = c.getSuperclass()) {
       final Set<String> properties = myClass2ExpertProperties.get(c.getName());
       if (properties != null && properties.contains(propertyName)) {
@@ -89,8 +92,7 @@ public final class Properties {
   /**
    * @return it is possible that property does not exist in class; returned value is one specified in config
    */
-  @Nullable
-  public String getInplaceProperty(final Class aClass) {
+  public @Nullable String getInplaceProperty(final Class aClass) {
     for (Class c = aClass; c != null; c = c.getSuperclass()) {
       final String property = myClass2InplaceProperty.get(c.getName());
       if (property != null) {
@@ -155,7 +157,7 @@ public final class Properties {
       }
       map.put(name, pairs);
     }
-    if (map.size() > 0) {
+    if (!map.isEmpty()) {
       myClass2EnumProperties.put(className, map);
     }
   }

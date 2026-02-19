@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.EngravedTextGraphics;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.content.Content;
@@ -16,8 +17,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.ComponentOrientation;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
@@ -27,6 +33,7 @@ public class BaseLabel extends JLabel {
 
   private Color myActiveFg;
   private Color myPassiveFg;
+  private Color myTabColor;
   private boolean myBold;
 
   public BaseLabel(@NotNull ToolWindowContentUi ui, boolean bold) {
@@ -43,7 +50,11 @@ public class BaseLabel extends JLabel {
         repaint();
       }
     });
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
+
+    if (ExperimentalUI.isNewUI()) {
+      setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets()));
+    }
   }
 
   @Override
@@ -109,15 +120,17 @@ public class BaseLabel extends JLabel {
     return myPassiveFg;
   }
 
-  protected void updateTextAndIcon(Content content, boolean isSelected) {
+  protected void updateTextAndIcon(Content content, boolean isSelected, boolean isBold) {
     if (content == null) {
       setText(null);
       setIcon(null);
+      myTabColor = null;
     }
     else {
-      setText(content.getDisplayName());
+      setText(showLabelText(content) ? content.getDisplayName() : null);
       setActiveFg(getActiveFg(isSelected));
       setPassiveFg(getPassiveFg(isSelected));
+      myTabColor = content.getTabColor();
 
       setToolTipText(content.getDescription());
 
@@ -132,19 +145,30 @@ public class BaseLabel extends JLabel {
           setIcon(icon);
         }
         else {
-          setIcon(icon != null ? new WatermarkIcon(icon, .5f) : null);
+          var userValueIsTransparent = content.getUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT);
+          var isTransparent = userValueIsTransparent != null ? userValueIsTransparent : true;
+
+          var labelIcon = icon != null ? (isTransparent ? new WatermarkIcon(icon, .5f) : icon) : null;
+          setIcon(labelIcon);
         }
       }
       else {
         setIcon(null);
       }
 
-      myBold = false; //isSelected;
+      myBold = isBold;
     }
   }
 
-  @Nullable
-  public Content getContent() {
+  boolean showLabelText(@NotNull Content content) {
+    return true;
+  }
+
+  public @Nullable Color getTabColor() {
+    return myTabColor;
+  }
+
+  public @Nullable Content getContent() {
     return null;
   }
 

@@ -1,17 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessEvents;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.TraceSettings;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareToggleAction;
@@ -20,7 +28,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.sun.jdi.*;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.InvalidStackFrameException;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.ThreadReference;
+import com.sun.jdi.Value;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.MethodEntryEvent;
 import com.sun.jdi.request.EventRequest;
@@ -80,8 +94,7 @@ public class CallTracer implements OverheadProducer {
 
   private void accept(Event event) {
     OverheadTimings.add(myDebugProcess, this, 1, null);
-    if (event instanceof MethodEntryEvent) {
-      MethodEntryEvent methodEntryEvent = (MethodEntryEvent)event;
+    if (event instanceof MethodEntryEvent methodEntryEvent) {
       try {
         ThreadReference thread = methodEntryEvent.thread();
         ThreadRequest request = myThreadRequests.get(thread);
@@ -98,26 +111,34 @@ public class CallTracer implements OverheadProducer {
           StringBuilder res = new StringBuilder("\n");
           res.append(indentString).append(method.declaringType().name()).append('.').append(method.name()).append('(');
           if (Registry.is("debugger.call.tracing.arguments")) {
-            StackFrame frame = thread.frame(0);
-            boolean first = true;
-            for (Value value : DebuggerUtilsEx.getArgumentValues(frame)) {
-              if (!first) {
-                res.append(", ");
+            try {
+              boolean first = true;
+              for (Value value : DebuggerUtilsEx.getArgumentValues(thread.frame(0))) {
+                if (!first) {
+                  res.append(", ");
+                }
+                first = false;
+                if (value == null) {
+                  res.append("null");
+                }
+                else if (value instanceof StringReference stringReference) {
+                  res.append(stringReference.value());
+                }
+                else if (value instanceof ObjectReference objectReference) {
+                  res.append(StringUtil.getShortName(objectReference.referenceType().name())).append("@")
+                    .append(objectReference.uniqueID());
+                }
+                else {
+                  res.append(value);
+                }
               }
-              first = false;
-              if (value == null) {
-                res.append("null");
+            }
+            catch (InternalException e) {
+              if (e.errorCode() != JvmtiError.INVALID_SLOT) { // ignore
+                throw e;
               }
-              else if (value instanceof StringReference) {
-                res.append(((StringReference)value).value());
-              }
-              else if (value instanceof ObjectReference) {
-                ObjectReference objectReference = (ObjectReference)value;
-                res.append(StringUtil.getShortName(objectReference.referenceType().name())).append("@").append(objectReference.uniqueID());
-              }
-              else {
-                res.append(value.toString());
-              }
+            }
+            catch (InvalidStackFrameException ignored) {
             }
           }
           else {
@@ -134,11 +155,8 @@ public class CallTracer implements OverheadProducer {
           myDebugProcess.printToConsole(res.toString());
         }
       }
-      catch (VMDisconnectedException vmd) {
-        throw vmd;
-      }
       catch (Exception e) {
-        LOG.error(e);
+        DebuggerUtilsImpl.logError(e);
       }
     }
   }
@@ -175,8 +193,7 @@ public class CallTracer implements OverheadProducer {
     renderer.append(JavaDebuggerBundle.message("call.tracer"));
   }
 
-  @NotNull
-  public static CallTracer get(DebugProcessImpl debugProcess) {
+  public static @NotNull CallTracer get(DebugProcessImpl debugProcess) {
     CallTracer tracer = debugProcess.getUserData(CALL_TRACER_KEY);
     if (tracer == null) {
       tracer = new CallTracer(debugProcess);
@@ -217,7 +234,7 @@ public class CallTracer implements OverheadProducer {
     }
 
     void stop() {
-      myEntryRequests.forEach(myRequestManager::deleteEventRequest);
+      myEntryRequests.forEach(r -> DebuggerUtilsAsync.deleteEventRequest(myRequestManager, r));
     }
   }
 
@@ -229,8 +246,13 @@ public class CallTracer implements OverheadProducer {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e.getProject());
+      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e);
       if (process != null) {
         CallTracer tracer = process.getUserData(CALL_TRACER_KEY);
         if (tracer != null) {
@@ -242,7 +264,7 @@ public class CallTracer implements OverheadProducer {
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e.getProject());
+      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(e);
       if (process != null) {
         get(process).setEnabled(state);
       }

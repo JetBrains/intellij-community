@@ -1,29 +1,47 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.NSWorkspace;
-import com.intellij.util.io.jna.DisposableMemory;
+import com.intellij.util.system.CpuArch;
 import com.sun.jna.Library;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
-import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.intellij.ui.mac.foundation.Foundation.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static com.intellij.ui.mac.foundation.Foundation.autorelease;
+import static com.intellij.ui.mac.foundation.Foundation.createDict;
+import static com.intellij.ui.mac.foundation.Foundation.createSelector;
+import static com.intellij.ui.mac.foundation.Foundation.getEncodingCode;
+import static com.intellij.ui.mac.foundation.Foundation.getEncodingName;
+import static com.intellij.ui.mac.foundation.Foundation.getObjcClass;
+import static com.intellij.ui.mac.foundation.Foundation.invoke;
+import static com.intellij.ui.mac.foundation.Foundation.invokeVarArg;
+import static com.intellij.ui.mac.foundation.Foundation.invoke_fpret;
+import static com.intellij.ui.mac.foundation.Foundation.nsString;
+import static com.intellij.ui.mac.foundation.Foundation.stringFromClass;
+import static com.intellij.ui.mac.foundation.Foundation.stringFromSelector;
+import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class FoundationTest {
   @BeforeClass
   public static void assumeMac() {
-    Assume.assumeTrue("mac only", SystemInfo.isMac);
+    IoTestUtil.assumeMacOS();
   }
 
   @Test
@@ -62,23 +80,22 @@ public class FoundationTest {
     assertThat(path, notNullValue());
     assertThat(path, endsWith("Finder.app"));
 
-    path = NSWorkspace.absolutePathForAppBundleWithIdentifier("unexisting-bla-blah");
+    path = NSWorkspace.absolutePathForAppBundleWithIdentifier("non-existing-blah-blah");
     assertThat(path, nullValue());
   }
 
   @Test
   public void testPlatformInfo() {
-    assertEquals("bitness does not match", SystemInfo.is64Bit, Platform.is64Bit());
-    assertTrue("not detected as mac", Platform.isMac());
+    assertTrue("Word size does not match", Platform.is64Bit());
+    assertTrue("Not detected as macOS", Platform.isMac());
 
-    boolean isIntel = SystemInfo.is32Bit || SystemInfo.isMacIntel64;
-    assertEquals((isIntel ? "not " : "") + "detected as Intel", isIntel, Platform.isIntel());
-    assertEquals((!isIntel ? "not " : "") + "detected as arm", !isIntel, Platform.isARM());
+    assertEquals("Incorrectly detected as " + CpuArch.CURRENT, CpuArch.CURRENT == CpuArch.X86_64, Platform.isIntel());
+    assertEquals("Incorrectly detected as " + CpuArch.CURRENT, CpuArch.CURRENT == CpuArch.ARM64, Platform.isARM());
 
     assertEquals(1, Native.BOOL_SIZE);
-    assertEquals(SystemInfo.is32Bit ? 4 : 8, Native.POINTER_SIZE);
-    assertEquals(SystemInfo.is32Bit ? 4 : 8, Native.SIZE_T_SIZE);
-    assertEquals(SystemInfo.is32Bit ? 4 : 8, Native.LONG_SIZE);
+    assertEquals(8, Native.POINTER_SIZE);
+    assertEquals(8, Native.SIZE_T_SIZE);
+    assertEquals(8, Native.LONG_SIZE);
   }
 
   @Test
@@ -170,14 +187,10 @@ public class FoundationTest {
   @Test
   public void testSprintf() {
     CLib cLib = Native.load("c", CLib.class);
-    DisposableMemory memory = new DisposableMemory(16);
-    try {
+    try (Memory memory = new Memory(16)) {
       int len = cLib.sprintf(memory, "%d plus %d is %d", 3, 5, 8);
       assertEquals(13, len);
       assertEquals("3 plus 5 is 8", memory.getString(0));
-    }
-    finally {
-      memory.dispose();
     }
   }
 }

@@ -1,24 +1,16 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -37,11 +29,10 @@ import java.util.Set;
 /**
  * @author Maxim.Mossienko
  */
-public class AnnotatedMacro extends Macro {
+public final class AnnotatedMacro extends Macro {
 
   @Override
-  @NonNls
-  public String getName() {
+  public @NonNls String getName() {
     return "annotated";
   }
 
@@ -50,8 +41,7 @@ public class AnnotatedMacro extends Macro {
     return "annotated(\"annotation qname\")";
   }
 
-  @Nullable
-  private static Query<PsiMember> findAnnotated(ExpressionContext context, Expression[] params) {
+  private static @Nullable Query<PsiMember> findAnnotated(ExpressionContext context, Expression[] params) {
     if (params == null || params.length == 0) return null;
     PsiManager instance = PsiManager.getInstance(context.getProject());
 
@@ -92,7 +82,7 @@ public class AnnotatedMacro extends Macro {
     if (query != null) {
       Set<LookupElement> set = new LinkedHashSet<>();
       final String secondParamValue = params.length > 1 ? params[1].calculateResult(context).toString() : null;
-      final boolean isShortName = secondParamValue != null && !Boolean.valueOf(secondParamValue);
+      final boolean isShortName = secondParamValue != null && !Boolean.parseBoolean(secondParamValue);
       final Project project = context.getProject();
       final PsiClass findInClass = secondParamValue != null
                                    ? JavaPsiFacade.getInstance(project).findClass(secondParamValue, GlobalSearchScope.allScope(project))

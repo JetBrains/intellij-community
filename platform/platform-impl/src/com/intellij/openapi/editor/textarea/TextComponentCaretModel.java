@@ -1,8 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
+import com.intellij.openapi.editor.CaretActionListener;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.EventDispatcher;
@@ -12,10 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
-class TextComponentCaretModel implements CaretModel {
+
+final class TextComponentCaretModel implements CaretModel {
   private final TextComponentEditor myEditor;
   private final Caret myCaret;
   private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);
@@ -29,20 +34,23 @@ class TextComponentCaretModel implements CaretModel {
   public void moveCaretRelatively(final int columnShift,
                                   final int lineShift,
                                   final boolean withSelection, final boolean blockSelection, final boolean scrollToCaret) {
-    if (lineShift == 0 && !withSelection && !blockSelection && !scrollToCaret) {
+    if (lineShift == 0 && !withSelection && !blockSelection) {
       moveToOffset(getOffset() + columnShift);
+      if (scrollToCaret) {
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
       return;
     }
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void addCaretListener(@NotNull final CaretListener listener) {
+  public void addCaretListener(final @NotNull CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeCaretListener(@NotNull final CaretListener listener) {
+  public void removeCaretListener(final @NotNull CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -61,15 +69,13 @@ class TextComponentCaretModel implements CaretModel {
     return 1;
   }
 
-  @NotNull
   @Override
-  public Caret getCurrentCaret() {
+  public @NotNull Caret getCurrentCaret() {
     return myCaret;
   }
 
-  @NotNull
   @Override
-  public Caret getPrimaryCaret() {
+  public @NotNull Caret getPrimaryCaret() {
     return myCaret;
   }
 
@@ -78,21 +84,18 @@ class TextComponentCaretModel implements CaretModel {
     return 1;
   }
 
-  @NotNull
   @Override
-  public List<Caret> getAllCarets() {
+  public @NotNull List<Caret> getAllCarets() {
     return Collections.singletonList(myCaret);
   }
 
-  @Nullable
   @Override
-  public Caret getCaretAt(@NotNull VisualPosition pos) {
+  public @Nullable Caret getCaretAt(@NotNull VisualPosition pos) {
     return myCaret.getVisualPosition().equals(pos) ? myCaret : null;
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     return null;
   }
 
@@ -112,7 +115,7 @@ class TextComponentCaretModel implements CaretModel {
 
   @Override
   public void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates) {
-    if (caretStates.size() < 1) throw new IllegalArgumentException("Empty list");
+    if (caretStates.isEmpty()) throw new IllegalArgumentException("Empty list");
     CaretState state = caretStates.get(0);
     if (state != null) {
       if (state.getCaretPosition() != null) moveToLogicalPosition(state.getCaretPosition());
@@ -128,9 +131,8 @@ class TextComponentCaretModel implements CaretModel {
     setCaretsAndSelections(caretStates);
   }
 
-  @NotNull
   @Override
-  public List<CaretState> getCaretsAndSelections() {
+  public @NotNull List<CaretState> getCaretsAndSelections() {
     return Collections.singletonList(new CaretState(getLogicalPosition(), 
                                                     myEditor.offsetToLogicalPosition(myEditor.getSelectionModel().getSelectionStart()), 
                                                     myEditor.offsetToLogicalPosition(myEditor.getSelectionModel().getSelectionEnd())));
@@ -139,8 +141,11 @@ class TextComponentCaretModel implements CaretModel {
   @Override
   public void runForEachCaret(@NotNull CaretAction action) {
     myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
-    action.perform(myCaret);
-    myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+    try {
+      action.perform(myCaret);
+    } finally {
+      myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+    }
   }
 
   @Override

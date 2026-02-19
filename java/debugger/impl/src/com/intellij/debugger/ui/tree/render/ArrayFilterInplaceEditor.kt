@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render
 
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.actions.ArrayAction
 import com.intellij.debugger.actions.ArrayFilterAction
-import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.actions.findJavaValue
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerUtilsImpl
@@ -14,6 +14,7 @@ import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.Pair
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.psi.JavaCodeFragment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -22,7 +23,6 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.tree.TreeModelAdapter
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
@@ -32,18 +32,20 @@ import com.sun.jdi.ArrayType
 import java.awt.Rectangle
 import javax.swing.event.TreeModelEvent
 import javax.swing.tree.TreeNode
+import kotlin.math.min
 
-final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolean, thisType: PsiType?) : XDebuggerTreeInplaceEditor(node,
-                                                                                                                              "arrayFilter") {
+class ArrayFilterInplaceEditor(
+  node: XDebuggerTreeNode, private val myTemp: Boolean, thisType: PsiType?, sessionProxy: XDebugSessionProxy,
+) : XDebuggerTreeInplaceEditor(node, "arrayFilter") {
   init {
     if (thisType != null) {
-      myExpressionEditor.setDocumentProcessor({ d ->
-                                                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(d)
-                                                if (psiFile is JavaCodeFragment) psiFile.thisType = thisType
-                                                d
-                                              })
+      myExpressionEditor.setDocumentProcessor { d ->
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(d)
+        if (psiFile is JavaCodeFragment) psiFile.thisType = thisType
+        d
+      }
     }
-    val arrayRenderer = ArrayAction.getArrayRenderer((myNode.parent as XValueNodeImpl).valueContainer)
+    val arrayRenderer = ArrayAction.getArrayRenderer((myNode.parent as XValueNodeImpl).valueContainer, sessionProxy)
     myExpressionEditor.expression = if (arrayRenderer is ArrayRenderer.Filtered) arrayRenderer.expression else null
   }
 
@@ -66,7 +68,7 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolea
         }
       }
     })
-    ArrayAction.setArrayRenderer(if (XDebuggerUtilImpl.isEmptyExpression(expression))
+    ArrayAction.setArrayRenderer(if (DebuggerUIUtil.isEmptyExpression(expression))
                                    NodeRendererSettings.getInstance().arrayRenderer
                                  else
                                    ArrayRenderer.Filtered(expression),
@@ -92,15 +94,12 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolea
 
   companion object {
     @JvmStatic
-    fun edit(node: XDebuggerTreeNode, temp: Boolean) {
-      val javaValue = (node.parent as XValueNodeImpl).valueContainer
-      if (javaValue is JavaValue) {
-        val debugProcess = javaValue.evaluationContext.debugProcess
-        debugProcess.managerThread.schedule(
+    fun edit(node: XDebuggerTreeNode, temp: Boolean, sessionProxy: XDebugSessionProxy) {
+      val javaValue = findJavaValue((node.parent as XValueNodeImpl).valueContainer, sessionProxy)
+      if (javaValue != null) {
+        javaValue.evaluationContext.managerThread.schedule(
           object : SuspendContextCommandImpl(javaValue.evaluationContext.suspendContext) {
-            override fun getPriority(): PrioritizedTask.Priority {
-              return PrioritizedTask.Priority.NORMAL
-            }
+            override val priority: PrioritizedTask.Priority get() = PrioritizedTask.Priority.NORMAL
 
             override fun contextAction(suspendContext: SuspendContextImpl) {
               var type: String? = null
@@ -112,7 +111,7 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolea
                 val lastChildrenValue = ExpressionChildrenRenderer.getLastChildrenValue(javaValue.descriptor)
                 if (lastChildrenValue is ArrayReference) {
                   // take first non-null element for now
-                  for (v in lastChildrenValue.getValues(0, Math.min(lastChildrenValue.length(), 100))) {
+                  for (v in lastChildrenValue.getValues(0, min(lastChildrenValue.length(), 100))) {
                     if (v != null) {
                       type = v.type().name()
                       break
@@ -123,28 +122,28 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolea
               val pair = ReadAction.compute<Pair<PsiElement, PsiType>, Exception> {
                 DebuggerUtilsImpl.getPsiClassAndType(type, javaValue.project)
               }
-              DebuggerUIUtil.invokeLater({ ArrayFilterInplaceEditor(node, temp, pair.second).show() })
+              DebuggerUIUtil.invokeLater { ArrayFilterInplaceEditor(node, temp, pair.second, sessionProxy).show() }
             }
 
             override fun commandCancelled() {
-              DebuggerUIUtil.invokeLater({ ArrayFilterInplaceEditor(node, temp, null).show() })
+              DebuggerUIUtil.invokeLater { ArrayFilterInplaceEditor(node, temp, null, sessionProxy).show() }
             }
           })
       }
       else {
-        ArrayFilterInplaceEditor(node, temp, null).show()
+        ArrayFilterInplaceEditor(node, temp, null, sessionProxy).show()
       }
     }
 
     @JvmStatic
-    fun editParent(parentNode: XValueNodeImpl) {
+    fun editParent(parentNode: XValueNodeImpl, sessionProxy: XDebugSessionProxy) {
       var temp = false
       var node = parentNode.children.find { ArrayFilterAction.isArrayFilter(it) }
       if (node == null) {
         node = parentNode.addTemporaryEditorNode(AllIcons.General.Filter, JavaDebuggerBundle.message("message.node.filtered"))
         temp = true
       }
-      edit(node as XDebuggerTreeNode, temp)
+      edit(node as XDebuggerTreeNode, temp, sessionProxy)
     }
   }
 }

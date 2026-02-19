@@ -17,12 +17,9 @@
 package com.intellij.execution;
 
 /**
- * Created by IntelliJ IDEA.
- *
- * @author: oleg
- * @date: 24.08.2006
+ * @author oleg
  */
-public class Output {
+public final class Output {
   private final String stdout;
   private final String stderr;
   private final int exitCode;

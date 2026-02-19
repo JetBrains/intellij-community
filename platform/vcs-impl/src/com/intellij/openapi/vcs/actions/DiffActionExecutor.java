@@ -1,7 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.diff.*;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
@@ -15,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -30,8 +36,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +61,7 @@ public abstract class DiffActionExecutor {
     mySelectedLine = getSelectedLine(project, mySelectedFile, editor);
   }
 
-  @Nullable
-  private static Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
+  private static @Nullable Integer getSelectedLine(@NotNull Project project, @NotNull VirtualFile file, @Nullable Editor contextEditor) {
     Editor editor = null;
     if (contextEditor != null) {
       VirtualFile contextFile = FileDocumentManager.getInstance().getFile(contextEditor.getDocument());
@@ -74,19 +77,18 @@ public abstract class DiffActionExecutor {
     return editor.getCaretModel().getLogicalPosition().line;
   }
 
-  @NotNull
-  protected DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
+  protected @NotNull DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
     DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
 
     DiffContent diffContent;
     if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
-      if (content == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
       diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
     }
     else {
       String content = fileRevision.getContent();
-      if (content == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
       diffContent = contentFactory.create(myProject, content, fileRevision.getFile());
     }
 
@@ -108,11 +110,17 @@ public abstract class DiffActionExecutor {
     }
 
     @Override
+    public @Nullable FileType getContentType() {
+      return myFilePath.getFileType();
+    }
+
+    @Override
     public @NotNull DiffRequest process(@NotNull UserDataHolder context,
                                         @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
       final ContentRevision contentRevision = getContentRevision();
-      if (contentRevision == null) throw new DiffRequestProducerException(
-        VcsBundle.message("diff.producer.error.cant.get.revision.content"));
+      if (contentRevision == null) {
+        throw new DiffRequestProducerException(VcsBundle.message("diff.producer.error.cant.get.revision.content"));
+      }
 
       try {
         DiffContent content1 = createRemote(contentRevision);
@@ -158,20 +166,13 @@ public abstract class DiffActionExecutor {
     }
   }
 
-  @Deprecated
-  public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
-                              final Project project, final VcsBackgroundableActions actionKey) {
-    showDiff(diffProvider, revisionNumber, selectedFile, project);
-  }
-
   public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
                               final Project project) {
     final DiffActionExecutor executor = new CompareToFixedExecutor(diffProvider, selectedFile, project, null, revisionNumber);
     executor.showDiff();
   }
 
-  @Nullable
-  protected abstract ContentRevision getContentRevision();
+  protected abstract @Nullable ContentRevision getContentRevision();
 
   public static class CompareToFixedExecutor extends DiffActionExecutor {
     private final VcsRevisionNumber myNumber;
@@ -186,8 +187,7 @@ public abstract class DiffActionExecutor {
     }
 
     @Override
-    @Nullable
-    protected ContentRevision getContentRevision() {
+    protected @Nullable ContentRevision getContentRevision() {
       return myDiffProvider.createFileContent(myNumber, mySelectedFile);
     }
   }
@@ -201,8 +201,7 @@ public abstract class DiffActionExecutor {
     }
 
     @Override
-    @Nullable
-    protected ContentRevision getContentRevision() {
+    protected @Nullable ContentRevision getContentRevision() {
       return myDiffProvider.createCurrentFileContent(mySelectedFile);
     }
   }
@@ -217,9 +216,8 @@ public abstract class DiffActionExecutor {
       super(diffProvider, selectedFile, project, editor);
     }
 
-    @Nullable
     @Override
-    protected ContentRevision getContentRevision() {
+    protected @Nullable ContentRevision getContentRevision() {
       final ItemLatestState itemState = myDiffProvider.getLastRevision(mySelectedFile);
       if (itemState == null) return null;
 
@@ -227,9 +225,8 @@ public abstract class DiffActionExecutor {
       return myDiffProvider.createFileContent(itemState.getNumber(), mySelectedFile);
     }
 
-    @NotNull
     @Override
-    protected DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
+    protected @NotNull DiffContent createRemote(@NotNull ContentRevision fileRevision) throws IOException, VcsException {
       if (myFileStillExists) {
         return super.createRemote(fileRevision);
       }

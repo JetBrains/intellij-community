@@ -1,0 +1,19 @@
+new String[][]{{}}
+-----
+Groovy script
+  NEW expression
+    PsiElement(new)('new')
+    PsiWhiteSpace(' ')
+    Reference element
+      PsiElement(identifier)('String')
+    Array declaration
+      PsiElement([)('[')
+      PsiElement(])(']')
+      PsiElement([)('[')
+      PsiElement(])(']')
+    Array initializer
+      PsiElement({)('{')
+      Array initializer
+        PsiElement({)('{')
+        PsiElement(})('}')
+      PsiElement(})('}')

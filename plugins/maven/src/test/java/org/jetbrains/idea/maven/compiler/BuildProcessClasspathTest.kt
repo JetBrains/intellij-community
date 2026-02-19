@@ -3,18 +3,17 @@ package org.jetbrains.idea.maven.compiler
 
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager
 import com.intellij.openapi.project.DefaultProjectFactory
-import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.jps.cmdline.ClasspathBootstrap
 import org.junit.Test
-import java.io.File
 
 class BuildProcessClasspathTest : BareTestFixtureTestCase() {
-  @Test fun testBuildProcessClasspath() {
-    val baseCp = ClasspathBootstrap.getBuildProcessApplicationClasspath()
-    val pluginsCp = BuildProcessClasspathManager(testRootDisposable).getBuildProcessPluginsClasspath(DefaultProjectFactory.getInstance().defaultProject)
-    val libs = (baseCp.asSequence() + pluginsCp.asSequence()).map { LightJavaModule.moduleName(File(it).name) }.toSet()
-    assertThat(libs).contains("intellij.maven.jps", "plexus.utils")
+  @Test fun testBuildProcessClasspath() = runBlocking {
+    val classpath = BuildProcessClasspathManager(testRootDisposable).getBuildProcessClasspath(DefaultProjectFactory.getInstance().defaultProject)
+    assertThat(classpath)
+      .anyMatch({ it.contains("intellij.maven.jps") }, "Maven-JPS plugin must be on classpath of the compiler process")
+      .anyMatch({ it.contains("plexus-utils") }, "Plexus Utils is a dependency of Maven-JPS plugins and must be present on classpath")
+    return@runBlocking
   }
 }

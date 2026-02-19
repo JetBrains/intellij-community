@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -9,13 +9,21 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.ComboBoxEditor;
+import javax.swing.InputMap;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.ListModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.ComboPopup;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -23,16 +31,12 @@ import java.lang.reflect.Method;
 
 /**
  * Use this editor if you wish your combobox editor to look good on Macs.
- *
- * User: spLeaner
  */
 public class FixedComboBoxEditor implements ComboBoxEditor {
-  @NotNull
-  private final JBTextField myField = UIUtil.isUnderDefaultMacTheme() ? new MacComboBoxTextField() : new JBTextField();
+  private final @NotNull JBTextField myField = UIUtil.isUnderDefaultMacTheme() ? new MacComboBoxTextField() : new JBTextField();
   private Object oldValue;
 
-  @NotNull
-  public JBTextField getField() {
+  public @NotNull JBTextField getField() {
     return myField;
   }
 
@@ -86,8 +90,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
 
   @Override public void removeActionListener(ActionListener l) {}
 
-  @Nullable
-  private static ComboPopup getComboboxPopup(JComboBox comboBox) {
+  private static @Nullable ComboPopup getComboboxPopup(JComboBox comboBox) {
     ComboBoxUI ui = comboBox.getUI();
     ComboPopup popup = null;
     if (ui instanceof BasicComboBoxUI) {
@@ -120,7 +123,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     @Override
     public boolean hasFocus() {
       Container parent = getParent();
-      if (parent instanceof ComboBox && ((ComboBox)parent).myPaintingNow) {
+      if (parent instanceof ComboBox && ((ComboBox<?>)parent).myPaintingNow) {
         return false; // to disable focus painting around combobox button
       }
       return super.hasFocus();
@@ -139,7 +142,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     private void repaintCombobox() {
       Container parent = getParent();
 
-      if (parent == null || parent instanceof JComponent && Boolean.TRUE == ((JComponent)parent).getClientProperty("JComboBox.isTableCellEditor")) return;
+      if (parent == null || parent instanceof JComponent && Boolean.TRUE == ((JComponent)parent).getClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY)) return;
 
       Container grandParent = parent.getParent();
       if (grandParent != null) {
@@ -187,13 +190,13 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
 
       ListModel listmodel = comboBox.getModel();
       int i = listmodel.getSize();
-      if (s.length() > 0) {
+      if (!s.isEmpty()) {
         for (int j = 0; j < i; j++) {
           Object obj = listmodel.getElementAt(j);
           if (obj == null) continue;
 
           String s1 = obj.toString();
-          if (s1 != null && (s1.startsWith(s) || s1.equals(s))) {
+          if (s1 != null && s1.startsWith(s)) {
             popup.getList().setSelectedIndex(j);
             return;
           }

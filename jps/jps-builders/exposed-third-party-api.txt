@@ -1,0 +1,13 @@
+com/google/protobuf/ByteString
+com/google/protobuf/CodedInputStream
+com/google/protobuf/ExtensionRegistryLite
+com/google/protobuf/GeneratedMessageLite
+com/google/protobuf/GeneratedMessageLite$Builder
+com/google/protobuf/Internal$EnumLite
+com/google/protobuf/Internal$EnumLiteMap
+com/google/protobuf/Internal$EnumVerifier
+com/google/protobuf/MessageLiteOrBuilder
+com/google/protobuf/Parser
+com/intellij/compiler/instrumentation/InstrumentationClassFinder
+org/jetbrains/org/objectweb/asm/ClassReader
+org/jetbrains/org/objectweb/asm/ClassWriter

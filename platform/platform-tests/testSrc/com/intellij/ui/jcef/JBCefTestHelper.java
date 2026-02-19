@@ -1,44 +1,105 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import junit.framework.TestCase;
+import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
+import org.cef.misc.Utils;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
+import javax.swing.JFrame;
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
-public class JBCefTestHelper {
-  public static void loadAndWait(@NotNull JBCefBrowser browser, @NotNull Runnable loadAction) {
+public final class JBCefTestHelper {
+  // NOTE: TeamCity runs tests in parallel with downloading (and other processes), and because of that
+  // first CEF initialization takes a long time (more than 15 sec in 1% of test runs). So use a large constant here.
+  //
+  private static int WAIT_BROWSER_SECONDS = Utils.getInteger("JCEF_WAIT_BROWSER_SECONDS", 60);
+  /**
+   * Shows the browser in a frame in waits for a load completion.
+   */
+  public static void showAndWaitForLoad(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle, Disposable parentDisposable) {
+    invokeAndWaitForLoad(browser, () -> show(browser, frameTitle, parentDisposable));
+  }
+
+  /**
+   * Shows the browser in a frame asynchronously.
+   */
+  public static void showAsync(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle, Disposable parentDisposable) {
+    EventQueue.invokeLater(() -> show(browser, frameTitle, parentDisposable));
+  }
+
+  private static void show(@NotNull JBCefBrowserBase browser, @NotNull String frameTitle, Disposable parentDisposable) {
+    JFrame frame = new JFrame(frameTitle);
+    frame.setSize(640, 480);
+    frame.setLocationRelativeTo(null);
+    frame.add(browser.getComponent(), BorderLayout.CENTER);
+    frame.setVisible(true);
+    Disposer.register(parentDisposable, () -> frame.removeNotify());
+  }
+
+  /**
+   * Invokes and waits for a load completion. Either the runnable should load URL/HTML or the browser should be created with initial URL/HTML.
+   */
+  public static void invokeAndWaitForLoad(@NotNull JBCefBrowserBase browser, @NotNull Runnable runnable) {
     CountDownLatch latch = new CountDownLatch(1);
 
     browser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
       @Override
       public void onLoadEnd(CefBrowser cefBrowser, CefFrame frame, int httpStatusCode) {
-        System.out.println("onLoadEnd on " + browser);
+        System.out.println("onLoadEnd on " + browser + " for " + browser.getCefBrowser().getURL());
         browser.getJBCefClient().removeLoadHandler(this, cefBrowser);
         latch.countDown();
       }
     }, browser.getCefBrowser());
 
-    loadAndWait(latch, loadAction);
+    invokeAndWaitForLatch(latch, "waiting onLoadEnd", runnable);
   }
 
-  public static void loadAndWait(@NotNull CountDownLatch latch, @NotNull Runnable loadAction) {
-    loadAction.run();
+  /**
+   * Invokes and waits for the condition to become true.
+   */
+  public static void invokeAndWaitForCondition(@NotNull Runnable runnable, @NotNull BooleanSupplier condition, @NotNull String description) {
+    CountDownLatch latch = new CountDownLatch(1);
 
-    TestCase.assertTrue(wait(latch));
-  }
+    invokeAndWaitForLatch(latch, description, () -> {
+      runnable.run();
+      latch.countDown();
+    });
 
-  public static boolean wait(@NotNull CountDownLatch latch) {
     try {
-      return latch.await(10, TimeUnit.SECONDS);
+      while (!condition.getAsBoolean()) {
+        //noinspection BusyWait
+        Thread.sleep(100);
+      }
     }
     catch (InterruptedException e) {
-      e.printStackTrace();
+      throw new RuntimeException(e);
     }
-    return false;
+  }
+
+  public static void invokeAndWaitForLatch(@NotNull CountDownLatch latch, @NotNull String description, @NotNull Runnable runnable) {
+    UIUtil.invokeLaterIfNeeded(runnable);
+    await(latch, description);
+  }
+
+  public static void await(@NotNull CountDownLatch latch, @NotNull String description) {
+    try {
+      if (!latch.await(WAIT_BROWSER_SECONDS, TimeUnit.SECONDS)) {
+        Assert.fail(description + " failed by timeout:\n" + ThreadDumper.dumpThreadsToString());
+      }
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

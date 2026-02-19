@@ -1,21 +1,13 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,11 +19,12 @@ public abstract class MethodSignatureBase implements MethodSignature {
   private final PsiSubstitutor mySubstitutor;
   private final PsiType[] myParameterTypes;
   private volatile PsiType[] myErasedParameterTypes;
-  protected final PsiTypeParameter[] myTypeParameters;
+  final PsiTypeParameter[] myTypeParameters;
+  private transient int myHash;
 
-  protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor, PsiType @NotNull [] parameterTypes, PsiTypeParameter @NotNull [] typeParameters) {
+  MethodSignatureBase(@NotNull PsiSubstitutor substitutor, PsiType @NotNull [] parameterTypes, PsiTypeParameter @NotNull [] typeParameters) {
     mySubstitutor = substitutor;
-    assert substitutor.isValid();
+    if (!substitutor.isValid()) throw new IllegalStateException("Substitutor " + substitutor + " is not valid");
     myParameterTypes = PsiType.createArray(parameterTypes.length);
     for (int i = 0; i < parameterTypes.length; i++) {
       PsiType type = parameterTypes[i];
@@ -41,9 +34,9 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myTypeParameters = typeParameters;
   }
 
-  protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor,
-                                @Nullable PsiParameterList parameterList,
-                                @Nullable PsiTypeParameterList typeParameterList) {
+  MethodSignatureBase(@NotNull PsiSubstitutor substitutor,
+                      @Nullable PsiParameterList parameterList,
+                      @Nullable PsiTypeParameterList typeParameterList) {
     mySubstitutor = substitutor;
     if (parameterList == null) {
       myParameterTypes = PsiType.EMPTY_ARRAY;
@@ -79,6 +72,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return result;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MethodSignature)) return false;
@@ -87,18 +81,24 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return MethodSignatureUtil.areSignaturesEqual(methodSignature, this);
   }
 
+  @Override
   public int hashCode() {
-    int result = getName().hashCode();
-    final PsiType[] parameterTypes = getErasedParameterTypes();
-    result = 31 * result + parameterTypes.length;
-    for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
-      PsiType type = parameterTypes[i];
-      if (type == null) continue;
-      result = 31 * result + type.hashCode();
+    int hash = myHash;
+    if (hash == 0) {
+      hash = getName().hashCode();
+      final PsiType[] parameterTypes = getErasedParameterTypes();
+      hash = 31 * hash + parameterTypes.length;
+      for (int i = 0, length = Math.min(3, parameterTypes.length); i < length; i++) {
+        PsiType type = parameterTypes[i];
+        if (type == null) continue;
+        hash = 31 * hash + type.hashCode();
+      }
+      myHash = hash;
     }
-    return result;
+    return hash;
   }
 
+  @Override
   public String toString() {
     String s = getClass().getSimpleName() + ": ";
     final PsiTypeParameter[] typeParameters = getTypeParameters();
@@ -111,8 +111,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
   }
 
   @Override
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 

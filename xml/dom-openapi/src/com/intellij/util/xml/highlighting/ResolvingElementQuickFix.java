@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.highlighting;
 
@@ -30,13 +16,17 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.ModelMergerUtil;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -45,7 +35,6 @@ import java.util.List;
 */
 public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction {
 
-  private final Class<? extends DomElement> myClazz;
   private final String myNewName;
   private final List<? extends DomElement> myParents;
   private final DomCollectionChildDescription myChildDescription;
@@ -53,12 +42,11 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   public ResolvingElementQuickFix(final Class<? extends DomElement> clazz, final String newName, final List<? extends DomElement> parents,
                                   final DomCollectionChildDescription childDescription) {
-    myClazz = clazz;
     myNewName = newName;
     myParents = parents;
     myChildDescription = childDescription;
 
-    myTypeName = TypePresentationService.getService().getTypePresentableName(myClazz);
+    myTypeName = TypePresentationService.getService().getTypePresentableName(clazz);
   }
 
   public void setTypeName(final String typeName) {
@@ -66,30 +54,27 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return XmlDomBundle.message("dom.quickfix.create.new.element.name", myTypeName, myNewName);
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlDomBundle.message("dom.quickfix.create.new.element.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
     applyFix();
   }
 
@@ -99,7 +84,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     applyFix();
   }
 
@@ -118,40 +103,32 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   protected static void chooseParent(final List<? extends DomElement> files, final Consumer<? super DomElement> onChoose) {
     switch (files.size()) {
-      case 0:
-        return;
-      case 1:
-        onChoose.consume(files.iterator().next());
-        return;
-      default:
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(XmlDomBundle.message(
-          "dom.quickfix.create.new.element.choose.file.title"), files) {
-          @Override
-          public PopupStep onChosen(final DomElement selectedValue, final boolean finalChoice) {
-            onChoose.consume(selectedValue);
-            return super.onChosen(selectedValue, finalChoice);
-          }
+      case 0 -> {}
+      case 1 -> onChoose.consume(files.iterator().next());
+      default -> JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(XmlDomBundle.message(
+        "dom.quickfix.create.new.element.choose.file.title"), files) {
+        @Override
+        public PopupStep<?> onChosen(final DomElement selectedValue, final boolean finalChoice) {
+          onChoose.consume(selectedValue);
+          return super.onChosen(selectedValue, finalChoice);
+        }
 
-          @Override
-          public Icon getIconFor(final DomElement aValue) {
-            return DomUtil.getFile(aValue).getIcon(0);
-          }
+        @Override
+        public Icon getIconFor(final DomElement aValue) {
+          return DomUtil.getFile(aValue).getIcon(0);
+        }
 
-          @Override
-          @NotNull
-          public String getTextFor(final DomElement value) {
-            final String name = DomUtil.getFile(value).getName();
-            assert name != null;
-            return name;
-          }
-        }).showInBestPositionFor(DataManager.getInstance().getDataContext());
+        @Override
+        public @NotNull String getTextFor(final DomElement value) {
+          return DomUtil.getFile(value).getName();
+        }
+      }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }
   }
 
-  @Nullable
-  public static <T extends DomElement> DomCollectionChildDescription getChildDescription(final List<? extends DomElement> contexts, Class<T> clazz) {
+  public static @Nullable <T extends DomElement> DomCollectionChildDescription getChildDescription(final List<? extends DomElement> contexts, Class<T> clazz) {
 
-    if (contexts.size() == 0) {
+    if (contexts.isEmpty()) {
         return null;
     }
     final DomElement context = contexts.get(0);
@@ -166,16 +143,14 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
     return null;
   }
 
-  @Nullable
-  public static ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final DomElement scope) {
+  public static @Nullable ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final DomElement scope) {
     final List<DomElement> parents = ModelMergerUtil.getImplementations(scope);
     return createFix(newName, clazz, parents);
   }
 
-  @Nullable
-  public static ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final List<? extends DomElement> parents) {
+  public static @Nullable ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final List<? extends DomElement> parents) {
     final DomCollectionChildDescription childDescription = getChildDescription(parents, clazz);
-    if (newName.length() > 0 && childDescription != null) {
+    if (!newName.isEmpty() && childDescription != null) {
       return new ResolvingElementQuickFix(clazz, newName, parents, childDescription);
     }
     return null;

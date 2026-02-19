@@ -5,7 +5,12 @@ package com.intellij.ide.util.treeView;
 import java.util.Comparator;
 
 public final class IndexComparator implements Comparator<NodeDescriptor<?>> {
-  public static final IndexComparator INSTANCE = new IndexComparator();
+
+  private static final IndexComparator INSTANCE = new IndexComparator();
+
+  public static IndexComparator getInstance() {
+    return INSTANCE;
+  }
 
   private IndexComparator() {}
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.api.elements;
 
@@ -28,22 +14,17 @@ public final class GraphEdge implements GraphElement {
   }
 
   public static GraphEdge createEdgeWithTargetId(int nodeIndex, @Nullable Integer targetId, @NotNull GraphEdgeType type) {
-    switch (type) {
-      case DOTTED_ARROW_UP:
-        return new GraphEdge(null, nodeIndex, targetId, type);
-      case NOT_LOAD_COMMIT:
-      case DOTTED_ARROW_DOWN:
-        return new GraphEdge(nodeIndex, null, targetId, type);
-
-      default:
-        throw new AssertionError("Unexpected edge type: " + type);
-    }
+    return switch (type) {
+      case DOTTED_ARROW_UP -> new GraphEdge(null, nodeIndex, targetId, type);
+      case NOT_LOAD_COMMIT, DOTTED_ARROW_DOWN -> new GraphEdge(nodeIndex, null, targetId, type);
+      default -> throw new AssertionError("Unexpected edge type: " + type);
+    };
   }
 
-  @Nullable private final Integer myUpNodeIndex;
-  @Nullable private final Integer myDownNodeIndex;
-  @Nullable private final Integer myTargetId;
-  @NotNull private final GraphEdgeType myType;
+  private final @Nullable Integer myUpNodeIndex;
+  private final @Nullable Integer myDownNodeIndex;
+  private final @Nullable Integer myTargetId;
+  private final @NotNull GraphEdgeType myType;
 
   public GraphEdge(@Nullable Integer upNodeIndex,
                    @Nullable Integer downNodeIndex,
@@ -55,23 +36,19 @@ public final class GraphEdge implements GraphElement {
     myType = type;
   }
 
-  @Nullable
-  public Integer getUpNodeIndex() {
+  public @Nullable Integer getUpNodeIndex() {
     return myUpNodeIndex;
   }
 
-  @Nullable
-  public Integer getDownNodeIndex() {
+  public @Nullable Integer getDownNodeIndex() {
     return myDownNodeIndex;
   }
 
-  @Nullable
-  public Integer getTargetId() {
+  public @Nullable Integer getTargetId() {
     return myTargetId;
   }
 
-  @NotNull
-  public GraphEdgeType getType() {
+  public @NotNull GraphEdgeType getType() {
     return myType;
   }
 

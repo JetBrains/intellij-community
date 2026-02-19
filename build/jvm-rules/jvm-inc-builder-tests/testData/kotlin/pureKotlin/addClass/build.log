@@ -1,0 +1,16 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_addClass-a.kotlin_module
+End of files
+Compiling files:
+  kotlin/pureKotlin/addClass/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_addClass-a.kotlin_module
+  use/UseAKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/addClass/a/useA.kt
+End of files
+------------------------------------------
+Exit code: OK

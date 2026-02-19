@@ -1,3 +1,5 @@
+import os
+import signal
 import sys
 import traceback
 
@@ -5,6 +7,7 @@ from _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_bundle.pydev_imports import _queue
 from _pydev_bundle.pydev_stdin import DebugConsoleStdIn
 from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle.pydevd_utils import interrupt_main_thread
 
 
 # =======================================================================================================================
@@ -79,6 +82,7 @@ class BaseCodeExecutor(object):
             pass
 
         more = False
+        exception_occurred = False
         try:
             sys.stdin = self.create_std_in(debugger, original_in)
             try:
@@ -103,13 +107,13 @@ class BaseCodeExecutor(object):
                         import pydevd_tracing
                         pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
 
-                    more = self.do_add_exec(code_fragment)
+                    more, exception_occurred = self.do_add_exec(code_fragment)
 
                     if hasattr(self, 'debugger'):
                         import pydevd_tracing
                         pydevd_tracing.SetTrace(None)
 
-                    self.finish_exec(more)
+                    self.finish_exec(more, exception_occurred)
                 finally:
                     if help is not None:
                         try:
@@ -127,7 +131,7 @@ class BaseCodeExecutor(object):
         except:
             traceback.print_exc()
 
-        return more
+        return more, exception_occurred
 
     def do_add_exec(self, codeFragment):
         '''
@@ -188,14 +192,11 @@ class BaseCodeExecutor(object):
         except:
             return ''
 
-
-
     def start_exec(self):
         self.interruptable = True
 
-    def finish_exec(self, more):
+    def finish_exec(self, more, exception_occurred):
         self.interruptable = False
-
         return True
 
     def enableGui(self, guiname):
@@ -224,3 +225,15 @@ class BaseCodeExecutor(object):
 
     def get_ipython_hidden_vars_dict(self):
         return None
+
+    def interrupt(self):
+        self.buffer = None  # Also clear the buffer when it's interrupted.
+        try:
+            if self.interruptable:
+                interrupt_main_thread()
+
+            self.finish_exec(False, False)
+            return True
+        except:
+            traceback.print_exc()
+            return False

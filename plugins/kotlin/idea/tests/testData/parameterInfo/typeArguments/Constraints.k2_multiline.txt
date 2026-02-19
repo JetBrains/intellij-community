@@ -1,0 +1,1 @@
+Text: (T1 : Any, <highlight>T2</highlight>, T3 where T2 : Runnable, T2 : Cloneable, T3 : List<T1>, T3 : Runnable), Disabled: false, Strikeout: false, Green: false

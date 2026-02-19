@@ -1,46 +1,41 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
-import org.gradle.tooling.BuildActionExecuter;
-import org.gradle.tooling.GradleConnectionException;
-import org.gradle.tooling.IntermediateResultHandler;
-import org.gradle.tooling.model.BuildModel;
-import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
-import org.jetbrains.plugins.gradle.model.ModelsHolder;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Allows to enhance {@link GradleProjectResolver} processing.
@@ -48,7 +43,7 @@ import java.util.*;
  * Every extension is expected to have a no-args constructor because they are used at external process and we need a simple way
  * to instantiate it.
  *
- * @author Denis Zhdanov, Vladislav Soroka
+ * @author Vladislav Soroka
  * @see GradleManager#enhanceRemoteProcessing(SimpleJavaParameters)   sample enhanceParameters() implementation
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer {
@@ -62,16 +57,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   @Nullable
   GradleProjectResolverExtension getNext();
-
-  /**
-   * @deprecated is not used anymore
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  default ProjectData createProject() {
-    throw new UnsupportedOperationException();
-  }
 
   void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject);
 
@@ -113,37 +98,27 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @ApiStatus.Experimental
   default void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {}
 
-  @NotNull
-  Set<Class<?>> getExtraProjectModelClasses();
+  default @NotNull Set<Class<?>> getExtraProjectModelClasses() {
+    return Collections.emptySet();
+  }
 
-  /**
-   * Allows to request gradle tooling models after "sync" tasks are run
-   *
-   * @see BuildActionExecuter.Builder#buildFinished(org.gradle.tooling.BuildAction, IntermediateResultHandler)
-   */
-  @Nullable
-  default ProjectImportModelProvider getModelProvider() {return null;}
+  default @NotNull Set<Class<?>> getExtraBuildModelClasses() {
+    return Collections.emptySet();
+  }
 
-  /**
-   * Allows to request gradle tooling models after gradle projects are loaded and before "sync" tasks are run.
-   * This can be used to setup "sync" tasks for the import
-   *
-   * @see BuildActionExecuter.Builder#projectsLoaded(org.gradle.tooling.BuildAction, IntermediateResultHandler)
-   */
-  @Nullable
-  default ProjectImportModelProvider getProjectsLoadedModelProvider() {return null;}
+  default @Nullable ProjectImportModelProvider getModelProvider() {
+    return null;
+  }
 
-  /**
-   * @return whether or not this resolver requires Gradle task running infrastructure to be initialized, if any of the resolvers which are
-   * used by the resolution return true then the {@link BuildActionExecuter} will have
-   * {@link BuildActionExecuter#forTasks(String...)} called with an empty list. This will allow
-   * any tasks that are scheduled by Gradle plugin in the model builders to be run.
-   *
-   * @deprecated not required anymore
-   */
-  @Deprecated
-  default boolean requiresTaskRunning() {
-    return false;
+  default @NotNull List<ProjectImportModelProvider> getModelProviders() {
+    ProjectImportModelProvider provider = getModelProvider();
+    if (provider != null) {
+      return List.of(provider);
+    }
+    List<ProjectImportModelProvider> providers = new ArrayList<>();
+    providers.addAll(GradleClassProjectModelProvider.createAll(getExtraProjectModelClasses()));
+    providers.addAll(GradleClassBuildModelProvider.createAll(getExtraBuildModelClasses()));
+    return providers;
   }
 
   /**
@@ -151,22 +126,24 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    *
    * @return classes to be available for gradle
    */
-  @NotNull
-  Set<Class<?>> getToolingExtensionsClasses();
+  default @NotNull Set<Class<?>> getToolingExtensionsClasses() {
+    return Collections.emptySet();
+  }
 
   /**
    * add target types to be used in the polymorphic containers
-   * @return
    */
   default Set<Class<?>> getTargetTypes() {
     return Collections.emptySet();
   }
 
-  @NotNull
-  List<Pair<String, String>> getExtraJvmArgs();
+  default @NotNull List<Pair<String, String>> getExtraJvmArgs() {
+    return Collections.emptyList();
+  }
 
-  @NotNull
-  List<String> getExtraCommandLineArgs();
+  default @NotNull List<String> getExtraCommandLineArgs() {
+    return Collections.emptyList();
+  }
 
   @NotNull
   ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
@@ -174,65 +151,89 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
                                                @NotNull String projectPath,
                                                @Nullable String buildFilePath);
 
+
+  @Override
+  default void enhanceRemoteProcessing(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
+  }
+
   /**
    * Performs project configuration and other checks before the actual project import (before invocation of gradle tooling API).
    */
-  void preImportCheck();
+  default void preImportCheck() {
+  }
 
   /**
-   * Called once Gradle has loaded projects but before any tasks execution.
-   * These models do not contain those models which is created when build finished.
-   * <p>
-   * Note: This method is called from a Gradle connection thread, within the {@link IntermediateResultHandler} passed to the
-   * tooling api.
-   *
-   * @param models obtained after projects loaded phase
-   * @see #getProjectsLoadedModelProvider()
+   * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
    */
-  default void projectsLoaded(@Nullable ModelsHolder<BuildModel, ProjectModel> models) {}
+  @Deprecated
+  default void enhanceTaskProcessing(
+    @NotNull List<String> taskNames,
+    @Nullable String jvmParametersSetup,
+    @NotNull Consumer<String> initScriptConsumer
+  ) { }
 
   /**
-   * Called once Gradle has finished executing everything, including any tasks that might need to be run. The models are obtained
-   * separately and in some cases before this method is called.
-   *
-   * @param exception the exception thrown by Gradle, if everything completes successfully then this will be null.
-   *
-   * Note: This method is called from a Gradle connection thread, within the {@link org.gradle.tooling.ResultHandler} passed to the
-   * tooling api.
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link ExternalSystemExecutionSettings#getJvmParameters} instead
    */
-  default void buildFinished(@Nullable GradleConnectionException exception) { }
-
-  /**
-   * Allows extension to contribute to init script
-   * @param taskNames gradle task names to be executed
-   * @param jvmParametersSetup jvm configuration that will be applied to Gradle jvm
-   * @param initScriptConsumer consumer of init script text. Must be called to add script txt
-   */
-  void enhanceTaskProcessing(@NotNull List<String> taskNames, @Nullable String jvmParametersSetup, @NotNull Consumer<String> initScriptConsumer);
-
-  // jvm configuration that will be applied to Gradle jvm
+  @Deprecated
   String JVM_PARAMETERS_SETUP_KEY = "JVM_PARAMETERS_SETUP";
 
-  // flag that shows if tasks will be treated as tests invocation by the IDE (e.g., test events are expected)
-  String TEST_EXECUTION_EXPECTED_KEY = "TEST_EXECUTION_EXPECTED";
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link GradleExecutionSettings#isRunAsTest} instead
+   */
+  @Deprecated
+  String IS_RUN_AS_TEST_KEY = "IS_RUN_AS_TEST";
 
-  // port for callbacks which Gradle tasks communicate to IDE
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link GradleExecutionSettings#isBuiltInTestEventsUsed} instead
+   */
+  @Deprecated
+  String IS_BUILT_IN_TEST_EVENTS_USED_KEY = "IS_BUILT_IN_TEST_EVENTS_USED";
+
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_DISPATCH_PORT_KEY} instead
+   */
+  @Deprecated
   String DEBUG_DISPATCH_PORT_KEY = "DEBUG_DISPATCH_PORT";
 
-  // options passed from project to Gradle
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_DISPATCH_ADDR_KEY} instead
+   */
+  @Deprecated
+  String DEBUG_DISPATCH_ADDR_KEY = "DEBUG_DISPATCH_ADDR";
+
+  /**
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use {@link ExternalSystemRunnableState#DEBUGGER_PARAMETERS_KEY} instead
+   */
+  @Deprecated
   String DEBUG_OPTIONS_KEY = "DEBUG_OPTIONS";
 
   /**
-   * Allows extension to contribute to init script
-   * @param taskNames gradle task names to be executed
-   * @param initScriptConsumer consumer of init script text. Must be called to add script txt
-   * @param parameters storage for passing optional named parameters
+   * @see GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)
+   * @deprecated use GradleVersion argument instead
    */
+  @Deprecated
+  String GRADLE_VERSION = "GRADLE_VERSION";
+
+  /**
+   * @deprecated use {@link GradleTaskManagerExtension#configureTasks(String, ExternalSystemTaskId, GradleExecutionSettings, GradleVersion)} instead
+   */
+  @Deprecated
   @ApiStatus.Experimental
-  default void enhanceTaskProcessing(@NotNull List<String> taskNames,
-                                     @NotNull Consumer<String> initScriptConsumer,
-                                     @NotNull Map<String, String> parameters) {
+  default @NotNull Map<String, String> enhanceTaskProcessing(
+    @Nullable Project project,
+    @NotNull List<String> taskNames,
+    @NotNull Consumer<String> initScriptConsumer,
+    @NotNull Map<String, String> parameters
+  ) {
     String jvmParametersSetup = parameters.get(JVM_PARAMETERS_SETUP_KEY);
     enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer);
+    return Map.of();
   }
 }

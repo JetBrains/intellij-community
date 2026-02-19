@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
  * @author Vladislav.Soroka
  */
 class MavenCompilerEclipseExtension : MavenCompilerExtension {
-  override fun getMavenCompilerId(): String = "eclipse"
+  override val mavenCompilerId: String = "eclipse"
 
   override fun getCompiler(project: Project): BackendCompiler? {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl

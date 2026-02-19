@@ -1,31 +1,51 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.UpdateScaleHelper;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.util.ArrayList;
 
-import static com.intellij.ui.RelativeFont.BOLD;
-
-public abstract class GroupedElementsRenderer {
+public abstract class GroupedElementsRenderer implements Accessible {
   protected SeparatorWithText mySeparatorComponent = createSeparator();
 
   protected abstract JComponent createItemComponent();
 
+  /**
+   * @deprecated Use {@link #getItemComponent()} getter instead, the field will be hidden
+   */
+  @Deprecated
   protected JComponent myComponent;
   protected MyComponent myRendererComponent;
+  private UpdateScaleHelper updateScaleHelper;
 
   protected ErrorLabel myTextLabel;
 
   public GroupedElementsRenderer() {
+    updateScaleHelper = new UpdateScaleHelper();
     myRendererComponent = new MyComponent();
 
     myComponent = createItemComponent();
@@ -34,6 +54,10 @@ public abstract class GroupedElementsRenderer {
   }
 
   protected abstract void layout();
+
+  public JComponent getItemComponent() {
+    return myComponent;
+  }
 
   protected SeparatorWithText createSeparator() {
     return new SeparatorWithText();
@@ -46,18 +70,29 @@ public abstract class GroupedElementsRenderer {
 
     myTextLabel.setText(text);
     myRendererComponent.setToolTipText(tooltip);
-    AccessibleContextUtil.setName(myRendererComponent, myTextLabel);
-    AccessibleContextUtil.setDescription(myRendererComponent, myTextLabel);
 
-    myTextLabel.setIcon(icon);
-    myTextLabel.setDisabledIcon(disabledIcon);
-
-    setSelected(myComponent, isSelected);
-    setSelected(myTextLabel, isSelected);
-
+    setComponentIcon(icon, disabledIcon);
+    updateSelection(isSelected, myComponent, myTextLabel);
     myRendererComponent.setPreferredWidth(preferredForcedWidth);
 
+    updateScaleHelper.saveScaleAndUpdateUIIfChanged(myRendererComponent);
+
     return myRendererComponent;
+  }
+
+  protected void updateSelection(boolean isSelected, JComponent component, JComponent innerComponent) {
+    if (!ExperimentalUI.isNewUI()) {
+      setSelected(component, isSelected);
+    } else {
+      UIUtil.setNotOpaqueRecursively(component);
+    }
+    setSelected(innerComponent, isSelected);
+  }
+
+  protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+    myTextLabel.setIcon(icon);
+    myTextLabel.setDisabledIcon(disabledIcon);
+    myTextLabel.setIconTextGap(JBUI.CurrentTheme.ActionsList.elementIconGap());
   }
 
   protected final void setSelected(JComponent aComponent) {
@@ -70,11 +105,15 @@ public abstract class GroupedElementsRenderer {
 
   protected final void setSelected(JComponent aComponent, boolean selected) {
     UIUtil.setBackgroundRecursively(aComponent, selected ? getSelectionBackground() : getBackground());
+    setForegroundSelected(aComponent, selected);
+  }
+
+  protected final void setForegroundSelected(JComponent aComponent, boolean selected) {
     aComponent.setForeground(selected ? getSelectionForeground() : getForeground());
   }
 
   protected void setSeparatorFont(Font font) {
-    mySeparatorComponent.setFont(BOLD.derive(font));
+    mySeparatorComponent.setFont(font);
   }
 
   protected abstract Color getSelectionBackground();
@@ -90,7 +129,7 @@ public abstract class GroupedElementsRenderer {
   }
 
   private static Border getBorder() {
-    return new EmptyBorder(UIUtil.getListCellPadding());
+    return new EmptyBorder(JBUI.CurrentTheme.ActionsList.cellPadding());
   }
 
   public abstract static class List extends GroupedElementsRenderer {
@@ -115,7 +154,7 @@ public abstract class GroupedElementsRenderer {
 
     @Override
     protected final Color getSelectionForeground() {
-      return UIUtil.getListSelectionForeground();
+      return NamedColorUtil.getListSelectionForeground(true);
     }
 
     @Override
@@ -139,12 +178,12 @@ public abstract class GroupedElementsRenderer {
 
     @Override
     protected Color getSelectionBackground() {
-      return UIUtil.getTreeSelectionBackground();
+      return UIUtil.getTreeSelectionBackground(true);
     }
 
     @Override
     protected Color getSelectionForeground() {
-      return UIUtil.getTreeSelectionForeground();
+      return UIUtil.getTreeSelectionForeground(true);
     }
 
     @Override
@@ -158,12 +197,14 @@ public abstract class GroupedElementsRenderer {
     }
   }
 
-  protected class MyComponent extends OpaquePanel {
+  public class MyComponent extends OpaquePanel implements UiInspectorContextProvider {
 
     private int myPrefWidth = -1;
+    private final @NotNull GroupedElementsRenderer renderer;
 
     public MyComponent() {
       super(new BorderLayout(), GroupedElementsRenderer.this.getBackground());
+      renderer = GroupedElementsRenderer.this;
     }
 
     public void setPreferredWidth(final int minWidth) {
@@ -176,6 +217,56 @@ public abstract class GroupedElementsRenderer {
       size.width = myPrefWidth == -1 ? size.width : myPrefWidth;
       return size;
     }
+
+    @ApiStatus.Internal
+    public @NotNull SeparatorWithText getSeparator() {
+      return mySeparatorComponent;
+    }
+
+    @ApiStatus.Internal
+    public @NotNull GroupedElementsRenderer getRenderer() {
+      return renderer;
+    }
+
+    @Override
+    public java.util.@NotNull List<PropertyBean> getUiInspectorContext() {
+      java.util.List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Renderer Delegate", renderer));
+      result.add(new PropertyBean("Renderer Delegate Class", UiInspectorUtil.getClassPresentation(renderer)));
+      return result;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new MyAccessibleContext();
+      }
+      return accessibleContext;
+    }
+
+    private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
+      @Override
+      public String getAccessibleName() {
+        return GroupedElementsRenderer.this.getDelegateAccessibleName();
+      }
+
+      @Override
+      public String getAccessibleDescription() {
+        return GroupedElementsRenderer.this.getDelegateAccessibleDescription();
+      }
+    }
   }
 
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    return myRendererComponent.getAccessibleContext();
+  }
+
+  protected @NlsSafe String getDelegateAccessibleName() {
+    return myTextLabel != null ? myTextLabel.getAccessibleContext().getAccessibleName() : null;
+  }
+
+  protected @NlsSafe String getDelegateAccessibleDescription() {
+    return myTextLabel != null ? myTextLabel.getAccessibleContext().getAccessibleDescription() : null;
+  }
 }

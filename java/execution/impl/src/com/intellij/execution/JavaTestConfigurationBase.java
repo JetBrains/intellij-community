@@ -1,15 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.LanguageRuntimeType;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
-import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -25,11 +20,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
-  implements RefactoringListenerProvider, SMRunnerConsolePropertiesProvider, TargetEnvironmentAwareRunProfile {
+  implements RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
 
   private ShortenCommandLine myShortenCommandLine = null;
   private boolean myUseModulePath = true;
   private static final @NonNls String USE_CLASS_PATH_ONLY = "useClassPathOnly";
+  private boolean myPrintAsyncStackTraceForExceptions = true;
+  private static final @NonNls String PRINT_ASYNC_STACK_TRACE_FOR_EXCEPTIONS_ATTRIBUTE = "printAsyncStackTraceForExceptions";
 
   public JavaTestConfigurationBase(String name,
                                    @NotNull JavaRunConfigurationModule configurationModule,
@@ -47,6 +44,8 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
 
   public abstract void beClassConfiguration(PsiClass aClass);
 
+  public void withNestedClass(PsiClass aClass) {}
+
   public abstract boolean isConfiguredByElement(PsiElement element);
 
   public abstract @NonNls String getTestType();
@@ -58,13 +57,11 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
   public abstract TestSearchScope getTestSearchScope();
   public abstract void setSearchScope(TestSearchScope searchScope);
 
-  @Nullable
   @Override
-  public abstract JavaTestFrameworkRunnableState<? extends JavaTestConfigurationBase> getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException;
+  public abstract @Nullable JavaTestFrameworkRunnableState<? extends JavaTestConfigurationBase> getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException;
 
-  @Nullable
   @Override
-  public ShortenCommandLine getShortenCommandLine() {
+  public @Nullable ShortenCommandLine getShortenCommandLine() {
     return myShortenCommandLine;
   }
 
@@ -76,16 +73,26 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-    setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
+    Element mode = element.getChild("shortenClasspath");
+    setShortenCommandLine(mode != null ? ShortenCommandLine.valueOf(mode.getAttributeValue("name")) : null);
     myUseModulePath = element.getChild(USE_CLASS_PATH_ONLY) == null;
+    {
+      var value = element.getAttributeValue(PRINT_ASYNC_STACK_TRACE_FOR_EXCEPTIONS_ATTRIBUTE);
+      myPrintAsyncStackTraceForExceptions = value == null || Boolean.parseBoolean(value);
+    }
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
+    if (myShortenCommandLine != null) {
+      element.addContent(new Element("shortenClasspath").setAttribute("name", myShortenCommandLine.name()));
+    }
     if (!myUseModulePath) {
       element.addContent(new Element(USE_CLASS_PATH_ONLY));
+    }
+    if (!myPrintAsyncStackTraceForExceptions) {
+      element.setAttribute(PRINT_ASYNC_STACK_TRACE_FOR_EXCEPTIONS_ATTRIBUTE, "false");
     }
   }
 
@@ -97,26 +104,11 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
     myUseModulePath = useModulePath;
   }
 
-  @Override
-  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
-    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
+  public boolean isPrintAsyncStackTraceForExceptions() {
+    return myPrintAsyncStackTraceForExceptions;
   }
 
-  @Nullable
-  @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
-    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
+  public void setPrintAsyncStackTraceForExceptions(boolean printAsyncStackTraceForExceptions) {
+    myPrintAsyncStackTraceForExceptions = printAsyncStackTraceForExceptions;
   }
-
-  @Nullable
-  @Override
-  public String getDefaultTargetName() {
-    return getOptions().getRemoteTarget();
-  }
-
-  @Override
-  public void setDefaultTargetName(@Nullable String targetName) {
-    getOptions().setRemoteTarget(targetName);
-  }
-
 }

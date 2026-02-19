@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
@@ -23,13 +24,17 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
-/**
- * @author yole
- */
+
 public class RadBorderLayoutManager extends RadLayoutManager {
   @Override
   public String getName() {
@@ -66,8 +71,8 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_BORDER_CONSTRAINT, (String) child.getCustomLayoutConstraints());
   }
 
-  @NotNull @Override
-  public ComponentDropLocation getDropLocation(RadContainer container, final Point location) {
+  @Override
+  public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final Point location) {
     return new MyDropLocation(container, getQuadrantAt(container, location));
   }
 
@@ -118,7 +123,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
       }
     }
 
-    if ((container.getComponentCount() > 0 && componentsInBorder.size() == 0) || componentsInBorder.size() > 3) {
+    if ((container.getComponentCount() > 0 && componentsInBorder.isEmpty()) || componentsInBorder.size() > 3) {
       throw new IncorrectOperationException("Component layout is too complex to convert to BorderLayout");
     }
 
@@ -192,8 +197,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
   }
 
-  @Nullable
-  private static String getAdjacentSide(final String side, final int rowDelta, final int colDelta) {
+  private static @Nullable String getAdjacentSide(final String side, final int rowDelta, final int colDelta) {
     if (rowDelta == -1 && colDelta == 0) {
       return getAdjacentSide(side, BorderLayout.NORTH, BorderLayout.SOUTH);
     }
@@ -209,8 +213,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     return null;
   }
 
-  @Nullable
-  private static String getAdjacentSide(final String side, final String toEdge, final String fromEdge) {
+  private static @Nullable String getAdjacentSide(final String side, final String toEdge, final String fromEdge) {
     if (side.equals(toEdge)) {
       return null;
     }
@@ -289,23 +292,13 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
 
     @Override
-    @Nullable
-    public ComponentDropLocation getAdjacentLocation(Direction direction) {
-      String side = null;
-      switch (direction) {
-        case LEFT:
-          side = getAdjacentSide(myQuadrant, 0, -1);
-          break;
-        case UP:
-          side = getAdjacentSide(myQuadrant, -1, 0);
-          break;
-        case RIGHT:
-          side = getAdjacentSide(myQuadrant, 0, 1);
-          break;
-        case DOWN:
-          side = getAdjacentSide(myQuadrant, 1, 0);
-          break;
-      }
+    public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
+      String side = switch (direction) {
+        case LEFT -> getAdjacentSide(myQuadrant, 0, -1);
+        case UP -> getAdjacentSide(myQuadrant, -1, 0);
+        case RIGHT -> getAdjacentSide(myQuadrant, 0, 1);
+        case DOWN -> getAdjacentSide(myQuadrant, 1, 0);
+      };
       if (side != null) {
         return new MyDropLocation(myContainer, side);
       }
@@ -317,7 +310,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     private LabelPropertyRenderer<String> myRenderer = null;
     private BorderSideEditor myEditor = null;
 
-    public static BorderSideProperty INSTANCE = new BorderSideProperty();
+    public static final BorderSideProperty INSTANCE = new BorderSideProperty();
 
     BorderSideProperty() {
       super(null, "Border Side");
@@ -339,8 +332,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<String> getRenderer() {
+    public @NotNull PropertyRenderer<String> getRenderer() {
       if (myRenderer == null) {
         myRenderer = new LabelPropertyRenderer<>();
       }
@@ -358,7 +350,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
 
   private static class BorderSideEditor extends ComboBoxPropertyEditor<String> {
     BorderSideEditor() {
-      String[] sides = new String[] {
+      @NlsSafe String[] sides = new String[] {
         BorderLayout.CENTER, BorderLayout.NORTH, BorderLayout.SOUTH, BorderLayout.WEST, BorderLayout.EAST,
         BorderLayout.PAGE_START, BorderLayout.PAGE_END, BorderLayout.LINE_START, BorderLayout.LINE_END
       };
@@ -366,7 +358,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
 
     @Override
-    public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
+    public JComponent getComponent(RadComponent component, @NlsSafe String value, InplaceContext inplaceContext) {
       myCbx.setSelectedItem(value);
       return myCbx;
     }

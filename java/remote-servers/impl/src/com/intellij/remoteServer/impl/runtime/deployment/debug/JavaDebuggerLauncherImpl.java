@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.deployment.debug;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -21,8 +21,8 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.runtime.deployment.debug.JavaDebugConnectionData;
 import com.intellij.remoteServer.runtime.deployment.debug.JavaDebugServerModeHandler;
@@ -30,9 +30,9 @@ import com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
+final class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
   private static final Logger LOG = Logger.getInstance(JavaDebuggerLauncherImpl.class);
 
   @Override
@@ -80,15 +80,13 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
       return myEnvironment;
     }
 
-    @Nullable
     @Override
-    public RunContentDescriptor getReuseContent() {
+    public @Nullable RunContentDescriptor getReuseContent() {
       return myExecutionEnvironment.getContentToReuse();
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return myExecutionEnvironment.getRunProfile().getIcon();
     }
 
@@ -97,9 +95,8 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
       actionGroup.add(new CloseAction(myExecutionEnvironment.getExecutor(), content, myExecutionEnvironment.getProject()));
     }
 
-    @Nullable
     @Override
-    public RunProfile getRunProfile() {
+    public @Nullable RunProfile getRunProfile() {
       return myExecutionEnvironment.getRunProfile();
     }
   }
@@ -112,23 +109,21 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
 
     RemoteServerDebugEnvironment(Project project, RemoteConnection remoteConnection, RunProfile runProfile) {
       myProject = project;
-      mySearchScope = GlobalSearchScopes.executionScope(project, runProfile);
+      mySearchScope = ExecutionSearchScopes.executionScope(project, runProfile);
       myRemoteConnection = remoteConnection;
       myRunProfile = runProfile;
     }
 
-    @Nullable
     @Override
-    public ExecutionResult createExecutionResult() throws ExecutionException {
+    public @Nullable ExecutionResult createExecutionResult() throws ExecutionException {
       ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject, false);
       RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject);
       consoleView.attachToProcess(process);
       return new DefaultExecutionResult(consoleView, process);
     }
 
-    @NotNull
     @Override
-    public GlobalSearchScope getSearchScope() {
+    public @NotNull GlobalSearchScope getSearchScope() {
       return mySearchScope;
     }
 

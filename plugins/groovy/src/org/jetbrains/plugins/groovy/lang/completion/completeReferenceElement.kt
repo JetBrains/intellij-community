@@ -10,7 +10,13 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Key
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind.CLASS
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind.PACKAGE
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -123,8 +129,7 @@ private class CompleteReferenceProcessor(
 
 private fun GrCodeReferenceElement.findTypeParameterListCandidate(): GrTypeParameterList? {
   val typeElement = getRootTypeElement() ?: return null
-  val parent = typeElement.parent
-  return when (parent) {
+  return when (typeElement.parent) {
     is GrTypeDefinitionBody -> skipWhitespacesAndComments(typeElement.prevSibling, false) as? GrTypeParameterList
     is GrVariableDeclaration -> {
       val errorElement = skipWhitespacesAndComments(typeElement.prevSibling, false) as? PsiErrorElement

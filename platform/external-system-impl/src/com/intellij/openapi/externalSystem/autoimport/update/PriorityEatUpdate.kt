@@ -2,15 +2,17 @@
 package com.intellij.openapi.externalSystem.autoimport.update
 
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 
-internal abstract class PriorityEatUpdate(private val priority: Long) : Update(Any()) {
+@ApiStatus.Internal
+internal abstract class PriorityEatUpdate(priority: Int) : Update(priority, priority) {
   override fun canEat(update: Update): Boolean {
     if (update !is PriorityEatUpdate) return false
     return priority <= update.priority
   }
 
   companion object {
-    operator fun invoke(priority: Long, update: () -> Unit) =
+    operator fun invoke(priority: Int, update: () -> Unit) =
       object : PriorityEatUpdate(priority) {
         override fun run() = update()
       }

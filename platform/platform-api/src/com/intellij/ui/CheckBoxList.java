@@ -1,30 +1,57 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CheckBoxList<T> extends JBList<JCheckBox> {
-  private final static int    RESET_ROLLOVER = -1;
+  private static final int    RESET_ROLLOVER = -1;
 
   private final CellRenderer myCellRenderer;
   private CheckBoxListListener checkBoxListListener;
@@ -153,8 +180,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     UIUtil.repaintViewport(this);
   }
 
-  @NotNull
-  private static Dimension getCheckBoxDimension(@NotNull JCheckBox checkBox) {
+  private static @NotNull Dimension getCheckBoxDimension(@NotNull JCheckBox checkBox) {
     Icon icon = null;
     BasicRadioButtonUI ui = ObjectUtils.tryCast(checkBox.getUI(), BasicRadioButtonUI.class);
     if (ui != null) {
@@ -162,7 +188,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     }
     if (icon == null) {
       // com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI.getDefaultIcon()
-      icon = JBUI.scale(EmptyIcon.create(20));
+      icon = JBUIScale.scaleIcon(EmptyIcon.create(20));
     }
     Insets margin = checkBox.getMargin();
     return new Dimension(margin.left + icon.getIconWidth(), margin.top + icon.getIconHeight());
@@ -177,8 +203,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
    * @param index     The list cell index
    * @return A point relative to the checkbox or null, if it's outside of the checkbox.
    */
-  @Nullable
-  protected Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
+  protected @Nullable Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
     int cx = x - myCellRenderer.getBorderInsets().left;
     int cy = y - myCellRenderer.getBorderInsets().top;
     return  cx >= 0 && cy >= 0 ? new Point(cx, cy) : null;
@@ -194,8 +219,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
    * @param index     The list cell index
    * @return A point relative to the checkbox or null, if it's outside of the checkbox.
    */
-  @Nullable
-  protected Point findPointRelativeToCheckBoxWithAdjustedRendering(int x, int y, @NotNull JCheckBox checkBox, int index) {
+  protected @Nullable Point findPointRelativeToCheckBoxWithAdjustedRendering(int x, int y, @NotNull JCheckBox checkBox, int index) {
     boolean selected = isSelectedIndex(index);
     boolean hasFocus = hasFocus();
     Component component = myCellRenderer.getListCellRendererComponent(this, checkBox, index, selected, hasFocus);
@@ -203,8 +227,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     bounds.x = 0;
     bounds.y = 0;
     component.setBounds(bounds);
-    if (component instanceof Container) {
-      Container c = (Container)component;
+    if (component instanceof Container c) {
       Component found = c.findComponentAt(x, y);
       if (found == checkBox) {
         Point checkBoxLocation = getChildLocationRelativeToAncestor(component, checkBox);
@@ -216,8 +239,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     return null;
   }
 
-  @Nullable
-  private static Point getChildLocationRelativeToAncestor(@NotNull Component ancestor, @NotNull Component child) {
+  private static @Nullable Point getChildLocationRelativeToAncestor(@NotNull Component ancestor, @NotNull Component child) {
     int dx = 0, dy = 0;
     Component c = child;
     while (c != null && c != ancestor) {
@@ -230,8 +252,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
   }
 
 
-  @NotNull
-  private JCheckBox getCheckBoxAt(int index) {
+  private @NotNull JCheckBox getCheckBoxAt(int index) {
     return getModel().getElementAt(index);
   }
 
@@ -270,15 +291,23 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     }
   }
 
-  @Nullable
-  public T getItemAt(int index) {
+  public @Unmodifiable @NotNull List<T> getCheckedItems() {
+    return ContainerUtil.mapNotNull(myItemMap.entrySet(),
+                                    entry -> entry.getValue().isSelected() ? entry.getKey() : null);
+  }
+
+  public @NotNull Set<T> getAllItems() {
+    return myItemMap.keySet();
+  }
+
+  public @Nullable T getItemAt(int index) {
     JCheckBox checkBox = getModel().getElementAt(index);
     List<T> value = myItemMap.getKeysByValue(checkBox);
     return value == null || value.isEmpty() ? null : value.get(0);
   }
 
   public void clear() {
-    ((DefaultListModel)getModel()).clear();
+    ((DefaultListModel<?>)getModel()).clear();
     myItemMap.clear();
   }
 
@@ -381,15 +410,12 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
       return rootComponent;
     }
 
-    @NotNull
-    private Insets getBorderInsets() {
+    private @NotNull Insets getBorderInsets() {
       return myBorderInsets;
     }
   }
 
-  @Nls
-  @Nullable
-  protected String getSecondaryText(int index) {
+  protected @Nls @Nullable String getSecondaryText(int index) {
     return null;
   }
 

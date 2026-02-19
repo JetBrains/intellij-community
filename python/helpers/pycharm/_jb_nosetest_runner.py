@@ -4,7 +4,8 @@ import re
 import nose
 import sys
 
-from _jb_runner_tools import jb_start_tests, jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING
+from _jb_runner_tools import jb_start_tests, jb_patch_separator, jb_doc_args, \
+    JB_DISABLE_BUFFERING, jb_finish_tests
 from teamcity.nose_report import TeamcityReport
 
 if __name__ == '__main__':
@@ -14,4 +15,7 @@ if __name__ == '__main__':
     if JB_DISABLE_BUFFERING and "-s" not in sys.argv:
         sys.argv += ["-s"]
     jb_doc_args("Nosetest", sys.argv)
-    sys.exit(nose.main(addplugins=[TeamcityReport()]))
+    try:
+        sys.exit(nose.main(addplugins=[TeamcityReport()]))
+    finally:
+        jb_finish_tests()

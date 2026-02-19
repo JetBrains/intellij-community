@@ -15,13 +15,19 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.UIManager;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 
 import static com.intellij.laf.win10.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
-class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+final class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   WinIntelliJEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
     super(editorTextField, editor);
     editor.addEditorMouseListener(new EditorMouseListener() {
@@ -80,9 +86,9 @@ class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
       boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
       int bw = 1;
 
-      Object op = editorTextField.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(editorTextField);
       if (editorTextField.isEnabled() && op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
+        op.setGraphicsColor(g2, c.hasFocus());
         bw = isCellRenderer ? 1 : 2;
       }
       else {
@@ -123,16 +129,15 @@ class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   @Override
   public Insets getBorderInsets(Component c) {
     if (ComponentUtil.getParentOfType((Class<? extends ComboBoxCompositeEditor>)ComboBoxCompositeEditor.class, c) != null) {
-      return JBUI.emptyInsets().asUIResource();
+      return JBInsets.emptyInsets().asUIResource();
     }
     return (DarculaUIUtil.isTableCellEditor(c) ?
             JBUI.insets(1) :
             isComboBoxEditor(c) ? JBInsets.create(1, 6) : JBInsets.create(4, 6)).asUIResource();
   }
 
-  @Nullable
   @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
+  public @Nullable Insets getVisualPaddings(@NotNull Component component) {
     return JBUI.insets(1);
   }
 }

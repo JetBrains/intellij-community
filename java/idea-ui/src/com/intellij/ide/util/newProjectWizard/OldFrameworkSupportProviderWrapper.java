@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkTypeEx;
@@ -7,7 +7,12 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.framework.library.FrameworkSupportWithLibrary;
-import com.intellij.ide.util.frameworkSupport.*;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkVersion;
+import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -21,7 +26,8 @@ import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.util.List;
 
 public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModuleProvider {
@@ -37,21 +43,19 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
     return myProvider;
   }
 
-  @NotNull
   @Override
-  public FrameworkTypeEx getFrameworkType() {
+  public @NotNull FrameworkTypeEx getFrameworkType() {
     return myType;
   }
 
-  @NotNull
   @Override
-  public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+  public @NotNull FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
     final FrameworkSupportConfigurable configurable = myProvider.createConfigurable(model);
     return new FrameworkSupportConfigurableWrapper(configurable);
   }
 
   @Override
-  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
+  public boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType) {
     return myProvider.isEnabledForModuleType(moduleType);
   }
 
@@ -81,16 +85,13 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
       myNewProvider = newProvider;
     }
 
-    @NotNull
     @Override
-    public FrameworkSupportInModuleProvider createProvider() {
+    public @NotNull FrameworkSupportInModuleProvider createProvider() {
       return myNewProvider;
     }
 
-    @NotNull
     @Override
-    @Nls(capitalization = Nls.Capitalization.Title)
-    public String getPresentableName() {
+    public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
       return GuiUtils.getTextWithoutMnemonicEscaping(myOldProvider.getTitle());
     }
 
@@ -99,9 +100,8 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
       return myOldProvider.getUnderlyingFrameworkId();
     }
 
-    @NotNull
     @Override
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       final Icon icon = myOldProvider.getIcon();
       return icon != null ? icon : EmptyIcon.ICON_16;
     }
@@ -133,6 +133,11 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
         public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
           final FrameworkVersion selectedVersion = myConfigurable.getSelectedVersion();
           return selectedVersion == null || version.getVersionString().equals(selectedVersion.getVersionName());
+        }
+
+        @Override
+        public String toString() {
+          return "FrameworkSupportLibraryVersionFilter(selectedVersion=" + myConfigurable.getSelectedVersion() + ")";
         }
       };
     }
@@ -172,9 +177,8 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
       return OldCustomLibraryDescription.createByVersions(versions);
     }
 
-    @NotNull
     @Override
-    public FrameworkLibraryVersionFilter getLibraryVersionFilter() {
+    public @NotNull FrameworkLibraryVersionFilter getLibraryVersionFilter() {
       return myVersionFilter;
     }
 

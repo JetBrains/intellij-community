@@ -1,14 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.ConstraintType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 
-/**
- * @author yole
- */
+
 public final class CompletionParameterTypeInferencePolicy extends ProcessCandidateParameterTypeInferencePolicy {
   public static final CompletionParameterTypeInferencePolicy INSTANCE = new CompletionParameterTypeInferencePolicy();
 
@@ -18,7 +22,7 @@ public final class CompletionParameterTypeInferencePolicy extends ProcessCandida
   @Override
   public PsiType getDefaultExpectedType(PsiCallExpression methodCall) {
     ExpectedTypeInfo expectedType = ExpectedTypesProvider.getSingleExpectedTypeForCompletion(methodCall);
-    return expectedType == null ? PsiType.NULL : expectedType.getType();
+    return expectedType == null ? (PsiPrimitiveType)PsiTypes.nullType() : expectedType.getType();
   }
 
   @Override
@@ -38,7 +42,7 @@ public final class CompletionParameterTypeInferencePolicy extends ProcessCandida
 
   @Override
   public PsiType adjustInferredType(PsiManager manager, PsiType guess, ConstraintType constraintType) {
-    if (guess != null && !(guess instanceof PsiWildcardType) && guess != PsiType.NULL) {
+    if (guess != null && !(guess instanceof PsiWildcardType) && guess != PsiTypes.nullType()) {
       if (constraintType == ConstraintType.SUPERTYPE) return PsiWildcardType.createExtends(manager, guess);
       else if (constraintType == ConstraintType.SUBTYPE) return PsiWildcardType.createSuper(manager, guess);
     }

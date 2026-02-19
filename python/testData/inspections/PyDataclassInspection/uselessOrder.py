@@ -1,7 +1,7 @@
 import dataclasses
 
 
-@dataclasses.dataclass(<error descr="'order' should be false if the class defines one of order methods">order=True</error>)
+@dataclasses.dataclass(<error descr="'order' should be False if the class defines one of order methods">order=True</error>)
 class A1:
     a: int = 1
 
@@ -19,7 +19,7 @@ class Derived1(Base1):
     d: int = 1
 
 
-@dataclasses.dataclass(<error descr="'order' should be false if the class defines one of order methods">order=True</error>)
+@dataclasses.dataclass(<error descr="'order' should be False if the class defines one of order methods">order=True</error>)
 class A2:
     a: int = 1
 
@@ -37,7 +37,7 @@ class Derived2(Base2):
     d: int = 1
 
 
-@dataclasses.dataclass(<error descr="'order' should be false if the class defines one of order methods">order=True</error>)
+@dataclasses.dataclass(<error descr="'order' should be False if the class defines one of order methods">order=True</error>)
 class A3:
     a: int = 1
 
@@ -55,7 +55,7 @@ class Derived3(Base3):
     d: int = 1
 
 
-@dataclasses.dataclass(<error descr="'order' should be false if the class defines one of order methods">order=True</error>)
+@dataclasses.dataclass(<error descr="'order' should be False if the class defines one of order methods">order=True</error>)
 class A4:
     a: int = 1
 

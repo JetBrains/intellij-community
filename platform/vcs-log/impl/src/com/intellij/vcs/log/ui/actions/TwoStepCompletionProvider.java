@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -14,7 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,9 +52,6 @@ public abstract class TwoStepCompletionProvider<T> extends ValuesCompletionProvi
           break;
         }
       }
-      catch (InterruptedException | CancellationException e) {
-        break;
-      }
       catch (TimeoutException ignored) {
       }
       catch (ExecutionException e) {
@@ -61,12 +62,14 @@ public abstract class TwoStepCompletionProvider<T> extends ValuesCompletionProvi
         future.cancel(true);
         throw e;
       }
+      catch (InterruptedException | CancellationException e) {
+        break;
+      }
     }
     result.stopHere();
   }
 
-  @NotNull
-  private List<? extends T> sortVariants(@NotNull Stream<? extends T> result) {
+  private @NotNull List<? extends T> sortVariants(@NotNull Stream<? extends T> result) {
     return result.sorted(myDescriptor).collect(Collectors.toList());
   }
 
@@ -76,9 +79,7 @@ public abstract class TwoStepCompletionProvider<T> extends ValuesCompletionProvi
     }
   }
 
-  @NotNull
-  protected abstract Stream<? extends T> collectSync(@NotNull CompletionResultSet result);
+  protected abstract @NotNull Stream<? extends T> collectSync(@NotNull CompletionResultSet result);
 
-  @NotNull
-  protected abstract Stream<? extends T> collectAsync(@NotNull CompletionResultSet result);
+  protected abstract @NotNull Stream<? extends T> collectAsync(@NotNull CompletionResultSet result);
 }

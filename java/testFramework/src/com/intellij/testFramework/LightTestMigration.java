@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.JavaTestUtil;
@@ -13,7 +13,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import one.util.streamex.StreamEx;
@@ -21,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.ComparisonFailure;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -75,19 +79,19 @@ class LightTestMigration {
     FileUtil.delete(myDir.toFile());
     Files.createDirectories(myDir);
     for (Pair<Path, String> file : resultFiles) {
-      Files.write(file.getFirst(), file.getSecond().getBytes(StandardCharsets.UTF_8));
+      Files.writeString(file.getFirst(), file.getSecond());
       System.out.println("Written: " + file.getFirst());
     }
   }
 
   private Pair<Path, String> processSingleFileTest(Path javaFile) throws Exception {
-    String fileText = new String(Files.readAllBytes(javaFile), StandardCharsets.UTF_8);
+    String fileText = Files.readString(javaFile);
     String testName = myName.isEmpty() ? javaFile.getFileName().toString().replaceFirst(".java$", "") : myName;
     myBaseDir = myName.isEmpty() ? myDir : myDir.getParent();
     Path targetFile = myBaseDir.resolve(testName + ".java");
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     LightProjectDescriptor descriptor = new LightProjectDescriptor();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(descriptor);
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(descriptor, testName);
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     JavaCodeInsightTestFixture javaFixture =
       JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
@@ -128,7 +132,7 @@ class LightTestMigration {
         String pathText = '/' + relativePath.toString().replace('\\', '/');
         if (pathText.startsWith(LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH)) {
           importedClasses.add(LightJavaInspectionTestCase.class);
-          pathSpec = "LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + \"" +
+          pathSpec = "LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + \"" +
                      StringUtil.escapeStringCharacters(
                        pathText.substring(LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH.length())) + '"';
         }
@@ -147,23 +151,24 @@ class LightTestMigration {
         .map(name -> "new " + name + "()").collect(Collectors.joining(", "));
     String year = Year.now().toString();
     String classTemplate = MessageFormat.format(
-      "// Copyright 2000-{6} JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.\n" +
-      "package {0};\n\n" +
-      "{1}" +
-      "\n" +
-      "public class {2} extends LightCodeInsightFixtureTestCase '{'\n" +
-      "  @Override\n" +
-      "  protected String getBasePath() '{'\n" +
-      "    return {3};\n" +
-      "  '}'\n" +
-      "\n" +
-      "  private void doTest() '{'\n" +
-      "    myFixture.enableInspections({4});\n" +
-      "    myFixture.testHighlighting(getTestName(false) + \".java\");\n" +
-      "  '}'\n" +
-      "\n" +
-      "{5}" +
-      "'}'\n",
+      """
+        // Copyright 2000-{6} JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+        package {0};
+
+        {1}
+        public class {2} extends LightCodeInsightFixtureTestCase '{'
+          @Override
+          protected String getBasePath() '{'
+            return {3};
+          '}'
+
+          private void doTest() '{'
+            myFixture.enableInspections({4});
+            myFixture.testHighlighting(getTestName(false) + ".java");
+          '}'
+
+        {5}'}'
+        """,
       myTestClass.getPackage().getName(), imports, myTestClass.getSimpleName(), pathSpec, inspections, testMethods, year);
     System.out.println("Class template: (" + myTestClass.getSimpleName() + ".java)");
     System.out.println("==============================");
@@ -200,8 +205,7 @@ class LightTestMigration {
     return javaFiles.get(0);
   }
 
-  @NotNull
-  private static List<Path> getJavaFiles(Path dir) throws IOException {
+  private static @NotNull List<Path> getJavaFiles(Path dir) throws IOException {
     List<Path> javaFiles = Files.walk(dir).filter(p -> p.toString().endsWith(".java")).filter(p -> Files.isRegularFile(p))
       .collect(Collectors.toList());
     if (javaFiles.isEmpty()) {

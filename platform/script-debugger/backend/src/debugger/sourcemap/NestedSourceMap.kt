@@ -4,7 +4,9 @@ package org.jetbrains.debugger.sourcemap
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class NestedSourceMap(private val childMap: SourceMap, private val parentMap: SourceMap) : SourceMap {
   override val sourceResolver: SourceResolver
     get() = parentMap.sourceResolver

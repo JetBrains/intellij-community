@@ -18,6 +18,6 @@ package com.intellij.openapi.command;
 /**
  * @deprecated Use {@link CommandListener} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class CommandAdapter implements CommandListener {
 }

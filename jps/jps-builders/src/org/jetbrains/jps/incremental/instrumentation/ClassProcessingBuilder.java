@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -11,7 +11,11 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -86,9 +90,8 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  @NotNull
   @Override
-  public List<String> getCompilableFileExtensions() {
+  public @NotNull List<String> getCompilableFileExtensions() {
     return Collections.emptyList();
   }
 

@@ -20,7 +20,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class ContentsUtil {
   public static void addOrReplaceContent(ContentManager manager, Content content, boolean select) {
@@ -52,8 +52,7 @@ public class ContentsUtil {
   }
 
   public static void closeContentTab(@NotNull ContentManager contentManager, @NotNull Content content) {
-    if (content instanceof TabbedContent) {
-      TabbedContent tabbedContent = (TabbedContent)content;
+    if (content instanceof TabbedContent tabbedContent) {
       if (tabbedContent.hasMultipleTabs()) {
         JComponent component = tabbedContent.getComponent();
         tabbedContent.removeContent(component);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.html.RelaxedHtmlNSDescriptor;
@@ -15,6 +15,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSTypeDescriptorProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,25 +27,26 @@ import java.util.Map;
  */
 public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTypeDescriptorProvider {
   private final XmlNSDescriptor myDelegate;
-  private final boolean myRelaxed;
-  private final boolean myCaseSensitive;
+  protected final boolean myRelaxed;
+  protected final boolean myCaseSensitive;
 
-  private static final SimpleFieldCache<Map<String, HtmlElementDescriptorImpl>, HtmlNSDescriptorImpl> myCachedDeclsCache = new SimpleFieldCache<Map<String, HtmlElementDescriptorImpl>, HtmlNSDescriptorImpl>() {
-    @Override
-    protected Map<String, HtmlElementDescriptorImpl> compute(final HtmlNSDescriptorImpl htmlNSDescriptor) {
-      return htmlNSDescriptor.doBuildCachedMap();
-    }
+  private static final SimpleFieldCache<Map<String, HtmlElementDescriptorImpl>, HtmlNSDescriptorImpl> myCachedDeclsCache =
+    new SimpleFieldCache<>() {
+      @Override
+      protected Map<String, HtmlElementDescriptorImpl> compute(final HtmlNSDescriptorImpl htmlNSDescriptor) {
+        return htmlNSDescriptor.doBuildCachedMap();
+      }
 
-    @Override
-    protected Map<String, HtmlElementDescriptorImpl> getValue(final HtmlNSDescriptorImpl htmlNSDescriptor) {
-      return htmlNSDescriptor.myCachedDecls;
-    }
+      @Override
+      protected Map<String, HtmlElementDescriptorImpl> getValue(final HtmlNSDescriptorImpl htmlNSDescriptor) {
+        return htmlNSDescriptor.myCachedDecls;
+      }
 
-    @Override
-    protected void putValue(final Map<String, HtmlElementDescriptorImpl> map, final HtmlNSDescriptorImpl htmlNSDescriptor) {
-      htmlNSDescriptor.myCachedDecls = map;
-    }
-  };
+      @Override
+      protected void putValue(final Map<String, HtmlElementDescriptorImpl> map, final HtmlNSDescriptorImpl htmlNSDescriptor) {
+        htmlNSDescriptor.myCachedDecls = map;
+      }
+    };
 
   private volatile Map<String, HtmlElementDescriptorImpl> myCachedDecls;
 
@@ -58,8 +60,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     myCaseSensitive = caseSensitive;
   }
 
-  @Nullable
-  public static XmlAttributeDescriptor getCommonAttributeDescriptor(@NotNull final String attributeName, @Nullable final XmlTag context) {
+  public static @Nullable XmlAttributeDescriptor getCommonAttributeDescriptor(final @NotNull String attributeName, final @Nullable XmlTag context) {
     final XmlElementDescriptor descriptor = guessTagForCommonAttributes(context);
     if (descriptor != null) {
       return descriptor.getAttributeDescriptor(attributeName, context);
@@ -75,8 +76,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  @Nullable
-  public static XmlElementDescriptor guessTagForCommonAttributes(@Nullable final XmlTag context) {
+  public static @Nullable XmlElementDescriptor guessTagForCommonAttributes(final @Nullable XmlTag context) {
     if (context == null) return null;
     final XmlNSDescriptor nsDescriptor = context.getNSDescriptor(context.getNamespace(), false);
     if (nsDescriptor instanceof HtmlNSDescriptorImpl) {
@@ -98,11 +98,15 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
 
     for (XmlElementDescriptor element : elements) {
       decls.put(
-        element.getName(),
-        new HtmlElementDescriptorImpl(element, myRelaxed, myCaseSensitive)
+        myCaseSensitive ? element.getName() : StringUtil.toLowerCase(element.getName()),
+        createHtmlElementDescriptor(element)
       );
     }
     return decls;
+  }
+
+  protected @NotNull HtmlElementDescriptorImpl createHtmlElementDescriptor(XmlElementDescriptor element) {
+    return new HtmlElementDescriptorImpl(element, myRelaxed, myCaseSensitive);
   }
 
   @Override
@@ -114,14 +118,15 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     return xmlElementDescriptor;
   }
 
-  private XmlElementDescriptor getElementDescriptorByName(String name) {
+  @ApiStatus.Internal
+  public XmlElementDescriptor getElementDescriptorByName(String name) {
     if (!myCaseSensitive) name = StringUtil.toLowerCase(name);
 
     return buildDeclarationMap().get(name);
   }
 
   @Override
-  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(final @Nullable XmlDocument document) {
     if (myDelegate == null) return XmlElementDescriptor.EMPTY_ARRAY;
     if (document != null) return myDelegate.getRootElementsDescriptors(document);
 
@@ -133,8 +138,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Override
-  @Nullable
-  public XmlFile getDescriptorFile() {
+  public @Nullable XmlFile getDescriptorFile() {
     return myDelegate == null ? null : myDelegate.getDescriptorFile();
   }
 
@@ -164,7 +168,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Override
-  public TypeDescriptor getTypeDescriptor(String name, XmlTag context) {
+  public TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context) {
     return myDelegate instanceof XmlNSTypeDescriptorProvider ?
            ((XmlNSTypeDescriptorProvider)myDelegate).getTypeDescriptor(name, context) : null;
   }

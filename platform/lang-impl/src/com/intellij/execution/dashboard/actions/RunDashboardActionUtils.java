@@ -1,55 +1,94 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
+import com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RunDashboardServiceViewContributor;
-import com.intellij.execution.dashboard.tree.GroupingNode;
+import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.execution.services.ServiceViewActionUtils;
-import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.ide.productMode.IdeProductMode;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-final class RunDashboardActionUtils {
+import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
+import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.findValue;
+
+@Internal
+@Deprecated(forRemoval = true)
+public final class RunDashboardActionUtils {
   private RunDashboardActionUtils() {
   }
 
-  @NotNull
-  static JBIterable<RunDashboardRunConfigurationNode> getTargets(@NotNull AnActionEvent e) {
+  public static @NotNull List<RunDashboardRunConfigurationNode> getTargets(@NotNull AnActionEvent e) {
     return ServiceViewActionUtils.getTargets(e, RunDashboardRunConfigurationNode.class);
   }
 
-  @Nullable
-  static RunDashboardRunConfigurationNode getTarget(@NotNull AnActionEvent e) {
+  public static @Nullable RunDashboardRunConfigurationNode getTarget(@NotNull AnActionEvent e) {
     return ServiceViewActionUtils.getTarget(e, RunDashboardRunConfigurationNode.class);
   }
 
-  @NotNull
-  static JBIterable<RunDashboardRunConfigurationNode> getLeafTargets(@NotNull AnActionEvent e) {
+  public static @NotNull JBIterable<RunDashboardRunConfigurationNode> getLeafTargets(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return JBIterable.empty();
 
-    JBIterable<Object> roots = JBIterable.of(e.getData(PlatformDataKeys.SELECTED_ITEMS));
     Set<RunDashboardRunConfigurationNode> result = new LinkedHashSet<>();
+    var uiSelection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+    if (uiSelection != null) {
+      JBIterable<Object> roots = JBIterable.of(uiSelection);
+      if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
+
+      if (IdeProductMode.isMonolith()) {
+        var substitutor = ContainerUtil.getFirstItem(LegacyRunDashboardServiceSubstitutor.EP_NAME.getExtensionList());
+        if (substitutor == null) return JBIterable.from(result);
+        return JBIterable.from(ContainerUtil.map(result, it -> substitutor.substituteWithBackendService(it, project)));
+      }
+      else {
+        return JBIterable.from(result);
+      }
+    }
+    return getFallbackSelectionForEmbeddedBackendRunToolwindowActions(e, project, result);
+  }
+
+  private static @NotNull JBIterable<RunDashboardRunConfigurationNode> getFallbackSelectionForEmbeddedBackendRunToolwindowActions(@NotNull AnActionEvent e,
+                                                                                Project project,
+                                                                                Set<RunDashboardRunConfigurationNode> result) {
+    var currentContentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
+    var currentContentDescriptorId = currentContentDescriptor == null ? null : currentContentDescriptor.getId();
+    RunDashboardService selectedService = null;
+    if (currentContentDescriptorId != null) {
+      // backend case with run toolwindow that is not split in any way and does not properly receive a serialized data context from frontend
+      // because of obscure content manager-related wrapping mechanism
+      var maybeService = RunDashboardManager.getInstance(project).findService(currentContentDescriptorId);
+      selectedService = maybeService instanceof RunDashboardService ? (RunDashboardService)maybeService : null;
+    }
+
+    JBIterable<Object> roots = JBIterable.of(selectedService);
     if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
 
-    return JBIterable.from(result);
+    return JBIterable.from(result).filter(RunDashboardRunConfigurationNode.class);
   }
 
   private static boolean getLeaves(Project project, AnActionEvent e, List<Object> items, List<Object> valueSubPath,
-                                   Set<RunDashboardRunConfigurationNode> result) {
+                                   Set<? super RunDashboardRunConfigurationNode> result) {
     for (Object item : items) {
-      if (item instanceof RunDashboardServiceViewContributor || item instanceof GroupingNode) {
+      if (item instanceof RunDashboardGroupNode groupNode) {
         List<Object> itemSubPath = new ArrayList<>(valueSubPath);
         itemSubPath.add(item);
-        List<Object> children = ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).getChildrenSafe(e, itemSubPath);
+        List<Object> children = groupNode.getChildren(project, e);
         if (!getLeaves(project, e, children, itemSubPath, result)) {
           return false;
         }

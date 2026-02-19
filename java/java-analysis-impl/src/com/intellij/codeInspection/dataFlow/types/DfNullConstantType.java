@@ -1,31 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
+import java.util.Set;
 
 public class DfNullConstantType extends DfConstantType<Object> implements DfReferenceType {
   DfNullConstantType() {
     super(null);
   }
 
-  @NotNull
   @Override
-  public DfaNullability getNullability() {
+  public @NotNull DfaNullability getNullability() {
     return DfaNullability.NULL;
   }
 
-  @NotNull
   @Override
-  public TypeConstraint getConstraint() {
+  public @NotNull TypeConstraint getConstraint() {
     return TypeConstraints.TOP;
   }
 
@@ -34,26 +29,31 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
     return DfTypes.NOT_NULL_OBJECT;
   }
 
-  @NotNull
   @Override
-  public PsiType getPsiType() {
-    return PsiType.NULL;
-  }
-
-  @NotNull
-  @Override
-  public DfReferenceType dropNullability() {
+  public @NotNull DfReferenceType dropNullability() {
     return DfTypes.OBJECT_OR_NULL;
   }
 
-  @NotNull
   @Override
-  public DfType join(@NotNull DfType other) {
+  public @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory) {
+    return this;
+  }
+
+  @Override
+  public @NotNull DfType join(@NotNull DfType other) {
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
-    if (!(other instanceof DfReferenceType)) return TOP;
-    DfReferenceType type = (DfReferenceType)other;
-    return new DfGenericObjectType(Collections.emptySet(), type.getConstraint(), DfaNullability.NULL.unite(type.getNullability()),
-                                   type.getMutability(), null, BOTTOM, false);
+    if (!(other instanceof DfReferenceType type)) return TOP;
+    Set<Object> notValues = type instanceof DfGenericObjectType objectType ? objectType.getRawNotValues() : Set.of();
+    return new DfGenericObjectType(notValues, type.getConstraint(), DfaNullability.NULL.unite(type.getNullability()),
+                                   type.getMutability(), type.getSpecialField(), type.getSpecialFieldType(), false);
+  }
+
+  @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    if (isMergeable(other)) return this;
+    if (other.isMergeable(this)) return other;
+    if (other instanceof DfGenericObjectType) return other.tryJoinExactly(this);
+    return null;
   }
 }

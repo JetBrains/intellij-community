@@ -1,7 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -14,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 
 import java.util.List;
 
-public class GrDefaultMethodComparator extends GrMethodComparator {
+public final class GrDefaultMethodComparator extends GrMethodComparator {
 
   @Override
   public Boolean dominated(@NotNull GroovyMethodResult result1,
@@ -38,7 +45,7 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 
-    if (arguments != null && arguments.size() == 0) {
+    if (arguments != null && arguments.isEmpty()) {
       if (params2.length == 1 && params2[0].getType() instanceof PsiArrayType) return true;
     }
 

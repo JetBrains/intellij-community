@@ -10,6 +10,6 @@ class DiagramNode<T> {}
 class A {
     static void f(Main m, List<DiagramNode<?>> nodes){
         final Object data = m.get(nodes, new A());
-        final <error descr="Incompatible types. Found: 'java.util.List<DiagramNode<?>>', required: 'java.util.List<DiagramNode>'">List<DiagramNode> n = nodes;</error>
+        final List<DiagramNode> n = <error descr="Incompatible types. Found: 'java.util.List<DiagramNode<?>>', required: 'java.util.List<DiagramNode>'">nodes</error>;
     }
 }

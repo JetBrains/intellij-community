@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.ide.JavaUiBundle;
@@ -23,16 +23,20 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JTextField;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Image;
+import java.awt.Point;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
@@ -50,20 +54,20 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       DnDManager.getInstance().registerSource(this);
     }
 
-    //todo[nik,pegov] fix for tooltips in the tree. Otherwise tooltips will be ignored by DnDEnabled
+    //todo fix for tooltips in the tree. Otherwise tooltips will be ignored by DnDEnabled
     setToolTipText("");
   }
 
   @Override
   protected void configureUiHelper(TreeUIHelper helper) {
-    final Convertor<TreePath, String> convertor = path -> {
+    final Function<TreePath, String> f = path -> {
       final SimpleNode node = getNodeFor(path);
       if (node instanceof PackagingElementNode) {
         return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
       }
       return "";
     };
-    new TreeSpeedSearch(this, convertor, true);
+    TreeSpeedSearch.installOn(this, true, f);
   }
 
   private List<PackagingElementNode<?>> getNodesToDrag() {
@@ -71,17 +75,17 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+  public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
     return !getNodesToDrag().isEmpty();
   }
 
   @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+  public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
     return new DnDDragStartBean(new LayoutNodesDraggingObject(myArtifactsEditor, getNodesToDrag()));
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     final List<PackagingElementNode<?>> nodes = getNodesToDrag();
     if (nodes.size() == 1) {
       return DnDAwareTree.getDragImage(this, getPathFor(nodes.get(0)), dragOrigin);
@@ -100,8 +104,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     return new LayoutTreeSelection(this);
   }
 
-  @Nullable
-  public PackagingElement<?> getElementByPath(TreePath path) {
+  public @Nullable PackagingElement<?> getElementByPath(TreePath path) {
     final SimpleNode node = getNodeFor(path);
     if (node instanceof PackagingElementNode) {
       final List<? extends PackagingElement<?>> elements = ((PackagingElementNode<?>)node).getPackagingElements();
@@ -116,7 +119,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     myTreeModel.invalidate(elementNode, true);
   }
 
-  public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<PackagingElementNode<?>> childFilter) {
+  public TreeVisitor createVisitorCompositeNodeChild(String parentPath, Predicate<? super PackagingElementNode<?>> childFilter) {
     List<Predicate<PackagingElementNode<?>>> parentElementFilters = ContainerUtil.map(StringUtil.split(parentPath, "/"),
                                                                                       LayoutTree::createCompositeNodeByNameFilter);
     TreePath predicatesPath = TreePathUtil.convertCollectionToTreePath(ContainerUtil.append(parentElementFilters, childFilter));
@@ -129,8 +132,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     };
   }
 
-  @NotNull
-  private static Predicate<PackagingElementNode<?>> createCompositeNodeByNameFilter(String name) {
+  private static @NotNull Predicate<PackagingElementNode<?>> createCompositeNodeByNameFilter(String name) {
     return (PackagingElementNode<?> node) -> node instanceof CompositePackagingElementNode
                                              && ((CompositePackagingElementNode)node).getFirstElement().getName().equals(name);
   }
@@ -144,7 +146,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
       final JTextField field = (JTextField)super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
       final Object node = ((DefaultMutableTreeNode)value).getUserObject();
-      final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+      final PackagingElement<?> element = ((PackagingElementNode<?>)node).getElementIfSingle();
       LOG.assertTrue(element != null);
       final String name = ((RenameablePackagingElement)element).getName();
       field.setText(name);
@@ -161,7 +163,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       final Object node = getNodeFor(path);
       RenameablePackagingElement currentElement = null;
       if (node instanceof PackagingElementNode) {
-        final PackagingElement<?> element = ((PackagingElementNode)node).getElementIfSingle();
+        final PackagingElement<?> element = ((PackagingElementNode<?>)node).getElementIfSingle();
         if (element instanceof RenameablePackagingElement) {
           currentElement = (RenameablePackagingElement)element;
         }

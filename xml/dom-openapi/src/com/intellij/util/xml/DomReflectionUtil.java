@@ -1,30 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author peter
- */
 public final class DomReflectionUtil {
   private DomReflectionUtil() {
   }
 
-  public static <T extends Annotation> T findAnnotationDFS(final Class<?> rawType, final Class<T> annotationType) {
+  public static <T extends Annotation> T findAnnotationDFS(@NotNull Class<?> rawType, Class<T> annotationType) {
     T annotation = rawType.getAnnotation(annotationType);
-    if (annotation != null) return annotation;
+    if (annotation != null) {
+      return annotation;
+    }
 
-    for (Class aClass : rawType.getInterfaces()) {
+    for (Class<?> aClass : rawType.getInterfaces()) {
       annotation = findAnnotationDFS(aClass, annotationType);
       if (annotation != null) {
         return annotation;
@@ -33,7 +39,7 @@ public final class DomReflectionUtil {
     return null;
   }
 
-  public static boolean canHaveIsPropertyGetterPrefix(final Type type) {
+  public static boolean canHaveIsPropertyGetterPrefix(Type type) {
     return boolean.class.equals(type) || Boolean.class.equals(type)
            || Boolean.class.equals(DomUtil.getGenericValueParameter(type));
   }
@@ -42,19 +48,19 @@ public final class DomReflectionUtil {
     final JavaMethod[] methods = new JavaMethod[path.length];
     Class<?> aClass = startClass;
     for (int i = 0; i < path.length; i++) {
-      final JavaMethod getter = findGetter(aClass, path[i]);
+      JavaMethod getter = findGetter(aClass, path[i]);
       assert getter != null : "Couldn't find getter for property " + path[i] + " in class " + aClass;
       methods[i] = getter;
       aClass = getter.getReturnType();
       if (List.class.isAssignableFrom(aClass)) {
-        aClass = ReflectionUtil.getRawType(extractCollectionElementType(getter.getGenericReturnType()));
+        @NotNull Type type = Objects.requireNonNull(extractCollectionElementType(getter.getGenericReturnType()));
+        aClass = ClassUtil.getRawType(type);
       }
     }
     return methods;
   }
 
-  @Nullable
-  public static JavaMethod findGetter(Class<?> aClass, String propertyName) {
+  public static @Nullable JavaMethod findGetter(Class<?> aClass, String propertyName) {
     final String capitalized = StringUtil.capitalize(propertyName);
     Method method = ReflectionUtil.getMethod(aClass, "get" + capitalized);
     if (method != null) return JavaMethod.getMethod(aClass, method);
@@ -66,15 +72,12 @@ public final class DomReflectionUtil {
     return canHaveIsPropertyGetterPrefix(javaMethod.getGenericReturnType()) ? javaMethod : null;
   }
 
-  public static Object invokeMethod(final Method method, final Object object, final Object... args) {
+  public static Object invokeMethod(Method method, Object object, Object... args) {
     try {
       return method.invoke(object, args);
     }
     catch (IllegalArgumentException e) {
       throw new RuntimeException("Calling method " + method + " on object " + object + " with arguments " + Arrays.asList(args), e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
     }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
@@ -92,33 +95,36 @@ public final class DomReflectionUtil {
     }
   }
 
-  @Nullable
-  public static Type extractCollectionElementType(Type returnType) {
-    if (returnType instanceof ParameterizedType) {
-      ParameterizedType parameterizedType = (ParameterizedType)returnType;
-      final Type rawType = parameterizedType.getRawType();
-      if (rawType instanceof Class) {
-        final Class<?> rawClass = (Class<?>)rawType;
-        if (List.class.equals(rawClass) || Collection.class.equals(rawClass)) {
-          final Type[] arguments = ReflectionUtil.getActualTypeArguments(parameterizedType);
-          if (arguments.length == 1) {
-            final Type argument = arguments[0];
-            if (argument instanceof WildcardType) {
-              final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
-              if (upperBounds.length == 1) {
-                return upperBounds[0];
-              }
-            }
-            else if (argument instanceof ParameterizedType) {
-              if (DomUtil.getGenericValueParameter(argument) != null) {
-                return argument;
-              }
-            }
-            else if (argument instanceof Class) {
-              return argument;
-            }
-          }
+  public static @Nullable Type extractCollectionElementType(Type returnType) {
+    if (!(returnType instanceof ParameterizedType parameterizedType)) {
+      return null;
+    }
+
+    Type rawType = parameterizedType.getRawType();
+    if (!(rawType instanceof Class<?> rawClass)) {
+      return null;
+    }
+
+    if (!List.class.equals(rawClass) && !Collection.class.equals(rawClass)) {
+      return null;
+    }
+
+    final Type[] arguments = parameterizedType.getActualTypeArguments();
+    if (arguments.length == 1) {
+      final Type argument = arguments[0];
+      if (argument instanceof WildcardType) {
+        final Type[] upperBounds = ((WildcardType)argument).getUpperBounds();
+        if (upperBounds.length == 1) {
+          return upperBounds[0];
         }
+      }
+      else if (argument instanceof ParameterizedType) {
+        if (DomUtil.getGenericValueParameter(argument) != null) {
+          return argument;
+        }
+      }
+      else if (argument instanceof Class) {
+        return argument;
       }
     }
     return null;

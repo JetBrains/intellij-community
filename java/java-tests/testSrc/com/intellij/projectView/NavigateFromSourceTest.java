@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory;
@@ -18,12 +18,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -37,41 +42,46 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     sortClassesByName(classes);
     PsiClass psiClass = classes[0];
 
-    final AbstractProjectViewPSIPane pane = myStructure.createPane();
+    final AbstractProjectViewPane pane = myStructure.createPane();
     final PsiFile containingFile = psiClass.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
 
     myStructure.checkNavigateFromSourceBehaviour(psiClass, virtualFile, pane);
 
-    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
-                                                     " -PsiDirectory: showClassMembers\n" +
-                                                     "  -PsiDirectory: src\n" +
-                                                     "   -PsiDirectory: com\n" +
-                                                     "    -PsiDirectory: package1\n" +
-                                                     "     -[Class1]\n" +
-                                                     "      InnerClass\n" +
-                                                     "     +Class2\n" +
-                                                     " +External Libraries\n"
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), """
+                                       -Project
+                                        -PsiDirectory: showClassMembers
+                                         -PsiDirectory: src
+                                          -PsiDirectory: com
+                                           -PsiDirectory: package1
+                                            [Class1]
+                                            Class2
+                                        +External Libraries
+                                       """
       , true);
 
-    changeClassTextAndTryToNavigate("class Class11 {}", (PsiJavaFile)containingFile, pane, "-Project\n" +
-                                                                                           " -PsiDirectory: showClassMembers\n" +
-                                                                                           "  -PsiDirectory: src\n" +
-                                                                                           "   -PsiDirectory: com\n" +
-                                                                                           "    -PsiDirectory: package1\n" +
-                                                                                           "     -Class1.java\n" +
-                                                                                           "      [Class11]\n" +
-                                                                                           "     +Class2\n" +
-                                                                                           " +External Libraries\n");
+    changeClassTextAndTryToNavigate("class Class11 {}", (PsiJavaFile)containingFile, pane, """
+      -Project
+       -PsiDirectory: showClassMembers
+        -PsiDirectory: src
+         -PsiDirectory: com
+          -PsiDirectory: package1
+           -Class1.java
+            [Class11]
+           Class2
+       +External Libraries
+      """);
 
-    changeClassTextAndTryToNavigate("class Class1 {}", (PsiJavaFile)containingFile, pane, "-Project\n" +
-                                                                                          " -PsiDirectory: showClassMembers\n" +
-                                                                                          "  -PsiDirectory: src\n" +
-                                                                                          "   -PsiDirectory: com\n" +
-                                                                                          "    -PsiDirectory: package1\n" +
-                                                                                          "     [Class1]\n" +
-                                                                                          "     +Class2\n" +
-                                                                                          " +External Libraries\n");
+    changeClassTextAndTryToNavigate("class Class1 {}", (PsiJavaFile)containingFile, pane, """
+      -Project
+       -PsiDirectory: showClassMembers
+        -PsiDirectory: src
+         -PsiDirectory: com
+          -PsiDirectory: package1
+           [Class1]
+           Class2
+       +External Libraries
+      """);
 
     doTestMultipleSelection(pane, ((PsiJavaFile)containingFile).getClasses()[0]);
   }
@@ -99,7 +109,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     assertThat(((PsiJavaFile)element).getName()).isEqualTo("Class1.java");
   }
 
-  private static void doTestMultipleSelection(@NotNull AbstractProjectViewPSIPane pane, PsiClass psiClass) {
+  private static void doTestMultipleSelection(AbstractProjectViewPane pane, PsiClass psiClass) {
     JTree tree = pane.getTree();
     int rowCount = tree.getRowCount();
     for (int i = 0; i < rowCount; i++) {
@@ -113,7 +123,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
   private static void changeClassTextAndTryToNavigate(String newClassString,
                                                       PsiJavaFile psiFile,
-                                                      AbstractProjectViewPSIPane pane,
+                                                      AbstractProjectViewPane pane,
                                                       String expected) {
     PsiClass psiClass = psiFile.getClasses()[0];
     VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
@@ -142,18 +152,20 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     WriteAction.runAndWait(() -> archive.move(project, moduleRoot));
     PsiTestUtil.addLibrary(module, archive.getPath()); // only libraries are expanded now
 
-    AbstractProjectViewPSIPane pane = myStructure.createPane();
+    AbstractProjectViewPane pane = myStructure.createPane();
     // select archived file in the Project View
     VirtualFile file = JarFileSystem.getInstance().getJarRootForLocalFile(archive).findChild("Main.class");
     pane.select(PsiManager.getInstance(project).findFile(file), file, false);
     PlatformTestUtil.waitWhileBusy(pane.getTree());
-    PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
-                                                     " -Group: group\n" +
-                                                     "  -PsiDirectory: module\n" +
-                                                     "   -test.jar\n" +
-                                                     "    PsiDirectory: META-INF\n" +
-                                                     "    [Main]\n" +
-                                                     " PsiDirectory: selectFileInArchiveUnderModuleGroup\n" +
-                                                     " +External Libraries\n", true);
+    PlatformTestUtil.assertTreeEqual(pane.getTree(), """
+      -Project
+       -Group: group
+        -PsiDirectory: module
+         -test.jar
+          PsiDirectory: META-INF
+          [Main]
+       PsiDirectory: selectFileInArchiveUnderModuleGroup
+       +External Libraries
+      """, true);
   }
 }

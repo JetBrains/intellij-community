@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
@@ -10,6 +10,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +22,13 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.IntegratedSelectedOptionsDialog;
 import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -39,12 +45,12 @@ public class SvnMergeInfoRootPanelManual {
   private JTextArea myLocalArea;
   private JTextArea myMixedRevisions;
 
-  @NotNull private final Project myProject;
-  @NotNull private final NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> myRefresher;
-  @NotNull private final Runnable myListener;
+  private final @NotNull Project myProject;
+  private final @NotNull NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> myRefresher;
+  private final @NotNull Runnable myListener;
   private boolean myOnlyOneRoot;
-  @NotNull private WCInfoWithBranches myInfo;
-  @NotNull private final Map<Url, String> myBranchToLocal;
+  private @NotNull WCInfoWithBranches myInfo;
+  private final @NotNull Map<Url, String> myBranchToLocal;
   private WCInfoWithBranches.Branch mySelectedBranch;
 
   public SvnMergeInfoRootPanelManual(@NotNull Project project,
@@ -174,8 +180,7 @@ public class SvnMergeInfoRootPanelManual {
     myMixedRevisions.setVisible(value);
   }
 
-  @Nullable
-  private static String getLocal(@NotNull Url url, @Nullable String localPath) {
+  private static @Nullable String getLocal(@NotNull Url url, @Nullable String localPath) {
     String result = null;
     Set<String> paths = SvnBranchMapperManager.getInstance().get(url);
 
@@ -193,7 +198,7 @@ public class SvnMergeInfoRootPanelManual {
       myLocalArea.setForeground(JBColor.RED);
       myLocalArea.setText(message("label.select.target.working.copy"));
     } else {
-      myLocalArea.setForeground(UIUtil.getInactiveTextColor());
+      myLocalArea.setForeground(NamedColorUtil.getInactiveTextColor());
       myLocalArea.setText(local);
       myBranchToLocal.put(url, local);
     }
@@ -233,8 +238,7 @@ public class SvnMergeInfoRootPanelManual {
     myFixedSelectLocal = new FixedSizeButton(20);
   }
 
-  @NotNull
-  public InfoHolder getInfo() {
+  public @NotNull InfoHolder getInfo() {
     return new InfoHolder(mySelectedBranch, getLocalBranch(), myInclude.isSelected());
   }
 
@@ -248,8 +252,8 @@ public class SvnMergeInfoRootPanelManual {
 
   public static class InfoHolder {
 
-    @Nullable private final WCInfoWithBranches.Branch myBranch;
-    @Nullable private final String myLocal;
+    private final @Nullable WCInfoWithBranches.Branch myBranch;
+    private final @Nullable String myLocal;
     private final boolean myEnabled;
 
     public InfoHolder(@Nullable WCInfoWithBranches.Branch branch, @Nullable String local, boolean enabled) {
@@ -258,13 +262,11 @@ public class SvnMergeInfoRootPanelManual {
       myEnabled = enabled;
     }
 
-    @Nullable
-    public WCInfoWithBranches.Branch getBranch() {
+    public @Nullable WCInfoWithBranches.Branch getBranch() {
       return myBranch;
     }
 
-    @Nullable
-    public String getLocal() {
+    public @Nullable String getLocal() {
       return myLocal;
     }
 
@@ -273,18 +275,15 @@ public class SvnMergeInfoRootPanelManual {
     }
   }
 
-  @NotNull
-  public WCInfoWithBranches getWcInfo() {
+  public @NotNull WCInfoWithBranches getWcInfo() {
     return myInfo;
   }
 
-  @Nullable
-  public WCInfoWithBranches.Branch getBranch() {
+  public @Nullable WCInfoWithBranches.Branch getBranch() {
     return mySelectedBranch;
   }
 
-  @Nullable
-  public String getLocalBranch() {
+  public @Nullable String getLocalBranch() {
     return mySelectedBranch != null ? myBranchToLocal.get(mySelectedBranch.getUrl()) : null;
   }
 

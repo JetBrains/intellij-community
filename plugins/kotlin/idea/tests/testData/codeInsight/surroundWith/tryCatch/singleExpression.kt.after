@@ -1,0 +1,8 @@
+// WITH_STDLIB
+fun foo() {
+    try {
+        "aaa"
+    } catch (e: <selection>Exception</selection>) {
+        throw e
+    }
+}

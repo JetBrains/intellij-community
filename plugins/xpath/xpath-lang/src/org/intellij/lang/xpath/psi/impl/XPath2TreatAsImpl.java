@@ -32,9 +32,8 @@ public class XPath2TreatAsImpl extends XPath2ElementImpl implements XPath2TreatA
     return getType();
   }
 
-  @NotNull
   @Override
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     final XPath2TypeElement node = findChildByClass(XPath2TypeElement.class);
     return node != null ? node.getDeclaredType() : XPathType.UNKNOWN;
   }

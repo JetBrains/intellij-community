@@ -1,14 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
+import com.intellij.openapi.Disposable
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
 
-interface StatisticsEventLogWriter {
+interface StatisticsEventLogWriter : Disposable {
   fun log(logEvent: LogEvent)
 
   fun getActiveFile(): EventLogFile?
@@ -21,24 +25,32 @@ interface StatisticsEventLogWriter {
 }
 
 class StatisticsEventLogFileWriter(private val recorderId: String,
-                                   private val maxFileSize: String,
+                                   private val loggerProvider: StatisticsEventLoggerProvider,
+                                   maxFileSizeInBytes: Int,
                                    isEap: Boolean,
                                    prefix: String) : StatisticsEventLogWriter {
-  private var fileAppender: StatisticsEventLogFileAppender? = null
-
-  private val eventLogger: Logger = Logger.getLogger("event.logger.$recorderId")
+  private var logger: EventLogFileWriter? = null
+    get() {
+      return if (loggerProvider.isRecordEnabled()) field else null
+    }
+    set(value) {
+      field?.close()
+      field = value
+    }
 
   init {
-    eventLogger.level = Level.INFO
-    eventLogger.additivity = false
-
-    val pattern = PatternLayout("%m\n")
     try {
       val dir = getEventLogDir()
-      fileAppender = StatisticsEventLogFileAppender.create(pattern, dir, prefix, isEap)
-      fileAppender?.let { appender ->
-        appender.setMaxFileSize(maxFileSize)
-        eventLogger.addAppender(appender)
+      val buildType = if (isEap) EventLogBuildType.EAP else EventLogBuildType.RELEASE
+      val logFilePathProvider = { directory: Path -> EventLogFile.create(directory, buildType, prefix).file }
+      val fileEventLoggerLogger = EventLogFileWriter(dir, maxFileSizeInBytes, logFilePathProvider)
+      logger = fileEventLoggerLogger
+      if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
+        // effectively canceled when this object is disposed
+        loggerProvider.coroutineScope.launch {
+          delay(10.seconds)
+          if (loggerProvider.isRecordEnabled()) fileEventLoggerLogger.flush ()
+        }
       }
     }
     catch (e: IOException) {
@@ -47,27 +59,31 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
   }
 
   private fun getEventLogDir(): Path {
-    return EventLogConfiguration.getEventLogDataPath().resolve("logs").resolve(recorderId)
+    return EventLogConfiguration.getInstance().getEventLogDataPath().resolve("logs").resolve(recorderId)
   }
 
   override fun log(logEvent: LogEvent) {
-    eventLogger.info(LogEventSerializer.toString(logEvent))
+    logger?.log(LogEventSerializer.toString(logEvent))
   }
 
   override fun getActiveFile(): EventLogFile? {
-    val activeLog = fileAppender?.activeLogName ?: return null
+    val activeLog = logger?.getActiveLogName() ?: return null
     return EventLogFile(File(File(getEventLogDir().toUri()), activeLog))
   }
 
   override fun getLogFilesProvider(): EventLogFilesProvider {
-    return DefaultEventLogFilesProvider(getEventLogDir()) { fileAppender?.activeLogName }
+    return DefaultEventLogFilesProvider(getEventLogDir()) { logger?.getActiveLogName() }
   }
 
   override fun cleanup() {
-    fileAppender?.cleanUp()
+    logger?.cleanUp()
   }
 
   override fun rollOver() {
-    fileAppender?.rollOver()
+    logger?.rollOver()
+  }
+
+  override fun dispose() {
+    logger = null
   }
 }

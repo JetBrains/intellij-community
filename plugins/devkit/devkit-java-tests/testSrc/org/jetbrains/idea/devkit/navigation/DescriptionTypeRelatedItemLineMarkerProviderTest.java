@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.testFramework.TestDataPath;
-import icons.DevkitIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -32,14 +32,27 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends Descriptio
     doTestInspectionDescription("MyWithDescriptionFromFieldReferenceInspection.java", "MyWithDescriptionFromFieldReferenceInspection.html");
   }
 
+  public void testMustNotProvideGutterIconsWhenInspectionDescriptionNameIsNotCaseSensitiveEqualToClassName() {
+    myFixture.copyDirectoryToProject("inspectionDescriptions", "inspectionDescriptions");
+    List<GutterMark> gutters = myFixture.findAllGutters("caseSensitive/MywithDescriptionInspection.java");
+    assertEmpty(gutters);
+  }
+
   public void testIntentionDescription() {
     myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
 
-    List<GutterMark> gutters = myFixture.findAllGutters("MyIntentionActionWithDescription.java");
+    List<GutterMark> gutters = ContainerUtil.sorted(myFixture.findAllGutters("MyIntentionActionWithDescription.java"),
+                                                    Comparator.comparing(GutterMark::getTooltipText));
     assertThat(gutters.size()).isEqualTo(2);
-    Collections.sort(gutters, Comparator.comparing(GutterMark::getTooltipText));
-    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(1), "Description", DevkitIcons.Gutter.DescriptionFile, "description.html");
-    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", DevkitIcons.Gutter.Diff,
+    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(1), "Description", DevkitCoreIcons.Gutter.DescriptionFile, "description.html");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", DevkitCoreIcons.Gutter.Diff,
                                                   "after.java.template", "before.java.template");
+  }
+
+  public void testMustNotProvideGutterIconsWhenIntentionDescriptionFolderNameIsNotCaseSensitiveEqualToClassName() {
+    myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
+
+    List<GutterMark> gutters = myFixture.findAllGutters("caseSensitive/MyIntentionActionwithDescription.java");
+    assertEmpty(gutters);
   }
 }

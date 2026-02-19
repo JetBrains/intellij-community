@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GroovyControlFlow;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -38,7 +39,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 /**
  * @author Max Medvedev
  */
-public class GroovyInlineLocalHandler extends InlineActionHandler {
+public final class GroovyInlineLocalHandler extends InlineActionHandler {
   private static final Logger LOG = Logger.getInstance(GroovyInlineLocalHandler.class);
 
   @Override
@@ -75,14 +76,13 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
   /**
    * Returns Settings object for referenced definition in case of local variable
    */
-  @Nullable
-  private static InlineLocalVarSettings createSettings(final GrVariable variable, Editor editor, boolean invokedOnReference) {
+  private static @Nullable InlineLocalVarSettings createSettings(final GrVariable variable, Editor editor, boolean invokedOnReference) {
     final String localName = variable.getName();
     final Project project = variable.getProject();
 
     GrExpression initializer = null;
     Instruction writeInstr = null;
-    Instruction[] flow = null;
+    GroovyControlFlow flow = null;
 
     //search for initializer to inline
     if (invokedOnReference) {
@@ -98,16 +98,16 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
           controlFlowOwner = ControlFlowUtils.findControlFlowOwner(cur);
           if (controlFlowOwner == null) break;
 
-          flow = controlFlowOwner.getControlFlow();
+          flow = ControlFlowUtils.getGroovyControlFlow(controlFlowOwner);
 
           final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, variable);
           final PsiElement finalCur = cur;
-          Instruction instruction = ControlFlowUtils.findInstruction(finalCur, flow);
+          Instruction instruction = ControlFlowUtils.findInstruction(finalCur, flow.getFlow());
 
           LOG.assertTrue(instruction != null);
           final BitSet prev = writes.get(instruction.num());
           if (prev.cardinality() == 1) {
-            writeInstr = flow[prev.nextSetBit(0)];
+            writeInstr = flow.getFlow()[prev.nextSetBit(0)];
             final PsiElement element = writeInstr.getElement();
             if (element instanceof GrVariable) {
               initializer = ((GrVariable)element).getInitializerGroovy();
@@ -131,9 +131,9 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
       }
     }
     else {
-      flow = ControlFlowUtils.findControlFlowOwner(variable).getControlFlow();
+      flow = ControlFlowUtils.getGroovyControlFlow(ControlFlowUtils.findControlFlowOwner(variable));
       initializer = variable.getInitializerGroovy();
-      writeInstr = ContainerUtil.find(flow, instruction -> instruction.getElement() == variable);
+      writeInstr = ContainerUtil.find(flow.getFlow(), instruction -> instruction.getElement() == variable);
     }
 
     if (initializer == null || writeInstr == null) {
@@ -157,9 +157,8 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getActionName(PsiElement element) {
+  public @Nullable String getActionName(PsiElement element) {
     return getInlineVariable();
   }
 

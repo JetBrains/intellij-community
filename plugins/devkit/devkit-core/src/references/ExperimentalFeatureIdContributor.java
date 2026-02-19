@@ -1,13 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ExperimentalFeatureImpl;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.UastReferenceRegistrar;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
@@ -18,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,40 +30,36 @@ import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.PsiJavaPatterns.string;
 import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
 
-class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
+final class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar
       .registerUastReferenceProvider(registrar,
-                                     injectionHostUExpression().methodCallParameter(0, psiMethod()
-                                       .withName(string().oneOf("isFeatureEnabled", "setFeatureEnabled"))
-                                       .definedInClass(Experiments.class.getName())),
+                                     injectionHostUExpression()
+                                       .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+                                       .methodCallParameter(0, psiMethod()
+                                         .withName(string().oneOf("isFeatureEnabled", "setFeatureEnabled"))
+                                         .definedInClass(Experiments.class.getName())),
                                      UastReferenceRegistrar.uastInjectionHostReferenceProvider(
                                        (expression, host) -> new PsiReference[]{new ExperimentalFeatureIdReference(host)}),
                                      PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
 
-  private static final class ExperimentalFeatureIdReference extends ExtensionPointReferenceBase {
+  private static final class ExperimentalFeatureIdReference extends ExtensionReferenceBase {
 
     private ExperimentalFeatureIdReference(PsiElement element) {
       super(element);
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return ExperimentalFeatureImpl.class.getName();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.experimentalFeature";
     }
 
     @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return extension.getId();
-    }
-
-    @NotNull
-    @Override
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return DevKitBundle.message("code.convert.experimental.feature.id.cannot.resolve", getValue());
     }
 
@@ -89,12 +89,11 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       return variants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
-    @Nullable
-    private static String getDescription(Extension extension) {
+    private static @Nullable String getDescription(Extension extension) {
       final DomFixedChildDescription description = extension.getGenericInfo().getFixedChildDescription("description");
       if (description == null) return null;
       final DomElement element = ContainerUtil.getFirstItem(description.getValues(extension));
-      return element instanceof GenericDomValue ? ((GenericDomValue)element).getStringValue() : null;
+      return element instanceof GenericDomValue ? ((GenericDomValue<?>)element).getStringValue() : null;
     }
   }
 }

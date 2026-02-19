@@ -1,23 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor.actions
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets
 
-class GroovyTripleQuoteBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
-
+internal class GroovyTripleQuoteBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
   private var myWithinTripleQuoted: Boolean = false
 
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {
     myWithinTripleQuoted = false
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return
     if (c != '\'' && c != '"') return
-    if (editor !is EditorEx) return
     val offset = editor.caretModel.offset
     val iterator: HighlighterIterator = editor.highlighter.createIterator(offset)
     val tokenType = iterator.tokenType

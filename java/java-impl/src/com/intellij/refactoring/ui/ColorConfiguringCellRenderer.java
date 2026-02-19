@@ -17,7 +17,7 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
 public class ColorConfiguringCellRenderer extends DefaultTableCellRenderer {

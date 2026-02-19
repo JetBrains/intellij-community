@@ -10,15 +10,18 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkUtil;
-import one.util.streamex.StreamEx;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,17 +49,22 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   private void doMultiFileTest(CompletionType completionType, int invocationCount) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
-    myFixture.complete(completionType, invocationCount);
+    @NotNull LookupElement[] variants = myFixture.complete(completionType, invocationCount);
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
   private void doMultiFileTestAssertSameOrderedElements(String... variants) {
+    assertOrderedEquals(doMultiFileTestCompletionVariants(), variants);
+  }
+
+  @NotNull
+  private List<String> doMultiFileTestCompletionVariants() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
     myFixture.completeBasic();
     final List<String> suggested = myFixture.getLookupElementStrings();
     assertNotNull(suggested);
-    assertOrderedEquals(suggested, variants);
+    return suggested;
   }
 
   @Nullable
@@ -239,9 +247,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testStarImport() {
-    myFixture.configureByFiles("starImport/starImport.py", "starImport/importSource.py");
-    myFixture.completeBasic();
-    assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
+    runWithImportableNamesInBasicCompletionDisabled(() -> {
+      myFixture.configureByFiles("starImport/starImport.py", "starImport/importSource.py");
+      myFixture.completeBasic();
+      assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
+    });
   }
 
   // PY-1211, PY-29232
@@ -306,7 +316,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testDictKeys() {  // PY-2245
-    doTest();
+    myFixture.configureByFile("dictKeys.py");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "'xyz'");
+    myFixture.type('\n');
+    myFixture.checkResultByFile("dictKeys.after.py");
   }
 
   public void testDictKeys2() { //PY-4181
@@ -315,6 +329,96 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   public void testDictKeys3() { //PY-5546
     doTest();
+  }
+
+  // PY-52502
+  public void testExpressionDictKey() {
+    doTest();
+  }
+
+  // PY-42738
+  public void testDictLiteralValueAccessWithDoubleQuotes() {
+    final String text = """
+    d={ "key1": 222, 'key2': 333, 22: True, False: 22 }
+    d["<caret>"]""";
+    assertSameElements(doTestByText(text), "key1", "key2");
+  }
+
+  // PY-42738
+  public void testDictLiteralValueAccessWithSingleQuotes() {
+    final String text = """
+    d={ "key1": 222, 'key2': 333, 22: True, False: 22 }
+    d['<caret>']""";
+    assertSameElements(doTestByText(text), "key1", "key2");
+  }
+
+  // PY-42738
+  public void testDictLiteralValueAccessWithoutQuotes() {
+    final String text = """
+    d={ "key1": 222, 'key2': 333, 22: True, False: 22 }
+    d[<caret>]""";
+    List<String> suggested = doTestByText(text);
+    assertContainsElements(suggested, "\"key1\"", "'key2'");
+  }
+
+  // PY-42738
+  public void testDictConstructorValueAccessWithDoubleQuotes() {
+    final String text = """
+    d=dict(aaa=222, bbb="val")
+    d["<caret>"]""";
+    assertSameElements(doTestByText(text), "aaa", "bbb");
+  }
+
+  // PY-42738
+  public void testDictConstructorValueAccessWithSingleQuotes() {
+    final String text = """
+    d=dict(aaa=222, bbb="val")
+    d['<caret>']""";
+    assertSameElements(doTestByText(text), "aaa", "bbb");
+  }
+
+  // PY-42738
+  public void testDictConstructorValueAccessWithoutQuotes() {
+    final String text = """
+    d=dict(aaa=222, bbb="val")
+    d[<caret>]""";
+    assertContainsElements(doTestByText(text), "\"aaa\"", "\"bbb\"");
+  }
+
+  // PY-42738
+  public void testDictAssignedValueAccessWithDoubleQuotes() {
+    final String text = """
+      d={}
+      d[30]=True
+      d[False]="zzz"
+      d["xxx"]=25
+      d['yyy']=26
+      d["<caret>"]""";
+    assertSameElements(doTestByText(text), "xxx", "yyy");
+  }
+
+  // PY-42738
+  public void testDictAssignedValueAccessWithSingleQuotes() {
+    final String text = """
+      d={}
+      d[30]=True
+      d[False]="zzz"
+      d["xxx"]=25
+      d['yyy']=26
+      d['<caret>']""";
+    assertSameElements(doTestByText(text), "xxx", "yyy");
+  }
+
+  // PY-42738
+  public void testDictAssignedValueAccessWithoutQuotes() {
+    final String text = """
+      d={}
+      d[30]=True
+      d[False]="zzz"
+      d["xxx"]=25
+      d['yyy']=26
+      d[<caret>]""";
+    assertContainsElements(doTestByText(text), "\"xxx\"", "'yyy'");
   }
 
   public void testNoParensForDecorator() {  // PY-2210
@@ -326,11 +430,48 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testSuperMethodWithAnnotation() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-45588
+  public void testSuperMethodWithAnnotationInsertingImports() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
   }
 
   public void testSuperMethodWithCommentAnnotation() {
     doTest();
+  }
+
+  // PY-53200
+  public void testSuperMethodWithExistingParameterList() {
+    doTest();
+  }
+
+  // PY-34493
+  public void testSuperMethodAnnotationsNotCopiedFromPyiStub() {
+    doMultiFileTest();
+  }
+
+  // PY-34493
+  public void testSuperMethodAnnotationsCopiedFromThirdPartyLibrary() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      runWithAdditionalClassEntryInSdkRoots(getTestName(true) + "/lib", () -> {
+        myFixture.copyDirectoryToProject(getTestName(true) + "/src", "");
+        myFixture.configureByFile("a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(getTestName(true) + "/src/a.after.py");
+      });
+    });
+  }
+
+  // PY-34493
+  public void testSuperMethodAnnotationsCopiedFromPyiStubToPyiStub() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile("a.pyi");
+      myFixture.complete(CompletionType.BASIC, 1);
+      myFixture.checkResultByFile(getTestName(true) + "/a.after.pyi");
+    });
   }
 
   public void testLocalVarInDictKey() {  // PY-2558
@@ -397,28 +538,6 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   public void testHasAttr() {  // PY-4423
     doTest();
-  }
-
-  public void testEpydocParamTag() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
-  }
-
-  public void testEpydocTags() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
-      myFixture.configureByFile("epydocTags.py");
-      myFixture.completeBasic();
-      final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
-      assertNotNull(lookupElementStrings);
-      assertTrue(lookupElementStrings.contains("@param"));
-    });
-  }
-
-  public void testEpydocTagsMiddle() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> {
-      myFixture.configureByFile("epydocTagsMiddle.py");
-      myFixture.completeBasic();
-      myFixture.checkResultByFile("epydocTagsMiddle.after.py");
-    });
   }
 
   public void testIdentifiersInPlainDocstring() {
@@ -490,7 +609,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-16870, PY-16972
   public void testClassNameInDocstring() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, this::doTest);
+    runWithDocStringFormat(DocStringFormat.REST, this::doTest);
   }
 
   // PY-17002
@@ -593,6 +712,13 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     doTest();
   }
 
+  public void testDunderAllClassReference() {  // PY-54167
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("__init__.py");
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.checkResultByFile(getTestName(true) + "/__init__.after.py");
+  }
+
   public void testDunderAllReferenceImport() {  // PY-6306
     doTest();
   }
@@ -677,9 +803,10 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   public void testDuplicateDunderAll() {  // PY-6483
     doTestByText("VAR = 1\nVAR = 2\n__all__ = ['<caret>']");
-    myFixture.checkResult("VAR = 1\n" +
-                          "VAR = 2\n" +
-                          "__all__ = ['VAR']");
+    myFixture.checkResult("""
+                            VAR = 1
+                            VAR = 2
+                            __all__ = ['VAR']""");
   }
 
   // PY-7805
@@ -697,10 +824,12 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testReturnTypeOfCallFromUsages() {
-    final List<String> results = doTestByText("def f(x):\n" +
-                                              "    return x\n" +
-                                              "\n" +
-                                              "f('foo').<caret>\n");
+    final List<String> results = doTestByText("""
+                                                def f(x):
+                                                    return x
+
+                                                f('foo').<caret>
+                                                """);
     assertTrue(results.contains("lower"));
   }
 
@@ -723,19 +852,19 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-1860
   public void testDunderMetaClass() {
-    doTestByText("class C(object):\n" +
-                 "    __meta<caret>\n");
-    myFixture.checkResult("class C(object):\n" +
-                          "    __metaclass__ = \n");
+    doTestByText("""
+                   class C(object):
+                       __meta<caret>
+                   """);
+    myFixture.checkResult("""
+                            class C(object):
+                                __metaclass__ =\s
+                            """);
   }
 
   // PY-13140
   public void testModulePrivateNamesCompletedInsideImport() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertContainsElements(suggested, "normal_name", "_private_name", "__magic_name__");
   }
 
@@ -755,17 +884,19 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-9342
   public void testBoundMethodSpecialAttributes() {
-    List<String> suggested = doTestByText("class C(object):\n" +
-                                          "  def f(self): pass\n" +
-                                          "\n" +
-                                          "C().f.im_<caret>");
+    List<String> suggested = doTestByText("""
+                                            class C(object):
+                                              def f(self): pass
+
+                                            C().f.im_<caret>""");
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.LEGACY_METHOD_SPECIAL_ATTRIBUTES);
 
-    suggested = doTestByText("class C(object):\n" +
-                             "  def f(self): pass\n" +
-                             "\n" +
-                             "C().f.__<caret>");
+    suggested = doTestByText("""
+                               class C(object):
+                                 def f(self): pass
+
+                               C().f.__<caret>""");
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
     final Set<String> functionAttributes = new HashSet<>(PyNames.FUNCTION_SPECIAL_ATTRIBUTES);
@@ -842,21 +973,13 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-14387
   public void testSubmoduleOfIndirectlyImportedPackage() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertSameElements(suggested, "VAR", "subpkg1");
   }
 
   //PY-28332
   public void testSubmoduleOfIndirectlyImportedPackage2() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertSameElements(suggested, "VAR", "subpkg1");
   }
 
@@ -1054,16 +1177,18 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-20279
   public void testImplicitDunderClass() {
-    final List<String> inClassMethod = doTestByText("class First:\n" +
-                                                    "    def foo(self):\n" +
-                                                    "        print(__cl<caret>)");
+    final List<String> inClassMethod = doTestByText("""
+                                                      class First:
+                                                          def foo(self):
+                                                              print(__cl<caret>)""");
     assertNotNull(inClassMethod);
     assertDoesntContain(inClassMethod, PyNames.__CLASS__);
 
-    final List<String> inStaticMethod = doTestByText("class First:\n" +
-                                                     "    @staticmethod\n" +
-                                                     "    def foo():\n" +
-                                                     "        print(__cl<caret>)");
+    final List<String> inStaticMethod = doTestByText("""
+                                                       class First:
+                                                           @staticmethod
+                                                           def foo():
+                                                               print(__cl<caret>)""");
     assertNotNull(inStaticMethod);
     assertDoesntContain(inStaticMethod, PyNames.__CLASS__);
 
@@ -1112,28 +1237,30 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testSixAddMetaclass() {
-    final List<String> suggested = doTestByText("import six\n" +
-                                                "class M(type):\n" +
-                                                "    def baz(self):\n" +
-                                                "        pass\n" +
-                                                "@six.add_metaclass(M)\n" +
-                                                "class C(object):\n" +
-                                                "    def foo(self):\n" +
-                                                "        C.ba<caret>()");
+    final List<String> suggested = doTestByText("""
+                                                  import six
+                                                  class M(type):
+                                                      def baz(self):
+                                                          pass
+                                                  @six.add_metaclass(M)
+                                                  class C(object):
+                                                      def foo(self):
+                                                          C.ba<caret>()""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "baz");
   }
 
   public void testSixAddMetaclassWithAs() {
-    final List<String> suggested = doTestByText("from six import add_metaclass as a_m\n" +
-                                                "class M(type):\n" +
-                                                "    def baz(self):\n" +
-                                                "        pass\n" +
-                                                "@a_m(M)\n" +
-                                                "class C(object):\n" +
-                                                "    def foo(self):\n" +
-                                                "        C.ba<caret>()");
+    final List<String> suggested = doTestByText("""
+                                                  from six import add_metaclass as a_m
+                                                  class M(type):
+                                                      def baz(self):
+                                                          pass
+                                                  @a_m(M)
+                                                  class C(object):
+                                                      def foo(self):
+                                                          C.ba<caret>()""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "baz");
@@ -1141,11 +1268,8 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-22570
   public void testNamesReexportedViaStarImport() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> variants = myFixture.getLookupElementStrings();
-    assertSameElements(variants, "mod1", "mod2", "foo", "_bar");
+    final List<String> suggested = doMultiFileTestCompletionVariants();
+    assertSameElements(suggested, "mod1", "mod2", "foo", "_bar");
   }
 
   // PY-23150
@@ -1173,15 +1297,16 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   // PY-18246
   public void testTypingNamedTupleCreatedViaCallInstance() {
     final List<String> suggested = doTestByText(
-      "from typing import NamedTuple\n" +
-      "EmployeeRecord = NamedTuple('EmployeeRecord', [\n" +
-      "    ('name', str),\n" +
-      "    ('age', int),\n" +
-      "    ('title', str),\n" +
-      "    ('department', str)\n" +
-      "])\n" +
-      "e = EmployeeRecord('n', 'a', 't', 'd')\n" +
-      "e.<caret>"
+      """
+        from typing import NamedTuple
+        EmployeeRecord = NamedTuple('EmployeeRecord', [
+            ('name', str),
+            ('age', int),
+            ('title', str),
+            ('department', str)
+        ])
+        e = EmployeeRecord('n', 'a', 't', 'd')
+        e.<caret>"""
     );
     assertNotNull(suggested);
     assertContainsElements(suggested, "name", "age", "title", "department");
@@ -1190,10 +1315,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   // PY-18246
   public void testTypingNamedTupleCreatedViaKwargsCallInstance() {
     final List<String> suggested = doTestByText(
-      "from typing import NamedTuple\n" +
-      "EmployeeRecord = NamedTuple('EmployeeRecord', name=str, age=int, title=str, department=str)\n" +
-      "e = EmployeeRecord('n', 'a', 't', 'd')\n" +
-      "e.<caret>"
+      """
+        from typing import NamedTuple
+        EmployeeRecord = NamedTuple('EmployeeRecord', name=str, age=int, title=str, department=str)
+        e = EmployeeRecord('n', 'a', 't', 'd')
+        e.<caret>"""
     );
     assertNotNull(suggested);
     assertContainsElements(suggested, "name", "age", "title", "department");
@@ -1205,14 +1331,15 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       LanguageLevel.PYTHON36,
       () -> {
         final List<String> suggested = doTestByText(
-          "from typing import NamedTuple\n" +
-          "class EmployeeRecord(NamedTuple):\n" +
-          "    name: str\n" +
-          "    age: int\n" +
-          "    title: str\n" +
-          "    department: str\n" +
-          "e = EmployeeRecord('n', 'a', 't', 'd')\n" +
-          "e.<caret>"
+          """
+            from typing import NamedTuple
+            class EmployeeRecord(NamedTuple):
+                name: str
+                age: int
+                title: str
+                department: str
+            e = EmployeeRecord('n', 'a', 't', 'd')
+            e.<caret>"""
         );
         assertNotNull(suggested);
         assertContainsElements(suggested, "name", "age", "title", "department");
@@ -1239,11 +1366,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-15365
   public void testModulesAndPackagesInDunderAll() {
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    final List<String> suggested = myFixture.getLookupElementStrings();
-    assertNotNull(suggested);
+    final List<String> suggested = doMultiFileTestCompletionVariants();
     assertSameElements(suggested, "m1", "m2", "m3", "m4");
   }
 
@@ -1288,7 +1411,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testMockPatchObject1Py2() {
     final String testName = getTestName(true);
 
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    final VirtualFile libDir = PyTypeShed.INSTANCE.getStubRootForPackage("mock");
     assertNotNull(libDir);
 
     runWithAdditionalClassEntryInSdkRoots(
@@ -1305,7 +1428,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testMockPatchObject2Py2() {
     final String testName = getTestName(true);
 
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    final VirtualFile libDir = PyTypeShed.INSTANCE.getStubRootForPackage("mock");
     assertNotNull(libDir);
 
     runWithAdditionalClassEntryInSdkRoots(
@@ -1419,22 +1542,24 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-27148
   public void testNamedTupleSpecial() {
-    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
-                                                "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
-                                                "    pass\n" +
-                                                "c1 = Cat1(\"name\", 5)\n" +
-                                                "c1.<caret>");
+    final List<String> suggested = doTestByText("""
+                                                  from collections import namedtuple
+                                                  class Cat1(namedtuple("Cat", "name age")):
+                                                      pass
+                                                  c1 = Cat1("name", 5)
+                                                  c1.<caret>""");
     assertNotNull(suggested);
     assertContainsElements(suggested, "_make", "_asdict", "_replace", "_fields");
   }
 
   // PY-31938
   public void testReassignedDictKeys() {
-    final List<String> suggested = doTestByText("foo = {'k1': '1', 'k2': '2'}\n" +
-                                                "bar = foo\n" +
-                                                "bar['<caret>']");
+    final List<String> suggested = doTestByText("""
+                                                  foo = {'k1': '1', 'k2': '2'}
+                                                  bar = foo
+                                                  bar['<caret>']""");
     assertNotNull(suggested);
-    assertContainsElements(suggested, "'k1'", "'k2'");
+    assertContainsElements(suggested, "k1", "k2");
   }
 
   // PY-33254
@@ -1516,19 +1641,23 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-8302
   public void testDeclaredClass() {
-    List<String> suggested = doTestByText("class AClass:\n" +
-                                          "    pass\n\n" +
-                                          "class BClass(A<caret>)");
+    List<String> suggested = doTestByText("""
+                                            class AClass:
+                                                pass
+
+                                            class BClass(A<caret>)""");
     assertNotNull(suggested);
     assertContainsElements(suggested, "AClass");
   }
 
   // PY-8302
   public void testBeforeImport() {
-    myFixture.configureByFiles("beforeImport/beforeImport.py", "beforeImport/source.py");
-    myFixture.completeBasic();
-    List<String> suggested = myFixture.getLookupElementStrings();
-    assertDoesntContain(suggested, "my_foo", "my_bar");
+    runWithImportableNamesInBasicCompletionDisabled(() -> {
+      myFixture.configureByFiles("beforeImport/beforeImport.py", "beforeImport/source.py");
+      myFixture.completeBasic();
+      List<String> suggested = myFixture.getLookupElementStrings();
+      assertDoesntContain(suggested, "my_foo", "my_bar");
+    });
   }
 
   // PY-8302
@@ -1541,10 +1670,12 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-8302
   public void testBeforeStarImport() {
-    myFixture.configureByFiles("beforeImport/beforeStarImport.py", "beforeImport/source.py");
-    myFixture.completeBasic();
-    List<String> suggested = myFixture.getLookupElementStrings();
-    assertDoesntContain(suggested, "my_foo", "my_bar");
+    runWithImportableNamesInBasicCompletionDisabled(() -> {
+      myFixture.configureByFiles("beforeImport/beforeStarImport.py", "beforeImport/source.py");
+      myFixture.completeBasic();
+      List<String> suggested = myFixture.getLookupElementStrings();
+      assertDoesntContain(suggested, "my_foo", "my_bar");
+    });
   }
 
   // PY-8302
@@ -1573,15 +1704,17 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-11977
   public void testClassStaticMembers() {
-    final String text = "class MyClass(object):\n" +
-                        "  def __init__(self):\n" +
-                        "    self.foo = 42\n" +
-                        "\n" +
-                        "  def baz(self):\n" +
-                        "    pass\n" +
-                        "\n\n" +
-                        "MyClass.bar = 42\n" +
-                        "MyClass.<caret>";
+    final String text = """
+      class MyClass(object):
+        def __init__(self):
+          self.foo = 42
+
+        def baz(self):
+          pass
+
+
+      MyClass.bar = 42
+      MyClass.<caret>""";
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.completeBasic();
     List<String> suggested = myFixture.getLookupElementStrings();
@@ -1596,11 +1729,12 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-36003
   public void testContinueInFinallyBefore38() {
-    final String text = "for x in []:\n" +
-                        "    try:\n" +
-                        "        a = 1\n" +
-                        "    finally:\n" +
-                        "        cont";
+    final String text = """
+      for x in []:
+          try:
+              a = 1
+          finally:
+              cont""";
 
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
@@ -1614,11 +1748,12 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-36003
   public void testContinueInFinallyAfter38() {
-    final String text = "for x in []:\n" +
-                        "    try:\n" +
-                        "        a = 1\n" +
-                        "    finally:\n" +
-                        "        cont";
+    final String text = """
+      for x in []:
+          try:
+              a = 1
+          finally:
+              cont""";
 
     runWithLanguageLevel(
       LanguageLevel.PYTHON38,
@@ -1632,10 +1767,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-36008
   public void testTypedDictHasDictMethods() {
-    final List<String> suggested = doTestByText("from typing import TypedDict\n" +
-                                                "class A(TypedDict):\n" +
-                                                "    pass\n" +
-                                                "A().<caret>");
+    final List<String> suggested = doTestByText("""
+                                                  from typing import TypedDict
+                                                  class A(TypedDict):
+                                                      pass
+                                                  A().<caret>""");
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "update", "clear", "pop", "popitem", "setdefault");
@@ -1643,96 +1779,159 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-39703
   public void testTypedDictUsingConstructorKeysCompletion() {
-    final String test1 = "from typing import TypedDict\n" +
-                         "class A(TypedDict):\n" +
-                         "    x: int\n" +
-                         "    y: int\n" +
-                         "a = A(x=42, y=1)\n" +
-                         "b = a['<caret>']";
+    final String test1 = """
+      from typing import TypedDict
+      class A(TypedDict):
+          x: int
+          y: int
+      a = A(x=42, y=1)
+      b = a['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, test1);
-        myFixture.completeBasic();
-        myFixture.checkResult(test1);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "'x'", "'y'");
-      }
+      () -> assertContainsElements(doTestByText(test1), "x", "y")
     );
   }
 
   // PY-39703
   public void testTypedDictInTypedDictKeys() {
-    final String test2 = "from typing import TypedDict, Mapping\n" +
-                         "class Movie(TypedDict):\n" +
-                         "    name: str\n" +
-                         "    year: int\n" +
-                         "class A(TypedDict):\n" +
-                         "    film: Movie\n" +
-                         "    genre: str\n" +
-                         "def get_back(m: A):\n" +
-                         "   a = m['film']['<caret>']";
+    final String test2 = """
+      from typing import TypedDict, Mapping
+      class Movie(TypedDict):
+          name: str
+          year: int
+      class A(TypedDict):
+          film: Movie
+          genre: str
+      def get_back(m: A):
+         a = m['film']['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, test2);
-        myFixture.completeBasic();
-        myFixture.checkResult(test2);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
-      }
+      () -> assertContainsElements(doTestByText(test2), "name", "year")
     );
   }
 
   // PY-39703
   public void testTypedDictKeysUsingTypeAnnotation() {
-    final String test3 = "from typing import TypedDict\n" +
-                         "class Movie(TypedDict, total=False):\n" +
-                         "    name: str\n" +
-                         "    year: int\n" +
-                         "m: Movie = {}\n" +
-                         "m['<caret>']";
+    final String test3 = """
+      from typing import TypedDict
+      class Movie(TypedDict, total=False):
+          name: str
+          year: int
+      m: Movie = {}
+      m['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, test3);
-        myFixture.completeBasic();
-        myFixture.checkResult(test3);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
-      }
+      () -> assertContainsElements(doTestByText(test3), "name", "year")
     );
   }
 
   // PY-39703
   public void testTypedDictWithWrongKey() {
-    final String test4 = "from typing import TypedDict\n" +
-                         "class Movie(TypedDict, total=False):\n" +
-                         "    name: str\n" +
-                         "    year: int\n" +
-                         "m: Movie = {'name': 'Alien', 'year': 1979}\n" +
-                         "m['wrong_key'] = 1\n" +
-                         "m['<caret>']";
+    final String test4 = """
+      from typing import TypedDict
+      class Movie(TypedDict, total=False):
+          name: str
+          year: int
+      m: Movie = {'name': 'Alien', 'year': 1979}
+      m['wrong_key'] = 1
+      m['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, test4);
-        myFixture.completeBasic();
-        myFixture.checkResult(test4);
+        List<String> lookupElementStrings = doTestByText(test4);
 
-        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
-        assertDoesntContain(myFixture.getLookupElementStrings(), "'wrong_key'");
+        assertContainsElements(lookupElementStrings, "name", "year");
+        assertDoesntContain(lookupElementStrings, "wrong_key");
+      }
+    );
+  }
+
+  // PY-42637
+  public void testTypedDictValueAccessWithDoubleQuotes() {
+    final String text = """
+      from typing import TypedDict
+      class VehicleTypedDict(TypedDict):
+          id: int
+          vin: str
+          zip: str
+          make: str
+          trim: str
+      def get_something(vehicle: VehicleTypedDict):
+          return vehicle["<caret>"]""";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> assertContainsElements(doTestByText(text), "id", "vin", "zip", "make", "trim")
+    );
+  }
+
+  // PY-42637
+  public void testTypedDictValueAccessWithoutQuotes() {
+    final String text = """
+      from typing import TypedDict
+      class VehicleTypedDict(TypedDict):
+          id: int
+          vin: str
+          zip: str
+          make: str
+          trim: str
+      def get_something(vehicle: VehicleTypedDict):
+          return vehicle[<caret>]""";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> assertContainsElements(doTestByText(text), "\"id\"", "\"vin\"", "\"zip\"", "\"make\"", "\"trim\"")
+    );
+  }
+
+  // PY-42637
+  public void testTypedDictValueAccessWithSingleQuotes() {
+    final String text = """
+      from typing import TypedDict
+      class VehicleTypedDict(TypedDict):
+          id: int
+          vin: str
+          zip: str
+          make: str
+          trim: str
+      def get_something(vehicle: VehicleTypedDict):
+          return vehicle['<caret>']""";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> assertContainsElements(doTestByText(text), "id", "vin", "zip", "make", "trim")
+    );
+  }
+
+  // PY-42637
+  public void testTypedDictValueAccessHalfTyped() {
+    final String text = """
+      from typing import TypedDict
+      class Point(TypedDict):
+          coordinateX: int
+          coordinateY: int
+          z: int
+      def draw(point: Point):
+          return point["coo<caret>"]""";
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        List<String> lookupElementStrings = doTestByText(text);
+
+        assertContainsElements(lookupElementStrings, "coordinateX", "coordinateY");
+        assertDoesntContain(lookupElementStrings, "z");
       }
     );
   }
 
   // PY-36008
   public void testTypedDictDefinition() {
-    final List<String> suggested = doTestByText("from typing import TypedDict\n" +
-                                                "class A(TypedDict, total=<caret>):\n");
+    final List<String> suggested = doTestByText("""
+                                                  from typing import TypedDict
+                                                  class A(TypedDict, total=<caret>):
+                                                  """);
 
-    final List<String> suggestedInAlternativeSyntax = doTestByText("from typing import TypedDict\n" +
-                                                                   "A = TypedDict('A', {}, total=<caret>):\n");
+    final List<String> suggestedInAlternativeSyntax = doTestByText("""
+                                                                     from typing import TypedDict
+                                                                     A = TypedDict('A', {}, total=<caret>):
+                                                                     """);
 
     assertNotNull(suggested);
     assertContainsElements(suggested, "True", "False");
@@ -1818,15 +2017,30 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   // PY-38172
-  public void testNoPrivateStubElementsInModuleCompletion() {
-    PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, "import collections\n" +
-                                                                      "collections.<caret>");
+  public void testNoPrivateStubElementsInCompletionForCollectionsModule() {
+    PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, """
+      import collections
+      collections.<caret>
+      """);
     myFixture.completeBasic();
     List<String> suggested = myFixture.getLookupElementStrings();
     assertNotEmpty(suggested);
     assertDoesntContain(suggested, "Union", "TypeVar", "Generic", "_S", "_T");
     assertProjectFilesNotParsed(file);
     assertSdkRootsNotParsed(file);
+  }
+
+  // PY-38172
+  public void testPrivateStubElementsNotSuggestedInPyFiles() {
+    doMultiFileTest();
+  }
+
+  // PY-38172
+  public void testPrivateStubElementsSuggestedInOtherPyiStubs() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.pyi");
+    myFixture.complete(CompletionType.BASIC, 1);
+    myFixture.checkResultByFile(getTestName(true) + "/a.after.pyi");
   }
 
   // PY-42520
@@ -1846,10 +2060,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        List<String> suggested = doTestByText("def foo(argument_1, /, argument_2):\n" +
-                                              "    pass\n" +
-                                              "\n" +
-                                              "foo(<caret>)");
+        List<String> suggested = doTestByText("""
+                                                def foo(argument_1, /, argument_2):
+                                                    pass
+
+                                                foo(<caret>)""");
         assertContainsElements(suggested, "argument_2=");
         assertDoesntContain(suggested, "argument_1=");
       }
@@ -1875,6 +2090,44 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       List<String> variants = doTestByFile();
       assertContainsElements(variants, "class_attr");
       assertDoesntContain(variants, "inst_attr");
+    });
+  }
+
+  // PY-53200
+  public void testMethodNamesSuggestedWithoutParameterListIfItIsAlreadyExist() {
+    final List<String> suggested = doMultiFileTestCompletionVariants();
+    assertContainsElements(suggested, "something_a", "something_b");
+  }
+
+  // PY-17627
+  public void testClassAttributeDefinedInClassMethod() {
+    doTest();
+  }
+
+  // PY-34617
+  public void testVersionCheckAtFileLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "attr0", "attr3", "f0", "f3", "MyClass0", "MyClass3");
+      assertDoesntContain(suggested, "attr1", "attr2", "f1", "f2", "MyClass1", "MyClass2");
+    });
+  }
+
+  // PY-34617
+  public void testVersionCheckAtClassLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "attr0", "attr2", "f0", "f2", "MyClass0", "MyClass2");
+      assertDoesntContain(suggested, "attr1", "attr3", "f1", "f3", "MyClass1", "MyClass3");
+    });
+  }
+
+  // PY-34617
+  public void testVersionCheckInClassInsideMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      List<String> suggested = doTestByFile();
+      assertContainsElements(suggested, "f0", "f1");
+      assertDoesntContain(suggested, "f2", "f3");
     });
   }
 
@@ -1924,15 +2177,106 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       myFixture.copyDirectoryToProject(getTestName(true), "");
       myFixture.runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
         myFixture.configureByFile("root1/pkg/test.py");
-        List<String> lookupStrings = StreamEx.of(myFixture.completeBasic())
-          .map(LookupElement::getLookupString)
-          .toList();
+        List<String> lookupStrings = ContainerUtil.map(myFixture.completeBasic(), LookupElement::getLookupString);
         assertContainsElements(lookupStrings, "foo", "bar", "baz");
       });
     });
   }
 
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/completion";
+  // PY-62208
+  public void testImportableNamesNotSuggestedImmediatelyInsideClassBody() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testImportableNamesSuggestedInsideOtherStatementsInsideClassBody() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testImportableNamesNotSuggestedImmediatelyInsideMatchStatement() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableFunctionsAndVariablesNotSuggestedInsideTypeHints() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableFunctionsAndVariablesNotSuggestedInsidePatterns() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile("a.py");
+      myFixture.complete(CompletionType.BASIC, 1);
+      List<String> variants = myFixture.getLookupElementStrings();
+      // TODO Use regular doMultiFileTest once PY-73173 is fixed
+      assertDoesntContain(variants, "unique_var", "unique_func");
+      assertContainsElements(variants, "unique_class");
+    });
+  }
+
+  // PY-62208
+  public void testNotReExportedNamesFromPrivateModulesNotSuggested() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testReExportedNamesFromPrivateModulesAreSuggested() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testAlreadyImportedNamesNotSuggestedTwice() {
+    doMultiFileTest();
+  }
+
+  // PY-83412
+  public void testImportableNamesNotSuggestedInTheMiddleOfAssignmentTargets() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    assertDoesntContain(myFixture.getLookupElementStrings(), "foo_func");
+  }
+
+  // PY-62208
+  public void testAlreadyImportedNamesNotSuggestedTwiceInsidePatterns() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile("a.py");
+      myFixture.complete(CompletionType.BASIC, 1);
+      List<String> variants = myFixture.getLookupElementStrings();
+      // TODO Use regular doMultiFileTest once PY-73173 is fixed
+      assertEquals(1, Collections.frequency(variants, "MyClass"));
+    });
+  }
+
+  // PY-62203 PY-84778
+  public void testMatchingSymbolsAndModulesSuggestedTogether() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    assertContainsElements(myFixture.getLookupElementStrings(), "dataclasses", "dataclass");
+  }
+
+  private static void runWithImportableNamesInBasicCompletionDisabled(@NotNull Runnable action) {
+    PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
+    boolean old = settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION;
+    settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION = false;
+    try {
+      action.run();
+    }
+    finally {
+      settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION = old;
+    }
+  }
+
+  @Override
+  protected @NotNull String getTestDataPath() {
+    return super.getTestDataPath() + "/completion";
   }
 }

@@ -1,11 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -23,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,9 +95,8 @@ public final class PatchProjectUtil {
         if (contentRoot == null) continue;
         final Set<VirtualFile> included = new HashSet<>();
         VfsUtilCore.visitChildrenRecursively(contentRoot, new VirtualFileVisitor<Void>() {
-          @NotNull
           @Override
-          public Result visitFileEx(@NotNull VirtualFile fileOrDir) {
+          public @NotNull Result visitFileEx(@NotNull VirtualFile fileOrDir) {
             String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
 
             for (Pattern module : excludePatterns.keySet()) {

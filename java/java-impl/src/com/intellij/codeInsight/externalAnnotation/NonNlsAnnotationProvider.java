@@ -1,16 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.externalAnnotation;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonNlsAnnotationProvider implements AnnotationProvider {
-  @NotNull
+public final class NonNlsAnnotationProvider implements AnnotationProvider {
   @Override
-  public String getName(Project project) {
+  public @NotNull String getName(Project project) {
     return AnnotationUtil.NON_NLS;
   }
 

@@ -1,33 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author ven
- */
+@ApiStatus.Internal
 public final class ExtractMethodUtil {
   private static final Logger LOG = Logger.getInstance(ExtractMethodUtil.class);
   private static final Key<PsiMethod> RESOLVE_TARGET_KEY = Key.create("RESOLVE_TARGET_KEY");
 
   private ExtractMethodUtil() { }
 
-  static Map<PsiMethodCallExpression, PsiMethod> encodeOverloadTargets(final PsiClass targetClass,
-                                                        final SearchScope processConflictsScope,
-                                                        final String overloadName,
-                                                        final PsiElement extractedFragment) {
+  public static Map<PsiMethodCallExpression, PsiMethod> encodeOverloadTargets(final PsiClass targetClass,
+                                                                              final SearchScope processConflictsScope,
+                                                                              final String overloadName,
+                                                                              final PsiElement extractedFragment) {
     final Map<PsiMethodCallExpression, PsiMethod> ret = new HashMap<>();
     encodeInClass(targetClass, overloadName, extractedFragment, ret);
 
@@ -45,11 +59,10 @@ public final class ExtractMethodUtil {
                                     final Map<PsiMethodCallExpression, PsiMethod> ret) {
     final PsiMethod[] overloads = aClass.findMethodsByName(overloadName, false);
     for (final PsiMethod overload : overloads) {
-      for (final PsiReference ref : ReferencesSearch.search(overload)) {
+      for (final PsiReference ref : ReferencesSearch.search(overload).asIterable()) {
         final PsiElement element = ref.getElement();
         final PsiElement parent = element.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression call = (PsiMethodCallExpression)parent;
+        if (parent instanceof PsiMethodCallExpression call) {
           if (PsiTreeUtil.isAncestor(extractedFragment, element, false)) {
             call.putCopyableUserData(RESOLVE_TARGET_KEY, overload);
           } else {
@@ -67,7 +80,7 @@ public final class ExtractMethodUtil {
     assert body != null;
     final JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
 
-      @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiMethod target = expression.getCopyableUserData(RESOLVE_TARGET_KEY);
         if (target != null) {
@@ -94,7 +107,14 @@ public final class ExtractMethodUtil {
     }
   }
 
-  public static void addCastsToEnsureResolveTarget(@NotNull final PsiMethod oldTarget, @NotNull final PsiMethodCallExpression call)
+  public static void addCastsToEnsureResolveTarget(final @NotNull PsiMethod oldTarget, final @NotNull PsiMethodCallExpression call)
+    throws IncorrectOperationException {
+    addCastsToEnsureResolveTarget(oldTarget, PsiSubstitutor.EMPTY, call);
+  }
+
+  public static void addCastsToEnsureResolveTarget(final @NotNull PsiMethod oldTarget,
+                                                   @NotNull PsiSubstitutor oldSubstitutor,
+                                                   final @NotNull PsiMethodCallExpression call)
     throws IncorrectOperationException {
     final PsiMethod newTarget = call.resolveMethod();
     final PsiManager manager = oldTarget.getManager();
@@ -107,6 +127,7 @@ public final class ExtractMethodUtil {
         for (int i = 0; i < args.length; i++) {
           PsiExpression arg = args[i];
           PsiType paramType = i < oldParameters.length ? oldParameters[i].getType() : oldParameters[oldParameters.length - 1].getType();
+          paramType = oldSubstitutor.substitute(paramType);
           final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", null);
           final PsiTypeElement typeElement = cast.getCastType();
           assert typeElement != null;

@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.ColorSettingsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.options.colors.*;
+import com.intellij.openapi.options.colors.AbstractKeyDescriptor;
+import com.intellij.openapi.options.colors.AttributesDescriptor;
+import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
+import com.intellij.openapi.options.colors.ColorDescriptor;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.ColorSettingsPages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.JBIterable;
@@ -33,22 +38,19 @@ final class ColorSettingsPagesImpl extends ColorSettingsPages implements Disposa
     return ColorSettingsPage.EP_NAME.getExtensions();
   }
 
-  @Nullable
   @Override
-  public Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key) {
+  public @Nullable Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> getAttributeDescriptor(TextAttributesKey key) {
     //noinspection unchecked
     return (Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>)myCache.get(key);
   }
 
-  @Nullable
   @Override
-  public Pair<ColorAndFontDescriptorsProvider, ColorDescriptor> getColorDescriptor(ColorKey key) {
+  public @Nullable Pair<ColorAndFontDescriptorsProvider, ColorDescriptor> getColorDescriptor(ColorKey key) {
     //noinspection unchecked
     return (Pair<ColorAndFontDescriptorsProvider, ColorDescriptor>)myCache.get(key);
   }
 
-  @Nullable
-  private Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor<?>> getDescriptorImpl(Object key) {
+  private @Nullable Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor<?>> getDescriptorImpl(Object key) {
     JBIterable<ColorAndFontDescriptorsProvider> providers = JBIterable.empty();
     for (ColorAndFontDescriptorsProvider page : providers.append(getRegisteredPages()).append(ColorAndFontDescriptorsProvider.EP_NAME.getExtensionList())) {
       Iterable<? extends AbstractKeyDescriptor<?>> descriptors;

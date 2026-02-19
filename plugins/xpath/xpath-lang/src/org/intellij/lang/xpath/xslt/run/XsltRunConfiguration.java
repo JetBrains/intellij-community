@@ -17,17 +17,26 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.AdditionalTabComponentManager;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.ModuleRunConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationWithSuppressedDefaultDebugAction;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -39,7 +48,12 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -69,7 +83,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     private static final String LOG_TAG = "(?:\\[[\\w ]+\\]\\:? +)?";
 
     public enum OutputType {
-        CONSOLE, STDOUT, @Deprecated FILE
+        CONSOLE, STDOUT
     }
 
     public enum JdkChoice {
@@ -77,12 +91,12 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     private List<Pair<String, String>> myParameters = new ArrayList<>();
-    @Nullable private VirtualFilePointer myXsltFile = null;
-    @Nullable private VirtualFilePointer myXmlInputFile = null;
-    @NotNull private OutputType myOutputType = OutputType.CONSOLE;
+    private @Nullable VirtualFilePointer myXsltFile = null;
+    private @Nullable VirtualFilePointer myXmlInputFile = null;
+    private @NotNull OutputType myOutputType = OutputType.CONSOLE;
     private boolean mySaveToFile = false;
-    @NotNull private JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
-    @Nullable private FileType myFileType = StdFileTypes.XML;
+    private @NotNull JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
+    private @Nullable FileType myFileType = XmlFileType.INSTANCE;
 
     public @NlsSafe String myOutputFile; // intentionally untracked. should it be?
     public boolean myOpenOutputFile;
@@ -102,9 +116,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         mySuggestedName = null;
     }
 
-    @NotNull
     @Override
-    public SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
+    public @NotNull SettingsEditor<XsltRunConfiguration> getConfigurationEditor() {
         return new XsltRunSettingsEditor(getProject());
     }
 
@@ -167,7 +180,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     @Override
-    public final RunConfiguration clone() {
+    public RunConfiguration clone() {
         final XsltRunConfiguration configuration = (XsltRunConfiguration)super.clone();
         configuration.myParameters = new ArrayList<>(myParameters);
         if (myXsltFile != null) configuration.myXsltFile = VirtualFilePointerManager.getInstance().duplicate(myXsltFile, getProject(), null);
@@ -206,7 +219,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     static boolean isEmpty(String file) {
-        return file == null || file.length() == 0;
+        return file == null || file.isEmpty();
     }
 
     // return modules to compile before run. Null or empty list to build project
@@ -247,13 +260,8 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         final Element outputType = element.getChild("OutputType");
         if (outputType != null) {
             final String value = outputType.getAttributeValue("value");
-            if (OutputType.FILE.name().equals(value)) {
-                myOutputType = OutputType.STDOUT;
-                mySaveToFile = true;
-            } else {
-                myOutputType = OutputType.valueOf(value);
-                mySaveToFile = Boolean.valueOf(outputType.getAttributeValue("save-to-file"));
-            }
+            myOutputType = OutputType.valueOf(value);
+            mySaveToFile = Boolean.parseBoolean(outputType.getAttributeValue("save-to-file"));
         }
         final Element fileType = element.getChild("FileType");
         if (fileType != null) {
@@ -265,8 +273,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         }
     }
 
-    @Nullable
-    private static FileType getFileType(String value) {
+    private static @Nullable FileType getFileType(String value) {
         if (value == null) return null;
         return FileTypeManager.getInstance().findFileTypeByName(value);
     }
@@ -345,28 +352,23 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myXsltFile = VirtualFilePointerManager.getInstance().create(virtualFile, getProject(), null);
     }
 
-    @Nullable
-    public @NlsSafe String getXsltFile() {
+    public @Nullable @NlsSafe String getXsltFile() {
         return myXsltFile != null ? myXsltFile.getPresentableUrl() : null;
     }
 
-    @Nullable
-    public VirtualFile findXsltFile() {
+    public @Nullable VirtualFile findXsltFile() {
         return myXsltFile != null ? myXsltFile.getFile() : null;
     }
 
-    @Nullable
-    public VirtualFile findXmlInputFile() {
+    public @Nullable VirtualFile findXmlInputFile() {
         return myXmlInputFile != null ? myXmlInputFile.getFile() : null;
     }
 
-    @Nullable
-    public @NlsSafe String getXmlInputFile() {
+    public @Nullable @NlsSafe String getXmlInputFile() {
         return myXmlInputFile != null ? myXmlInputFile.getPresentableUrl() : null;
     }
 
-    @Nullable
-    public FileType getFileType() {
+    public @Nullable FileType getFileType() {
         return myFileType;
     }
 
@@ -374,13 +376,11 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myFileType = fileType;
     }
 
-    @Nullable
-    public Module getModule() {
+    public @Nullable Module getModule() {
         return myModule != null ? ModuleManager.getInstance(getProject()).findModuleByName(myModule) : null;
     }
 
-    @Nullable
-    public Sdk getJdk() {
+    public @Nullable Sdk getJdk() {
         return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
     }
 
@@ -404,8 +404,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         myJdk = projectJdk != null ? projectJdk.getName() : null;
     }
 
-    @NotNull
-    public OutputType getOutputType() {
+    public @NotNull OutputType getOutputType() {
         return myOutputType;
     }
 
@@ -421,8 +420,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         mySaveToFile = saveToFile;
     }
 
-    @NotNull
-    public JdkChoice getJdkChoice() {
+    public @NotNull JdkChoice getJdkChoice() {
         return myJdkChoice;
     }
 
@@ -440,8 +438,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         return ourDefaultSdk;
     }
 
-    @Nullable
-    public Sdk getEffectiveJDK() {
+    public @Nullable Sdk getEffectiveJDK() {
         if (myJdkChoice == JdkChoice.JDK) {
             return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;
         }
@@ -460,8 +457,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         return jdk;
     }
 
-    @Nullable
-    public Module getEffectiveModule() {
+    public @Nullable Module getEffectiveModule() {
         //assert myJdkChoice == JdkChoice.FROM_MODULE;
 
         Module module = myJdkChoice == JdkChoice.FROM_MODULE ? getModule() : null;
@@ -483,6 +479,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     public XsltRunConfiguration initFromFile(@NotNull XmlFile file) {
         assert XsltSupport.isXsltFile(file) : "Not an XSLT file: " + file.getName();
         mySuggestedName = file.getName();
+        setName(mySuggestedName);
 
         final VirtualFile virtualFile = file.getVirtualFile();
         assert virtualFile != null : "No VirtualFile for " + file.getName();
@@ -514,9 +511,9 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
         for (XmlTag output : outputs) {
             final String method = output.getAttributeValue("method");
             if ("xml".equals(method)) {
-                setFileType(StdFileTypes.XML);
+                setFileType(XmlFileType.INSTANCE);
             } else if ("html".equals(method)) {
-                setFileType(StdFileTypes.HTML);
+                setFileType(HtmlFileType.INSTANCE);
             } else if ("text".equals(method)) {
                 setFileType(FileTypes.PLAIN_TEXT);
             }

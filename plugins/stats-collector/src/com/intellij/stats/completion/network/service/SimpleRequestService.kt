@@ -1,16 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.network.service
 
 import com.google.common.net.HttpHeaders
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.stats.completion.logger.LineStorage
 import com.intellij.util.io.HttpRequests
-import java.io.ByteArrayOutputStream
+import com.intellij.util.io.URLUtil
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URLConnection
-import java.util.zip.GZIPOutputStream
 
 class SimpleRequestService : RequestService() {
   private companion object {
@@ -19,16 +20,18 @@ class SimpleRequestService : RequestService() {
 
   override fun postZipped(url: String, file: File): ResponseData? {
     return try {
-      val zippedArray = toZippedByteArray(file)
+      val zippedArray = LineStorage.readAsZipArray(file)
       return HttpRequests.post(url, "application/json").tuner {
         it.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip")
+        it.setRequestProperty(HttpHeaders.CONTENT_LENGTH, zippedArray.size.toString())
+        it.setRequestProperty(HttpHeaders.USER_AGENT, ApplicationInfo.getInstance().fullApplicationName)
       }.connect { request ->
         request.write(zippedArray)
         return@connect request.connection.asResponseData(zippedArray.size)
       }
     }
     catch (e: HttpRequests.HttpStatusException) {
-      ResponseData(e.statusCode, StringUtil.notNullize(e.message))
+      ResponseData(e.statusCode, (e.message ?: ""))
     }
     catch (e: IOException) {
       LOG.debug(e)
@@ -51,14 +54,6 @@ class SimpleRequestService : RequestService() {
     }
   }
 
-  private fun toZippedByteArray(file: File): ByteArray {
-    val outputStream = ByteArrayOutputStream()
-    GZIPOutputStream(outputStream).use {
-      it.write(file.readBytes())
-    }
-    return outputStream.toByteArray()
-  }
-
   private fun URLConnection.asResponseData(sentDataSize: Int?): ResponseData? {
     if (this is HttpURLConnection) {
       return ResponseData(this.responseCode, StringUtil.notNullize(this.responseMessage, ""), sentDataSize)
@@ -72,6 +67,10 @@ class SimpleRequestService : RequestService() {
     val connection = this.connection
     if (connection is HttpURLConnection) {
       return connection.responseCode
+    }
+    // for diagnostic purpose
+    if (connection.url.protocol == URLUtil.FILE_PROTOCOL) {
+      return 200
     }
 
     LOG.error("Could not get code from http response")

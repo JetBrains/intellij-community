@@ -33,8 +33,6 @@ import java.io.IOException;
 /**
  * Copied from org.apache.maven.profiles.activation.FileProfileActivator
  * added parameter baseDit to test file existing
- *
- * @author Sergey Evdokimov
  */
 public class MyFileProfileActivator extends DetectedProfileActivator
     implements LogEnabled

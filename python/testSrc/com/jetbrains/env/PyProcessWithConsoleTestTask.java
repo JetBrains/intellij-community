@@ -15,7 +15,11 @@
  */
 package com.jetbrains.env;
 
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
@@ -29,8 +33,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.extensions.ModuleExtKt;
+import com.jetbrains.python.extensions.ModuleExtKt;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +44,7 @@ import org.junit.Assert;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.testFramework.ThreadTracker.longRunningThreadCreated;
+import static com.jetbrains.env.PyEnvTestCase.escapeTestMessage;
 
 /**
  * <h1>Task that knows how to execute some process with console.</h1>
@@ -89,10 +94,8 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     // Generally, this should be done in thread tracker itself, but since ApplicationManager.getApplication() may return null on TC,
     // We re add it just to make sure. Set is safe for double adding strings ;)
 
-    longRunningThreadCreated(ApplicationManager.getApplication(),
-                             "Periodic tasks thread",
-                             "ApplicationImpl pooled thread ",
-                             ProcessIOExecutorService.POOLED_THREAD_PREFIX);
+    ThreadLeakTracker.longRunningThreadCreated(ApplicationManager.getApplication(), "Periodic tasks thread",
+                                               "ApplicationImpl pooled thread ", ProcessIOExecutorService.POOLED_THREAD_PREFIX);
 
 
     if (existingSdk == null) {
@@ -112,7 +115,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     prepare();
     final T runner = createProcessRunner();
     do {
-      executeRunner(sdkHome, runner);
+      executeRunner(sdkHome, existingSdk, runner);
     }
     while (runner.shouldRunAgain());
     Disposer.dispose(runner);
@@ -125,16 +128,17 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
    * @param e exception (root cause)
    */
   protected void exceptionThrown(@NotNull Throwable e, @NotNull T runner) {
+    Logger.getInstance(PyProcessWithConsoleTestTask.class).error(e);
     Assert.fail("Exception thrown, see logs for details: " + e.getMessage());
   }
 
-  private void executeRunner(final String sdkHome, final T runner) throws InterruptedException {
+  private void executeRunner(final String sdkHome, @Nullable Sdk sdk, final T runner) throws InterruptedException {
     // Semaphore to wait end of process
     final Semaphore processStartedSemaphore = new Semaphore(1);
     processStartedSemaphore.acquire();
     final StringBuilder stdOut = new StringBuilder();
     final StringBuilder stdErr = new StringBuilder();
-    final StringBuilder stdAll = new StringBuilder();
+    final var stdAll = new StringBuffer();
     final Ref<Boolean> failed = new Ref<>(false);
     final Ref<ProcessHandler> processHandlerRef = new Ref<>();
 
@@ -164,7 +168,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     // Invoke runner
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        runner.runProcess(sdkHome, getProject(), processListener, myFixture.getTempDirPath());
+        runner.runProcess(sdkHome, sdk, getProject(), processListener, myFixture.getTempDirPath());
       }
       catch (final Throwable e) {
         failed.set(true);
@@ -194,21 +198,19 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       LOG.warn("Time out waiting for test finish");
       handler.destroyProcess(); // To prevent process leak
       handler.waitFor();
-      Thread.sleep(1000); // Give time to listening threads to process process death
       throw new AssertionError(String.format("Timeout waiting for process to finish. Current output is %s", stdAll));
     }
 
-    Thread.sleep(1000); // Give time to listening threads to finish
     final Integer code = handler.getExitCode();
     assert code != null : "Process finished, but no exit code exists";
 
     XDebuggerTestUtil.waitForSwing();
     try {
       runner.assertExitCodeIsCorrect(code);
-      checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString(), code);
+      checkTestResults(runner, escapeTestMessage(stdOut.toString()), escapeTestMessage(stdErr.toString()), escapeTestMessage(stdAll.toString()), code);
     }
     catch (Throwable e) {
-      throw new RuntimeException(stdAll.toString(), e);
+      throw new RuntimeException(escapeTestMessage(stdAll.toString()), e);
     }
   }
 
@@ -239,7 +241,6 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
    * @param stdout   process stdout
    * @param stderr   process stderr or exception message.
    * @param all      joined stdout and stderr
-   * @param exitCode
    */
   protected abstract void checkTestResults(@NotNull T runner,
                                            @NotNull String stdout,

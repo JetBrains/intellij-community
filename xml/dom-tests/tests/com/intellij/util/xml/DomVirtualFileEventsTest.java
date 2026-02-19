@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
 
   @Override

@@ -44,7 +44,7 @@ public abstract class CompositeStorageOwner implements StorageOwner {
     applyBulkOperation(getChildStorages(), StorageOwner::close);
   }
 
-  protected <T extends StorageOwner> void applyBulkOperation(Iterable<T> storages, ThrowableConsumer<? super T, IOException> action) throws IOException{
+  protected <T extends StorageOwner> void applyBulkOperation(Iterable<? extends T> storages, ThrowableConsumer<? super T, IOException> action) throws IOException{
     IOException exc = null;
     for (T child : storages) {
       if (child != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -12,18 +12,27 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable;
-import com.intellij.ui.*;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWithBrowseButton implements UserActivityProviderComponent {
   private static final Comparator<RemoteServer<?>> SERVERS_COMPARATOR =
@@ -64,8 +73,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     return (ServerItem)myServerListModel.getSelectedItem();
   }
 
-  @Nullable
-  public RemoteServer<S> getSelectedServer() {
+  public @Nullable RemoteServer<S> getSelectedServer() {
     ServerItem selected = getSelectedItem();
     //noinspection unchecked
     return selected == null ? null : (RemoteServer<S>)selected.findRemoteServer();
@@ -86,21 +94,18 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     return myServerType;
   }
 
-  @NotNull
-  protected List<TransientItem> getActionItems() {
+  protected @NotNull List<TransientItem> getActionItems() {
     return Collections.singletonList(new CreateNewServerItem());
   }
 
-  @Nullable
-  protected ServerItem getMissingServerItem(@NotNull String serverName) {
+  protected @Nullable ServerItem getMissingServerItem(@NotNull String serverName) {
     return new MissingServerItem(serverName);
   }
 
   /**
    * @return item with <code>result.getServerName() == null</code>
    */
-  @NotNull
-  protected ServerItem getNoServersItem() {
+  protected @NotNull ServerItem getNoServersItem() {
     return new NoServersItem();
   }
 
@@ -202,11 +207,14 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
       myServerListModel.add(nextAction);
     }
 
+    setSelectedServerItem(newSelection, itemToSelect);
+  }
+
+  protected void setSelectedServerItem(@Nullable RemoteServer<?> newSelection, @Nullable ServerItem itemToSelect) {
     getComboBox().setSelectedItem(itemToSelect);
   }
 
-  @NotNull
-  private List<RemoteServer<S>> getSortedServers() {
+  protected @NotNull List<RemoteServer<S>> getSortedServers() {
     List<RemoteServer<S>> result = new ArrayList<>(RemoteServersManager.getInstance().getServers(myServerType));
     result.sort(SERVERS_COMPARATOR);
     return result;
@@ -258,6 +266,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
 
     @Override
     public void onItemChosen() {
+      getChildComponent().hidePopup();
       createAndEditNewServer();
     }
 
@@ -266,9 +275,8 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
       createAndEditNewServer();
     }
 
-    @Nullable
     @Override
-    public RemoteServer<S> findRemoteServer() {
+    public @Nullable RemoteServer<S> findRemoteServer() {
       return null;
     }
   }
@@ -281,8 +289,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     }
 
     @Override
-    @NlsSafe
-    public String getServerName() {
+    public @NlsSafe String getServerName() {
       return myServerName;
     }
 
@@ -296,9 +303,8 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
       editServer(RemoteServerListConfigurable.createConfigurable(myServerType, myServerName));
     }
 
-    @Nullable
     @Override
-    public RemoteServer<S> findRemoteServer() {
+    public @Nullable RemoteServer<S> findRemoteServer() {
       return myServerName == null ? null : RemoteServersManager.getInstance().findByName(myServerName, myServerType);
     }
 
@@ -318,9 +324,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
     }
 
     @Override
-    @NotNull
-    @NlsSafe
-    public String getServerName() {
+    public @NotNull @NlsSafe String getServerName() {
       String result = super.getServerName();
       assert result != null;
       return result;

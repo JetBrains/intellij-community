@@ -1,35 +1,51 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.InlayProperties;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
+import java.awt.AlphaComposite;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Composite;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
 
 public final class EditorEmbeddedComponentManager {
   private static final Key<ComponentInlays> COMPONENT_INLAYS_KEY = Key.create("editor.embedded.component.inlays");
@@ -40,24 +56,25 @@ public final class EditorEmbeddedComponentManager {
   private EditorEmbeddedComponentManager() {
   }
 
-  @NotNull
-  public static EditorEmbeddedComponentManager getInstance() {
+  public static @NotNull EditorEmbeddedComponentManager getInstance() {
     return ourInstance;
   }
 
-  @Nullable
-  public Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public @Nullable Inlay<?> addComponent(@NotNull EditorEx editor,
+                                         @NotNull JComponent component,
+                                         @NotNull Properties properties) {
+    ThreadingAssertions.assertEventDispatchThread();
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
     return inlays.add(component, properties.resizePolicy, properties.rendererFactory,
-                      properties.relatesToPrecedingText, properties.showAbove,
+                      properties.relatesToPrecedingText, properties.showAbove, properties.showWhenFolded, properties.fullWidth,
                       properties.priority, properties.offset);
   }
 
-  @NotNull
-  private static ComponentInlays getComponentInlaysFor(@NotNull EditorEx editor) {
-    if (!COMPONENT_INLAYS_KEY.isIn(editor)) COMPONENT_INLAYS_KEY.set(editor, new ComponentInlays(editor));
+  private static @NotNull ComponentInlays getComponentInlaysFor(@NotNull EditorEx editor) {
+    if (!COMPONENT_INLAYS_KEY.isIn(editor)) {
+      COMPONENT_INLAYS_KEY.set(editor, new ComponentInlays(editor));
+    }
     return COMPONENT_INLAYS_KEY.get(editor);
   }
 
@@ -82,8 +99,7 @@ public final class EditorEmbeddedComponentManager {
       return ourAny;
     }
 
-    @NotNull
-    public static ResizePolicy none() {
+    public static @NotNull ResizePolicy none() {
       return ourNone;
     }
 
@@ -96,20 +112,49 @@ public final class EditorEmbeddedComponentManager {
     }
   }
 
-  public static class Properties {
+  public static final class Properties {
     final ResizePolicy resizePolicy;
     final RendererFactory rendererFactory;
     final boolean relatesToPrecedingText;
     final boolean showAbove;
+    final boolean showWhenFolded;
+    final boolean fullWidth;
     final int priority;
     final int offset;
 
-    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
-                      boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      int priority,
+                      int offset) {
+      this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, false, priority, offset);
+    }
+
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      boolean showWhenFolded,
+                      int priority,
+                      int offset) {
+      this(resizePolicy, rendererFactory, relatesToPrecedingText, showAbove, false, false, priority, offset);
+    }
+
+    public Properties(@NotNull ResizePolicy resizePolicy,
+                      @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText,
+                      boolean showAbove,
+                      boolean showWhenFolded,
+                      boolean fullWidth,
+                      int priority,
+                      int offset) {
       this.resizePolicy = resizePolicy;
       this.rendererFactory = rendererFactory;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.showAbove = showAbove;
+      this.showWhenFolded = showWhenFolded;
+      this.fullWidth = fullWidth;
       this.priority = priority;
       this.offset = offset;
     }
@@ -119,7 +164,8 @@ public final class EditorEmbeddedComponentManager {
     }
   }
 
-  private static class MyRenderer extends JPanel implements EditorCustomElementRenderer {
+  @ApiStatus.Internal
+  public static class MyRenderer extends JPanel implements EditorCustomElementRenderer {
     private static final int UNDEFINED = -1;
 
     final ResizePolicy resizePolicy;
@@ -127,20 +173,26 @@ public final class EditorEmbeddedComponentManager {
     private final Properties.RendererFactory myRendererFactory;
     private int myCustomWidth = UNDEFINED;
     private int myCustomHeight = UNDEFINED;
+    protected final @NotNull JScrollPane myEditorScrollPane;
+    private final @NotNull ComponentInlays.ResizeListener myResizeListener;
+    private @Nullable Inlay<MyRenderer> myInlay;
 
     MyRenderer(@NotNull JComponent component,
                @NotNull ResizePolicy resizePolicy,
-               @Nullable Properties.RendererFactory rendererFactory) {
+               @Nullable Properties.RendererFactory rendererFactory,
+               @NotNull JScrollPane editorScrollPane,
+               @NotNull ComponentInlays.ResizeListener resizeListener) {
       super(new BorderLayout());
       this.resizePolicy = resizePolicy;
       myRendererFactory = rendererFactory;
+      myEditorScrollPane = editorScrollPane;
+      myResizeListener = resizeListener;
       add(component, BorderLayout.CENTER);
       setOpaque(false);
     }
 
-    @Nullable
     @Override
-    public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
+    public @Nullable GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
       return myRendererFactory == null ? null : myRendererFactory.createRenderer(inlay);
     }
 
@@ -166,21 +218,12 @@ public final class EditorEmbeddedComponentManager {
 
     @Override
     public int calcHeightInPixels(@NotNull Inlay inlay) {
-      return Math.max(getHeight(), 0);
+      return Math.max(getPreferredHeight(), 0);
     }
 
     @Override
     public int calcWidthInPixels(@NotNull Inlay inlay) {
       return Math.max(getWidth(), 0);
-    }
-
-    @Override
-    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
-      Rectangle currentBounds = inlay.getBounds();
-      if (currentBounds == null || Objects.equals(currentBounds, getBounds())) return;
-      setBounds(currentBounds);
-      revalidate();
-      repaint(50);
     }
 
     @Override
@@ -195,96 +238,210 @@ public final class EditorEmbeddedComponentManager {
         g2d.setComposite(old);
       }
     }
+
+    @Override
+    public void doLayout() {
+      ReadAction.run(() -> {
+        synchronizeBoundsWithInlay();
+        super.doLayout();
+      });
+    }
+
+    @Override
+    public void validate() {
+      synchronizeBoundsWithInlay();
+      super.validate();
+    }
+
+    private void synchronizeBoundsWithInlay() {
+      if (myInlay != null && !myResizeListener.isResizeInProgress(this) && !myInlay.getEditor().getDocument().isInBulkUpdate()) {
+        Rectangle inlayBounds = myInlay.getBounds();
+        boolean shouldUpdateInlay;
+        if (inlayBounds != null) {
+          inlayBounds.setLocation(inlayBounds.x + verticalScrollbarLeftShift(), inlayBounds.y);
+
+          int visibleWidth = myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth();
+          Rectangle newBounds = new Rectangle(
+            inlayBounds.x,
+            inlayBounds.y,
+            isWidthSet() ? myCustomWidth : Math.min(getPreferredWidth(), visibleWidth),
+            getPreferredHeight()
+          );
+          shouldUpdateInlay = !isVisible() || !newBounds.equals(inlayBounds);
+          if (shouldUpdateInlay || !newBounds.equals(getBounds())) {
+            setVisible(true);
+            setBounds(newBounds);
+          }
+        }
+        else {
+          shouldUpdateInlay = isVisible();
+          setVisible(false);
+        }
+        if (shouldUpdateInlay) {
+          myInlay.update();
+        }
+      }
+    }
+
+    public void setInlay(@Nullable Inlay<MyRenderer> inlay) {
+      myInlay = inlay;
+    }
+
+    private int verticalScrollbarLeftShift() {
+      Object flipProperty = myEditorScrollPane.getClientProperty(JBScrollPane.Flip.class);
+      if (flipProperty == JBScrollPane.Flip.HORIZONTAL || flipProperty == JBScrollPane.Flip.BOTH) {
+        return myEditorScrollPane.getVerticalScrollBar().getWidth();
+      }
+      return 0;
+    }
   }
 
-  private static class ComponentInlays implements Disposable {
+  @ApiStatus.Internal
+  public static final class FullEditorWidthRenderer extends MyRenderer {
+
+    FullEditorWidthRenderer(@NotNull JComponent component,
+                            @NotNull ResizePolicy resizePolicy,
+                            Properties.@Nullable RendererFactory rendererFactory,
+                            @NotNull JScrollPane editorScrollPane,
+                            ComponentInlays.@NotNull ResizeListener resizeListener) {
+      super(component, resizePolicy, rendererFactory, editorScrollPane, resizeListener);
+    }
+
+    @Override
+    int getPreferredWidth() {
+      return myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth();
+    }
+  }
+
+  private static final class ComponentInlays implements Disposable {
     private final EditorEx myEditor;
-    private final List<Inlay<? extends MyRenderer>> myInlays;
     private final ResizeListener myResizeListener;
 
     ComponentInlays(@NotNull EditorEx editor) {
       myEditor = editor;
-      myInlays = new ArrayList<>();
       myResizeListener = new ResizeListener();
       setup();
     }
 
 
     @Nullable
-    Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, @Nullable Properties.RendererFactory rendererFactory,
-                          boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
-      MyRenderer renderer = new MyRenderer(component, policy, rendererFactory);
-      Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, priority, renderer);
+    Inlay<MyRenderer> add(@NotNull JComponent component,
+                          @NotNull ResizePolicy policy,
+                          @Nullable Properties.RendererFactory rendererFactory,
+                          boolean relatesToPrecedingText,
+                          boolean showAbove,
+                          boolean showWhenFolded,
+                          boolean fullWidth,
+                          int priority,
+                          int offset) {
+      if (myEditor.isDisposed()) return null;
+
+
+      MyRenderer renderer = fullWidth ? new FullEditorWidthRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener) : new MyRenderer(component, policy, rendererFactory, myEditor.getScrollPane(), myResizeListener);
+      Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset,
+                                                                         new InlayProperties()
+                                                                           .relatesToPrecedingText(relatesToPrecedingText)
+                                                                           .showAbove(showAbove)
+                                                                           .priority(priority)
+                                                                           .showWhenFolded(showWhenFolded),
+                                                                         renderer);
       if (inlay == null) return null;
+      Disposer.register(this, inlay);
 
       renderer.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
-          inlay.update();
-          updateAllInlaysBelow(component.getBounds());
+          if (e.getSource() instanceof MyRenderer renderer) {
+            revalidateComponents(renderer.getBounds().y);
+          }
         }
       });
-      component.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent e) {
-          updateSize(inlay);
-          inlay.update();
-          updateAllInlaysBelow(component.getBounds());
-        }
-      });
-      renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 
-      update(inlay);
-      inlay.update();
+     // renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 
+      renderer.setInlay(inlay);
       myEditor.getContentComponent().add(renderer);
-      myInlays.add(inlay);
       Disposer.register(inlay, () -> {
-        myEditor.getContentComponent().remove(renderer);
-        myInlays.remove(inlay);
+        Runnable runnable = () -> {
+          renderer.setInlay(null);
+          myEditor.getContentComponent().remove(renderer);
+        };
+        Application application = ApplicationManager.getApplication();
+        if (application.isDispatchThread()) runnable.run();
+        else application.invokeLater(runnable);
       });
+
+      // If validation is postponed, visual artifacts can appear while typing text.
+      if (!myEditor.getInlayModel().isInBatchMode()) {
+        renderer.validate();
+      }
+
       return inlay;
     }
 
-    private void updateAllInlaysBelow(@NotNull Rectangle bounds) {
-      for (Inlay<? extends MyRenderer> i : getInlaysBelow(bounds.y)) {
-        update(i);
+    private void revalidateComponents() {
+      revalidateComponents(Integer.MIN_VALUE);
+    }
+
+    private void revalidateComponents(int yTop) {
+      JComponent parent = myEditor.getContentComponent();
+      for (int i = 0; i < parent.getComponentCount(); ++i) {
+        Component component = parent.getComponent(i);
+        if (component instanceof MyRenderer && component.getY() >= yTop) {
+          component.revalidate();
+        }
       }
     }
 
     private void setup() {
-      EditorUtil.disposeWithEditor(myEditor, this);
+      Disposer.register(((EditorImpl)myEditor).getDisposable(), this);
       myEditor.getFoldingModel().addListener(new FoldingListener() {
         @Override
         public void onFoldProcessingEnd() {
-          for (Inlay<? extends MyRenderer> inlay : myInlays) {
-            update(inlay);
+          revalidateComponents();
+        }
+      }, this);
+      myEditor.getDocument().addDocumentListener(new DocumentListener() {
+        private int linesBefore;
+
+        @Override
+        public void beforeDocumentChange(@NotNull DocumentEvent event) {
+          linesBefore = event.getDocument().getLineCount();
+        }
+
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+          if (linesBefore != event.getDocument().getLineCount() && !event.getDocument().isInBulkUpdate()) {
+            int y = myEditor.logicalPositionToXY(new LogicalPosition(event.getDocument().getLineNumber(event.getOffset()), 0)).y;
+            revalidateComponents(y);
           }
+        }
+
+        @Override
+        public void bulkUpdateFinished(@NotNull Document document) {
+          revalidateComponents();
         }
       }, this);
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
         @Override
-        public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
-          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0) {
-            Rectangle bounds = inlay.getBounds();
-            if (bounds != null) {
-              updateAllInlaysBelow(bounds);
+        public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
+          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 && inlay.getRenderer() instanceof MyRenderer component) {
+            // This method can be called while validating the same component. Prevent resetting parent validation flags.
+            if (component.isValid()) {
+              component.revalidate();
             }
           }
         }
 
         @Override
-        public void onRemoved(@NotNull Inlay inlay) {
+        public void onRemoved(@NotNull Inlay<?> inlay) {
           Disposer.dispose(inlay);
         }
       }, this);
       ComponentAdapter viewportListener = new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
-          int maxY = myEditor.getScrollPane().getViewport().getViewRect().y;
-          for (Inlay<? extends MyRenderer> inlay : getInlaysBelow(maxY)) {
-            updateSize(inlay);
-          }
+          revalidateComponents();
         }
       };
       JViewport viewport = myEditor.getScrollPane().getViewport();
@@ -295,55 +452,12 @@ public final class EditorEmbeddedComponentManager {
       myEditor.addEditorMouseMotionListener(myResizeListener);
     }
 
-    @NotNull
-    private Collection<Inlay<? extends MyRenderer>> getInlaysBelow(int y) {
-      return ContainerUtil.filter(myInlays, inlay -> {
-        Rectangle bounds = inlay.getRenderer().getBounds();
-        return bounds != null && bounds.y + bounds.height >= y;
-      });
-    }
-
-    private void update(@NotNull Inlay<? extends MyRenderer> inlay) {
-      Rectangle bounds = inlay.getBounds();
-      MyRenderer renderer = inlay.getRenderer();
-      if (bounds == null) {
-        renderer.setVisible(false);
-        return;
-      }
-      JScrollBar vsb = myEditor.getScrollPane().getVerticalScrollBar();
-      renderer.setLocation(new Point(isVerticalScrollbarFlipped() ? vsb.getWidth() : 0, bounds.getLocation().y));
-      renderer.setVisible(true);
-      updateSize(inlay);
-    }
-
-    private boolean isVerticalScrollbarFlipped() {
-      Object flipProperty = myEditor.getScrollPane().getClientProperty(JBScrollPane.Flip.class);
-      return flipProperty == JBScrollPane.Flip.HORIZONTAL || flipProperty == JBScrollPane.Flip.BOTH;
-    }
-
-    private void updateSize(@NotNull Inlay<? extends MyRenderer> inlay) {
-      MyRenderer renderer = inlay.getRenderer();
-      if (!renderer.isVisible() || myResizeListener.isResizeInProgress(renderer)) return;
-
-      int componentWidth = renderer.getPreferredWidth();
-      int componentHeight = renderer.getPreferredHeight();
-      JScrollPane scrollPane = myEditor.getScrollPane();
-      int visibleWidth = scrollPane.getViewport().getWidth() - scrollPane.getVerticalScrollBar().getWidth();
-      int minWidth = renderer.isWidthSet() ? componentWidth : visibleWidth;
-      int width =  Math.min(componentWidth, minWidth);
-      Dimension newSize = new Dimension(Math.max(width, 0), Math.max(componentHeight, 0));
-      if (!renderer.getSize().equals(newSize)) renderer.setSize(newSize);
-    }
-
     @Override
     public void dispose() {
-      myEditor.setCustomCursor(this, null);
-      for (int i = myInlays.size() - 1; i > -1; i--) {
-        Disposer.dispose(myInlays.get(i));
-      }
+      // All inlays are already registered in the disposable.
     }
 
-    private static class ResizeInfo {
+    private static final class ResizeInfo {
       final Inlay<? extends MyRenderer> inlay;
       final ResizeDirection direction;
       final int startWidth;
@@ -371,11 +485,11 @@ public final class EditorEmbeddedComponentManager {
       }
     }
 
-    private class ResizeListener implements EditorMouseListener, EditorMouseMotionListener {
+    private final class ResizeListener implements EditorMouseListener, EditorMouseMotionListener {
       private ResizeInfo info;
 
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         ResizeInfo info = getInfoForResizeUnder(e.getMouseEvent().getPoint());
         if (info == null) {
           resetCursor();
@@ -394,7 +508,10 @@ public final class EditorEmbeddedComponentManager {
 
       @Override
       public void mouseReleased(@NotNull EditorMouseEvent event) {
-        info = null;
+        if (info != null) {
+          info.inlay.getRenderer().revalidate();
+          info = null;
+        }
         resetCursor();
       }
 
@@ -452,11 +569,13 @@ public final class EditorEmbeddedComponentManager {
         if (info == null) myEditor.setCustomCursor(ComponentInlays.this, null);
       }
 
-      @Nullable
-      private ResizeInfo getInfoForResizeUnder(@NotNull Point point) {
-        return ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(myInlays, inlay -> {
-          ResizePolicy policy = inlay.getRenderer().resizePolicy;
+      private @Nullable ResizeInfo getInfoForResizeUnder(@NotNull Point point) {
+        return ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(myEditor.getContentComponent().getComponents(), component -> {
+          if (!(component instanceof MyRenderer)) return null;
+          ResizePolicy policy = ((MyRenderer)component).resizePolicy;
           if (!policy.isResizable()) return null;
+          Inlay<MyRenderer> inlay = ((MyRenderer)component).myInlay;
+          if (inlay == null) return null;
           Rectangle bounds = inlay.getBounds();
           if (bounds == null) return null;
           int pressY = point.y;
@@ -473,13 +592,13 @@ public final class EditorEmbeddedComponentManager {
                                       null;
           return direction == null ? null : new ResizeInfo(inlay, direction);
         }));
-    }
+      }
 
-      private boolean isNearTo(int value, int coordinate) {
+      private static boolean isNearTo(int value, int coordinate) {
         return isInside(value, coordinate, coordinate);
       }
 
-      private boolean isInside(int value, int min, int max) {
+      private static boolean isInside(int value, int min, int max) {
         return value > min - RESIZE_POINT_DELTA && value < max + RESIZE_POINT_DELTA;
       }
     }

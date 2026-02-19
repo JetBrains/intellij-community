@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntSupport;
@@ -8,6 +8,7 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.resources.AntActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -65,8 +66,12 @@ public class RunTargetAction extends AnAction {
     }
   }
 
-  @Nullable
-  private static Pair<AntBuildFileBase, AntDomTarget> findAntTarget(@NotNull AnActionEvent e) {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  private static @Nullable Pair<AntBuildFileBase, AntDomTarget> findAntTarget(@NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final Project project = e.getProject();
 
@@ -79,10 +84,9 @@ public class RunTargetAction extends AnAction {
     }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (!(psiFile instanceof XmlFile)) {
+    if (!(psiFile instanceof XmlFile xmlFile)) {
       return null;
     }
-    final XmlFile xmlFile = (XmlFile)psiFile;
 
     final AntBuildFileBase antFile = AntConfigurationBase.getInstance(project).getAntBuildFile(xmlFile);
     if (antFile == null) {

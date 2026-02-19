@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class XHtmlFileType extends HtmlFileType {
   public static final XHtmlFileType INSTANCE = new XHtmlFileType();
@@ -16,20 +16,17 @@ public final class XHtmlFileType extends HtmlFileType {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "XHTML";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return XmlPsiBundle.message("filetype.description.xhtml");
+  public @NotNull String getDescription() {
+    return XmlCoreBundle.message("filetype.xhtml.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "xhtml";
   }
 

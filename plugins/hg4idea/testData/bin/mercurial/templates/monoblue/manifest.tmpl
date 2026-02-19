@@ -1,0 +1,41 @@
+{header}
+<title>{repo|escape}: files</title>
+    <link rel="alternate" type="application/atom+xml" href="{url|urlescape}atom-log" title="Atom feed for {repo|escape}"/>
+    <link rel="alternate" type="application/rss+xml" href="{url|urlescape}rss-log" title="RSS feed for {repo|escape}"/>
+</head>
+
+<body>
+<div id="container">
+    <div class="page-header">
+        <h1 class="breadcrumb"><a href="/">Mercurial</a> {pathdef%breadcrumb} / files</h1>
+
+        {searchform}
+
+        <ul class="page-nav">
+            <li><a href="{url|urlescape}summary{sessionvars%urlparameter}">summary</a></li>
+            <li><a href="{url|urlescape}shortlog{sessionvars%urlparameter}">shortlog</a></li>
+            <li><a href="{url|urlescape}changelog{sessionvars%urlparameter}">changelog</a></li>
+            <li><a href="{url|urlescape}graph/{symrev}{sessionvars%urlparameter}">graph</a></li>
+            <li><a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a></li>
+            <li><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a></li>
+            <li><a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a></li>
+            <li class="current">files</li>
+            <li><a href="{url|urlescape}help{sessionvars%urlparameter}">help</a></li>
+        </ul>
+    </div>
+
+    <ul class="submenu">
+        <li><a href="{url|urlescape}rev/{symrev}{sessionvars%urlparameter}">changeset</a></li>
+        {archives%archiveentry}
+    </ul>
+
+    <h2 class="no-link no-border">files</h2>
+    <p class="files">{path|escape} {alltags}</p>
+
+    <table>
+        {ifeq(path, up, '', updirentry)}
+        {dentries%direntry}
+        {fentries%fileentry}
+    </table>
+
+{footer}

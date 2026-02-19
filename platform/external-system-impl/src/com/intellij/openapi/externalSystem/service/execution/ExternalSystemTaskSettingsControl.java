@@ -1,12 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
-
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
@@ -16,7 +12,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -25,22 +20,22 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.ui.GridBag;
-import gnu.trove.THashMap;
-import java.awt.Dimension;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
-public class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
+import java.awt.Dimension;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private final Project myProject;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
+
+@ApiStatus.Internal
+public final class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull Project myProject;
 
   @SuppressWarnings("FieldCanBeLocal") // Used via reflection at showUi() and disposeResources()
   private JBLabel myProjectPathLabel;
@@ -56,7 +51,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   private RawCommandLineEditor myArgumentsEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
 
-  @Nullable private ExternalSystemTaskExecutionSettings myOriginalSettings;
+  private @Nullable ExternalSystemTaskExecutionSettings myOriginalSettings;
 
   public ExternalSystemTaskSettingsControl(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     myProject = project;
@@ -68,18 +63,11 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   }
 
   @Override
-  public void fillUi(@NotNull final PaintAwarePanel canvas, int indentLevel) {
+  public void fillUi(final @NotNull PaintAwarePanel canvas, int indentLevel) {
     myProjectPathLabel = new JBLabel(ExternalSystemBundle.message(
       "run.configuration.settings.label.project", myExternalSystemId.getReadableName()
     ));
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
-    FileChooserDescriptor projectPathChooserDescriptor = null;
-    if (manager instanceof ExternalSystemUiAware) {
-      projectPathChooserDescriptor = ((ExternalSystemUiAware)manager).getExternalProjectConfigDescriptor();
-    }
-    if (projectPathChooserDescriptor == null) {
-      projectPathChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-    }
+    FileChooserDescriptor projectPathChooserDescriptor = ExternalSystemApiUtil.getExternalProjectConfigDescriptor(myExternalSystemId);
     String title = ExternalSystemBundle.message("settings.label.select.project", myExternalSystemId.getReadableName());
     myProjectPathField = new ExternalProjectPathField(myProject, myExternalSystemId, projectPathChooserDescriptor, title) {
       @Override
@@ -93,9 +81,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myTasksLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.tasks"));
     myTasksTextField = new EditorTextField("", myProject, PlainTextFileType.INSTANCE);
     canvas.add(myTasksLabel, ExternalSystemUiUtil.getLabelConstraints(0));
-    GridBag c = ExternalSystemUiUtil.getFillLineConstraints(0);
-    c.insets.right = myProjectPathField.getButton().getPreferredSize().width + 8 /* street magic, sorry */;
-    canvas.add(myTasksTextField, c);
+    canvas.add(myTasksTextField, ExternalSystemUiUtil.getFillLineConstraints(0));
 
     new TaskCompletionProvider(myProject, myExternalSystemId, myProjectPathField).apply(myTasksTextField);
 
@@ -165,7 +151,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     settings.setVmOptions(myVmOptionsEditor.getText());
     settings.setScriptParameters(myArgumentsEditor.getText());
     settings.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());
-    settings.setEnv(myEnvVariablesComponent.getEnvs().isEmpty() ? Collections.emptyMap() : new THashMap<>(myEnvVariablesComponent.getEnvs()));
+    settings.setEnv(myEnvVariablesComponent.getEnvs().isEmpty() ? Collections.emptyMap() : new HashMap<>(myEnvVariablesComponent.getEnvs()));
   }
 
   @Override

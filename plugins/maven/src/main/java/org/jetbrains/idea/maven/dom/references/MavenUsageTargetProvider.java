@@ -10,7 +10,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class MavenUsageTargetProvider implements UsageTargetProvider {
+public final class MavenUsageTargetProvider implements UsageTargetProvider {
   @Override
   public UsageTarget[] getTargets(@NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement target = MavenTargetUtil.getFindTarget(editor, file, false);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -29,9 +29,9 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CleanupWorker extends Task.Backgroundable {
 
-  @NotNull protected final List<VirtualFile> myRoots;
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final List<Pair<VcsException, VirtualFile>> myExceptions = new ArrayList<>();
+  protected final @NotNull List<VirtualFile> myRoots;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull List<Pair<VcsException, VirtualFile>> myExceptions = new ArrayList<>();
 
   public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<? extends VirtualFile> roots) {
     this(vcs, roots, null);
@@ -79,23 +79,24 @@ public class CleanupWorker extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
-    if (myProject.isDisposed()) return;
+    assert getProject() != null;
+    if (getProject().isDisposed()) return;
 
     getApplication().invokeLater(() -> getApplication().runWriteAction(() -> {
-      if (!myProject.isDisposed()) {
+      if (!getProject().isDisposed()) {
         LocalFileSystem.getInstance().refreshFiles(myRoots, false, true, null);
       }
     }));
-    markFilesDirty(myProject, myRoots);
+    markFilesDirty(getProject(), myRoots);
 
     if (!myExceptions.isEmpty()) {
-      AbstractVcsHelper.getInstance(myProject).showErrors(
+      AbstractVcsHelper.getInstance(getProject()).showErrors(
         myExceptions.stream()
           .map(pair -> new VcsException(
             message("action.Subversion.cleanup.error.message", toSystemDependentName(pair.second.getPath()),
                     pair.first == null ? "" : pair.first.getMessage())))
           .collect(toList()),
-        myTitle);
+        getTitle());
     }
   }
 }

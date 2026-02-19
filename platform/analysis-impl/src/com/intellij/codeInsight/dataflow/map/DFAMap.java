@@ -1,14 +1,18 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.dataflow.map;
 
 import com.intellij.codeInsight.dataflow.SetUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class DFAMap<V> {
 
   // invariant:
@@ -73,8 +77,7 @@ public class DFAMap<V> {
     }
   }
 
-  @Nullable
-  public V get(String key) {
+  public @Nullable V get(String key) {
     if (myAll != null) {
       return myAll.get(key);
     }

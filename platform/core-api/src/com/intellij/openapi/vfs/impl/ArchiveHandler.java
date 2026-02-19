@@ -1,17 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.text.ByteArrayCharSequence;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,15 +17,30 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
+import static com.intellij.reference.SoftReference.dereference;
+
+/**
+ * Use {@link TempCopyArchiveHandler} if you'd like to extract archive to a temporary file
+ * and use it to read attributes and content.
+ */
 public abstract class ArchiveHandler {
   public static final long DEFAULT_LENGTH = 0L;
   public static final long DEFAULT_TIMESTAMP = -1L;
+  public static final FileAttributes DIRECTORY_ATTRIBUTES =
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE);
 
-  protected static class EntryInfo {
+  @ApiStatus.Internal
+  public static class EntryInfo {
     public final EntryInfo parent;
     public final CharSequence shortName;
     public final boolean isDirectory;
@@ -43,42 +56,49 @@ public abstract class ArchiveHandler {
     }
   }
 
-  private final File myPath;
+  private final Path myPath;
   private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<>(null);
   private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
   private boolean myCorrupted;
 
   protected ArchiveHandler(@NotNull String path) {
-    myPath = new File(path);
+    myPath = Paths.get(path);
   }
 
-  @NotNull
-  public File getFile() {
+  public @NotNull Path getPath() {
     return myPath;
   }
 
-  @Nullable
-  public FileAttributes getAttributes(@NotNull String relativePath) {
-    if (relativePath.isEmpty()) {
-      FileAttributes attributes = FileSystemUtil.getAttributes(myPath);
-      return attributes != null ? new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE) : null;
+  /** @deprecated please use {@link #getPath} instead */
+  @Deprecated
+  public @NotNull File getFile() {
+    return getPath().toFile();
+  }
+
+  public @Nullable FileAttributes getAttributes(@NotNull String relativePath) {
+    if (!relativePath.isEmpty()) {
+      EntryInfo e = getEntryInfo(relativePath);
+      if (e != null) {
+        return new FileAttributes(e.isDirectory, false, false, false, e.length, e.timestamp, false, FileAttributes.CaseSensitivity.SENSITIVE);
+      }
     }
-    else {
-      EntryInfo entry = getEntryInfo(relativePath);
-      return entry != null ? new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false, entry.isDirectory ? FileAttributes.CaseSensitivity.SENSITIVE: FileAttributes.CaseSensitivity.UNKNOWN) : null;
+    else if (Files.exists(myPath)) {
+      return DIRECTORY_ATTRIBUTES;
     }
+
+    return null;
   }
 
   public String @NotNull [] list(@NotNull String relativePath) {
     EntryInfo entry = getEntryInfo(relativePath);
-    if (entry == null || !entry.isDirectory) return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    if (entry == null || !entry.isDirectory) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     AddonlyKeylessHash<EntryInfo, Object> result = getParentChildrenMap();
 
     Object o = result.get(entry);
     if (o == null) {
-      return ArrayUtilRt.EMPTY_STRING_ARRAY; // directories without children
+      return ArrayUtil.EMPTY_STRING_ARRAY; // directories without children
     }
     if (o instanceof EntryInfo) {
       return new String[] {((EntryInfo)o).shortName.toString()};
@@ -92,12 +112,11 @@ public abstract class ArchiveHandler {
     return names;
   }
 
-  @NotNull
   private AddonlyKeylessHash<EntryInfo, Object> getParentChildrenMap() {
-    AddonlyKeylessHash<EntryInfo, Object> map = SoftReference.dereference(myChildrenEntries);
+    AddonlyKeylessHash<EntryInfo, Object> map = dereference(myChildrenEntries);
     if (map == null) {
       synchronized (myLock) {
-        map = SoftReference.dereference(myChildrenEntries);
+        map = dereference(myChildrenEntries);
 
         if (map == null) {
           if (myCorrupted) {
@@ -109,7 +128,7 @@ public abstract class ArchiveHandler {
             }
             catch (Exception e) {
               myCorrupted = true;
-              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + myPath, e);
+              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + getPath(), e);
               map = new AddonlyKeylessHash<>(ourKeyValueMapper);
             }
           }
@@ -121,8 +140,8 @@ public abstract class ArchiveHandler {
     return map;
   }
 
-  private @NotNull AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
-    THashMap<EntryInfo, List<EntryInfo>> map = new THashMap<>();
+  private AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
+    Map<EntryInfo, List<EntryInfo>> map = new HashMap<>();
     for (EntryInfo info : getEntriesMap().values()) {
       if (info.isDirectory && !map.containsKey(info)) map.put(info, new SmartList<>());
       if (info.parent != null) {
@@ -133,7 +152,7 @@ public abstract class ArchiveHandler {
     }
 
     AddonlyKeylessHash<EntryInfo, Object> result = new AddonlyKeylessHash<>(map.size(), ourKeyValueMapper);
-    map.forEachEntry((parent, children) -> {
+    for (List<EntryInfo> children : map.values()) {
       int numberOfChildren = children.size();
       if (numberOfChildren == 1) {
         result.add(children.get(0));
@@ -141,16 +160,12 @@ public abstract class ArchiveHandler {
       else if (numberOfChildren > 1) {
         result.add(children.toArray(new EntryInfo[numberOfChildren]));
       }
-      return true;
-    });
+    }
     return result;
   }
 
-  public void dispose() {
-    clearCaches();
-  }
-
-  protected void clearCaches() {
+  @ApiStatus.OverrideOnly
+  public void clearCaches() {
     synchronized (myLock) {
       myEntries.clear();
       myChildrenEntries.clear();
@@ -158,17 +173,16 @@ public abstract class ArchiveHandler {
     }
   }
 
-  @Nullable
-  protected EntryInfo getEntryInfo(@NotNull String relativePath) {
+  @ApiStatus.Internal
+  protected @Nullable EntryInfo getEntryInfo(@NotNull String relativePath) {
     return getEntriesMap().get(relativePath);
   }
 
-  @NotNull
-  protected Map<String, EntryInfo> getEntriesMap() {
-    Map<String, EntryInfo> map = SoftReference.dereference(myEntries);
+  protected @NotNull Map<String, EntryInfo> getEntriesMap() {
+    Map<String, EntryInfo> map = dereference(myEntries);
     if (map == null) {
       synchronized (myLock) {
-        map = SoftReference.dereference(myEntries);
+        map = dereference(myEntries);
 
         if (map == null) {
           if (myCorrupted) {
@@ -180,77 +194,103 @@ public abstract class ArchiveHandler {
             }
             catch (Exception e) {
               myCorrupted = true;
-              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + myPath, e);
+              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + getPath(), e);
               map = Collections.emptyMap();
             }
           }
 
           myEntries = new SoftReference<>(map);
+          // createEntriesMap recreates EntryInfo instances, so we need to ensure that we also recreate the children entries
+          // cache which uses EntryInfo instances as keys (otherwise the cache lookup in list() would return empty children arrays)
+          myChildrenEntries = new SoftReference<>(null);
         }
       }
     }
     return map;
   }
 
-  @NotNull
-  protected abstract Map<String, EntryInfo> createEntriesMap() throws IOException;
+  protected abstract @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException;
 
-  @NotNull
-  protected EntryInfo createRootEntry() {
+  @ApiStatus.Internal
+  protected @NotNull EntryInfo createRootEntry() {
     return new EntryInfo("", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, null);
   }
 
-  @NotNull
-  protected EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
-    EntryInfo entry = map.get(entryName);
-    if (entry == null) {
-      Trinity<String, String, String> path = splitPathAndFix(entryName);
-      EntryInfo parentEntry = getOrCreate(map, path.first);
-      CharSequence shortName = ByteArrayCharSequence.convertToBytesIfPossible(path.second);
-      entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parentEntry);
-      map.put(path.third, entry);
+  /**
+   * Attempts to place an entry with the given name into the entry map.
+   * <p>
+   * The name is normalized (backward slashes are converted into forward ones, then leading, trailing, and duplicate slashes
+   * are removed); empty names and directory traversals are rejected; parent entries are created if needed.
+   *
+   * @param entryFun a routine for producing entry data; when {@code null}, a directory entry is created.
+   */
+  protected final void processEntry(
+    @NotNull Map<String, EntryInfo> map,
+    @NotNull String entryName,
+    @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun
+  ) {
+    processEntry(map, null, entryName, entryFun);
+  }
+
+  protected final void processEntry(
+    @NotNull Map<String, EntryInfo> map,
+    @Nullable Logger logger,
+    @NotNull String entryName,
+    @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun
+  ) {
+    String normalizedName = normalizeName(entryName);
+    if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
+      if (logger != null) logger.trace("invalid entry: " + getPath() + "!/" + entryName);
+      return;
+    }
+
+    if (entryFun == null) {
+      directoryEntry(map, logger, normalizedName);
+      return;
+    }
+
+    EntryInfo existing = map.get(normalizedName);
+    if (existing != null) {
+      if (logger != null) logger.trace("duplicate entry: " + getPath() + "!/" + normalizedName);
+      return;
+    }
+
+    Pair<String, String> path = split(normalizedName);
+    EntryInfo parent = directoryEntry(map, logger, path.first);
+    map.put(normalizedName, entryFun.apply(parent, path.second));
+  }
+
+  protected @NotNull String normalizeName(@NotNull String entryName) {
+    return StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
+  }
+
+  private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {
+    EntryInfo entry = map.get(normalizedName);
+    if (entry == null || !entry.isDirectory) {
+      if (logger != null && entry != null) logger.trace("duplicate entry: " + getPath() + "!/" + normalizedName);
+      if (normalizedName.isEmpty()) {
+        entry = createRootEntry();
+      }
+      else {
+        Pair<String, String> path = split(normalizedName);
+        EntryInfo parent = directoryEntry(map, logger, path.first);
+        entry = new EntryInfo(path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parent);
+      }
+      map.put(normalizedName, entry);
     }
     return entry;
   }
 
-  /**
-   * @deprecated Use {@link #splitPathAndFix(String)} instead to correctly handle invalid entry names
-   */
-  @NotNull
-  @Deprecated
-  protected Pair<String, String> splitPath(@NotNull String entryName) {
-    int p = entryName.lastIndexOf('/');
-    String parentName = p > 0 ? entryName.substring(0, p) : "";
-    String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-    return Pair.create(parentName, shortName);
-  }
-
-  /**
-   * @return parentName, shortName, fixedEntryName
-   */
-  @NotNull
-  protected Trinity<String, String, String> splitPathAndFix(@NotNull String entryName) {
-    int slashP = entryName.lastIndexOf('/');
-    // There are crazy jar files with backslash-containing entries inside (IDEA-228441)
-    // Under Windows we can't create files with backslash in the name
-    // and although in Unix we can, we prefer not to, to maintain consistency to avoid subtle bugs when the code which confuses file separators with slashes
-    int p = Math.max(slashP, entryName.lastIndexOf('\\'));
-
-    String parentName = p > 0 ? entryName.substring(0, p) : "";
-    String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-    String fixedParent = parentName.replace('\\', '/');
-    //noinspection StringEquality
-    if (fixedParent != parentName || slashP == -1 && p != -1) {
-      parentName = fixedParent;
-      entryName = parentName + '/' + shortName;
-    }
-    return Trinity.create(parentName, shortName, entryName);
+  private static Pair<String, String> split(String normalizedName) {
+    int p = normalizedName.lastIndexOf('/');
+    String parentPath = p > 0 ? normalizedName.substring(0, p) : "";
+    String shortName = p > 0 ? normalizedName.substring(p + 1) : normalizedName;
+    return new Pair<>(parentPath, shortName);
   }
 
   public abstract byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException;
 
-  @NotNull
-  public InputStream getInputStream(@NotNull String relativePath) throws IOException {
+  public @NotNull InputStream getInputStream(@NotNull String relativePath) throws IOException {
     return new BufferExposingByteArrayInputStream(contentsToByteArray(relativePath));
   }
 

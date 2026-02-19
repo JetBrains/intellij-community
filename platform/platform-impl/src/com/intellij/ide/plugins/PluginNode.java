@@ -1,30 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.marketplace.ModuleDependency;
+import com.intellij.ide.plugins.marketplace.PluginContentModule;
+import com.intellij.ide.plugins.marketplace.PluginModule;
+import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public final class PluginNode implements IdeaPluginDescriptor {
+  private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
+  private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
+
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }
 
-  private PluginId id;
+  private @NotNull PluginId id;
   private String name;
+  private boolean isPaid = false;
+  private Integer defaultTrialPeriod = null;
+  private Map<String, Integer> customTrialPeriods = null;
   private String productCode;
   private Date releaseDate;
   private int releaseVersion;
   private boolean licenseOptional;
   private String version;
   private String vendor;
+  private @Nullable PluginNodeVendorDetails vendorDetails = null;
   private @NlsSafe String description;
   private String sinceBuild;
   private String untilBuild;
@@ -35,12 +53,19 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String vendorEmail;
   private String vendorUrl;
   private String url;
+  private String sourceCodeUrl;
+  private String forumUrl;
+  private String licenseUrl;
+  private String bugtrackerUrl;
+  private String documentationUrl;
+  private String reportPluginUrl;
   private long date = Long.MAX_VALUE;
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
   private boolean myLoaded;
   private String myDownloadUrl;
-  private String myRepositoryName;
+  private String myChannel; // TODO parameters map?
+  private @NlsSafe String myRepositoryName;
   private String myInstalledVersion;
   private boolean myEnabled = true;
   private String myRating;
@@ -48,8 +73,19 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<String> myTags;
   private String externalUpdateId;
   private String externalPluginId;
+  private PageContainer<PluginReviewComment> reviewComments;
+  private List<String> screenShots;
+  private String externalPluginIdForScreenShots;
+  private String mySuggestedCommercialIde = null;
+  private @NotNull Collection<String> suggestedFeatures = Collections.emptyList();
+  private boolean myConverted;
+  private Collection<String> dependencyNames;
 
-  public PluginNode() { }
+  private FUSEventSource installSource;
+
+  private List<PluginContentModule> contentModules = Collections.emptyList();
+  private List<PluginModule> modules = Collections.emptyList();
+  private List<ModuleDependency> moduleDependencies = Collections.emptyList();
 
   public PluginNode(@NotNull PluginId id) {
     this.id = id;
@@ -71,9 +107,6 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   public void setName(@NotNull String name) {
-    if (id == null) {
-      id = PluginId.getId(name);
-    }
     this.name = name;
   }
 
@@ -81,23 +114,52 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.id = PluginId.getId(id);
   }
 
-  @Nullable
+  public boolean getIsPaid() {
+    return isPaid;
+  }
+
+  public void setIsPaid(boolean isPaid) {
+    this.isPaid = isPaid;
+  }
+
+  public @Nullable Integer getDefaultTrialPeriod() {
+    return defaultTrialPeriod;
+  }
+
+  public void setDefaultTrialPeriod(@Nullable Integer trialPeriod) {
+    this.defaultTrialPeriod = trialPeriod;
+  }
+
+  /*
+    Allows customizing trial period duration per product for a plugin on Marketplace.
+    For the details, see: https://youtrack.jetbrains.com/issue/LLM-3752
+  */
+  @ApiStatus.Internal
+  public @Nullable Integer getTrialPeriodByProductCode(@Nullable String ideProductCode) {
+    if (ideProductCode == null || customTrialPeriods == null) return defaultTrialPeriod;
+    return customTrialPeriods.getOrDefault(ideProductCode, defaultTrialPeriod);
+  }
+
+  @ApiStatus.Internal
+  public void setCustomTrialPeriodMap(@Nullable Map<String, Integer> customTrialPeriodMap) {
+    this.customTrialPeriods = customTrialPeriodMap;
+  }
+
   @Override
-  public String getProductCode() {
+  public @Nullable String getProductCode() {
     return productCode;
   }
 
-  public void setProductCode(String productCode) {
+  public void setProductCode(@Nullable String productCode) {
     this.productCode = productCode;
   }
 
-  @Nullable
   @Override
-  public Date getReleaseDate() {
+  public @Nullable Date getReleaseDate() {
     return releaseDate;
   }
 
-  public void setReleaseDate(Date date) {
+  public void setReleaseDate(@Nullable Date date) {
     releaseDate = date;
   }
 
@@ -120,33 +182,31 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   /**
-   * Plugin update unique ID from Marketplace database.
-   * Needed for getting Plugin meta information.
+   * Plugin update unique ID from the Marketplace database.
+   * Needed for getting plugin meta-information.
    */
-  @Nullable
-  public String getExternalUpdateId() {
+  public @Nullable String getExternalUpdateId() {
     return externalUpdateId;
   }
 
-  public void setExternalUpdateId(String externalUpdateId) {
+  public void setExternalUpdateId(@Nullable String externalUpdateId) {
     this.externalUpdateId = externalUpdateId;
   }
 
   /**
-   * Plugin unique ID from Marketplace storage.
-   * Needed for getting Plugin meta information.
+   * Plugin unique ID from the Marketplace storage.
+   * Needed for getting plugin meta-information.
    */
-  @Nullable
-  public String getExternalPluginId() {
+  public @Nullable String getExternalPluginId() {
     return externalPluginId;
   }
 
-  public void setExternalPluginId(String externalPluginId) {
+  public void setExternalPluginId(@Nullable String externalPluginId) {
     this.externalPluginId = externalPluginId;
   }
 
   @Override
-  public String getCategory() {
+  public @Nullable String getCategory() {
     return category;
   }
 
@@ -166,38 +226,63 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public String getVendor() {
+  public @Nullable String getVendor() {
     return vendor;
   }
 
-  public void setVendor(@NotNull String vendor) {
+  public void setVendor(@Nullable String vendor) {
     this.vendor = vendor;
   }
 
+  @ApiStatus.Internal
+  public @Nullable PluginNodeVendorDetails getVendorDetails() {
+    return vendorDetails;
+  }
+
+  @ApiStatus.Internal
+  public void setVendorDetails(@Nullable PluginNodeVendorDetails vendorDetails) {
+    this.vendorDetails = vendorDetails;
+  }
+
+  public void setVendorDetails(@NlsSafe @NotNull String vendorName, @Nullable String url, @Nullable Boolean isTrader, @Nullable Boolean isVerified) {
+    this.vendorDetails = new PluginNodeVendorDetails(vendorName, url, isTrader, isVerified);
+  }
+
+  public void setVendorDetails(@NlsSafe @Nullable String vendorName) {
+    if (vendorName == null) return;
+    this.vendorDetails = new PluginNodeVendorDetails(vendorName, null, null, null);
+  }
+
   @Override
-  public String getDescription() {
+  public @Nullable String getOrganization() {
+    if (vendorDetails == null) return null;
+    return vendorDetails.getName();
+  }
+
+  @Override
+  public @Nullable String getDescription() {
     return description;
   }
 
-  public void setDescription(@NlsSafe String description) {
+  public void setDescription(@Nullable @NlsSafe String description) {
     this.description = description;
   }
 
   @Override
-  public String getChangeNotes() {
+  public @Nullable String getChangeNotes() {
     return changeNotes;
   }
 
-  public void setChangeNotes(@NotNull String changeNotes) {
+  public void setChangeNotes(@Nullable String changeNotes) {
     this.changeNotes = changeNotes;
   }
 
   @Override
-  public String getSinceBuild() {
+  public @Nullable String getSinceBuild() {
     return sinceBuild;
   }
 
-  public void setSinceBuild(String sinceBuild) {
+  public void setSinceBuild(@Nullable String sinceBuild) {
     this.sinceBuild = sinceBuild;
   }
 
@@ -217,14 +302,26 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myLoaded = loaded;
   }
 
-  @Override
-  @NlsSafe
-  public String getDownloads() {
+  public @Nullable @NlsSafe String getDownloads() {
     return downloads;
   }
 
-  public void setDownloads(String downloads) {
+  public void setDownloads(@Nullable String downloads) {
     this.downloads = downloads;
+  }
+
+  public @Nullable @NlsSafe String getPresentableDownloads() {
+    if (!StringUtil.isEmptyOrSpaces(downloads)) {
+      try {
+        long value = Long.parseLong(downloads);
+        return value <= 1000 ? Long.toString(value) :
+               value < 1000000 ? K_FORMAT.format(value / 1000D) :
+               M_FORMAT.format(value / 1000000D);
+      }
+      catch (NumberFormatException ignore) { }
+    }
+
+    return null;
   }
 
   public String getSize() {
@@ -235,36 +332,99 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.size = size;
   }
 
+  public long getIntegerSize() {
+    try {
+      return Long.parseLong(size);
+    }
+    catch (NumberFormatException e) {
+      return 0;
+    }
+  }
+
+  public @Nullable @NlsSafe String getPresentableSize() {
+    long size = getIntegerSize();
+    return size >= 0 ? StringUtil.formatFileSize(size).toUpperCase(Locale.ENGLISH) : null;
+  }
+
   @Override
-  public String getVendorEmail() {
+  public @Nullable String getVendorEmail() {
     return vendorEmail;
   }
 
-  public void setVendorEmail(String vendorEmail) {
+  public void setVendorEmail(@Nullable String vendorEmail) {
     this.vendorEmail = vendorEmail;
   }
 
   @Override
-  public String getVendorUrl() {
+  public @Nullable String getVendorUrl() {
     return vendorUrl;
   }
 
-  public void setVendorUrl(String vendorUrl) {
+  public void setVendorUrl(@Nullable String vendorUrl) {
     this.vendorUrl = vendorUrl;
   }
 
   @Override
-  public String getUrl() {
+  public @Nullable String getUrl() {
     return url;
   }
 
-  public void setUrl(String url) {
+  public void setUrl(@Nullable String url) {
     this.url = url;
   }
 
-  public void setDate(String date) {
-    this.date = Long.valueOf(date);
+  public @Nullable String getSourceCodeUrl() {
+    return sourceCodeUrl;
   }
+
+  public void setSourceCodeUrl(@Nullable String sourceCodeUrl) {
+    this.sourceCodeUrl = sourceCodeUrl;
+  }
+
+  public @Nullable String getForumUrl() {
+    return forumUrl;
+  }
+
+  public void setForumUrl(@Nullable String forumUrl) {
+    this.forumUrl = forumUrl;
+  }
+
+  public @Nullable String getLicenseUrl() {
+    return licenseUrl;
+  }
+
+  public void setLicenseUrl(@Nullable String licenseUrl) {
+    this.licenseUrl = licenseUrl;
+  }
+
+  public @Nullable String getBugtrackerUrl() {
+    return bugtrackerUrl;
+  }
+
+  public void setBugtrackerUrl(@Nullable String bugtrackerUrl) {
+    this.bugtrackerUrl = bugtrackerUrl;
+  }
+
+  public @Nullable String getDocumentationUrl() {
+    return documentationUrl;
+  }
+
+  public void setDocumentationUrl(@Nullable String documentationUrl) {
+    this.documentationUrl = documentationUrl;
+  }
+
+  public @Nullable String getReportPluginUrl() {
+    return reportPluginUrl;
+  }
+
+  public void setReportPluginUrl(@Nullable String reportPluginUrl) {
+    this.reportPluginUrl = reportPluginUrl;
+  }
+
+  public void setDate(String date) {
+    this.date = Long.parseLong(date);
+  }
+
   public void setDate(Long date) {
     this.date = date;
   }
@@ -272,13 +432,20 @@ public final class PluginNode implements IdeaPluginDescriptor {
   public long getDate() {
     return date;
   }
-  
+
+  public @Nullable @NlsSafe String getPresentableDate() {
+    long date = getDate();
+
+    return date > 0 && date != Long.MAX_VALUE ?
+           PluginManagerConfigurable.DATE_FORMAT.format(new Date(date)) :
+           null;
+  }
+
   /**
    * @deprecated Use {@link #setDependencies(List)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void setDepends(@NotNull List<? extends PluginId> depends, PluginId @Nullable [] optionalDependencies) {
+  @Deprecated(forRemoval = true)
+  public void setDepends(@NotNull List<PluginId> depends, PluginId @Nullable [] optionalDependencies) {
     myDependencies = new ArrayList<>();
     for (PluginId id : depends) {
       myDependencies.add(new PluginNodeDependency(id, false));
@@ -290,7 +457,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     }
   }
 
-  public void setDependencies(@NotNull List<IdeaPluginDependency> dependencies) {
+  public void setDependencies(@NotNull List<? extends IdeaPluginDependency> dependencies) {
     myDependencies = new ArrayList<>(dependencies);
   }
 
@@ -302,9 +469,18 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myDependencies.add(new PluginNodeDependency(PluginId.getId(id), optional));
   }
 
+  public void addDepends(@NotNull PluginId id, boolean optional) {
+    myDependencies.add(new PluginNodeDependency(id, optional));
+  }
+
   @Override
   public @NotNull List<IdeaPluginDependency> getDependencies() {
     return myDependencies;
+  }
+
+  @Override
+  public @Nullable String getDescriptorPath() {
+    return null;
   }
 
   public List<String> getTags() {
@@ -323,13 +499,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
    * Methods below implement PluginDescriptor and IdeaPluginDescriptor interface
    */
   @Override
-  public PluginId getPluginId() {
+  public @NotNull PluginId getPluginId() {
     return id;
   }
 
   @Override
-  @Nullable
-  public ClassLoader getPluginClassLoader() {
+  public @Nullable ClassLoader getPluginClassLoader() {
     return null;
   }
 
@@ -339,36 +514,26 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public PluginId @NotNull [] getOptionalDependentPluginIds() {
-    List<PluginId> result = new ArrayList<>();
-    for (IdeaPluginDependency dependency : myDependencies) {
-      if (dependency.isOptional()) {
-        result.add(dependency.getPluginId());
-      }
-    }
-    return result.toArray(PluginId.EMPTY_ARRAY);
-  }
-
-  @Override
-  @Nullable
-  public String getResourceBundleBaseName() {
+  public @Nullable String getResourceBundleBaseName() {
     return null;
   }
 
   @Override
-  public String getUntilBuild() {
+  public @Nullable String getUntilBuild() {
     return untilBuild;
   }
 
-  public void setUntilBuild(final String untilBuild) {
+  public void setUntilBuild(@Nullable String untilBuild) {
     this.untilBuild = untilBuild;
   }
 
+  @Deprecated
   @Override
   public boolean isEnabled() {
     return myEnabled;
   }
 
+  @Deprecated
   @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
@@ -378,15 +543,25 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return myDownloadUrl;
   }
 
-  public void setDownloadUrl(String host) {
-    myDownloadUrl = host;
+  public void setDownloadUrl(String downloadUrl) {
+    myDownloadUrl = downloadUrl;
+  }
+
+  @ApiStatus.Experimental
+  public String getChannel() {
+    return myChannel;
+  }
+
+  @ApiStatus.Experimental
+  public void setChannel(String channel) {
+    myChannel = channel;
   }
 
   public @NlsSafe String getRepositoryName() {
     return myRepositoryName;
   }
 
-  public void setRepositoryName(String repositoryName) {
+  public void setRepositoryName(@NlsSafe String repositoryName) {
     myRepositoryName = repositoryName;
   }
 
@@ -406,6 +581,21 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myRating = rating;
   }
 
+  public @Nullable @NlsSafe String getPresentableRating() {
+    String rating = getRating();
+
+    if (!StringUtil.isEmptyOrSpaces(rating)) {
+      try {
+        if (Double.parseDouble(rating) > 0) {
+          return StringUtil.trimEnd(rating, ".0");
+        }
+      }
+      catch (NumberFormatException ignore) {
+      }
+    }
+    return null;
+  }
+
   public boolean isIncomplete() {
     return myIncomplete;
   }
@@ -418,9 +608,108 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return externalPluginId == null || externalUpdateId == null || description != null;
   }
 
+  @ApiStatus.Internal
+  public @Nullable PageContainer<PluginReviewComment> getReviewComments() {
+    return reviewComments;
+  }
+
+  @ApiStatus.Internal
+  public void setReviewComments(@NotNull PageContainer<PluginReviewComment> reviewComments) {
+    this.reviewComments = reviewComments;
+  }
+
+  public @Nullable List<String> getScreenShots() {
+    return screenShots;
+  }
+
+  public @Nullable String getExternalPluginIdForScreenShots() {
+    return externalPluginIdForScreenShots;
+  }
+
+  public void setExternalPluginIdForScreenShots(@Nullable String externalPluginId) {
+    externalPluginIdForScreenShots = externalPluginId;
+  }
+
+  public void setScreenShots(@NotNull List<String> screenshots) {
+    this.screenShots = screenshots;
+  }
+
+  public String getSuggestedCommercialIde() {
+    return mySuggestedCommercialIde;
+  }
+
+  public void setSuggestedCommercialIde(String commercialIdeCode) {
+    mySuggestedCommercialIde = commercialIdeCode;
+  }
+
+  public @NotNull Collection<String> getSuggestedFeatures() {
+    return suggestedFeatures;
+  }
+
+  public void setSuggestedFeatures(@NotNull Collection<String> features) {
+    suggestedFeatures = features;
+  }
+
+  public @Nullable Collection<String> getDependencyNames() {
+    return dependencyNames;
+  }
+
+  public void setDependencyNames(@Nullable Collection<String> dependencyNames) {
+    this.dependencyNames = dependencyNames;
+  }
+
+  public boolean isConverted() {
+    return myConverted;
+  }
+
+  public void setConverted(boolean converted) {
+    myConverted = converted;
+  }
+
+  @ApiStatus.Internal
+  public FUSEventSource getInstallSource() {
+    return installSource;
+  }
+
+  @ApiStatus.Internal
+  public void setInstallSource(FUSEventSource installSource) {
+    this.installSource = installSource;
+  }
+
+  @ApiStatus.Internal
+  public List<PluginContentModule> getContentModules() {
+    return contentModules;
+  }
+
+  @ApiStatus.Internal
+  public void setContentModules(List<PluginContentModule> contentModules) {
+    this.contentModules = contentModules != null ? contentModules : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public List<PluginModule> getModules() {
+    return modules;
+  }
+
+  @ApiStatus.Internal
+  public void setModules(List<PluginModule> modules) {
+    this.modules = modules != null ? modules : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public List<ModuleDependency> getModuleDependencies() {
+    return moduleDependencies;
+  }
+
+  @ApiStatus.Internal
+  public void setModuleDependencies(List<ModuleDependency> moduleDependencies) {
+    this.moduleDependencies = moduleDependencies != null ? moduleDependencies : Collections.emptyList();
+  }
+
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof PluginNode && id == ((PluginNode)o).id;
+    return this == o ||
+           o instanceof PluginNode && id.equals(((PluginNode)o).id);
   }
 
   @Override
@@ -429,27 +718,32 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public String toString() {
-    return getName();
+  public @NotNull String toString() {
+    return String.format("PluginNode{id=%s, name='%s'}", id, name);
   }
 
-  private static class PluginNodeDependency implements IdeaPluginDependency {
-    private final PluginId myPluginId;
+  private static final class PluginNodeDependency implements IdeaPluginDependency {
+    private final @NotNull PluginId myPluginId;
     private final boolean myOptional;
 
-    private PluginNodeDependency(PluginId id, boolean optional) {
+    private PluginNodeDependency(@NotNull PluginId id, boolean optional) {
       myPluginId = id;
       myOptional = optional;
     }
 
     @Override
-    public PluginId getPluginId() {
+    public @NotNull PluginId getPluginId() {
       return myPluginId;
     }
 
     @Override
     public boolean isOptional() {
       return myOptional;
+    }
+
+    @Override
+    public String toString() {
+      return "PluginNodeDependency{pluginId=" + myPluginId + ", optional=" + myOptional + '}';
     }
   }
 }

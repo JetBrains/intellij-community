@@ -1,31 +1,37 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefGraphAnnotator;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Base class for global inspections. Global inspections work only in batch mode
- * (when the &quot;Analyze / Inspect Code&quot; is invoked) and can access the
- * complete graph of references between classes, methods and other elements in the scope
- * selected for the analysis.
- *
+ * Base class for global inspections.
+ * Global inspections work only in batch mode (when "Analyze / Inspect Code" is invoked)
+ * and can access the complete graph of references between classes, methods and other elements
+ * in the scope selected for the analysis.
+ * <p>
  * Global inspections can use a shared local inspection tool for highlighting the cases
  * that do not need global analysis in the editor by implementing {@link #getSharedLocalInspectionTool()}
  * The shared local inspection tools shares settings and documentation with the global inspection tool.
  *
  * @author anna
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see LocalInspectionTool
  */
 public abstract class GlobalInspectionTool extends InspectionProfileEntry {
-  @NotNull
   @Override
-  protected final String getSuppressId() {
+  public final @NotNull String getSuppressId() {
     return super.getSuppressId();
   }
 
@@ -39,8 +45,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * additional markers or does not use the reference graph at all.
    * @see #isGraphNeeded
    */
-  @Nullable
-  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+  public @Nullable RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return null;
   }
 
@@ -55,10 +60,10 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @param globalContext                the context for the current global inspection run.
    * @param problemDescriptionsProcessor the collector for problems reported by the inspection
    */
-  public void runInspection(@NotNull final AnalysisScope scope,
-                            @NotNull final InspectionManager manager,
-                            @NotNull final GlobalInspectionContext globalContext,
-                            @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+  public void runInspection(final @NotNull AnalysisScope scope,
+                            final @NotNull InspectionManager manager,
+                            final @NotNull GlobalInspectionContext globalContext,
+                            final @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!globalContext.shouldCheck(refEntity, GlobalInspectionTool.this)) return;
@@ -70,8 +75,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
       }
 
       private boolean isInScope(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement) {
-          SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
+        if (refEntity instanceof RefElement refElement) {
+          SmartPsiElementPointer pointer = refElement.getPointer();
           if (pointer != null) {
             VirtualFile virtualFile = pointer.getVirtualFile();
             if (virtualFile != null && !scope.contains(virtualFile)) return false;
@@ -81,8 +86,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
             return owner == null || isInScope(owner);
           }
         }
-        if (refEntity instanceof RefModule) {
-          return scope.containsModule(((RefModule)refEntity).getModule());
+        if (refEntity instanceof RefModule refModule) {
+          return scope.containsModule(refModule.getModule());
         }
         return true;
       }
@@ -124,21 +129,50 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
+   * Only called when {@link #isGlobalSimpleInspectionTool()} returns true.
+   * Processes and reports problems for a single psi file without using the reference graph.
+   *
+   * @param psiFile           the file to check
+   * @param manager        the inspection manager instance for the project on which the inspection was run.
+   * @param problemsHolder used to register problems found.
+   * @param globalContext  the context for the current global inspection run.
+   * @param processor      the collector for problems reported by the inspection (see also {@code problemsHolder}).
+   */
+  public void checkFile(@NotNull PsiFile psiFile,
+                        @NotNull InspectionManager manager,
+                        @NotNull ProblemsHolder problemsHolder,
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor processor) {
+    assert isGlobalSimpleInspectionTool();
+  }
+
+  /**
+   * Should this global inspection be run as a global simple inspection tool?
+   * When true {@link #checkFile} will be called for every file in the inspection scope.
+   * When false {@link #checkElement} and {@link #runInspection} will be called.
+   *
+   * @return true, when this inspection should be run as a global simple inspection tool, false otherwise.
+   */
+  public boolean isGlobalSimpleInspectionTool() {
+    return false;
+  }
+
+  /**
    * Checks if this inspection requires building of the reference graph. The reference graph
-   * is built if at least one of the global inspection has requested that.
+   * is built if at least one of the global inspections has requested it.
    *
    * @return true if the reference graph is required, false if the inspection does not use a
    * reference graph (refEntities) and uses some other APIs for its processing.
    */
   public boolean isGraphNeeded() {
-    return true;
+    return !isGlobalSimpleInspectionTool();
   }
 
   /**
-   * True by default to ensure third party plugins are not broken
-   * 
+   * True by default to ensure third party plugins are not broken.
+   *
    * @return true if inspection should be started ({@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}) in ReadAction,
-   *         false if ReadAction is taken by inspection itself
+   * false if ReadAction is taken by inspection itself
    */
   public boolean isReadActionNeeded() {
     return true;
@@ -162,6 +196,9 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * can add new problems to {@code problemDescriptionsProcessor} or remove some of the problems
    * collected by {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}
    * by calling {@link ProblemDescriptionsProcessor#ignoreElement(RefEntity)}.
+   * <p>
+   * NOTE: if you want to check references in files which are not included in the graph e.g., in xml, which may be located in the scope,
+   * you need to explicitly disable optimization and override {@link #getAdditionalJobs(GlobalInspectionContext)}
    *
    * @param manager                      the inspection manager instance for the project on which the inspection was run.
    * @param globalContext                the context for the current global inspection run.
@@ -178,10 +215,9 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   /**
    * Allows TeamCity plugin to reconstruct quickfixes from server side data
    * @param hint a hint to distinguish different quick fixes for one problem
-   * @return quickfix to be shown in editor when server side inspections are enabled
+   * @return quickfix to show in the editor when server side inspections are enabled
    */
-  @Nullable
-  public QuickFix getQuickFix(final String hint) {
+  public @Nullable QuickFix getQuickFix(final String hint) {
     return null;
   }
 
@@ -190,8 +226,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * @param fix fix to be serialized
    * @return hint to be stored on server
    */
-  @Nullable
-  public String getHint(@NotNull QuickFix fix) {
+  public @Nullable String getHint(@NotNull QuickFix fix) {
     return null;
   }
 
@@ -237,8 +272,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * For example a global inspection that reports a package could have a local inspection tool which highlights
    * the package statement in a file.
    */
-  @Nullable
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return null;
   }
 }

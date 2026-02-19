@@ -1,8 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.psi.impl.source.xml.XmlStubBasedAttribute;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,12 +17,12 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implements XmlAttributeStub<XmlStubBasedAttribute> {
 
-  @NotNull private final String name;
-  @Nullable private final String value;
+  private final @NotNull String name;
+  private final @Nullable String value;
 
   public XmlAttributeStubImpl(@Nullable StubElement<?> parent,
                        @NotNull StubInputStream dataStream,
-                       @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> elementType)
+                       @NotNull IElementType elementType)
     throws IOException {
     super(parent, elementType);
     name = notNull(StringRef.toString(dataStream.readName()), "");
@@ -27,24 +31,22 @@ public class XmlAttributeStubImpl extends StubBase<XmlStubBasedAttribute> implem
 
   public XmlAttributeStubImpl(@NotNull XmlStubBasedAttribute psi,
                        @Nullable StubElement<?> parent,
-                       @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> elementType) {
+                       @NotNull IElementType elementType) {
     super(parent, elementType);
     name = psi.getName();
     value = psi.getValue();
   }
 
-  void serialize(StubOutputStream stream) throws IOException {
+  public void serialize(StubOutputStream stream) throws IOException {
     stream.writeName(name);
     stream.writeName(value);
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
-  @Nullable
-  public String getValue() {
+  public @Nullable String getValue() {
     return value;
   }
 }

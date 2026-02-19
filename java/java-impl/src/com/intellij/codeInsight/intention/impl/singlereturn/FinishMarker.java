@@ -1,12 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -17,7 +39,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.NULL;
@@ -86,8 +112,7 @@ public final class FinishMarker {
       }
       return parent != block;
     }
-    if (!(parent instanceof PsiStatement)) return true;
-    PsiStatement currentContext = (PsiStatement)parent;
+    if (!(parent instanceof PsiStatement currentContext)) return true;
     PsiStatement loopOrSwitch = PsiTreeUtil.getNonStrictParentOfType(currentContext, PsiLoopStatement.class, PsiSwitchStatement.class);
     if (loopOrSwitch != null && PsiTreeUtil.isAncestor(block, loopOrSwitch, true)) {
       currentContext = loopOrSwitch;
@@ -134,27 +159,27 @@ public final class FinishMarker {
 
   private static FinishMarker defineFinishMarker(PsiCodeBlock block, List<? extends PsiReturnStatement> returns, PsiType returnType,
                                                  boolean mayNeedMarker, PsiElementFactory factory) {
-    if (PsiType.VOID.equals(returnType)) {
+    if (PsiTypes.voidType().equals(returnType)) {
       return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
     }
     PsiReturnStatement terminalReturn = tryCast(ArrayUtil.getLastElement(block.getStatements()), PsiReturnStatement.class);
     List<PsiExpression> nonTerminalReturns = StreamEx.<PsiReturnStatement>of(returns).without(terminalReturn)
       .map(PsiReturnStatement::getReturnValue)
       .map(PsiUtil::skipParenthesizedExprDown).toList();
-    if (nonTerminalReturns.size() == 0) {
+    if (nonTerminalReturns.isEmpty()) {
       return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
     }
     Set<Object> nonTerminalReturnValues = StreamEx.of(nonTerminalReturns)
       .map(val -> val instanceof PsiLiteralExpression ? ((PsiLiteralExpression)val).getValue() : NULL)
       .toSet();
     if (!mayNeedMarker) {
-      PsiExpression initValue = findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker);
+      PsiExpression initValue = findBestExpression(terminalReturn, nonTerminalReturns, false);
       if (initValue == null && nonTerminalReturnValues.size() == 1 && nonTerminalReturnValues.iterator().next() != NULL) {
         initValue = nonTerminalReturns.iterator().next();
       }
       return new FinishMarker(FinishMarkerType.SEPARATE_VAR, initValue);
     }
-    if (PsiType.BOOLEAN.equals(returnType)) {
+    if (PsiTypes.booleanType().equals(returnType)) {
       if (nonTerminalReturnValues.size() == 1) {
         Object value = nonTerminalReturnValues.iterator().next();
         if (value instanceof Boolean) {
@@ -164,8 +189,8 @@ public final class FinishMarker {
         }
       }
     }
-    if (PsiType.INT.equals(returnType) || PsiType.LONG.equals(returnType)) {
-      return getMarkerForIntegral(nonTerminalReturns, terminalReturn, mayNeedMarker, returnType, factory);
+    if (PsiTypes.intType().equals(returnType) || PsiTypes.longType().equals(returnType)) {
+      return getMarkerForIntegral(nonTerminalReturns, terminalReturn, returnType, factory);
     }
     if (!(returnType instanceof PsiPrimitiveType)) {
       if (StreamEx.of(nonTerminalReturns).map(ret -> NullabilityUtil.getExpressionNullability(ret, true))
@@ -179,13 +204,12 @@ public final class FinishMarker {
         return new FinishMarker(FinishMarkerType.SEPARATE_VAR, value);
       }
     }
-    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker));
+    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, true));
   }
 
-  @Nullable
-  private static PsiExpression findBestExpression(PsiReturnStatement terminalReturn,
-                                                  List<PsiExpression> nonTerminalReturns,
-                                                  boolean mayNeedMarker) {
+  private static @Nullable PsiExpression findBestExpression(PsiReturnStatement terminalReturn,
+                                                            List<PsiExpression> nonTerminalReturns,
+                                                            boolean mayNeedMarker) {
     List<PsiExpression> bestGroup = StreamEx.of(nonTerminalReturns)
       .filter(FinishMarker::canMoveToStart)
       .groupingBy(PsiExpression::getText, LinkedHashMap::new, Collectors.toList())
@@ -205,16 +229,15 @@ public final class FinishMarker {
     return null;
   }
 
-  @NotNull
-  private static FinishMarker getMarkerForIntegral(List<PsiExpression> nonTerminalReturns,
-                                                   PsiReturnStatement terminalReturn,
-                                                   boolean mayNeedMarker, PsiType returnType, PsiElementFactory factory) {
-    boolean isLong = PsiType.LONG.equals(returnType);
-    LongRangeSet fullSet = requireNonNull(LongRangeSet.fromType(returnType));
+  private static @NotNull FinishMarker getMarkerForIntegral(List<PsiExpression> nonTerminalReturns,
+                                                            PsiReturnStatement terminalReturn,
+                                                            PsiType returnType, PsiElementFactory factory) {
+    boolean isLong = PsiTypes.longType().equals(returnType);
+    LongRangeSet fullSet = requireNonNull(JvmPsiRangeSetUtil.typeRange(returnType));
     LongRangeSet set = nonTerminalReturns.stream()
       .map(CommonDataflow::getExpressionRange)
       .map(range -> range == null ? fullSet : range)
-      .reduce(LongRangeSet::unite)
+      .reduce(LongRangeSet::join)
       .orElse(fullSet);
     if (!set.isEmpty() && !set.contains(fullSet)) {
       PsiExpression terminalReturnValue = terminalReturn == null ? null : terminalReturn.getReturnValue();
@@ -246,7 +269,7 @@ public final class FinishMarker {
         return new FinishMarker(FinishMarkerType.VALUE_NON_EQUAL, factory.createExpressionFromText(text, null));
       }
     }
-    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker));
+    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, true));
   }
 
   @Contract("null -> false")
@@ -258,7 +281,7 @@ public final class FinishMarker {
       if (target instanceof PsiLocalVariable) return false;
       if (target instanceof PsiParameter) {
         PsiElement block = ((PsiParameter)target).getDeclarationScope();
-        return block instanceof PsiMethod && HighlightControlFlowUtil.isEffectivelyFinal(target, block, null);
+        return block instanceof PsiMethod && ControlFlowUtil.isEffectivelyFinal(target, block);
       }
     }
     return true;

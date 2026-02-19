@@ -80,7 +80,7 @@
           <text resource-bundle="messages/ApplicationBundle" key="margin.columns"/>
         </properties>
       </component>
-      <component id="82576" class="com.intellij.ui.components.labels.ActionLink" binding="myResetLink" custom-create="true">
+      <component id="82576" class="com.intellij.ui.components.AnActionLink" binding="myResetLink" custom-create="true">
         <constraints>
           <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -96,7 +96,7 @@
           <text resource-bundle="messages/ApplicationBundle" key="settings.code.style.general.visual.guides.hint"/>
         </properties>
       </component>
-      <component id="b4584" class="com.intellij.ui.components.labels.ActionLink" binding="myResetGuidesLink" custom-create="true">
+      <component id="b4584" class="com.intellij.ui.components.AnActionLink" binding="myResetGuidesLink" custom-create="true">
         <constraints>
           <grid row="2" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

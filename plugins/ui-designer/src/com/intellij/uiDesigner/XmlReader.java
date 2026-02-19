@@ -1,68 +1,72 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
 import com.intellij.uiDesigner.compiler.RecursiveFormNestingException;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.lw.LwAtomicComponent;
+import com.intellij.uiDesigner.lw.LwComponent;
+import com.intellij.uiDesigner.lw.LwContainer;
+import com.intellij.uiDesigner.lw.LwHSpacer;
+import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
+import com.intellij.uiDesigner.lw.LwNestedForm;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.uiDesigner.lw.LwScrollPane;
+import com.intellij.uiDesigner.lw.LwSplitPane;
+import com.intellij.uiDesigner.lw.LwTabbedPane;
+import com.intellij.uiDesigner.lw.LwToolBar;
+import com.intellij.uiDesigner.lw.LwVSpacer;
+import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.make.PsiNestedFormLoader;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
+import com.intellij.uiDesigner.radComponents.RadAtomicComponent;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadErrorComponent;
+import com.intellij.uiDesigner.radComponents.RadHSpacer;
+import com.intellij.uiDesigner.radComponents.RadLayoutManager;
+import com.intellij.uiDesigner.radComponents.RadNestedForm;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadScrollPane;
+import com.intellij.uiDesigner.radComponents.RadSplitPane;
+import com.intellij.uiDesigner.radComponents.RadTabbedPane;
+import com.intellij.uiDesigner.radComponents.RadTable;
+import com.intellij.uiDesigner.radComponents.RadToolBar;
+import com.intellij.uiDesigner.radComponents.RadVSpacer;
+import com.intellij.uiDesigner.radComponents.XYLayoutManagerImpl;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JTable;
+import java.awt.Color;
+import java.awt.LayoutManager;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class XmlReader {
-  private static final Logger LOG = Logger.getInstance(XmlReader.class);
-
   private XmlReader() {
   }
 
-  @NotNull
-  public static RadRootContainer createRoot(final ModuleProvider module, final LwRootContainer lwRootContainer, final ClassLoader loader,
-                                            final Locale stringDescriptorLocale) throws Exception{
+  public static @NotNull RadRootContainer createRoot(final ModuleProvider module, final LwRootContainer lwRootContainer, final ClassLoader loader,
+                                                     final Locale stringDescriptorLocale) throws Exception{
     return (RadRootContainer)createComponent(module, lwRootContainer, loader, stringDescriptorLocale);
   }
 
-  @NotNull
-  public static RadComponent createComponent(@NotNull final ModuleProvider module,
-                                             @NotNull final LwComponent lwComponent,
-                                             @NotNull final ClassLoader loader,
-                                             final Locale stringDescriptorLocale) throws Exception{
+  public static @NotNull RadComponent createComponent(final @NotNull ModuleProvider module,
+                                                      final @NotNull LwComponent lwComponent,
+                                                      final @NotNull ClassLoader loader,
+                                                      final Locale stringDescriptorLocale) throws Exception{
     // Id
     final String id = lwComponent.getId();
     final RadComponent component;
     Class componentClass = null;
 
-    if (lwComponent instanceof LwNestedForm) {
-      LwNestedForm nestedForm = (LwNestedForm) lwComponent;
+    if (lwComponent instanceof LwNestedForm nestedForm) {
       boolean recursiveNesting = false;
       try {
         Utils.validateNestedFormLoop(nestedForm.getFormFileName(), new PsiNestedFormLoader(module.getModule()));
@@ -135,8 +139,7 @@ public final class XmlReader {
       else if (lwComponent instanceof LwToolBar) {
         component = new RadToolBar(module, componentClass, id);
       }
-      else if (lwComponent instanceof LwContainer) {
-        final LwContainer lwContainer = (LwContainer)lwComponent;
+      else if (lwComponent instanceof LwContainer lwContainer) {
         LayoutManager layout = lwContainer.getLayout();
         if (layout instanceof XYLayoutManager) {
           // replace stub layout with the real one
@@ -158,7 +161,7 @@ public final class XmlReader {
             component = new RadContainer(module, componentClass, id);
 
             String layoutManagerName = lwContainer.getLayoutManager();
-            if (layoutManagerName == null || layoutManagerName.length() == 0) {
+            if (layoutManagerName == null || layoutManagerName.isEmpty()) {
               if (layout instanceof XYLayoutManager) {
                 layoutManagerName = UIFormXmlConstants.LAYOUT_XY;
               }
@@ -219,8 +222,7 @@ public final class XmlReader {
       component.getDelegee().putClientProperty(entry.getKey(), value);
     }
 
-    if (component instanceof RadContainer) {
-      final RadContainer container = (RadContainer)component;
+    if (component instanceof RadContainer container) {
       final LwContainer lwContainer = (LwContainer)lwComponent;
 
       copyBorder(container, lwContainer);
@@ -231,8 +233,7 @@ public final class XmlReader {
       }
     }
 
-    if (component instanceof RadRootContainer) {
-      final RadRootContainer radRootContainer = (RadRootContainer)component;
+    if (component instanceof RadRootContainer radRootContainer) {
       final LwRootContainer lwRootContainer = (LwRootContainer)lwComponent;
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());

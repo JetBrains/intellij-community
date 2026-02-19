@@ -1,7 +1,14 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.folding;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonLiteral;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiUtil;
+import com.intellij.json.psi.impl.JsonCollectionPsiPresentationUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -16,16 +23,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Mikhail Golubev
  */
-public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
+public final class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
+  private static final Set<String> PRIORITIZED_KEYS = Set.of("id", "name");
+
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     final List<FoldingDescriptor> descriptors = new ArrayList<>();
     collectDescriptorsRecursively(node, document, descriptors);
-    return descriptors.toArray(FoldingDescriptor.EMPTY);
+    return descriptors.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   private static void collectDescriptorsRecursively(@NotNull ASTNode node,
@@ -52,34 +63,14 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
     }
   }
 
-  @Nullable
   @Override
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  public @Nullable String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == JsonElementTypes.OBJECT) {
-      final JsonObject object = node.getPsi(JsonObject.class);
-      final List<JsonProperty> properties = object.getPropertyList();
-      JsonProperty candidate = null;
-      for (JsonProperty property : properties) {
-        final String name = property.getName();
-        final JsonValue value = property.getValue();
-        if (value instanceof JsonLiteral) {
-          if ("id".equals(name) || "name".equals(name)) {
-            candidate = property;
-            break;
-          }
-          if (candidate == null) {
-            candidate = property;
-          }
-        }
-      }
-      if (candidate != null) {
-        return "{\"" + candidate.getName() + "\": " + candidate.getValue().getText() + "...}";
-      }
-      return "{...}";
+      return buildObjectPlaceholder(node.getPsi(JsonObject.class));
     }
-    else if (type == JsonElementTypes.ARRAY) {
-      return "[...]";
+    else if (type == JsonElementTypes.ARRAY && node.getPsi() instanceof JsonArray arrayNode) {
+      return JsonCollectionPsiPresentationUtils.getCollectionPsiPresentationText(arrayNode);
     }
     else if (type == JsonElementTypes.LINE_COMMENT) {
       return "//...";
@@ -90,13 +81,38 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
     return "...";
   }
 
+  private static String buildObjectPlaceholder(JsonObject object) {
+    List<JsonProperty> properties = object.getPropertyList();
+    JsonFoldingSettings settings = JsonFoldingSettings.getInstance();
+    if (settings.showKeyCount) {
+      return JsonBundle.message("folding.collapsed.object.text", properties.size());
+    }
+    JsonProperty candidate = chooseCandidateProperty(properties, settings);
+    return candidate != null
+           ? "{\"" + candidate.getName() + "\": " + Objects.requireNonNull(candidate.getValue()).getText() + "...}"
+           : JsonCollectionPsiPresentationUtils.getCollectionPsiPresentationText(properties.size());
+  }
+
+  private static @Nullable JsonProperty chooseCandidateProperty(List<JsonProperty> properties, JsonFoldingSettings settings) {
+    JsonProperty candidate = null;
+    for (JsonProperty property : properties) {
+      if (!(property.getValue() instanceof JsonLiteral)) continue;
+      if (!settings.showFirstKey && PRIORITIZED_KEYS.contains(property.getName())) {
+        return property;
+      }
+      if (candidate == null) {
+        candidate = property;
+      }
+    }
+    return candidate;
+  }
+
   @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return false;
   }
 
-  @NotNull
-  public static Couple<PsiElement> expandLineCommentsRange(@NotNull PsiElement anchor) {
+  public static @NotNull Couple<PsiElement> expandLineCommentsRange(@NotNull PsiElement anchor) {
     return Couple.of(JsonPsiUtil.findFurthestSiblingOfSameType(anchor, false), JsonPsiUtil.findFurthestSiblingOfSameType(anchor, true));
   }
 

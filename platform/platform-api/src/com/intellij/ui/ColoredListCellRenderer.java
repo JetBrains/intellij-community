@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ui.list.ListCellBackgroundSupplier;
@@ -6,16 +6,19 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Rectangle;
 
 /**
  * SimpleColoredComponent-based list cell renderer.
  *
  * @see SimpleListCellRenderer for a simpler JBLabel-based variant.
  * @see ListCellBackgroundSupplier for different background color.
- *
- * @author Vladimir Kondratyev
  */
 public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer<T> {
 
@@ -67,13 +70,12 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   }
 
   @Override
-  void revalidateAndRepaint() {
+  protected void revalidateAndRepaint() {
     // no need for this in a renderer
   }
 
   @Override
-  @NotNull
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     // There is a bug in BasicComboPopup. It does not add renderer into CellRendererPane,
     // so font can be null here.
 

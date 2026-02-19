@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
@@ -11,20 +11,27 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ColoredProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Eugene Zhuravlev
@@ -46,9 +53,8 @@ public class ToolRunProfile implements ModuleRunProfile{
     //}
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return expandMacrosInName(myTool, myContext);
   }
 
@@ -71,7 +77,7 @@ public class ToolRunProfile implements ModuleRunProfile{
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
+  public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
     final Project project = env.getProject();
     if (myCommandLine == null) {
       // can return null if creation of cmd line has been cancelled
@@ -84,8 +90,7 @@ public class ToolRunProfile implements ModuleRunProfile{
       }
 
       @Override
-      @NotNull
-      protected OSProcessHandler startProcess() throws ExecutionException {
+      protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
         final GeneralCommandLine commandLine = createCommandLine();
         final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine);
         ProcessTerminatedListener.attach(processHandler);
@@ -93,18 +98,19 @@ public class ToolRunProfile implements ModuleRunProfile{
       }
 
       @Override
-      @NotNull
-      public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+      public @NotNull ExecutionResult execute(final @NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
         final ExecutionResult result = super.execute(executor, runner);
         final ProcessHandler processHandler = result.getProcessHandler();
         if (processHandler != null) {
           processHandler.addProcessListener(new ToolProcessAdapter(project, myTool.synchronizeAfterExecution(), getName()));
-          processHandler.addProcessListener(new ProcessAdapter() {
+          processHandler.addProcessListener(new ProcessListener() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
               if ((outputType == ProcessOutputTypes.STDOUT && myTool.isShowConsoleOnStdOut())
                 || (outputType == ProcessOutputTypes.STDERR && myTool.isShowConsoleOnStdErr())) {
-                RunContentManager.getInstance(project).toFrontRunContent(executor, processHandler);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  RunContentManager.getInstance(project).toFrontRunContent(executor, processHandler);
+                }, project.getDisposed());
               }
             }
           });

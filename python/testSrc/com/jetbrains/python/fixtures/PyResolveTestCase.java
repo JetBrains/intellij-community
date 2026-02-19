@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.editor.Document;
@@ -8,7 +8,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.TestDataFile;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -19,9 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author yole
- */
+
 public abstract class PyResolveTestCase extends PyTestCase {
   @NonNls protected static final String MARKER = "<ref>";
 
@@ -131,10 +133,35 @@ public abstract class PyResolveTestCase extends PyTestCase {
     return offset;
   }
 
+  public static int findMarkerOffset(final PsiFile psiFile, @NotNull String marker) {
+    // TODO: harmonize with CythonResolveTest synax
+    // TODO: check and fix work with single letter identifiers
+    Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    assert document != null;
+    int offset = -1;
+    for (int i=1; i<document.getLineCount(); i++) {
+      int lineStart = document.getLineStartOffset(i);
+      int lineEnd = document.getLineEndOffset(i);
+      final int index=document.getCharsSequence().subSequence(lineStart, lineEnd).toString().indexOf(marker);
+      if (index>0) {
+        offset = document.getLineStartOffset(i-1) + index;
+      }
+    }
+    assertTrue(marker + " in test file not found", offset >= 0);
+    return offset;
+  }
+
   @NotNull
   public static PsiReference findReferenceByMarker(PsiFile psiFile) {
     final PsiReference ref = psiFile.findReferenceAt(findMarkerOffset(psiFile));
     assertNotNull("No reference found at <ref> position", ref);
+    return ref;
+  }
+
+  @NotNull
+  public static PsiReference findReferenceByMarker(PsiFile psiFile, @NotNull String marker) {
+    final PsiReference ref = psiFile.findReferenceAt(findMarkerOffset(psiFile, marker));
+    assertNotNull("No reference found at " + marker + " position", ref);
     return ref;
   }
 

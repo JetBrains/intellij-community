@@ -1,0 +1,3 @@
+com.intellij.lambda.sampleTestsWithFixtures.util.SetLambdaPluginCallback
+com.intellij.lambda.sampleTestsWithFixtures.util.IdeConfigSetup
+com.intellij.lambda.sampleTestsWithFixtures.util.CleanApplicationStateExtension

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -15,20 +15,20 @@ public enum LeafState {
    */
   ALWAYS,
   /**
-   * Specifies that a tree should always show the collapse/expand icon for the node, even if this node have no children.
+   * Specifies that a tree should always show the collapse/expand icon for the node, even if this node has no children.
    *
    * @see AbstractTreeNode#isAlwaysShowPlus()
    */
   NEVER,
   /**
-   * Specifies that a tree should show the collapse/expand icon for the node, only if this node have some children.
+   * Specifies that a tree should show the collapse/expand icon for the node only if this node has some children.
    * By default, children are counted immediately that may cause performance problems.
    *
    * @see TreeModel#getChildCount(Object)
    */
   DEFAULT,
   /**
-   * Specifies that a tree should show the collapse/expand icon for the node, only if this node have some children.
+   * Specifies that a tree should show the collapse/expand icon for the node only if this node has some children.
    * In this mode children are counted later that may cause a "blinking" of the collapse/expand icon.
    */
   ASYNC;
@@ -47,8 +47,7 @@ public enum LeafState {
    * @return a leaf state of the specified tree node, or {@link #DEFAULT} value
    */
   @ApiStatus.Internal
-  @NotNull
-  public static LeafState get(@NotNull Object node) {
+  public static @NotNull LeafState get(@NotNull Object node) {
     return node instanceof Supplier ? ((Supplier)node).getLeafState() : DEFAULT;
   }
 
@@ -58,8 +57,7 @@ public enum LeafState {
    * @return a resolved leaf state of the specified tree node according to the given model
    */
   @ApiStatus.Internal
-  @NotNull
-  public static LeafState get(@NotNull Object node, @NotNull TreeModel model) {
+  public static @NotNull LeafState get(@NotNull Object node, @NotNull TreeModel model) {
     LeafState state = get(node);
     return state != DEFAULT ? state : model.isLeaf(node) ? ALWAYS : NEVER;
   }

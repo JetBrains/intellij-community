@@ -1,29 +1,38 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -36,6 +45,11 @@ import java.util.List;
 public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/refactoring/extractMethod/";
   private boolean myCatchOnNewLine = true;
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk21();
+  }
 
   @NotNull
   @Override
@@ -262,19 +276,25 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTestWithJava17();
   }
 
+  public void testStringTemplateJava21Preview() throws Exception {
+    doTest();
+  }
+
+  public void testStringTemplateExceptionJava21Preview() throws Exception {
+    doTest();
+  }
+
   private void doTestWithJava17() throws Exception {
     doTestWithLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
   private void doTestWithLanguageLevel(LanguageLevel languageLevel) throws Exception {
-    LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), languageLevel);
     try {
-      projectExtension.setLanguageLevel(languageLevel);
       doTest();
     }
     finally {
-      projectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 
@@ -505,7 +525,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testForceBraces() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     int old = settings.IF_BRACE_FORCE;
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     try {
@@ -942,7 +962,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
   
   public void testPatternVariable() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testPatternVariableIntroduced() throws Exception {
@@ -954,7 +974,27 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariableIntroduced3() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
+  }
+
+  public void testRecordPatternIntroduced() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced2() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced3() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced4() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testRecordPatternIntroduced5() throws Exception {
+    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
@@ -969,7 +1009,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testSimpleMethodsInOneLine() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     doTest();
@@ -1016,20 +1056,20 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testMakeVoidMethodReturnVariable() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testNoReturnTypesSuggested() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testMultipleVarsInMethodNoReturnStatementAndAssignment() throws Exception {
     //return type should not be suggested but still
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testReassignFinalFieldInside() throws Exception {
-    doTestReturnTypeChanged(PsiType.INT);
+    doTestReturnTypeChanged(PsiTypes.intType());
   }
 
   public void testShortenClassRefsInNewReturnType() throws Exception {
@@ -1196,7 +1236,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testQualifyWhenConflictingNamePresent() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1431,7 +1471,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestDisabledParam() throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1441,7 +1481,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestReturnTypeChanged(PsiType type) throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1451,7 +1491,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestPassFieldsAsParams() throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1479,7 +1519,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTest() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     doTest(true);
@@ -1571,7 +1611,7 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
       elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     }
     if (elements.length == 0) {
-      final PsiExpression expression = IntroduceVariableBase.getSelectedExpression(project, file, startOffset, endOffset);
+      final PsiExpression expression = IntroduceVariableUtil.getSelectedExpression(project, file, startOffset, endOffset);
       if (expression != null) {
         elements = new PsiElement[]{expression};
       }
@@ -1588,10 +1628,10 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     }
 
     if (doRefactor) {
-      processor.testTargetClass(targetClass);
+      processor.setTargetClass(targetClass);
       processor.testPrepare(returnType, makeStatic);
       if (methodVisibility != null) processor.setMethodVisibility(methodVisibility);
-      processor.testNullability();
+      processor.prepareNullability();
       for (int param : disabledParams) {
         processor.doNotPassParameter(param);
       }

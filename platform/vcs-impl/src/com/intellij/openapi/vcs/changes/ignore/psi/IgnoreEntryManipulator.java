@@ -32,9 +32,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class IgnoreEntryManipulator extends AbstractElementManipulator<IgnoreEntry> {
+@ApiStatus.Internal
+public final class IgnoreEntryManipulator extends AbstractElementManipulator<IgnoreEntry> {
   /**
    * Changes the element's text to a new value
    *
@@ -47,10 +49,9 @@ public class IgnoreEntryManipulator extends AbstractElementManipulator<IgnoreEnt
   @Override
   public IgnoreEntry handleContentChange(@NotNull IgnoreEntry entry, @NotNull TextRange range, String newContent)
     throws IncorrectOperationException {
-    if (!(entry.getLanguage() instanceof IgnoreLanguage)) {
+    if (!(entry.getLanguage() instanceof IgnoreLanguage language)) {
       return entry;
     }
-    IgnoreLanguage language = (IgnoreLanguage)entry.getLanguage();
     IgnoreFileType fileType = (IgnoreFileType)language.getAssociatedFileType();
     assert fileType != null;
     PsiFile file = PsiFileFactory.getInstance(entry.getProject())
@@ -66,9 +67,8 @@ public class IgnoreEntryManipulator extends AbstractElementManipulator<IgnoreEnt
    * @param element element to be changed
    * @return range
    */
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull IgnoreEntry element) {
+  public @NotNull TextRange getRangeInElement(@NotNull IgnoreEntry element) {
     IgnoreNegation negation = element.getNegation();
     if (negation != null) {
       return TextRange.create(

@@ -1,19 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
-class MayaSdkFlavor private constructor() : CPythonSdkFlavor() {
+@ApiStatus.Internal
 
-  override fun isValidSdkHome(path: String): Boolean {
-    val file = File(path)
-    return file.isFile && isValidSdkPath(file) || isMayaFolder(file)
-  }
+class MayaSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>() {
+  override fun getFlavorDataClass(): Class<PyFlavorData.Empty>  = PyFlavorData.Empty::class.java
 
-  override fun isValidSdkPath(file: File): Boolean {
-    val name = FileUtil.getNameWithoutExtension(file).toLowerCase()
+  override fun isValidSdkPath(pathStr: String): Boolean {
+    val name = FileUtil.getNameWithoutExtension(pathStr).lowercase()
     return name.startsWith("mayapy")
   }
 
@@ -36,5 +35,5 @@ class MayaSdkFlavor private constructor() : CPythonSdkFlavor() {
 
 
 class MayaFlavorProvider: PythonFlavorProvider {
-  override fun getFlavor(platformIndependent: Boolean): MayaSdkFlavor = MayaSdkFlavor.INSTANCE
+  override fun getFlavor(): MayaSdkFlavor = MayaSdkFlavor.INSTANCE
 }

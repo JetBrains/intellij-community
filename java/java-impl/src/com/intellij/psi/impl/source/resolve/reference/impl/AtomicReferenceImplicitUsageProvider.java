@@ -1,34 +1,50 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ATOMIC_INTEGER_FIELD_UPDATER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ATOMIC_LONG_FIELD_UPDATER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ATOMIC_REFERENCE_FIELD_UPDATER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.NEW_UPDATER;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isCallToMethod;
 import static com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprUp;
 
-/**
- * @author Pavel.Dolgov
- */
-public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvider {
-  private static final Set<String> ourUpdateMethods = ContainerUtil.set(
+public final class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvider {
+  private static final Set<String> ourUpdateMethods = Set.of(
     "compareAndSet", "weakCompareAndSet", "set", "lazySet", "getAndSet", "getAndIncrement", "getAndDecrement", "getAndAdd",
     "incrementAndGet", "decrementAndGet", "addAndGet", "getAndUpdate", "updateAndGet", "getAndAccumulate", "accumulateAndGet");
 
@@ -44,22 +60,19 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
 
   @Override
   public boolean isImplicitWrite(@NotNull PsiElement element) {
-    if (element instanceof PsiField) {
-      PsiField field = (PsiField)element;
-      if (field.hasModifierProperty(PsiModifier.VOLATILE)) {
-        return CachedValuesManager.getCachedValue(field, () ->
-          new CachedValueProvider.Result<>(isAtomicWrite(field), PsiModificationTracker.MODIFICATION_COUNT));
-      }
+    if (element instanceof PsiField field && field.hasModifierProperty(PsiModifier.VOLATILE)) {
+      return CachedValuesManager.getCachedValue(field, () ->
+        new CachedValueProvider.Result<>(isAtomicWrite(field), PsiModificationTracker.MODIFICATION_COUNT));
     }
     return false;
   }
 
   private static boolean isAtomicWrite(@NotNull PsiField field) {
     PsiType type = field.getType();
-    if (PsiType.INT.equals(type)) {
+    if (PsiTypes.intType().equals(type)) {
       return isAtomicWrite(field, ATOMIC_INTEGER_FIELD_UPDATER);
     }
-    if (PsiType.LONG.equals(type)) {
+    if (PsiTypes.longType().equals(type)) {
       return isAtomicWrite(field, ATOMIC_LONG_FIELD_UPDATER);
     }
     if (!(type instanceof PsiPrimitiveType)) {
@@ -87,19 +100,15 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     }
     PsiElement callParent = skipParenthesizedExprUp(methodCall.getParent());
     PsiVariable updaterVariable = null;
-    if (callParent instanceof PsiVariable && skipParenthesizedExprDown(((PsiVariable)callParent).getInitializer()) == methodCall) {
-      updaterVariable = (PsiVariable)callParent;
+    if (callParent instanceof PsiVariable var && skipParenthesizedExprDown(var.getInitializer()) == methodCall) {
+      updaterVariable = var;
     }
-    else if (callParent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)callParent;
-      if (assignment.getOperationTokenType() == JavaTokenType.EQ && skipParenthesizedExprDown(assignment.getRExpression()) == methodCall) {
-        PsiExpression lExpression = skipParenthesizedExprDown(assignment.getLExpression());
-        if (lExpression instanceof PsiReferenceExpression) {
-          PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
-          if (resolved instanceof PsiVariable) {
-            updaterVariable = (PsiVariable)resolved;
-          }
-        }
+    else if (callParent instanceof PsiAssignmentExpression assignment) {
+      if (assignment.getOperationTokenType() == JavaTokenType.EQ &&
+          skipParenthesizedExprDown(assignment.getRExpression()) == methodCall &&
+          skipParenthesizedExprDown(assignment.getLExpression()) instanceof PsiReferenceExpression refExpr &&
+          refExpr.resolve() instanceof PsiVariable var) {
+        updaterVariable = var;
       }
     }
     if (updaterVariable != null && InheritanceUtil.isInheritor(updaterVariable.getType(), updaterName)) {
@@ -116,6 +125,7 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     PsiReferenceExpression methodExpression = ObjectUtils.tryCast(skipParenthesizedExprUp(element.getParent()), PsiReferenceExpression.class);
     if (methodExpression != null &&
         (methodExpression instanceof PsiMethodReferenceExpression || methodExpression.getParent() instanceof PsiMethodCallExpression) &&
+        methodExpression.getReferenceName() != null &&
         ourUpdateMethods.contains(methodExpression.getReferenceName()) &&
         skipParenthesizedExprDown(methodExpression.getQualifierExpression()) == element) {
 
@@ -124,8 +134,7 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     return true;
   }
 
-  @Nullable
-  private static SearchScope getCheapSearchScope(@NotNull PsiField field) {
+  private static @Nullable SearchScope getCheapSearchScope(@NotNull PsiField field) {
     SearchScope scope = field.getUseScope();
     if (scope instanceof LocalSearchScope) {
       return scope;
@@ -136,7 +145,7 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
 
     if (scope instanceof GlobalSearchScope &&
-        searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, null, null) == FEW_OCCURRENCES) {
+        searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, null) == FEW_OCCURRENCES) {
       return scope;
     }
     return null;

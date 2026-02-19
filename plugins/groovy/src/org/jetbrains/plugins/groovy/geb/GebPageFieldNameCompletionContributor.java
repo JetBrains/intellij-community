@@ -16,7 +16,11 @@
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.util.Pair;
@@ -30,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.util.FieldInitializerTailTypes;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GebPageFieldNameCompletionContributor extends CompletionContributor {
+public final class GebPageFieldNameCompletionContributor extends CompletionContributor {
 
   public GebPageFieldNameCompletionContributor() {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(GroovyTokenTypes.mIDENT).withParent(

@@ -1,4 +1,4 @@
-// "Fix all 'Map.forEach() can be used' problems in file" "true"
+// "Fix all ''Map.forEach()' can be used' problems in file" "true"
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -91,5 +91,12 @@ public class Test {
       map.forEach((key, value) -> {
           //long comment
       });
+  }
+
+  void expressionStatement(Map<String, String> map) {
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      String value = entry.getValue();
+      entry.getValue();
+    }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.java.JavaBundle;
@@ -27,17 +13,17 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class JavaClassReferenceCompletionContributor extends CompletionContributor implements DumbAware {
+import java.util.List;
+
+public final class JavaClassReferenceCompletionContributor extends CompletionContributor implements DumbAware {
   @Override
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
     JavaClassReference reference = findJavaClassReference(context.getFile(), context.getStartOffset());
-    if (reference != null && reference.getExtendClassNames() != null) {
+    if (reference != null && !reference.getSuperClasses().isEmpty()) {
       JavaClassReferenceSet set = reference.getJavaClassReferenceSet();
       context.setReplacementOffset(set.getRangeInElement().getEndOffset() + set.getElement().getTextRange().getStartOffset());
     }
@@ -51,14 +37,14 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
       return;
     }
 
-    String[] extendClassNames = reference.getExtendClassNames();
+    List<String> extendClassNames = reference.getSuperClasses();
     PsiElement context = reference.getCompletionContext();
-    if (extendClassNames != null && context instanceof PsiPackage) {
+    if (!extendClassNames.isEmpty() && context instanceof PsiPackage) {
       if (parameters.getCompletionType() == CompletionType.SMART) {
         JavaClassReferenceSet set = reference.getJavaClassReferenceSet();
         int setStart = set.getRangeInElement().getStartOffset() + set.getElement().getTextRange().getStartOffset();
         String fullPrefix = parameters.getPosition().getContainingFile().getText().substring(setStart, parameters.getOffset());
-        reference.processSubclassVariants((PsiPackage)context, extendClassNames, result.withPrefixMatcher(fullPrefix));
+        reference.processSubclassVariants((PsiPackage)context, ArrayUtil.toStringArray(extendClassNames), result.withPrefixMatcher(fullPrefix));
         return;
       }
       result.addLookupAdvertisement(JavaBundle.message("press.0.to.see.inheritors.of.1",
@@ -70,7 +56,7 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
       return;
     }
 
-    if (parameters.isExtendedCompletion() || parameters.getCompletionType() == CompletionType.CLASS_NAME) {
+    if (parameters.isExtendedCompletion()) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, result);
     }
     else {
@@ -79,8 +65,7 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
     result.stopHere();
   }
 
-  @Nullable
-  public static JavaClassReference findJavaClassReference(final PsiFile file, final int offset) {
+  public static @Nullable JavaClassReference findJavaClassReference(final PsiFile file, final int offset) {
     PsiReference reference = file.findReferenceAt(offset);
     if (reference instanceof PsiMultiReference) {
       for (final PsiReference psiReference : ((PsiMultiReference)reference).getReferences()) {

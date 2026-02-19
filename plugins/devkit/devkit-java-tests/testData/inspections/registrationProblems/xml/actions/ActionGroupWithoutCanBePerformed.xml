@@ -1,0 +1,6 @@
+<idea-plugin>
+  <actions>
+    <action id="myAction" class="foo.bar.BarAction"/>
+    <group id="groupWithUseShortcutOf" class="foo.bar.GroupWithoutCanBePerformed" use-shortcut-of="myAction"/>
+  </actions>
+</idea-plugin>

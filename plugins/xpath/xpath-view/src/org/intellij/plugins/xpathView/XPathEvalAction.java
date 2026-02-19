@@ -16,6 +16,7 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.find.FindSettings;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
@@ -43,9 +44,15 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Processor;
-import icons.XpathIcons;
 import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
@@ -59,7 +66,7 @@ import org.jaxen.saxpath.SAXPathException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -120,7 +127,7 @@ public class XPathEvalAction extends XPathAction {
   @Override
     protected void updateToolbar(AnActionEvent event) {
         super.updateToolbar(event);
-    event.getPresentation().setIcon(XpathIcons.Xml);
+    event.getPresentation().setIcon(AllIcons.FileTypes.Xml);
   }
 
     @Override
@@ -221,9 +228,8 @@ public class XPathEvalAction extends XPathAction {
             LOG.debug("result = " + result);
             LOG.assertTrue(result != null, "null result?");
 
-            if (result instanceof List<?>) {
-                final List<?> list = (List<?>)result;
-                if (!list.isEmpty()) {
+            if (result instanceof List<?> list) {
+              if (!list.isEmpty()) {
                     if (cfg.HIGHLIGHT_RESULTS) {
                         highlightResult(contextNode, editor, list);
                     }
@@ -285,14 +291,13 @@ public class XPathEvalAction extends XPathAction {
         });
     }
 
-    public static void showUsageView(@NotNull final Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
+    public static void showUsageView(final @NotNull Project project, MyUsageTarget usageTarget, Factory<UsageSearcher> searcherFactory, final EditExpressionAction editAction) {
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText("XPath Expression");
+        presentation.setTargetsNodeText(XPathBundle.message("list.item.xpath.expression"));
         presentation.setCodeUsages(false);
         presentation.setCodeUsagesString(XPathBundle.message("list.item.found.matches"));
         presentation.setNonCodeUsagesString(XPathBundle.message("list.item.result"));
-        presentation.setUsagesString("XPath Result");
-        presentation.setUsagesWord(XPathBundle.message("match"));
+        presentation.setUsagesString(XPathBundle.message("xpath.result"));
         final ItemPresentation targetPresentation = usageTarget.getPresentation();
         if (targetPresentation != null) {
           presentation
@@ -318,7 +323,7 @@ public class XPathEvalAction extends XPathAction {
                 new UsageViewManager.UsageViewStateListener() {
                     @Override
                     public void usageViewCreated(@NotNull UsageView usageView) {
-                        usageView.addButtonToLowerPane(editAction, "&Edit Expression");
+                        usageView.addButtonToLowerPane(editAction, XPathBundle.message("button.edit.expression.with.mnemonic"));
                     }
 
                     @Override
@@ -333,8 +338,7 @@ public class XPathEvalAction extends XPathAction {
      * @return The expression or {@code null} if the user hits the cancel button
      * @param project The project to take the history from
      */
-    @Nullable
-    private EvalExpressionDialog.Context inputXPathExpression(final Project project, XmlElement contextNode) {
+    private static @Nullable EvalExpressionDialog.Context inputXPathExpression(final Project project, XmlElement contextNode) {
         final XPathProjectComponent pc = XPathProjectComponent.getInstance(project);
         LOG.assertTrue(pc != null);
 
@@ -365,7 +369,7 @@ public class XPathEvalAction extends XPathAction {
      *
      * @param editor The editor object to apply the highlighting to
      */
-    private void highlightResult(XmlElement contextNode, @NotNull final Editor editor, final List<?> list) {
+    private static void highlightResult(XmlElement contextNode, final @NotNull Editor editor, final List<?> list) {
 
         final Config cfg = XPathAppComponent.getInstance().getConfig();
         int lowestOffset = Integer.MAX_VALUE;
@@ -373,10 +377,9 @@ public class XPathEvalAction extends XPathAction {
         for (final Object o : list) {
             LOG.assertTrue(o != null, "null element?");
 
-            if (o instanceof PsiElement) {
-                final PsiElement element = (PsiElement)o;
+            if (o instanceof PsiElement element) {
 
-                if (element.getContainingFile() == contextNode.getContainingFile()) {
+              if (element.getContainingFile() == contextNode.getContainingFile()) {
                     lowestOffset = highlightElement(editor, element, cfg, lowestOffset);
                 }
             } else {
@@ -433,20 +436,6 @@ public class XPathEvalAction extends XPathAction {
         public ItemPresentation getPresentation() {
             return myItemPresentation;
         }
-
-        @Override
-        public void navigate(boolean requestFocus) {
-        }
-
-        @Override
-        public boolean canNavigate() {
-            return false;
-        }
-
-        @Override
-        public boolean canNavigateToSource() {
-            return false;
-        }
     }
 
     private static class MyUsageSearcher implements UsageSearcher {
@@ -461,7 +450,7 @@ public class XPathEvalAction extends XPathAction {
         }
 
         @Override
-        public void generate(@NotNull final Processor<? super Usage> processor) {
+        public void generate(final @NotNull Processor<? super Usage> processor) {
             Runnable runnable = () -> {
                 final List<?> list;
                 if (myResult.isEmpty()) {
@@ -493,9 +482,8 @@ public class XPathEvalAction extends XPathAction {
                 for (int i = 0; i < size; i++) {
                     indicator.checkCanceled();
                     Object o = list.get(i);
-                    if (o instanceof PsiElement) {
-                        final PsiElement element = (PsiElement)o;
-                        processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
+                    if (o instanceof PsiElement element) {
+                      processor.process(new UsageInfo2UsageAdapter(new UsageInfo(element)));
                         indicator.setText2(element.getContainingFile().getName());
                     }
                     indicator.setFraction(i / (double)size);

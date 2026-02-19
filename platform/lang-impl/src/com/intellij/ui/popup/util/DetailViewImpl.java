@@ -1,10 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.util;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -21,13 +26,18 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
 * @author zajac
@@ -36,6 +46,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private final Project myProject;
   private final UserDataHolderBase myDataHolderBase = new UserDataHolderBase();
   private final JLabel myLabel = new JLabel("", SwingConstants.CENTER);
+  private final Collection<EditorChangedListener> myEditorChangedListeners = new ArrayList<>();
 
   private Editor myEditor;
   private ItemWrapper myWrapper;
@@ -43,7 +54,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private JPanel myDetailPanelWrapper;
   private RangeHighlighter myHighlighter;
   private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
-  private @NlsContexts.Label String myEmptyLabel = UIBundle.message("message.nothingToShow");
+  private @NlsContexts.Label String myEmptyLabel = IdeCoreBundle.message("message.nothingToShow");
 
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
@@ -99,6 +110,9 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
 
   public void setEditor(Editor editor) {
     myEditor = editor;
+    for (EditorChangedListener listener : myEditorChangedListeners) {
+      listener.editorChanged(editor);
+    }
   }
 
   @Override
@@ -139,8 +153,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     }
   }
 
-  @NotNull
-  protected Editor createEditor(@Nullable Project project, Document document, VirtualFile file) {
+  protected @NotNull Editor createEditor(@Nullable Project project, Document document, @NotNull VirtualFile file) {
     EditorEx editor = (EditorEx)EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW);
 
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -172,7 +185,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   }
 
   @Override
-  public void setPropertiesPanel(@Nullable final JPanel panel) {
+  public void setPropertiesPanel(final @Nullable JPanel panel) {
     if (panel == null) {
       if (myDetailPanelWrapper != null) {
         myDetailPanelWrapper.removeAll();
@@ -210,5 +223,16 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     myDataHolderBase.putUserData(key, value);
+  }
+
+  @ApiStatus.Internal
+  public void addEditorChangedListener(EditorChangedListener listener) {
+    myEditorChangedListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  @FunctionalInterface
+  public interface EditorChangedListener {
+    void editorChanged(@Nullable Editor newEditor);
   }
 }

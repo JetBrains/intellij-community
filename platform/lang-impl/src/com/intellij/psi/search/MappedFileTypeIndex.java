@@ -1,0 +1,543 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.search;
+
+import com.intellij.diagnostic.LoadingState;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
+import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.StorageUpdate;
+import com.intellij.util.indexing.containers.BitSetAsRAIntContainer;
+import com.intellij.util.indexing.containers.IntHashSetAsRAIntContainer;
+import com.intellij.util.indexing.containers.IntIdsIterator;
+import com.intellij.util.indexing.containers.RandomAccessIntContainer;
+import com.intellij.util.indexing.containers.UpgradableRandomAccessIntContainer;
+import com.intellij.util.indexing.impl.ValueContainerImpl;
+import com.intellij.util.io.ClosedStorageException;
+import com.intellij.util.system.OS;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import kotlin.ranges.IntRange;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.IntConsumer;
+
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getIntProperty;
+
+@Internal
+public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
+  private static final Logger LOG = Logger.getInstance(MappedFileTypeIndex.class);
+
+  private static final int INVERTED_INDEX_SIZE_THRESHOLD = getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 16384);
+
+  /** reduce the risk of JVM crash for Linux and macOS */
+  private static final boolean USE_UNMAP_FOR_INDEX_DISPOSAL = getBooleanProperty(
+    "mapped-file-type-index.use-unmap-for-dispose",
+    OS.CURRENT == OS.Windows
+  );
+
+  private final @NotNull MappedFileTypeIndex.IndexDataController myDataController;
+
+  public MappedFileTypeIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException, StorageException {
+    super(extension);
+
+    var storageFile = getStorageFile();
+    Path forwardIndexStorageFile = storageFile.resolveSibling(storageFile.getFileName().toString() + ".index.mmap");
+    IndexDataController.ForwardIndexFileController forwardIndex = new ForwardIndexFileControllerOverMappedFile(
+      forwardIndexStorageFile
+    );
+
+    Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
+    forwardIndex.processEntries((inputId, data) -> {
+      if (data != 0) {
+        invertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
+      }
+    });
+    myDataController = new IndexDataController(invertedIndex, forwardIndex, id -> notifyInvertedIndexChangedForFileTypeId(id));
+  }
+
+  private static short checkFileTypeIdIsShort(int fileTypeId) {
+    assert fileTypeId < Short.MAX_VALUE : "file type id = " + fileTypeId;
+    return (short)fileTypeId;
+  }
+
+  @Override
+  public long getModificationStamp() {
+    return myDataController.getModificationStamp();
+  }
+
+  @Override
+  protected void processFileIdsForFileTypeId(int fileTypeId, @NotNull IntConsumer consumer) {
+    for (IntIdsIterator it = myDataController.getFileIds(checkFileTypeIdIsShort(fileTypeId)); it.hasNext(); ) {
+      consumer.accept(it.next());
+    }
+  }
+
+  @Override
+  public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
+    try {
+      int fileTypeId = getFileTypeId(content == null ? null : content.getFileType());
+      if (LOG.isTraceEnabled()) {
+        if (content == null) {
+          LOG.trace("Map input: inputId(" + inputId + ") -> null, because content is null");
+        }
+        else {
+          LOG.trace("Map input: inputId(" + inputId + ") -> fileType(" + content.getFileType() + ", fileTypeId=" + fileTypeId + ")");
+        }
+      }
+      return () -> updateIndex(inputId, checkFileTypeIdIsShort(fileTypeId));
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  protected int getIndexedFileTypeId(int fileId) throws StorageException {
+    myLock.readLock().lock();
+    try {
+      return myDataController.getIndexedData(fileId);
+    }
+    finally {
+      myLock.readLock().unlock();
+    }
+  }
+
+  private @NotNull Boolean updateIndex(int inputId, short fileTypeId) {
+    myLock.writeLock().lock();
+    try {
+      if (myInMemoryMode.get()) {
+        throw new IllegalStateException("file type index should not be updated for unsaved changes");
+      }
+      else {
+        myDataController.setAssociation(inputId, fileTypeId);
+      }
+    }
+    catch (StorageException e) {
+      LOG.error(e);
+      return Boolean.FALSE;
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
+    return Boolean.TRUE;
+  }
+
+  @Override
+  public void flush() throws StorageException {
+    myDataController.flush();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return myDataController.isDirty();
+  }
+
+  @Override
+  public void clear() throws StorageException {
+    try {
+      myDataController.clear();
+    } finally {
+      super.clear();
+    }
+  }
+
+  @Override
+  public void dispose() {
+    try {
+      myDataController.close();
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+    finally {
+      super.dispose();
+    }
+  }
+
+  private static final class IndexDataController {
+    private final @NotNull Int2ObjectMap<RandomAccessIntContainer> myInvertedIndex;
+    private final @NotNull MappedFileTypeIndex.IndexDataController.ForwardIndexFileController myForwardIndex;
+    private final @NotNull IntConsumer myInvertedIndexChangeCallback;
+
+    private static final boolean EXTRA_CONSISTENCY_CHECKS =
+      getBooleanProperty("mapped-file-type-index.extra-consistency-checks", ApplicationManager.getApplication().isEAP());
+    private final @Nullable ExtraChecksInfo myExtraChecksInfo;
+    private static final AtomicInteger myInconsistenciesLogged = new AtomicInteger(0);
+    private static final int MAX_INCONSISTENCIES_TO_LOG = 10;
+
+    private record ExtraChecksInfo(int initMaxAllocatedId, List<IntRange> invertedIndexInitKeys) {
+    }
+
+    private IndexDataController(@NotNull Int2ObjectMap<RandomAccessIntContainer> invertedIndex,
+                                @NotNull MappedFileTypeIndex.IndexDataController.ForwardIndexFileController forwardIndex,
+                                @NotNull IntConsumer invertedIndexChangeCallback) {
+      myInvertedIndex = invertedIndex;
+      myForwardIndex = forwardIndex;
+      myInvertedIndexChangeCallback = invertedIndexChangeCallback;
+
+      myExtraChecksInfo = collectExtraDebugInfo();
+    }
+
+    private ExtraChecksInfo collectExtraDebugInfo() {
+      if (!EXTRA_CONSISTENCY_CHECKS) {
+        return null;
+      }
+      int[] maxAllocatedId = new int[]{0};
+      try {
+        myForwardIndex.processEntries((inputId, data) -> {
+          if (maxAllocatedId[0] < inputId) maxAllocatedId[0] = inputId;
+        });
+      }
+      catch (StorageException e) {
+        LOG.error("MappedFileTypeIndex extra check init fail", e);
+      }
+      var invertedIndexInitKeys = new ArrayList<>(myInvertedIndex.keySet());
+      invertedIndexInitKeys.sort(Comparator.naturalOrder());
+      var invertedIndexInitKeysRanges = new ArrayList<IntRange>();
+      var lastRangeStart = -1;
+      var lastRangeEnd = -1;
+      for (int key : invertedIndexInitKeys) {
+        if (lastRangeStart == -1) {
+          lastRangeStart = key;
+          lastRangeEnd = key;
+        }
+        else if (lastRangeEnd == key - 1) {
+          lastRangeEnd = key;
+        }
+        else {
+          invertedIndexInitKeysRanges.add(new IntRange(lastRangeStart, lastRangeEnd));
+          lastRangeStart = key;
+          lastRangeEnd = key;
+        }
+      }
+      if (lastRangeStart != -1) {
+        invertedIndexInitKeysRanges.add(new IntRange(lastRangeStart, lastRangeEnd));
+      }
+      return new ExtraChecksInfo(maxAllocatedId[0], invertedIndexInitKeysRanges);
+    }
+
+    public void setAssociation(int inputId, short data) throws StorageException {
+      short indexedData = getIndexedData(inputId);
+      if (indexedData == data) {
+        if (indexedData != 0 && EXTRA_CONSISTENCY_CHECKS) {
+          var indexedSet = myInvertedIndex.get(indexedData);
+          var ok = indexedSet != null && indexedSet.contains(inputId);
+          if (!ok) {
+            logInconsistencySameValueIndexedSetIsNullOrDoesntContainInputId(inputId, indexedData, indexedData, indexedSet == null,
+                                                                            myExtraChecksInfo);
+          }
+        }
+        return;
+      }
+      // indexedData != data
+      if (indexedData != 0) {
+        var indexedSet = myInvertedIndex.get(indexedData);
+        if (indexedSet == null) {
+          logInconsistencyIndexedSetIsNull(inputId, indexedData, data, myExtraChecksInfo);
+        }
+        else {
+          var removed = indexedSet.remove(inputId);
+          if (!removed) {
+            final AtomicInteger keyWitness;
+            if (EXTRA_CONSISTENCY_CHECKS && myInconsistenciesLogged.get() < MAX_INCONSISTENCIES_TO_LOG) {
+              keyWitness = new AtomicInteger(0);
+              myInvertedIndex.forEach((key, fileSet) -> {
+                if (fileSet != null && fileSet.contains(inputId)) {
+                  keyWitness.set(key);
+                }
+              });
+            }
+            else {
+              keyWitness = null;
+            }
+            logInconsistencyIndexedSetValueNotRemoved(inputId, indexedData, data, keyWitness, myExtraChecksInfo);
+          }
+        }
+      }
+      myForwardIndex.set(inputId, data);
+      if (data != 0) {
+        myInvertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
+      }
+      //TODO RC: should we do the notification under the lock?
+      triggerOnInvertedIndexChangeCallback(data, indexedData);
+    }
+
+    private void triggerOnInvertedIndexChangeCallback(short newData, short oldData) {
+      if (oldData != newData) {
+        if (oldData != 0) {
+          myInvertedIndexChangeCallback.accept(oldData);
+        }
+        if (newData != 0) {
+          myInvertedIndexChangeCallback.accept(newData);
+        }
+      }
+    }
+
+    public @NotNull IntIdsIterator getFileIds(int data) {
+      RandomAccessIntContainer fileIds = myInvertedIndex.get(data);
+      return fileIds == null ? ValueContainerImpl.EMPTY_ITERATOR : fileIds.intIterator();
+    }
+
+    public short getIndexedData(int inputId) throws StorageException {
+      return myForwardIndex.get(inputId);
+    }
+
+    public long getModificationStamp() {
+      return myForwardIndex.modificationsCounter();
+    }
+
+    public void clear() throws StorageException {
+      myInvertedIndex.clear();
+      myForwardIndex.clear();
+    }
+
+    public void flush() throws StorageException {
+      myForwardIndex.flush();
+    }
+
+    public boolean isDirty() {
+      return myForwardIndex.isDirty();
+    }
+
+    public void close() throws StorageException {
+      myForwardIndex.close();
+    }
+
+
+    public interface ForwardIndexFileController {
+      long modificationsCounter();
+
+      short get(int inputId) throws StorageException;
+
+      void set(int inputId, short value) throws StorageException;
+
+      void processEntries(@NotNull EntriesProcessor processor) throws StorageException;
+
+      void clear() throws StorageException;
+
+      void flush() throws StorageException;
+
+      boolean isDirty();
+
+      void close() throws StorageException;
+
+      @FunctionalInterface
+      interface EntriesProcessor {
+        void process(int inputId, short data) throws StorageException;
+      }
+    }
+
+    // following methods exist to make issues sorting in Exception Analyzer easier
+    private static void logInconsistencySameValueIndexedSetIsNullOrDoesntContainInputId(
+      int inputId, int indexedData, int data, boolean indexedSetIsNull, ExtraChecksInfo extraChecksInfo
+    ) {
+      if (myInconsistenciesLogged.get() > MAX_INCONSISTENCIES_TO_LOG) return;
+      myInconsistenciesLogged.incrementAndGet();
+      LOG.error("inverted filetype index inconsistency @ set [" + inputId + "]=" + indexedData + "->" + data +
+                ": indexedSet is null(=" + indexedSetIsNull + ") or does not contain inputId, extra info=" + extraChecksInfo);
+    }
+
+    private static void logInconsistencyIndexedSetIsNull(
+      int inputId, int indexedData, int data, ExtraChecksInfo extraChecksInfo
+    ) {
+      if (myInconsistenciesLogged.get() > MAX_INCONSISTENCIES_TO_LOG) return;
+      myInconsistenciesLogged.incrementAndGet();
+      LOG.error("inverted filetype index inconsistency @ set [" + inputId + "]=" + indexedData + "->" + data +
+                ": indexedSet is null for " + indexedData + ", extra info=" + extraChecksInfo);
+    }
+
+    private static void logInconsistencyIndexedSetValueNotRemoved(
+      int inputId, int indexedData, int data, @Nullable AtomicInteger keyWitness, ExtraChecksInfo extraChecksInfo
+    ) {
+      if (myInconsistenciesLogged.get() > MAX_INCONSISTENCIES_TO_LOG) return;
+      myInconsistenciesLogged.incrementAndGet();
+      String witnessString = keyWitness == null ? "" : (" (inputId is in indexed set for key (0 if none)=" + keyWitness.get() + ")");
+      LOG.error("inverted filetype index inconsistency @ set [" + inputId + "]=" + indexedData + "->" + data +
+                ": indexed set for indexedData didn't contain inputId" + witnessString + ", extra info=" + extraChecksInfo);
+    }
+  }
+
+  private static RandomAccessIntContainer createContainerForInvertedIndex() {
+    return new UpgradableRandomAccessIntContainer<>(
+      INVERTED_INDEX_SIZE_THRESHOLD,
+      () -> new IntHashSetAsRAIntContainer(Hash.DEFAULT_INITIAL_SIZE, Hash.DEFAULT_LOAD_FACTOR),
+      (container) -> {
+        // calculate needed capacity so there are less memory allocations
+        int maxId = 0;
+        for (IntIdsIterator it = container.intIterator(); it.hasNext(); ) {
+          int id = it.next();
+          if (maxId < id) maxId = id;
+        }
+        return new BitSetAsRAIntContainer(maxId + 1);
+      }
+    );
+  }
+
+  private static boolean isCheckCanceledNeeded() {
+    return LoadingState.COMPONENTS_LOADED.isOccurred() && ApplicationManager.getApplication().isReadAccessAllowed();
+  }
+
+  /**
+   * 'OverMappedFile' is a bit of abstraction leak, since implementation really uses specialized
+   * FileAttribute ({@link SpecializedFileAttributes#specializeAsFastShort(FSRecordsImpl, FileAttribute)}).
+   * But we know that specialization uses memory-mapped file under the hood, and this is
+   * that really important here.
+   */
+  private static final class ForwardIndexFileControllerOverMappedFile implements IndexDataController.ForwardIndexFileController {
+
+    private static final String STORAGE_NAME = "filetype.index";
+    private static final int BINARY_FORMAT_VERSION = 1;
+
+    private static final int FIELD_WIDTH = Short.BYTES;
+    private static final int FIELD_OFFSET = 0;
+
+    /**
+     * FIXME RC: it MUST be set true all the time -- it should _never_ be _any_ fileId in use outside (0..maxAllocatedId].
+     * False is a temporary backward compatibility option: it seems like in some use-cases somehow the constraint
+     * is violated, but we have no time/hands to to find out why. Investigate, fix, and remove the flag
+     */
+    public static final boolean CHECK_FILE_ID_BELOW_MAX = getBooleanProperty("MappedFileTypeIndex.CHECK_FILE_ID_BELOW_MAX", false);
+
+    private final MappedFileStorageHelper storage;
+
+    private final AtomicLong modificationsCounter = new AtomicLong(0);
+
+    private ForwardIndexFileControllerOverMappedFile(@NotNull Path forwardIndexStorageFile) throws StorageException {
+      try {
+        storage = MappedFileStorageHelper.openHelperAndVerifyVersions(
+          FSRecords.getInstance(),
+          forwardIndexStorageFile.toAbsolutePath(),
+          BINARY_FORMAT_VERSION,
+          FIELD_WIDTH,
+          CHECK_FILE_ID_BELOW_MAX
+        );
+      }
+      catch (IOException e) {
+        throw new StorageException("Can't open storage [" + STORAGE_NAME + "]", e);
+      }
+    }
+
+    @Override
+    public long modificationsCounter() {
+      return modificationsCounter.get();
+    }
+
+    @Override
+    public short get(int inputId) throws StorageException {
+      try {
+        return readImpl(inputId);
+      }
+      catch (IOException e) {
+        throw wrapped(e);
+      }
+    }
+
+    @Override
+    public void set(int inputId, short value) throws StorageException {
+      try {
+        writeImpl(inputId, value);
+      }
+      catch (IOException e) {
+        throw wrapped(e);
+      }
+      modificationsCounter.incrementAndGet();
+    }
+
+    @Override
+    public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
+      try {
+        boolean isCheckCanceledNeeded = isCheckCanceledNeeded();
+        int maxAllocatedID = FSRecords.getInstance().connection().records().maxAllocatedID();
+        for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
+          if (isCheckCanceledNeeded) {
+            ProgressManager.checkCanceled();
+          }
+          short value = readImpl(fileId);
+          processor.process(fileId, value);
+        }
+      }
+      catch (IOException e) {
+        throw wrapped(e);
+      }
+    }
+
+    @Override
+    public void clear() throws StorageException {
+      try {
+        storage.clearRecords();
+        modificationsCounter.incrementAndGet();
+      }
+      catch (IOException e) {
+        throw wrapped(e);
+      }
+    }
+
+    @Override
+    public boolean isDirty() {
+      //RC: seems like we don't really need it for mmapped impl, since we don't have flush() anyway?
+      return false;
+    }
+
+    @Override
+    public void flush() {
+      //RC: seems like we don't need explicit flush for mmapped impl?
+    }
+
+    @Override
+    public void close() throws StorageException {
+      try {
+        if (USE_UNMAP_FOR_INDEX_DISPOSAL) {
+          // unmap is required for correct index re-instantiation on windows,
+          // but may result in JVM crash if we are not careful enough
+          storage.closeAndUnsafelyUnmap();
+        } else {
+          storage.close();
+        }
+      }
+      catch (IOException e) {
+        throw wrapped(e);
+      }
+    }
+
+    private void writeImpl(int inputId,
+                           short value) throws IOException {
+      storage.writeShortField(inputId, FIELD_OFFSET, value);
+    }
+
+    private short readImpl(int inputId) throws IOException {
+      return storage.readShortField(inputId, FIELD_OFFSET);
+    }
+
+    @Contract("_ -> fail")
+    private static StorageException wrapped(@NotNull IOException e) throws StorageException {
+      if (e instanceof ClosedStorageException) {
+        AlreadyDisposedException ade = new AlreadyDisposedException("Index already closed");
+        ade.addSuppressed(e);
+        throw ade;
+      }
+      throw new StorageException(e);
+    }
+  }
+}

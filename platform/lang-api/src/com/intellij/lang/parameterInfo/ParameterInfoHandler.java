@@ -1,28 +1,28 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.parameterInfo;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
 
-public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> {
+/**
+ * This extension is used to implement support for 'Parameter Info' action for a specific language. That action shows a popup with
+ * information about formal method parameters, when caret is located at method invocation site.<p>
+ * The extension should implement methods finding target method's PSI element based on caret position
+ * ({@link #findElementForParameterInfo(CreateParameterInfoContext)} and
+ * {@link #findElementForUpdatingParameterInfo(UpdateParameterInfoContext)}, the former also should specify information about all method
+ * overloads to display), method to select currently used overload and parameter caret is currently on
+ * ({@link #updateParameterInfo(Object, UpdateParameterInfoContext)}), method defining the presentation of popup elements
+ * ({@link #updateUI(Object, ParameterInfoUIContext)} and method to actually show the popup
+ * ({@link #showParameterInfo(Object, CreateParameterInfoContext)});
+ */
+public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> extends PossiblyDumbAware {
 
   /**
    * <p>Find psiElement for parameter info should also set ItemsToShow in context and may set highlighted element</p>
@@ -31,8 +31,12 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
    */
   @Nullable
   ParameterOwner findElementForParameterInfo(@NotNull CreateParameterInfoContext context);
-  // Usually context.showHint
-  void showParameterInfo(@NotNull final ParameterOwner element, @NotNull CreateParameterInfoContext context);
+
+  /**
+   * This method is called to show parameter info popup. Usually it just invokes
+   * {@link CreateParameterInfoContext#showHint(PsiElement, int, ParameterInfoHandler)}.
+   */
+  void showParameterInfo(final @NotNull ParameterOwner element, @NotNull CreateParameterInfoContext context);
 
   /**
    * <p>Hint has to be removed if method returns <code>null</code>.</p>
@@ -60,7 +64,7 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
    *
    * <p>Note: it is executed on non UI thread.</p>
    */
-  void updateParameterInfo(@NotNull final ParameterOwner parameterOwner, @NotNull UpdateParameterInfoContext context);
+  void updateParameterInfo(final @NotNull ParameterOwner parameterOwner, @NotNull UpdateParameterInfoContext context);
 
   /**
    * <p>This method is executed on UI thread and supposed only to update UI representation using
@@ -71,6 +75,13 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
    */
   void updateUI(ParameterType p, @NotNull ParameterInfoUIContext context);
 
+  default @Nullable JComponent createBottomComponent() {
+    return null;
+  }
+
+  default void updateBottomComponent(@NotNull JComponent component) {
+  }
+
   default boolean supportsOverloadSwitching() { return false; }
   default void dispose(@NotNull DeleteParameterInfoContext context) {}
 
@@ -80,28 +91,23 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
   default void syncUpdateOnCaretMove(@NotNull UpdateParameterInfoContext context) {}
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default Object @Nullable [] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default @Nullable String getParameterCloseChars() { return null; }
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default boolean tracksParameterIndex() { return false; }
 
   /** @deprecated unused */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default boolean couldShowInLookup() { return false; }
 
   /** @deprecated unused */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return null;
   }

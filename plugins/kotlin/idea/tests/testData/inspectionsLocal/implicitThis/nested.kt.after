@@ -1,0 +1,11 @@
+// WITH_STDLIB
+
+class Foo {
+    fun s() = ""
+
+    fun test() {
+        "".apply {
+            <caret>this@Foo.s()
+        }
+    }
+}

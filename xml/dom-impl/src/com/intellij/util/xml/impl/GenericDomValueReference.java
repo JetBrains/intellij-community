@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
@@ -18,7 +18,18 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.EnumConverter;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.MergedObject;
+import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.WrappingConverter;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> implements EmptyResolveMessageProvider, ResolvingHint {
   private final GenericDomValue<T> myGenericValue;
 
@@ -44,8 +52,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   protected TextRange createTextRange() {
-    if (myGenericValue instanceof GenericAttributeValue) {
-      final GenericAttributeValue genericAttributeValue = (GenericAttributeValue)myGenericValue;
+    if (myGenericValue instanceof GenericAttributeValue genericAttributeValue) {
       final XmlAttributeValue attributeValue = genericAttributeValue.getXmlAttributeValue();
       if (attributeValue == null) {
         return TextRange.from(0, genericAttributeValue.getXmlAttribute().getTextLength());
@@ -68,8 +75,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return true;
   }
 
-  @Nullable
-  protected PsiElement resolveInner(T o) {
+  protected @Nullable PsiElement resolveInner(T o) {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       return ((ResolvingConverter<T>)converter).resolve(o, getConvertContext());
@@ -95,7 +101,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(final @NotNull PsiElement element) {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       T value = myGenericValue.getValue();
@@ -121,21 +127,18 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final T value = myGenericValue.getValue();
     return value == null ? null : resolveInner(value);
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return StringUtil.notNullize(getStringValue());
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     final ConvertContext context = getConvertContext();
     return getConverter().getErrorMessage(getStringValue(), context);
   }
@@ -145,7 +148,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(final @NotNull String newElementName) throws IncorrectOperationException {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       ((ResolvingConverter)converter).handleElementRename(myGenericValue, getConvertContext(), newElementName);
@@ -181,8 +184,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
       if (DomCompletionContributor.isSchemaEnumerated(getElement())) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    if (converter instanceof ResolvingConverter) {
-      final ResolvingConverter<T> resolvingConverter = (ResolvingConverter<T>)converter;
+    if (converter instanceof ResolvingConverter<T> resolvingConverter) {
       ArrayList<Object> result = new ArrayList<>();
       final ConvertContext convertContext = getConvertContext();
       for (T variant: resolvingConverter.getVariants(convertContext)) {
@@ -197,7 +199,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
         }
       }
       for (final String string : resolvingConverter.getAdditionalVariants(convertContext)) {
-        result.add(LookupValueFactory.createLookupValue(string, null));
+        result.add(LookupElementBuilder.create(string));
       }
       return result.toArray();
     }
@@ -207,6 +209,6 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   @Override
   public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
     Converter<T> converter = getConverter();
-    return !(converter instanceof ResolvingConverter) || ((ResolvingConverter)converter).canResolveTo(elementClass);
+    return !(converter instanceof ResolvingConverter) || ((ResolvingConverter<?>)converter).canResolveTo(elementClass);
   }
 }

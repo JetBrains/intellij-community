@@ -1,17 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.CreateAbstractMethodActionGroup
+import com.intellij.lang.jvm.actions.CreateMethodActionGroup
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.JvmActionGroup
+import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
-import com.intellij.psi.util.JavaElementKind
+import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils.createTemplateForMethod
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
@@ -24,13 +30,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 internal class CreateMethodAction(
   targetClass: GrTypeDefinition,
   override val request: CreateMethodRequest,
-  private val abstract: Boolean
+  private val abstract: Boolean,
 ) : CreateMemberAction(targetClass, request), JvmGroupIntentionAction {
 
   override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    return super.isAvailable(project, editor, file) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
+    return super.isAvailable(project, editor, psiFile) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
+  }
+
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    val method = MethodRenderer(project, abstract, target, request).renderMethod()
+    val className = myTargetPointer.element?.name
+    return IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, className, "", method.text)
   }
 
   override fun getRenderData() = JvmActionGroup.RenderData { request.methodName }
@@ -40,11 +52,11 @@ internal class CreateMethodAction(
   override fun getText(): String {
     val what = request.methodName
     val where = getNameForClass(target, false)
-    val kind = if (abstract && !target.isInterface) JavaElementKind.ABSTRACT_METHOD else JavaElementKind.METHOD
-    return message("create.element.in.class", kind.`object`(), what, where)
+    val template = if (abstract && !target.isInterface) "intention.name.create.abstract.method.in.class" else "intention.name.create.method.in.class"
+    return GroovyBundle.message(template, what, where)
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
     MethodRenderer(project, abstract, target, request).execute()
   }
 }
@@ -53,7 +65,7 @@ private class MethodRenderer(
   val project: Project,
   val abstract: Boolean,
   val targetClass: GrTypeDefinition,
-  val request: CreateMethodRequest
+  val request: CreateMethodRequest,
 ) {
 
   fun execute() {
@@ -68,12 +80,12 @@ private class MethodRenderer(
     val typeExpressions = setupParameters(method, parameters).toTypedArray()
     val nameExpressions = setupNameExpressions(parameters, project).toTypedArray()
     val returnExpression = setupTypeElement(method, createConstraints(project, request.returnType))
-    createTemplateForMethod(typeExpressions, nameExpressions, method, targetClass, returnExpression, false, null)
+    createTemplateForMethod(typeExpressions, nameExpressions, method, targetClass, returnExpression, false, request.isStartTemplate, null)
   }
 
-  private fun renderMethod(): GrMethod {
+  fun renderMethod(): GrMethod {
     val factory = GroovyPsiElementFactory.getInstance(project)
-    val method = factory.createMethod(request.methodName, PsiType.VOID)
+    val method = factory.createMethod(request.methodName, PsiTypes.voidType())
 
     val modifiersToRender = request.modifiers.toMutableList()
     if (targetClass.isInterface) {
@@ -104,6 +116,12 @@ private class MethodRenderer(
   }
 
   private fun insertMethod(method: GrMethod): GrMethod {
-    return targetClass.add(method) as GrMethod
+    val elementToReplace = request.elementToReplace
+    return if (elementToReplace != null && elementToReplace.isValid) {
+      elementToReplace.replace(method) as GrMethod
+    }
+    else {
+      targetClass.add(method) as GrMethod
+    }
   }
 }

@@ -1,12 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({"WhileLoopSpinsOnField", "SynchronizeOnThis"})
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 final class StorageGuard {
+  private final Lock myLock = new ReentrantLock();
+  private final Condition myCondition = myLock.newCondition();
+
   private int myHolds;
-  private int myWaiters;
 
   public interface StorageModeExitHandler {
     void leave();
@@ -25,40 +32,51 @@ final class StorageGuard {
     }
   };
 
+  @SuppressWarnings("WhileLoopSpinsOnField")
   @NotNull
-  synchronized StorageModeExitHandler enter(boolean mode) {
-    if (mode) {
-      while (myHolds < 0) {
-        doWait();
-      }
-      myHolds++;
-      return myTrueStorageModeExitHandler;
-    }
-    else {
-      while (myHolds > 0) {
-        doWait();
-      }
-      myHolds--;
-      return myFalseStorageModeExitHandler;
-    }
-  }
-
-  private void doWait() {
+  StorageModeExitHandler enter(boolean mode) {
+    boolean nonCancelableSection = ProgressManager.getInstance().isInNonCancelableSection();
+    myLock.lock();
     try {
-      ++myWaiters;
-      wait();
-    }
-    catch (InterruptedException ignored) {
+      if (mode) {
+        while (myHolds < 0) {
+          await(nonCancelableSection);
+        }
+        myHolds++;
+        return myTrueStorageModeExitHandler;
+      }
+      else {
+        while (myHolds > 0) {
+          await(nonCancelableSection);
+        }
+        myHolds--;
+        return myFalseStorageModeExitHandler;
+      }
     }
     finally {
-      --myWaiters;
+      myLock.unlock();
     }
   }
 
-  private synchronized void leave(boolean mode) {
-    myHolds += mode ? -1 : 1;
-    if (myHolds == 0 && myWaiters > 0) {
-      notifyAll();
+  private void await(boolean nonCancelableSection) {
+    if (nonCancelableSection) {
+      myCondition.awaitUninterruptibly();
+    }
+    else {
+      ProgressIndicatorUtils.awaitWithCheckCanceled(myCondition);
+    }
+  }
+
+  private void leave(boolean mode) {
+    myLock.lock();
+    try {
+      myHolds += mode ? -1 : 1;
+      if (myHolds == 0) {
+        myCondition.signalAll();
+      }
+    }
+    finally {
+      myLock.unlock();
     }
   }
 }

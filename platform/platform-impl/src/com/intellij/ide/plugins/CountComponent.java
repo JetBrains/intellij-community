@@ -8,25 +8,35 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
 /**
  * @author Alexander Lobas
  */
 public class CountComponent extends JLabel {
-  @SuppressWarnings("UseJBColor")
-  private final Color myOvalColor = JBColor.namedColor("Counter.background", new Color(0xCC9AA7B0, true));
-
   public CountComponent() {
     setBorder(null);
     setFont(UIUtil.getLabelFont(SystemInfo.isMac || (SystemInfo.isLinux && (UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula()))
                                 ? UIUtil.FontSize.SMALL
                                 : UIUtil.FontSize.NORMAL));
-    setForeground(JBColor.namedColor("Counter.foreground", new JBColor(0xFFFFFF, 0x3E434D)));
     setHorizontalAlignment(CENTER);
     setHorizontalTextPosition(CENTER);
+    setFocusable(false);
+  }
+
+  @Override
+  public Color getForeground() {
+    return JBColor.namedColor("Counter.foreground", new JBColor(0xFFFFFF, 0x3E434D));
+  }
+
+  @SuppressWarnings("UseJBColor")
+  protected @NotNull Color getOvalColor() {
+    return JBColor.namedColor("Counter.background", new Color(0xCC9AA7B0, true));
   }
 
   public void setSelected(boolean selected) {
@@ -54,7 +64,7 @@ public class CountComponent extends JLabel {
       g.fillRect(0, 0, width, height);
     }
 
-    g.setColor(myOvalColor);
+    g.setColor(getOvalColor());
     g.fillRoundRect(getTextOffset() + (width - ovalWidth) / 2, (height - ovalHeight) / 2, ovalWidth, ovalHeight, corner, corner);
 
     config.restore();

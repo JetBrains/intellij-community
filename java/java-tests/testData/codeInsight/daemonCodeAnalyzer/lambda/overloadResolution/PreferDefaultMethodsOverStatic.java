@@ -10,7 +10,7 @@ class Test {
   static class IJ implements I, J {}
   static class JI implements J, I {}
 
-  public static void main(String[] args) {
+  public static void main() {
     new IJ(). f();
     new JI(). f();
 
@@ -39,7 +39,7 @@ class Test2 {
   public static void main(IJ s, J<String> j) {
     s.f("");
 
-    <error descr="Static method may be invoked on containing interface class only">j.j("");</error>
+    j.<error descr="Static method may only be called on its containing interface">j</error>("");
   }
 
 }

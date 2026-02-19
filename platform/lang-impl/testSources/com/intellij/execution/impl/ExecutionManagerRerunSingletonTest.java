@@ -9,6 +9,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.idea.IJIgnore;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ui.UIUtil;
@@ -41,6 +43,7 @@ public class ExecutionManagerRerunSingletonTest extends LightPlatformTestCase {
     }
   }
 
+  @IJIgnore(issue = "IDEA-354952")
   public void testRerunSingleton() {
     Project project = getProject();
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
@@ -53,6 +56,7 @@ public class ExecutionManagerRerunSingletonTest extends LightPlatformTestCase {
     ExecutionEnvironment env1 = createEnv(project, settings);
     executionManager.restartRunProfile(env1);
     UIUtil.dispatchAllInvocationEvents();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     ProcessHandler processHandler1 = getProcessHandler(executionManager);
 
     ExecutionEnvironment env2 = createEnv(project, settings);
@@ -64,6 +68,7 @@ public class ExecutionManagerRerunSingletonTest extends LightPlatformTestCase {
     // However, the created processHandler is not willing to terminate on the first request (surviveSoftKill=true).
     // It will be terminated on the second request: executionManager.restartRunProfile(env3)
 
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     ProcessHandler processHandler2 = getProcessHandler(executionManager);
     assertSame(processHandler1, processHandler2);
     assertTrue(processHandler1.isProcessTerminating());
@@ -72,6 +77,7 @@ public class ExecutionManagerRerunSingletonTest extends LightPlatformTestCase {
     executionManager.restartRunProfile(env3);
     UIUtil.dispatchAllInvocationEvents();
 
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     FakeProcessHandler processHandler3 = getProcessHandler(executionManager);
     assertNotSame(processHandler1, processHandler3);
 

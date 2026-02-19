@@ -1,13 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
 import com.intellij.build.FileNavigatable;
 import com.intellij.build.FilePosition;
-import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
+import com.intellij.build.events.BuildEventsNls.Title;
 import com.intellij.build.events.FileMessageEvent;
 import com.intellij.build.events.FileMessageEventResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,22 +20,44 @@ import java.util.Objects;
 /**
  * @author Vladislav.Soroka
  */
+@Internal
 public class FileMessageEventImpl extends MessageEventImpl implements FileMessageEvent {
 
-  private final FilePosition myFilePosition;
+  private final @NotNull FilePosition myFilePosition;
 
-  public FileMessageEventImpl(@NotNull Object parentId,
-                              @NotNull Kind kind,
-                              @Nullable @BuildEventsNls.Title String group,
-                              @NotNull @BuildEventsNls.Message String message,
-                              @Nullable @BuildEventsNls.Description String detailedMessage,
-                              @NotNull FilePosition filePosition) {
-    super(parentId, kind, group, message, detailedMessage);
+  @Internal
+  public FileMessageEventImpl(
+    @Nullable Object id,
+    @Nullable Object parentId,
+    @Nullable Long time,
+    @NotNull @Message String message,
+    @Nullable @Hint String hint,
+    @Nullable @Description String description,
+    @NotNull Kind kind,
+    @Nullable @Title String group,
+    @NotNull FilePosition filePosition
+  ) {
+    super(id, parentId, time, message, hint, description, kind, group, null);
     myFilePosition = filePosition;
   }
 
+  /**
+   * @deprecated Use {@link FileMessageEvent#builder} event builder instead.
+   */
+  @Deprecated
+  public FileMessageEventImpl(
+    @NotNull Object parentId,
+    @NotNull Kind kind,
+    @Nullable @Title String group,
+    @NotNull @Message String message,
+    @Nullable @Description String detailedMessage,
+    @NotNull FilePosition filePosition
+  ) {
+    this(null, parentId, null, message, null, detailedMessage, kind, group, filePosition);
+  }
+
   @Override
-  public FileMessageEventResult getResult() {
+  public @NotNull FileMessageEventResult getResult() {
     return new FileMessageEventResult() {
       @Override
       public FilePosition getFilePosition() {
@@ -44,15 +70,14 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
       }
 
       @Override
-      @Nullable
-      public String getDetails() {
+      public @Nullable String getDetails() {
         return getDescription();
       }
     };
   }
 
   @Override
-  public FilePosition getFilePosition() {
+  public @NotNull FilePosition getFilePosition() {
     return myFilePosition;
   }
 
@@ -65,9 +90,8 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
     return hint;
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull Project project) {
+  public @Nullable Navigatable getNavigatable(@NotNull Project project) {
     return new FileNavigatable(project, myFilePosition);
   }
 

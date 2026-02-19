@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.file;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.EOFException;
 import java.io.FileNotFoundException;
@@ -15,7 +17,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.locks.ReentrantLock;
 
-class FileAdapter {
+@ApiStatus.Internal
+public final class FileAdapter {
   private static final Logger logger = Logger.getInstance(FileAdapter.class);
   private static final int UNDEFINED = -1;
 
@@ -26,9 +29,10 @@ class FileAdapter {
   private final int pageSize; // in bytes
   private final int maxPageBorderShift; // in bytes
 
-  volatile private long cashedFileSize = UNDEFINED; // in bytes
+  private volatile long cashedFileSize = UNDEFINED; // in bytes
 
-  FileAdapter(int pageSize, int maxPageBorderShift, @NotNull VirtualFile vFile) throws FileNotFoundException {
+  @VisibleForTesting
+  public FileAdapter(int pageSize, int maxPageBorderShift, @NotNull VirtualFile vFile) throws FileNotFoundException {
     this.pageSize = pageSize;
     this.maxPageBorderShift = maxPageBorderShift;
     this.vFile = vFile;
@@ -42,7 +46,8 @@ class FileAdapter {
     }
   }
 
-  void setCharset(Charset newCharset) {
+  @VisibleForTesting
+  public void setCharset(Charset newCharset) {
     randomAccessFileLock.lock();
     try {
       vFile.setCharset(newCharset);
@@ -52,7 +57,8 @@ class FileAdapter {
     }
   }
 
-  void closeFile() throws IOException {
+  @VisibleForTesting
+  public void closeFile() throws IOException {
     randomAccessFileLock.lock();
     try {
       if (randomAccessFile != null) {
@@ -68,7 +74,8 @@ class FileAdapter {
     return vFile.getCharset().name();
   }
 
-  long getPagesAmount() throws IOException {
+  @VisibleForTesting
+  public long getPagesAmount() throws IOException {
     return (getFileSize() + pageSize - 1) / pageSize;
   }
 
@@ -119,7 +126,8 @@ class FileAdapter {
    * @return text of the page if page exists or null if page doesn't
    * @throws NullPointerException - when access to physical file was not established
    */
-  String getPageText(long pageNumber) throws IOException {
+  @VisibleForTesting
+  public String getPageText(long pageNumber) throws IOException {
     randomAccessFileLock.lock();
     try {
       long pagesAmount = getPagesAmount();
@@ -198,7 +206,7 @@ class FileAdapter {
     if (substringLength != -1) {
       int substringLengthInBytes;
       if (charset.equals(StandardCharsets.UTF_16)) {
-        substringLengthInBytes = text1.substring(0, substringLength).getBytes(CharsetToolkit.UTF_16BE_CHARSET).length;
+        substringLengthInBytes = text1.substring(0, substringLength).getBytes(StandardCharsets.UTF_16BE).length;
       }
       else {
         substringLengthInBytes = text1.substring(0, substringLength).getBytes(charset).length;
@@ -213,12 +221,12 @@ class FileAdapter {
   private static int findNextSymbolBeginningOffsetFrom(long numberOfStartByte,
                                                        RandomAccessFile randomAccessFile,
                                                        Charset charset) throws IOException {
-    if (charset.compareTo(CharsetToolkit.UTF8_CHARSET) == 0) {
+    if (charset.compareTo(StandardCharsets.UTF_8) == 0) {
       return findNextSymbolBeginningOffsetFrom_UTF8(numberOfStartByte, randomAccessFile);
     }
     else if (charset.compareTo(StandardCharsets.UTF_16) == 0
-             || charset.compareTo(CharsetToolkit.UTF_16BE_CHARSET) == 0
-             || charset.compareTo(CharsetToolkit.UTF_16LE_CHARSET) == 0) {
+             || charset.compareTo(StandardCharsets.UTF_16BE) == 0
+             || charset.compareTo(StandardCharsets.UTF_16LE) == 0) {
       return findNextSymbolBeginningOffsetFrom_UTF16(numberOfStartByte, randomAccessFile, charset);
     }
     else if (charset.compareTo(CharsetToolkit.UTF_32BE_CHARSET) == 0
@@ -272,7 +280,7 @@ class FileAdapter {
     long offset = numberOfStartByte % 2;
 
     // taking the HIGH byte of the word
-    if (charset.compareTo(StandardCharsets.UTF_16) == 0 || charset.compareTo(CharsetToolkit.UTF_16BE_CHARSET) == 0) {
+    if (charset.compareTo(StandardCharsets.UTF_16) == 0 || charset.compareTo(StandardCharsets.UTF_16BE) == 0) {
       randomAccessFile.seek(numberOfStartByte + offset);
     }
     else {

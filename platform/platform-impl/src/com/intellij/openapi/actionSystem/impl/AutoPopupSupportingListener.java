@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * and unregisters when it is hidden, thus allowing it to be used from an action toolbar in auto-popup mode.
  * Use {@link AutoPopupSupportingListener#installOn(JBPopup)} to install the listener.
  */
-public class AutoPopupSupportingListener implements JBPopupListener {
+public final class AutoPopupSupportingListener implements JBPopupListener {
   private final @NotNull JBPopup myPopup;
 
   public AutoPopupSupportingListener(@NotNull JBPopup popup) {

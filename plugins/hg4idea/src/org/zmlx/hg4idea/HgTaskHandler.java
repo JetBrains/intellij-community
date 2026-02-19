@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.branch.DvcsTaskHandler;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -27,11 +26,14 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.Collections;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.EXCEPTION_DURING_MERGE_COMMIT;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_ERROR;
+
 public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   private final HgReferenceValidator myNameValidator;
 
   public HgTaskHandler(@NotNull Project project) {
-    super(ServiceManager.getService(project, HgRepositoryManager.class), project, "bookmark");
+    super(project.getService(HgRepositoryManager.class), project, "bookmark");
 
     myNameValidator = HgReferenceValidator.getInstance();
   }
@@ -54,9 +56,8 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
     return bookmark == null ? repository.getCurrentBranch() : bookmark;
   }
 
-  @NotNull
   @Override
-  protected Iterable<TaskInfo> getAllBranches(@NotNull HgRepository repository) {
+  protected @NotNull Iterable<TaskInfo> getAllBranches(@NotNull HgRepository repository) {
     //be careful with equality names of branches/bookmarks =(
     Iterable<String> names =
       ContainerUtil.concat(HgUtil.getSortedNamesWithoutHashes(repository.getBookmarks()), repository.getOpenedBranches());
@@ -64,7 +65,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   }
 
   @Override
-  protected void mergeAndClose(@NotNull final String branch, @NotNull final List<? extends HgRepository> repositories) {
+  protected void mergeAndClose(final @NotNull String branch, final @NotNull List<? extends HgRepository> repositories) {
     String bookmarkRevisionArg = "bookmark(\"" + branch + "\")";
     FileDocumentManager.getInstance().saveAllDocuments();
     final UpdatedFiles updatedFiles = UpdatedFiles.create();
@@ -77,11 +78,11 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
           HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
         }
         catch (HgCommandException e) {
-            HgErrorUtil.handleException(project, "hg.merge.error", e);
+            HgErrorUtil.handleException(project, MERGE_ERROR, e);
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project)
-            .notifyError("hg.exception.during.merge.commit", HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
+            .notifyError(EXCEPTION_DURING_MERGE_COMMIT, HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
         }
       });
     }
@@ -97,9 +98,8 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
     return myNameValidator.checkInput(branchName);
   }
 
-  @NotNull
   @Override
-  public String cleanUpBranchName(@NotNull String suggestedName) {
+  public @NotNull String cleanUpBranchName(@NotNull String suggestedName) {
     return myNameValidator.cleanUpBranchName(suggestedName);
   }
 }

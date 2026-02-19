@@ -1,49 +1,49 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
-/**
- * @author ven
- */
 public abstract class ArgumentFixerActionFactory {
   private static final Logger LOG = Logger.getInstance(ArgumentFixerActionFactory.class);
 
-  @Nullable
-  protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
+  protected abstract @Nullable PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
-  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
+  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, @NotNull Consumer<? super CommonIntentionAction> info) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();
@@ -80,19 +80,22 @@ public abstract class ArgumentFixerActionFactory {
 
     try {
       PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(call);
-      for (int i = 0; i < expressions.length; i++) {
-        PsiExpression expression = expressions[i];
-        PsiType exprType = expression.getType();
-        Set<String> suggestedCasts = new THashSet<>();
-        // find to which type we can cast this param to get valid method call
-        for (CandidateInfo candidate : methodCandidates) {
-          PsiMethod method = (PsiMethod)candidate.getElement();
-          PsiSubstitutor substitutor = candidate.getSubstitutor();
-          PsiType originalParameterType = PsiTypesUtil.getParameterType(method.getParameterList().getParameters(), i, true);
+      Map<Integer, Set<String>> suggestedCasts = new HashMap<>();
+      // find to which type we can cast this param to get a valid method call
+      List<ArgumentCast> actualCasts = new ArrayList<>();
+      for (CandidateInfo candidate : methodCandidates) {
+        PsiMethod method = (PsiMethod)candidate.getElement();
+        PsiSubstitutor substitutor = candidate.getSubstitutor();
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        List<ArgumentCast> potentialCasts = new ArrayList<>();
+        for (int i = 0; i < expressions.length; i++) {
+          PsiExpression expression = expressions[i];
+          PsiType exprType = PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiFunctionalExpression fn ? 
+                             fn.getFunctionalInterfaceType() : expression.getType();
+          PsiType originalParameterType = PsiTypesUtil.getParameterType(parameters, i, true);
           PsiType parameterType = substitutor.substitute(originalParameterType);
-          if (parameterType instanceof PsiWildcardType) continue;
-          if (!GenericsUtil.isFromExternalTypeLanguage(parameterType)) continue;
-          if (suggestedCasts.contains(parameterType.getCanonicalText())) continue;
+          if (!PsiTypesUtil.isDenotableType(parameterType, call)) continue;
+          if (suggestedCasts.computeIfAbsent(i, __ -> new HashSet<>()).contains(parameterType.getCanonicalText())) continue;
           if (TypeConversionUtil.isPrimitiveAndNotNull(exprType) && parameterType instanceof PsiClassType) {
             PsiType unboxedParameterType = PsiPrimitiveType.getUnboxedType(parameterType);
             if (unboxedParameterType != null) {
@@ -101,31 +104,108 @@ public abstract class ArgumentFixerActionFactory {
           }
           // strict compare since even widening cast may help
           if (Comparing.equal(exprType, parameterType)) continue;
-          PsiCall newCall = LambdaUtil.copyTopLevelCall(call); //copy with expected type
-          if (newCall == null) continue;
-          PsiExpression modifiedExpression = getModifiedArgument(expression, parameterType);
-          if (modifiedExpression == null) continue;
-          PsiExpressionList argumentList = newCall.getArgumentList();
-          if (argumentList == null) continue;
-          argumentList.getExpressions()[i].replace(modifiedExpression);
-          JavaResolveResult resolveResult = newCall.resolveMethodGenerics();
-          if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
-            if (expectedTypeByParent != null && newCall instanceof PsiCallExpression) {
-              PsiType type = ((PsiCallExpression)newCall).getType();
-              if (type != null && !TypeConversionUtil.isAssignable(expectedTypeByParent, type)) continue;
+          potentialCasts.add(new ArgumentCast(i, parameterType));
+        }
+
+        if (!potentialCasts.isEmpty()) {
+          PsiCall newCall = call;
+          for (var argumentCast : potentialCasts) {
+            newCall = replaceWithCast(expressions, newCall, argumentCast, newCall == call);
+            if (newCall == null) {
+              break;
             }
-            suggestedCasts.add(parameterType.getCanonicalText());
-            QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, createFix(list, i, parameterType));
+          }
+          if (newCall != null) {
+            doCheckNewCall(expectedTypeByParent, newCall, () -> {
+              for (var argumentCast : potentialCasts) {
+                collectCast(actualCasts, suggestedCasts, argumentCast);
+              }
+              potentialCasts.clear();
+            });
+          }
+
+          for (var argumentCast : potentialCasts) {
+            PsiCall callWithSingleCast = replaceWithCast(expressions, call, argumentCast, true);
+            if (callWithSingleCast == null) continue;
+            doCheckNewCall(expectedTypeByParent, callWithSingleCast, () -> collectCast(actualCasts, suggestedCasts, argumentCast));
           }
         }
       }
+      putCompilableCastsFirst(actualCasts, expressions).forEach(cast -> registerCastIntention(info, list, cast));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
 
+  private static void doCheckNewCall(PsiType expectedTypeByParent, PsiCall call, Runnable registerIntentions) {
+    JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
+      if (expectedTypeByParent != null && call instanceof PsiCallExpression callExpression) {
+        PsiType type = callExpression.getType();
+        if (type != null && !TypeConversionUtil.isAssignable(expectedTypeByParent, type)) return;
+      }
+      registerIntentions.run();
+    }
+  }
+
+  private void registerCastIntention(@NotNull Consumer<? super CommonIntentionAction> info,
+                                     PsiExpressionList list,
+                                     ArgumentCast argumentCast) {
+    IntentionAction action = createFix(list, argumentCast.argumentIndex(), argumentCast.castType());
+    if (action != null) {
+      info.accept(action);
+    }
+  }
+
+  private @Nullable PsiCall replaceWithCast(PsiExpression[] expressions, @NotNull PsiCall origCall, ArgumentCast argumentCast,
+                                            boolean shouldCopy) {
+    int i = argumentCast.argumentIndex();
+    PsiExpression modifiedExpression = getModifiedArgument(expressions[i], argumentCast.castType());
+    if (modifiedExpression == null) return null;
+    PsiExpressionList argumentList = origCall.getArgumentList();
+    if (argumentList == null) return null;
+    PsiCall newCall = shouldCopy ? LambdaUtil.copyTopLevelCall(origCall) : origCall;
+    if (newCall == null) return null;
+    Objects.requireNonNull(newCall.getArgumentList()).getExpressions()[i].replace(modifiedExpression);
+    return newCall;
+  }
+
+  private static void collectCast(@NotNull List<@NotNull ArgumentCast> actualCasts,
+                                  @NotNull Map<@NotNull Integer, @NotNull Set<@NotNull String>> suggestedCasts,
+                                  @NotNull ArgumentCast argumentCast) {
+    actualCasts.add(argumentCast);
+    suggestedCasts.get(argumentCast.argumentIndex()).add(argumentCast.castType().getCanonicalText());
+  }
+
+  private List<ArgumentCast> putCompilableCastsFirst(@NotNull List<@NotNull ArgumentCast> casts,
+                                                     @NotNull PsiExpression @NotNull [] expressions) {
+    List<ArgumentCast> compilableCasts = new ArrayList<>();
+    List<ArgumentCast> nonCompilableCasts = new ArrayList<>();
+    for (var argumentCast : casts) {
+      if (doesFixCauseOtherCompilationErrors(expressions[argumentCast.argumentIndex()], argumentCast.castType())) {
+        nonCompilableCasts.add(argumentCast);
+      }
+      else {
+        compilableCasts.add(argumentCast);
+      }
+    }
+    return ContainerUtil.concat(compilableCasts, nonCompilableCasts);
+  }
+
+  protected boolean doesFixCauseOtherCompilationErrors(@NotNull PsiExpression expression, @NotNull PsiType parameterType) {
+    return false;
+  }
+
   public abstract boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, @NotNull PsiElement context);
 
   public abstract IntentionAction createFix(PsiExpressionList list, int i, PsiType parameterType);
+
+  /**
+   * Cast of an argument in a method call to a type.
+   * @param argumentIndex index of the argument that is cast
+   * @param castType      type in a cast expression
+   */
+  private record ArgumentCast(int argumentIndex, @NotNull PsiType castType) {
+  }
 }

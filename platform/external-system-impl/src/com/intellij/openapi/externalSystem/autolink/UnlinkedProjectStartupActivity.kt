@@ -1,163 +1,311 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.extensions.ExtensionPointListener
-import com.intellij.openapi.extensions.ExtensionPointUtil
-import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.createExtensionDisposable
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
+import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.isFile
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
+import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
+import com.intellij.platform.isConfiguredByPlatformProcessor
+import com.intellij.util.containers.DisposableWrapperList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.CopyOnWriteArrayList
 
-class UnlinkedProjectStartupActivity : StartupActivity.Background {
-  private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("UnlinkedProjectTracker.backgroundExecutor", 1)
+@VisibleForTesting
+@ApiStatus.Internal
+class UnlinkedProjectStartupActivity : ProjectActivity {
 
-  override fun runActivity(project: Project) {
-    val externalProjectPath = project.guessProjectDir()?.path ?: return
-    showNotificationWhenNonEmptyProjectUnlinked(project)
-    showNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
-    showNotificationWhenNewBuildFileCreated(project, externalProjectPath)
-    if (!ExternalSystemUtil.isNewProject(project)) {
-      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
+  override suspend fun execute(project: Project) {
+    project.trackActivity(ExternalSystemActivityKey) {
+      project.serviceAsync<ExternalSystemInProgressService>().unlinkedActivityStarted()
+      loadProjectIfSingleUnlinkedProjectFound(project)
+      val projectRoots = installProjectRootsScanner(project)
+      installUnlinkedProjectScanner(project, projectRoots)
     }
   }
 
-  private fun showNotificationIfUnlinkedProjectsFound(project: Project, externalProjectPath: String) {
-    EP_NAME.forEachExtensionSafe {
-      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, it)
+  private fun isEnabledAutoLink(project: Project): Boolean {
+    return ExternalSystemUnlinkedProjectSettings.getInstance(project).isEnabledAutoLink &&
+           !Registry.`is`("external.system.auto.import.disabled")
+  }
+
+  private fun isNewExternalProject(project: Project): Boolean {
+    return ExternalSystemUtil.isNewProject(project)
+  }
+
+  private fun isNewPlatformProject(project: Project): Boolean {
+    return isNewProject(project)
+  }
+
+  private fun isOpenedWithEmptyModel(project: Project): Boolean {
+    return isConfiguredByPlatformProcessor(project) || isEmptyModel(project)
+  }
+
+  private fun isEmptyModel(project: Project): Boolean {
+    val moduleManager = ModuleManager.getInstance(project)
+    return moduleManager.modules.isEmpty()
+  }
+
+  private suspend fun loadProjectIfSingleUnlinkedProjectFound(project: Project) {
+    val externalProjectPath = project.basePath ?: return
+    val isNewExternalProject = isNewExternalProject(project)
+    val isEnabledAutoLink = isEnabledAutoLink(project)
+    val isNewPlatformProject = isNewPlatformProject(project)
+    val isOpenedWithEmptyModel = isOpenedWithEmptyModel(project)
+    val isExpectedAutoLink = isEnabledAutoLink && !isNewPlatformProject && isOpenedWithEmptyModel
+    val (linkedProjects, unlinkedProjects) = findLinkedAndUnlinkedProjects(project, externalProjectPath)
+    if (!isNewExternalProject) {
+      if (isExpectedAutoLink && unlinkedProjects.size == 1 && linkedProjects.isEmpty()) {
+        val extension = unlinkedProjects.single()
+        extension.linkAndLoadProjectAsync(project, externalProjectPath)
+        if (LOG.isDebugEnabled) {
+          val projectId = extension.createProjectId(externalProjectPath)
+          LOG.debug("$projectId: project is auto-linked")
+        }
+        return
+      }
+    }
+    if (LOG.isDebugEnabled) {
+      LOG.debug("""
+          |Project '${project.name}' wasn't auto-linked:
+          |  linkedProjects=$linkedProjects
+          |  unlinkedProjects=$unlinkedProjects
+          |  isNewExternalProject=$isNewExternalProject
+          |  isExpectedAutoLink=$isExpectedAutoLink
+          |    isEnabledAutoLink=$isEnabledAutoLink
+          |    isNewPlatformProject=$isNewPlatformProject
+          |    isOpenedWithEmptyModel=$isOpenedWithEmptyModel
+        """.trimMargin())
     }
   }
 
-  private fun showNotificationIfUnlinkedProjectsFound(project: Project, externalProjectPath: String, buildFiles: Set<VirtualFile>) {
-    EP_NAME.forEachExtensionSafe {
-      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, buildFiles, it)
-    }
-  }
-
-  private fun showNotificationIfUnlinkedProjectsFound(
+  private suspend fun findLinkedAndUnlinkedProjects(
     project: Project,
-    externalProjectPath: String,
-    unlinkedProjectAware: ExternalSystemUnlinkedProjectAware
-  ) {
-    showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, unlinkedProjectAware) {
-      unlinkedProjectAware.getBuildFiles(project, externalProjectPath)
+    externalProjectPath: String
+  ): Pair<List<ExternalSystemUnlinkedProjectAware>, List<ExternalSystemUnlinkedProjectAware>> {
+    val linkedProjects = ArrayList<ExternalSystemUnlinkedProjectAware>()
+    val unlinkedProjects = ArrayList<ExternalSystemUnlinkedProjectAware>()
+    EP_NAME.forEachExtensionSafeAsync { extension ->
+      when {
+        extension.isLinkedProject(project, externalProjectPath) ->
+          linkedProjects.add(extension)
+        extension.hasBuildFiles(project, externalProjectPath) ->
+          unlinkedProjects.add(extension)
+      }
     }
+    return linkedProjects to unlinkedProjects
   }
 
-  private fun showNotificationIfUnlinkedProjectsFound(
-    project: Project,
-    externalProjectPath: String,
-    possibleBuildFiles: Set<VirtualFile>,
-    unlinkedProjectAware: ExternalSystemUnlinkedProjectAware
-  ) {
-    showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, unlinkedProjectAware) {
-      possibleBuildFiles.filter { unlinkedProjectAware.isBuildFile(project, it) }
+  private suspend fun installProjectRootsScanner(project: Project): ProjectRoots {
+    val projectRoots = ProjectRoots()
+    val rootProjectPath = project.basePath
+    if (rootProjectPath != null && !hasLinkedProject(project, rootProjectPath)) {
+      projectRoots.addProjectRoot(rootProjectPath)
     }
+    EP_NAME.withEachExtensionSafeAsync(project) { extension, extensionDisposable ->
+      extension.subscribe(project, object : ExternalSystemProjectLinkListener {
+        override fun onProjectLinked(externalProjectPath: String) {
+          project.esCoroutineScope.launch(extensionDisposable) {
+            projectRoots.removeProjectRoot(externalProjectPath)
+          }
+        }
+      }, extensionDisposable)
+    }
+    return projectRoots
   }
 
-  private fun showNotificationIfUnlinkedProjectsFound(
-    project: Project,
-    externalProjectPath: String,
-    unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
-    collectBuildFiles: () -> Collection<VirtualFile>
-  ) {
-    val extensionDisposable = createExtensionDisposable(project, unlinkedProjectAware)
-    if (unlinkedProjectAware.isLinkedProject(project, externalProjectPath)) return
-    ReadAction.nonBlocking(collectBuildFiles)
-      .expireWith(extensionDisposable)
-      .finishOnUiThread(ModalityState.defaultModalityState()) { buildFiles ->
-        if (buildFiles.isNotEmpty()) {
-          val notificationAware = UnlinkedProjectNotificationAware.getInstance(project)
-          notificationAware.notify(unlinkedProjectAware, externalProjectPath)
+  private suspend fun installUnlinkedProjectScanner(project: Project, projectRoots: ProjectRoots) {
+    EP_NAME.withEachExtensionSafeAsync(project) { extension, extensionDisposable ->
+      whenProjectRootsChanged(project, projectRoots, extensionDisposable) { changedRoots ->
+        project.trackActivity(ExternalSystemActivityKey) {
+          for (projectRoot in changedRoots) {
+            updateNotification(project, projectRoot, extension)
+          }
         }
       }
-      .submit(backgroundExecutor)
-  }
-
-  private fun showNotificationWhenNonEmptyProjectUnlinked(project: Project) {
-    EP_NAME.forEachExtensionSafe {
-      showNotificationWhenNonEmptyProjectUnlinked(project, it)
-    }
-    EP_NAME.addExtensionPointListener(
-      object : ExtensionPointListener<ExternalSystemUnlinkedProjectAware> {
-        override fun extensionAdded(extension: ExternalSystemUnlinkedProjectAware, pluginDescriptor: PluginDescriptor) {
-          showNotificationWhenNonEmptyProjectUnlinked(project, extension)
+      projectRoots.withProjectRoot(extensionDisposable) { projectRoot ->
+        project.trackActivity(ExternalSystemActivityKey) {
+          updateNotification(project, projectRoot, extension)
         }
-      }, project)
-  }
-
-  private fun showNotificationWhenNonEmptyProjectUnlinked(project: Project, unlinkedProjectAware: ExternalSystemUnlinkedProjectAware) {
-    val extensionDisposable = createExtensionDisposable(project, unlinkedProjectAware)
-    unlinkedProjectAware.subscribe(project, object : ExternalSystemProjectLinkListener {
-      override fun onProjectUnlinked(externalProjectPath: String) {
-        showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
       }
-    }, extensionDisposable)
-  }
-
-  private fun showNotificationWhenBuildToolPluginEnabled(project: Project, externalProjectPath: String) {
-    EP_NAME.addExtensionPointListener(
-      object : ExtensionPointListener<ExternalSystemUnlinkedProjectAware> {
-        override fun extensionAdded(extension: ExternalSystemUnlinkedProjectAware, pluginDescriptor: PluginDescriptor) {
-          showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
+      projectRoots.whenProjectRootRemoved(extensionDisposable) { projectRoot ->
+        project.trackActivity(ExternalSystemActivityKey) {
+          expireNotification(project, projectRoot, extension)
         }
-      }, project)
+      }
+    }
   }
 
-  private fun showNotificationWhenNewBuildFileCreated(project: Project, externalProjectPath: String) {
-    val asyncNewFilesListener = NewBuildFilesListener(project, externalProjectPath)
-    val fileManager = VirtualFileManager.getInstance()
-    fileManager.addAsyncFileListener(asyncNewFilesListener, project)
+  private fun hasLinkedProject(project: Project, projectRoot: String): Boolean {
+    EP_NAME.forEachExtensionSafeAsync { extension ->
+      if (extension.isLinkedProject(project, projectRoot)) {
+        return true
+      }
+    }
+    return false
   }
 
-  private fun ExternalSystemUnlinkedProjectAware.getBuildFiles(project: Project, externalProjectPath: String): List<VirtualFile> {
-    val localFilesSystem = LocalFileSystem.getInstance()
-    val externalProjectDir = localFilesSystem.findFileByPath(externalProjectPath)
-    if (externalProjectDir == null) return emptyList()
-    return externalProjectDir.children.filter { isBuildFile(project, it) }
+  private suspend fun updateNotification(project: Project, projectRoot: String, extension: ExternalSystemUnlinkedProjectAware) {
+    when {
+      extension.isLinkedProject(project, projectRoot) ->
+        expireNotification(project, projectRoot, extension)
+      extension.hasBuildFiles(project, projectRoot) ->
+        notifyNotification(project, projectRoot, extension)
+      else ->
+        expireNotification(project, projectRoot, extension)
+    }
   }
 
-  private fun createExtensionDisposable(project: Project, unlinkedProjectAware: ExternalSystemUnlinkedProjectAware): Disposable {
-    return ExtensionPointUtil.createExtensionDisposable(unlinkedProjectAware, EP_NAME)
-      .also { Disposer.register(project, it) }
+  private suspend fun notifyNotification(
+    project: Project,
+    externalProjectPath: String,
+    extension: ExternalSystemUnlinkedProjectAware
+  ) {
+    val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
+    UnlinkedProjectNotificationAware.getInstance(project)
+      .notificationNotify(extension.createProjectId(externalProjectPath)) {
+        project.esCoroutineScope.launch(extensionDisposable) {
+          project.trackActivity(ExternalSystemActivityKey) {
+            extension.linkAndLoadProjectAsync(project, externalProjectPath)
+          }
+        }
+    }
   }
 
-  inner class NewBuildFilesListener(
-    private val project: Project,
-    private val externalProjectPath: String
-  ) : AsyncFileChangeListenerBase() {
-    private lateinit var buildFiles: MutableSet<VirtualFile>
+  private suspend fun expireNotification(
+    project: Project,
+    externalProjectPath: String,
+    extension: ExternalSystemUnlinkedProjectAware
+  ) {
+    UnlinkedProjectNotificationAware.getInstance(project)
+      .notificationExpire(extension.createProjectId(externalProjectPath))
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun whenProjectRootsChanged(
+    project: Project,
+    projectRoots: ProjectRoots,
+    parentDisposable: Disposable,
+    action: suspend (Set<String>) -> Unit,
+  ) {
+    val virtualFileDispatcher = Dispatchers.Default.limitedParallelism(1)
+    val listener = UnlinkedProjectWatcher(projectRoots) { changedRoots ->
+      project.esCoroutineScope.launch(parentDisposable, virtualFileDispatcher) {
+        action(changedRoots)
+      }
+    }
+    installAsyncVirtualFileListener(listener, parentDisposable)
+  }
+
+  private class UnlinkedProjectWatcher(
+    private val projectRoots: ProjectRoots,
+    private val action: (Set<String>) -> Unit
+  ) : VirtualFileChangesListener {
+
+    @Volatile
+    private var changedRoots = HashSet<String>()
 
     override fun init() {
-      buildFiles = HashSet()
+      changedRoots = HashSet()
+    }
+
+    override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean {
+      return event !is VFileContentChangeEvent
+    }
+
+    override fun updateFile(file: VirtualFile, event: VFileEvent) {
+      for (projectRoot in projectRoots) {
+        val path = file.toNioPathOrNull() ?: continue
+        val projectPath = projectRoot.toNioPathOrNull() ?: continue
+        if (projectPath.startsWith(path)) {
+          changedRoots.add(projectRoot)
+        }
+        else if (file.isFile && path.parent == projectPath) {
+          changedRoots.add(projectRoot)
+        }
+      }
     }
 
     override fun apply() {
-      if (buildFiles.isEmpty()) return
-      showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, buildFiles)
+      val changedRoots = changedRoots.toSet()
+      if (changedRoots.isNotEmpty()) {
+        action(changedRoots)
+      }
     }
+  }
 
-    override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean =
-      event is VFileCreateEvent &&
-      FileUtil.pathsEqual(PathUtil.getParentPath(file.path), externalProjectPath) &&
-      EP_NAME.extensionList.any { it.isBuildFile(project, file) }
 
-    override fun updateFile(file: VirtualFile, event: VFileEvent) {
-      buildFiles.add(file)
+  private fun ExternalSystemUnlinkedProjectAware.createProjectId(externalProjectPath: String): ExternalSystemProjectId {
+    return ExternalSystemProjectId(systemId, externalProjectPath)
+  }
+
+  private suspend fun ExternalSystemUnlinkedProjectAware.hasBuildFiles(project: Project, externalProjectPath: String): Boolean {
+    return readAction {
+      val projectRoot = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
+      projectRoot?.children?.firstOrNull { isBuildFile(project, it) } != null
     }
   }
 }
+
+private class ProjectRoots : Iterable<String> {
+  private val projectRoots = CopyOnWriteArrayList<String>()
+  private val addListeners = DisposableWrapperList<suspend (String) -> Unit>()
+  private val removeListeners = DisposableWrapperList<suspend (String) -> Unit>()
+
+  override fun iterator(): Iterator<String> {
+    return projectRoots.iterator()
+  }
+
+  suspend fun addProjectRoot(projectRoot: String) {
+    projectRoots.add(projectRoot)
+    addListeners.forEach { it(projectRoot) }
+  }
+
+  suspend fun removeProjectRoot(projectRoot: String) {
+    projectRoots.remove(projectRoot)
+    removeListeners.forEach { it(projectRoot) }
+  }
+
+  fun whenProjectRootAdded(parentDisposable: Disposable, action: suspend (String) -> Unit) {
+    addListeners.add(action, parentDisposable)
+  }
+
+  fun whenProjectRootRemoved(parentDisposable: Disposable, action: suspend (String) -> Unit) {
+    removeListeners.add(action, parentDisposable)
+  }
+
+  suspend fun withProjectRoot(parentDisposable: Disposable, action: suspend (String) -> Unit) {
+    for (projectRoot in projectRoots) {
+      action(projectRoot)
+    }
+    whenProjectRootAdded(parentDisposable) { projectRoot ->
+      action(projectRoot)
+    }
+  }
+}
+
+private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autolink")

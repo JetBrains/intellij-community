@@ -16,15 +16,33 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBinaryExpression
-import org.jetbrains.uast.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UastBinaryOperator
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 
+@ApiStatus.Internal
 class JavaUBinaryExpression(
   override val sourcePsi: PsiBinaryExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpression {
-  override val leftOperand: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.lOperand, this) }
-  override val rightOperand: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.rOperand, this) }
-  override val operator: UastBinaryOperator by lz { sourcePsi.operationTokenType.getOperatorType() }
+
+  private val leftOperandPart = UastLazyPart<UExpression>()
+  private val rightOperandPart = UastLazyPart<UExpression>()
+  private val operatorPart = UastLazyPart<UastBinaryOperator>()
+
+  override val leftOperand: UExpression
+    get() = leftOperandPart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.lOperand, this) }
+
+  override val rightOperand: UExpression
+    get() = rightOperandPart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.rOperand, this) }
+
+  override val operator: UastBinaryOperator
+    get() = operatorPart.getOrBuild { sourcePsi.operationTokenType.getOperatorType() }
 
   override val operatorIdentifier: UIdentifier
     get() = UIdentifier(sourcePsi.operationSign, this)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -6,22 +6,34 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.jetbrains.annotations.ApiStatus.Obsolete;
+
 /**
- * This extension point allows to contribute content to the following IDE features:
+ * <b>PSA</b>
+ * <p>
+ * The new code is expected to implement {@link com.intellij.platform.backend.documentation.DocumentationTarget DocumentationTarget} instead.
+ * {@code DocumentationProvider} interface is not <b>yet</b> deprecated to avoid warnings in the existing code.
+ * Existing implementations are supported as is
+ * via {@link com.intellij.lang.documentation.psi.PsiElementDocumentationTarget PsiElementDocumentationTarget},
+ * you can take inspiration for migration there, but <b>do not use it</b>.
+ * Consider migrating to {@code DocumentationTarget} if you need to fix something in your implementation of this interface.
+ * </p>
+ * <br/>
+ * Contributes content to the following IDE features:
  * <ul>
  *   <li>Quick Documentation (invoked via explicit action or shown on mouse hover)</li>
  *   <li>Navigation info (shown in editor on Ctrl/Cmd+mouse hover)</li>
@@ -29,18 +41,22 @@ import java.util.function.Consumer;
  * </ul>
  * <p>
  * Extend {@link AbstractDocumentationProvider}.
+ * <p>
+ * Language-specific instance should be registered in {@code com.intellij.lang.documentationProvider} extension point; otherwise use
+ * {@code com.intellij.documentationProvider}.
+ * </p>
  *
  * @see com.intellij.lang.LanguageDocumentation
  * @see DocumentationProviderEx
  * @see ExternalDocumentationProvider
  * @see ExternalDocumentationHandler
  */
+@Obsolete
 public interface DocumentationProvider {
-
   /**
-   * Please use {@link com.intellij.lang.LanguageDocumentation} instead of this for language-specific documentation
+   * Please use {@code com.intellij.lang.documentationProvider} instead of this for language-specific documentation.
    */
-  ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
+  ExtensionPointName<DocumentationProvider> EP_NAME = new ExtensionPointName<>("com.intellij.documentationProvider");
 
   /**
    * Returns the text to show in the Ctrl-hover popup for the specified element.
@@ -51,8 +67,7 @@ public interface DocumentationProvider {
    * @return the documentation to show, or {@code null} if the provider can't provide any documentation for this element. Documentation can contain
    * HTML markup. If HTML special characters need to be shown in popup, they should be properly escaped.
    */
-  @Nullable
-  default String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  default @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return null;
   }
 
@@ -68,8 +83,7 @@ public interface DocumentationProvider {
    * For {@link ExternalDocumentationProvider}, first URL, yielding non-empty result in
    * {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List, boolean)} will be used.
    */
-  @Nullable
-  default List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+  default @Unmodifiable @Nullable List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }
 
@@ -96,8 +110,7 @@ public interface DocumentationProvider {
    * @return target element's documentation, or {@code null} if provider is unable to generate documentation
    * for the given element
    */
-  @Nullable
-  default @NlsSafe String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  default @Nullable @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null;
   }
 
@@ -107,18 +120,8 @@ public interface DocumentationProvider {
    * At the moment it's only invoked to get initial on-hover documentation. If user navigates any link in that documentation,
    * {@link #generateDoc(PsiElement, PsiElement)} will be used to fetch corresponding content.
    */
-  @Nullable
-  default String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+  default @Nullable @Nls String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     return generateDoc(element, originalElement);
-  }
-
-  /**
-   * @deprecated Override {@link #generateRenderedDoc(PsiDocCommentBase)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiElement element) {
-    return null;
   }
 
   /**
@@ -126,10 +129,8 @@ public interface DocumentationProvider {
    *
    * @see #collectDocComments(PsiFile, Consumer)
    */
-  @ApiStatus.Experimental
-  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
-    PsiElement target = comment.getOwner();
-    return generateRenderedDoc(target == null ? comment : target);
+  default @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+    return null;
   }
 
   /**
@@ -141,8 +142,7 @@ public interface DocumentationProvider {
    * a case, {@link #findDocComment(PsiFile, TextRange)} should also be implemented by the documentation provider, for the rendered
    * documentation view to work correctly.
    */
-  @ApiStatus.Experimental
-  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {}
+  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) { }
 
   /**
    * This method is needed to support rendered representation of documentation comments in editor. It should return doc comment located at
@@ -152,14 +152,12 @@ public interface DocumentationProvider {
    *
    * @see #collectDocComments(PsiFile, Consumer)
    */
-  @ApiStatus.Experimental
   default @Nullable PsiDocCommentBase findDocComment(@NotNull PsiFile file, @NotNull TextRange range) {
     PsiDocCommentBase comment = PsiTreeUtil.getParentOfType(file.findElementAt(range.getStartOffset()), PsiDocCommentBase.class, false);
     return comment == null || !range.equals(comment.getTextRange()) ? null : comment;
   }
 
-  @Nullable
-  default PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  default @Nullable PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null;
   }
 
@@ -173,8 +171,7 @@ public interface DocumentationProvider {
    * @return the navigation target, or {@code null} if the link couldn't be resolved.
    * @see DocumentationManagerUtil#createHyperlink(StringBuilder, String, String, boolean)
    */
-  @Nullable
-  default PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+  default @Nullable PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
 
@@ -183,20 +180,34 @@ public interface DocumentationProvider {
    * referenced at target offset) isn't suitable for your language. For example, it could be a keyword where there's no
    * {@link com.intellij.psi.PsiReference}, but for which users might benefit from context help.
    *
-   * @param targetOffset equals to caret offset for 'Quick Documentation' action, and to offset under mouse cursor for documentation shown
-   *                     on mouse hover
+   * @param targetOffset   equals to caret offset for 'Quick Documentation' action, and to offset under mouse cursor for documentation shown
+   *                       on mouse hover
    * @param contextElement the leaf PSI element in {@code file} at target offset
    * @return target PSI element to show documentation for, or {@code null} if it should be determined by standard platform's logic (default
    * behaviour)
    */
-  @Nullable
-  default PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
-                                                   @NotNull final PsiFile file,
+  default @Nullable PsiElement getCustomDocumentationElement(final @NotNull Editor editor,
+                                                   final @NotNull PsiFile file,
                                                    @Nullable PsiElement contextElement,
                                                    int targetOffset) {
     //noinspection deprecation
-    return (this instanceof DocumentationProviderEx)
-           ? ((DocumentationProviderEx)this).getCustomDocumentationElement(editor, file, contextElement)
+    return (this instanceof DocumentationProviderEx ex)
+           ? ex.getCustomDocumentationElement(editor, file, contextElement)
            : null;
+  }
+
+  default @Nullable DocumentationParts getDocumentationParts(@NotNull PsiElement element, PsiElement originalElement) {
+    String doc = generateDoc(element, originalElement);
+    return doc == null ? null : new DocumentationParts(doc, null);
+  }
+
+  class DocumentationParts {
+    public final @Nls String doc;
+    public final String definitionDetails;
+
+    public DocumentationParts(@Nls String doc, String definitionDetails) {
+      this.doc = doc;
+      this.definitionDetails = definitionDetails;
+    }
   }
 }

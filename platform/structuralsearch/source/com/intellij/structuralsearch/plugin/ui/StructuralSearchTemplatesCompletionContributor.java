@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -10,19 +10,19 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class StructuralSearchTemplatesCompletionContributor extends CompletionContributor {
+public class StructuralSearchTemplatesCompletionContributor extends CompletionContributor implements DumbAware {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    final StructuralSearchDialog dialog = parameters.getEditor().getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_DIALOG);
+    final StructuralSearchDialog dialog = parameters.getEditor().getUserData(StructuralSearchDialogKeys.STRUCTURAL_SEARCH_DIALOG);
     if (dialog == null) {
-      final Boolean test = parameters.getEditor().getUserData(StructuralSearchDialog.TEST_STRUCTURAL_SEARCH_DIALOG);
+      final Boolean test = parameters.getEditor().getUserData(StructuralSearchDialogKeys.TEST_STRUCTURAL_SEARCH_DIALOG);
       if (test == null || !test) return;
     }
 
@@ -66,7 +66,8 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
 
         LookupElementBuilder element = LookupElementBuilder.create(configuration, configuration.getMatchOptions().getSearchPattern())
           .withLookupString(configuration.getName())
-          .withTailText(configuration.getTailText(), true)
+          .withTypeText(configuration.getTypeText(), true)
+          .withIcon(configuration.getIcon())
           .withCaseSensitivity(false)
           .withPresentableText(configuration.getName());
 

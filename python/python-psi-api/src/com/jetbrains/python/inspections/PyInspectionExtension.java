@@ -1,20 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class PyInspectionExtension {
   public static final ExtensionPointName<PyInspectionExtension> EP_NAME = ExtensionPointName.create("Pythonid.inspectionExtension");
 
@@ -22,7 +28,7 @@ public abstract class PyInspectionExtension {
     return false;
   }
 
-  public boolean ignoreShadowed(@NotNull final PsiElement element) {
+  public boolean ignoreShadowed(final @NotNull PsiElement element) {
     return false;
   }
 
@@ -60,6 +66,7 @@ public abstract class PyInspectionExtension {
 
   /**
    * Enable "unresolved reference" inspection regardless of IDE type and initialized SDK.
+   *
    * @return true -- Enable forcibly, false -- disable forcibly, null -- act as usual.
    */
   public Boolean overrideUnresolvedReferenceInspection(@NotNull PsiFile file) {
@@ -85,7 +92,7 @@ public abstract class PyInspectionExtension {
    * @param context    type eval to be used
    * @return true if ignore
    */
-  public boolean ignoreProtectedSymbol(@NotNull final PyReferenceExpression expression, @NotNull final TypeEvalContext context) {
+  public boolean ignoreProtectedSymbol(final @NotNull PyReferenceExpression expression, final @NotNull TypeEvalContext context) {
     return false;
   }
 
@@ -126,5 +133,5 @@ public abstract class PyInspectionExtension {
   /**
    * @return Do not report "unused import"
    */
- public boolean ignoreUnusedImports(@NotNull PyImportedNameDefiner importNameDefiner) {return false;}
+  public boolean ignoreUnusedImports(@NotNull PyImportedNameDefiner importNameDefiner) { return false; }
 }

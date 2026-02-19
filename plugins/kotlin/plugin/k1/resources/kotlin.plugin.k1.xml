@@ -1,0 +1,134 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <module value="com.intellij.modules.kotlin.k1"/>
+
+  <xi:include href="/META-INF/analysis-api/analysis-api-fe10.xml"/> <!-- comes from the Kotlin compiler -->
+
+  <xi:include href="kotlin-core.xml"/>
+  <xi:include href="searching-base.xml"/>
+  <xi:include href="kotlin-core-fe10.xml"/>
+  <xi:include href="navigation.xml"/>
+  <xi:include href="refactorings.xml"/>
+  <xi:include href="file-types.xml"/>
+  <xi:include href="resolution-fe10.xml"/>
+  <xi:include href="kotlin.highlighting.shared.xml"/>
+  <xi:include href="highlighting-fe10.xml"/>
+  <xi:include href="language.xml"/>
+  <xi:include href="light-classes.xml"/>
+  <xi:include href="light-classes-fe10.xml"/>
+  <xi:include href="formatter.xml"/>
+  <xi:include href="completion-fe10.xml"/>
+  <xi:include href="refactorings-fe10.xml"/>
+  <xi:include href="inspections-fe10.xml"/>
+  <xi:include href="indices.xml"/>
+  <xi:include href="caches.xml"/>
+  <xi:include href="caches-fe10.xml"/>
+  <xi:include href="jps.xml"/>
+  <xi:include href="statistics.xml"/>
+  <xi:include href="scripting-v1.xml"/>
+  <xi:include href="dep-spellchecker.xml"/>
+  <xi:include href="kotlinx-serialization.xml"/>
+  <xi:include href="native.xml"/>
+  <xi:include href="jvm-debugger.xml"/>
+  <xi:include href="jvm-debugger-fe10.xml"/>
+  <xi:include href="facets-base.xml"/>
+  <xi:include href="platform-kind-resolution-fe10.xml"/>
+  <xi:include href="jvm.xml"/>
+  <xi:include href="actions-fe10.xml"/>
+  <xi:include href="intellij.kotlin.base.codeInsight.minimal.xml"/>
+
+  <!--suppress XmlPathReference -->
+  <xi:include href="ultimate-plugin.xml">
+    <xi:fallback/>
+  </xi:include>
+
+  <xi:include href="parcelize.k1.xml"/>
+
+  <content namespace="jetbrains">
+    <module name="intellij.kotlin.base.analysis.platform"/>
+    <module name="intellij.kotlin.base.externalSystem"/>
+    <module name="kotlin.base.fe10.plugin"/>
+    <module name="kotlin.base.fe10.analysis-api-platform"/>
+    <module name="kotlin.base.fe10.project-structure"/>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <module name="intellij.kotlin.gradle.gradle"/>
+    <module name="intellij.kotlin.gradle.codeInsight.common"/>
+    <module name="intellij.kotlin.gradle.codeInsight.groovy"/>
+    <module name="intellij.kotlin.gradle.codeInsight.toml"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <module name="kotlin.gradle.scripting.k1"/>
+    <module name="kotlin.gradle.gradle-java.k1"/>
+    <module name="intellij.kotlin.maven"/>
+    <module name="intellij.kotlin.onboarding"/>
+    <module name="intellij.kotlin.onboarding.gradle"/>
+    <module name="intellij.kotlin.onboarding.maven"/>
+    <module name="intellij.kotlin.projectWizard.idea"/>
+    <module name="kotlin.project-wizard.idea.k1"/>
+    <module name="intellij.kotlin.projectWizard.gradle"/>
+    <module name="intellij.kotlin.projectWizard.maven"/>
+    <module name="intellij.kotlin.projectWizard.compose"/>
+    <module name="intellij.kotlin.jvm.decompiler"/>
+    <module name="kotlin.jvm-debugger.sequence.k1"/>
+    <module name="intellij.kotlin.runConfigurations.junit"/>
+    <module name="kotlin.run-configurations.junit-fe10"/>
+    <module name="intellij.kotlin.runConfigurations.testng"/>
+    <module name="intellij.kotlin.runConfigurations.jvm"/>
+    <module name="intellij.kotlin.coverage"/>
+    <module name="intellij.kotlin.i18n"/>
+    <module name="intellij.kotlin.git"/>
+    <module name="intellij.kotlin.grazie"/>
+    <module name="intellij.kotlin.completion.ml"/>
+    <module name="kotlin.compiler-plugins.compiler-plugin-support.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.support.maven"/>
+    <module name="kotlin.compiler-plugins.allopen.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.allopen.maven"/>
+    <module name="kotlin.compiler-plugins.noarg.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.noarg.maven"/>
+    <module name="kotlin.compiler-plugins.sam-with-receiver.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.samWithReceiver.maven"/>
+    <module name="kotlin.compiler-plugins.parcelize.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.scripting"/>
+    <module name="intellij.kotlin.compilerPlugins.kapt"/>
+    <module name="kotlin.compiler-plugins.kotlinx-serialization.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.serialization.maven"/>
+    <module name="intellij.kotlin.compilerPlugins.dataframe.maven"/>
+    <module name="kotlin.compiler-plugins.lombok.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.lombok.maven"/>
+    <module name="kotlin.compiler-plugins.assignment.common.k1"/>
+    <module name="kotlin.compiler-plugins.assignment.gradle"/>
+    <module name="intellij.kotlin.compilerPlugins.assignment.maven"/>
+
+    <module name="kotlin.jvm.shared"/>
+    <module name="kotlin.jvm.k1"/>
+
+    <module name="intellij.kotlin.featuresTrainer"/>
+    <module name="kotlin.j2k.k1.new.post-processing"/>
+    <module name="kotlin.j2k.k1.old.post-processing"/>
+
+    <module name="intellij.kotlin.copyright"/>
+    <module name="kotlin.injection.k1"/>
+    <module name="kotlin.base.injection"/>
+
+    <module name="kotlin.code-insight.intentions.shared"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
+    <module name="kotlin.code-insight.inspections.k1"/>
+    <module name="kotlin.code-insight.live-templates.shared"/>
+    <module name="kotlin.code-insight.live-templates.k1"/>
+    <module name="kotlin.code-insight.postfix-templates.k1"/>
+    <module name="kotlin.code-insight.structural-search.k1"/>
+    <module name="kotlin.code-insight.k1"/>
+
+    <module name="intellij.kotlin.compilerReferenceIndex"/>
+
+    <module name="intellij.kotlin.performanceExtendedPlugin"/>
+
+    <module name="kotlin.base.scripting.k1"/>
+    <module name="intellij.kotlin.base.scripting.shared"/>
+  </content>
+  <extensions defaultExtensionNs="org.jetbrains.uast">
+    <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin"/>
+    <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
+    <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.generate.KotlinUastCodeGenerationPlugin"/>
+  </extensions>
+</idea-plugin>

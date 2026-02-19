@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e -u -o pipefail
+
+ultimate_root="$(cd "$(dirname "$0")/../../../../../.."; pwd)"
+
+if [ "${RUN_WITHOUT_ULTIMATE_ROOT-:}" != "true" ]; then
+  # Provide packages.jetbrains.team credentials for Bazel in .netrc
+  # The script will be missing if run from community repository
+  authorizer="$ultimate_root/build/private-packages-auth/authorizer.sh"
+  if [ -f "$authorizer" ]; then
+    "$authorizer"
+  fi
+fi
+
+_bazel="$BAZEL_REAL"
+unset BAZEL_REAL BAZELISK_SKIP_WRAPPER
+exec "$_bazel" "$@"

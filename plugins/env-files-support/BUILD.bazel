@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.dotenv` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "dotenv_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "dotenv",
+  module_name = "intellij.dotenv",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
+  resources = [":dotenv_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-core",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/refactoring",
+    "//platform/lang-impl",
+    "//platform/lang-api:lang",
+  ]
+)
+
+jvm_library(
+  name = "dotenv_test_lib",
+  module_name = "intellij.dotenv",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":dotenv",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/lang-core:lang-core_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/refactoring:refactoring_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
+### auto-generated section `build intellij.dotenv` end

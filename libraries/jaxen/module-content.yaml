@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.jaxen.jar
+  modules:
+  - name: intellij.libraries.jaxen
+    libraries:
+      Jaxen:
+      - name: $MAVEN_REPOSITORY$/jaxen/jaxen/1/jaxen-1.jar

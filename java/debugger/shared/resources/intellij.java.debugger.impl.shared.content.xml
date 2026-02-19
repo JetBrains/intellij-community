@@ -1,0 +1,81 @@
+<!--
+  This file contains extensions, actions, services, etc. without v2 dependencies,
+  so it can be included in Analyzer dependencies where V2 is not yet supported.
+
+  All new extensions, actions, services, extension points, etc. should be added to this file.
+-->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+    <applicationSettings service="com.intellij.debugger.settings.DebuggerSettings"/>
+    <xdebugger.hotSwapUiExtension implementation="com.intellij.debugger.impl.hotswap.JvmHotSwapUiExtension"/>
+    <rdct.remoteSettingProvider implementation="com.intellij.debugger.settings.JavaDebuggerSettingsProvider"/>
+    <xdebugger.customXDescriptorSerializerProvider
+      implementation="com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptorSerializerProvider"/>
+    <xdebugger.customXDescriptorSerializerProvider
+      implementation="com.intellij.java.debugger.impl.shared.engine.JavaExecutionStackDescriptorSerializerProvider"/>
+    <postStartupActivity implementation="com.intellij.java.debugger.impl.shared.SharedDebuggerInitializationProjectActivity"/>
+    <xdebugger.xTextValueModificationPreparatorProvider
+      implementation="com.intellij.java.debugger.impl.shared.engine.JavaValueTextModificationPreparatorProvider"/>
+    <registryKey defaultValue="1000"
+                 description="Maximum number of dump items that can be serialized to pass to the frontend"
+                 key="debugger.thread.dump.max.items.frontend"/>
+
+  </extensions>
+  <actions resource-bundle="messages.JavaDebuggerSharedBundle">
+    <action id="Debugger.AsyncStacks" class="com.intellij.java.debugger.impl.shared.actions.AsyncStacksToggleAction">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+    </action>
+    <action id="DumpThreads" class="com.intellij.java.debugger.impl.shared.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
+      <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
+    </action>
+    <action id="Debugger.StepOutOfBlock" class="com.intellij.java.debugger.impl.shared.actions.StepOutOfBlockAction"
+            icon="AllIcons.Actions.StepOutCodeBlock">
+      <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra" anchor="after" relative-to-action="SmartStepInto"/>
+    </action>
+    <action id="Debugger.XThreadsView.ResumeThread" class="com.intellij.java.debugger.impl.shared.actions.ResumeThreadAction">
+      <add-to-group group-id="XDebugger.Threads.View.Popup"/>
+    </action>
+    <action id="Debugger.XThreadsView.FreezeThread" class="com.intellij.java.debugger.impl.shared.actions.FreezeThreadAction">
+      <add-to-group group-id="XDebugger.Threads.View.Popup"/>
+    </action>
+    <action id="Debugger.XThreadsView.InterruptThread" class="com.intellij.java.debugger.impl.shared.actions.InterruptThreadAction">
+      <add-to-group group-id="XDebugger.Threads.View.Popup"/>
+    </action>
+    <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
+            id="MemoryView.ShowInstancesFromDebuggerTree">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Debugger.ShowReferring"/>
+    </action>
+    <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
+            id="Memory.CalculateRetainedSize">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
+    </action>
+  </actions>
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+    </action>
+    <group id="Debugger.ViewAsGroup" class="com.intellij.java.debugger.impl.shared.actions.ViewAsGroup">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+    </group>
+    <action id="Debugger.CreateRenderer" class="com.intellij.java.debugger.impl.shared.actions.CreateRendererAction">
+      <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
+      <override-text place="XDebuggerTreePopup"/>
+    </action>
+    <action id="Debugger.AutoRenderer" class="com.intellij.java.debugger.impl.shared.actions.AutoRendererAction"/>
+    <action id="Debugger.ShowTypes" class="com.intellij.java.debugger.impl.shared.actions.ShowTypesAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.ViewAsGroup"/>
+    </action>
+    <action id="Debugger.MuteRenderers" class="com.intellij.java.debugger.impl.shared.actions.MuteRenderersAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.ShowTypes"/>
+    </action>
+    <action id="Debugger.CustomizeContextView" class="com.intellij.java.debugger.impl.shared.actions.CustomizeContextViewAction">
+      <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
+      <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
+    </action>
+  </actions>
+</idea-plugin>

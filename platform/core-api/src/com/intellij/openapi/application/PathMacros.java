@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,11 +23,9 @@ public abstract class PathMacros {
     return ApplicationManager.getApplication().getService(PathMacros.class);
   }
 
-  @NotNull
-  public abstract Set<String> getAllMacroNames();
+  public abstract @NotNull Set<String> getAllMacroNames();
 
-  @Nullable
-  public abstract String getValue(@NotNull String name);
+  public abstract @Nullable String getValue(@NotNull String name);
 
   /**
    * Consider using {@link PathMacroContributor}.
@@ -34,34 +33,21 @@ public abstract class PathMacros {
   @ApiStatus.Internal
   public abstract void setMacro(@NotNull String name, @Nullable String value);
 
-  /**
-   * @deprecated Use {@link PathMacroContributor}
-   */
-  @Deprecated
-  public void removeMacro(@NotNull String name) {
-    setMacro(name, null);
-  }
+  public abstract @NotNull Set<String> getUserMacroNames();
 
-  @NotNull
-  public abstract Set<String> getUserMacroNames();
+  public abstract @NotNull Map<String, String> getUserMacros();
 
-  @NotNull
-  public abstract Map<String, String> getUserMacros();
+  public abstract @NotNull Set<String> getSystemMacroNames();
 
-  @NotNull
-  public abstract Set<String> getSystemMacroNames();
+  public abstract @NotNull Collection<String> getIgnoredMacroNames();
 
-  @NotNull
-  public abstract Collection<String> getIgnoredMacroNames();
+  public abstract void setIgnoredMacroNames(final @NotNull Collection<String> names);
 
-  public abstract void setIgnoredMacroNames(@NotNull final Collection<String> names);
+  public abstract void addIgnoredMacro(@NotNull List<String> names);
 
-  public abstract void addIgnoredMacro(@NotNull final String name);
-
-  public abstract boolean isIgnoredMacroName(@NotNull final String macro);
+  public abstract boolean isIgnoredMacroName(@NotNull String macro);
 
   public abstract void removeAllMacros();
 
-  @NotNull
-  public abstract Collection<String> getLegacyMacroNames();
+  public abstract @NotNull Collection<String> getLegacyMacroNames();
 }

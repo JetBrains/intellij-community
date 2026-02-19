@@ -1,45 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Defines persistence storage location and options.
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Persisting States</a>.
+ * Defines persistence storage location and options. The annotation should be used as a value of {@link State#storages()}.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">Persisting State of Components (IntelliJ Platform Docs)</a>.
  */
 @Retention(RetentionPolicy.RUNTIME)
+@Target({})
 public @interface Storage {
-  
-  /**
-   * @deprecated use {@link StoragePathMacros#NON_ROAMABLE_FILE}
-   */
-  @Deprecated
-  String NOT_ROAMABLE_FILE = StoragePathMacros.NON_ROAMABLE_FILE;
-
-  /**
-   * @deprecated Use {@link #value()}.
-   */
-  @Deprecated
+  /** @deprecated Use {@link #value()}. */
+  @Deprecated(forRemoval = true)
   String file() default "";
 
   /**
-   * Relative to component container configuration root path.
-   * Consider using shorthand form - {@code @Storage("yourName.xml")} (when you need to specify only file path).
+   * The configuration root path relative to component container.
+   * Consider using shorthand form - {@code @Storage("yourName.xml")} (when you need to specify only a file path).
    * <p>
-   * Consider reusing existing storage files instead of a new one to avoid creating new ones. Related components should reuse the same storage file.
+   * Consider reusing existing storage files instead of a new one to avoid creating too many of them.
+   * Related components should reuse the same storage file.
+   * But don't mix components with different RoamingTypes in a single file, it is prohibited.
+   * <p>
+   * The actual path to the storage file on disk is not strictly defined as relative to the container path;
+   * in fact it can be different, e.g., application-wide {@link RoamingType#PER_OS os-dependent} settings are stored in the subfolder
+   * corresponding to the current OS (e.g., in {@code APP_CONFIG/options/mac/}).
    *
    * @see StoragePathMacros
    */
-  @NonNls
   String value() default "";
 
   /**
-   * If deprecated, data will be removed on write. And ignored on read if (and only if) new storage exists.
+   * If deprecated, data won't be written. And ignored on read - but only if a new storage exists.
    */
   boolean deprecated() default false;
 
@@ -55,11 +53,16 @@ public @interface Storage {
    */
   Class<? extends StateStorage> storageClass() default StateStorage.class;
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings("removal")
   Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
 
   /**
    * Whether to apply save threshold policy (defaults to {@code true} if {@link #roamingType()} is set to {@link RoamingType#DISABLED}).
+   * <p>
+   * If the threshold is enabled, calls of {@link Application#saveSettings()} will save the component at most once in 5 minutes, but if user
+   * explicitly invokes 'Save All' action, the component will be saved immediately. Use this attribute to disable the threshold for components
+   * which configuration may be read from external processes, and therefore it's important to save them immediately.
+   * </p>
    */
   ThreeState useSaveThreshold() default ThreeState.UNSURE;
 
@@ -67,7 +70,10 @@ public @interface Storage {
   boolean exclusive() default false;
 
   /**
-   * Is exportable (Export Settings dialog) regardless of roaming type.
+   * Is exportable (Export Settings dialog, migrate settings) regardless of roaming type.
    */
   boolean exportable() default false;
+
+  @ApiStatus.Internal
+  boolean usePathMacroManager() default true;
 }

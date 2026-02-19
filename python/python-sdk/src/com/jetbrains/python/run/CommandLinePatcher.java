@@ -16,10 +16,10 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import org.jetbrains.annotations.ApiStatus;
 
-/**
- * @author yole
- */
+
 public interface CommandLinePatcher {
+  @ApiStatus.Internal
   void patchCommandLine(GeneralCommandLine commandLine);
 }

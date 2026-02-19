@@ -5,11 +5,9 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -19,15 +17,29 @@ import java.util.List;
  * it can NOT be done through {@link ChangeListManager} interface; it is for external/IDEA user modifications
  */
 public interface ChangeListManagerGate {
+  /**
+   * @return lists with <b>populated</b> {@link LocalChangeList#getChanges()}
+   */
   @NotNull
   List<LocalChangeList> getListsCopy();
 
+  /**
+   * @return list with <b>non-populated</b> {@link LocalChangeList#getChanges()}
+   */
   @Nullable
   LocalChangeList findChangeList(@Nullable @NlsSafe String name);
 
+  /**
+   * If a changelist with this name already exists, an error is logged.
+   *
+   * @return list with <b>non-populated</b> {@link LocalChangeList#getChanges()}
+   */
   @NotNull
   LocalChangeList addChangeList(@NotNull @NlsSafe String name, @Nullable @NlsSafe String comment);
 
+  /**
+   * @return list with <b>non-populated</b> {@link LocalChangeList#getChanges()}
+   */
   @NotNull
   LocalChangeList findOrCreateList(@NotNull @NlsSafe String name, @Nullable @NlsSafe String comment);
 
@@ -42,13 +54,6 @@ public interface ChangeListManagerGate {
 
   @Nullable
   FileStatus getStatus(@NotNull FilePath filePath);
-
-  /**
-   * @deprecated use {@link #getStatus(FilePath)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
-  FileStatus getStatus(@NotNull File file);
 
   void setDefaultChangeList(@NotNull String list);
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.module.Module;
@@ -6,18 +7,17 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
   private final ModuleProjectStructureElement myContainingElement;
-  @Nullable private final DependencyScope myScope;
+  private final @Nullable DependencyScope myScope;
   private final ProjectStructureElement mySourceElement;
   private final Module myModule;
 
@@ -76,14 +76,13 @@ public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   @Override
   public void removeSourceElement() {
     if (mySourceElement instanceof LibraryProjectStructureElement) {
-      ModuleStructureConfigurable.getInstance(myModule.getProject())
+      myContext.getModulesConfigurator().getProjectStructureConfigurable().getModulesConfig()
         .removeLibraryOrderEntry(myModule, ((LibraryProjectStructureElement)mySourceElement).getLibrary());
     }
   }
 
-  @Nullable
   @Override
-  public String getPresentableLocationInElement() {
+  public @Nullable String getPresentableLocationInElement() {
     return myScope != null && myScope != DependencyScope.COMPILE ? "[" + StringUtil.decapitalize(myScope.getDisplayName()) + "]" : null;
   }
 

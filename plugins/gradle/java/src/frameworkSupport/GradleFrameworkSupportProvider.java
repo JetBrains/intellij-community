@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 import static org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder.getBuildScriptData;
 
@@ -27,34 +27,22 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
   public static final ExtensionPointName<GradleFrameworkSupportProvider> EP_NAME =
     ExtensionPointName.create("org.jetbrains.plugins.gradle.frameworkSupport");
 
-  /**
-   * @deprecated use {@link #addSupport(ProjectId, Module, ModifiableRootModel, ModifiableModelsProvider, BuildScriptDataBuilder)}
-   */
-  @Deprecated
-  public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel,
-                         @NotNull ModifiableModelsProvider modifiableModelsProvider,
-                         @NotNull BuildScriptDataBuilder buildScriptData) {
-  }
-
   public void addSupport(@NotNull ProjectId projectId,
                          @NotNull Module module,
                          @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {
-    addSupport(module, rootModel, modifiableModelsProvider, buildScriptData);
   }
 
   public JComponent createComponent() {
     return null;
   }
 
-  @NotNull
   @Override
-  public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+  public @NotNull FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
     return new FrameworkSupportInModuleConfigurable() {
-      @Nullable
       @Override
-      public JComponent createComponent() {
+      public @Nullable JComponent createComponent() {
         return GradleFrameworkSupportProvider.this.createComponent();
       }
 
@@ -74,7 +62,7 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
   }
 
   @Override
-  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
+  public boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType) {
     return false;
   }
 }

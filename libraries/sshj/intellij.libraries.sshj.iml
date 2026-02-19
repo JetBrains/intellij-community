@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="SSHJ" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps:sshj:0.38.0-idea2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0.38.0-idea2/sshj-0.38.0-idea2.jar">
+              <sha256sum>bd0bf08b2b4aca35a87ec2bee62920fb0478d5b21c97f6ece04739bf5b4aeefc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0.jar">
+              <sha256sum>e4f70fd92849b52240048b8ebace0c9a17d3bb7b9c882b3c7778cec3458495f5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0.jar">
+              <sha256sum>4dda1120db856640dbec04140ed23242215a075fe127bdefa0dcfa29fb31267d</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="org.bouncycastle:bcprov-jdk18on" />
+            <dependency maven-id="org.bouncycastle:bcpkix-jdk18on" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0.38.0-idea2/sshj-0.38.0-idea2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/sshj/0.38.0-idea2/sshj-0.38.0-idea2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/hierynomus/asn-one/0.6.0/asn-one-0.6.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.3.0/eddsa-0.3.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

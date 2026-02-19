@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.properties.IProperty;
@@ -64,14 +64,13 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
   public abstract GenericAttributeValue<String> getbasedir();
 
   @Override
-  @NotNull
-  public final Iterator<String> getNamesIterator() {
+  public final @NotNull Iterator<String> getNamesIterator() {
     final String prefix = getPropertyPrefixValue();
     final Iterator<String> delegate = buildProperties().keySet().iterator();
     if (prefix == null) {
       return delegate;
     }
-    return new Iterator<String>() {
+    return new Iterator<>() {
       @Override
       public boolean hasNext() {
         return delegate.hasNext();
@@ -106,10 +105,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     }
 
     if (domTarget != null) {
-      final PsiElement psi = PomService.convertToPsi(domTarget);
-      if (psi != null) {
-        return psi;
-      }
+      return PomService.convertToPsi(domTarget);
     }
 
     final PsiFileSystemItem psiFile = getFile().getValue();
@@ -132,8 +128,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
   }
 
   @Override
-  @Nullable
-  public final String getPropertyValue(String propertyName) {
+  public final @Nullable String getPropertyValue(String propertyName) {
     final String prefix = getPropertyPrefixValue();
     if (prefix != null) {
       if (!propertyName.startsWith(prefix)) {
@@ -202,20 +197,18 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         final String resource = getResource().getStringValue();
         if (resource != null) {
           final ClassLoader loader = getClassLoader();
-          if (loader != null) {
-            final InputStream stream = loader.getResourceAsStream(resource);
-            if (stream != null) {
-              try {
-                // todo: Remote file can be XmlPropertiesFile
-                final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream,
-                                                                                                            PropertiesFileType.INSTANCE);
-                result = new HashMap<>();
-                for (final IProperty property : propFile.getProperties()) {
-                  result.put(property.getUnescapedKey(), property.getUnescapedValue());
-                }
+          final InputStream stream = loader.getResourceAsStream(resource);
+          if (stream != null) {
+            try {
+              // todo: Remote file can be XmlPropertiesFile
+              final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream,
+                                                                                                          PropertiesFileType.INSTANCE);
+              result = new HashMap<>();
+              for (final IProperty property : propFile.getProperties()) {
+                result.put(property.getUnescapedKey(), property.getUnescapedValue());
               }
-              catch (IOException ignored) {
-              }
+            }
+            catch (IOException ignored) {
             }
           }
         }
@@ -224,8 +217,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return (myCachedProperties = result);
   }
 
-  @Nullable
-  public String getPropertyPrefixValue() {
+  public @Nullable String getPropertyPrefixValue() {
     final GenericAttributeValue<String> prefixValue = getPrefix();
     if (prefixValue == null) {
       return null;
@@ -242,8 +234,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return prefix;
   }
 
-  @Nullable
-  private ClassLoader getClassLoader() {
+  private @NotNull ClassLoader getClassLoader() {
     ClassLoader loader = myCachedLoader;
     if (loader == null) {
       myCachedLoader = loader = CustomAntElementsRegistry.createClassLoader(CustomAntElementsRegistry.collectUrls(this), getContextAntProject());
@@ -251,13 +242,11 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return loader;
   }
 
-  @Nullable
-  public PropertiesFile getPropertiesFile() {
+  public @Nullable PropertiesFile getPropertiesFile() {
     return toPropertiesFile(getFile().getValue());
   }
 
-  @Nullable
-  private static PropertiesFile toPropertiesFile(@Nullable final PsiFileSystemItem item) {
+  private static @Nullable PropertiesFile toPropertiesFile(final @Nullable PsiFileSystemItem item) {
     if (item instanceof PropertiesFile) {
       return (PropertiesFile)item;
     }

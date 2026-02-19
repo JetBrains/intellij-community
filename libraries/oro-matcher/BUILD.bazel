@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.libraries.oro.matcher` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "oro-matcher_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "oro-matcher",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":oro-matcher_resources"],
+  exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
+  runtime_deps = ["@lib//:libraries-oro-matcher-_oro_matcher"]
+)
+
+jvm_library(
+  name = "oro-matcher_test_lib",
+  module_name = "intellij.libraries.oro.matcher",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
+  runtime_deps = [":oro-matcher"]
+)
+### auto-generated section `build intellij.libraries.oro.matcher` end

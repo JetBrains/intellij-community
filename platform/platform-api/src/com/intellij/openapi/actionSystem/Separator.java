@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.IdeBundle;
@@ -9,29 +9,26 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
  * Represents a separator.
  */
-@SuppressWarnings("ComponentNotRegistered")
-public final class Separator extends AnAction implements DumbAware, LightEditCompatible {
+public final class Separator extends DecorativeElement implements DumbAware, LightEditCompatible, SeparatorAction {
 
   private static final Separator ourInstance = new Separator();
   private final Supplier<@NlsContexts.Separator String> myDynamicText;
 
-  @NotNull
-  public static Separator getInstance() {
+  public static @NotNull Separator getInstance() {
     return ourInstance;
   }
 
-  @NotNull
-  public static Separator create() {
+  public static @NotNull Separator create() {
     return create(null);
   }
 
-  @NotNull
-  public static Separator create(@Nullable @NlsContexts.Separator String text) {
+  public static @NotNull Separator create(@Nullable @NlsContexts.Separator String text) {
     return StringUtil.isEmptyOrSpaces(text)? ourInstance : new Separator(text);
   }
 
@@ -47,17 +44,26 @@ public final class Separator extends AnAction implements DumbAware, LightEditCom
     myDynamicText = dynamicText;
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   public @NlsContexts.Separator String getText() {
     return myDynamicText.get();
   }
 
   @Override
-  public String toString() {
-    return IdeBundle.message("action.separator", myDynamicText.get());
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null || getClass() != obj.getClass()) return false;
+
+    Separator other = (Separator) obj;
+    return Objects.equals(myDynamicText, other.myDynamicText);
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e){
-    throw new UnsupportedOperationException();
+  public String toString() {
+    return IdeBundle.message("action.separator", myDynamicText.get());
   }
 }

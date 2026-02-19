@@ -1,8 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
@@ -22,14 +28,11 @@ import org.intellij.lang.regexp.psi.RegExpProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author vnikolaenko
- */
 public final class RegExpCompletionContributor extends CompletionContributor {
   private static final Icon emptyIcon = EmptyIcon.create(PlatformIcons.PROPERTY_ICON);
 
@@ -69,25 +72,9 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       extend(CompletionType.BASIC, psiElement().inside(RegExpProperty.class).afterLeaf(psiElement(RegExpTT.EQ)),
              new PropertyValueCompletionProvider());
     }
-
-    {
-      // TODO: this seems to be needed only for tests!
-      final ElementPattern<PsiElement> backSlashPattern = psiElement().withText("\\\\");
-      extend(CompletionType.BASIC, psiElement().afterLeaf(backSlashPattern), new CharacterClassesNameCompletionProvider());
-
-      final ElementPattern<PsiElement> propertyPattern
-              = psiElement().withText("p").afterLeaf(backSlashPattern);
-      extend(CompletionType.BASIC, psiElement().afterLeaf(propertyPattern), new PropertyCompletionProvider());
-
-      final PsiElementPattern.Capture<PsiElement> namedCharacterPattern = psiElement().withText("N");
-      extend(CompletionType.BASIC, psiElement().afterLeaf(namedCharacterPattern),
-             new NamedCharacterCompletionProvider(true));
-      extend(CompletionType.BASIC, psiElement().afterLeaf(psiElement(RegExpTT.LBRACE).afterLeaf(namedCharacterPattern)),
-             new NamedCharacterCompletionProvider(false));
-    }
   }
 
-  private static void addLookupElement(final CompletionResultSet result, @NonNls final String name, String type, Icon icon) {
+  private static void addLookupElement(CompletionResultSet result, @NonNls String name, String type, Icon icon) {
     result.addElement(createLookupElement(name, type, icon));
   }
 
@@ -105,7 +92,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
       for (String[] completion : RegExpLanguageHosts.getInstance().getPosixCharacterClasses(parameters.getPosition())) {
         result.addElement(
           LookupElementBuilder.create(completion[0]).withTypeText((completion.length > 1) ? completion[1] : null).withIcon(emptyIcon)
-            .withInsertHandler(new InsertHandler<LookupElement>() {
+            .withInsertHandler(new InsertHandler<>() {
               @Override
               public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
                 context.setAddCompletionChar(false);
@@ -126,9 +113,9 @@ public final class RegExpCompletionContributor extends CompletionContributor {
   private static class PropertyCompletionProvider extends CompletionProvider<CompletionParameters> {
 
     @Override
-    public void addCompletions(@NotNull final CompletionParameters parameters,
-                               @NotNull final ProcessingContext context,
-                               @NotNull final CompletionResultSet result) {
+    public void addCompletions(@NotNull CompletionParameters parameters,
+                               @NotNull ProcessingContext context,
+                               @NotNull CompletionResultSet result) {
       for (String[] stringArray : RegExpLanguageHosts.getInstance().getAllKnownProperties(parameters.getPosition())) {
         addLookupElement(result, "{" + stringArray[0] + "}", stringArray.length > 1 ? stringArray[1]:null, PlatformIcons.PROPERTY_ICON);
       }
@@ -138,11 +125,11 @@ public final class RegExpCompletionContributor extends CompletionContributor {
   private static class CharacterClassesNameCompletionProvider extends CompletionProvider<CompletionParameters> {
 
     @Override
-    public void addCompletions(@NotNull final CompletionParameters parameters,
-                               @NotNull final ProcessingContext context,
-                               @NotNull final CompletionResultSet result)
+    public void addCompletions(@NotNull CompletionParameters parameters,
+                               @NotNull ProcessingContext context,
+                               @NotNull CompletionResultSet result)
     {
-      for (final String[] completion : RegExpLanguageHosts.getInstance().getKnownCharacterClasses(parameters.getPosition())) {
+      for (String[] completion : RegExpLanguageHosts.getInstance().getKnownCharacterClasses(parameters.getPosition())) {
         addLookupElement(result, completion[0], completion[1], emptyIcon);
       }
 

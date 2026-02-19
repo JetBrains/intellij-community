@@ -1,0 +1,9 @@
+# Using an exact number in the specifier for scripts/sync_protobuf/google_protobuf.py
+# When updating, also re-run the script
+version = "~=6.32.1"
+upstream_repository = "https://github.com/protocolbuffers/protobuf"
+extra_description = "Partially generated using [mypy-protobuf==3.6.0](https://github.com/nipunn1313/mypy-protobuf/tree/v3.6.0) and libprotoc 31.1 on [protobuf v32.1](https://github.com/protocolbuffers/protobuf/releases/tag/v32.1) (python `protobuf==6.32.1`)."
+partial_stub = true
+
+[tool.stubtest]
+ignore_missing_stub = true

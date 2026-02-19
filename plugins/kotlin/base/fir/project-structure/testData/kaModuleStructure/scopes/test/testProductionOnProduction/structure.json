@@ -1,0 +1,6 @@
+{
+    "modules": [
+        { "name": "A", "content_roots": ["tests", "production"], "dependencies": [ {"name": "B", "scope": "TEST" } ] },
+        { "name": "B", "content_roots": ["production"] }
+    ]
+}

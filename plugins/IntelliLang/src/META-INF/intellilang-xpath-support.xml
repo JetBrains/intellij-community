@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy"
-                        serviceImplementation="org.intellij.plugins.intelliLang.inject.config.XPathSupportProxyImpl"/>
-  </extensions>
-</idea-plugin>

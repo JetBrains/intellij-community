@@ -15,16 +15,21 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class ClsRepositoryPsiElement<T extends StubElement> extends ClsElementImpl implements StubBasedPsiElement<T> {
+public abstract class ClsRepositoryPsiElement<T extends StubElement<?>> extends ClsElementImpl implements StubBasedPsiElement<T> {
   private final T myStub;
 
   protected ClsRepositoryPsiElement(final T stub) {
@@ -34,6 +39,11 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
   @Override
   public IStubElementType getElementType() {
     return myStub.getStubType();
+  }
+
+  @Override
+  public IElementType getIElementType() {
+    return myStub.getElementType();
   }
 
   @Override
@@ -50,7 +60,7 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
 
   @Override
   public PsiFile getContainingFile() {
-    StubElement p = myStub;
+    StubElement<?> p = myStub;
     while (!(p instanceof PsiFileStub)) {
       p = p.getParentStub();
     }
@@ -70,8 +80,8 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    @SuppressWarnings("unchecked") List<StubElement> stubs = getStub().getChildrenStubs();
-    if (stubs.size() == 0) return EMPTY_ARRAY;
+    List<StubElement<?>> stubs = getStub().getChildrenStubs();
+    if (stubs.isEmpty()) return EMPTY_ARRAY;
     PsiElement[] children = new PsiElement[stubs.size()];
     for (int i = 0; i < stubs.size(); i++) {
       children[i] = stubs.get(i).getPsi();
@@ -81,13 +91,13 @@ public abstract class ClsRepositoryPsiElement<T extends StubElement> extends Cls
 
   @Override
   public PsiElement getFirstChild() {
-    @SuppressWarnings("unchecked") List<StubElement> children = getStub().getChildrenStubs();
+    List<StubElement<?>> children = getStub().getChildrenStubs();
     return children.isEmpty() ? null : children.get(0).getPsi();
   }
 
   @Override
   public PsiElement getLastChild() {
-    @SuppressWarnings("unchecked") List<StubElement> children = getStub().getChildrenStubs();
+    List<StubElement<?>> children = getStub().getChildrenStubs();
     return children.isEmpty() ? null : children.get(children.size() - 1).getPsi();
   }
 

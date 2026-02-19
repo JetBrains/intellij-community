@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -11,9 +12,10 @@ import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "JsonEditorOptions",
-  storages = @Storage("editor.xml")
+  storages = @Storage("editor.xml"),
+  category = SettingsCategory.CODE
 )
-public class JsonEditorOptions implements PersistentStateComponent<JsonEditorOptions> {
+public final class JsonEditorOptions implements PersistentStateComponent<JsonEditorOptions> {
   public boolean COMMA_ON_ENTER = true;
   public boolean COMMA_ON_MATCHING_BRACES = true;
   public boolean COMMA_ON_PASTE = true;
@@ -23,9 +25,8 @@ public class JsonEditorOptions implements PersistentStateComponent<JsonEditorOpt
   public boolean COLON_MOVE_OUTSIDE_QUOTES = false;
   public boolean COMMA_MOVE_OUTSIDE_QUOTES = false;
 
-  @Nullable
   @Override
-  public JsonEditorOptions getState() {
+  public @Nullable JsonEditorOptions getState() {
     return this;
   }
 
@@ -34,7 +35,12 @@ public class JsonEditorOptions implements PersistentStateComponent<JsonEditorOpt
     XmlSerializerUtil.copyBean(state, this);
   }
 
+  @Override
+  public void noStateLoaded() {
+    loadState(new JsonEditorOptions());
+  }
+
   public static JsonEditorOptions getInstance() {
-    return ServiceManager.getService(JsonEditorOptions.class);
+    return ApplicationManager.getApplication().getService(JsonEditorOptions.class);
   }
 }

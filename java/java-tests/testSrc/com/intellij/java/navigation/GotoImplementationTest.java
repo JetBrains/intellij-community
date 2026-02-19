@@ -36,7 +36,7 @@ public class GotoImplementationTest extends JavaCodeInsightTestCase {
   protected void setUpProject() {
     String root = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/alexProject";
     VirtualFile vfsRoot = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(root));
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(vfsRoot.findChild("test.ipr").getPath()));
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(vfsRoot.findChild("test.ipr").getPath()), getTestRootDisposable());
   }
 
   public void test() {

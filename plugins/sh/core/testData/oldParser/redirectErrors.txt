@@ -1,0 +1,40 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        NUMBER
+          PsiElement(int)('1')
+        PsiWhiteSpace(' ')
+        PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('out')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        NUMBER
+          PsiElement(int)('1')
+        PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(file descriptor)('&1')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        PsiElement(>>)('>>')
+        PsiElement(file descriptor)('&1')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        NUMBER
+          PsiElement(int)('1')
+        PsiElement(>>)('>>')
+        PsiElement(file descriptor)('&1')
+  PsiElement(\n)('\n')
+  PsiErrorElement:'<<' unexpected
+    PsiElement(HEREDOC_MARKER_TAG)('<<')
+  PsiElement(BAD_CHARACTER)('&')
+  PsiElement(HEREDOC_MARKER_START)('1')
+  PsiElement(\n)('\n')
+  PsiElement(HEREDOC_CONTENT)('1<<&1\n<<<&1')

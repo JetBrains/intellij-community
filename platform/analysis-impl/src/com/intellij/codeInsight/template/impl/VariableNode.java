@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -22,7 +22,7 @@ public class VariableNode extends Expression {
     if (myInitialValue != null){
       return myInitialValue.calculateQuickResult(context);
     }
-    return TemplateManagerUtilBase.getTemplateState(context.getEditor()).getVariableValue(getName());
+    return context.getVariableValue(getName());
   }
 
   @Override
@@ -42,7 +42,7 @@ public class VariableNode extends Expression {
     return myName;
   }
 
-  @Nullable public Expression getInitialValue() {
+  public @Nullable Expression getInitialValue() {
     return myInitialValue;
   }
 }

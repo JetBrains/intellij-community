@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -7,15 +7,13 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
-import icons.PythonIcons;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author yole
- */
+
 public final class PythonConfigurationType implements ConfigurationType {
 
   private final PythonConfigurationFactory myFactory = new PythonConfigurationFactory(this);
@@ -30,8 +28,7 @@ public final class PythonConfigurationType implements ConfigurationType {
     }
 
     @Override
-    @NotNull
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new PythonRunConfiguration(project, this);
     }
 
@@ -41,9 +38,8 @@ public final class PythonConfigurationType implements ConfigurationType {
     }
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return PyBundle.message("python.run.python");
   }
 
@@ -54,7 +50,7 @@ public final class PythonConfigurationType implements ConfigurationType {
 
   @Override
   public Icon getIcon() {
-    return PythonIcons.Python.Python;
+    return  PythonParserIcons.PythonFile;
   }
 
   @Override
@@ -72,9 +68,7 @@ public final class PythonConfigurationType implements ConfigurationType {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return "PythonConfigurationType";
   }
 

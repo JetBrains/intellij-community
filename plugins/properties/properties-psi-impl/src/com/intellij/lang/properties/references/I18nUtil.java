@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -28,16 +26,19 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-public class I18nUtil {
-  @NotNull
-  public static List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {
+public final class I18nUtil {
+  public static @NotNull List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {
     if (resourceBundleName == null) return Collections.emptyList();
     PsiFile containingFile = context.getContainingFile();
     PsiElement containingFileContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     if (containingFileContext != null) containingFile = containingFileContext.getContainingFile();
-    
+
     VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) {
       virtualFile = containingFile.getOriginalFile().getVirtualFile();

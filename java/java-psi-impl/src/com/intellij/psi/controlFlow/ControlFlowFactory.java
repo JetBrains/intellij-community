@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.AnyPsiChangeListener;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,14 +15,13 @@ import java.util.Map;
 
 import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 
+@Service(Service.Level.PROJECT)
 public final class ControlFlowFactory implements Disposable {
   // psiElements hold weakly, controlFlows softly
-  private final Map<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = ContainerUtil.createConcurrentWeakKeySoftValueMap();
-
-  private static final NotNullLazyKey<ControlFlowFactory, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ControlFlowFactory.class);
+  private volatile @NotNull Map<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = CollectionFactory.createConcurrentWeakKeySoftValueMap();
 
   public static ControlFlowFactory getInstance(Project project) {
-    return INSTANCE_KEY.getValue(project);
+    return project.getService(ControlFlowFactory.class);
   }
 
   public ControlFlowFactory(@NotNull Project project) {
@@ -35,14 +34,24 @@ public final class ControlFlowFactory implements Disposable {
   }
 
   private void clearCache() {
-    cachedFlows.clear();
+    cachedFlows = CollectionFactory.createConcurrentWeakKeySoftValueMap();
   }
 
   void registerSubRange(final PsiElement codeFragment,
                         final ControlFlowSubRange flow,
-                        final ControlFlowOptions options, 
+                        final ControlFlowOptions options,
                         final ControlFlowPolicy policy) {
     registerControlFlow(codeFragment, flow, options, policy);
+  }
+
+  /**
+   * @param body body element to compute control flow for
+   * @return control flow where constants are not evaluated (e.g., unreachable code due to always false loop condition is still present)
+   * @throws AnalysisCanceledException if control flow cannot be built (e.g., syntax error inside the body)
+   */
+  public static @NotNull ControlFlow getControlFlowNoConstantEvaluate(@NotNull PsiElement body) throws AnalysisCanceledException {
+    LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+    return getControlFlow(body, policy, ControlFlowOptions.NO_CONST_EVALUATE);
   }
 
   private static final class ControlFlowContext {
@@ -75,7 +84,7 @@ public final class ControlFlowFactory implements Disposable {
     public int hashCode() {
       int result = policy.hashCode();
       result = 31 * result + (options.hashCode());
-      result = 31 * result + (int)(modificationCount ^ (modificationCount >>> 32));
+      result = 31 * result + Long.hashCode(modificationCount);
       return result;
     }
 
@@ -96,27 +105,23 @@ public final class ControlFlowFactory implements Disposable {
     }
   }
 
-  @NotNull
-  public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy) throws AnalysisCanceledException {
+  public @NotNull ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy) throws AnalysisCanceledException {
     return doGetControlFlow(element, policy, ControlFlowOptions.create(true, true, true));
   }
 
-  @NotNull
-  public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
+  public @NotNull ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     return doGetControlFlow(element, policy, ControlFlowOptions.create(true, evaluateConstantIfCondition, true));
   }
 
-  @NotNull
-  public static ControlFlow getControlFlow(@NotNull PsiElement element,
-                                           @NotNull ControlFlowPolicy policy,
-                                           @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
+  public static @NotNull ControlFlow getControlFlow(@NotNull PsiElement element,
+                                                    @NotNull ControlFlowPolicy policy,
+                                                    @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
     return getInstance(element.getProject()).doGetControlFlow(element, policy, options);
   }
 
-  @NotNull
-  private ControlFlow doGetControlFlow(@NotNull PsiElement element,
-                                       @NotNull ControlFlowPolicy policy,
-                                       @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
+  private @NotNull ControlFlow doGetControlFlow(@NotNull PsiElement element,
+                                                @NotNull ControlFlowPolicy policy,
+                                                @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
     if (!element.isPhysical()) {
       return new ControlFlowAnalyzer(element, policy, options).buildControlFlow();
     }
@@ -131,11 +136,10 @@ public final class ControlFlowFactory implements Disposable {
     return controlFlow;
   }
 
-  @NotNull
-  private static ControlFlowContext createContext(@NotNull ControlFlowOptions options,
-                                                  @NotNull ControlFlowPolicy policy,
-                                                  @NotNull ControlFlow controlFlow,
-                                                  final long modificationCount) {
+  private static @NotNull ControlFlowContext createContext(@NotNull ControlFlowOptions options,
+                                                           @NotNull ControlFlowPolicy policy,
+                                                           @NotNull ControlFlow controlFlow,
+                                                           final long modificationCount) {
     return new ControlFlowContext(options, policy, modificationCount, controlFlow);
   }
 
@@ -150,8 +154,7 @@ public final class ControlFlowFactory implements Disposable {
     cached.addIfAbsent(controlFlowContext);
   }
 
-  @NotNull
-  private ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
+  private @NotNull ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
     return cachedFlows.computeIfAbsent(element, __ -> ContainerUtil.createConcurrentList());
   }
 

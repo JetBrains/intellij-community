@@ -29,7 +29,6 @@ if '_pydev_runfiles.pydev_runfiles' in sys.modules:
 from _pydev_runfiles import pydev_runfiles
 import unittest
 import tempfile
-import re
 
 try:
     set
@@ -77,7 +76,7 @@ class RunfilesTest(unittest.TestCase):
         self.filtered_tests = self.MyTestRunner.filter_tests(self.all_tests)
 
     def setUp(self):
-        self.file_dir = [os.path.abspath(os.path.join(desired_runfiles_path, 'tests_runfiles/samples'))]
+        self.file_dir = [os.path.abspath(os.path.join(desired_runfiles_path, 'pydev_tests_runfiles/samples'))]
         self._setup_scenario(self.file_dir, None)
 
 

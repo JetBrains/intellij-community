@@ -1,13 +1,11 @@
 import org.jetbrains.annotations.*;
 
 class Test {
-  @Nullable
-  String foo1() {
+  @Nullable String foo1() {
     return null;
   }
 
-  @NotNull
-  String foo2() {
+  @NotNull String foo2() {
     return "";
   }
 
@@ -15,29 +13,24 @@ class Test {
     return s;
   }
 
-  @NotNull
-  String foo4(@NotNull String s) {
+  @NotNull String foo4(@NotNull String s) {
     return s.substring(0);
   }
 
-  @NotNull
-  Integer foo5(Integer i) {
+  @NotNull Integer foo5(Integer i) {
     return i++;
   }
 
-  @NotNull
-  Integer foo6(Integer i) {
+  @NotNull Integer foo6(Integer i) {
     if (i == 0) return 1;
     return i * foo6(i--);
   }
 
-  @Nullable
-  Integer foo7(boolean flag) {
+  @Nullable Integer foo7(boolean flag) {
     return flag ? null : 1;
   }
 
-  @Nullable
-  Integer foo8(boolean flag) {
+  @Nullable Integer foo8(boolean flag) {
     if (flag) {
       return null;
     }
@@ -51,8 +44,7 @@ class Test {
     return foo3("");
   }
 
-  @Nullable
-  String foo9() {
+  @Nullable String foo9() {
     return bar9();
   }
 
@@ -67,16 +59,13 @@ class Test {
     return foo3("");
   }
 
-  @Nullable
-  String foo10(boolean flag) {
+  @Nullable String foo10(boolean flag) {
     return flag ? bar10() : bar101();
   }
 
-  @NotNull
-  String foo11() {
+  @NotNull String foo11() {
     class Foo{
-      @Nullable
-      String mess() {
+      @Nullable String mess() {
         return null;
       }
     }

@@ -1,27 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PointersKt;
 import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -29,25 +33,23 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.intellij.psi.SmartPointersKt.createSmartPointer;
+
 @SkipSlowTestLocally
 public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   //TODO merge tests
-  private boolean myDefaultEnableState;
   private CompilerTester myCompilerTester;
 
   @Override
   public void setUp() throws Exception {
-    myDefaultEnableState = CompilerReferenceService.IS_ENABLED_KEY.asBoolean();
-    CompilerReferenceService.IS_ENABLED_KEY.setValue(true);
     super.setUp();
     myCompilerTester = new CompilerTester(myModule);
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_8);
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
-      CompilerReferenceService.IS_ENABLED_KEY.setValue(myDefaultEnableState);
       myCompilerTester.tearDown();
     }
     catch (Throwable e) {
@@ -118,8 +120,8 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   private void assertSameUsageAfterRebuild(PsiElement target) {
     PsiReference ref1 = assertOneElement(searchReferences(target));
 
-    SmartPsiElementPointer<PsiElement> pRef = PointersKt.createSmartPointer(ref1.getElement());
-    SmartPsiElementPointer<PsiElement> pTarget = PointersKt.createSmartPointer(target);
+    SmartPsiElementPointer<PsiElement> pRef = createSmartPointer(ref1.getElement());
+    SmartPsiElementPointer<PsiElement> pTarget = createSmartPointer(target);
     myCompilerTester.rebuild();
 
     PsiReference ref2 = assertOneElement(searchReferences(pTarget.getElement()));

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkOrGroup;
@@ -9,14 +9,12 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -31,7 +29,7 @@ public class FrameworksTree extends CheckboxTree {
     putClientProperty("JTree.lineStyle", "None");
   }
 
-  public void setRoots(List<? extends FrameworkSupportNodeBase> roots) {
+  public void setRoots(List<? extends FrameworkSupportNodeBase<?>> roots) {
     CheckedTreeNode root = new CheckedTreeNode(null);
     for (FrameworkSupportNodeBase<?> base : roots) {
       root.add(base);
@@ -68,7 +66,7 @@ public class FrameworksTree extends CheckboxTree {
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, path -> {
+    TreeSpeedSearch.installOn(this, false, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof FrameworkSupportNodeBase) {
         return ((FrameworkSupportNodeBase<?>)node).getTitle();
@@ -93,8 +91,7 @@ public class FrameworksTree extends CheckboxTree {
 
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof FrameworkSupportNodeBase) {
-        FrameworkSupportNodeBase<?> node = (FrameworkSupportNodeBase<?>)value;
+      if (value instanceof FrameworkSupportNodeBase<?> node) {
         SimpleTextAttributes attributes = node instanceof FrameworkGroupNode ?
                                           SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
         getTextRenderer().append(node.getTitle(), attributes);
@@ -109,17 +106,5 @@ public class FrameworksTree extends CheckboxTree {
         getCheckbox().setVisible(value instanceof FrameworkSupportNode);
       }
     }
-  }
-
-  @TestOnly
-  public boolean selectFramework(final String id, final boolean checked) {
-    TreeNode root = (TreeNode)getModel().getRoot();
-    return !TreeUtil.traverse(root, node -> {
-      if (node instanceof FrameworkSupportNode && id.equals(((FrameworkSupportNode)node).getId())) {
-        ((FrameworkSupportNode)node).setChecked(checked);
-        return false;
-      }
-      return true;
-    });
   }
 }

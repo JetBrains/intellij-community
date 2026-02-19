@@ -2,11 +2,22 @@
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
@@ -14,33 +25,58 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public final class GrInjectionUtil {
   static int findParameterIndex(PsiElement arg, GrCall call) {
     final GroovyResolveResult result = call.advancedResolve();
-    if (!(result.getElement() instanceof PsiMethod)) return -1;
+    if (!(result.getElement() instanceof PsiMethod method)) return -1;
 
     final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil
       .mapArgumentsToParameters(result, call, false, false, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments());
     if (map == null) return -1;
 
-    final PsiMethod method = (PsiMethod)result.getElement();
     final PsiParameter parameter = map.get(arg).first;
     if (parameter == null) return -1;
 
     return method.getParameterList().getParameterIndex(parameter);
   }
 
+  static @Nullable PsiMethod getMethodFromLeftShiftOperator(@NotNull GrBinaryExpression expression) {
+    IElementType operator = expression.getOperator();
+    if (operator != GroovyElementTypes.LEFT_SHIFT_SIGN) return null;
+
+    GroovyCallReference reference = expression.getReference();
+    if (reference == null) return null;
+
+    PsiElement resolvedElement = reference.resolve();
+    if (!(resolvedElement instanceof PsiMethod method)) return null;
+    return method;
+  }
+
+  static @Nullable PsiParameter getSingleParameterFromMethod(@Nullable PsiMethod method) {
+    if (method == null) return null;
+    PsiParameterList parameterList = method.getParameterList();
+    return ContainerUtil.getOnlyItem(Arrays.asList(parameterList.getParameters()));
+  }
+
   public interface AnnotatedElementVisitor {
-    boolean visitMethodParameter(GrExpression expression, GrCall psiCallExpression);
-    boolean visitMethodReturnStatement(GrReturnStatement parent, PsiMethod method);
-    boolean visitVariable(PsiVariable variable);
-    boolean visitAnnotationParameter(GrAnnotationNameValuePair nameValuePair, PsiAnnotation psiAnnotation);
-    boolean visitReference(GrReferenceExpression expression);
+    boolean visitMethodParameter(@NotNull GrExpression expression, @NotNull GrCall psiCallExpression);
+    boolean visitMethodReturnStatement(@NotNull GrReturnStatement parent, @NotNull PsiMethod method);
+    boolean visitVariable(@NotNull PsiVariable variable);
+    boolean visitAnnotationParameter(@NotNull GrAnnotationNameValuePair nameValuePair, @NotNull PsiAnnotation psiAnnotation);
+    boolean visitReference(@NotNull GrReferenceExpression expression);
+    boolean visitBinaryExpression(@NotNull GrBinaryExpression expression);
   }
 
   public static void visitAnnotatedElements(@Nullable PsiElement element, AnnotatedElementVisitor visitor) {
@@ -60,8 +96,7 @@ public final class GrInjectionUtil {
       return visitor.visitAnnotationParameter((GrAnnotationNameValuePair)element, (PsiAnnotation)parent.getParent());
     }
 
-    if (parent instanceof GrAssignmentExpression) {
-      final GrAssignmentExpression p = (GrAssignmentExpression)parent;
+    if (parent instanceof GrAssignmentExpression p) {
       if (p.getRValue() == element || p.getOperationTokenType() == GroovyTokenTypes.mPLUS_ASSIGN) {
         final GrExpression left = p.getLValue();
         if (left instanceof GrReferenceExpression) {
@@ -86,6 +121,9 @@ public final class GrInjectionUtil {
     }
     else if (parent instanceof GrAnnotationArrayInitializer || parent instanceof GrAnnotationNameValuePair) {
       return true;
+    }
+    else if (parent instanceof GrBinaryExpression binaryExpression) {
+      return visitor.visitBinaryExpression(binaryExpression);
     }
     else if (parent instanceof GrArgumentList && parent.getParent() instanceof GrCall && element instanceof GrExpression) {
       return visitor.visitMethodParameter((GrExpression)element, (GrCall)parent.getParent());

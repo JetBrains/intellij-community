@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.application.options.CodeStyle;
@@ -11,10 +11,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,7 +33,11 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -45,6 +49,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
@@ -56,10 +61,17 @@ import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
 import org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public final class EclipseImportBuilder extends ProjectImportBuilder<String> implements EclipseProjectWizardContext {
   private static final Logger LOG = Logger.getInstance(EclipseImportBuilder.class);
@@ -78,8 +90,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
   private Parameters parameters;
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return EclipseBundle.message("eclipse.name");
   }
 
@@ -89,8 +100,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
   }
 
   @Override
-  @Nullable
-  public String getRootDirectory() {
+  public @Nullable String getRootDirectory() {
     return getParameters().root;
   }
 
@@ -100,7 +110,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<String> roots = new ArrayList<>();
-        EclipseProjectFinder.findModuleRoots(roots, path, path12 -> {
+        EclipseProjectFinder.findModuleRoots(roots, path, (@NlsSafe var path12) -> {
           final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           if (progressIndicator != null) {
             if (progressIndicator.isCanceled()) return false;
@@ -277,11 +287,11 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
           modulesDirectory = path;
         }
         final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerEx.IML_EXTENSION,
-                                                    StdModuleTypes.JAVA.getId());
+                                                    JavaModuleType.getModuleType().getId());
         result.add(module);
         final Set<String> natures = collectNatures(path);
 
-        if (natures.size() > 0) {
+        if (!natures.isEmpty()) {
           module2NatureNames.put(module, natures);
         }
         final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -322,14 +332,14 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
         getParameters().existingModuleNames.add(projectName);
       }
     }
-    StringBuilder message = new StringBuilder();
+    @Nls StringBuilder message = new StringBuilder();
     if (!refsToModules.isEmpty()) {
 
       message.append(EclipseBundle.message("unknown.modules.detected.dialog.message", StringUtil.join(refsToModules, "\n")));
     }
     if (!unknownJdks.isEmpty()) {
-      message.append(EclipseBundle.message("unknown.jdks.detected.message", 
-                                           message.length() > 0 ? 0 : 1,
+      message.append(EclipseBundle.message("unknown.jdks.detected.message",
+                                           !message.isEmpty() ? 0 : 1,
                                            StringUtil.join(unknownJdks, "\n")));
     }
     
@@ -344,7 +354,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
         
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
-          public boolean isFileSelectable(VirtualFile file) {
+          public boolean isFileSelectable(@Nullable VirtualFile file) {
             return super.isFileSelectable(file) && Comparing.strEqual(file.getExtension(), "userlibraries");
           }
         };
@@ -364,7 +374,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
 
     setupProjectCodeStyle(project, message);
 
-    if (message.length() > 0) {
+    if (!message.isEmpty()) {
       Messages.showErrorDialog(project, message.toString(), getTitle());
     }
 
@@ -383,14 +393,14 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
       }
     }
     catch (Exception e) {
-      if (messageBuilder.length() > 0) messageBuilder.append('\n');
+      if (!messageBuilder.isEmpty()) messageBuilder.append('\n');
       messageBuilder.append(EclipseBundle.message("error.while.importing.project.code.style", e.getMessage()));
     }
   }
 
-  private static void scheduleNaturesImporting(@NotNull final Project project,
-                                               @NotNull final Map<Module, Set<String>> module2NatureNames) {
-    if (module2NatureNames.size() == 0) {
+  private static void scheduleNaturesImporting(final @NotNull Project project,
+                                               final @NotNull Map<Module, Set<String>> module2NatureNames) {
+    if (module2NatureNames.isEmpty()) {
       return;
     }
     StartupManager.getInstance(project).runAfterOpened(() -> {
@@ -408,7 +418,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
             }
           }
 
-          if (modulesToImport.size() > 0) {
+          if (!modulesToImport.isEmpty()) {
             importer.doImport(project, modulesToImport);
           }
         }
@@ -424,7 +434,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
           return looksLikeEclipse(file) ? dressIcon(file, AllIcons.Providers.Eclipse) : super.getIcon(file);
         }
 
-        private boolean looksLikeEclipse(final VirtualFile file) {
+        private static boolean looksLikeEclipse(final VirtualFile file) {
           return file.findChild(".eclipseproduct") != null;
         }
       };
@@ -451,8 +461,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     }
   }
 
-  @NotNull
-  public Parameters getParameters() {
+  public @NotNull Parameters getParameters() {
     if (parameters == null) {
       parameters = new Parameters();
       parameters.existingModuleNames = new HashSet<>();
@@ -481,8 +490,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     }
   }
 
-  @NotNull
-  public static Set<String> collectNatures(@NotNull String path) {
+  public static @NotNull Set<String> collectNatures(@NotNull String path) {
     Set<String> naturesNames = new HashSet<>();
     try {
       Element natures = JDOMUtil.load(new File(path, EclipseXml.DOT_PROJECT_EXT)).getChild("natures");

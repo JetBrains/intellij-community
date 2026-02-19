@@ -1,0 +1,11 @@
+package pack
+
+import topLevelFunction
+
+fun usage() {
+    topLevelFunction()<caret>
+}
+
+// IGNORE_K2
+// ELEMENT: topLevelFunction
+// TAIL_TEXT: "() (<root>)"

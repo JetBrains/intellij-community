@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -8,7 +8,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -21,16 +21,17 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
+public final class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
-  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, final @NotNull ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
+    PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(context);
     if (elements == null) {
       final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
       if (element != null) {
@@ -50,7 +51,7 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, final @NotNull ViewSettings viewSettings) {
     if (element instanceof PsiMethod) {
       return new MethodSmartPointerNode(project, (PsiMethod)element, viewSettings);
     }
@@ -87,15 +88,13 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  @NotNull
-  public String getFavoriteTypeId() {
+  public @NotNull String getFavoriteTypeId() {
     return "method";
   }
 
   @Override
   public String getElementUrl(final Object element) {
-     if (element instanceof PsiMethod) {
-       PsiMethod aMethod = (PsiMethod)element;
+     if (element instanceof PsiMethod aMethod) {
        if (DumbService.isDumb(aMethod.getProject())) return null;
        return PsiFormatUtil.getExternalName(aMethod);
     }
@@ -104,9 +103,8 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public String getElementModuleName(final Object element) {
-     if (element instanceof PsiMethod) {
-      PsiMethod aMethod = (PsiMethod)element;
-      Module module = ModuleUtilCore.findModuleForPsiElement(aMethod);
+     if (element instanceof PsiMethod aMethod) {
+       Module module = ModuleUtilCore.findModuleForPsiElement(aMethod);
       return module != null ? module.getName() : null;
     }
     return null;
@@ -115,8 +113,12 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     if (DumbService.isDumb(project)) return null;
-    final PsiMethod method = RefMethodImpl.findPsiMethod(PsiManager.getInstance(project), url);
-    if (method == null) return null;
-    return new Object[]{method};
+    var context = createBookmarkContext(project, url, moduleName);
+    return context == null ? null : new Object[]{context};
+  }
+
+  @Override
+  public @Nullable Object createBookmarkContext(@NotNull Project project, @NotNull String url, @Nullable String moduleName) {
+    return RefMethodImpl.findPsiMethod(PsiManager.getInstance(project), url);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet;
 
 import com.intellij.facet.impl.FacetEventsPublisher;
@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.serialization.facet.FacetState;
 
 import java.util.Collection;
@@ -29,9 +32,8 @@ public abstract class FacetManagerBase extends FacetManager {
   public static final String FEATURE_TYPE = "com.intellij.facetType";
 
   @Override
-  @NotNull
-  public <F extends Facet<?>, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C configuration,
-                                                                          @Nullable final Facet<?> underlying) {
+  public @NotNull <F extends Facet<?>, C extends FacetConfiguration> F createFacet(final @NotNull FacetType<F, C> type, final @NotNull String name, final @NotNull C configuration,
+                                                                                   final @Nullable Facet<?> underlying) {
     return createFacet(getModule(), type, name, configuration, underlying);
   }
 
@@ -40,11 +42,10 @@ public abstract class FacetManagerBase extends FacetManager {
     facet.setName(newName);
   }
 
-  @NotNull
-  protected static <F extends Facet<?>, C extends FacetConfiguration> F createFacet(@NotNull Module module, @NotNull FacetType<F, C> type,
-                                                                                    @NotNull String name,
-                                                                                    @NotNull C configuration,
-                                                                                    @Nullable Facet<?> underlying) {
+  protected static @NotNull <F extends Facet<?>, C extends FacetConfiguration> F createFacet(@NotNull Module module, @NotNull FacetType<F, C> type,
+                                                                                             @NotNull String name,
+                                                                                             @NotNull C configuration,
+                                                                                             @Nullable Facet<?> underlying) {
     final F facet = type.createFacet(module, name, configuration, underlying);
     assertTrue(facet.getModule() == module, facet, "module");
     assertTrue(facet.getConfiguration() == configuration, facet, "configuration");
@@ -54,15 +55,13 @@ public abstract class FacetManagerBase extends FacetManager {
   }
 
   @Override
-  @NotNull
-  public <F extends Facet<?>, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @Nullable final Facet<?> underlying) {
+  public @NotNull <F extends Facet<?>, C extends FacetConfiguration> F createFacet(final @NotNull FacetType<F, C> type, final @NotNull String name, final @Nullable Facet<?> underlying) {
     C configuration = ProjectFacetManager.getInstance(getModule().getProject()).createDefaultConfiguration(type);
     return createFacet(type, name, configuration, underlying);
   }
 
   @Override
-  @NotNull
-  public <F extends Facet<?>, C extends FacetConfiguration> F addFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @Nullable final Facet<?> underlying) {
+  public @NotNull <F extends Facet<?>, C extends FacetConfiguration> F addFacet(final @NotNull FacetType<F, C> type, final @NotNull String name, final @Nullable Facet<?> underlying) {
     final ModifiableFacetModel model = createModifiableModel();
     final F facet = createFacet(type, name, underlying);
     model.addFacet(facet);
@@ -72,7 +71,7 @@ public abstract class FacetManagerBase extends FacetManager {
 
   @Override
   public void facetConfigurationChanged(@NotNull Facet<?> facet) {
-    FacetEventsPublisher.getInstance(facet.getModule().getProject()).fireFacetConfigurationChanged(facet);
+    FacetEventsPublisher.Companion.getInstance(facet.getModule().getProject()).fireFacetConfigurationChanged(facet);
   }
 
   @Override
@@ -81,34 +80,29 @@ public abstract class FacetManagerBase extends FacetManager {
   }
 
   @Override
-  @Nullable
-  public <F extends Facet<?>> F getFacetByType(FacetTypeId<F> typeId) {
+  public @Nullable <F extends Facet<?>> F getFacetByType(FacetTypeId<F> typeId) {
     return getModel().getFacetByType(typeId);
   }
 
   protected abstract FacetModel getModel();
 
   @Override
-  @Nullable
-  public <F extends Facet<?>> F findFacet(final FacetTypeId<F> type, final String name) {
+  public @Nullable <F extends Facet<?>> F findFacet(final FacetTypeId<F> type, final String name) {
     return getModel().findFacet(type, name);
   }
 
   @Override
-  @Nullable
-  public <F extends Facet<?>> F getFacetByType(@NotNull final Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
+  public @Nullable <F extends Facet<?>> F getFacetByType(final @NotNull Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
     return getModel().getFacetByType(underlyingFacet, typeId);
   }
 
   @Override
-  @NotNull
-  public <F extends Facet<?>> Collection<F> getFacetsByType(@NotNull final Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
+  public @NotNull @Unmodifiable <F extends Facet<?>> Collection<F> getFacetsByType(final @NotNull Facet<?> underlyingFacet, final FacetTypeId<F> typeId) {
     return getModel().getFacetsByType(underlyingFacet, typeId);
   }
 
   @Override
-  @NotNull
-  public <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
+  public @NotNull @Unmodifiable <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
     return getModel().getFacetsByType(typeId);
   }
 
@@ -118,18 +112,16 @@ public abstract class FacetManagerBase extends FacetManager {
   }
 
   @Override
-  @NotNull
-  public String getFacetName(@NotNull Facet<?> facet) {
+  public @NotNull String getFacetName(@NotNull Facet<?> facet) {
     return getModel().getFacetName(facet);
   }
 
   protected abstract Module getModule();
 
   @ApiStatus.Internal
-  @NotNull
-  public static InvalidFacet createInvalidFacet(@NotNull Module module, @NotNull FacetState state, @Nullable Facet<?> underlyingFacet,
-                                                @NotNull @NlsContexts.DialogMessage String errorMessage,
-                                                boolean unknownType, boolean reportError) {
+  public static @NotNull InvalidFacet createInvalidFacet(@NotNull Module module, @NotNull FacetState state, @Nullable Facet<?> underlyingFacet,
+                                                         @NotNull @NlsContexts.DialogMessage String errorMessage,
+                                                         boolean unknownType, boolean reportError) {
     Project project = module.getProject();
     final InvalidFacetType type = InvalidFacetType.getInstance();
     final InvalidFacetConfiguration configuration = new InvalidFacetConfiguration(state, errorMessage);
@@ -139,8 +131,12 @@ public abstract class FacetManagerBase extends FacetManager {
       if (!invalidFacetManager.isIgnored(facet)) {
         FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
         ProjectLoadingErrorsNotifier.getInstance(project).registerError(description);
+
         if (unknownType) {
-          UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(FEATURE_TYPE, state.getFacetType(), "Facet");
+          UnknownFeaturesCollector.getInstance(project)
+            .registerUnknownFeature(new UnknownFeature(description.getErrorType().getFeatureType(),
+                                                       ProjectBundle.message("plugins.advertiser.feature.facet"),
+                                                       state.getFacetType()));
         }
       }
     }

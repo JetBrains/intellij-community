@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_soleFileChangesPackage-a.kotlin_module
+  foo/AKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/soleFileChangesPackage/a/a.kt
+End of files
+------------------------------------------
+Exit code: OK

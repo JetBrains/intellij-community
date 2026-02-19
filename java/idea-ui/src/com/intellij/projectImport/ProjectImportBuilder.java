@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport;
 
 import com.intellij.ide.DataManager;
@@ -11,16 +11,18 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 /**
- * @author Vladislav.Kaznacheev
+ * An extension point for importing modules from a given file
+ * (see {@link com.intellij.ide.util.newProjectWizard.AddModuleWizard#initModuleWizard}).
  */
 public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
   public static final ExtensionPointName<ProjectImportBuilder<?>> EXTENSIONS_POINT_NAME = new ExtensionPointName<>("com.intellij.projectImportBuilder");
@@ -62,7 +64,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
     return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
   }
 
-  protected String getTitle() {
+  protected @NlsContexts.DialogTitle String getTitle() {
     return JavaUiBundle.message("project.import.wizard.title", getName());
   }
 
@@ -71,7 +73,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
     return myUpdate;
   }
 
-  public void setUpdate(final boolean update) {
+  public void setUpdate(boolean update) {
     myUpdate = update;
   }
 }

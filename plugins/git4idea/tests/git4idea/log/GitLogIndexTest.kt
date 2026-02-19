@@ -1,45 +1,73 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.Executor
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.child
+import com.intellij.openapi.vcs.Executor.mkdir
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.VcsLogStorage
-import com.intellij.vcs.log.data.index.*
+import com.intellij.vcs.log.data.index.IndexDataGetter
+import com.intellij.vcs.log.data.index.IndexedDetails
+import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.index
+import com.intellij.vcs.log.data.index.setUpIndex
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.test.*
+import git4idea.cherrypick.GitCherryPicker
+import git4idea.test.GitSingleRepoTest
+import git4idea.test.USER_EMAIL
+import git4idea.test.USER_NAME
+import git4idea.test.addCommit
+import git4idea.test.appendAndCommit
+import git4idea.test.last
+import git4idea.test.makeCommit
+import git4idea.test.modify
+import git4idea.test.mv
+import git4idea.test.setupDefaultUsername
+import git4idea.test.setupUsername
+import git4idea.test.tac
 import junit.framework.TestCase
 
-class GitLogIndexTest : GitSingleRepoTest() {
-  private val defaultUser = VcsUserImpl(USER_NAME, USER_EMAIL)
+abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
+  private val defaultUser = VcsUserUtil.createUser(USER_NAME, USER_EMAIL)
 
   private lateinit var disposable: Disposable
   private lateinit var index: VcsLogPersistentIndex
   private val dataGetter: IndexDataGetter
-    get() = index.dataGetter!!
+    get() = index.dataGetter
   private val storage: VcsLogStorage
     get() = dataGetter.logStorage
 
   override fun setUp() {
     super.setUp()
 
-    disposable = Disposable { }
+    disposable = Disposer.newDisposable()
     Disposer.register(testRootDisposable, disposable)
 
-    index = setUpIndex(myProject, repo.root, logProvider, disposable)
+    index = setUpIndex(myProject, repo.root, logProvider, useSqlite, disposable)
   }
 
   override fun tearDown() {
-    Disposer.dispose(disposable)
-    super.tearDown()
+    try {
+      Disposer.dispose(disposable)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test indexed`() {
@@ -50,9 +78,9 @@ class GitLogIndexTest : GitSingleRepoTest() {
     }
 
     val commits = indexAll()
-    TestCase.assertTrue(index.isIndexed(repo.root))
+    assertTrue(index.isIndexed(repo.root))
     for (commit in commits) {
-      TestCase.assertTrue(index.isIndexed(commit))
+      assertTrue(index.isIndexed(commit))
     }
   }
 
@@ -61,10 +89,34 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
     indexAll()
 
-    val expectedMetadata = logProvider.readMetadata(repo.root, listOf(commitHash)).first()
+    val collector = CollectConsumer<VcsCommitMetadata>()
+    logProvider.readMetadata(repo.root, listOf(commitHash), collector)
+    val expectedMetadata = collector.result.first()
     val actualMetadata = IndexedDetails(dataGetter, storage, getCommitIndex(commitHash), 0L)
 
     TestCase.assertEquals(expectedMetadata.presentation(), actualMetadata.presentation())
+  }
+
+  @IgnoreJUnit3
+  fun `test forward index with batch api`() {
+    val file = "file.txt"
+    tac(file)
+    for (i in 0 until 5) {
+      repo.appendAndCommit(file, "new content ${i}\n")
+    }
+
+    val commits = indexAll()
+
+    val collector = CollectConsumer<VcsCommitMetadata>()
+    logProvider.readMetadata(repo.root, commits.map { getCommitHash(it) }, collector)
+    val expectedPresentation = collector.result.joinToString("\n\n") { it.presentation() }
+
+    val actualMetadata = IndexedDetails.createMetadata(commits.toSet(), dataGetter, storage,
+                                                       project.getService(VcsLogObjectsFactory::class.java))
+    val actualPresentation = commits.map { actualMetadata[it] }.joinToString("\n\n") { it?.presentation() ?: "NOT LOADED" }
+
+
+    TestCase.assertEquals(expectedPresentation, actualPresentation)
   }
 
   fun `test text filter`() {
@@ -83,12 +135,37 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(keyword)))
 
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
-  fun `test text filter with multiple patterns`() {
-    val keyword1 = "keyword1"
-    val keyword2 = "keyword2"
+  fun `test regexp text filter`() {
+    val expected = mutableSetOf<Int>()
+    val pattern = "[A-Z]+\\-\\d+"
+
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    append(file, "more content")
+    expected.add(getCommitIndex(repo.addCommit("message with ABC-18")))
+
+    append(file, "and some more content")
+    expected.add(getCommitIndex(repo.addCommit("message with CDE-239")))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    append(file, "and even more content")
+    expected.add(getCommitIndex(repo.addCommit("message with XYZ-42")))
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(pattern, isRegexpAllowed = true)))
+
+    assertEquals(expected, actual)
+  }
+
+  private fun `test text filter with multiple patterns`(keyword1: String, keyword2: String) {
     val expected = mutableSetOf<Int>()
 
     val file = "file.txt"
@@ -108,7 +185,19 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPatternsList(listOf(keyword1, keyword2))))
 
-    TestCase.assertEquals(expected.sorted(), actual.sorted())
+    assertEquals(expected.sorted(), actual.sorted())
+  }
+
+  fun `test text filter with multiple patterns`() {
+    `test text filter with multiple patterns`("keyword1", "keyword2")
+  }
+
+  fun `test text filter with short and long patterns`() {
+    `test text filter with multiple patterns`("k1", "keyword2")
+  }
+
+  fun `test text filter with short patterns`() {
+    `test text filter with multiple patterns`("k1", "k2")
   }
 
   fun `test author filter`() {
@@ -116,7 +205,7 @@ class GitLogIndexTest : GitSingleRepoTest() {
     touch(file, "content")
     repo.addCommit("some message")
 
-    val author = VcsUserImpl("Name", "name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
     val expected = setOf(getCommitIndex(makeCommit(author, file)))
 
     append(file, "even more content")
@@ -126,11 +215,41 @@ class GitLogIndexTest : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser))))
 
+    assertEquals(expected, actual)
+  }
+
+  fun `test author filter with different committer`() {
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
+    val expected = mutableSetOf<Int>()
+    var hashToPick = ""
+    build {
+      master {
+        0("a.txt")
+        1("b.txt")
+        expected.addAll(indexAll())
+      }
+      feature(1) {
+        setupUsername(project, author.name, author.email)
+        2("c.txt")
+        3("d.txt")
+        hashToPick = repo.last()
+        setupDefaultUsername(project)
+      }
+      master {
+        //cherry-pick with default user
+        GitCherryPicker(project).cherryPick(readDetails(hashToPick))
+      }
+    }
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(defaultUser, setOf(author, defaultUser))))
+
     TestCase.assertEquals(expected, actual)
   }
 
   fun `test text and author filter`() {
-    val author = VcsUserImpl("Name", "name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
     val keyword = "keyword"
     val expected = mutableSetOf<Int>()
 
@@ -180,13 +299,13 @@ class GitLogIndexTest : GitSingleRepoTest() {
     val newHistory = dataGetter.filter(listOf(createPathFilter(newFile)))
     val oldHistory = dataGetter.filter(listOf(createPathFilter(oldFile)))
 
-    TestCase.assertEquals(expectedHistory, newHistory)
-    TestCase.assertEquals(expectedHistory, oldHistory)
+    assertEquals(expectedHistory, newHistory)
+    assertEquals(expectedHistory, oldHistory)
   }
 
   fun `test directory history`() {
     val dir = "dir"
-    Executor.mkdir(dir)
+    mkdir(dir)
 
     val expectedHistory = mutableSetOf<Int>()
 
@@ -214,13 +333,17 @@ class GitLogIndexTest : GitSingleRepoTest() {
     indexAll()
 
     val actualHistory = dataGetter.filter(listOf(createPathFilter(dir)))
-    TestCase.assertEquals(expectedHistory, actualHistory)
+    assertEquals(expectedHistory, actualHistory)
   }
 
   private fun createPathFilter(relativePath: String) = VcsLogFilterObject.fromPaths(setOf(VcsUtil.getFilePath(child(relativePath))))
 
   private fun getCommitIndex(hash: String): Int {
     return storage.getCommitIndex(HashImpl.build(hash), repo.root)
+  }
+
+  private fun getCommitHash(commit: Int): String {
+    return storage.getCommitId(commit)!!.hash.asString()
   }
 
   private fun indexAll(): Set<Int> {
@@ -245,3 +368,6 @@ class GitLogIndexTest : GitSingleRepoTest() {
            "$subject\n$fullMessage"
   }
 }
+
+class GitLogPhmIndexTest : GitLogIndexTest(useSqlite = false)
+class GitLogSqliteIndexTest : GitLogIndexTest(useSqlite = true)

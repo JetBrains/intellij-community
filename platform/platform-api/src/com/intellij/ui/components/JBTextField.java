@@ -1,38 +1,38 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.SwingUndoUtil;
+import com.intellij.util.ui.TextLayoutUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.accessibility.AccessibleContext;
+import javax.swing.JTextField;
 import javax.swing.plaf.TextUI;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
+import javax.swing.text.Document;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 
 public class JBTextField extends JTextField implements ComponentWithEmptyText, TextAccessor {
+
   private TextComponentEmptyText myEmptyText;
+
+  /**
+   * Forces paint inner background for disabled or non-editable text field
+   */
+  @ApiStatus.Internal
+  public static final String IS_FORCE_INNER_BACKGROUND_PAINT = "JTextField.isForceInnerBackgroundPaint";
 
   public JBTextField() {
     init();
@@ -53,19 +53,14 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
     init();
   }
 
-  private void init() {
-    UIUtil.addUndoRedoActions(this);
-    myEmptyText = new TextComponentEmptyText(this) {
-      @Override
-      protected boolean isStatusVisible() {
-        Object function = getClientProperty("StatusVisibleFunction");
-        if (function instanceof BooleanFunction) {
-          //noinspection unchecked
-          return ((BooleanFunction<JTextComponent>)function).fun(JBTextField.this);
-        }
-        return super.isStatusVisible();
-      }
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
 
+  private void init() {
+    SwingUndoUtil.addUndoRedoActions(this);
+    myEmptyText = new TextComponentEmptyText(this, true) {
       @Override
       protected Rectangle getTextComponentBound() {
         return getEmptyTextComponentBounds(super.getTextComponentBound());
@@ -85,18 +80,25 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   public void setText(String t) {
     if (Objects.equals(t, getText())) return;
     super.setText(t);
-    UIUtil.resetUndoRedoActions(this);
+    SwingUndoUtil.resetUndoRedoActions(this);
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) myEmptyText.resetFont();
+  }
+
+  @Override
+  @SuppressWarnings("DuplicatedCode")
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
+
     if (!myEmptyText.getStatusTriggerText().isEmpty() && myEmptyText.isStatusVisible()) {
       g.setColor(getBackground());
 
@@ -107,13 +109,44 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
 
       g.setColor(getForeground());
     }
+
     myEmptyText.paintStatusText(g);
   }
 
   @Override
   public String getToolTipText(MouseEvent event) {
     TextUI ui = getUI();
-    @SuppressWarnings("HardCodedStringLiteral") String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
+    String text = ui == null ? null : ui.getToolTipText2D(this, event.getPoint());
     return text != null ? text : getToolTipText();
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJBTextField();
+    }
+    return accessibleContext;
+  }
+
+  @Override
+  protected Document createDefaultModel() {
+    Document model = super.createDefaultModel();
+    TextLayoutUtil.disableTextLayoutIfNeeded(model);
+    return model;
+  }
+
+  private class AccessibleJBTextField extends AccessibleJTextField {
+    @Override
+    public String getAccessibleDescription() {
+      String description = super.getAccessibleDescription();
+      if (description == null && StringUtil.isEmpty(getText())) {
+        //noinspection HardCodedStringLiteral
+        String emptyText = myEmptyText.toString();
+        if (!emptyText.isEmpty()) {
+          return AccessibleContextUtil.getUniqueDescription(this, emptyText);
+        }
+      }
+      return description;
+    }
   }
 }

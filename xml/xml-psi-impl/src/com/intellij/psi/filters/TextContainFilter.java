@@ -17,9 +17,6 @@ package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * @author spleaner
- */
 public class TextContainFilter extends XmlTextFilter {
 
   public TextContainFilter(String value){

@@ -1,22 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class UiActivityMonitor {
   public static UiActivityMonitor getInstance() {
-    return ServiceManager.getService(UiActivityMonitor.class);
+    return ApplicationManager.getApplication().getService(UiActivityMonitor.class);
   }
 
-  @NotNull
-  public abstract BusyObject getBusy(@NotNull Project project, UiActivity @NotNull ... toWatch);
+  public abstract @NotNull BusyObject getBusy(@NotNull Project project, UiActivity @NotNull ... toWatch);
 
-  @NotNull
-  public abstract BusyObject getBusy(UiActivity @NotNull ... toWatch);
+  public abstract @NotNull BusyObject getBusy(UiActivity @NotNull ... toWatch);
 
   public abstract void addActivity(@NotNull Project project, @NotNull UiActivity activity);
 

@@ -1,9 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
@@ -30,17 +36,17 @@ public class DeclarationStatementHandler extends MatchingHandler {
 
     final PsiDeclarationStatement dcl = (PsiDeclarationStatement)patternNode;
     if (matchedNode instanceof PsiDeclarationStatement) {
-      return context.getMatcher().matchSequentially(new SsrFilteringNodeIterator(patternNode.getFirstChild()),
-                                                    new SsrFilteringNodeIterator(matchedNode.getFirstChild()));
+      return context.getMatcher().matchSequentially(SsrFilteringNodeIterator.create(patternNode.getFirstChild()),
+                                                    SsrFilteringNodeIterator.create(matchedNode.getFirstChild()));
     }
     final PsiElement[] declared = dcl.getDeclaredElements();
 
     // declaration statement could wrap class or dcl
-    if (declared.length > 0 && (!context.shouldRecursivelyMatch() || !(matchedNode.getParent() instanceof PsiDeclarationStatement)) /* skip twice matching for child*/) {
+    if (declared.length > 0 && !(matchedNode.getParent() instanceof PsiDeclarationStatement) /* skip twice matching for child*/) {
       if (!(matchedNode instanceof PsiField)) {
         return context.getMatcher().matchSequentially(
           new ArrayBackedNodeIterator(declared),
-          new CountingNodeIterator(declared.length, new SsrFilteringNodeIterator(matchedNode))
+          new CountingNodeIterator(declared.length, SsrFilteringNodeIterator.create(matchedNode))
         );
       }
 

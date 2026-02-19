@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
@@ -17,12 +17,10 @@ import java.util.Set;
  * <b>Note:</b> type-unaware entry will not be matched by the current rule.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementAtomMatchCondition> myTypes = new HashSet<>();
+  private final @NotNull Set<ArrangementAtomMatchCondition> myTypes = new HashSet<>();
 
   public ByTypeArrangementEntryMatcher(@NotNull ArrangementAtomMatchCondition interestedType) {
     myTypes.add(interestedType);
@@ -35,7 +33,7 @@ public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof TypeAwareArrangementEntry) {
-      final Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
+      final Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
       for (ArrangementAtomMatchCondition condition : myTypes) {
         final Object value = condition.getValue();
         boolean isInverted = value instanceof Boolean && !((Boolean)value);
@@ -48,8 +46,7 @@ public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
     return false;
   }
 
-  @NotNull
-  public Set<ArrangementAtomMatchCondition> getTypes() {
+  public @NotNull Set<ArrangementAtomMatchCondition> getTypes() {
     return myTypes;
   }
 

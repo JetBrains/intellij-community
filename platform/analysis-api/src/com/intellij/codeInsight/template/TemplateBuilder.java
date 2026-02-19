@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Shows a live template-like chooser UI over a PSI element and offers the user to replace certain sub-elements of the
  * specified element with values of his/her choice.
- *
- * @author yole
  * @see TemplateBuilderFactory
  */
 public interface TemplateBuilder {
@@ -58,13 +56,6 @@ public interface TemplateBuilder {
   void replaceRange(TextRange rangeWithinElement, Expression expression);
 
   /**
-   * Shows the live template and initiates editing process.
-   * @deprecated does not work correctly for files with multiple editors use #run(Editor, boolean) instead
-   */
-  @Deprecated
-  void run();
-
-  /**
    * Run the template without any interactivity - no UI, no editor is requested.
    * Consider using this method in the backend applications.
    * It simply fills the variables with provided replacements and commit the document.
@@ -78,4 +69,10 @@ public interface TemplateBuilder {
    * @param inline if true then inline template will be created, regular otherwise
    */
   void run(@NotNull Editor editor, boolean inline);
+
+  /**
+   * override scroll template policy
+   * @param scrollToTemplate by default true, set false to prevent scrolling
+   */
+  TemplateBuilder setScrollToTemplate(boolean scrollToTemplate);
 }

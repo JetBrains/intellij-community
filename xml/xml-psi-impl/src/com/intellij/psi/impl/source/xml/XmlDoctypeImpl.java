@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -6,13 +6,25 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlMarkupDecl;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,26 +61,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_DOCTYPE_PUBLIC) {
-      return XmlChildRole.XML_DOCTYPE_PUBLIC;
-    }
-    else if (i == XmlTokenType.XML_DOCTYPE_SYSTEM) {
-      return XmlChildRole.XML_DOCTYPE_SYSTEM;
-    }
-    else if (i == XmlTokenType.XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
-  }
-
-  @Override
-  @Nullable
-  public String getDtdUri() {
+  public @Nullable String getDtdUri() {
     final PsiElement dtdUrlElement = getDtdUrlElement();
     if (dtdUrlElement == null || dtdUrlElement.getTextLength() == 0) return null;
     return extractValue(dtdUrlElement);
@@ -106,9 +99,9 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   @Override
-  @Nullable
-  public PsiElement getDtdUrlElement() {
-    PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
+  public @Nullable PsiElement getDtdUrlElement() {
+    ASTNode child = getNode().findChildByType(XmlTokenType.XML_DOCTYPE_PUBLIC);
+    PsiElement docTypePublic = child != null ? child.getPsi() : null;
 
     if (docTypePublic != null){
       PsiElement element = docTypePublic.getNextSibling();
@@ -131,7 +124,8 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
       }
     }
 
-    PsiElement docTypeSystem = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_SYSTEM);
+    child = getNode().findChildByType(XmlTokenType.XML_DOCTYPE_SYSTEM);
+    PsiElement docTypeSystem = child != null ? child.getPsi() : null;
 
     if (docTypeSystem != null){
       PsiElement element = docTypeSystem.getNextSibling();
@@ -151,22 +145,23 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
 
   @Override
   public XmlElement getNameElement() {
-    return (XmlElement)findChildByRoleAsPsiElement(XmlChildRole.XML_NAME);
+    ASTNode child = getNode().findChildByType(XmlTokenType.XML_NAME);
+    return child != null ? child.getPsi(XmlElement.class) : null;
   }
 
   @Override
-  @Nullable
-  public String getPublicId() {
-    return getSomeId(XmlChildRole.XML_DOCTYPE_PUBLIC);
+  public @Nullable String getPublicId() {
+    return getSomeId(XmlTokenType.XML_DOCTYPE_PUBLIC);
   }
 
   @Override
   public String getSystemId() {
-    return getSomeId(XmlChildRole.XML_DOCTYPE_SYSTEM);
+    return getSomeId(XmlTokenType.XML_DOCTYPE_SYSTEM);
   }
 
-  private String getSomeId(final int role) {
-    PsiElement docTypeSystem = findChildByRoleAsPsiElement(role);
+  private String getSomeId(final IElementType elementType) {
+    ASTNode child = getNode().findChildByType(elementType);
+    PsiElement docTypeSystem = child != null ? child.getPsi() : null;
 
     if (docTypeSystem != null) {
       PsiElement element = docTypeSystem.getNextSibling();
@@ -221,15 +216,13 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   protected PsiReference createUrlReference(final PsiElement dtdUrlElement) {
-    return new URLReference(XmlDoctypeImpl.this) {
+    return new URLReference(this) {
       @Override
-      @NotNull
-      public String getCanonicalText() {
+      public @NotNull String getCanonicalText() {
         return extractValue(dtdUrlElement);
       }
-      @NotNull
       @Override
-      public TextRange getRangeInElement() {
+      public @NotNull TextRange getRangeInElement() {
         return TextRange.from(dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1, Math.max(dtdUrlElement.getTextRange().getLength() - 2, 0));
       }
     };

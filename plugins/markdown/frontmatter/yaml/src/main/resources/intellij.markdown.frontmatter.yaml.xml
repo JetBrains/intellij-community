@@ -1,0 +1,11 @@
+<idea-plugin package="org.intellij.plugins.markdown.frontmatter.yaml">
+  <dependencies>
+    <module name="intellij.platform.langInjection"/>
+    <module name="intellij.yaml.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <languageInjectionContributor language="Markdown"
+                                  implementationClass="org.intellij.plugins.markdown.frontmatter.yaml.FrontMatterHeaderYamlInjectionContributor"/>
+  </extensions>
+</idea-plugin>

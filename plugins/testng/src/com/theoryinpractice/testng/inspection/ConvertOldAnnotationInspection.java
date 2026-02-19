@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -11,7 +12,14 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,24 +35,19 @@ import org.jetbrains.annotations.NotNull;
 public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "ConvertOldAnnotations";
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitAnnotation(final PsiAnnotation annotation) {
+      @Override public void visitAnnotation(final @NotNull PsiAnnotation annotation) {
         final String qualifiedName = annotation.getQualifiedName();
         if (Comparing.strEqual(qualifiedName, "org.testng.annotations.Configuration")) {
           holder.registerProblem(annotation, TestngBundle.message("inspection.message.old.testng.annotation.configuration.used"), new ConvertOldAnnotationsQuickfix());
@@ -57,8 +60,7 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
     private static final Logger LOG = Logger.getInstance(ConvertOldAnnotationsQuickfix.class);
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return TestngBundle.message("intention.family.name.convert.old.configuration.testng.annotations");
     }
 
@@ -68,7 +70,14 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiAnnotation annotation = (PsiAnnotation)previewDescriptor.getPsiElement();
+      doFix(annotation);
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    @Override
+    public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
       final PsiAnnotation annotation = (PsiAnnotation)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(annotation)) return;
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(annotation)) return;

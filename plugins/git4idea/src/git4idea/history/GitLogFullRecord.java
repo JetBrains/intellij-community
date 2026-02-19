@@ -1,30 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
-class GitLogFullRecord extends GitLogRecord {
-
-  @NotNull private final List<? extends VcsFileStatusInfo> myStatusInfo;
+@ApiStatus.Internal
+public final class GitLogFullRecord extends GitLogRecord {
+  private final @NotNull List<VcsFileStatusInfo> myStatusInfo;
 
   GitLogFullRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
-                   @NotNull List<? extends VcsFileStatusInfo> statusInfo,
+                   @NotNull List<VcsFileStatusInfo> statusInfo,
                    boolean supportsRawBody) {
     super(options, supportsRawBody);
     myStatusInfo = statusInfo;
   }
 
-  @NotNull
-  private Collection<String> getPaths() {
+  private @NotNull Collection<String> getPaths() {
     LinkedHashSet<String> result = new LinkedHashSet<>();
     for (VcsFileStatusInfo info : myStatusInfo) {
       result.add(info.getFirstPath());
@@ -34,12 +38,12 @@ class GitLogFullRecord extends GitLogRecord {
   }
 
   @NotNull
-  List<? extends VcsFileStatusInfo> getStatusInfos() {
+  List<VcsFileStatusInfo> getStatusInfos() {
     return myStatusInfo;
   }
 
-  @NotNull
-  List<FilePath> getFilePaths(@NotNull VirtualFile root) {
+  @VisibleForTesting
+  public @NotNull List<FilePath> getFilePaths(@NotNull VirtualFile root) {
     List<FilePath> res = new ArrayList<>();
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
@@ -48,8 +52,8 @@ class GitLogFullRecord extends GitLogRecord {
     return res;
   }
 
-  @NotNull
-  List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) throws VcsException {
+  @VisibleForTesting
+  public @NotNull List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) {
     String[] hashes = getParentsHashes();
     return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), hashes.length == 0 ? null : hashes[0]);
   }

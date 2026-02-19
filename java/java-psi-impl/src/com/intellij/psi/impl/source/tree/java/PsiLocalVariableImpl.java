@@ -1,16 +1,46 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiVariableEx;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -18,15 +48,15 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLocalVariable, PsiVariableEx {
@@ -49,16 +79,14 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  @NotNull
-  public final PsiIdentifier getNameIdentifier() {
+  public final @NotNull PsiIdentifier getNameIdentifier() {
     final PsiElement element = findChildByRoleAsPsiElement(ChildRole.NAME);
     assert element instanceof PsiIdentifier : getText();
     return (PsiIdentifier)element;
   }
 
   @Override
-  @NotNull
-  public final String getName() {
+  public final @NotNull String getName() {
     String cachedName = myCachedName;
     if (cachedName == null){
       myCachedName = cachedName = getNameIdentifier().getText();
@@ -78,14 +106,12 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  @NotNull
-  public final PsiType getType() {
+  public final @NotNull PsiType getType() {
     return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement getTypeElement() {
+  public @NotNull PsiTypeElement getTypeElement() {
     PsiTypeElement typeElement = PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
     if (typeElement != null) return typeElement;
 
@@ -107,7 +133,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  public boolean hasModifierProperty(@NotNull String name) {
+  public boolean hasModifierProperty(@PsiModifier.ModifierConstant @NotNull String name) {
     final PsiModifierList modifierList = getModifierList();
     return modifierList != null && modifierList.hasModifierProperty(name);
   }
@@ -124,7 +150,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @Override
   public Object computeConstantValue() {
-    return computeConstantValue(new THashSet<>());
+    return computeConstantValue(new HashSet<>());
   }
 
   @Override
@@ -154,7 +180,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(statement);
     final PsiElement[] variables = psiElement instanceof  PsiDeclarationStatement
                                    ? ((PsiDeclarationStatement)psiElement).getDeclaredElements() : PsiElement.EMPTY_ARRAY;
-    if (variables.length > 1) {
+    if (variables.length > 1 && !(statement.getTreeParent() instanceof PsiForStatement)) {
       final PsiModifierList modifierList = getModifierList();
       final PsiTypeElement typeElement = getTypeElement();
       assert modifierList != null : getText();
@@ -223,9 +249,6 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.MODIFIER_LIST:
         return findChildByType(JavaElementType.MODIFIER_LIST);
 
@@ -243,6 +266,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
+
+      default:
+        return null;
     }
   }
 
@@ -308,8 +334,10 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     final PsiElement parentElement = getParent();
     if (parentElement instanceof PsiDeclarationStatement) {
       return new LocalSearchScope(parentElement.getParent());
@@ -318,9 +346,10 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
+  public Icon getElementIcon(int flags) {
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Variable),
+                                                     ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 

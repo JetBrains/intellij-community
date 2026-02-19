@@ -1,0 +1,167 @@
+# Error: is not present in stub
+# =============================
+# These are plain strings, regex strings or compiled regex patterns
+# which are used internally for parsing, so they should not be public API
+webob.acceptparse.Accept.accept_compiled_re
+webob.acceptparse.Accept.accept_ext_compiled_re
+webob.acceptparse.Accept.accept_ext_re
+webob.acceptparse.Accept.accept_params_re
+webob.acceptparse.Accept.media_range_n_accept_params_compiled_re
+webob.acceptparse.Accept.media_range_n_accept_params_re
+webob.acceptparse.Accept.media_range_re
+webob.acceptparse.Accept.media_type_compiled_re
+webob.acceptparse.Accept.media_type_re
+webob.acceptparse.Accept.obs_text_re
+webob.acceptparse.Accept.parameter_re
+webob.acceptparse.Accept.parameters_compiled_re
+webob.acceptparse.Accept.qdtext_re
+webob.acceptparse.Accept.quoted_pair_re
+webob.acceptparse.Accept.quoted_string_re
+webob.acceptparse.Accept.subtype_re
+webob.acceptparse.Accept.type_re
+webob.acceptparse.Accept.vchar_re
+webob.acceptparse.AcceptCharset.accept_charset_compiled_re
+webob.acceptparse.AcceptCharset.charset_n_weight_compiled_re
+webob.acceptparse.AcceptCharset.charset_n_weight_re
+webob.acceptparse.AcceptCharset.charset_re
+webob.acceptparse.AcceptEncoding.accept_encoding_compiled_re
+webob.acceptparse.AcceptEncoding.codings_n_weight_compiled_re
+webob.acceptparse.AcceptEncoding.codings_n_weight_re
+webob.acceptparse.AcceptEncoding.codings_re
+webob.acceptparse.AcceptLanguage.accept_language_compiled_re
+webob.acceptparse.AcceptLanguage.lang_range_n_weight_compiled_re
+webob.acceptparse.AcceptLanguage.lang_range_n_weight_re
+webob.acceptparse.AcceptLanguage.lang_range_re
+webob.acceptparse.OWS_re
+webob.acceptparse.qvalue_re
+webob.acceptparse.tchar_re
+webob.acceptparse.token_compiled_re
+webob.acceptparse.token_re
+webob.acceptparse.weight_re
+webob.cachecontrol.need_quote_re
+webob.cachecontrol.token_re
+webob.client.SendRequest.MULTILINE_RE
+webob.descriptors.CHARSET_RE
+webob.descriptors.SCHEME_RE
+
+webob.acceptparse.MIMEAccept  # Deprecated API
+
+# PY2 compat stuff that has already been removed upstream
+webob.compat.PY2
+webob.compat.PY3
+webob.compat.bytes_
+webob.compat.class_types
+webob.compat.integer_types
+webob.compat.iteritems_
+webob.compat.itervalues_
+webob.compat.long
+webob.compat.native_
+webob.compat.parse_qsl_text
+webob.compat.reraise
+webob.compat.string_types
+webob.compat.text_
+webob.compat.text_type
+webob.compat.unquote
+webob.multidict.MultiDict.iteritems
+webob.multidict.MultiDict.iterkeys
+webob.multidict.MultiDict.itervalues
+webob.multidict.NestedMultiDict.iteritems
+webob.multidict.NestedMultiDict.iterkeys
+webob.multidict.NestedMultiDict.itervalues
+webob.multidict.NoVars.iterkeys
+
+# The implementation details of cgi_FieldStorage shouldn't matter
+webob.compat.cgi_FieldStorage.read_multi
+
+# NoVars implements the MultiDict interface for better runtime errors
+# but it is annoying for type checking, so the methods that are not
+# valid to call on NoVars have been removed. In the future we would
+# like to switch to a @type_error() decorator
+webob.multidict.NoVars.__getitem__
+webob.multidict.NoVars.__setitem__
+webob.multidict.NoVars.__delitem__
+webob.multidict.NoVars.add
+webob.multidict.NoVars.setdefault
+webob.multidict.NoVars.update
+webob.multidict.NoVars.clear
+webob.multidict.NoVars.pop
+webob.multidict.NoVars.popitem
+webob.multidict.NoVars.getone
+
+# ResponseBodyFile cannot be closed and emits an Exception, so we're better
+# off pretending the method doesn't exist
+webob.response.ResponseBodyFile.close
+
+# Error: is inconsistent
+# ======================
+# set_cookie has a deprecated argument `expires` which has been removed upstream
+webob.Response.set_cookie
+webob.response.Response.set_cookie
+
+# These are here due to the slightly more strict nature of the type annotation
+# of these descriptors for type checking, it does not really have any runtime
+# consequences since `_IntValueProperty` derives from `value_property` and
+# only makes `__set__` slightly more strict.
+webob.cachecontrol.UpdateDict.setdefault
+
+# Even though at runtime the default argument has a default value of `None`
+# that will cause an exception, so we're better off pretending the argument
+# is required, and that it can't be `None`
+webob.headers.ResponseHeaders.setdefault
+webob.multidict.GetDict.setdefault
+
+# These need to be ignored due to how WebOb decided to let people know
+# that certain methods on `NestedMultiDict` should not be called since
+# they are immutable, compared to a MultiDict, but still can be used
+# interchangeably in some parts of the API. So they reuse generic functions
+# that accept any parameters and assign them to methods which should still
+# satisfy the same interface. The type annotations enforce the correct
+# input arguments instead of the generic ones.
+webob.multidict.NestedMultiDict.__delitem__
+webob.multidict.NestedMultiDict.__setitem__
+webob.multidict.NestedMultiDict.add
+webob.multidict.NestedMultiDict.clear
+webob.multidict.NestedMultiDict.pop
+webob.multidict.NestedMultiDict.popitem
+webob.multidict.NestedMultiDict.setdefault
+webob.multidict.NestedMultiDict.update
+
+# The `DEFAULT` parameter on these dunder methods don't really make sense as
+# part of the public API, so they have been removed from the stubs
+webob.request.AdhocAttrMixin.__delattr__
+webob.request.AdhocAttrMixin.__getattr__
+webob.request.AdhocAttrMixin.__setattr__
+
+# BaseRequest has a bunch of named parameters that have been deprecated and
+# removed upstream, since there's a `**kwargs` anyways, it doesn't really
+# make sense to annotate them and pretend they're part of the API.
+webob.request.BaseRequest.__init__
+
+# We needed to add a dummy *_: _P.args in order to support ParamSpec
+webob.dec.wsgify.middleware
+webob.dec._MiddlewareFactory.__call__
+
+# We renamed some of the arguments in positional only overloads for greater
+# clarity about what the arguments mean, stubtest should probably be a bit
+# more lenient here, since this is only unsafe if that overload accepts
+# arbitrary named arguments, that could overlap with the argument in that
+# specific position
+webob.dec.wsgify.__call__
+
+# Error: is not present at runtime
+# =============================
+# This attribute is there to help mypy type narrow NoVars based on its static
+# falsyness, so it's to make it possible to narrow the type union in request.POST
+# without importing MultiDict or NoVars
+webob.multidict.NoVars.__bool__
+
+# This attribute is set on the instance instead of the class in the `__init__`
+# so the type annotation is technically wrong, however I am unsure about
+# whether the ResponseBodyFile would satisfy some of the IO Protocols if
+# `write` was defined as a Callable instance attribute. It's hard to come up
+# with a use-case where the distinction matters, besides inheriting from
+# the class and overwriting the __init__ and forgetting to populate `write`.
+webob.response.ResponseBodyFile.write
+
+# A couple of utility types we use in multiple modules
+webob._types

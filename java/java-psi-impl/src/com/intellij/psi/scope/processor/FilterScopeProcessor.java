@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.processor;
 
 import com.intellij.openapi.util.Key;
@@ -58,8 +58,8 @@ public class FilterScopeProcessor<T> implements PsiScopeProcessor {
     return true;
   }
 
+  @SuppressWarnings("unchecked")
   protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
-    //noinspection unchecked
     myResults.add((T)element);
   }
 
@@ -71,8 +71,7 @@ public class FilterScopeProcessor<T> implements PsiScopeProcessor {
     return null;
   }
 
-  @NotNull
-  public List<T> getResults() {
+  public @NotNull List<T> getResults() {
     return myResults;
   }
 }

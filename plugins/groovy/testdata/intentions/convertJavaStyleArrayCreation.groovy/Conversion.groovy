@@ -1,0 +1,1 @@
+def foo = new Ob<caret>ject[] {1, 2, 3}

@@ -1,15 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author ilyas
- */
 public abstract class GroovyScriptType {
 
   private final String id;
@@ -18,13 +15,11 @@ public abstract class GroovyScriptType {
     this.id = id;
   }
 
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return id;
   }
 
-  @NotNull
-  public abstract Icon getScriptIcon();
+  public abstract @NotNull Icon getScriptIcon();
 
   public GlobalSearchScope patchResolveScope(@NotNull GroovyFile file, @NotNull GlobalSearchScope baseScope) {
     return baseScope;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
@@ -11,12 +11,8 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 /**
  * Main classdef for Groovy element types, such as lexems or AST nodes
- *
- * @author ilyas
  */
 public class GroovyElementType extends IElementType {
-
-  private final String myDebugName;
   private final boolean myLeftBound;
 
   public GroovyElementType(@NonNls String debugName) {
@@ -25,12 +21,7 @@ public class GroovyElementType extends IElementType {
 
   public GroovyElementType(String debugName, boolean boundToLeft) {
     super(debugName, GroovyLanguage.INSTANCE);
-    myDebugName = debugName;
     myLeftBound = boundToLeft;
-  }
-
-  public String toString() {
-    return myDebugName;
   }
 
   @Override
@@ -38,12 +29,11 @@ public class GroovyElementType extends IElementType {
     return myLeftBound;
   }
 
-  public static abstract class PsiCreator extends GroovyElementType {
+  public abstract static class PsiCreator extends GroovyElementType {
     protected PsiCreator(String debugName) {
       super(debugName);
     }
 
-    @NotNull
-    public abstract PsiElement createPsi(@NotNull ASTNode node);
+    public abstract @NotNull PsiElement createPsi(@NotNull ASTNode node);
   }
 }

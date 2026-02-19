@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
@@ -26,7 +28,19 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(CommonClassNames.JAVA_LANG_STRING, (element as PsiClass).qualifiedName)
   }
 
+  fun testTryWithResourcesWithIntersectionType() {
+    doTest()
+  }
+
   fun testShebangInJavaFile() {
+    doTest()
+  }
+
+  fun testComplexStreamTypeMismatch() {
+    doTest()
+  }
+
+  fun testStaticImportArrayCopyOfAccess() {
     doTest()
   }
 
@@ -35,10 +49,37 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
                                          """#!/path/to/java
                                  |class Main {{
                                  |int i = 0;
-                                 |i*<error descr="';' expected"><error descr="Expression expected"><error descr="Unexpected token">*</error></error></error>;
                                  |}}""".trimMargin())
     myFixture.checkHighlighting()
-    Assert.assertTrue(HighlightClassUtil.isJavaHashBangScript(file))
+    Assert.assertTrue(JavaPsiSingleFileSourceUtil.isJavaHashBangScript(file))
+  }
+
+  fun testRequiresJavaBase() {
+    myFixture.configureByText("module-info.java", """
+      module M {
+        requires <error descr="Modifier 'static' not allowed here">static</error> <error descr="Modifier 'transitive' not allowed here">transitive</error> java.base;
+      }""".trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  fun testRequiresTransitiveJavaBaseWithStatic() {
+    IdeaTestUtil.withLevel(module, JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE.standardLevel!!){
+      myFixture.configureByText("module-info.java", """
+      module M {
+        requires <error descr="Modifier 'static' not allowed here">static</error> transitive java.base;
+      }""".trimIndent())
+      myFixture.checkHighlighting()
+    }
+  }
+
+  fun testRequiresTransitiveJavaBase() {
+    IdeaTestUtil.withLevel(module, JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE.standardLevel!!){
+      myFixture.configureByText("module-info.java", """
+      module M {
+        requires transitive java.base;
+      }""".trimIndent())
+      myFixture.checkHighlighting()
+    }
   }
 
   private fun doTest() {

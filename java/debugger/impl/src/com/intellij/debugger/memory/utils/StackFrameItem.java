@@ -1,11 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.ThreadDumpAction;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMStackFrameInfoProvider;
+import com.intellij.debugger.engine.JavaStackFrame;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.*;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.jdi.LocalVariableProxyImpl;
+import com.intellij.debugger.jdi.LocalVariablesUtil;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.CaptureConfigurable;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -18,26 +29,38 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XNamedValue;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
-import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
+import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Value;
+import kotlinx.coroutines.flow.Flow;
+import kotlinx.coroutines.flow.FlowKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,81 +98,84 @@ public class StackFrameItem {
     return myLocation;
   }
 
-  @NotNull
-  public String path() {
+  public @NotNull String path() {
     return myLocation.declaringType().name();
   }
 
-  @NotNull
-  public String method() {
-    return myLocation.method().name();
+  public @NotNull String method() {
+    return DebuggerUtilsEx.getLocationMethodName(myLocation);
   }
 
   public int line() {
     return DebuggerUtilsEx.getLineNumber(myLocation, false);
   }
 
-  @NotNull
-  public static List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
+  public static @NotNull List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
     ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
     if (threadReferenceProxy != null) {
       List<StackFrameProxyImpl> frameProxies = threadReferenceProxy.forceFrames();
       List<StackFrameItem> res = new ArrayList<>(frameProxies.size());
       for (StackFrameProxyImpl frame : frameProxies) {
         try {
-          List<XNamedValue> vars = null;
+          final List<XNamedValue> vars;
           Location location = frame.location();
-          Method method = location.method();
           if (withVars) {
             if (!DebuggerSettings.getInstance().CAPTURE_VARIABLES) {
               vars = VARS_CAPTURE_DISABLED;
             }
-            else if (method.isNative() || method.isBridge() || DebuggerUtils.isSynthetic(method)) {
-              vars = VARS_NOT_CAPTURED;
-            }
             else {
-              vars = new ArrayList<>();
-
-              try {
-                ObjectReference thisObject = frame.thisObject();
-                if (thisObject != null) {
-                  vars.add(createVariable(thisObject, "this", VariableItem.VarType.OBJECT));
-                }
+              Method method = location.method();
+              if (method.isNative() || method.isBridge() || DebuggerUtils.isSynthetic(method)) {
+                vars = VARS_NOT_CAPTURED;
               }
-              catch (EvaluateException e) {
-                LOG.debug(e);
-              }
+              else {
+                vars = new ArrayList<>();
 
-              try {
-                for (LocalVariableProxyImpl v : frame.visibleVariables()) {
-                  try {
-                    VariableItem.VarType varType = v.getVariable().isArgument() ? VariableItem.VarType.PARAM : VariableItem.VarType.OBJECT;
-                    vars.add(createVariable(frame.getValue(v), v.name(), varType));
+                try {
+                  ObjectReference thisObject = frame.thisObject();
+                  if (thisObject != null) {
+                    vars.add(createVariable(thisObject, "this", VariableItem.VarType.OBJECT));
                   }
-                  catch (EvaluateException e) {
+                }
+                catch (EvaluateException e) {
+                  LOG.debug(e);
+                }
+
+                try {
+                  for (LocalVariableProxyImpl v : frame.visibleVariables()) {
+                    try {
+                      VariableItem.VarType varType =
+                        v.getVariable().isArgument() ? VariableItem.VarType.PARAM : VariableItem.VarType.OBJECT;
+                      vars.add(createVariable(frame.getValue(v), v.name(), varType));
+                    }
+                    catch (EvaluateException e) {
+                      LOG.debug(e);
+                    }
+                  }
+                }
+                catch (EvaluateException e) {
+                  if (e.getCause() instanceof AbsentInformationException) {
+                    vars.add(JavaStackFrame.LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
+                    // only args for frames w/o debug info for now
+                    try {
+                      for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
+                        .fetchValues(frame, suspendContext.getDebugProcess(), false).entrySet()) {
+                        vars.add(createVariable(entry.getValue(), entry.getKey().getDisplayName(), VariableItem.VarType.PARAM));
+                      }
+                    }
+                    catch (Exception ex) {
+                      LOG.info(ex);
+                    }
+                  }
+                  else {
                     LOG.debug(e);
                   }
                 }
               }
-              catch (EvaluateException e) {
-                if (e.getCause() instanceof AbsentInformationException) {
-                  vars.add(JavaStackFrame.LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
-                  // only args for frames w/o debug info for now
-                  try {
-                    for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
-                      .fetchValues(frame, suspendContext.getDebugProcess(), false).entrySet()) {
-                      vars.add(createVariable(entry.getValue(), entry.getKey().getDisplayName(), VariableItem.VarType.PARAM));
-                    }
-                  }
-                  catch (Exception ex) {
-                    LOG.info(ex);
-                  }
-                }
-                else {
-                  LOG.debug(e);
-                }
-              }
             }
+          }
+          else {
+            vars = null;
           }
 
           StackFrameItem frameItem = new StackFrameItem(location, vars);
@@ -206,13 +232,13 @@ public class StackFrameItem {
     @Override
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-      String type = Registry.is("debugger.showTypes") ? classRenderer.renderTypeName(myType) : null;
-      Icon icon = myVarType == VariableItem.VarType.PARAM ? PlatformIcons.PARAMETER_ICON : AllIcons.Debugger.Value;
+      String type = DebuggerSettings.getInstance().SHOW_TYPES ? classRenderer.renderTypeName(myType) : null;
+      Icon icon = myVarType == VariableItem.VarType.PARAM ? IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter)
+                                                          : AllIcons.Debugger.Value;
       if (myType != null && myType.startsWith(CommonClassNames.JAVA_LANG_STRING + "@")) {
         node.setPresentation(icon, new XStringValuePresentation(myValue) {
-          @Nullable
           @Override
-          public String getType() {
+          public @Nullable String getType() {
             return classRenderer.SHOW_STRINGS_TYPE ? type : null;
           }
         }, false);
@@ -222,52 +248,68 @@ public class StackFrameItem {
     }
   }
 
-  public XStackFrame createFrame(DebugProcessImpl debugProcess) {
-    return new CapturedStackFrame(debugProcess, this);
+  /**
+   * @deprecated Use {@link #createFrame(DebugProcessImpl, SourcePosition)} instead
+   */
+  @Deprecated
+  public XStackFrame createFrame(@NotNull DebugProcessImpl debugProcess) {
+    return createFrame(debugProcess, debugProcess.getPositionManager().getSourcePosition(myLocation));
   }
 
-  public static void setWithSeparator(XStackFrame frame, boolean withSeparator) {
-    if (frame instanceof CapturedStackFrame) {
-      ((CapturedStackFrame)frame).setWithSeparator(withSeparator);
+  public XStackFrame createFrame(@NotNull DebugProcessImpl debugProcess, @Nullable SourcePosition sourcePosition) {
+    return new CapturedStackFrame(debugProcess, this, sourcePosition);
+  }
+
+  public static boolean hasSeparatorAbove(XStackFrame frame) {
+    return frame instanceof XStackFrameWithSeparatorAbove frameWithSeparator &&
+           frameWithSeparator.hasSeparatorAbove();
+  }
+
+  public static void setWithSeparator(XStackFrame frame) {
+    if (frame instanceof XStackFrameWithSeparatorAbove frameWithSeparator) {
+      frameWithSeparator.setWithSeparator(true);
     }
   }
 
-  @Nls
-  public static String getAsyncStacktraceMessage() {
+  public static @Nls String getAsyncStacktraceMessage() {
     return JavaDebuggerBundle.message("frame.panel.async.stacktrace");
   }
 
   public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
-                                                                        XDebuggerFramesList.ItemWithSeparatorAbove {
+                                                                        XStackFrameWithSeparatorAbove {
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;
+    private final boolean myShouldHide;
 
     private final String myPath;
     private final @NlsSafe String myMethodName;
     private final int myLineNumber;
+    private final Location myLocation;
 
     private final List<XNamedValue> myVariables;
 
     private volatile boolean myWithSeparator;
 
-    public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item) {
+    public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item, SourcePosition sourcePosition) {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       myPath = item.path();
       myMethodName = item.method();
       myLineNumber = item.line();
       myVariables = item.myVariables;
 
-      Location location = item.myLocation;
-      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(debugProcess.getPositionManager().getSourcePosition(location));
-      myIsSynthetic = DebuggerUtils.isSynthetic(location.method());
+      myLocation = item.myLocation;
+      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(sourcePosition);
+      myIsSynthetic = DebuggerUtils.isSynthetic(myLocation.method());
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
+
+      myShouldHide = myIsSynthetic || myIsInLibraryContent ||
+                     (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(myLocation));
     }
 
-    @Nullable
     @Override
-    public XSourcePosition getSourcePosition() {
+    public @Nullable XSourcePosition getSourcePosition() {
       return mySourcePosition;
     }
 
@@ -282,10 +324,36 @@ public class StackFrameItem {
     }
 
     @Override
+    public boolean shouldHide() {
+      return myShouldHide;
+    }
+
+    @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
-      component.setIcon(JBUI.scale(EmptyIcon.create(6)));
-      component.append(myMethodName + ":" + myLineNumber, getAttributes());
+      doCustomizePresentation(component);
+    }
+
+    @Override
+    public void customizeTextPresentation(@NotNull ColoredTextContainer component) {
+      //noinspection HardCodedStringLiteral
+      component.append(ThreadDumpAction.renderLocation(myLocation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+
+    @Override
+    public @NotNull Flow<@NotNull XStackFrameUiPresentationContainer> customizePresentation() {
+      XStackFrameUiPresentationContainer component = new XStackFrameUiPresentationContainer();
+      doCustomizePresentation(component);
+      return FlowKt.flowOf(component);
+    }
+
+    private void doCustomizePresentation(ColoredTextContainer component) {
       ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
+
+      component.setIcon(EmptyIcon.ICON_16);
+      component.append(myMethodName, getAttributes());
+      if (settings.SHOW_LINE_NUMBER) {
+        component.append(":" + myLineNumber, getAttributes());
+      }
       if (settings.SHOW_CLASS_NAME) {
         component.append(", " + StringUtil.getShortName(myPath), getAttributes());
         String packageName = StringUtil.getPackageName(myPath);
@@ -306,11 +374,15 @@ public class StackFrameItem {
         children = new XValueChildrenList(myVariables.size());
         myVariables.forEach(children::add);
       }
+      else {
+        node.setMessage(JavaDebuggerBundle.message("debugger.variables.not.available.in.async"), AllIcons.General.Information,
+                        SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+      }
       node.addChildren(children, true);
     }
 
     private SimpleTextAttributes getAttributes() {
-      if (isSynthetic() || isInLibraryContent()) {
+      if (shouldHide()) {
         return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       }
       return SimpleTextAttributes.REGULAR_ATTRIBUTES;
@@ -326,6 +398,7 @@ public class StackFrameItem {
       return myWithSeparator;
     }
 
+    @Override
     public void setWithSeparator(boolean withSeparator) {
       myWithSeparator = withSeparator;
     }

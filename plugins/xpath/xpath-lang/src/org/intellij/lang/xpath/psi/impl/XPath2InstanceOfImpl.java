@@ -16,7 +16,11 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
+import org.intellij.lang.xpath.psi.XPath2InstanceOf;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPath2TypeElement;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,15 +30,13 @@ public class XPath2InstanceOfImpl extends XPath2ElementImpl implements XPath2Ins
   }
 
   @Override
-  @Nullable
-  public XPathType getTargetType() {
+  public @Nullable XPathType getTargetType() {
     final XPath2TypeElement node = findChildByClass(XPath2TypeElement.class);
     return node != null ? node.getDeclaredType() : null;
   }
 
-  @NotNull
   @Override
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     return XPath2Type.BOOLEAN;
   }
 

@@ -17,10 +17,14 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
 
+@ApiStatus.Internal
 public class SameHeightPanel extends NonOpaquePanel {
   private final JComponent myOriginalHeightComponent;
 

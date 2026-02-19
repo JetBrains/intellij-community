@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
@@ -11,22 +11,19 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public abstract class AbstractBooleanProperty<T extends RadComponent> extends Property<T, Boolean> {
   private BooleanRenderer myRenderer;
   private BooleanEditor myEditor;
   private final boolean myDefaultValue;
 
-  protected AbstractBooleanProperty(final Property parent, @NonNls final String name, final boolean defaultValue) {
+  protected AbstractBooleanProperty(final Property parent, final @NonNls String name, final boolean defaultValue) {
     super(parent, name);
     myDefaultValue = defaultValue;
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<Boolean> getRenderer() {
+  public @NotNull PropertyRenderer<Boolean> getRenderer() {
     if (myRenderer == null) {
       myRenderer = new BooleanRenderer();
     }

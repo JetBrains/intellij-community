@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.spellchecker.xml.jar
+  modules:
+  - name: intellij.spellchecker.xml

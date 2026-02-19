@@ -1,26 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs
 
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.util.text.HtmlChunk.*
+import com.intellij.openapi.util.text.HtmlChunk.Element
+import com.intellij.openapi.util.text.HtmlChunk.empty
+import com.intellij.openapi.util.text.HtmlChunk.link
+import com.intellij.openapi.util.text.HtmlChunk.tag
+import com.intellij.openapi.util.text.HtmlChunk.text
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.HtmlPanel
-import com.intellij.util.ui.UIUtil.getLabelFont
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.idea.svn.NestedCopyType
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.WorkingCopyFormat
 import org.jetbrains.idea.svn.api.Depth
-import org.jetbrains.idea.svn.dialogs.CopiesPanel.*
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.CHANGE_FORMAT
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.CLEANUP
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.CONFIGURE_BRANCHES
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.FIX_DEPTH
+import org.jetbrains.idea.svn.dialogs.CopiesPanel.MERGE_FROM
 import java.awt.Font
 import javax.swing.event.HyperlinkEvent
 
-private class WorkingCopyInfoPanel : HtmlPanel() {
+internal class WorkingCopyInfoPanel : HtmlPanel() {
   var info: WCInfo? = null
   var upgradeFormats: Collection<WorkingCopyFormat> = emptyList()
 
-  override fun getBodyFont(): Font = getLabelFont()
+  override fun getBodyFont(): Font = StartupUiUtil.labelFont
   override fun getBody(): String = getBodyHtml().toString()
   override fun hyperlinkUpdate(e: HyperlinkEvent) = Unit
 

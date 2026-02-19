@@ -1,0 +1,12 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide.nonModalWelcomeScreen"/>
+    <module name="intellij.platform.compose"/>
+  </dependencies>
+
+  <projectListeners>
+    <listener class="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.WelcomeScreenLeftTabListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+</idea-plugin>

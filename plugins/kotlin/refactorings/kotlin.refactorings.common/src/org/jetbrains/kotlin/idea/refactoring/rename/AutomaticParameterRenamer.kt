@@ -1,0 +1,82 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.refactoring.rename
+
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiParameter
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.rename.naming.AutomaticRenamer
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
+import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import com.intellij.refactoring.rename.naming.AutomaticParametersRenamer as JavaAutomaticParametersRenamer
+
+class AutomaticParameterRenamer(element: KtParameter, newName: String) : AutomaticRenamer() {
+    init {
+        processHierarchy(element, newName)
+    }
+
+    private fun processHierarchy(element: KtParameter, newName: String) {
+        val function = element.ownerFunction ?: return
+        for (overrider in KotlinFindUsagesSupport.searchOverriders(function, function.useScope)) {
+            val callable = overrider.namedUnwrappedElement ?: continue
+            if (!callable.canRefactorElement()) continue
+            val parameter: PsiNamedElement? = when (callable) {
+                is KtCallableDeclaration -> callable.valueParameters.firstOrNull { it.name == element.name }
+                is PsiMethod -> callable.parameterList.parameters.firstOrNull { it.name == element.name }
+                else -> null
+            }
+            if (parameter == null) continue
+            myElements += parameter
+        }
+        suggestAllNames(element.name, newName.quoteIfNeeded())
+    }
+
+    override fun getDialogTitle() = KotlinBundle.message("text.rename.parameters.title")
+
+    override fun getDialogDescription() = RefactoringBundle.message("title.rename.parameters.hierarchy")
+
+    override fun entityName() = KotlinBundle.message("text.parameter")
+
+    override fun isSelectedByDefault() = true
+}
+
+open class AutomaticParameterRenamerFactory : AutomaticRenamerFactory {
+    override fun isApplicable(element: PsiElement) = element is KtParameter && element.ownerFunction is KtNamedFunction
+
+    override fun getOptionName() = RefactoringBundle.message("rename.parameters.hierarchy")
+
+    override fun isEnabled() = KotlinCommonRefactoringSettings.getInstance().renameParameterInHierarchy
+
+    override fun setEnabled(enabled: Boolean) {
+        KotlinCommonRefactoringSettings.getInstance().renameParameterInHierarchy = enabled
+    }
+
+    override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>): AutomaticRenamer {
+        return AutomaticParameterRenamer(element as KtParameter, newName)
+    }
+}
+
+internal class AutomaticParameterRenamerFactoryForJavaParam : AutomaticParameterRenamerFactory() {
+    override fun isApplicable(element: PsiElement): Boolean {
+        if (element !is PsiParameter) return false
+        val declarationScope = element.declarationScope
+        return declarationScope is PsiMethod && !declarationScope.hasModifierProperty(PsiModifier.STATIC)
+    }
+
+    override fun createRenamer(element: PsiElement, newName: String, usages: Collection<UsageInfo>): AutomaticRenamer {
+        return JavaAutomaticParametersRenamer(element as PsiParameter, newName, KotlinLanguage.INSTANCE)
+    }
+}

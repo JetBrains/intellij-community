@@ -1,11 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.TooltipTitle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -16,32 +22,53 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.DefaultButtonModel;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.plaf.basic.BasicButtonUI;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.geom.Path2D;
+import java.beans.PropertyChangeEvent;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static Icon myIcon;
   private static Icon myDisabledIcon;
 
-  public static Icon getArrowIcon(boolean enabled) {
+  public static @NotNull Icon getArrowIcon(boolean enabled) {
     if (myIcon != AllIcons.General.ArrowDown) {
       myIcon = UIManager.getIcon("ComboBoxButton.arrowIcon");
       myDisabledIcon = UIManager.getIcon("ComboBoxButton.arrowIconDisabled");
@@ -52,7 +79,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return enabled ? myIcon : myDisabledIcon;
   }
   private boolean mySmallVariant = true;
-  private @NlsContexts.PopupTitle String myPopupTitle;
+  private boolean myFontSet;
+  protected @NlsContexts.PopupTitle String myPopupTitle;
 
 
   protected ComboBoxAction() {
@@ -66,39 +94,39 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     JFrame frame = WindowManager.getInstance().getFrame(project);
     if (!(frame instanceof IdeFrame)) return;
 
-    ListPopup popup = createActionPopup(e.getDataContext(), ((IdeFrame)frame).getComponent(), null);
+    JBPopup popup = createActionPopup(e.getDataContext(), ((IdeFrame)frame).getComponent(), null);
     popup.showCenteredInCurrentWindow(project);
   }
 
-  @NotNull
-  protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
-    DefaultActionGroup group = createPopupActionGroup(component, context);
+  protected @NotNull JBPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
+    return createActionPopup(createPopupActionGroup(component, context), context, disposeCallback);
+  }
+
+  protected JBPopup createActionPopup(DefaultActionGroup group, @NotNull DataContext context, @Nullable Runnable disposeCallback) {
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       myPopupTitle, group, context, false, shouldShowDisabledActions(), false, disposeCallback, getMaxRows(), getPreselectCondition());
     popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
     return popup;
   }
 
-  /** @deprecated use {@link ComboBoxAction#createCustomComponent(Presentation, String)} */
-  @Deprecated
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
-    return createCustomComponent(presentation, ActionPlaces.UNKNOWN);
-  }
-
-  @NotNull
-  @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    JPanel panel = new JPanel(new GridBagLayout());
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = createComboBoxButton(presentation);
+    if (isNoWrapping(place)) return button;
+
+    JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints(
       0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.create(0, 3), 0, 0);
     panel.add(button, constraints);
     return panel;
   }
 
-  protected ComboBoxButton createComboBoxButton(Presentation presentation) {
+  protected boolean isNoWrapping(@NotNull String place) {
+    if (!ExperimentalUI.isNewUI()) return false;
+    return ActionPlaces.MAIN_TOOLBAR.equals(place);
+  }
+
+  protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
     return new ComboBoxButton(presentation);
   }
 
@@ -110,7 +138,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     mySmallVariant = smallVariant;
   }
 
-  public void setPopupTitle(@NlsContexts.PopupTitle String popupTitle) {
+  public void setPopupTitle(@NotNull @NlsContexts.PopupTitle String popupTitle) {
     myPopupTitle = popupTitle;
   }
 
@@ -118,11 +146,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return false;
   }
 
-  @NotNull
-  protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
+  /** @deprecated override {@link #createPopupActionGroup(JComponent, DataContext)} instead */
+  @Deprecated
+  protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
+    throw new UnsupportedOperationException();
+  }
 
-  @NotNull
-  protected DefaultActionGroup createPopupActionGroup(JComponent button, @NotNull  DataContext dataContext) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull  DataContext dataContext) {
     return createPopupActionGroup(button);
   }
 
@@ -143,7 +173,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private boolean myForcePressed;
     private @TooltipTitle String myTooltipText;
 
-    public ComboBoxButton(Presentation presentation) {
+    @Override
+    public String getUIClassID() {
+      return "ComboBoxButtonUI";
+    }
+
+    public ComboBoxButton(@NotNull Presentation presentation) {
       myPresentation = presentation;
 
       setIcon(myPresentation.getIcon());
@@ -159,7 +194,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
-      setMargin(JBUI.insets(0, 8, 0, 5));
+      setMargin();
       if (isSmallVariant()) {
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
@@ -167,12 +202,17 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {
-          if (SwingUtilities.isLeftMouseButton(e)) {
-            e.consume();
-            if (e.isShiftDown()) {
-              doShiftClick();
-            } else {
-              doClick();
+          if (performClickOnMousePress()) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
+              e.consume();
+              if (e.isShiftDown()) {
+                doShiftClick();
+              }
+              else {
+                doClick();
+              }
+            } else if(SwingUtilities.isRightMouseButton(e)){
+              doRightClick();
             }
           }
         }
@@ -183,28 +223,67 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           mouseMoved(MouseEventAdapter.convert(e, e.getComponent(),
                                                MouseEvent.MOUSE_MOVED,
                                                e.getWhen(),
-                                               e.getModifiers() | e.getModifiersEx(),
+                                               UIUtil.getAllModifiers(e),
                                                e.getX(),
                                                e.getY()));
         }
       });
 
       myPresentation.addPropertyChangeListener(evt -> {
-        String propertyName = evt.getPropertyName();
-        if (Presentation.PROP_TEXT.equals(propertyName)) {
-          setText((String)evt.getNewValue());
-        }
-        else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
-          myTooltipText = (String)evt.getNewValue();
-          updateTooltipText();
-        }
-        else if (Presentation.PROP_ICON.equals(propertyName)) {
-          setIcon((Icon)evt.getNewValue());
-        }
-        else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-          setEnabled((Boolean)evt.getNewValue());
+        presentationChanged(evt);
+      });
+    }
+
+    private void setMargin() {
+      setMargin(JBUI.insets(0, 8, 0, 5));
+    }
+
+    /**
+     * Sets a label for this component.  If the given label has displayed mnemonic,
+     * it will call the {@code #doClick} method when the mnemonic is activated.
+     *
+     * @param label the label referring to this component
+     * @see JLabel#setLabelFor
+     */
+    public void setLabel(@NotNull JLabel label) {
+      label.setLabelFor(this);
+
+      ActionMap map = label.getActionMap();
+      String name = "release"; // BasicLabelUI.Actions.RELEASE
+      Action old = map.get(name);
+      map.put(name, new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+          if (old != null) old.actionPerformed(event);
+          doClick();
         }
       });
+    }
+
+    protected void presentationChanged(PropertyChangeEvent event) {
+      String propertyName = event.getPropertyName();
+      if (Presentation.PROP_TEXT.equals(propertyName)) {
+        setText((String)event.getNewValue());
+      }
+      else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
+        myTooltipText = (String)event.getNewValue();
+        updateTooltipText();
+      }
+      else if (Presentation.PROP_ICON.equals(propertyName)) {
+        setIcon((Icon)event.getNewValue());
+      }
+      else if (Presentation.PROP_ENABLED.equals(propertyName)) {
+        setEnabled((Boolean)event.getNewValue());
+      }
+    }
+
+    protected boolean performClickOnMousePress() {
+      return true;
+    }
+
+    @TestOnly
+    public @NotNull Presentation getPresentation() {
+      return myPresentation;
     }
 
     @Override
@@ -214,43 +293,40 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
     }
 
-    @NotNull
-    private Runnable setForcePressed() {
-      myForcePressed = true;
+    private void setForcePressed(boolean forcePressed) {
+      if (myForcePressed == forcePressed) return;
+      myForcePressed = forcePressed;
       repaint();
-
-      return () -> {
-        // give the button a chance to handle action listener
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myForcePressed = false;
-          repaint();
-        }, ModalityState.any());
-        repaint();
-        fireStateChanged();
-      };
     }
 
-    @Nullable
+    private void releaseForcePressed() {
+      // give the button a chance to handle action listener
+      ApplicationManager.getApplication().invokeLater(() -> setForcePressed(false), ModalityState.any());
+      repaint();
+      fireStateChanged();
+    }
+
     @Override
-    public String getToolTipText() {
-      return myForcePressed || Registry.is("ide.helptooltip.enabled") ? null : super.getToolTipText();
+    public @Nullable String getToolTipText() {
+      return myForcePressed || UISettings.isIdeHelpTooltipEnabled() ? null : super.getToolTipText();
     }
 
     public void showPopup() {
-      JBPopup popup = createPopup(setForcePressed());
-      if (Registry.is("ide.helptooltip.enabled")) {
+      JBPopup popup = createPopup(this::releaseForcePressed);
+      setForcePressed(true);
+      if (UISettings.isIdeHelpTooltipEnabled()) {
         HelpTooltip.setMasterPopup(this, popup);
       }
 
       popup.showUnderneathOf(this);
     }
 
-    protected JBPopup createPopup(Runnable onDispose) {
+    protected @NotNull JBPopup createPopup(@Nullable Runnable onDispose) {
       return createActionPopup(getDataContext(), this, onDispose);
     }
 
-    protected DataContext getDataContext() {
-      return DataManager.getInstance().getDataContext(this);
+    protected @NotNull DataContext getDataContext() {
+      return ActionToolbar.getDataContextFor(this);
     }
 
     @Override
@@ -268,10 +344,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private void updateTooltipText() {
       HelpTooltip.dispose(this);
 
-      if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(myTooltipText)) {
+      if (StringUtil.isNotEmpty(myTooltipText) && UISettings.isIdeHelpTooltipEnabled()) {
         String shortcut = KeymapUtil.getFirstKeyboardShortcutText(ComboBoxAction.this);
         new HelpTooltip().setTitle(myTooltipText).setShortcut(shortcut).installOn(this);
-      } else {
+      }
+      else {
         String tooltip = KeymapUtil.createTooltipText(myTooltipText, ComboBoxAction.this);
         setToolTipText(!tooltip.isEmpty() ? tooltip : null);
       }
@@ -295,29 +372,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    public Dimension getPreferredSize() {
-      Dimension prefSize = super.getPreferredSize();
-      Insets i = getInsets();
-      int width = prefSize.width + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0) +
-       (myPresentation == null || !isArrowVisible(myPresentation) ? 0 : JBUIScale.scale(16));
-
-      int height = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + i.top + i.bottom;
-      if (!isSmallVariant()) {
-        height = Math.max(height, prefSize.height);
-      }
-      Dimension size = new Dimension(width, height);
-      JBInsets.addTo(size, getMargin());
-      return size;
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return new Dimension(super.getMinimumSize().width, getPreferredSize().height);
-    }
-
-    @Override
     public Font getFont() {
-      return isSmallVariant() ? UIUtil.getToolbarFont() : UIUtil.getLabelFont();
+      if (myFontSet && ExperimentalUI.isNewUI()) return super.getFont();
+      return isSmallVariant() ? UIUtil.getToolbarFont() : StartupUiUtil.getLabelFont();
+    }
+
+    @Override
+    public void setFont(Font font) {
+      super.setFont(font);
+      myFontSet = true;
     }
 
     @Override
@@ -325,72 +388,40 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
     }
 
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-      if (!isArrowVisible(myPresentation)) {
-        return;
-      }
-
-      if (UIUtil.isUnderWin10LookAndFeel()) {
-        Icon icon = getArrowIcon(isEnabled());
-        int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right - JBUIScale.scale(3);
-        int y = (getHeight() - icon.getIconHeight()) / 2;
-        icon.paintIcon(null, g, x, y);
-      }
-      else {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
-          int iconSize = JBUIScale.scale(16);
-          int x = getWidth() - iconSize - getInsets().right - getMargin().right; // Different icons correction
-          int y = (getHeight() - iconSize)/2;
-
-          g2.translate(x, y);
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-
-          g2.setColor(JBUI.CurrentTheme.Arrow.foregroundColor(isEnabled()));
-
-          Path2D arrow = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-          arrow.moveTo(JBUIScale.scale(3.5f), JBUIScale.scale(6f));
-          arrow.lineTo(JBUIScale.scale(12.5f), JBUIScale.scale(6f));
-          arrow.lineTo(JBUIScale.scale(8f), JBUIScale.scale(11f));
-          arrow.closePath();
-
-          g2.fill(arrow);
-        }
-        finally {
-          g2.dispose();
-        }
-      }
+    /*
+    should be used with margin
+     */
+    public int getArrowGap() {
+      return 0;
     }
 
     protected boolean isArrowVisible(@NotNull Presentation presentation) {
       return true;
     }
 
-    @Override public void updateUI() {
-      super.updateUI();
-      updateMargin();
+    public boolean isArrowVisible() {
+      return myPresentation != null && isArrowVisible(myPresentation);
     }
 
-    protected void updateMargin() {
-      setMargin(JBUI.insets(0, 8, 0, 5));
+    public boolean isSmallVariant() {
+      return ComboBoxAction.this.isSmallVariant();
     }
 
-    /**
-     * @deprecated This method is noop. Set icon, text and tooltip in the constructor
-     * or property change listener for proper computation of preferred size.
-     * Other updates happen in Swing.
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-    protected void updateButtonSize() {}
+    @Override
+    public void updateUI() {
+      Object uiClassName = UIManager.get(getUIClassID());
+      setUI(uiClassName == null ?
+            BasicButtonUI.createUI(this) :
+            UIManager.getUI(this));
+      setMargin();
+    }
 
     @ApiStatus.Experimental
     protected void doShiftClick() {
       doClick();
     }
+
+    protected void doRightClick() {}
   }
 
   protected Condition<AnAction> getPreselectCondition() { return null; }

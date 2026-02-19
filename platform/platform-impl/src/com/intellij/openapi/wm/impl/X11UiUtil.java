@@ -1,50 +1,67 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.system.OS;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UnixDesktopEnv;
+import com.sun.jna.Memory;
+import com.sun.jna.Pointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
-import sun.misc.Unsafe;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.peer.ComponentPeer;
+import javax.swing.JFrame;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.regex.Matcher;
+import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.ArrayUtil.newLongArray;
-
+@ApiStatus.Internal
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
 
   private static final int True = 1;
   private static final int False = 0;
-  private static final long None = 0;
   private static final long XA_ATOM = 4;
   private static final long XA_WINDOW = 33;
+  private static final long ANY_PROPERTY_TYPE = 0;
   private static final int CLIENT_MESSAGE = 33;
-  private static final int FORMAT_BYTE = 8;
   private static final int FORMAT_LONG = 32;
   private static final long EVENT_MASK = (3L << 19);
+  private static final long NET_WM_STATE_REMOVE = 0;
   private static final long NET_WM_STATE_ADD = 1;
   private static final long NET_WM_STATE_TOGGLE = 2;
 
+  public static final String KDE_LAF_PROPERTY = "LookAndFeelPackage=";
+
+  /**
+   * The list of all known tile WM in the lower case can be updated later
+   */
   @SuppressWarnings("SpellCheckingInspection")
-  private static class Xlib {
-    private Unsafe unsafe;
+  public static final Set<String> TILE_WM = Set.of(
+    "awesome", "bspwm", "cagebreak", "compiz", "dwl", "dwm", "frankenwm", "herbstluftwm", "hyprland", "i3", "ion", "larswm", "leftwm",
+    "notion", "qtile", "ratpoison", "river", "snapwm", "spectrwm", "stumpwm", "sway", "wmii", "xmonad"
+  );
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private static final String GSETTINGS_COMMAND = "gsettings";
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private static final class Xlib {
     private Method XGetWindowProperty;
     private Method XFree;
     private Method RootWindow;
@@ -53,58 +70,65 @@ public final class X11UiUtil {
     private Method getScreenNumber;
     private Method awtLock;
     private Method awtUnlock;
+    private Method getChildWindows;
+    private Method XGetWindowAttributes;
 
     private long display;
 
-    private long UTF8_STRING;
     private long NET_SUPPORTING_WM_CHECK;
-    private long NET_WM_NAME;
     private long NET_WM_ALLOWED_ACTIONS;
     private long NET_WM_STATE;
     private long NET_WM_ACTION_FULLSCREEN;
     private long NET_WM_STATE_FULLSCREEN;
+    private long NET_WM_STATE_MAXIMIZED_VERT;
+    private long NET_WM_STATE_MAXIMIZED_HORZ;
     private long NET_WM_STATE_DEMANDS_ATTENTION;
     private long NET_ACTIVE_WINDOW;
+    private long _NET_WM_PID;
 
     private static @Nullable Xlib getInstance() {
-      Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
-      if (!SystemInfo.isXWindow || !"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
+      var toolkitClass = Toolkit.getDefaultToolkit().getClass();
+      if (!StartupUiUtil.isXToolkit()) {
         return null;
       }
 
       try {
-        Xlib x11 = new Xlib();
+        var x11 = new Xlib();
 
         // reflect on Xlib method wrappers and important structures
-        Class<?> XlibWrapper = Class.forName("sun.awt.X11.XlibWrapper");
-        x11.unsafe = (Unsafe)AtomicFieldUpdater.getUnsafe();
+        var XlibWrapper = Class.forName("sun.awt.X11.XlibWrapper");
         x11.XGetWindowProperty = method(XlibWrapper, "XGetWindowProperty", 12);
         x11.XFree = method(XlibWrapper, "XFree", 1);
         x11.RootWindow = method(XlibWrapper, "RootWindow", 2);
         x11.XSendEvent = method(XlibWrapper, "XSendEvent", 5);
-        Class<?> XBaseWindow = Class.forName("sun.awt.X11.XBaseWindow");
+        x11.XGetWindowAttributes = method(XlibWrapper, "XGetWindowAttributes", 3);
+        var XBaseWindow = Class.forName("sun.awt.X11.XBaseWindow");
         x11.getWindow = method(XBaseWindow, "getWindow");
         x11.getScreenNumber = method(XBaseWindow, "getScreenNumber");
         x11.display = (Long)method(toolkitClass, "getDisplay").invoke(null);
         x11.awtLock = method(toolkitClass, "awtLock");
         x11.awtUnlock = method(toolkitClass, "awtUnlock");
 
+        var XlibUtil = Class.forName("sun.awt.X11.XlibUtil");
+        x11.getChildWindows = method(XlibUtil, "getChildWindows", long.class);
+
         // intern atoms
-        Class<?> XAtom = Class.forName("sun.awt.X11.XAtom");
-        Method get = method(XAtom, "get", String.class);
-        Field atom = field(XAtom, "atom");
-        x11.UTF8_STRING = (Long)atom.get(get.invoke(null, "UTF8_STRING"));
+        var XAtom = Class.forName("sun.awt.X11.XAtom");
+        var get = method(XAtom, "get", String.class);
+        var atom = field(XAtom, "atom");
         x11.NET_SUPPORTING_WM_CHECK = (Long)atom.get(get.invoke(null, "_NET_SUPPORTING_WM_CHECK"));
-        x11.NET_WM_NAME = (Long)atom.get(get.invoke(null, "_NET_WM_NAME"));
         x11.NET_WM_ALLOWED_ACTIONS = (Long)atom.get(get.invoke(null, "_NET_WM_ALLOWED_ACTIONS"));
         x11.NET_WM_STATE = (Long)atom.get(get.invoke(null, "_NET_WM_STATE"));
         x11.NET_WM_ACTION_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_ACTION_FULLSCREEN"));
         x11.NET_WM_STATE_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_FULLSCREEN"));
+        x11.NET_WM_STATE_MAXIMIZED_VERT = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_VERT"));
+        x11.NET_WM_STATE_MAXIMIZED_HORZ = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_HORZ"));
         x11.NET_WM_STATE_DEMANDS_ATTENTION = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_DEMANDS_ATTENTION"));
         x11.NET_ACTIVE_WINDOW = (Long)atom.get(get.invoke(null, "_NET_ACTIVE_WINDOW"));
+        x11._NET_WM_PID = (Long)atom.get(get.invoke(null, "_NET_WM_PID"));
 
         // check for _NET protocol support
-        Long netWmWindow = x11.getNetWmWindow();
+        var netWmWindow = x11.getNetWmWindow();
         if (netWmWindow == null) {
           LOG.info("_NET protocol is not supported");
           return null;
@@ -130,58 +154,36 @@ public final class X11UiUtil {
     }
 
     private @Nullable Long getNetWmWindow() throws Exception {
-      long rootWindow = getRootWindow(0);
-      long[] values = getLongArrayProperty(rootWindow, NET_SUPPORTING_WM_CHECK, XA_WINDOW);
+      var rootWindow = getRootWindow(0);
+      var values = getWindowProperty(rootWindow, NET_SUPPORTING_WM_CHECK, XA_WINDOW);
       return values != null && values.length > 0 ? values[0] : null;
     }
 
-    private long @Nullable [] getLongArrayProperty(long window, long name, long type) throws Exception {
-      return getWindowProperty(window, name, type, FORMAT_LONG);
-    }
-
-    private @Nullable String getUtfStringProperty(long window, long name) throws Exception {
-      byte[] bytes = getWindowProperty(window, name, UTF8_STRING, FORMAT_BYTE);
-      return bytes != null ? new String(bytes, StandardCharsets.UTF_8) : null;
-    }
-
-    private @Nullable <T> T getWindowProperty(long window, long name, long type, long expectedFormat) throws Exception {
-      long data = unsafe.allocateMemory(64);
+    private long @Nullable [] getWindowProperty(long window, long name, long type) throws Exception {
       awtLock.invoke(null);
-      try {
-        unsafe.setMemory(data, 64, (byte)0);
-
+      try (var buffer = new Memory(64)) {
+        buffer.clear();
+        long pBuf = Pointer.nativeValue(buffer);
         int result = (Integer)XGetWindowProperty.invoke(
-          null, display, window, name, 0L, 65535L, (long)False, type, data, data + 8, data + 16, data + 24, data + 32);
+          null, display, window, name, 0L, 65535L, (long)False, type, pBuf, pBuf + 8, pBuf + 16, pBuf + 24, pBuf + 32
+        );
         if (result == 0) {
-          int format = unsafe.getInt(data + 8);
-          long pointer = SystemInfo.is64Bit ? unsafe.getLong(data + 32) : unsafe.getInt(data + 32);
-
-          if (pointer != None && format == expectedFormat) {
-            int length = SystemInfo.is64Bit ? (int)unsafe.getLong(data + 16) : unsafe.getInt(data + 16);
-            if (format == FORMAT_BYTE) {
-              byte[] bytes = new byte[length];
-              for (int i = 0; i < length; i++) bytes[i] = unsafe.getByte(pointer + i);
-              return (T)bytes;
+          var format = buffer.getInt(8);
+          var pointer = buffer.getPointer(32);
+          if (pointer != Pointer.NULL) {
+            if (format == FORMAT_LONG) {
+              var length = (int)buffer.getLong(16);
+              return pointer.getLongArray(0, length);
             }
-            else if (format == FORMAT_LONG) {
-              long[] values = newLongArray(length);
-              for (int i = 0; i < length; i++) {
-                values[i] = SystemInfo.is64Bit ? unsafe.getLong(pointer + 8L * i) : unsafe.getInt(pointer + 4L * i);
-              }
-              return (T)values;
-            }
-            else if (format != None) {
+            else {
               LOG.info("unexpected format: " + format);
             }
+            XFree.invoke(null, Pointer.nativeValue(pointer));
           }
-
-          if (pointer != None) XFree.invoke(null, pointer);
-
         }
       }
       finally {
         awtUnlock.invoke(null);
-        unsafe.freeMemory(data);
       }
 
       return null;
@@ -189,150 +191,125 @@ public final class X11UiUtil {
 
     private void sendClientMessage(long target, long window, long type, long... data) throws Exception {
       assert data.length <= 5;
-      long event = unsafe.allocateMemory(128);
       awtLock.invoke(null);
-      try {
-        unsafe.setMemory(event, 128, (byte)0);
-
-        unsafe.putInt(event, CLIENT_MESSAGE);
-        if (!SystemInfo.is64Bit) {
-          unsafe.putInt(event + 8, True);
-          unsafe.putInt(event + 16, (int)window);
-          unsafe.putInt(event + 20, (int)type);
-          unsafe.putInt(event + 24, FORMAT_LONG);
-          for (int i = 0; i < data.length; i++) {
-            unsafe.putInt(event + 28 + 4L * i, (int)data[i]);
-          }
+      try (var event = new Memory(128)) {
+        event.clear();
+        event.setInt(0, CLIENT_MESSAGE);
+        event.setInt(16, True);
+        event.setLong(32, window);
+        event.setLong(40, type);
+        event.setInt(48, FORMAT_LONG);
+        for (var i = 0; i < data.length; i++) {
+          event.setLong(56 + 8L * i, data[i]);
         }
-        else {
-          unsafe.putInt(event + 16, True);
-          unsafe.putLong(event + 32, window);
-          unsafe.putLong(event + 40, type);
-          unsafe.putInt(event + 48, FORMAT_LONG);
-          for (int i = 0; i < data.length; i++) {
-            unsafe.putLong(event + 56 + 8L * i, data[i]);
-          }
-        }
-
-        XSendEvent.invoke(null, display, target, false, EVENT_MASK, event);
+        XSendEvent.invoke(null, display, target, false, EVENT_MASK, Pointer.nativeValue(event));
       }
       finally {
         awtUnlock.invoke(null);
-        unsafe.freeMemory(event);
       }
     }
 
     private void sendClientMessage(Window window, String operation, long type, long... params) {
       try {
-        ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
+        var peer = AWTAccessor.getComponentAccessor().getPeer(window);
         if (peer == null) throw new IllegalStateException(window + " has no peer");
         long windowId = (Long)getWindow.invoke(peer);
         long screen = (Long)getScreenNumber.invoke(peer);
-        long rootWindow = getRootWindow(screen);
+        var rootWindow = getRootWindow(screen);
         sendClientMessage(rootWindow, windowId, type, params);
       }
       catch (Throwable t) {
         LOG.info("cannot " + operation, t);
       }
     }
+
+    private Long findProcessWindow(long window, long pid, int recursionLevel) throws InvocationTargetException, IllegalAccessException {
+      if (recursionLevel > 100) {
+        LOG.warn("Recursion level exceeded. Deep lying windows will be skipped");
+        return null;
+      }
+
+      if (isProcessWindowOwner(window, pid) && isViewableWin(window)) {
+        return window;
+      }
+
+      var childWindows = getChildWindows(window);
+      if (childWindows == null) return null;
+
+      for (var childWindow : childWindows) {
+        var wnd = findProcessWindow(childWindow, pid, recursionLevel + 1);
+        if (wnd != null) {
+          return wnd;
+        }
+      }
+
+      return null;
+    }
+
+    private static Boolean isViewableWin(long window) throws InvocationTargetException, IllegalAccessException {
+      assert X11 != null;
+      try {
+        X11.awtLock.invoke(null);
+        try (var wrapper = new XWindowAttributesWrapper(window)) {
+          return wrapper.getMapState() == XWindowAttributesWrapper.MapState.IsViewable;
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        return false;
+      }
+      finally {
+        X11.awtUnlock.invoke(null);
+      }
+    }
+
+    private boolean isProcessWindowOwner(Long window, long pid) {
+      long[] value;
+      try {
+        value = getWindowProperty(window, _NET_WM_PID, ANY_PROPERTY_TYPE);
+      }
+      catch (Exception ex) {
+        LOG.error("Exception on obtaingin \"_NET_WM_PID\" window property", ex);
+        return false;
+      }
+
+      if (value == null) {
+        LOG.trace("_NET_WM_PID property is not set for window " + window);
+        return false;
+      }
+
+      var windowPid = value[0];
+      return windowPid == pid;
+    }
+
+    public Set<Long> getChildWindows(Long window) {
+      try {
+        @SuppressWarnings("unchecked") var windows = (Set<Long>)getChildWindows.invoke(null, window);
+        return windows;
+      }
+      catch (Exception e) {
+        LOG.error("Can't get children for window: " + window, e);
+        return null;
+      }
+    }
   }
 
   private static final @Nullable Xlib X11 = Xlib.getInstance();
 
-  // WM detection and patching
-
-  public static @Nullable String getWmName() {
-    if (X11 == null) return null;
-
-    try {
-      Long netWmWindow = X11.getNetWmWindow();
-      if (netWmWindow != null) {
-        return X11.getUtfStringProperty(netWmWindow, X11.NET_WM_NAME);
-      }
-    }
-    catch (Throwable t) {
-      LOG.info("cannot get WM name", t);
-    }
-
-    return null;
+  public static boolean isInitialized() {
+    return X11 != null;
   }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  public static void patchDetectedWm(String wmName) {
-    if (X11 == null || !SystemProperties.getBooleanProperty("ide.x11.override.wm", true)) {
-      return;
-    }
-
-    try {
-      if ("Muffin".equals(wmName)) {
-        setWM("MUTTER_WM");
-      }
-      else if ("Marco".equals(wmName)) {
-        setWM("MARCO_WM", "METACITY_WM");
-      }
-      else if ("awesome".equals(wmName)) {
-        String version = getAwesomeWMVersion();
-        if (StringUtil.compareVersionNumbers(version, "3.5") >= 0) {
-          setWM("SAWFISH_WM");
-        }
-        else if (version != null) {
-          setWM("OTHER_NONREPARENTING_WM", "LG3D_WM");
-        }
-      }
-    }
-    catch (Throwable t) {
-      LOG.warn(t);
-    }
-  }
-
-  private static void setWM(@NonNls String... wmConstants) throws Exception {
-    Class<?> xwmClass = Class.forName("sun.awt.X11.XWM");
-    Object xwm = method(xwmClass, "getWM").invoke(null);
-    if (xwm != null) {
-      for (String wmConstant : wmConstants) {
-        try {
-          Field wm = field(xwmClass, wmConstant);
-          Object id = wm.get(null);
-          if (id != null) {
-            field(xwmClass, "awt_wmgr").set(null, id);
-            field(xwmClass, "WMID").set(xwm, id);
-            LOG.info("impersonated WM: " + wmConstant);
-            break;
-          }
-        }
-        catch (NoSuchFieldException ignore) { }
-      }
-    }
-  }
-
-  private static @Nullable String getAwesomeWMVersion() {
-    try {
-      String version = ExecUtil.execAndReadLine(new GeneralCommandLine("awesome", "--version"));
-      if (version != null) {
-        Matcher m = Pattern.compile("awesome v([0-9.]+)").matcher(version);
-        if (m.find()) {
-          return m.group(1);
-        }
-      }
-    }
-    catch (Throwable t) {
-      LOG.warn(t);
-    }
-    return null;
-  }
-
-  // full-screen support
 
   public static boolean isFullScreenSupported() {
     if (X11 == null) return false;
 
-    List<ProjectFrameHelper> frames = WindowManagerEx.getInstanceEx().getProjectFrameHelpers();
+    var frames = WindowManagerEx.getInstanceEx().getProjectFrameHelpers();
     // no frame to check the property so be optimistic here
     if (frames.isEmpty()) {
       return true;
     }
 
-    IdeFrameImpl frame = frames.get(0).getFrame();
+    var frame = frames.getFirst().getFrame();
     return hasWindowProperty(frame, X11.NET_WM_ALLOWED_ACTIONS, X11.NET_WM_ACTION_FULLSCREEN);
   }
 
@@ -340,17 +317,100 @@ public final class X11UiUtil {
     return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_FULLSCREEN);
   }
 
+  public static boolean isVMaximized(JFrame frame) {
+    return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_MAXIMIZED_VERT);
+  }
+
+  public static boolean isHMaximized(JFrame frame) {
+    return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_MAXIMIZED_HORZ);
+  }
+
+  public static void setMaximized(JFrame frame, boolean maximized) {
+    if (X11 == null) return;
+
+    if (maximized) {
+      X11.sendClientMessage(
+        frame, "set Maximized mode", X11.NET_WM_STATE, NET_WM_STATE_ADD, X11.NET_WM_STATE_MAXIMIZED_HORZ, X11.NET_WM_STATE_MAXIMIZED_VERT
+      );
+    }
+    else {
+      X11.sendClientMessage(
+        frame, "reset Maximized mode", X11.NET_WM_STATE, NET_WM_STATE_REMOVE, X11.NET_WM_STATE_MAXIMIZED_HORZ, X11.NET_WM_STATE_MAXIMIZED_VERT
+      );
+    }
+  }
+
+  public static boolean isWSL() {
+    return OS.isGenericUnix() && System.getenv("WSL_DISTRO_NAME") != null;
+  }
+
+  public static boolean isTileWM() {
+    var desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return OS.isGenericUnix() && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
+  }
+
+  public static boolean isUndefinedDesktop() {
+    return OS.isGenericUnix() && System.getenv("XDG_CURRENT_DESKTOP") == null;
+  }
+
+  @RequiresBackgroundThread
+  public static @Nullable String getTheme() {
+    if (UnixDesktopEnv.CURRENT == UnixDesktopEnv.GNOME) {
+      var result = exec("Cannot get gnome theme", GSETTINGS_COMMAND, "get", "org.gnome.desktop.interface", "gtk-theme");
+      return trimQuotes(result);
+    }
+
+    if (UnixDesktopEnv.CURRENT == UnixDesktopEnv.KDE) {
+      // https://github.com/shalva97/kde-configuration-files
+      var home = Path.of(System.getenv("HOME"), ".config/kdeglobals");
+      var matches = grepFile("Cannot get KDE theme", home, Pattern.compile("\\s*" + KDE_LAF_PROPERTY + ".*"));
+      if (matches.size() != 1) {
+        return null;
+      }
+      var result = matches.getFirst().trim();
+      if (result.startsWith(KDE_LAF_PROPERTY)) {
+        return result.substring(KDE_LAF_PROPERTY.length()).trim();
+      }
+      return null;
+    }
+
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public static @Nullable String getIconTheme() {
+    var result = exec("Cannot get icon theme", GSETTINGS_COMMAND, "get", "org.gnome.desktop.interface", "icon-theme");
+    return trimQuotes(result);
+  }
+
+  /**
+   * Format like `icon:minimize,maximize,close` or `close:icon`
+   */
+  @RequiresBackgroundThread
+  @ApiStatus.Internal
+  public static @Nullable String getWindowButtonsConfig() {
+    if (UnixDesktopEnv.CURRENT == UnixDesktopEnv.GNOME || UnixDesktopEnv.CURRENT == UnixDesktopEnv.KDE) {
+      var execResult = exec("Cannot get gnome WM buttons layout", GSETTINGS_COMMAND, "get", "org.gnome.desktop.wm.preferences", "button-layout");
+      return trimQuotes(execResult);
+    }
+    return null;
+  }
+
+  private static @Nullable String trimQuotes(@Nullable String s) {
+    var quoted = s != null && s.length() > 1 && s.startsWith("'") && s.endsWith("'");
+    return quoted ? s.substring(1, s.length() - 1) : s;
+  }
+
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
     if (X11 == null) return false;
     try {
-      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
+      var peer = AWTAccessor.getComponentAccessor().getPeer(frame);
       if (peer != null) {
         long window = (Long)X11.getWindow.invoke(peer);
-        long[] values = X11.getLongArrayProperty(window, name, XA_ATOM);
+        var values = X11.getWindowProperty(window, name, XA_ATOM);
         if (values != null) {
-          for (long value : values) {
-            if (value == expected) return true;
-          }
+          return ArrayUtil.indexOf(values, expected) != -1;
         }
       }
       return false;
@@ -366,16 +426,59 @@ public final class X11UiUtil {
     X11.sendClientMessage(frame, "toggle mode", X11.NET_WM_STATE, NET_WM_STATE_TOGGLE, X11.NET_WM_STATE_FULLSCREEN);
   }
 
+  public static void setFullScreenMode(JFrame frame, boolean fullScreen) {
+    if (X11 == null) return;
+
+    if (fullScreen) {
+      X11.sendClientMessage(frame, "set FullScreen mode", X11.NET_WM_STATE, NET_WM_STATE_ADD, X11.NET_WM_STATE_FULLSCREEN);
+    }
+    else {
+      X11.sendClientMessage(frame, "reset FullScreen mode", X11.NET_WM_STATE, NET_WM_STATE_REMOVE, X11.NET_WM_STATE_FULLSCREEN);
+    }
+  }
+
   /**
    * This method requests window manager to activate the specified application window. This might cause the window to steal focus
    * from another (currently active) application, which is generally not considered acceptable. So it should be used only in
-   * special cases, when we know that the user definitely expects such behaviour. In most cases, requesting focus in the target
+   * special cases, when we know that the user definitely expects such behavior. In most cases, requesting focus in the target
    * window should be used instead - in that case window manager is expected to indicate that the application requires user
    * attention but won't switch the focus to it automatically.
    */
   public static void activate(@NotNull Window window) {
     if (X11 == null) return;
+    if (FocusManagerImpl.FOCUS_REQUESTS_LOG.isDebugEnabled()) {
+      FocusManagerImpl.FOCUS_REQUESTS_LOG.debug("_NET_ACTIVE_WINDOW", new Throwable());
+    }
     X11.sendClientMessage(window, "activate", X11.NET_ACTIVE_WINDOW);
+  }
+
+  @ApiStatus.Internal
+  public static boolean activate(long windowId) {
+    if (X11 == null) return false;
+    if (FocusManagerImpl.FOCUS_REQUESTS_LOG.isDebugEnabled()) {
+      FocusManagerImpl.FOCUS_REQUESTS_LOG.debug("_NET_ACTIVE_WINDOW", new Throwable());
+    }
+    try {
+      var rootWindow = X11.getRootWindow(0);
+      X11.sendClientMessage(rootWindow, windowId, X11.NET_ACTIVE_WINDOW);
+      return true;
+    }
+    catch (Exception e) {
+      LOG.error("Can not activate window:" + windowId, e);
+      return false;
+    }
+  }
+
+  @ApiStatus.Internal
+  public static Long findVisibleWindowByPid(long pid) {
+    if (X11 == null) return null;
+    try {
+      var rootWindow = X11.getRootWindow(0);
+      return X11.findProcessWindow(rootWindow, pid, 0);
+    }
+    catch (Exception e) {
+      return null;
+    }
   }
 
   public static void requestAttention(@NotNull Window window) {
@@ -385,10 +488,10 @@ public final class X11UiUtil {
 
   // reflection utilities
 
-  private static Method method(Class<?> aClass, @NonNls String name, Class<?>... parameterTypes) throws Exception {
+  private static Method method(Class<?> aClass, String name, Class<?>... parameterTypes) throws Exception {
     while (aClass != null) {
       try {
-        Method method = aClass.getDeclaredMethod(name, parameterTypes);
+        var method = aClass.getDeclaredMethod(name, parameterTypes);
         method.setAccessible(true);
         return method;
       }
@@ -399,8 +502,8 @@ public final class X11UiUtil {
     throw new NoSuchMethodException(name);
   }
 
-  private static Method method(Class<?> aClass, @NonNls String name, int parameters) throws Exception {
-    for (Method method : aClass.getDeclaredMethods()) {
+  private static Method method(Class<?> aClass, String name, int parameters) throws Exception {
+    for (var method : aClass.getDeclaredMethods()) {
       if (method.getParameterCount() == parameters && name.equals(method.getName())) {
         method.setAccessible(true);
         return method;
@@ -409,9 +512,68 @@ public final class X11UiUtil {
     throw new NoSuchMethodException(name);
   }
 
-  private static Field field(Class<?> aClass, @NonNls String name) throws Exception {
-    Field field = aClass.getDeclaredField(name);
+  @SuppressWarnings("SameParameterValue")
+  private static Field field(Class<?> aClass, String name) throws Exception {
+    var field = aClass.getDeclaredField(name);
     field.setAccessible(true);
     return field;
+  }
+
+  private static @Nullable String exec(String errorMessage, String... command) {
+    var execResult = LinuxUiUtil.exec(errorMessage, command);
+    return LinuxUiUtilKt.output(execResult);
+  }
+
+  private static List<String> grepFile(@SuppressWarnings("SameParameterValue") String errorMessage, Path file, Pattern pattern) {
+    try (var lines = Files.lines(file)) {
+      return lines.filter(line -> pattern.matcher(line).matches()).toList();
+    }
+    catch (IOException e) {
+      LOG.info(errorMessage, e);
+      return List.of();
+    }
+  }
+
+  private static final class XWindowAttributesWrapper implements AutoCloseable {
+    private enum MapState { IsUnmapped, IsUnviewable, IsViewable }
+
+    private MapState getMapState() throws InvocationTargetException, IllegalAccessException {
+      return MapState.values()[(Integer)get_map_state.invoke(instance)];
+    }
+
+    private XWindowAttributesWrapper(long windowId) throws Exception {
+      assert X11 != null;
+
+      instance = getXWindowAttributesCtor().newInstance();
+      var ptrData = getPData.invoke(instance);
+
+      var operationResult = (Integer)X11.XGetWindowAttributes.invoke(null, X11.display, windowId, ptrData);
+      if (operationResult == 0) {
+        throw new Exception("XGetWindowAttributes failed :" + operationResult);
+      }
+    }
+
+    @Override
+    public void close() throws Exception {
+      dispose.invoke(instance);
+    }
+
+    private final Object instance;
+
+    private static Constructor<?> ctor;
+    private static Method get_map_state;
+    private static Method getPData;
+    private static Method dispose;
+
+    private static Constructor<?> getXWindowAttributesCtor() throws Exception {
+      if (ctor == null) {
+        var clazz = Class.forName("sun.awt.X11.XWindowAttributes");
+        ctor = clazz.getConstructor();
+        get_map_state = method(clazz, "get_map_state");
+        dispose = method(clazz, "dispose");
+        getPData = method(clazz, "getPData");
+      }
+      return ctor;
+    }
   }
 }

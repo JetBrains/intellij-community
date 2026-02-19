@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.google.common.primitives.Chars;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -39,19 +24,20 @@ import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletio
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsLogBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.border.CompoundBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.Collection;
 import java.util.List;
 
 class MultilinePopupBuilder {
   static final char[] SEPARATORS = {'|', '\n'};
 
-  @NotNull private final EditorTextField myTextField;
+  private final @NotNull EditorTextField myTextField;
   private final char[] mySeparators;
 
   MultilinePopupBuilder(@NotNull Project project,
@@ -91,16 +77,13 @@ class MultilinePopupBuilder {
         popup.closeOk(e.getInputEvent());
       }
     };
-    okAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, popup.getContent());
-    AutoPopupSupportingListener.installOn(popup);
+    okAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), popup.getContent());
     return popup;
   }
 
-  @NotNull
-  @NlsContexts.PopupAdvertisement
-  private String getAdText() {
+  private @NotNull @NlsContexts.PopupAdvertisement String getAdText() {
     return VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text", getSeparatorsText(mySeparators),
-                                KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()));
+                                KeymapUtil.getShortcutsText(CommonShortcuts.getCtrlEnter().getShortcuts()));
   }
 
   @NotNull
@@ -111,12 +94,11 @@ class MultilinePopupBuilder {
     });
   }
 
-  @NotNull
-  private static String getSeparatorsText(char[] separators) {
+  private static @NotNull String getSeparatorsText(char[] separators) {
     StringBuilder s = new StringBuilder();
     for (char c : separators) {
       String separator = c == '\n' ? VcsLogBundle.message("vcs.log.filter.popup.advertisement.text.new.lines") : Character.toString(c);
-      if (s.length() == 0) {
+      if (s.isEmpty()) {
         s.append(separator);
       }
       else {
@@ -131,30 +113,29 @@ class MultilinePopupBuilder {
     textField.setBorder(new CompoundBorder(JBUI.Borders.empty(2), textField.getBorder()));
   }
 
-  interface CompletionPrefixProvider {
-    String getPrefix(@NotNull String text, int offset);
+  @ApiStatus.OverrideOnly
+  public interface CompletionPrefixProvider {
+    @NotNull String getPrefix(@NotNull String text, int offset);
   }
 
   private static class MyCompletionProvider extends ValuesCompletionProviderDumbAware<String> {
-    @Nullable private final CompletionPrefixProvider myCompletionPrefixProvider;
+    private final @Nullable CompletionPrefixProvider myCompletionPrefixProvider;
 
     MyCompletionProvider(@NotNull Collection<String> values, @Nullable CompletionPrefixProvider completionPrefixProvider) {
       super(new DefaultTextCompletionValueDescriptor.StringValueDescriptor(), Chars.asList(SEPARATORS), values, false);
       myCompletionPrefixProvider = completionPrefixProvider;
     }
 
-    @Nullable
     @Override
-    public String getPrefix(@NotNull String text, int offset) {
+    public @Nullable String getPrefix(@NotNull String text, int offset) {
       if (myCompletionPrefixProvider != null) {
         return myCompletionPrefixProvider.getPrefix(text, offset);
       }
       return super.getPrefix(text, offset);
     }
 
-    @Nullable
     @Override
-    public String getAdvertisement() {
+    public @Nullable String getAdvertisement() {
       return VcsLogBundle.message("vcs.log.filter.popup.advertisement.text", getSeparatorsText(SEPARATORS));
     }
   }

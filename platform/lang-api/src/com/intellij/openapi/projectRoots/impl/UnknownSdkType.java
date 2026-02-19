@@ -1,15 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,8 +33,7 @@ public final class UnknownSdkType extends SdkType {
     super(typeName);
   }
 
-  @NotNull
-  public static UnknownSdkType getInstance(@NotNull String typeName) {
+  public static @NotNull UnknownSdkType getInstance(@NotNull String typeName) {
     return ourTypeNameToInstanceMap.computeIfAbsent(typeName, UnknownSdkType::new);
   }
 
@@ -39,18 +43,17 @@ public final class UnknownSdkType extends SdkType {
   }
 
   @Override
-  public boolean isValidSdkHome(String path) {
+  public boolean isValidSdkHome(@NotNull String path) {
     return false;
   }
 
   @Override
-  public String getVersionString(String sdkHome) {
+  public String getVersionString(@NotNull String sdkHome) {
     return "";
   }
 
-  @NotNull
   @Override
-  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
+  public @NotNull String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
     return currentSdkName != null ? currentSdkName : "";
   }
 
@@ -78,15 +81,13 @@ public final class UnknownSdkType extends SdkType {
     }
   }
 
-  @Nullable
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
+  public @NotNull SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
     return new UnknownSdkAdditionalData(additional);
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return ProjectBundle.message("sdk.unknown.name");
   }
 
@@ -101,8 +102,7 @@ public final class UnknownSdkType extends SdkType {
   }
 
   private static class UnknownSdkAdditionalData implements SdkAdditionalData {
-    @NotNull
-    private final Element myAdditionalElement;
+    private final @NotNull Element myAdditionalElement;
 
     UnknownSdkAdditionalData(@NotNull Element element) {
       myAdditionalElement = element.clone();

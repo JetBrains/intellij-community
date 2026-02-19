@@ -19,6 +19,7 @@ class FeatureUsageCustomValidatorsUtilTest {
     Assert.assertEquals(PluginType.JB_NOT_BUNDLED, findPluginTypeByValue("JB_NOT_BUNDLED"))
     Assert.assertEquals(PluginType.JB_BUNDLED, findPluginTypeByValue("JB_BUNDLED"))
     Assert.assertEquals(PluginType.PLATFORM, findPluginTypeByValue("PLATFORM"))
+    Assert.assertEquals(PluginType.JVM_CORE, findPluginTypeByValue("JVM_CORE"))
     Assert.assertEquals(PluginType.JB_UPDATED_BUNDLED, findPluginTypeByValue("JB_UPDATED_BUNDLED"))
     Assert.assertEquals(PluginType.JB_UPDATED_BUNDLED, findPluginTypeByValue("JB_UPDATED_BUNDLED"))
   }

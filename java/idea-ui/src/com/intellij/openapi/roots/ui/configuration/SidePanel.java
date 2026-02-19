@@ -1,33 +1,49 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.*;
+import com.intellij.ui.AbstractExpandableItemsHandler;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExpandableItemsHandler;
+import com.intellij.ui.Gray;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.CellRendererPane;
+import javax.swing.DefaultListModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Rectangle;
 
 public final class SidePanel extends JPanel {
   private final JList<SidePanelItem> myList;
   private final DefaultListModel<SidePanelItem> myModel;
   private final Place.Navigator myNavigator;
 
-  private final Int2ObjectOpenHashMap<@Nls String> myIndex2Separator = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<@Nls String> myIndex2Separator = new Int2ObjectOpenHashMap<>();
 
   public SidePanel(Place.Navigator navigator) {
     myNavigator = navigator;
@@ -51,7 +67,7 @@ public final class SidePanel extends JPanel {
 
       @Override
       public Icon getIconFor(final SidePanelItem value) {
-        return JBUI.scale(EmptyIcon.create(16, 20));
+        return JBUIScale.scaleIcon(EmptyIcon.create(16, 20));
       }
 
       @Override
@@ -82,7 +98,7 @@ public final class SidePanel extends JPanel {
       @Override
       protected void layout() {
         myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-        myExtraPanel.add(myComponent, BorderLayout.CENTER);
+        myExtraPanel.add(getItemComponent(), BorderLayout.CENTER);
         myExtraPanel.add(myCountLabel, BorderLayout.EAST);
         myRendererComponent.add(myExtraPanel, BorderLayout.CENTER);
       }
@@ -95,7 +111,7 @@ public final class SidePanel extends JPanel {
                                                     boolean cellHasFocus) {
         layout();
         myCountLabel.setText("");
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
           final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)value.myPlace.getPath("category");
           int errorsCount;
@@ -104,12 +120,12 @@ public final class SidePanel extends JPanel {
             myCountLabel.setText(errorsCount > 100 ? "100+" : String.valueOf(errorsCount));
           }
         }
-        if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
+        if (ClientProperty.isTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
           Rectangle bounds = list.getCellBounds(index, index);
           bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
           AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
           myExtraPanel.setSize((int)myExtraPanel.getPreferredSize().getWidth(), myExtraPanel.getHeight());
-          ComponentUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+          myExtraPanel.putClientProperty(ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
           return myExtraPanel;
         }
         return component;
@@ -118,6 +134,7 @@ public final class SidePanel extends JPanel {
       @Override
       protected JComponent createItemComponent() {
         myExtraPanel = new NonOpaquePanel(new BorderLayout());
+
         myCountLabel = new SidePanelCountLabel();
         final JComponent component = super.createItemComponent();
 
@@ -162,8 +179,7 @@ public final class SidePanel extends JPanel {
     myIndex2Separator.put(myModel.size(), text);
   }
 
-  @Nullable
-  private @NlsContexts.Separator String getSeparatorAbove(final SidePanelItem item) {
+  private @Nullable @NlsContexts.Separator String getSeparatorAbove(final SidePanelItem item) {
     return myIndex2Separator.get(myModel.indexOf(item));
   }
 

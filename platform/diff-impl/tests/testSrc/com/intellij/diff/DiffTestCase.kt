@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff
 
+import com.intellij.diff.comparison.CancellationChecker
 import com.intellij.diff.comparison.ComparisonManagerImpl
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.util.DiffUtil
@@ -29,7 +16,8 @@ import com.intellij.util.text.CharSequenceSubSequence
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.junit.Assert
-import java.util.*
+import java.util.BitSet
+import java.util.Random
 import java.util.concurrent.atomic.AtomicLong
 
 abstract class DiffTestCase : TestCase() {
@@ -39,6 +27,7 @@ abstract class DiffTestCase : TestCase() {
   val RNG: Random = Random()
   private var gotSeedException = false
 
+  val CANCELLATION: CancellationChecker = CancellationChecker.EMPTY
   val INDICATOR: ProgressIndicator = DumbProgressIndicator.INSTANCE
   val MANAGER: ComparisonManagerImpl = ComparisonManagerImpl()
 
@@ -53,8 +42,12 @@ abstract class DiffTestCase : TestCase() {
   }
 
   override fun tearDown() {
-    DiffIterableUtil.setVerifyEnabled(false)
-    super.tearDown()
+    try {
+      DiffIterableUtil.setVerifyEnabled(false)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun getTestName() = UsefulTestCase.getTestName(name, true)
@@ -89,10 +82,10 @@ abstract class DiffTestCase : TestCase() {
         debugData.reset()
       }
       catch (e: Throwable) {
-        println("Seed: " + seed)
-        println("Runs: " + runs)
-        println("I: " + i)
-        println("Current seed: " + lastSeed)
+        println("Seed: $seed")
+        println("Runs: $runs")
+        println("I: $i")
+        println("Current seed: $lastSeed")
         debugData.dump()
         throw e
       }
@@ -213,12 +206,16 @@ abstract class DiffTestCase : TestCase() {
 
     fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
       if (skipLastNewline && !ignoreSpaces) {
-        assertTrue(StringUtil.equals(chunk1, chunk2) ||
-                   StringUtil.equals(stripNewline(chunk1), chunk2) ||
-                   StringUtil.equals(chunk1, stripNewline(chunk2)))
+        assertTrue(
+          "Text1: '$chunk1', Text2: '$chunk2'",
+          StringUtil.equals(chunk1, chunk2) ||
+          StringUtil.equals(stripNewline(chunk1), chunk2) ||
+          StringUtil.equals(chunk1, stripNewline(chunk2)))
       }
       else {
-        assertTrue(isEqualsCharSequences(chunk1, chunk2, ignoreSpaces))
+        assertTrue(
+          "Text1: '$chunk1', Text2: '$chunk2'",
+          isEqualsCharSequences(chunk1, chunk2, ignoreSpaces))
       }
     }
 
@@ -288,7 +285,7 @@ abstract class DiffTestCase : TestCase() {
       val lines1 = matching.split('_', '*')
       val lines2 = text.split('\n')
       assertEquals(lines1.size, lines2.size)
-      for (i in 0..lines1.size - 1) {
+      for (i in lines1.indices) {
         assertEquals(lines1[i].length, lines2[i].length, "line $i")
       }
 

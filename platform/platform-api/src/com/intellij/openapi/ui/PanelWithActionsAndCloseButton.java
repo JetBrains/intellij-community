@@ -3,7 +3,16 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -13,10 +22,11 @@ import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
-public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider, Disposable {
+public abstract class PanelWithActionsAndCloseButton extends JPanel implements UiCompatibleDataProvider, Disposable {
   protected final ContentManager myContentManager;
   private final @NonNls String myHelpId;
   private final boolean myVerticalToolbar;
@@ -55,14 +65,15 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     myCloseEnabled = false;
   }
 
-  protected void init(){
+  protected void init() {
     addActionsTo(myToolbarGroup);
     myToolbarGroup.add(new MyCloseAction());
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, ! myVerticalToolbar);
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, !myVerticalToolbar);
     JComponent centerPanel = createCenterPanel();
     toolbar.setTargetComponent(centerPanel);
-    for (AnAction action : myToolbarGroup.getChildren(null)) {
+    for (AnAction action : myToolbarGroup.getChildren(actionManager)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), centerPanel);
     }
 
@@ -76,9 +87,8 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
-  public Object getData(@NotNull String dataId) {
-    return PlatformDataKeys.HELP_ID.is(dataId) ? myHelpId : null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId);
   }
 
   protected abstract JComponent createCenterPanel();
@@ -90,6 +100,11 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myCloseEnabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

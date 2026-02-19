@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -23,32 +9,26 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.navigation.History;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.EventListener;
 
 /**
  * @author Eugene Zhuravlev
  */
 public abstract class ModuleElementsEditor implements ModuleConfigurationEditor {
-  @NotNull protected final Project myProject;
+  protected final @NotNull Project myProject;
   protected JComponent myComponent;
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private final EventDispatcher<ModuleElementsEditorListener> myDispatcher = EventDispatcher.create(ModuleElementsEditorListener.class);
 
-  protected History myHistory;
   private final ModuleConfigurationState myState;
 
   protected ModuleElementsEditor(@NotNull ModuleConfigurationState state) {
     myProject = state.getProject();
     myState = state;
-  }
-
-  public void setHistory(final History history) {
-    myHistory = history;
   }
 
   public void addListener(ModuleElementsEditorListener listener) {
@@ -65,11 +45,10 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   }
 
   protected ModifiableRootModel getModel() {
-    return myState.getRootModel();
+    return myState.getModifiableRootModel();
   }
 
-  @NotNull
-  protected ModuleConfigurationState getState() {
+  protected @NotNull ModuleConfigurationState getState() {
     return myState;
   }
 

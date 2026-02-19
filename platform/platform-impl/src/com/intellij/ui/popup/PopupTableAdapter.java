@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -7,16 +7,17 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.Set;
 
-/**
- * @author yole
- */
-class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
+
+final class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T> {
   private final PopupChooserBuilder myBuilder;
   private final JTable myTable;
 

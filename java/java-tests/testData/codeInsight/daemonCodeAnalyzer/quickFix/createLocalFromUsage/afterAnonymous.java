@@ -1,4 +1,4 @@
-// "Create local variable 'zeit'" "true"
+// "Create local variable 'zeit'" "true-preview"
 public class A {
     {
         Object zeit;

@@ -1,20 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import org.jetbrains.annotations.NotNull;
 
 public final class ImmutableCDATA extends CDATA {
   ImmutableCDATA(@NotNull String str) {
-    //todo[nik] fake change to ensure that this file is recompiled, otherwise the call will invoke the incorrect method and exception will fail
-    //noinspection unused
-    CDATA cdata = super.setText(str);
+    super.setText(str);
   }
 
   @Override
   public CDATA clone() {
-    CDATA text = new CDATA();
-    text.value = value;
-    return text;
+    return new CDATA(true, value);
   }
 
   @Override

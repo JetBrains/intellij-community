@@ -1,0 +1,13 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.internal.actions">
+  <resource-bundle>messages.KotlinInternalBundle</resource-bundle>
+  <actions>
+      <action id="InvalidateK2CachesInternalAction" class="org.jetbrains.kotlin.idea.internal.actions.InvalidateK2CachesInternalAction" internal="true">
+        <add-to-group group-id="KotlinInternalGroup"/>
+      </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Internal Kotlin Plugin Actions" displayType="BALLOON" bundle="messages.KotlinInternalBundle"
+                       key="internal.kotlin.plugin.actions.notification.group"/>
+  </extensions>
+</idea-plugin>

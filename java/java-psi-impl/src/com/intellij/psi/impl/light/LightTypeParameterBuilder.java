@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import org.jetbrains.annotations.NonNls;
@@ -20,9 +22,17 @@ public class LightTypeParameterBuilder extends LightPsiClassBuilder implements P
     myIndex = index;
   }
 
-  @Nullable
   @Override
-  public PsiTypeParameterListOwner getOwner() {
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeParameter(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+  @Override
+  public @Nullable PsiTypeParameterListOwner getOwner() {
     return myOwner;
   }
 
@@ -41,15 +51,13 @@ public class LightTypeParameterBuilder extends LightPsiClassBuilder implements P
     return getModifierList().getApplicableAnnotations();
   }
 
-  @Nullable
   @Override
-  public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @Nullable PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     return getModifierList().findAnnotation(qualifiedName);
   }
 
-  @NotNull
   @Override
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     return getModifierList().addAnnotation(qualifiedName);
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,8 +18,9 @@ import java.util.regex.Pattern;
  * <p>
  * Instances of this class are not safe for use by multiple concurrent threads, just as {@link Matcher} instances are.
  */
-public class RegExReplacementBuilder {
-  @NotNull private final MatchGroupContainer myMatcher;
+@ApiStatus.Internal
+public final class RegExReplacementBuilder {
+  private final @NotNull MatchGroupContainer myMatcher;
 
   private String myTemplate;
   private int myCursor;
@@ -109,17 +111,12 @@ public class RegExReplacementBuilder {
     if (myCursor == myTemplate.length()) throw new IllegalArgumentException("character to be escaped is missing");
     nextChar = myTemplate.charAt(myCursor++);
     switch (nextChar) {
-      case 'n':
-        myReplacement.append('\n'); break;
-      case 'r':
-        myReplacement.append('\r'); break;
-      case 'b':
-        myReplacement.append('\b');  break;
-      case 't':
-        myReplacement.append('\t'); break;
-      case 'f':
-        myReplacement.append('\f'); break;
-      case 'x':
+      case 'n' -> myReplacement.append('\n');
+      case 'r' -> myReplacement.append('\r');
+      case 'b' -> myReplacement.append('\b');
+      case 't' -> myReplacement.append('\t');
+      case 'f' -> myReplacement.append('\f');
+      case 'x' -> {
         if (myCursor + 4 <= myTemplate.length()) {
           try {
             int code = Integer.parseInt(myTemplate.substring(myCursor, myCursor + 4), 16);
@@ -128,14 +125,13 @@ public class RegExReplacementBuilder {
           }
           catch (NumberFormatException ignored) {}
         }
-        break;
-      case 'l': startConversionForCharacter(false); break;
-      case 'u': startConversionForCharacter(true); break;
-      case 'L': startConversionForRegion(false); break;
-      case 'U': startConversionForRegion(true); break;
-      case 'E': resetConversionState(); break;
-      default:
-        myReplacement.append(nextChar);
+      }
+      case 'l' -> startConversionForCharacter(false);
+      case 'u' -> startConversionForCharacter(true);
+      case 'L' -> startConversionForRegion(false);
+      case 'U' -> startConversionForRegion(true);
+      case 'E' -> resetConversionState();
+      default -> myReplacement.append(nextChar);
     }
   }
 
@@ -155,7 +151,7 @@ public class RegExReplacementBuilder {
           break;
         }
       }
-      if (gsb.length() == 0) throw new IllegalArgumentException("named capturing group has 0 length name");
+      if (gsb.isEmpty()) throw new IllegalArgumentException("named capturing group has 0 length name");
       if (nextChar != '}') throw new IllegalArgumentException("named capturing group is missing trailing '}'");
       String gname = gsb.toString();
       if (isDigit(gname.charAt(0))) {

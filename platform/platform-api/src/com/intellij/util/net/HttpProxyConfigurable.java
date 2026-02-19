@@ -1,45 +1,41 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableBase;
+import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.util.net.internal.ProxyMigrationService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class HttpProxyConfigurable extends ConfigurableBase<HttpProxySettingsUi, HttpConfigurable> {
-  private final HttpConfigurable settings;
+import javax.swing.JComponent;
+
+public class HttpProxyConfigurable extends ConfigurableBase<ConfigurableUi<ProxySettings>, ProxySettings> implements Configurable.NoMargin {
+  private final ProxySettings proxySettings;
+  private final ProxyCredentialStore credentialStore;
+  private final DisabledProxyAuthPromptsManager disabledProxyAuthPromptsManager;
 
   public HttpProxyConfigurable() {
-    this(HttpConfigurable.getInstance());
-  }
-
-  public HttpProxyConfigurable(@NotNull HttpConfigurable settings) {
     super("http.proxy", IdeBundle.message("http.proxy.configurable"), "http.proxy");
 
-    this.settings = settings;
-  }
-
-  @NotNull
-  @Override
-  protected HttpConfigurable getSettings() {
-    return settings;
+    this.proxySettings = ProxySettings.getInstance();
+    this.credentialStore = ProxyCredentialStore.getInstance();
+    this.disabledProxyAuthPromptsManager = DisabledProxyAuthPromptsManager.getInstance();
   }
 
   @Override
-  protected HttpProxySettingsUi createUi() {
-    return new HttpProxySettingsUi(settings);
+  protected @NotNull ProxySettings getSettings() {
+    return proxySettings;
+  }
+
+  @Override
+  protected ConfigurableUi<ProxySettings> createUi() {
+    return ProxyMigrationService.getInstance().createProxySettingsUi(proxySettings, credentialStore, disabledProxyAuthPromptsManager);
+  }
+
+  public static boolean editConfigurable(@Nullable JComponent parent) {
+    return ShowSettingsUtil.getInstance().editConfigurable(parent, new HttpProxyConfigurable());
   }
 }

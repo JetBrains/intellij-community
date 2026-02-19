@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.build.FilePosition;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.build.issue.BuildIssueChecker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.issue.BuildIssueException;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
@@ -19,12 +21,14 @@ import org.jetbrains.plugins.gradle.issue.GradleIssueData;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
 import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -35,12 +39,11 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
 
   private static final Logger LOG = Logger.getInstance(BaseProjectImportErrorHandler.class);
 
-  @NotNull
   @Override
-  public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                      @NotNull Throwable error,
-                                                      @NotNull String projectPath,
-                                                      @Nullable String buildFilePath) {
+  public @NotNull ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                               @NotNull Throwable error,
+                                                               @NotNull String projectPath,
+                                                               @Nullable String buildFilePath) {
     GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);
     ExternalSystemException exception = doGetUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath, executionErrorHandler);
     if (!exception.isCauseInitialized()) {
@@ -76,8 +79,8 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     if (location == null && !StringUtil.isEmpty(buildFilePath)) {
       location = String.format("Build file: '%1$s'", buildFilePath);
     }
-
-    GradleIssueData issueData = new GradleIssueData(projectPath, error, buildEnvironment, null);
+    FilePosition errorFilePosition = getErrorFilePosition(location);
+    GradleIssueData issueData = new GradleIssueData(projectPath, error, buildEnvironment, errorFilePosition);
     List<GradleIssueChecker> knownIssuesCheckList = GradleIssueChecker.getKnownIssuesCheckList();
     for (BuildIssueChecker<GradleIssueData> checker : knownIssuesCheckList) {
       BuildIssue buildIssue = checker.check(issueData);
@@ -104,23 +107,6 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       }
     }
 
-    if (rootCause instanceof OutOfMemoryError) {
-      // The OutOfMemoryError happens in the Gradle daemon process.
-      String msg = "Out of memory";
-      if (rootCauseMessage != null && !rootCauseMessage.isEmpty()) {
-        msg = msg + ": " + rootCauseMessage;
-      }
-      if (msg.endsWith("Java heap space")) {
-        msg += ". Configure Gradle memory settings using '-Xmx' JVM option (e.g. '-Xmx2048m'.)";
-      }
-      else if (!msg.endsWith(".")) {
-        msg += ".";
-      }
-      msg += EMPTY_LINE + OPEN_GRADLE_SETTINGS;
-      // Location of build.gradle is useless for this error. Omitting it.
-      return createUserFriendlyError(msg, null);
-    }
-
     if (rootCause instanceof ClassNotFoundException) {
       String msg = String.format("Unable to load class '%1$s'.", rootCauseMessage) + EMPTY_LINE +
                    UNEXPECTED_ERROR_FILE_BUG;
@@ -137,11 +123,22 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     if (rootCause instanceof ConnectException) {
-      String msg = rootCauseMessage;
-      if (msg != null && msg.contains("timed out")) {
-        msg += msg.endsWith(".") ? " " : ". ";
-        msg += SET_UP_HTTP_PROXY;
-        return createUserFriendlyError(msg, null);
+      if (rootCauseMessage != null) {
+        if (rootCauseMessage.contains("timed out")) {
+          String msg = rootCauseMessage;
+          msg += msg.endsWith(".") ? " " : ". ";
+          msg += SET_UP_HTTP_PROXY;
+          return createUserFriendlyError(msg, null);
+        }
+        if (rootCauseMessage.toLowerCase(Locale.ROOT).contains("connection refused")) {
+          String errorMessage = error.getMessage();
+          if (errorMessage != null && errorMessage.startsWith("Could not install Gradle distribution")) {
+            String msg = errorMessage;
+            msg += msg.endsWith(".") ? " " : ". ";
+            msg += rootCauseMessage + EMPTY_LINE + "Please ensure the host name is correct. " + SET_UP_HTTP_PROXY;
+            return createUserFriendlyError(msg, null);
+          }
+        }
       }
     }
 
@@ -179,5 +176,12 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       errMessage = rootCauseMessage;
     }
     return createUserFriendlyError(errMessage, location);
+  }
+
+  private static @Nullable FilePosition getErrorFilePosition(@Nullable String location) {
+    if (location == null) return null;
+    Pair<String, Integer> errorLocation = GradleExecutionErrorHandler.getErrorLocation(location);
+    if (errorLocation == null) return null;
+    return new FilePosition(new File(errorLocation.first), errorLocation.second - 1, 0);
   }
 }

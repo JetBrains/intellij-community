@@ -16,9 +16,11 @@
 package org.jetbrains.debugger.values
 
 import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.Scope
 
+@ApiStatus.Internal
 interface FunctionValue : ObjectValue {
   /**
    * You must invoke [.resolve] to use any function value methods

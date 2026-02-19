@@ -19,12 +19,12 @@ package org.intellij.plugins.xsltDebugger.rt.engine.remote;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 
-import javax.rmi.PortableRemoteObject;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class RemoteVariableImpl extends PortableRemoteObject implements RemoteDebugger.Variable {
+public final class RemoteVariableImpl extends UnicastRemoteObject implements RemoteDebugger.Variable {
   private final Debugger.Variable myVariable;
 
   RemoteVariableImpl(Debugger.Variable variable) throws RemoteException {
@@ -63,7 +63,7 @@ public final class RemoteVariableImpl extends PortableRemoteObject implements Re
   }
 
   public static List<RemoteDebugger.Variable> convert(List<? extends Debugger.Variable> list) throws RemoteException {
-    List<RemoteDebugger.Variable> variables = new ArrayList<RemoteDebugger.Variable>(list.size());
+    List<RemoteDebugger.Variable> variables = new ArrayList<>(list.size());
     for (final Debugger.Variable variable : list) {
       variables.add(new RemoteVariableImpl(variable));
     }

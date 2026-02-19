@@ -1,12 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.debugger;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
+import java.awt.Image;
+import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public final class ImageSerializer {
   public static String imageToBytes(Image image) throws IOException {
@@ -17,7 +23,7 @@ public final class ImageSerializer {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ImageIO.write(bi, "png", baos);
     g.dispose();
-    return new String(baos.toByteArray(), "ISO-8859-1");
+    return new String(baos.toByteArray(), StandardCharsets.ISO_8859_1);
   }
 
   public static String iconToBytesPreview(Icon icon, int maxSize) throws IOException {
@@ -50,8 +56,15 @@ public final class ImageSerializer {
     else {
       final int w = icon.getIconWidth();
       final int h = icon.getIconHeight();
-      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
+      BufferedImage image;
+      try {
+        image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+          .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
+      }
+      catch (HeadlessException e) {
+        //noinspection UndesirableClassUsage
+        image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+      }
       final Graphics2D g = image.createGraphics();
       icon.paintIcon(null, g, 0, 0);
       g.dispose();

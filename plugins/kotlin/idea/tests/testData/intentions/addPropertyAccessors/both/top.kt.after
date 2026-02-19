@@ -1,0 +1,6 @@
+// PRIORITY: LOW
+var x = 1
+    get() = field
+    set(value) {
+        field = value
+    }

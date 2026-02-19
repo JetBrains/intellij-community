@@ -1,32 +1,36 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class InstanceGuardedByStaticInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class InstanceGuardedByStaticInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.concurrency.annotation.issues");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "InstanceGuardedByStatic";
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
   }
 
@@ -39,7 +43,7 @@ public class InstanceGuardedByStaticInspection extends AbstractBaseJavaLocalInsp
 
 
     @Override
-    public void visitDocTag(PsiDocTag psiDocTag) {
+    public void visitDocTag(@NotNull PsiDocTag psiDocTag) {
       super.visitDocTag(psiDocTag);
       if (!JCiPUtil.isGuardedByTag(psiDocTag)) {
         return;
@@ -68,7 +72,7 @@ public class InstanceGuardedByStaticInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (!JCiPUtil.isGuardedByAnnotation(annotation)) {
         return;

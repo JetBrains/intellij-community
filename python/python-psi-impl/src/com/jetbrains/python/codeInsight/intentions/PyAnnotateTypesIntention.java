@@ -15,34 +15,55 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
+public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.add.type.hints.for.function");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
 
-    final PyFunction function = findSuitableFunction(editor, file);
-    if (function != null) {
-      setText(PyPsiBundle.message("INTN.add.type.hints.for.function", function.getName()));
-      return true;
+    final PyFunction function = findSuitableFunction(editor, psiFile);
+    if (function == null) return false;
+
+    if (function.getTypeComment() != null) {
+      return false;
     }
-    return false;
+
+    final PyAnnotation annotation = function.getAnnotation();
+    if (annotation != null) {
+      boolean allParametersAnnotated = ContainerUtil.and(function.getParameterList().getParameters(),
+                                                         it -> it instanceof PyNamedParameter &&
+                                                               ((PyNamedParameter)it).getAnnotation() != null);
+      if (allParametersAnnotated) {
+        return false;
+      }
+    }
+
+    setText(PyPsiBundle.message("INTN.add.type.hints.for.function", function.getName()));
+    return true;
   }
 
   @Override
@@ -58,8 +79,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  private static PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
     return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
   }
 
@@ -100,7 +120,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
     replacementTextBuilder.append(") -> ");
 
-    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function);
+    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function).getAnnotationText();
     templates.add(Pair.create(replacementTextBuilder.length(), returnType));
 
     replacementTextBuilder.append(returnType);
@@ -157,7 +177,8 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
                                                                              offset);
     if (targetEditor != null) {
       builder.run(targetEditor, true);
-    } else {
+    }
+    else {
       builder.runNonInteractively(true);
     }
   }

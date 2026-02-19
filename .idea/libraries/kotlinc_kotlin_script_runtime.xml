@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-script-runtime" type="repository">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.4.0-dev-3554">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.4.0-dev-3554/kotlin-script-runtime-2.4.0-dev-3554.jar">
+          <sha256sum>c9e5654912f4f027d9ace2a4372f29b7d0e1793b0873786f4c2e133cf5d987f5</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.4.0-dev-3554/kotlin-script-runtime-2.4.0-dev-3554.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.4.0-dev-3554/kotlin-script-runtime-2.4.0-dev-3554-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

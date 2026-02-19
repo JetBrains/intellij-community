@@ -1,0 +1,17 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g clip-path="url(#clip0_9973_77792)">
+    <path d="M30.51 5.49L5.49 30.51C1.98 34.02 0 38.79 0 43.77V88.5C0 92.64 3.36 96 7.5 96H52.23C57.21 96 61.965 94.02 65.49 90.51L90.51 65.49C94.02 61.98 96 57.21 96 52.23V7.5C96 3.36 92.64 0 88.5 0H43.77C38.79 0 34.035 1.98 30.51 5.49Z" fill="url(#paint0_linear_9973_77792)"/>
+    <path d="M72 24H12V84H72V24Z" fill="black"/>
+    <path d="M45 70.5H19.5V76.5H45V70.5Z" fill="white"/>
+  </g>
+  <defs>
+    <linearGradient id="paint0_linear_9973_77792" x1="83.263" y1="13.5" x2="12.0128" y2="83.2611" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B74AF7"/>
+      <stop offset="1" stop-color="#21D789"/>
+    </linearGradient>
+    <clipPath id="clip0_9973_77792">
+      <rect width="96" height="96" fill="white"/>
+    </clipPath>
+  </defs>
+</svg>

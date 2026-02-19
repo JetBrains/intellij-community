@@ -1,28 +1,30 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.vfs
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VirtualFileFilteringListener
-import com.intellij.util.containers.ContainerUtil
 import git4idea.i18n.GitBundle
+import java.util.concurrent.ConcurrentHashMap
 
 private const val PROTOCOL = "gitIndexFs"
 
-class GitIndexFileSystem : VirtualFileSystem() {
-  private val listenerWrappers: MutableMap<VirtualFileListener, VirtualFileListener> = ContainerUtil.newConcurrentMap()
+class GitIndexFileSystem : VirtualFileSystem(), NonPhysicalFileSystem {
+  private val listenerWrappers: MutableMap<VirtualFileListener, VirtualFileListener> = ConcurrentHashMap()
 
   override fun getProtocol(): String = PROTOCOL
   override fun isReadOnly(): Boolean = false
 
   override fun findFileByPath(path: String): VirtualFile? {
-    val (project, virtualFile, filePath) = GitIndexVirtualFile.decode(path) ?: return null
+    val (project, root, filePath) = GitIndexVirtualFile.decode(path) ?: return null
 
-    project.service<GitIndexFileSystemRefresher>() // init service
-    return project.service<GitIndexVirtualFileCache>().get(virtualFile, filePath)
+    // we do not check actual content here
+    // the returned file is valid, but may stop being such after the first read access
+    // this is a tradeoff with making EditorHistoryManager load every file that was ever loaded
+    return GitIndexFileSystemRefresher.getInstance(project).findFile(root, filePath)
   }
 
   override fun refreshAndFindFileByPath(path: String): VirtualFile? = findFileByPath(path)

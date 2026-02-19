@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
@@ -15,10 +15,10 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 
-public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
+public final class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.keyword1"), CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.keyword2"), CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES),
@@ -77,19 +77,21 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
 
   @Override
   public @NotNull String getDemoText() {
-    return "# Line comment\n"
-           + "aKeyword1 variable = 123;\n"
-           + "anotherKeyword1 someString = \"SomeString\";\n"
-           + "aKeyword2 variable = 123;\n"
-           + "anotherKeyword2 someString = \"SomeString\";\n"
-           + "aKeyword3 variable = 123;\n"
-           + "anotherKeyword3 someString = \"SomeString\";\n"
-           + "aKeyword4 variable = 123;\n"
-           + "anotherKeyword4 someString = \"SomeString \\n\\x  \\& \\g \";\n"
-           + "/* \n"
-           + " * Block comment\n"
-           + " */\n"
-           + "\n";
+    return """
+      # Line comment
+      aKeyword1 variable = 123;
+      anotherKeyword1 someString = "SomeString";
+      aKeyword2 variable = 123;
+      anotherKeyword2 someString = "SomeString";
+      aKeyword3 variable = 123;
+      anotherKeyword3 someString = "SomeString";
+      aKeyword4 variable = 123;
+      anotherKeyword4 someString = "SomeString \\n\\x  \\& \\g ";
+      /*\s
+       * Block comment
+       */
+
+      """;
   }
 
   @Override

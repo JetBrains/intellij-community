@@ -1,0 +1,6 @@
+# Side effects from module initialization:
+html5lib.serializer.k
+html5lib.serializer.v
+html5lib.treeadapters.sax.prefix
+html5lib.treeadapters.sax.localName
+html5lib.treeadapters.sax.namespace

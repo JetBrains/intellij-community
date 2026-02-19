@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.config;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
@@ -15,13 +15,21 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ConfigFilesTreeBuilder {
 
@@ -119,8 +127,7 @@ public class ConfigFilesTreeBuilder {
     return psiFiles;
   }
 
-  @Nls
-  private static String getFileTypeNodeName(FileType fileType) {
+  private static @Nls String getFileTypeNodeName(FileType fileType) {
     return XmlBundle.message("xml.tree.config.files.type", fileType.getName());
   }
 
@@ -130,6 +137,7 @@ public class ConfigFilesTreeBuilder {
     return nonEmptyGroups > 1;
   }
 
+  @Contract(mutates = "param1,param3")
   private void addChildrenFiles(@NotNull Set<? super PsiFile> psiFiles, DefaultMutableTreeNode parentNode, @NotNull List<? extends PsiFile> moduleFiles) {
     moduleFiles.sort(FILE_COMPARATOR);
     for (PsiFile file : moduleFiles) {
@@ -148,21 +156,18 @@ public class ConfigFilesTreeBuilder {
   public static void renderNode(Object value, boolean expanded, ColoredTreeCellRenderer renderer) {
     if (!(value instanceof DefaultMutableTreeNode)) return;
     final Object object = ((DefaultMutableTreeNode)value).getUserObject();
-    if (object instanceof FileType) {
-      final FileType fileType = (FileType)object;
+    if (object instanceof FileType fileType) {
       final Icon icon = fileType.getIcon();
       renderer.setIcon(icon);
       renderer.append(getFileTypeNodeName(fileType), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    else if (object instanceof Module) {
-      final Module module = (Module)object;
+    else if (object instanceof Module module) {
       final Icon icon = ModuleType.get(module).getIcon();
       renderer.setIcon(icon);
       final String moduleName = module.getName();
       renderer.append(moduleName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    else if (object instanceof PsiFile) {
-      final PsiFile psiFile = (PsiFile)object;
+    else if (object instanceof PsiFile psiFile) {
       final Icon icon = psiFile.getIcon(0);
       renderer.setIcon(icon);
       final String fileName = psiFile.getName();
@@ -172,8 +177,7 @@ public class ConfigFilesTreeBuilder {
         renderPath(renderer, virtualFile);
       }
     }
-    else if (object instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)object;
+    else if (object instanceof VirtualFile file) {
       renderer.setIcon(VirtualFilePresentation.getIcon(file));
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       renderPath(renderer, file);
@@ -181,7 +185,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private static void renderPath(ColoredTreeCellRenderer renderer, VirtualFile virtualFile) {
-    String path = virtualFile.getPath();
+    String path = virtualFile.getPath(); //NON-NLS
     final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (i >= 0) {
       path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());
@@ -191,7 +195,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   public static void installSearch(JTree tree) {
-    new TreeSpeedSearch(tree, treePath -> {
+    TreeSpeedSearch.installOn(tree, false, treePath -> {
       final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
       if (object instanceof Module) {
         return ((Module)object).getName();

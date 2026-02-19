@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.editors;
 
@@ -9,15 +9,13 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public class IntRegexEditor<T> extends AbstractTextFieldEditor<T> {
-  @NonNls private final Pattern myPattern;
+  private final @NonNls Pattern myPattern;
   private final Class<T> myValueClass;
   private final LabelPropertyRenderer<T> myRenderer;
   private final int[] myMinValues;

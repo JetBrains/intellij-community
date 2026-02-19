@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -19,28 +19,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CDataToTextIntention implements IntentionAction {
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getText() {
     return getFamilyName();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return XmlBundle.message("convert.cdata.to.text");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getCData(editor, file) != null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return getCData(editor, psiFile) != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement cdata = getCData(editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement cdata = getCData(editor, psiFile);
     if (cdata == null) return;
 
     ASTNode node = cdata.getNode();
@@ -66,13 +62,13 @@ public class CDataToTextIntention implements IntentionAction {
                                        cdatas.get(cdatas.size() - 1).getTextRange().getEndOffset(), text.toString());
   }
 
-  private static PsiElement getCData(Editor editor, PsiFile file) {
+  private static PsiElement getCData(Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = psiFile.findElementAt(offset);
     PsiElement parent = element != null ? element.getParent() : null;
     if (parent != null && parent.getNode() != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
 
-    element = file.findElementAt(offset - 1);
+    element = psiFile.findElementAt(offset - 1);
     parent = element != null ? element.getParent() : null;
     if (parent != null && parent.getNode() != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
     return null;

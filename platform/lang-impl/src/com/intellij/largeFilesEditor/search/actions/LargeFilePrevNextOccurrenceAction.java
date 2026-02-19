@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.find.SearchReplaceComponent;
@@ -6,19 +6,27 @@ import com.intellij.find.editorHeaderActions.ContextAwareShortcutProvider;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.largeFilesEditor.search.LfeSearchManager;
 import com.intellij.largeFilesEditor.search.searchTask.CloseSearchTask;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LargeFilePrevNextOccurrenceAction extends DumbAwareAction implements ContextAwareShortcutProvider {
+public final class LargeFilePrevNextOccurrenceAction extends DumbAwareAction implements ContextAwareShortcutProvider {
 
   private final LfeSearchManager mySearchManager;
   private final boolean myDirectionForward;
@@ -43,14 +51,18 @@ public class LargeFilePrevNextOccurrenceAction extends DumbAwareAction implement
     e.getPresentation().setEnabled(isEnabled());
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   private boolean isEnabled() {
     CloseSearchTask task = mySearchManager.getLastExecutedCloseSearchTask();
     return task == null || task.isFinished();
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut(@NotNull DataContext context) {
+  public @Nullable ShortcutSet getShortcut(@NotNull DataContext context) {
     List<Shortcut> list = new ArrayList<>();
     boolean isSingleLine = !isMultiLine();
     if (myDirectionForward) {

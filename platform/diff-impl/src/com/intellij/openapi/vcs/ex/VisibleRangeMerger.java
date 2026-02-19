@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.editor.Editor;
@@ -10,18 +10,18 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class VisibleRangeMerger<T> {
-  @NotNull private final Editor myEditor;
-  @NotNull private final FlagsProvider<T> myFlagsProvider;
+  private final @NotNull Editor myEditor;
+  private final @NotNull FlagsProvider<T> myFlagsProvider;
 
-  @NotNull private ChangesBlock<T> myBlock = new ChangesBlock<>();
+  private @NotNull ChangesBlock<T> myBlock = new ChangesBlock<>();
 
-  @NotNull private final List<ChangesBlock<T>> myResult = new ArrayList<>();
+  private final @NotNull List<ChangesBlock<T>> myResult = new ArrayList<>();
 
   private VisibleRangeMerger(@NotNull Editor editor, @NotNull FlagsProvider<T> flagsProvider) {
     myEditor = editor;
@@ -41,8 +41,7 @@ public class VisibleRangeMerger<T> {
     return new VisibleRangeMerger<>(editor, flagsProvider).run(ranges, clip);
   }
 
-  @NotNull
-  private List<ChangesBlock<T>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
+  private @NotNull List<ChangesBlock<T>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
     int visibleLinesStart = EditorUtil.yToLogicalLineRange(myEditor, clip.y).intervalStart();
     int visibleLinesEnd = EditorUtil.yToLogicalLineRange(myEditor, clip.y + Math.max(clip.height - 1, 0)).intervalEnd() + 1;
 
@@ -80,7 +79,7 @@ public class VisibleRangeMerger<T> {
 
     int sharedPrefixHeight;
     if (pair1.second == null) {
-      sharedPrefixHeight = pair1.first.intervalEnd() - pair1.first.intervalStart() + 1;
+      sharedPrefixHeight = pair1.first.intervalEnd() - pair1.first.intervalStart();
     }
     else {
       sharedPrefixHeight = pair1.second.intervalStart() - pair1.first.intervalStart();
@@ -96,11 +95,11 @@ public class VisibleRangeMerger<T> {
     }
     else {
       Pair<@NotNull Interval, @Nullable Interval> pair2 = EditorUtil.logicalLineToYRange(myEditor, end - 1);
-      int visualEnd = pair2.first.intervalEnd() + 1;
+      int visualEnd = pair2.first.intervalEnd();
 
       int sharedSuffixHeight;
       if (pair2.second == null) {
-        sharedSuffixHeight = pair2.first.intervalEnd() - pair2.first.intervalStart() + 1;
+        sharedSuffixHeight = pair2.first.intervalEnd() - pair2.first.intervalStart();
       }
       else {
         sharedSuffixHeight = pair2.first.intervalEnd() - pair2.second.intervalEnd();
@@ -207,7 +206,7 @@ public class VisibleRangeMerger<T> {
     }
 
 
-    FlagsProvider<Unit> EMPTY = new FlagsProvider<Unit>() {
+    FlagsProvider<Unit> EMPTY = new FlagsProvider<>() {
       @Override
       public @NotNull Unit getFlags(@NotNull Range range) {
         return Unit.INSTANCE;

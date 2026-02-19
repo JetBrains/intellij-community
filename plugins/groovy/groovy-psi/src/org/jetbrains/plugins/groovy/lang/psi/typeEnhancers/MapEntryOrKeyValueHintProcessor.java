@@ -1,10 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -13,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
-  @NlsSafe private static final String INDEX = "index";
-  @NlsSafe private static final String ARG_NUM = "argNum";
+public final class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
+  private static final @NlsSafe String INDEX = "index";
+  private static final @NlsSafe String ARG_NUM = "argNum";
 
 
   @Override
@@ -23,11 +31,10 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     return "groovy.transform.stc.MapEntryOrKeyValue";
   }
 
-  @NotNull
   @Override
-  public List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
-                                                 @NotNull PsiSubstitutor substitutor,
-                                                 String @NotNull [] options) {
+  public @NotNull List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
+                                                          @NotNull PsiSubstitutor substitutor,
+                                                          String @NotNull [] options) {
     int argNum = extractArgNum(options);
     boolean index = extractIndex(options);
 
@@ -49,10 +56,10 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
 
     PsiClassType mapEntryType = JavaPsiFacade.getElementFactory(method.getProject()).createType(mapEntry, key, value);
 
-    PsiType[] keyValueSignature = index ? new PsiType[]{key, value, PsiType.INT} : new PsiType[]{key, value};
-    PsiType[] mapEntrySignature = index ? new PsiType[]{mapEntryType, PsiType.INT} : new PsiType[]{mapEntryType};
+    PsiType[] keyValueSignature = index ? new PsiType[]{key, value, PsiTypes.intType()} : new PsiType[]{key, value};
+    PsiType[] mapEntrySignature = index ? new PsiType[]{mapEntryType, PsiTypes.intType()} : new PsiType[]{mapEntryType};
 
-    return ContainerUtil.newArrayList(keyValueSignature, mapEntrySignature);
+    return List.of(keyValueSignature, mapEntrySignature);
   }
 
   private static int extractArgNum(String[] options) {
@@ -107,8 +114,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     return null;
   }
 
-  @Nullable
-  private static Couple<String> parseValue(String value) {
+  private static @Nullable Couple<String> parseValue(String value) {
     String[] split = value.split("=");
     return split.length == 2 ? Couple.of(split[0].trim(), split[1].trim()) : null;
   }

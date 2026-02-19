@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 
 /**
@@ -61,42 +62,18 @@ public final class GrStringUtil {
       }
       else {
         switch (ch) {
-          case 'n':
-            buffer.append('\n');
-            break;
-
-          case 'r':
-            buffer.append('\r');
-            break;
-
-          case 'b':
-            buffer.append('\b');
-            break;
-
-          case 't':
-            buffer.append('\t');
-            break;
-
-          case 'f':
-            buffer.append('\f');
-            break;
-
-          case '\'':
-            buffer.append('\'');
-            break;
-
-          case '\"':
-            buffer.append('\"');
-            break;
-
-          case '\\':
-            buffer.append('\\');
-            break;
-          case '\n':
-            //do nothing
-            break;
-
-          case 'u':
+          case 'n' -> buffer.append('\n');
+          case 'r' -> buffer.append('\r');
+          case 'b' -> buffer.append('\b');
+          case 't' -> buffer.append('\t');
+          case 'f' -> buffer.append('\f');
+          case '$' -> buffer.append('$');
+          case '\'' -> buffer.append('\'');
+          case '\"' -> buffer.append('\"');
+          case '\\' -> buffer.append('\\');
+          case '\n' -> {}
+          //do nothing
+          case 'u' -> {
             if (idx + 4 < length) {
               try {
                 int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
@@ -110,12 +87,11 @@ public final class GrStringUtil {
             else {
               buffer.append("\\u");
             }
-            break;
-
-          default:
+          }
+          default -> {
             buffer.append('\\');
             buffer.append(ch);
-            break;
+          }
         }
         escaped = false;
       }
@@ -149,13 +125,13 @@ public final class GrStringUtil {
       }
       else {
         switch (ch) {
-          case '/':
+          case '/' -> {
             if (!unescapeSlash) {
               buffer.append('\\');
             }
             buffer.append('/');
-            break;
-          case 'u':
+          }
+          case 'u' -> {
             if (idx + 4 < length) {
               try {
                 int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
@@ -169,12 +145,11 @@ public final class GrStringUtil {
             else {
               buffer.append("\\u");
             }
-            break;
-
-          default:
+          }
+          default -> {
             buffer.append('\\');
             buffer.append(ch);
-            break;
+          }
         }
         escaped = false;
       }
@@ -222,8 +197,8 @@ public final class GrStringUtil {
           char nextCh = str.charAt(idx + 1);
           if (nextCh == '$') {
             // /$ -> $/$
-            buffer.append("$/$");
-            idx += 2;
+            buffer.append("$/");
+            idx++;
             continue;
           }
         }
@@ -231,11 +206,11 @@ public final class GrStringUtil {
       else if (ch == '$') {
         if (idx + 1 < length) {
           final char nextCh = str.charAt(idx + 1);
-          if (nextCh == '$' || nextCh == '/') {
+          if (nextCh == '$' || nextCh == '/' || GroovyNamesUtil.isIdentifier(Character.toString(nextCh))) {
             // $$ -> $$$
             // $/ -> $$/
-            buffer.append("$$").append(nextCh);
-            idx += 2;
+            buffer.append("$$");
+            idx += 1;
             continue;
           }
         }
@@ -295,56 +270,43 @@ public final class GrStringUtil {
     }
   }
 
-  @NotNull
-  public static StringBuilder escapeStringCharacters(int length,
-                                                     @NotNull CharSequence str,
-                                                     @Nullable String additionalChars,
-                                                     boolean escapeLineFeeds,
-                                                     boolean escapeBackSlash,
-                                                     @NotNull @NonNls StringBuilder buffer) {
+  public static @NotNull StringBuilder escapeStringCharacters(int length,
+                                                              @NotNull CharSequence str,
+                                                              @Nullable String additionalChars,
+                                                              boolean escapeLineFeeds,
+                                                              boolean escapeBackSlash,
+                                                              @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
-        case '\b':
-          buffer.append("\\b");
-          break;
-
-        case '\t':
-          buffer.append("\\t");
-          break;
-
-        case '\f':
-          buffer.append("\\f");
-          break;
-
-        case '\\':
+        case '\b' -> buffer.append("\\b");
+        case '\t' -> buffer.append("\\t");
+        case '\f' -> buffer.append("\\f");
+        case '\\' -> {
           if (escapeBackSlash) {
             buffer.append("\\\\");
           }
           else {
             buffer.append('\\');
           }
-          break;
-
-        case '\n':
+        }
+        case '\n' -> {
           if (escapeLineFeeds) {
             buffer.append("\\n");
           }
           else {
             buffer.append('\n');
           }
-          break;
-
-        case '\r':
+        }
+        case '\r' -> {
           if (escapeLineFeeds) {
             buffer.append("\\r");
           }
           else {
             buffer.append('\r');
           }
-          break;
-
-        default:
+        }
+        default -> {
           if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
             buffer.append("\\").append(ch);
           }
@@ -354,6 +316,7 @@ public final class GrStringUtil {
           else {
             buffer.append(ch);
           }
+        }
       }
     }
     return buffer;
@@ -615,9 +578,8 @@ public final class GrStringUtil {
     return "";
   }
 
-  @Nullable
   @Contract("null -> null")
-  public static TextRange getStringContentRange(@Nullable PsiElement element) {
+  public static @Nullable TextRange getStringContentRange(@Nullable PsiElement element) {
     if (element == null) return null;
     IElementType elementType = element.getNode().getElementType();
     if (!GroovyTokenSets.STRING_LITERALS.contains(elementType)) return null;
@@ -662,7 +624,7 @@ public final class GrStringUtil {
       }
       c = chars.charAt(index++);
       switch (c) {
-        case '/':
+        case '/' -> {
           if (escapeSlash) {
             outChars.append(c);
             if (sourceOffsets != null) {
@@ -672,15 +634,14 @@ public final class GrStringUtil {
           else {
             outChars.append('\\').append('/');
           }
-
-          break;
-        case '\n':
+        }
+        case '\n' -> {
           //do nothing
           if (sourceOffsets != null) {
             sourceOffsets[outChars.length() - outOffset] = index;
           }
-          break;
-        case 'u':
+        }
+        case 'u' -> {
           // uuuuu1234 is valid too
           while (index != chars.length() && chars.charAt(index) == 'u') {
             index++;
@@ -704,13 +665,13 @@ public final class GrStringUtil {
           else {
             return false;
           }
-          break;
-        default:
+        }
+        default -> {
           outChars.append('\\').append(c);
           if (sourceOffsets != null) {
             sourceOffsets[outChars.length() - outOffset] = index;
           }
-
+        }
       }
     }
     return true;
@@ -745,45 +706,18 @@ public final class GrStringUtil {
       if (index == chars.length()) return false;
       c = chars.charAt(index++);
       switch (c) {
-        case'b':
-          outChars.append('\b');
-          break;
-        case't':
-          outChars.append('\t');
-          break;
-        case'n':
-          outChars.append('\n');
-          break;
-        case'f':
-          outChars.append('\f');
-          break;
-        case'r':
-          outChars.append('\r');
-          break;
-        case'"':
-          outChars.append('\"');
-          break;
-        case'\'':
-          outChars.append('\'');
-          break;
-        case'$':
-          outChars.append('$');
-          break;
-        case'\\':
-          outChars.append('\\');
-          break;
-        case '\n':
-          //do nothing
-          break;
-
-        case'0':
-        case'1':
-        case'2':
-        case'3':
-        case'4':
-        case'5':
-        case'6':
-        case'7':
+        case 'b' -> outChars.append('\b');
+        case 't' -> outChars.append('\t');
+        case 'n' -> outChars.append('\n');
+        case 'f' -> outChars.append('\f');
+        case 'r' -> outChars.append('\r');
+        case '"' -> outChars.append('\"');
+        case '\'' -> outChars.append('\'');
+        case '$' -> outChars.append('$');
+        case '\\' -> outChars.append('\\');
+        case '\n' -> {}
+        //do nothing
+        case '0', '1', '2', '3', '4', '5', '6', '7' -> {
           char startC = c;
           int v = (int)c - '0';
           if (index < chars.length()) {
@@ -807,9 +741,8 @@ public final class GrStringUtil {
             }
           }
           outChars.append((char)v);
-          break;
-
-        case'u':
+        }
+        case 'u' -> {
           // uuuuu1234 is valid too
           while (index != chars.length() && chars.charAt(index) == 'u') {
             index++;
@@ -831,9 +764,10 @@ public final class GrStringUtil {
           else {
             return false;
           }
-          break;
-        default:
+        }
+        default -> {
           return false;
+        }
       }
       if (sourceOffsets != null) {
         sourceOffsets[outChars.length()-outOffset] = index;

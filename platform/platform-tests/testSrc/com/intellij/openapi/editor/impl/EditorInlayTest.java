@@ -2,18 +2,24 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -349,30 +355,94 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(Arrays.asList(i1, i2), getEditor().getInlayModel().getInlineElementsInRange(1, 1));
   }
 
+  /**
+   * Utility function for line-height block inlays testing.
+   * <p>
+   * Converts geometric position of editor line that accounts block inlays to visual position that is applicable to text lines only.
+   * <p>
+   * Consider the following example:
+   * <p>
+   * abc <- geometric line 0, visual line 0
+   * <block inlay with height being equal to line height> <- geometric line 1, visual line NA
+   * cde <- geometric line 2, visual line 1
+   *
+   */
+  private int geometricLineToVisualLine(int geometricLine) {
+    return getEditor().yToVisualLine(geometricLineY(geometricLine));
+  }
+
+  private static int geometricLineY(int geometricLine) {
+    return (int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * geometricLine;
+  }
+
   public void testYToVisualLineCalculationForBlockInlay() {
     initText("abc\ndef");
     addBlockInlay(1);
-    assertEquals(1, getEditor().yToVisualLine((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT * 2)));
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
+  }
+
+  public void testYToVisualLineCalculationForAboveBlockInlay() {
+    initText("abc\ndef");
+    addBlockInlay(1, true);
+    assertEquals(0, geometricLineToVisualLine(1));
+    assertEquals(1, geometricLineToVisualLine(2));
   }
 
   public void testYToVisualLineCalculationForBlockInlayAnotherCase() {
     initText("abc\ndef\nghi");
     addBlockInlay(1);
-    assertEquals(1, getEditor().yToVisualLine((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT * 2)));
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
+    assertEquals(2, geometricLineToVisualLine(3));
+  }
+
+  public void testInlayInStartOfCollapsedLine() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(4, true, false);
+    assertEquals(0, geometricLineToVisualLine(0));
+    assertEquals(1, geometricLineToVisualLine(2));
+  }
+
+  public void testInlayInStartOfCollapsedLineRelatesToPreceding() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(4, true, true);
+    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
+    assertEquals(geometricLineY(1), getEditor().visualLineToY(1));
+  }
+
+  public void testInlayInCollapsedLine() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    addBlockInlay(5, true, false);
+    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
+    assertEquals(geometricLineY(1), getEditor().visualLineToY(1));
+  }
+
+  public void testInlayAboveFolding() {
+    initText("abc\ndef\nghi");
+    addCollapsedFoldRegion(4, 8, "");
+    EditorTestUtil.addBlockInlay(getEditor(), 5, true, true, true, 0, null);
+    assertEquals(geometricLineY(0), getEditor().offsetToXY(0).y);
+    assertEquals(geometricLineY(2), getEditor().offsetToXY(8).y);
   }
 
   public void testInlayIsAddedIntoCollapsedFoldRegion() {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    EditorTestUtil.addBlockInlay(getEditor(), 0, true, false, 0, null);
+    Inlay inlay = EditorTestUtil.addBlockInlay(getEditor(), 0, true, false, 0, null);
     assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT), getEditor().visualLineToY(1));
+    assertNull(inlay.getBounds());
   }
 
   public void testInlayIsAddedIntoCollapsedFoldRegionDifferentRelatesFlag() {
     initText("abc");
     addCollapsedFoldRegion(0, 3, "...");
-    EditorTestUtil.addBlockInlay(getEditor(), 0, false, false, 0, null);
+    Inlay inlay = EditorTestUtil.addBlockInlay(getEditor(), 0, false, false, 0, null);
     assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * 2, getEditor().visualLineToY(1));
+    assertNotNull(inlay.getBounds());
   }
 
   public void testVerticalCaretMovementInPresenceOfBothTypesOfInlays() {
@@ -395,13 +465,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     getEditor().getSettings().setAdditionalColumnsCount(0);
     getEditor().getInlayModel().addBlockElement(0, false, false, 0, new EditorCustomElementRenderer() {
       @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) { return 123;}
-
-      @Override
-      public void paint(@NotNull Inlay inlay,
-                        @NotNull Graphics g,
-                        @NotNull Rectangle targetRegion,
-                        @NotNull TextAttributes textAttributes) {}
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 123; }
     });
     assertEquals(123, getEditor().getContentComponent().getPreferredSize().width);
   }
@@ -428,7 +492,7 @@ public class EditorInlayTest extends AbstractEditorTest {
   public void testCorrectSoftWrappingAfterTextMovementWithInlays() {
     initText(" \tabcd efghijklmno");
     addInlay(1, TEST_CHAR_WIDTH);
-    configureSoftWraps(11);
+    configureSoftWraps(11, false);
     verifySoftWrapPositions(7);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> ((EditorEx)getEditor()).getDocument().moveText(0, 1, 7));
     verifySoftWrapPositions(7, 16);
@@ -452,6 +516,116 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertTrue(inlay.isValid());
     EditorFactory.getInstance().releaseEditor(editor);
     assertFalse(inlay.isValid());
+  }
+
+  public void testInlayForDisposedEditor2() {
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+    EditorFactory.getInstance().releaseEditor(editor);
+
+    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
+    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
+    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
+
+    // TODO: inlays can be registered after Editor disposal
+    assertNotNull(inlay1);
+    assertNotNull(inlay2);
+    assertNotNull(inlay3);
+
+    CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
+    try {
+      boolean registered = Disposer.tryRegister(inlay1, disposable1);
+      // TODO: inlays are not disposed after Editor disposal either
+      assertTrue(registered);
+    }
+    finally {
+      Disposer.dispose(disposable1);
+
+      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
+      //      Remove when the inlays are fixed
+      Disposer.dispose(inlay1);
+    }
+  }
+
+  public void testInlayAreDisposables1() {
+    CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
+    CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
+    CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
+
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+
+    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
+    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
+    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
+
+    try {
+      try {
+        Disposer.register(inlay1, disposable1);
+        Disposer.register(inlay2, disposable2);
+        Disposer.register(inlay3, disposable3);
+      }
+      finally {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
+
+      // FIXME: BUG - Inlays are NOT disposed with editor
+      assertFalse(disposable1.isDisposed());
+      assertFalse(disposable2.isDisposed());
+      assertFalse(disposable3.isDisposed());
+    }
+    finally {
+      Disposer.dispose(disposable1);
+      Disposer.dispose(disposable2);
+      Disposer.dispose(disposable3);
+
+      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
+      //      Remove when the inlays are fixed
+      Disposer.dispose(inlay1);
+      Disposer.dispose(inlay2);
+      Disposer.dispose(inlay3);
+    }
+  }
+
+  public void testInlayAreDisposables2() {
+    CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
+    CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
+    CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
+
+    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl("some\nmultiline\ntext"));
+
+    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 10);
+    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 10, false, false, 10, 10);
+    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 10, 10);
+    try {
+      Disposer.register(inlay1, disposable1);
+      Disposer.register(inlay2, disposable2);
+      Disposer.register(inlay3, disposable3);
+
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        editor.getDocument().setText("qwerty");
+      });
+
+      assertFalse(inlay1.isValid());
+      assertFalse(inlay2.isValid());
+      assertFalse(inlay3.isValid());
+
+      // WARN: Inlays are NOT disposed on range invalidation
+      assertFalse(disposable1.isDisposed());
+      assertFalse(disposable2.isDisposed());
+      assertFalse(disposable3.isDisposed());
+    }
+    finally {
+      EditorFactory.getInstance().releaseEditor(editor);
+
+      Disposer.dispose(disposable1);
+      Disposer.dispose(disposable2);
+      Disposer.dispose(disposable3);
+
+      // FIXME: Disposer.register(inlay, ...) triggers True-Positive 'Memory leak detected' in 'LastInSuiteTest'
+      //      Remove when the inlays are fixed
+      Disposer.dispose(inlay1);
+      Disposer.dispose(inlay2);
+      Disposer.dispose(inlay3);
+    }
   }
 
   private void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

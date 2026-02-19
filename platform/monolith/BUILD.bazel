@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.monolith` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "monolith_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "monolith",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":monolith_resources"],
+  runtime_deps = [
+    "//platform/platform-frontend:frontend",
+    "//platform/backend",
+  ]
+)
+
+jvm_library(
+  name = "monolith_test_lib",
+  module_name = "intellij.platform.monolith",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":monolith",
+    "//platform/platform-frontend:frontend_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.monolith` end

@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -32,11 +17,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.project.IntelliJProjectConfiguration.getLocalMavenRepo;
+
 public class ArtifactRepositoryManagerTest extends UsefulTestCase {
   private static final RemoteRepository mavenLocal;
 
   static {
-    File mavenLocalDir = new File(SystemProperties.getUserHome(), ".m2/repository");
+    System.setProperty("org.jetbrains.idea.maven.aether.strictValidation", "true");
+    File mavenLocalDir = getLocalMavenRepo().toFile();
     mavenLocal = new RemoteRepository
       .Builder("mavenLocal", "default", "file://" + mavenLocalDir.getAbsolutePath())
       .build();
@@ -94,9 +82,10 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     ArtifactDependencyNode second = result.getDependencies().get(1);
     assertCoordinates(first.getArtifact(), "org.apache.httpcomponents", "httpclient", "4.5.5");
     assertCoordinates(second.getArtifact(), "commons-logging", "commons-logging", "1.2");
-    assertEquals(2, first.getDependencies().size());
+    assertEquals(3, first.getDependencies().size());
     assertCoordinates(first.getDependencies().get(0).getArtifact(), "org.apache.httpcomponents", "httpcore", "4.4.9");
-    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-codec", "commons-codec", "1.10");
+    assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-logging", "commons-logging", "1.2");
+    assertCoordinates(first.getDependencies().get(2).getArtifact(), "commons-codec", "commons-codec", "1.10");
   }
 
   public void testTransitiveSnapshotDependenciesExcluded() throws Exception {

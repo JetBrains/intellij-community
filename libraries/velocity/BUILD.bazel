@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.libraries.velocity` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "velocity_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "velocity",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":velocity_resources"],
+  exports = ["@lib//:libraries-velocity-_velocity"],
+  runtime_deps = ["@lib//:libraries-velocity-_velocity"]
+)
+
+jvm_library(
+  name = "velocity_test_lib",
+  module_name = "intellij.libraries.velocity",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-velocity-_velocity"],
+  runtime_deps = [":velocity"]
+)
+### auto-generated section `build intellij.libraries.velocity` end

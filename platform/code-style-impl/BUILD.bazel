@@ -1,0 +1,56 @@
+### auto-generated section `build intellij.platform.codeStyle.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "codeStyle-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "codeStyle-impl",
+  module_name = "intellij.platform.codeStyle.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":codeStyle-impl_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/core-impl",
+    "@lib//:kotlin-stdlib",
+    "//libraries/stream",
+    "//libraries/fastutil",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/progress/shared:ide-progress",
+    "//platform/util/coroutines",
+  ]
+)
+
+jvm_library(
+  name = "codeStyle-impl_test_lib",
+  module_name = "intellij.platform.codeStyle.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":codeStyle-impl",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/code-style-api:codeStyle_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/stream:stream_test_lib",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/progress/shared:ide-progress_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.codeStyle.impl` end

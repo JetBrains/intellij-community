@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
+import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SuggestedRefactoringUndoableAction private constructor(
   document: Document,
   private val project: Project,
@@ -22,9 +25,9 @@ class SuggestedRefactoringUndoableAction private constructor(
 {
   companion object {
     fun create(document: Document, state: SuggestedRefactoringState): SuggestedRefactoringUndoableAction {
-      val signatureRange = state.refactoringSupport.signatureRange(state.declaration)!!
+      val signatureRange = state.refactoringSupport.signatureRange(state.anchor)!!
       return SuggestedRefactoringUndoableAction(
-        document, state.declaration.project, signatureRange, state.oldDeclarationText, state.oldImportsText,
+        document, state.anchor.project, signatureRange, state.oldDeclarationText, state.oldImportsText,
         state.oldSignature, state.newSignature, state.disappearedParameters, state.additionalData
       )
     }
@@ -32,9 +35,19 @@ class SuggestedRefactoringUndoableAction private constructor(
 
   private val documentReference = DocumentReferenceManager.getInstance().create(document)
 
-  override fun getAffectedDocuments() = arrayOf(documentReference)
+  private var performedNanoTime: Long = -1
 
-  override fun isGlobal() = false
+  override fun getPerformedNanoTime(): Long {
+    return performedNanoTime
+  }
+
+  override fun setPerformedNanoTime(l: Long) {
+    performedNanoTime = l
+  }
+
+  override fun getAffectedDocuments(): Array<DocumentReference> = arrayOf(documentReference)
+
+  override fun isGlobal(): Boolean = false
 
   override fun undo() {
     val document = documentReference.document ?: return
@@ -42,12 +55,12 @@ class SuggestedRefactoringUndoableAction private constructor(
     psiDocumentManager.commitAllDocuments()
     val psiFile = psiDocumentManager.getPsiFile(document) ?: return
     val refactoringSupport = SuggestedRefactoringSupport.forLanguage(psiFile.language) ?: return
-    val declaration = refactoringSupport.declarationByOffset(psiFile, signatureRange.startOffset)
+    val anchor = refactoringSupport.anchorByOffset(psiFile, signatureRange.startOffset)
                         ?.takeIf { refactoringSupport.signatureRange(it) == signatureRange } ?: return
     val state = SuggestedRefactoringState(
-      declaration, refactoringSupport, SuggestedRefactoringState.ErrorLevel.NO_ERRORS,
+      anchor, refactoringSupport, SuggestedRefactoringState.ErrorLevel.NO_ERRORS,
       oldDeclarationText, oldImportsText, oldSignature, newSignature,
-      refactoringSupport.stateChanges.parameterMarkers(declaration, newSignature), disappearedParameters, additionalData = additionalData
+      refactoringSupport.stateChanges.parameterMarkers(anchor, newSignature), disappearedParameters, additionalData = additionalData
     )
 
     SuggestedRefactoringProviderImpl.getInstance(project).undoToState(state, signatureRange)

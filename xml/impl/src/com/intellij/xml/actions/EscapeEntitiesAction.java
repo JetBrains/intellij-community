@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -41,8 +41,7 @@ final class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeIn
     return result.toString();
   }
 
-  @NotNull
-  private static Int2ObjectMap<String> computeMap(XmlFile xmlFile) {
+  private static @NotNull Int2ObjectMap<String> computeMap(XmlFile xmlFile) {
     final XmlFile file = XmlUtil.findXmlFile(xmlFile, Html5SchemaProvider.getCharsDtdLocation());
     assert file != null;
 
@@ -75,22 +74,21 @@ final class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeIn
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return file instanceof XmlFile;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return psiFile instanceof XmlFile;
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return this;
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     int[] starts = editor.getSelectionModel().getBlockSelectionStarts();
     int[] ends = editor.getSelectionModel().getBlockSelectionEnds();
     final Document document = editor.getDocument();
-    XmlFile xmlFile = (XmlFile)file;
+    XmlFile xmlFile = (XmlFile)psiFile;
     Int2ObjectMap<String> map = computeMap(xmlFile);
     for (int i = starts.length - 1; i >= 0; i--) {
       final int start = starts[i];

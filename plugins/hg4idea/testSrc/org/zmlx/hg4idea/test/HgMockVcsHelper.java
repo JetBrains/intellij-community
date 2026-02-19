@@ -1,9 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.TransactionRunnable;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -17,13 +25,13 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -33,9 +41,8 @@ import java.util.Map;
  * shown during normal execution).
  * @author Kirill Likhodedov
  */
-public class HgMockVcsHelper extends AbstractVcsHelper {
-
-  private final Collection<VcsHelperListener> myListeners = new THashSet<>();
+public final class HgMockVcsHelper extends AbstractVcsHelper {
+  private final Collection<VcsHelperListener> myListeners = new HashSet<>();
 
   public HgMockVcsHelper(@NotNull Project project) {
     super(project);
@@ -115,7 +122,7 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
     notifyListeners();
     return null;
   }
-  
+
   @Nullable
   @Override
   public Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
@@ -167,5 +174,4 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
       listener.dialogInvoked();
     }
   }
-
 }

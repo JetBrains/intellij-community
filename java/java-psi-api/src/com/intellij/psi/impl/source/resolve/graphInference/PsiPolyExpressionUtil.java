@@ -1,7 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchExpression;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiYieldStatement;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -60,7 +91,7 @@ public final class PsiPolyExpressionUtil {
   }
 
   private static boolean isMethodCallTypeDependsOnInference(PsiExpression expression, PsiMethod method) {
-    final Set<PsiTypeParameter> typeParameters = ContainerUtil.set(method.getTypeParameters());
+    final Set<PsiTypeParameter> typeParameters = ContainerUtil.newHashSet(method.getTypeParameters());
     if (!typeParameters.isEmpty()) {
       final PsiType returnType = method.getReturnType();
       if (returnType != null) {
@@ -105,7 +136,7 @@ public final class PsiPolyExpressionUtil {
   }
 
   private static boolean isVarContext(PsiVariable variable) {
-    if (PsiUtil.isLanguageLevel10OrHigher(variable)) {
+    if (PsiUtil.isAvailable(JavaFeature.LVTI, variable)) {
       PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null && typeElement.isInferredType()) {
         return true;
@@ -117,7 +148,7 @@ public final class PsiPolyExpressionUtil {
   public static boolean isExpressionOfPrimitiveType(@Nullable PsiExpression arg) {
     if (arg != null && !isPolyExpression(arg)) {
       final PsiType type = arg.getType();
-      return type instanceof PsiPrimitiveType && type != PsiType.NULL;
+      return type instanceof PsiPrimitiveType && type != PsiTypes.nullType();
     }
     else if (arg instanceof PsiNewExpression || arg instanceof PsiFunctionalExpression) {
       return false;
@@ -209,13 +240,13 @@ public final class PsiPolyExpressionUtil {
           }
         }
       }
+      return switchKind;
     }
     return null;
   }
 
-  @Nullable
-  private static ConditionalKind isBooleanOrNumericType(PsiType type) {
-    if (type == PsiType.NULL) {
+  private static @Nullable ConditionalKind isBooleanOrNumericType(PsiType type) {
+    if (type == PsiTypes.nullType()) {
       return ConditionalKind.NULL;
     }
 

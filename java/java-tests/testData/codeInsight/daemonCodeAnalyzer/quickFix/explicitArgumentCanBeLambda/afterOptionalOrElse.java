@@ -1,4 +1,4 @@
-// "Use 'orElseGet' method with functional argument" "true"
+// "Use 'orElseGet' method with functional argument" "true-preview"
 
 import java.util.Optional;
 

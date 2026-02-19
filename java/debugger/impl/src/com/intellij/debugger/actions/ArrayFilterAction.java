@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.render.ArrayFilterInplaceEditor;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -24,12 +27,16 @@ public abstract class ArrayFilterAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(getFilterNode(e) != null);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   public static boolean isArrayFilter(TreeNode node) {
     return node instanceof MessageTreeNode && ((MessageTreeNode)node).getLink() == ArrayRenderer.Filtered.FILTER_HYPERLINK;
   }
 
-  @Nullable
-  private static MessageTreeNode getFilterNode(AnActionEvent e) {
+  private static @Nullable MessageTreeNode getFilterNode(AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
     if (tree != null) {
       TreePath[] paths = tree.getSelectionPaths();
@@ -47,8 +54,9 @@ public abstract class ArrayFilterAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       MessageTreeNode node = getFilterNode(e);
-      if (node != null) {
-        ArrayFilterInplaceEditor.edit(node, false);
+      XDebugSessionProxy sessionProxy = DebuggerUIUtil.getSessionProxy(e);
+      if (node != null && sessionProxy != null) {
+        ArrayFilterInplaceEditor.edit(node, false, sessionProxy);
       }
     }
   }

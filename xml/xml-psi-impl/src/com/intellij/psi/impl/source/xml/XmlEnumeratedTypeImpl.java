@@ -4,14 +4,15 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.psi.filters.position.XmlTokenTypeFilter;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlEnumeratedType;
 import com.intellij.psi.xml.XmlTokenType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class XmlEnumeratedTypeImpl extends XmlElementImpl implements XmlEnumeratedType, XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.XML_ENUMERATED_TYPE;
+
+public class XmlEnumeratedTypeImpl extends XmlElementImpl implements XmlEnumeratedType {
   public XmlEnumeratedTypeImpl() {
     super(XML_ENUMERATED_TYPE);
   }

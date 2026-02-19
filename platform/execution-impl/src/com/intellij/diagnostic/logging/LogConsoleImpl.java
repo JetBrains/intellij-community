@@ -17,30 +17,35 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.Arrays;
 
 public abstract class LogConsoleImpl extends LogConsoleBase {
   private final @NlsSafe String myPath;
-  @NotNull
-  private final File myFile;
-  @NotNull
-  private final Charset myCharset;
+  private final @NotNull File myFile;
+  private final @NotNull Charset myCharset;
   private FileSnapshot myOldSnapshot;
 
   public LogConsoleImpl(Project project,
                         @NotNull File file,
                         @NotNull Charset charset,
                         long skippedContents,
-                        @NotNull String title,
+                        @NlsContexts.TabTitle @NotNull String title,
                         final boolean buildInActions,
                         final GlobalSearchScope searchScope) {
     super(project, getReader(file, charset, skippedContents), title, buildInActions, new DefaultLogFilterModel(project),
@@ -51,8 +56,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     myOldSnapshot = new FileSnapshot();
   }
 
-  @Nullable
-  private static Reader getReader(@NotNull File file, @NotNull Charset charset, long skippedContents) {
+  private static @Nullable Reader getReader(@NotNull File file, @NotNull Charset charset, long skippedContents) {
     try {
       try {
         @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -79,8 +83,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
   }
 
   @Override
-  @Nullable
-  public String getTooltip() {
+  public @Nullable String getTooltip() {
     return myPath;
   }
 
@@ -88,9 +91,8 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     return myPath;
   }
 
-  @Nullable
   @Override
-  protected BufferedReader updateReaderIfNeeded(@Nullable BufferedReader reader) throws IOException {
+  protected @Nullable BufferedReader updateReaderIfNeeded(@Nullable BufferedReader reader) throws IOException {
     if (reader == null) {
       return null;
     }
@@ -105,7 +107,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     return reader;
   }
 
-  private class FileSnapshot {
+  private final class FileSnapshot {
     final long length;
     final byte[] firstBytes;
 

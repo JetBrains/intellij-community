@@ -1,13 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeEP;
+import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.UnknownModuleType;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -26,21 +32,22 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
       if (ep.id == null) {
         LOG.error(new PluginException("'id' attribute isn't specified for <moduleType implementationClass='" + ep.implementationClass + "'> extension", pluginDescriptor.getPluginId()));
       }
+      return Unit.INSTANCE;
     });
   }
 
   @Override
-  public void registerModuleType(ModuleType type) {
+  public void registerModuleType(@NotNull ModuleType type) {
     registerModuleType(type, false);
   }
 
   @Override
-  public void unregisterModuleType(ModuleType<?> type) {
+  public void unregisterModuleType(@NotNull ModuleType<?> type) {
     myModuleTypes.remove(type);
   }
 
   @Override
-  public void registerModuleType(ModuleType type, boolean classpathProvider) {
+  public void registerModuleType(@NotNull ModuleType type, boolean classpathProvider) {
     for (ModuleType<?> oldType : myModuleTypes.keySet()) {
       if (oldType.getId().equals(type.getId())) {
         PluginException.logPluginError(LOG, "Trying to register a module type that clashes with existing one. Old=" + oldType + ", new = " + type, null, type.getClass());
@@ -52,19 +59,19 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public ModuleType<?>[] getRegisteredTypes() {
+  public @NotNull @Unmodifiable List<ModuleType<?>> getRegisteredTypes() {
     List<ModuleType<?>> result = new ArrayList<>(myModuleTypes.keySet());
-    for (ModuleTypeEP moduleTypeEP : EP_NAME.getExtensionList()) {
-      ModuleType<?> moduleType = moduleTypeEP.getModuleType();
+    EP_NAME.forEachExtensionSafe(ep -> {
+      ModuleType<?> moduleType = ep.getModuleType();
       if (!myModuleTypes.containsKey(moduleType)) {
         result.add(moduleType);
       }
-    }
-    return result.toArray(new ModuleType[0]);
+    });
+    return result;
   }
 
   @Override
-  public ModuleType<?> findByID(@Nullable String moduleTypeId) {
+  public @NotNull ModuleType<?> findByID(@Nullable String moduleTypeId) {
     if (moduleTypeId == null) {
       return getDefaultModuleType();
     }
@@ -95,7 +102,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public ModuleType<?> getDefaultModuleType() {
+  public @NotNull ModuleType<?> getDefaultModuleType() {
     return EmptyModuleType.getInstance();
   }
 }

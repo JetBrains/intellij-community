@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@PerformanceUnitTest
 public class FileUtilPerformanceTest {
   private static final String myTestPath = "/a/b/c/./d///e/../f/g/h/i/j/";
   private static final String myCanonicalPath = "/a/b/c/d/f/g/h/i/j";
@@ -30,35 +18,35 @@ public class FileUtilPerformanceTest {
   public void toCanonicalPath() {
     assertEquals(myCanonicalPath, FileUtil.toCanonicalPath(myTestPath));
 
-    PlatformTestUtil.startPerformanceTest("toCanonicalPath", 1_000, () -> {
+    Benchmark.newBenchmark("toCanonicalPath", () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(myTestPath, '/');
-        assert canonicalPath != null && canonicalPath.length() == 18 : canonicalPath;
+        assert canonicalPath.length() == 18 : canonicalPath;
       }
-    }).assertTiming();
+    }).start();
   }
 
   @Test
   public void toCanonicalPathSimple() {
     assertEquals(mySimpleTestPath, FileUtil.toCanonicalPath(mySimpleTestPath));
 
-    PlatformTestUtil.startPerformanceTest("toCanonicalPathSimple", 210, () -> {
+    Benchmark.newBenchmark("toCanonicalPathSimple", () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(mySimpleTestPath, '/');
-        assert canonicalPath != null && canonicalPath.length() == 8 : canonicalPath;
+        assert canonicalPath.length() == 8 : canonicalPath;
       }
-    }).assertTiming();
+    }).start();
   }
 
   @Test
   public void isAncestor() {
     assertTrue(FileUtil.isAncestor(myTestPath, myCanonicalPath, false));
 
-    PlatformTestUtil.startPerformanceTest("isAncestor", 3000, () -> {
+    Benchmark.newBenchmark("isAncestor", () -> {
       for (int i = 0; i < 1000000; ++i) {
         assert FileUtil.isAncestor(myTestPath, myCanonicalPath, false);
         assert !FileUtil.isAncestor(myTestPath, myCanonicalPath, true);
       }
-    }).assertTiming();
+    }).start();
   }
 }

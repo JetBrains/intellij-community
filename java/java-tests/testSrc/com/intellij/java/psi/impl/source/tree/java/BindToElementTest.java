@@ -22,7 +22,13 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -31,9 +37,6 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
 
-/**
- * @author dsl
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class BindToElementTest extends JavaCodeInsightTestCase {
   public static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/impl/bindToElementTest/".replace('/', File.separatorChar);

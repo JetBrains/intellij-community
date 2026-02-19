@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -26,7 +13,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogCommitSelection;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,13 +28,19 @@ import java.util.Map;
 import static com.intellij.vcs.log.util.VcsLogUtil.MAX_SELECTED_COMMITS;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
 
-    log.requestSelectedDetails(details -> {
+    selection.requestFullDetails(details -> {
       MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details, VcsShortCommitDetails::getRoot);
       if (grouped == null) return;
       actionPerformed(project, grouped);
@@ -52,13 +50,13 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    if (project == null || log == null) {
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (project == null || selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    MultiMap<Repo, Hash> grouped = groupFirstPackOfCommits(project, log);
+    MultiMap<Repo, Hash> grouped = groupFirstPackOfCommits(project, selection);
     if (grouped == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
@@ -77,19 +75,16 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     return grouped.keySet().stream().noneMatch(manager::isExternal);
   }
 
-  @NotNull
-  protected abstract AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
+  protected abstract @NotNull AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
 
-  @Nullable
-  protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
+  protected abstract @Nullable Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 
   /**
    * Collects no more than VcsLogUtil.MAX_SELECTED_COMMITS and groups them by repository.
    * To use only during update.
    */
-  @Nullable
-  private MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLog log) {
-    MultiMap<Repo, CommitId> commitIds = groupCommits(project, ContainerUtil.getFirstItems(log.getSelectedCommits(), MAX_SELECTED_COMMITS),
+  private @Nullable MultiMap<Repo, Hash> groupFirstPackOfCommits(@NotNull Project project, @NotNull VcsLogCommitSelection selection) {
+    MultiMap<Repo, CommitId> commitIds = groupCommits(project, ContainerUtil.getFirstItems(selection.getCommits(), MAX_SELECTED_COMMITS),
                                                       CommitId::getRoot);
     if (commitIds == null) return null;
 
@@ -100,10 +95,9 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
     return hashes;
   }
 
-  @Nullable
-  private <T> MultiMap<Repo, T> groupCommits(@NotNull Project project,
-                                             @NotNull Collection<? extends T> commits,
-                                             @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
+  private @Nullable <T> MultiMap<Repo, T> groupCommits(@NotNull Project project,
+                                                       @NotNull Collection<? extends T> commits,
+                                                       @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
     MultiMap<Repo, T> map = MultiMap.create();
     for (T commit : commits) {
       Repo root = getRepositoryForRoot(project, rootGetter.fun(commit));

@@ -24,7 +24,11 @@
 
 package com.intellij.openapi.vcs.changes.ignore.codeInsight;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,6 +38,7 @@ import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreSyntax;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,9 +47,9 @@ import java.util.List;
 /**
  * Class provides completion feature for {@link com.intellij.openapi.vcs.changes.ignore.psi.IgnoreTypes#SYNTAX} element.
  */
+@ApiStatus.Internal
 public class SyntaxCompletionContributor extends CompletionContributor {
-  @NotNull
-  private static final List<LookupElementBuilder> SYNTAX_ELEMENTS = new ArrayList<>();
+  private static final @NotNull List<LookupElementBuilder> SYNTAX_ELEMENTS = new ArrayList<>();
 
   static {
     for (Syntax syntax : Syntax.values()) {
@@ -55,7 +60,7 @@ public class SyntaxCompletionContributor extends CompletionContributor {
   public SyntaxCompletionContributor() {
     extend(CompletionType.BASIC,
            StandardPatterns.instanceOf(PsiElement.class),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,

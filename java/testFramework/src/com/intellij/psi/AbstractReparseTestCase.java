@@ -1,8 +1,9 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.psi.impl.DebugUtil;
@@ -27,11 +28,17 @@ public abstract class AbstractReparseTestCase extends LightJavaCodeInsightFixtur
     super.tearDown();
   }
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    DaemonCodeAnalyzer.getInstance(getProject()).disableUpdateByTimer(getTestRootDisposable()); // disable automatic rehighlighting because it could query PSI in inconvenient moments in background, messing with hardcoded assumptions of this test
+  }
+
   protected void setFileType(final FileType fileType) {
     myFileType = fileType;
   }
 
-  protected void insert(@NonNls final String s) throws IncorrectOperationException {
+  protected void insert(final @NonNls String s) throws IncorrectOperationException {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
       String oldText = myDummyFile.getText();
       String expectedNewText = oldText.substring(0, myInsertOffset) + s + oldText.substring(myInsertOffset);
@@ -59,23 +66,22 @@ public abstract class AbstractReparseTestCase extends LightJavaCodeInsightFixtur
 
   private void doReparseAndCheck(final String s, final String expectedNewText, final int length) throws IncorrectOperationException {
     doReparse(s, length);
-    String foundStructure = DebugUtil.treeToString(myDummyFile.getNode(), false);
+    String foundStructure = DebugUtil.treeToString(myDummyFile.getNode(), true);
     final PsiFile psiFile = createDummyFile(getName() + "." + myFileType.getDefaultExtension(), expectedNewText);
-    String expectedStructure = DebugUtil.treeToString(psiFile.getNode(), false);
+    String expectedStructure = DebugUtil.treeToString(psiFile.getNode(), true);
     assertEquals(expectedStructure, foundStructure);
 
     assertEquals("Reparse tree should be equal to the document", expectedNewText, myDummyFile.getText());
   }
 
-  @NotNull
-  protected PsiFile createDummyFile(@NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
+  protected @NotNull PsiFile createDummyFile(@NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
     FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, type, text);
   }
 
   protected void doReparse(final String s, final int length) {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      BlockSupport blockSupport = ServiceManager.getService(getProject(), BlockSupport.class);
+      BlockSupport blockSupport = BlockSupport.getInstance(getProject());
       blockSupport.reparseRange(myDummyFile, myInsertOffset - length, myInsertOffset, s);
     }), "asd", null);
   }

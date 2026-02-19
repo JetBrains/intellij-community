@@ -1,18 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
-public class FindFurtherAction extends AnAction implements DumbAware {
+public final class FindFurtherAction extends AnAction implements DumbAware {
   private final boolean directionForward;
   private final RangeSearch myRangeSearch;
 
@@ -44,6 +45,11 @@ public class FindFurtherAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     boolean enabled = myRangeSearch.isButtonFindFurtherEnabled(directionForward);
     e.getPresentation().setEnabled(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

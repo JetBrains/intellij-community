@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.ide.util.AbstractTreeClassChooserDialog;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -14,17 +15,15 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleValueActionListener<T> {
-  private final @NlsContexts.DialogTitle String myTitle;
+  protected final @NlsContexts.DialogTitle String myTitle;
 
   public ClassBrowser(@NotNull Project project, @NlsContexts.DialogTitle String title) {
     super(project);
@@ -32,8 +31,7 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
   }
 
   @Override
-  @Nullable
-  protected String showDialog() {
+  protected @Nullable String showDialog() {
     ClassFilter.ClassFilterWithScope classFilter;
     try {
       classFilter = getFilter();
@@ -44,7 +42,7 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
     }
 
     TreeClassChooser dialog = createClassChooser(classFilter);
-    configureDialog(dialog);
+    ((AbstractTreeClassChooserDialog<?>)dialog).setInitialSelection(objects -> findClass(getText()));
     dialog.showDialog();
     PsiClass psiClass = dialog.getSelected();
     if (psiClass == null) return null;
@@ -60,28 +58,12 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
   }
 
   protected void onClassChosen(@NotNull PsiClass psiClass) {
-    onClassChoosen(psiClass);
-  }
-
-  /** @deprecated override {@link #onClassChosen(PsiClass)} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @SuppressWarnings({"DeprecatedIsStillUsed", "SpellCheckingInspection", "unused"})
-  protected void onClassChoosen(PsiClass psiClass) { }
-
-  private void configureDialog(TreeClassChooser dialog) {
-    PsiClass psiClass = findClass(getText());
-    if (psiClass == null) return;
-    PsiDirectory directory = psiClass.getContainingFile().getContainingDirectory();
-    if (directory != null) dialog.selectDirectory(directory);
-    dialog.select(psiClass);
   }
 
   protected abstract PsiClass findClass(String className);
 
   /** @deprecated use {@link AppClassBrowser#AppClassBrowser(Project, ConfigurationModuleSelector)} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("rawtypes")
   public static ClassBrowser createApplicationClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector) {
     return new AppClassBrowser(project, moduleSelector);
@@ -125,8 +107,7 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
       };
     }
 
-    @Nullable
-    protected ClassFilter createFilter(@Nullable Module module) {
+    protected @Nullable ClassFilter createFilter(@Nullable Module module) {
       return null;
     }
   }

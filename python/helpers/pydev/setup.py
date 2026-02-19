@@ -29,6 +29,11 @@ from distutils.extension import Extension
 from setuptools import setup
 from setuptools.dist import Distribution
 
+# PEP 517 compatibility
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from setup_cython import get_frame_eval_extension_name
+del sys.path[0]
+
 
 class BinaryDistribution(Distribution):
     def is_pure(self):
@@ -56,7 +61,7 @@ def add_directory_to_datafiles(datafiles, dir):
 
 def accept_extension(f):
     f = f.lower()
-    for ext in '.pyd .so'.split():
+    for ext in '.pyd .so .c'.split():
         if f.endswith(ext):
             return True
     return False
@@ -96,7 +101,7 @@ _replace_version_placeholder(version)
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
-    README = open(os.path.join(here, 'README.rst')).read()
+    README = open(os.path.join(here, 'README.md')).read()
 except IOError:
     README = ''
 
@@ -105,6 +110,7 @@ args = dict(
     version=version,
     description='PyCharm Debugger (used in PyCharm and PyDev)',
     long_description=README,
+    long_description_content_type='text/markdown',
     author='JetBrains, Fabio Zadrozny and others',
     url='https://github.com/JetBrains/intellij-community',
     license='Apache 2.0',
@@ -113,10 +119,19 @@ args = dict(
         '_pydev_imps',
         '_pydev_runfiles',
         '_pydevd_bundle',
+        '_pydevd_bundle.smart_step_into',
+        '_pydevd_bundle.tables',
+        '_pydevd_bundle.tables.images',
         '_pydevd_frame_eval',
         'pydev_ipython',
         # 'pydev_sitecustomize', -- Not actually a package (not added)
         'pydevd_attach_to_process',
+        'pydevd_attach_to_process.common',
+        'pydevd_attach_to_process.linux_and_mac',
+        'pydevd_attach_to_process.winappdbg',
+        'pydevd_attach_to_process.winappdbg.plugins',
+        'pydevd_attach_to_process.winappdbg.win32',
+        'pydevd_attach_to_process.windows',
         'pydevd_concurrency_analyser',
         'pydevd_plugins',
         'pydevd_plugins.extensions',
@@ -141,8 +156,6 @@ args = dict(
         'Environment :: Console',
         'Intended Audience :: Developers',
 
-        'License :: OSI Approved :: Apache Software License',
-
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
@@ -156,6 +169,9 @@ args = dict(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Software Development :: Debuggers',
     ],
     entry_points={
@@ -180,15 +196,13 @@ if sys.platform not in ('darwin', 'win32'):
             Extension('_pydevd_bundle.pydevd_cython', ['_pydevd_bundle/pydevd_cython.c',])
         ]
     ))
-    if sys.version_info >= (3, 6):
-        args_with_binaries.update(dict(
-            distclass=BinaryDistribution,
-            ext_modules=[
-                # In this setup, don't even try to compile with cython, just go with the .c file which should've
-                # been properly generated from a tested version.
-                Extension('_pydevd_frame_eval.pydevd_frame_evaluator', ['_pydevd_frame_eval/pydevd_frame_evaluator.c',])
-            ]
-        ))
+    if (3, 6) <= sys.version_info <= (3, 10):
+        frame_eval_extension_name = get_frame_eval_extension_name()
+        args_with_binaries["ext_modules"].append(
+            # In this setup, don't even try to compile with cython, just go with the .c file which should've
+            # been properly generated from a tested version.
+            Extension('_pydevd_frame_eval.pydevd_frame_evaluator', ['_pydevd_frame_eval/%s.c' % frame_eval_extension_name,])
+        )
 
 try:
     setup(**args_with_binaries)

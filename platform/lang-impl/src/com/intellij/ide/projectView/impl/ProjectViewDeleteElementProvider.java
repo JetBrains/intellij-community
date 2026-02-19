@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.history.LocalHistory;
@@ -7,6 +7,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.DeleteHandler;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -18,13 +19,23 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.newvfs.NewVirtualFile.asCacheAvoiding;
+
+@ApiStatus.Internal
 public abstract class ProjectViewDeleteElementProvider implements DeleteProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
@@ -64,11 +75,10 @@ public abstract class ProjectViewDeleteElementProvider implements DeleteProvider
     PsiElement[] elements = getSelectedPSIElements(dataContext);
     for (int idx = 0; idx < elements.length; idx++) {
       final PsiElement element = elements[idx];
-      if (element instanceof PsiDirectory) {
-        PsiDirectory directory = (PsiDirectory)element;
+      if (element instanceof PsiDirectory directory) {
         final ProjectViewDirectoryHelper directoryHelper = ProjectViewDirectoryHelper.getInstance(project);
         if (hideEmptyMiddlePackages(dataContext) &&
-            directory.getChildren().length == 0 &&
+            getChildrenCount(directory) == 0 &&
             !directoryHelper.skipDirectory(directory)) {
           while (true) {
             PsiDirectory parent = directory.getParentDirectory();
@@ -77,8 +87,8 @@ public abstract class ProjectViewDeleteElementProvider implements DeleteProvider
                 PsiDirectoryFactory.getInstance(project).getQualifiedName(parent, false).isEmpty()) {
               break;
             }
-            PsiElement[] children = parent.getChildren();
-            if (children.length == 0 || children.length == 1 && children[0] == directory) {
+            int childrenCount = getChildrenCount(parent);
+            if (childrenCount == 0 || childrenCount == 1 && parent.getChildren()[0] == directory) {
               directory = parent;
             }
             else {
@@ -102,5 +112,11 @@ public abstract class ProjectViewDeleteElementProvider implements DeleteProvider
       }
     }
     return elements;
+  }
+
+  private static int getChildrenCount(@NotNull PsiDirectory directory) {
+    return directory instanceof PsiDirectoryImpl
+           ? ContainerUtil.filter(asCacheAvoiding(directory.getVirtualFile()).getChildren(), child -> child.isValid()).size()
+           : directory.getChildren().length;
   }
 }

@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -96,8 +96,9 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     assertNoPendingChunks();
   }
 
+  @PerformanceUnitTest
   public void testPerformanceSingleStream() {
-    PlatformTestUtil.startPerformanceTest("single stream", 30000, () -> {
+    Benchmark.newBenchmark("single stream", () -> {
       mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
       long nowTimeMillis = 10;
       for (int i = 0; i < 10_000_000; i++) {
@@ -117,11 +118,12 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
         assertNoPendingChunks();
         nowTimeMillis += 8;
       }
-    }).assertTiming();
+    }).start();
   }
 
+  @PerformanceUnitTest
   public void testPerformanceTwoStreams() {
-    PlatformTestUtil.startPerformanceTest("two streams", 30000, () -> {
+    Benchmark.newBenchmark("two streams", () -> {
       mySynchronizer = new MockProcessStreamsSynchronizer(getTestRootDisposable());
       long nowTimeMillis = 10;
       for (int i = 0; i < 10_000_000; i++) {
@@ -141,11 +143,11 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
         assertNoPendingChunks();
         nowTimeMillis += 8 + 2 * AWAIT_SAME_STREAM_TEXT_MILLIS;
       }
-    }).assertTiming();
+    }).start();
   }
 
   private void assertFlushedChunks(FlushedChunk @NotNull ... expectedFlushedChunks) {
-    Assert.assertEquals(ContainerUtil.newArrayList(expectedFlushedChunks), mySynchronizer.getFlushedChunksAndClear());
+    Assert.assertEquals(List.of(expectedFlushedChunks), mySynchronizer.getFlushedChunksAndClear());
   }
 
   private void assertNoPendingChunks() {
@@ -174,23 +176,23 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     }
 
     @Override
-    long getNanoTime() {
+    protected long getNanoTime() {
       return myNowTimeNano;
     }
 
     @Override
-    boolean isProcessingScheduled() {
+    protected boolean isProcessingScheduled() {
       return myNextScheduledProcessingTimeNano != -1;
     }
 
     @Override
-    void scheduleProcessPendingChunks(long delayNano) {
+    protected void scheduleProcessPendingChunks(long delayNano) {
       Assert.assertEquals(-1, myNextScheduledProcessingTimeNano);
       myNextScheduledProcessingTimeNano = myNowTimeNano + delayNano;
     }
 
     @Override
-    void waitForAllFlushed() {
+    public void waitForAllFlushed() {
       LOG.error("Use #advanceTimeTo for " + MockProcessStreamsSynchronizer.class);
     }
 

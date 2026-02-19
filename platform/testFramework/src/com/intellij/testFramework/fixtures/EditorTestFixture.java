@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -12,25 +13,36 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.ActionProcessor;
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -41,81 +53,84 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.KeyStroke;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.instantiateAndRun;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-/**
- * @author yole
- */
+
 public class EditorTestFixture {
-  @NotNull
-  private final Project myProject;
-  private final Editor myEditor;
-  private final VirtualFile myFile;
+  private static final @NotNull Logger LOG = Logger.getInstance(EditorTestFixture.class);
+
+  private final @NotNull Project myProject;
+  private final @NotNull Editor myEditor;
+  private final @NotNull VirtualFile myVirtualFile;
 
   private boolean myEmptyLookup;
 
-  public EditorTestFixture(@NotNull Project project, Editor editor, VirtualFile file) {
+  public EditorTestFixture(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
     myProject = project;
     myEditor = editor;
-    myFile = file;
+    myVirtualFile = file;
   }
 
   public void type(char c) {
+    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(ApplicationManagerEx.getApplicationEx())) {
+      // TODO make LOG.error
+      LOG.warn("type() must not be in WA");
+    }
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final EditorActionManager actionManager = EditorActionManager.getInstance();
-      if (c == '\b') {
-        performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-        return;
-      }
-      if (c == '\n') {
-        if (performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM)) {
-          return;
+      int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
+      KeyEvent keyEvent = new KeyEvent(getEditor().getContentComponent(), KeyEvent.KEY_PRESSED, -1, 0, keyCode, c);
+      if (!Character.isLetterOrDigit(keyEvent.getKeyChar()) || ClientProperty.get(
+        getEditor().getContentComponent(), ActionUtil.ALLOW_PlAIN_LETTER_SHORTCUTS) == Boolean.TRUE) {
+        KeyboardShortcut shortcut =
+          c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ?
+          (KeyboardShortcut)Objects.requireNonNull(KeymapUtil.getPrimaryShortcut("EditorCompleteStatement")) :
+          new KeyboardShortcut(KeyStroke.getKeyStroke(keyCode, 0), null);
+        IdeKeyEventDispatcher keyEventDispatcher = IdeEventQueue.getInstance().getKeyEventDispatcher();
+        keyEventDispatcher.updateCurrentContext(getEditor().getContentComponent(), shortcut);
+        keyEventDispatcher.getContext().setProject(myProject);
+        keyEventDispatcher.getContext().setDataContext(getEditorDataContext());
+        keyEventDispatcher.getContext().setShortcut(shortcut);
+        try {
+          if (keyEventDispatcher.processAction(keyEvent, new ActionProcessor() {
+            @Override
+            public void performAction(@NotNull InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent event) {
+              super.performAction(inputEvent, action, event);
+              LOG.info("type(): performing action '" + event.getActionManager().getId(action) + "'");
+            }
+          })) {
+            return;
+          }
         }
-        if (performEditorAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE)) {
-          return;
-        }
-
-        performEditorAction(IdeActions.ACTION_EDITOR_ENTER);
-        return;
-      }
-      if (c == '\t') {
-        if (performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
-          return;
-        }
-        if (performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)) {
-          return;
-        }
-        if (performEditorAction(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE)) {
-          return;
-        }
-        if (performEditorAction(IdeActions.ACTION_EDITOR_TAB)) {
-          return;
+        finally {
+          keyEventDispatcher.getContext().clear();
         }
       }
-      if (c == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-        if (performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)) {
-          return;
-        }
-      }
-
       ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
       TypedAction.getInstance().actionPerformed(myEditor, c, getEditorDataContext());
       ActionManagerEx.getInstanceEx().fireAfterEditorTyping(c, getEditorDataContext());
     });
-
   }
 
   public void type(@NotNull String s) {
@@ -125,38 +140,38 @@ public class EditorTestFixture {
   }
 
   public boolean performEditorAction(@NotNull String actionId) {
-    final DataContext dataContext = getEditorDataContext();
-
-    final ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final AnAction action = managerEx.getAction(actionId);
-    final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
-
-    action.beforeActionPerformedUpdate(event);
-
-    if (!event.getPresentation().isEnabled()) {
-      return false;
-    }
-
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
-    return true;
+    return performEditorAction(actionId, null);
   }
 
-  @NotNull
-  private DataContext getEditorDataContext() {
-    return ((EditorEx)myEditor).getDataContext();
+  public boolean performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent) {
+    ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
+    AnAction action = managerEx.getAction(actionId);
+    AnActionEvent event =
+      actionEvent != null ? actionEvent :
+      new AnActionEvent(null, getEditorDataContext(), ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+    PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
+    ActionUtil.updateAction(action, event);
+    if (event.getPresentation().isEnabled()) {
+      ActionUtil.performAction(action, event);
+      LOG.info("performEditorAction(): performing action '" + event.getActionManager().getId(action) + "'");
+      return true;
+    }
+    return false;
+  }
+
+  private @NotNull DataContext getEditorDataContext() {
+    return EditorUtil.getEditorDataContext(myEditor);
   }
 
   public PsiFile getFile() {
-    return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myFile)) : null;
+    return ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myVirtualFile));
   }
 
-  @NotNull
-  public List<HighlightInfo> doHighlighting() {
+  public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     return doHighlighting(false, false);
   }
 
-  @NotNull
-  public List<HighlightInfo> doHighlighting(boolean myAllowDirt, boolean readEditorMarkupModel) {
+  public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting(boolean myAllowDocumentModification, boolean readEditorMarkupModel) {
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
     PsiFile file = getFile();
@@ -166,11 +181,10 @@ public class EditorTestFixture {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
     assertNotNull(file);
-    return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt, readEditorMarkupModel);
+    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDocumentModification, readEditorMarkupModel);
   }
 
-  @Nullable
-  protected Editor getCompletionEditor() {
+  protected @NotNull Editor getCompletionEditor() {
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, getFile());
   }
 
@@ -178,7 +192,7 @@ public class EditorTestFixture {
     return (LookupImpl)LookupManager.getActiveLookup(myEditor);
   }
 
-  public LookupElement[] complete(@NotNull final CompletionType type) {
+  public LookupElement[] complete(final @NotNull CompletionType type) {
     return complete(type, 1);
   }
 
@@ -186,13 +200,12 @@ public class EditorTestFixture {
     return complete(CompletionType.BASIC);
   }
 
-  public LookupElement[] complete(@NotNull final CompletionType type, final int invocationCount) {
+  public LookupElement[] complete(final @NotNull CompletionType type, final int invocationCount) {
     myEmptyLookup = false;
     ApplicationManager.getApplication().invokeAndWait(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
         @Override
-        @SuppressWarnings("deprecation")
-        protected void completionFinished(CompletionProgressIndicator indicator, boolean hasModifiers) {
+        protected void completionFinished(@NotNull CompletionProgressIndicator indicator, boolean hasModifiers) {
           myEmptyLookup = indicator.getLookup().getItems().isEmpty();
           super.completionFinished(indicator, hasModifiers);
         }
@@ -216,15 +229,15 @@ public class EditorTestFixture {
     }
   }
 
-  public List<String> getLookupElementStrings() {
+  public @Unmodifiable List<String> getLookupElementStrings() {
     final LookupElement[] elements = getLookupElements();
     if (elements == null) return null;
 
     return ContainerUtil.map(elements, LookupElement::getLookupString);
   }
 
-  @NotNull
-  public final List<LookupElement> completeBasicAllCarets(@Nullable final Character charToTypeAfterCompletion) {
+  public final @NotNull List<LookupElement> completeBasicAllCarets(final @Nullable Character charToTypeIfOnlyOneOrNoCompletion,
+                                                                   final @Nullable Character charToTypeIfMultipleCompletions) {
     final CaretModel caretModel = myEditor.getCaretModel();
     final List<Caret> carets = caretModel.getAllCarets();
 
@@ -242,8 +255,10 @@ public class EditorTestFixture {
     for (final int originalOffset : originalOffsets) {
       caretModel.moveToOffset(originalOffset);
       final LookupElement[] lookupElements = completeBasic();
-      if (charToTypeAfterCompletion != null) {
-        type(charToTypeAfterCompletion);
+      if ((lookupElements == null || lookupElements.length == 0) && charToTypeIfOnlyOneOrNoCompletion != null) {
+        type(charToTypeIfOnlyOneOrNoCompletion);
+      } else if (lookupElements != null && lookupElements.length > 0 && charToTypeIfMultipleCompletions != null) {
+        type(charToTypeIfMultipleCompletions);
       }
       if (lookupElements != null) {
         result.addAll(Arrays.asList(lookupElements));
@@ -256,7 +271,7 @@ public class EditorTestFixture {
     final LookupImpl lookup = getLookup();
     assertNotNull("No lookup is shown", lookup);
 
-    final JList list = lookup.getList();
+    final JList<LookupElement> list = lookup.getList();
     List<String> strings = getLookupElementStrings();
     assertNotNull(strings);
     final List<String> actual = ContainerUtil.getFirstItems(strings, expected.length);
@@ -290,9 +305,17 @@ public class EditorTestFixture {
     }
 
     if (element == null) {
-      fail("element not found in file " + myFile.getName() +
-           " at caret position offset " + myEditor.getCaretModel().getOffset() + "," +
-           " psi structure:\n" + DebugUtil.psiToString(getFile(), true, true));
+      PsiFile psiFile = getFile();
+      int offset = myEditor.getCaretModel().getOffset();
+      int expectedCaretOffset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : offset;
+      fail("element not found in file " + psiFile + "(" + psiFile.getClass() + ", " + psiFile.getViewProvider() + ", " + editor.getProject() + ")" +
+           " at caret position offset " + offset + (offset == expectedCaretOffset ? "" : ", expected caret offset: "+expectedCaretOffset) +
+           ", psi structure:\n" + DebugUtil.psiToString(psiFile, true, true) +
+           ", elementAt(" + offset + ")=" + psiFile.findElementAt(offset) +
+           ", editor=" + editor +
+           ", adjusted offset=" + TargetElementUtilBase.adjustOffset(psiFile, editor.getDocument(), offset)+
+           ", TargetElementUtilBase.findTargetElement(editor, flags, offset)=" + TargetElementUtilBase.findTargetElement(editor, findTargetFlags, offset)
+      );
     }
     return element;
   }
@@ -305,23 +328,24 @@ public class EditorTestFixture {
     return PsiTreeUtil.getParentOfType(getFile().findElementAt(pos), elementClass);
   }
 
-  @NotNull
-  public List<IntentionAction> getAllQuickFixes() {
+  public @NotNull List<IntentionAction> getAllQuickFixes() {
     List<HighlightInfo> infos = doHighlighting();
     List<IntentionAction> actions = new ArrayList<>();
     for (HighlightInfo info : infos) {
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          actions.add(pair.getFirst().getAction());
-        }
-      }
+      info.findRegisteredQuickFix((descriptor, range) -> {
+        actions.add(descriptor.getAction());
+        return null;
+      });
     }
     return actions;
   }
 
-  @NotNull
-  public List<Crumb> getBreadcrumbsAtCaret() {
-    FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
-    return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));
+  public @NotNull @Unmodifiable List<Crumb> getBreadcrumbsAtCaret() {
+    FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myVirtualFile);
+    return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myVirtualFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));
+  }
+
+  public @NotNull Editor getEditor() {
+    return myEditor;
   }
 }

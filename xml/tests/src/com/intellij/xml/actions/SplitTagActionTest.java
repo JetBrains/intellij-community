@@ -19,9 +19,6 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
 public class SplitTagActionTest extends LightIntentionActionTestCase {
   @Override
   protected boolean shouldBeAvailableAfterExecution() {

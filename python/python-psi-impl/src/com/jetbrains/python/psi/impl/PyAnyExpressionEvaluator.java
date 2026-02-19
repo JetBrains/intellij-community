@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Evaluator tht supports expression of any type (it evaluates any expression, concatenating several expressions to list etc)
+ * Evaluator that supports expression of any type (it evaluates any expression, concatenating several expressions to list, etc.).
  */
 public class PyAnyExpressionEvaluator extends PyEvaluator {
   private final boolean myEvalSequence;
@@ -36,49 +40,44 @@ public class PyAnyExpressionEvaluator extends PyEvaluator {
     myEvalSequence = evalSequence;
   }
 
-  @Nullable
   @Override
-  public Object evaluate(@Nullable PyExpression expression) {
+  public @Nullable Object evaluate(@Nullable PyExpression expression) {
     final Object evaluate = super.evaluate(expression);
     return evaluate != null ? evaluate : expression;
   }
 
   @Override
-  @NotNull
-  public Object applyPlus(@Nullable Object lhs, @Nullable Object rhs) {
+  public @NotNull Object applyPlus(@Nullable Object lhs, @Nullable Object rhs) {
     final Object evaluate = super.applyPlus(lhs, rhs);
     return evaluate != null ? evaluate : Arrays.asList(lhs, rhs);
   }
 
   @Override
-  @NotNull
-  protected Object evaluateReference(@NotNull PyReferenceExpression expression) {
+  protected @NotNull Object evaluateReference(@NotNull PyReferenceExpression expression) {
     final Object evaluate = super.evaluateReference(expression);
     return evaluate != null ? evaluate : expression;
   }
 
   @Override
-  @NotNull
-  protected Object evaluateCall(@NotNull PyCallExpression expression) {
+  protected @NotNull Object evaluateCall(@NotNull PyCallExpression expression) {
     final Object evaluate = super.evaluateCall(expression);
     return evaluate != null ? evaluate : expression;
   }
 
   @Override
-  @NotNull
-  protected Object evaluateSequence(@NotNull PySequenceExpression expression) {
+  protected @NotNull Object evaluateSequence(@NotNull PySequenceExpression expression) {
     return myEvalSequence ? super.evaluateSequence(expression) : expression;
   }
 
   /**
    * Evaluates expression to single element
+   *
    * @param expression exp to eval
-   * @param aClass expected class
-   * @param <T>    expected class
+   * @param aClass     expected class
+   * @param <T>        expected class
    * @return instance of aClass, or null if failed to eval
    */
-  @Nullable
-  public static <T> T evaluateOne(@NotNull final PyExpression expression, @NotNull final Class<T> aClass) {
+  public static @Nullable <T> T evaluateOne(final @NotNull PyExpression expression, final @NotNull Class<T> aClass) {
     final PyAnyExpressionEvaluator evaluator = new PyAnyExpressionEvaluator(false);
     final Object evaluate = evaluator.evaluate(expression);
     final T resultSingle = PyUtil.as(evaluate, aClass);
@@ -95,23 +94,23 @@ public class PyAnyExpressionEvaluator extends PyEvaluator {
 
   /**
    * Evaluates expression to string
+   *
    * @param expression exp to eval
    * @return string, or null if failed to eval
    */
-  @Nullable
-  public static String evaluateString(@NotNull final PyExpression expression) {
+  public static @Nullable String evaluateString(final @NotNull PyExpression expression) {
     return PyUtil.as(new PyAnyExpressionEvaluator(false).evaluate(expression), String.class);
   }
 
   /**
    * Evaluates expression as list of values
+   *
    * @param expression exp to eval
-   * @param aClass expected element class
-   * @param <T> expected element class
+   * @param aClass     expected element class
+   * @param <T>        expected element class
    * @return a list of elements of expected type
    */
-  @NotNull
-  public static <T>List<T> evaluateIterable(@NotNull final PyExpression expression, @NotNull final Class<T> aClass) {
+  public static @NotNull <T> List<T> evaluateIterable(final @NotNull PyExpression expression, final @NotNull Class<T> aClass) {
     final PyAnyExpressionEvaluator evaluator = new PyAnyExpressionEvaluator(true);
     final Object evaluate = evaluator.evaluate(expression);
     final T resultSingle = PyUtil.as(evaluate, aClass);

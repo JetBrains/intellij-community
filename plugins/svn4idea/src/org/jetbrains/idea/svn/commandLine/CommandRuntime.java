@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,16 +22,13 @@ import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CommandRuntime {
 
   private static final Logger LOG = Logger.getInstance(CommandRuntime.class);
 
-  @NotNull private final AuthenticationService myAuthenticationService;
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final List<CommandRuntimeModule> myModules;
+  private final @NotNull AuthenticationService myAuthenticationService;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull List<CommandRuntimeModule> myModules;
   private final String exePath;
 
   public CommandRuntime(@NotNull SvnVcs vcs, @NotNull AuthenticationService authenticationService) {
@@ -45,8 +44,12 @@ public class CommandRuntime {
     myModules.add(new SshTunnelRuntimeModule(this));
   }
 
-  @NotNull
-  public CommandExecutor runWithAuthenticationAttempt(@NotNull Command command) throws SvnBindException {
+  public @NotNull CommandExecutor runWithAuthenticationAttempt(@NotNull Command command) throws SvnBindException {
+    Project project = myVcs.getProject();
+    if (!project.isDefault() && !TrustedProjects.isProjectTrusted(project)) {
+      throw new IllegalStateException("Shouldn't be possible to run a SVN command in the safe mode");
+    }
+
     try {
       onStart(command);
 
@@ -63,10 +66,14 @@ public class CommandRuntime {
     }
   }
 
-  @NotNull
-  public CommandExecutor runLocal(@NotNull Command command, int timeout) throws SvnBindException {
+  public @NotNull CommandExecutor runLocal(@NotNull Command command, int timeout) throws SvnBindException {
+    Project project = myVcs.getProject();
+    if (!project.isDefault() && !TrustedProjects.isProjectTrusted(project)) {
+      throw new IllegalStateException("Shouldn't be possible to run a SVN command in the safe mode");
+    }
+
     if (command.getWorkingDirectory() == null) {
-      command.setWorkingDirectory(CommandParametersResolutionModule.getDefaultWorkingDirectory(myVcs.getProject()));
+      command.setWorkingDirectory(CommandParametersResolutionModule.getDefaultWorkingDirectory(project));
     }
 
     CommandExecutor executor = newExecutor(command);
@@ -167,8 +174,7 @@ public class CommandRuntime {
     }
   }
 
-  @Nullable
-  private AuthCallbackCase createCallback(@NotNull final String errText, @Nullable final Url url, boolean isUnderTerminal) {
+  private @Nullable AuthCallbackCase createCallback(final @NotNull String errText, final @Nullable Url url, boolean isUnderTerminal) {
     List<AuthCallbackCase> authCases = new ArrayList<>();
 
     if (isUnderTerminal) {
@@ -210,8 +216,7 @@ public class CommandRuntime {
     }
   }
 
-  @NotNull
-  private CommandExecutor newExecutor(@NotNull Command command) {
+  private @NotNull CommandExecutor newExecutor(@NotNull Command command) {
     final CommandExecutor executor;
 
     if (!myVcs.getSvnConfiguration().isRunUnderTerminal() || isLocal(command)) {
@@ -230,8 +235,7 @@ public class CommandRuntime {
     return executor;
   }
 
-  @NotNull
-  private TerminalExecutor newTerminalExecutor(@NotNull Command command) {
+  private @NotNull TerminalExecutor newTerminalExecutor(@NotNull Command command) {
     return SystemInfo.isWindows
            ? new WinTerminalExecutor(exePath, command)
            : new TerminalExecutor(exePath, command);
@@ -250,13 +254,11 @@ public class CommandRuntime {
            command.isLocalInfo() || command.isLocalStatus() || command.isLocalProperty() || command.isLocalCat();
   }
 
-  @NotNull
-  public AuthenticationService getAuthenticationService() {
+  public @NotNull AuthenticationService getAuthenticationService() {
     return myAuthenticationService;
   }
 
-  @NotNull
-  public SvnVcs getVcs() {
+  public @NotNull SvnVcs getVcs() {
     return myVcs;
   }
 }

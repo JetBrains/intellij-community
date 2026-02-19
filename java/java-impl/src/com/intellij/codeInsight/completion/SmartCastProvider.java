@@ -1,19 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
@@ -23,13 +42,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 final class SmartCastProvider {
 
   static boolean shouldSuggestCast(CompletionParameters parameters) {
@@ -81,7 +98,7 @@ final class SmartCastProvider {
         type = ((PsiWildcardType)type).getBound();
       }
 
-      if (type == null || PsiType.VOID.equals(type)) {
+      if (type == null || PsiTypes.voidType().equals(type)) {
         continue;
       }
 
@@ -98,8 +115,7 @@ final class SmartCastProvider {
     }
   }
 
-  @NotNull
-  static List<ExpectedTypeInfo> getParenthesizedCastExpectationByOperandType(PsiElement position) {
+  static @Unmodifiable @NotNull List<ExpectedTypeInfo> getParenthesizedCastExpectationByOperandType(PsiElement position) {
     PsiElement parenthesisOwner = getParenthesisOwner(position);
     PsiExpression operand = getCastedExpression(parenthesisOwner);
     if (operand == null || !(parenthesisOwner.getParent() instanceof PsiParenthesizedExpression)) return Collections.emptyList();
@@ -107,12 +123,13 @@ final class SmartCastProvider {
     List<PsiType> dfaTypes = GuessManager.getInstance(operand.getProject()).getControlFlowExpressionTypeConjuncts(operand);
     if (!dfaTypes.isEmpty()) {
       return ContainerUtil.map(dfaTypes, dfaType ->
-        new ExpectedTypeInfoImpl(dfaType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, dfaType, TailType.NONE, null, () -> null));
+        new ExpectedTypeInfoImpl(dfaType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, dfaType, TailTypes.noneType(), null, ExpectedTypeInfoImpl.NULL));
     }
 
     PsiType type = operand.getType();
     return type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? Collections.emptyList() :
-           Collections.singletonList(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE, null, () -> null));
+           Collections.singletonList(
+             new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType(), null, ExpectedTypeInfoImpl.NULL));
   }
 
   private static void addHierarchyTypes(CompletionParameters parameters, PrefixMatcher matcher, ExpectedTypeInfo info, Consumer<? super PsiType> result, boolean quick) {
@@ -160,7 +177,7 @@ final class SmartCastProvider {
     return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<>(
       PsiTypeLookupItem.createLookupItem(type, parameters.getPosition())) {
       @Override
-      public void renderElement(LookupElementPresentation presentation) {
+      public void renderElement(@NotNull LookupElementPresentation presentation) {
         presentation.setItemText("(" + type.getPresentableText() + ")");
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (aClass != null) {
@@ -181,7 +198,7 @@ final class SmartCastProvider {
 
         final CommonCodeStyleSettings csSettings = CompletionStyleUtil.getCodeStyleSettings(context);
         final int oldTail = context.getTailOffset();
-        context.setTailOffset(RParenthTailType.addRParenth(editor, oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
+        context.setTailOffset(RParenthTailType.addRParenth(editor.asModNavigator(), oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
 
         getDelegate().handleInsert(CompletionUtil.newContext(context, getDelegate(), context.getStartOffset(), oldTail));
 

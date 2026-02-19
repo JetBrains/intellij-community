@@ -12,12 +12,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
@@ -28,18 +37,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * Available on self.my_something when my_something is unresolved.
- * User: dcheryasov
  */
-public class AddFieldQuickFix implements LocalQuickFix {
-
+public final class AddFieldQuickFix implements LocalQuickFix {
   private final String myInitializer;
   private final String myClassName;
   private final String myIdentifier;
-  private boolean replaceInitializer = false;
+  private final boolean replaceInitializer;
 
-  public AddFieldQuickFix(@NotNull final String identifier, @NotNull final String initializer, final String className, boolean replace) {
+  public AddFieldQuickFix(final @NotNull String identifier, final @NotNull String initializer, final String className, boolean replace) {
     myIdentifier = identifier;
     myInitializer = initializer;
     myClassName = className;
@@ -47,19 +56,16 @@ public class AddFieldQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.add.field.to.class", myIdentifier, myClassName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.add.field.to.class");
   }
 
-  @NotNull
-  public static PsiElement appendToMethod(PyFunction init, Function<? super String, ? extends PyStatement> callback) {
+  public static @NotNull PsiElement appendToMethod(PyFunction init, Function<? super String, ? extends PyStatement> callback) {
     // add this field as the last stmt of the constructor
     final PyStatementList statementList = init.getStatementList();
     // name of 'self' may be different for fancier styles
@@ -68,7 +74,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     if (params.length > 0) {
       selfName = params[0].getName();
     }
-    final PyStatement newStmt = callback.fun(selfName);
+    final PyStatement newStmt = callback.apply(selfName);
     final PsiElement result = PyPsiRefactoringUtil.addElementToStatementList(newStmt, statementList, true);
     PyPsiUtils.removeRedundantPass(statementList);
     return result;
@@ -107,7 +113,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return false;
   }
 
-  private static PyClassType getClassType(@NotNull final PsiElement element) {
+  private static PyClassType getClassType(final @NotNull PsiElement element) {
     if (element instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
       if (qualifier == null) return null;
@@ -118,7 +124,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return aClass != null ? new PyClassTypeImpl(aClass, false) : null;
   }
 
-  private void showTemplateBuilder(PsiElement initStatement, @NotNull final PsiFile file) {
+  private void showTemplateBuilder(PsiElement initStatement, final @NotNull PsiFile file) {
     initStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(initStatement);
     if (initStatement instanceof PyAssignmentStatement) {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(initStatement);
@@ -138,11 +144,10 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
   }
 
-  @Nullable
-  public static PsiElement addFieldToInit(Project project,
-                                          PyClass cls,
-                                          String itemName,
-                                          Function<? super String, ? extends PyStatement> callback) {
+  public static @Nullable PsiElement addFieldToInit(Project project,
+                                                    PyClass cls,
+                                                    String itemName,
+                                                    Function<? super String, ? extends PyStatement> callback) {
     if (cls != null && itemName != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false, null);
       if (init != null) {
@@ -173,8 +178,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return null;
   }
 
-  @NotNull
-  private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit) {
+  private static @NotNull PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit) {
     // found it; copy its param list and make a call to it.
     @NonNls String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
 
@@ -240,7 +244,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
 
     @Override
-    public PyStatement fun(String selfName) {
+    public PyStatement apply(String selfName) {
       return PyElementGenerator.getInstance(myProject)
         .createFromText(LanguageLevel.getDefault(), PyStatement.class, selfName + "." + myItemName + " = " + myInitializer);
     }

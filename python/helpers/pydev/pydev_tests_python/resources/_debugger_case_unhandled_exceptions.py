@@ -22,7 +22,7 @@ def thread_func(n):
 
 
 th = threading.Thread(target=lambda: thread_func(1))
-th.setDaemon(True)
+th.daemon = True
 th.start()
 
 event = threading.Event()

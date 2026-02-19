@@ -1,3 +1,3 @@
 class Test {
-   Object[] f = new Object[] {"a"};
+   Object[] f = new String[] {"a"};
 }

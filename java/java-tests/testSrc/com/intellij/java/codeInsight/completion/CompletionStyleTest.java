@@ -10,9 +10,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.TestDataPath;
@@ -43,46 +44,53 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after1.java");
   }
 
+  @NeedsIndex.ForStandardLibrary(reason = "String class should be resolved")
   public void testIDEADEV5935() {
     configureFromFileText("A.java",
-                          "public class A {\n" +
-                          "  public static void foo(String param1, String param2) {\n" +
-                          "  }\n" +
-                          "\n" +
-                          "  public static void main(String[] args) {\n" +
-                          "    String param1 = args[0];\n" +
-                          "    String param2 = args[1];\n" +
-                          "    foo(<caret>);\n" +
-                          "  }\n" +
-                          "}"
+                          """
+                            public class A {
+                              public static void foo(String param1, String param2) {
+                              }
+
+                              public static void main(String[] args) {
+                                String param1 = args[0];
+                                String param2 = args[1];
+                                foo(<caret>);
+                              }
+                            }"""
     );
     performSmartCompletion();
     select(Lookup.NORMAL_SELECT_CHAR, getSelected());
     checkResultByText(
-      "public class A {\n" +
-      "  public static void foo(String param1, String param2) {\n" +
-      "  }\n" +
-      "\n" +
-      "  public static void main(String[] args) {\n" +
-      "    String param1 = args[0];\n" +
-      "    String param2 = args[1];\n" +
-      "    foo(param1, <caret>);\n" +
-      "  }\n" +
-      "}"
+      """
+        public class A {
+          public static void foo(String param1, String param2) {
+          }
+
+          public static void main(String[] args) {
+            String param1 = args[0];
+            String param2 = args[1];
+            foo(param1, <caret>);
+          }
+        }"""
     );
   }
 
   public void testIDEADEV2878() {
     configureFromFileText(
       "A.java",
-      "class Bar<T> {}\n" +
-      "class Foo {\n" +
-      "public void createFoo(Bar<?> <caret>)\n" + "}");
+      """
+        class Bar<T> {}
+        class Foo {
+        public void createFoo(Bar<?> <caret>)
+        }""");
     performNormalCompletion();
     checkResultByText(
-      "class Bar<T> {}\n" +
-      "class Foo {\n" +
-      "public void createFoo(Bar<?> bar<caret>)\n" + "}");
+      """
+        class Bar<T> {}
+        class Foo {
+        public void createFoo(Bar<?> bar<caret>)
+        }""");
   }
 
   public void testMethodsParametersStyle1() {
@@ -351,19 +359,18 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
 
   @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   public void testAfterNew15() {
-    final LanguageLevelProjectExtension ll = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel old = ll.getLanguageLevel();
-    ll.setLanguageLevel(LanguageLevel.JDK_1_5);
+    final LanguageLevel old = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_5);
 
     try {
       final String path = BASE_PATH;
       configureByFile(path + "/AfterNew15.java");
       performSmartCompletion();
       select('\n', getSelected());
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       checkResultByFile(path + "/AfterNew15-out.java");
     }
     finally {
-      ll.setLanguageLevel(old);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), old);
     }
   }
 

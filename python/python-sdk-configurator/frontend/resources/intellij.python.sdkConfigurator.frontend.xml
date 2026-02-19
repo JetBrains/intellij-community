@@ -1,0 +1,21 @@
+<idea-plugin visibility="private">
+  <dependencies>
+    <module name="intellij.platform.rpc"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.python.sdkConfigurator.common"/>
+    <module name="intellij.platform.compose"/>
+    <module name="intellij.platform.jewel.foundation"/>
+    <module name="intellij.platform.jewel.ui"/>
+    <module name="intellij.platform.jewel.ideLafBridge"/>
+    <module name="intellij.python.common"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.compose.foundation.desktop"/>
+    <module name="intellij.libraries.compose.runtime.desktop"/>
+    <module name="intellij.libraries.skiko"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.projectRemoteTopicListener
+      implementation="com.intellij.python.sdkConfigurator.frontend.rpcBridge.FrontendTopicListener"/>
+  </extensions>
+</idea-plugin>

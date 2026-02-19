@@ -1,4 +1,4 @@
-'''
+"""
 Helper to build pydevd.
 
 It should:
@@ -6,14 +6,20 @@ It should:
     * compile cython deps (properly setting up the environment first).
 
 Note that it's used in the CI to build the cython deps based on the PYDEVD_USE_CYTHON environment variable.
-'''
+"""
 from __future__ import print_function
 
+import glob
 import os
 import subprocess
 import sys
+import tempfile
 
-from generate_code import remove_if_exists, root_dir, is_python_64bit, generate_dont_trace_files, generate_cython_module
+from generate_code import remove_if_exists, root_dir, is_python_64bit, \
+    generate_dont_trace_files, generate_cython_module, generate_pep669_module
+
+# noinspection SpellCheckingInspection
+BINARY_DIRS = '_pydevd_bundle', '_pydevd_frame_eval'
 
 
 def validate_pair(ob):
@@ -32,6 +38,7 @@ def consume(it):
             next(it)
     except StopIteration:
         pass
+
 
 def get_environment_from_batch_command(env_cmd, initial=None):
     """
@@ -89,10 +96,11 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 
 
 def remove_binaries(suffixes):
-    for f in os.listdir(os.path.join(root_dir, '_pydevd_bundle')):
-        for suffix in suffixes:
-            if f.endswith(suffix):
-                remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', f))
+    for binary_dir in BINARY_DIRS:
+        for f in os.listdir(os.path.join(root_dir, binary_dir)):
+            for suffix in suffixes:
+                if f.endswith(suffix):
+                    remove_if_exists(os.path.join(root_dir, binary_dir, f))
 
 
 def build():
@@ -101,23 +109,16 @@ def build():
 
     os.chdir(root_dir)
 
-    env=None
+    env = os.environ.copy()
+
     if sys.platform == 'win32':
-        # "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
-        # set MSSdk=1
-        # set DISTUTILS_USE_SDK=1
-        # set VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools
+        if sys.version_info[:2] in ((2, 7), (3, 6), (3, 7), (3, 8), (3, 9), (3, 10),
+                                    (3, 11), (3, 12)):
+            import setuptools  # We have to import it first for the compiler to be found.
+            from msvccompiler_wrapper import find_vcvarsall
 
+            vcvarsall = find_vcvarsall()
 
-        env = os.environ.copy()
-        if sys.version_info[:2] in ((2, 7), (3, 5), (3, 6), (3, 7), (3, 8), (3, 9)):
-            import setuptools # We have to import it first for the compiler to be found
-            from distutils import msvc9compiler
-
-            if sys.version_info[:2] == (2, 7):
-                vcvarsall = msvc9compiler.find_vcvarsall(9.0)
-            elif sys.version_info[:2] in ((3, 5), (3, 6), (3, 7), (3, 8), (3, 9)):
-                vcvarsall = msvc9compiler.find_vcvarsall(14.0)
             if vcvarsall is None or not os.path.exists(vcvarsall):
                 raise RuntimeError('Error finding vcvarsall.')
 
@@ -143,14 +144,121 @@ def build():
             additional_args.append(arg)
             break
     else:
-        additional_args.append('--force-cython')  # Build always forces cython!
+        additional_args.append('--force-cython')  # Build always forces Cython!
 
-    args = [
-        sys.executable, os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'), 'build_ext', '--inplace',
-    ]+additional_args
-    print('Calling args: %s' % (args,))
-    subprocess.check_call(args, env=env,)
+    if sys.platform.startswith('darwin'):
+        macos_cross_compile(additional_args, env)
+    else:
+        args = [
+                   sys.executable,
+                   os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
+                   'build_ext',
+                   '--inplace',
+               ] + additional_args
 
+        print('Calling args: %s' % (args,))
+        subprocess.check_call(args, env=env)
+
+
+def check_arch(filepath, expected_arch):
+    try:
+        result = subprocess.check_output(['lipo', '-info', filepath],
+                                         stderr=subprocess.STDOUT).decode()
+        if expected_arch not in result:
+            raise RuntimeError(
+                'Wrong architecture for {filepath}. '.format(filepath=filepath) +
+                'Expected {expected_arch}, got: {result}'.format(
+                    expected_arch=expected_arch, result=result)
+            )
+    except subprocess.CalledProcessError as e:
+        print('Failed to check architecture of {filepath}: {output}'.format(
+            filepath=filepath, output=e.output.decode()))
+        raise
+
+def macos_cross_compile(additional_args, env):
+    # Cross-compilation for x86 and M1.
+    tempdir = tempfile.mkdtemp()
+    try:
+        # x86_64
+        x86_env = env.copy()
+        x86_env['ARCHFLAGS'] = '-arch x86_64'
+        x86_env['MACOSX_DEPLOYMENT_TARGET'] = '14.3'
+
+        args = [
+                   sys.executable,
+                   os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
+                   'build_ext',
+                   '--inplace',
+                   '--build-lib=%s/lib.x86' % tempdir,
+                   '--build-temp=%s/temp.x86' % tempdir,
+                   '--target=x86_64-apple-macos14.3',
+                   ] + additional_args
+        print('Calling args for x86_64: %s' % (args,))
+        subprocess.check_call(args, env=x86_env)
+
+        # arm64
+        arm_env = env.copy()
+        arm_env['ARCHFLAGS'] = '-arch arm64'
+        arm_env['MACOSX_DEPLOYMENT_TARGET'] = '14.3'
+
+        args = [
+                   sys.executable,
+                   os.path.join(os.path.dirname(__file__), '..', 'setup_cython.py'),
+                   'build_ext',
+                   '--inplace',
+                   '--build-lib=%s/lib.arm64' % tempdir,
+                   '--build-temp=%s/temp.arm64' % tempdir,
+                   '--target=arm64-apple-macos14.3',
+                   ] + additional_args
+        print('Calling args for arm64: %s' % (args,))
+        subprocess.check_call(args, env=arm_env)
+
+        def ensure_dir_exists(path):
+            if not os.path.exists(path):
+                os.makedirs(path)
+
+        for ext_dir_x86, ext_dir_arm64 in zip(glob.glob('%s/lib.x86/*' % tempdir),
+                                              glob.glob('%s/lib.arm64/*' % tempdir)):
+            for shared_lib_x86, shared_lib_arm64 in zip(
+                    glob.glob('%s/*' % ext_dir_x86), glob.glob('%s/*' % ext_dir_arm64)):
+
+                if not os.path.exists(shared_lib_x86):
+                    raise RuntimeError('x86_64 binary not found: {shared_lib_x86}'.format(shared_lib_x86=shared_lib_x86))
+                if not os.path.exists(shared_lib_arm64):
+                    raise RuntimeError('arm64 binary not found: {shared_lib_arm64}'.format(shared_lib_arm64=shared_lib_arm64))
+
+                check_arch(shared_lib_x86, 'x86_64')
+                check_arch(shared_lib_arm64, 'arm64')
+
+                output_path = '%s/%s/%s' % (root_dir, os.path.basename(ext_dir_x86),
+                                            os.path.basename(shared_lib_x86))
+
+                ensure_dir_exists(os.path.dirname(output_path))
+
+                args = [
+                    'lipo',
+                    '-create',
+                    '-output',
+                    output_path,
+                    shared_lib_x86,
+                    shared_lib_arm64,
+                ]
+
+                print('Building universal binary:')
+                print(' - Output: %s' % output_path)
+                print(' - x86_64: %s' % shared_lib_x86)
+                print(' - arm64:  %s' % shared_lib_arm64)
+
+                try:
+                    subprocess.check_call(args, env=env)
+                except subprocess.CalledProcessError as e:
+                    print('Failed to create universal binary:')
+                    print(' - Command: {0}'.format(" ".join(args)))
+                    print(' - Return code: {0}'.format(e.returncode))
+                    raise
+    finally:
+        import shutil
+        shutil.rmtree(tempdir, ignore_errors=True)
 
 if __name__ == '__main__':
     use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
@@ -163,6 +271,10 @@ if __name__ == '__main__':
         if '--no-regenerate-files' not in sys.argv:
             generate_dont_trace_files()
             generate_cython_module()
+            generate_pep669_module()
         build()
     else:
-        raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))
+        raise RuntimeError(
+            'Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)'
+            % (use_cython,)
+        )

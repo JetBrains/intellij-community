@@ -1,0 +1,8 @@
+- name: dist.all/lib/intellij.libraries.asm.tools.jar
+  modules:
+  - name: intellij.libraries.asm.tools
+    libraries:
+      asm-tools:
+      - name: $MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9/asm-analysis-9.jar
+      - name: $MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9/asm-tree-9.jar
+      - name: $MAVEN_REPOSITORY$/org/ow2/asm/asm/9/asm-9.jar

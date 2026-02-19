@@ -1,0 +1,8 @@
+// "Configure arguments for the feature: context parameters" "true"
+// LANGUAGE_VERSION: 2.2
+// APPLY_QUICKFIX: false
+// DISABLE_K2_ERRORS
+
+context(i: Int)
+fun test() {
+}

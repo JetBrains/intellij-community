@@ -1,25 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.render.RenderersKt;
 import com.intellij.util.ui.FontInfo;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
+/**
+ * @deprecated This renderer doesn't support rounded selection. Use {@link RenderersKt#fontInfoRenderer(boolean)} instead.
+ */
+@Deprecated(forRemoval = true)
 public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
   @Override
   protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean focused) {
     Font font = list.getFont();
     @NlsSafe String text = value == null ? "" : value.toString();
     append(text);
-    if (value instanceof FontInfo) {
-      FontInfo info = (FontInfo)value;
-      Integer size = getFontSize();
-      Font f = info.getFont(size != null ? size : font.getSize());
+    if (value instanceof FontInfo info) {
+      Font f = info.getFont(font.getSize());
       if (f.canDisplayUpTo(text) == -1) {
         setFont(f);
       }
@@ -29,10 +35,9 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
     }
   }
 
-  @NotNull
   @Override
-  public Dimension getPreferredSize() {
-    // Existing usages (e.g. FontComboBox) ignore returned preferred width. 
+  public @NotNull Dimension getPreferredSize() {
+    // Existing usages (e.g., FontComboBox) ignore returned preferred width.
     // Calculating preferred width can be quite consuming though (in particular, when a large number of fonts is available),
     // so we avoid such a calculation here.
     return new Dimension(1, computePreferredHeight());
@@ -41,10 +46,6 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
   @Override
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(isEditorFont()));
-  }
-
-  protected Integer getFontSize() {
-    return null;
   }
 
   protected boolean isEditorFont() {

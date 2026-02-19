@@ -15,6 +15,10 @@
  */
 package org.jetbrains.uast
 
+import org.jetbrains.uast.UastCallKind.Companion.NESTED_ARRAY_INITIALIZER
+import org.jetbrains.uast.UastCallKind.Companion.NEW_ARRAY_WITH_INITIALIZER
+
+
 /**
  * Kinds of [UCallExpression].
  */

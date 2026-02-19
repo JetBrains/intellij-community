@@ -3,17 +3,19 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint;
 import org.jetbrains.annotations.NotNull;
 
 final class FileBasedIndexPluginListener implements DynamicPluginListener {
-  private final @NotNull FileBasedIndexSwitcher mySwitcher;
+  private final @NotNull FileBasedIndexTumbler mySwitcher;
 
-  FileBasedIndexPluginListener(@NotNull FileBasedIndexImpl index) {
-    mySwitcher = new FileBasedIndexSwitcher(index);
+  FileBasedIndexPluginListener() {
+    mySwitcher = new FileBasedIndexTumbler("Plugin loaded/unloaded");
   }
 
   @Override
-  public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+  public void beforePluginsLoaded() {
     beforePluginSetChanged();
   }
 
@@ -23,7 +25,7 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
   }
 
   @Override
-  public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+  public void pluginsLoaded() {
     afterPluginSetChanged();
   }
 
@@ -34,9 +36,12 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
 
   private void beforePluginSetChanged() {
     mySwitcher.turnOff();
+    ApplicationManager.getApplication().getService(IndexingDependenciesFingerprint.class).resetCache();
   }
 
   private void afterPluginSetChanged() {
-    mySwitcher.turnOn();
+    // we don't use dedicated listener for IndexingDependenciesFingerprint, because order is important: first invalidate, then scan.
+    ApplicationManager.getApplication().getService(IndexingDependenciesFingerprint.class).resetCache();
+    mySwitcher.turnOn(null);
   }
 }

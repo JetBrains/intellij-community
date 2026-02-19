@@ -1,37 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("ConvertSecondaryConstructorToPrimary", "UnnecessaryVariable")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ConvertSecondaryConstructorToPrimary")
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.WindowsRegistryUtil
-import com.intellij.util.io.exists
-import java.nio.file.FileSystems
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.TreeSet
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.io.path.exists
 import kotlin.text.RegexOption.IGNORE_CASE
 import kotlin.text.RegexOption.MULTILINE
 
+@Internal
 class JavaHomeFinderWindows : JavaHomeFinderBasic {
   companion object {
-    const val defaultJavaLocation = "C:\\Program Files"
+    const val defaultJavaLocation: String = "C:\\Program Files"
 
     @Suppress("SpellCheckingInspection")
-    private const val regCommand = """reg query HKLM\SOFTWARE\JavaSoft\JDK /s /v JavaHome"""
+    private val regCommand = listOf("reg", "query", """HKLM\SOFTWARE\JavaSoft\JDK""", "/s", "/v", "JavaHome")
 
     private val javaHomePattern = Regex("""^\s+JavaHome\s+REG_SZ\s+(\S.+\S)\s*$""", setOf(MULTILINE, IGNORE_CASE))
 
-    /**
-     * Whether the OS is 64-bit. Don't mix with JRE.
-     * SIC! it's not the same as [SystemInfo.is64Bit].
-     */
-    private val os64bit: Boolean = !System.getenv("ProgramFiles(x86)").isNullOrBlank()
-
     private val logger: Logger = Logger.getInstance(JavaHomeFinderWindows::class.java)
-
 
     fun gatherHomePaths(text: CharSequence): Set<String> {
       val paths = TreeSet<String>()
@@ -44,15 +41,54 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
   }
 
-  constructor(forceEmbeddedJava: Boolean) : super(forceEmbeddedJava) {
-    if (os64bit && SystemInfo.isWin7OrNewer) {
-      registerFinder(this::readRegisteredLocationsOS64J64)
-      registerFinder(this::readRegisteredLocationsOS64J32)
-    }
-    else {
-      registerFinder(this::readRegisteredLocationsOS32J32)
+  private val processRunner: (cmd: List<String>) -> CharSequence
+
+  @JvmOverloads
+  constructor(
+    registeredJdks: Boolean,
+    wslJdks: Boolean,
+    systemInfoProvider: JavaHomeFinder.SystemInfoProvider,
+    processRunner: (cmd: List<String>) -> CharSequence = { cmd -> WindowsRegistryUtil.readRegistry(cmd.joinToString(" ")) },
+  ) : super(systemInfoProvider) {
+    this.processRunner = processRunner
+
+    if (registeredJdks) {
+      /** Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]). */
+      val os64bit = !systemInfoProvider.getEnvironmentVariable("ProgramFiles(x86)").isNullOrBlank()
+      if (os64bit) {
+        registerFinder(this::readRegisteredLocationsOS64J64)
+        registerFinder(this::readRegisteredLocationsOS64J32)
+      }
+      else {
+        registerFinder(this::readRegisteredLocationsOS32J32)
+      }
     }
     registerFinder(this::guessPossibleLocations)
+    if (wslJdks) {
+      val installedDistributions = try {
+        WslDistributionManager.getInstance().installedDistributions
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (t: Throwable) {
+        thisLogger().warn(IllegalStateException("Unable to get WSL distributions list: ${t.message}", t))
+        emptyList()
+      }
+
+      for (distro in installedDistributions) {
+        try {
+          val wslFinder = JavaHomeFinderWsl(distro)
+          registerFinder { wslFinder.findExistingJdks() }
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (t: Throwable) {
+          thisLogger().warn(IllegalStateException("Unable to connect to WSL distribution '${distro.id}': ${t.message}", t))
+        }
+      }
+    }
   }
 
   private fun readRegisteredLocationsOS64J64() = readRegisteredLocations(Bitness.x64)
@@ -63,11 +99,11 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     val cmd =
       when (b) {
         null -> regCommand
-        Bitness.x32 -> "$regCommand /reg:32"
-        Bitness.x64 -> "$regCommand /reg:64"
+        Bitness.x32 -> regCommand + "/reg:32"
+        Bitness.x64 -> regCommand + "/reg:64"
       }
     try {
-      val registryLines: CharSequence = WindowsRegistryUtil.readRegistry(cmd)
+      val registryLines: CharSequence = processRunner(cmd)
       val registeredPaths = gatherHomePaths(registryLines)
       val folders: MutableSet<Path> = TreeSet()
       for (rp in registeredPaths) {
@@ -85,6 +121,9 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     catch (ie: InterruptedException) {
       return emptySet()
     }
+    catch (e: CancellationException) {
+      return emptySet()
+    }
     catch (e: Exception) {
       logger.warn("Unable to detect registered JDK using the following command: $cmd", e)
       return emptySet()
@@ -92,9 +131,10 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
   }
 
   private fun guessPossibleLocations(): Set<String> {
-    val fsRoots = FileSystems.getDefault().rootDirectories ?: return emptySet()
+    val fsRoots = systemInfo.fsRoots
     val roots: MutableSet<Path> = HashSet()
     for (root in fsRoots) {
+      ProgressManager.checkCanceled()
       if (!root.exists()) {
         continue
       }
@@ -103,6 +143,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       roots.add(root.resolve("Program Files (x86)/Java"))
       roots.add(root.resolve("Java"))
     }
+    getPathInUserHome(".jdks")?.let { roots.add(it) }
     return scanAll(roots, true)
   }
 }

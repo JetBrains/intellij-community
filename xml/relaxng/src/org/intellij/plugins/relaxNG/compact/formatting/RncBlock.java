@@ -16,7 +16,12 @@
 
 package org.intellij.plugins.relaxNG.compact.formatting;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
+import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -41,14 +46,12 @@ class RncBlock implements Block {
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     final List<Block> list = new ArrayList<>();
     ASTNode node = myNode.getFirstChildNode();
     while (node != null) {
@@ -61,15 +64,13 @@ class RncBlock implements Block {
   }
 
   @Override
-  @Nullable
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     // TODO
     return null;
   }
 
   @Override
-  @Nullable
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     if (myNode.getTreeParent() == null) return null;
     if (isTopLevel()) {
       return Indent.getAbsoluteNoneIndent();
@@ -88,15 +89,13 @@ class RncBlock implements Block {
   }
 
   @Override
-  @Nullable
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     // TODO
     return null;
   }
 
   @Override
-  @Nullable
-  public Spacing getSpacing(Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 == null) {
       return null;
     }
@@ -121,8 +120,7 @@ class RncBlock implements Block {
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     return new ChildAttributes(null, null);
   }
 

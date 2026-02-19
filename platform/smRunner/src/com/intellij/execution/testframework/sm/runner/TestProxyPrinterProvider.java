@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.filters.Filter;
@@ -6,6 +6,7 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,8 +29,7 @@ public final class TestProxyPrinterProvider {
     myFilterProvider = filterProvider;
   }
 
-  @Nullable
-  public Printer getPrinterByType(@NotNull String nodeType, @NotNull String nodeName, @Nullable String nodeArguments) {
+  public @Nullable Printer getPrinterByType(@NotNull String nodeType, @NotNull String nodeName, @Nullable String nodeArguments) {
     Filter filter = myFilterProvider.getFilter(nodeType, nodeName, nodeArguments);
     if (filter != null && !Disposer.isDisposed(myTestOutputConsoleView)) {
       return new HyperlinkPrinter(myTestOutputConsoleView, HyperlinkPrinter.ERROR_CONTENT_TYPE, filter);
@@ -47,16 +47,16 @@ public final class TestProxyPrinterProvider {
     private final Filter myFilter;
 
     HyperlinkPrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
-                            @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
-                            @NotNull Filter filter) {
+                     @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
+                     @NotNull Filter filter) {
       super(testsOutputConsoleView, testsOutputConsoleView.getProperties(), null);
       myContentTypeCondition = contentTypeCondition;
       myFilter = filter;
     }
 
     @Override
-    public void print(String text, ConsoleViewContentType contentType) {
-      if (contentType == null || !myContentTypeCondition.value(contentType)) {
+    public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+      if (!myContentTypeCondition.value(contentType)) {
         defaultPrint(text, contentType);
         return;
       }
@@ -78,13 +78,14 @@ public final class TestProxyPrinterProvider {
     }
 
     private void printLine(@NotNull String line, @NotNull ConsoleViewContentType contentType) {
-      Filter.Result result;
-      try {
-        result = myFilter.applyFilter(line, line.length());
-      }
-      catch (Throwable t) {
-        throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
-      }
+      Filter.Result result = ReadAction.compute(() -> {
+        try {
+          return myFilter.applyFilter(line, line.length());
+        }
+        catch (Throwable t) {
+          throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
+        }
+      });
       if (result != null) {
         List<Filter.ResultItem> items = sort(result.getResultItems());
         int lastOffset = 0;
@@ -101,8 +102,7 @@ public final class TestProxyPrinterProvider {
       }
     }
 
-    @NotNull
-    private static List<Filter.ResultItem> sort(@NotNull List<Filter.ResultItem> items) {
+    private static @NotNull List<Filter.ResultItem> sort(@NotNull List<Filter.ResultItem> items) {
       if (items.size() <= 1) {
         return items;
       }

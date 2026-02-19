@@ -18,7 +18,24 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResourceExpression;
+import com.intellij.psi.PsiResourceVariable;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,12 +98,12 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   private void addExceptionThrowPlaces(@NotNull PsiClassType type, @NotNull PsiElement place) {
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         visitElement(expression);
       }
 
       @Override
-      public void visitThrowStatement(PsiThrowStatement statement) {
+      public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
         super.visitThrowStatement(statement);
         List<PsiClassType> actualTypes = ExceptionUtil.getUnhandledExceptions(statement, place);
         for (PsiClassType actualType : actualTypes) {
@@ -112,7 +129,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         PsiReference reference = expression.getMethodExpression().getReference();
         if (reference != null) {
@@ -127,7 +144,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         super.visitNewExpression(expression);
         PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
         if (classReference != null) {
@@ -142,7 +159,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
 
       @Override
-      public void visitResourceExpression(PsiResourceExpression expression) {
+      public void visitResourceExpression(@NotNull PsiResourceExpression expression) {
         super.visitResourceExpression(expression);
         List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledCloserExceptions(expression, place);
         for (PsiClassType actualType : exceptionTypes) {
@@ -154,7 +171,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
       }
 
       @Override
-      public void visitResourceVariable(PsiResourceVariable variable) {
+      public void visitResourceVariable(@NotNull PsiResourceVariable variable) {
         super.visitResourceVariable(variable);
         List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledCloserExceptions(variable, place);
         for (PsiClassType actualType : exceptionTypes) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -8,8 +8,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +37,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.CachedValueProvider;
@@ -48,8 +53,8 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -62,41 +67,43 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author peter
- */
-public class GrabDependencies implements IntentionAction {
+public final class GrabDependencies implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(GrabDependencies.class);
 
-  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Grape", NotificationDisplayType.BALLOON, true);
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Grape");
   public static final String GRAPE_RUNNER = "org.jetbrains.plugins.groovy.grape.GrapeRunner";
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return GroovyBundle.message("grab.intention.name");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("grab.family.name");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!isCorrectModule(file)) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!isCorrectModule(psiFile)) return false;
 
     int offset = editor.getCaretModel().getOffset();
-    final GrAnnotation anno = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrAnnotation.class, false);
+    final GrAnnotation anno = PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset, GrAnnotation.class, false);
     if (anno != null && isGrabAnnotation(anno)) {
       return true;
     }
 
-    PsiElement at = file.findElementAt(offset);
-    if (at != null && isUnresolvedRefName(at) && findGrab(file) != null) {
+    PsiElement at = psiFile.findElementAt(offset);
+    if (at != null && isUnresolvedRefName(at) && findGrab(psiFile) != null) {
       return true;
     }
 
@@ -127,7 +134,7 @@ public class GrabDependencies implements IntentionAction {
 
   private static boolean isUnresolvedRefName(@NotNull PsiElement at) {
     PsiElement parent = at.getParent();
-    return parent instanceof GrReferenceElement && ((GrReferenceElement)parent).getReferenceNameElement() == at && ((GrReferenceElement)parent).resolve() == null;
+    return parent instanceof GrReferenceElement && ((GrReferenceElement<?>)parent).getReferenceNameElement() == at && ((GrReferenceElement<?>)parent).resolve() == null;
   }
 
   private static boolean isGrabAnnotation(@NotNull GrAnnotation anno) {
@@ -150,14 +157,14 @@ public class GrabDependencies implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
     assert module != null;
 
-    final VirtualFile vfile = file.getOriginalFile().getVirtualFile();
+    final VirtualFile vfile = psiFile.getOriginalFile().getVirtualFile();
     assert vfile != null;
 
-    if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", file.getResolveScope()) == null) {
+    if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", psiFile.getResolveScope()) == null) {
       Messages.showErrorDialog(
         GroovyBundle.message("grab.error.ivy.missing.message"),
         GroovyBundle.message("grab.error.ivy.missing.title")
@@ -165,7 +172,7 @@ public class GrabDependencies implements IntentionAction {
       return;
     }
 
-    Map<String, String> queries = prepareQueries(file);
+    Map<String, String> queries = prepareQueries(psiFile);
 
     final Map<@NlsSafe String, GeneralCommandLine> lines = new HashMap<>();
     for (@NlsSafe String grabText : queries.keySet()) {
@@ -175,16 +182,15 @@ public class GrabDependencies implements IntentionAction {
       //javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
       try {
-        DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true, true, false);
+        DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true, true);
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
         javaParameters.getProgramParametersList().add(queries.get(grabText));
-        javaParameters.setUseDynamicClasspath(true);
+        javaParameters.setUseDynamicClasspath(project);
         lines.put(grabText, javaParameters.toCommandLine());
       }
       catch (CantRunException e) {
         String title = GroovyBundle.message("grab.error.0.title", ExceptionUtil.getMessage(e));
-        //noinspection HardCodedStringLiteral
-        NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
+        NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR).notify(project);
         return;
       }
     }
@@ -215,20 +221,20 @@ public class GrabDependencies implements IntentionAction {
         }
 
         final String title = GroovyBundle.message("grab.result.title", totalJarCount);
-        NOTIFICATION_GROUP.createNotification(title, messages.toString(), NotificationType.INFORMATION, null).notify(project);
+        NOTIFICATION_GROUP.createNotification(title, messages.toString(), NotificationType.INFORMATION).notify(project);
       }
     });
   }
 
-  static Map<@NlsSafe String, String> prepareQueries(PsiFile file) {
+  @VisibleForTesting
+  public static Map<@NlsSafe String, String> prepareQueries(PsiFile file) {
     final Set<GrAnnotation> grabs = new LinkedHashSet<>();
-    final Set<GrAnnotation> excludes = new THashSet<>();
-    final Set<GrAnnotation> resolvers = new THashSet<>();
+    final Set<GrAnnotation> excludes = new HashSet<>();
+    final Set<GrAnnotation> resolvers = new HashSet<>();
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof GrAnnotation) {
-          GrAnnotation anno = (GrAnnotation)element;
+        if (element instanceof GrAnnotation anno) {
           String qname = anno.getQualifiedName();
           if (GrabAnnos.GRAB_ANNO.equals(qname)) grabs.add(anno);
           else if (GrabAnnos.GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);
@@ -253,7 +259,7 @@ public class GrabDependencies implements IntentionAction {
     return false;
   }
 
-  private static class GrapeProcessHandler extends OSProcessHandler {
+  private static final class GrapeProcessHandler extends OSProcessHandler {
     private final @NlsSafe StringBuilder myStdOut = new StringBuilder();
     private final @NlsSafe StringBuilder myStdErr = new StringBuilder();
     private final Module myModule;

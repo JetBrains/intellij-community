@@ -1,7 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.*;
+import com.intellij.psi.OriginInfoAwareElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,27 +32,23 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
     super(context, name);
   }
 
-  @Nullable
   @Override
-  public String getOriginInfo() {
+  public @Nullable String getOriginInfo() {
     return myOriginInfo;
   }
 
-  @NotNull
   @Override
-  public LightModifierList getModifierList() {
+  public @NotNull LightModifierList getModifierList() {
     return myModifierList;
   }
 
-  @NotNull
   @Override
-  public LightReferenceListBuilder getExtendsList() {
+  public @NotNull LightReferenceListBuilder getExtendsList() {
     return myExtendsList;
   }
 
-  @NotNull
   @Override
-  public LightReferenceListBuilder getImplementsList() {
+  public @NotNull LightReferenceListBuilder getImplementsList() {
     return myImplementsList;
   }
 
@@ -78,15 +79,13 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
     return myScope;
   }
 
-  @Nullable
   @Override
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     return myContainingClass;
   }
 
-  @NotNull
   @Override
-  public LightTypeParameterListBuilder getTypeParameterList() {
+  public @NotNull LightTypeParameterListBuilder getTypeParameterList() {
     return myTypeParametersList;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -13,12 +13,15 @@ import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEv
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
-import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import java.util.Objects;
+
+@ApiStatus.Internal
 public class ImportedTestContentHandler extends DefaultHandler {
   private final GeneralTestEventsProcessor myProcessor;
   private final Stack<String> mySuites = new Stack<>();
@@ -57,7 +60,7 @@ public class ImportedTestContentHandler extends DefaultHandler {
       final TestStartedEvent startedEvent = new TestStartedEvent(name,
                                                                  locationValue == null ? null : StringUtil.unescapeXmlEntities(locationValue),
                                                                  metaValue == null ? null : StringUtil.unescapeXmlEntities(metaValue));
-      if (isConfig != null && Boolean.valueOf(isConfig)) {
+      if (isConfig != null && Boolean.parseBoolean(isConfig)) {
         startedEvent.setConfig(true);
       }
       myProcessor.onTestStarted(startedEvent);
@@ -101,9 +104,8 @@ public class ImportedTestContentHandler extends DefaultHandler {
       }
       else if (TestResultsXmlFormatter.STATUS_IGNORED.equals(myStatus) || TestResultsXmlFormatter.STATUS_SKIPPED.equals(myStatus)) {
         myProcessor.onTestIgnored(new TestIgnoredEvent(myCurrentTest, "", currentText) {
-          @NotNull
           @Override
-          public String getIgnoreComment() {
+          public @NotNull String getIgnoreComment() {
             return "";
           }
         });

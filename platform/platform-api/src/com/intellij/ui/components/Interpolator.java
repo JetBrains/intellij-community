@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayDeque;
@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  */
 public class Interpolator {
   private static final int PERIOD = 7; // ms
-  private static final long TIMEOUT = 500_000000L; // ns
+  private static final long TIMEOUT = 500_000_000L; // ns
 
   private final Supplier<Integer> myInput;
   private final Consumer<? super Integer> myOutput;
@@ -126,7 +126,7 @@ public class Interpolator {
     }
   }
 
-  private static abstract class Segment {
+  private abstract static class Segment {
     protected final Position myBegin;
     protected final Position myEnd;
 

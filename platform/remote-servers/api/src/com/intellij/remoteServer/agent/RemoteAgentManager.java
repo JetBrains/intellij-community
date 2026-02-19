@@ -1,22 +1,22 @@
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.agent;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
-/**
- * @author michael.golubev
- */
+@ApiStatus.Internal
 public abstract class RemoteAgentManager {
 
   public static RemoteAgentManager getInstance() {
-    return ServiceManager.getService(RemoteAgentManager.class);
+    return ApplicationManager.getApplication().getService(RemoteAgentManager.class);
   }
 
   public abstract <T extends RemoteAgent> T createAgent(RemoteAgentProxyFactory agentProxyFactory,
-                                                        List<File> instanceLibraries,
+                                                        List<Path> instanceLibraries,
                                                         List<Class<?>> commonJarClasses,
                                                         String specificsRuntimeModuleName,
                                                         String specificsBuildJarPath,
@@ -31,7 +31,7 @@ public abstract class RemoteAgentManager {
                                                                         @NotNull Class<?> pluginClass);
 
   public abstract static class Builder<T extends RemoteAgent> {
-    public abstract Builder<T> withInstanceLibraries(@NotNull List<File> libraries);
+    public abstract Builder<T> withInstanceLibraries(List<Path> libraries);
 
     /**
      * @param rtClass "independent" class from *.rt module, without dependency to the rest of IDEA. Since the whole module

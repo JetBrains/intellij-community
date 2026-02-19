@@ -18,10 +18,11 @@ package com.jetbrains.python.findUsages;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author yole
+ * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
 public class PyFunctionFindUsagesHandler extends PyFindUsagesHandler {
   private final List<PsiElement> myAllElements;
@@ -37,12 +38,22 @@ public class PyFunctionFindUsagesHandler extends PyFindUsagesHandler {
   }
 
   @Override
-  public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+  protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return true;
   }
 
   @Override
   public PsiElement @NotNull [] getPrimaryElements() {
-    return myAllElements != null ? myAllElements.toArray(PsiElement.EMPTY_ARRAY) : super.getPrimaryElements();
+    List<PsiElement> result = new ArrayList<>();
+    if (myAllElements != null) {
+      result.addAll(myAllElements);
+    }
+    else {
+      result.add(myPsiElement);
+    }
+
+    completePrimaryElementsWithStubAndOriginalElements(result);
+
+    return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 }

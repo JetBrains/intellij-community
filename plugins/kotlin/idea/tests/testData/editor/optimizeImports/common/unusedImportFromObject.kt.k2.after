@@ -1,0 +1,18 @@
+package test
+
+fun test() {
+    dependency.Bar.property
+    dependency.Bar.function()
+    dependency.Bar::callable
+
+    with(dependency.Bar) {
+        property
+        function()
+        ::callable
+    }
+
+    val bar = dependency.Bar
+    bar.property
+    bar.function()
+    bar::callable
+}

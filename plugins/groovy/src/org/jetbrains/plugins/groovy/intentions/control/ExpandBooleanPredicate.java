@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -15,19 +16,16 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrStatement)) {
+    if (!(element instanceof GrStatement statement)) {
       return false;
     }
-    final GrStatement statement = (GrStatement) element;
     return isBooleanReturn(statement) || isBooleanAssignment(statement);
   }
 
   public static boolean isBooleanReturn(GrStatement statement) {
-    if (!(statement instanceof GrReturnStatement)) {
+    if (!(statement instanceof GrReturnStatement returnStatement)) {
       return false;
     }
-    final GrReturnStatement returnStatement =
-        (GrReturnStatement) statement;
     final GrExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null) {
       return false;
@@ -39,16 +37,14 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
     if (returnType == null) {
       return false;
     }
-    return returnType.equals(PsiType.BOOLEAN) || returnType.equalsToText("java.lang.Boolean");
+    return returnType.equals(PsiTypes.booleanType()) || returnType.equalsToText("java.lang.Boolean");
   }
 
   public static boolean isBooleanAssignment(GrStatement expression) {
 
-    if (!(expression instanceof GrAssignmentExpression)) {
+    if (!(expression instanceof GrAssignmentExpression assignment)) {
       return false;
     }
-    final GrAssignmentExpression assignment =
-        (GrAssignmentExpression) expression;
     final GrExpression rhs = assignment.getRValue();
     if (rhs == null) {
       return false;
@@ -60,6 +56,6 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
     if (assignmentType == null) {
       return false;
     }
-    return assignmentType.equals(PsiType.BOOLEAN) || assignmentType.equalsToText("java.lang.Boolean");
+    return assignmentType.equals(PsiTypes.booleanType()) || assignmentType.equalsToText("java.lang.Boolean");
   }
 }

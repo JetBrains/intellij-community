@@ -1,19 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.template.emmet.completion.EmmetAbbreviationCompletionProvider;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -26,7 +25,14 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,8 +60,8 @@ public final class XmlCompletionContributor extends CompletionContributor {
   public static final Key<Boolean> WORD_COMPLETION_COMPATIBLE = Key.create("WORD_COMPLETION_COMPATIBLE");
   public static final EntityRefInsertHandler ENTITY_INSERT_HANDLER = new EntityRefInsertHandler();
 
-  @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
-  private static final InsertHandler<LookupElementDecorator<LookupElement>> QUOTE_EATER = new InsertHandlerDecorator<LookupElement>() {
+  public static final @NonNls String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
+  private static final InsertHandler<LookupElementDecorator<LookupElement>> QUOTE_EATER = new InsertHandlerDecorator<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
       final char completionChar = context.getCompletionChar();
@@ -72,15 +78,15 @@ public final class XmlCompletionContributor extends CompletionContributor {
             editor.getCaretModel().moveToOffset(tailOffset + 1);
           }
         }
-      } else {
+      }
+      else {
         item.getDelegate().handleInsert(context);
       }
     }
   };
 
   public XmlCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new EmmetAbbreviationCompletionProvider());
-    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -95,21 +101,25 @@ public final class XmlCompletionContributor extends CompletionContributor {
           String prefix = matcher.getPrefix();
           if (prefix.startsWith("&")) {
             prefix = prefix.substring(1);
-          } else if (prefix.contains("&")) {
+          }
+          else if (prefix.contains("&")) {
             prefix = prefix.substring(prefix.indexOf("&") + 1);
           }
-
-          addEntityRefCompletions(position, result.withPrefixMatcher(prefix));
+          matcher = matcher.cloneWithPrefix(prefix);
+          if (parameters.getInvocationCount() == 0) {
+            matcher = new StartOnlyMatcher(matcher);
+          }
+          addEntityRefCompletions(position, result.withPrefixMatcher(matcher));
         }
       }
     });
     extend(CompletionType.BASIC,
            psiElement().inside(XmlPatterns.xmlAttributeValue()),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
-                                           @NotNull final CompletionResultSet result) {
+                                           final @NotNull CompletionResultSet result) {
                final PsiElement position = parameters.getPosition();
                if (!position.getLanguage().isKindOf(XMLLanguage.INSTANCE)) {
                  return;
@@ -139,7 +149,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
              }
            });
     extend(CompletionType.BASIC, psiElement().withElementType(XmlTokenType.XML_DATA_CHARACTERS),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -176,7 +186,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
     if (result.isStopped()) {
       return;
@@ -197,12 +207,11 @@ public final class XmlCompletionContributor extends CompletionContributor {
     PsiElement element = parameters.getPosition();
     if (!isXmlNameCompletion(parameters)) return;
     PsiElement parent = element.getParent();
-    if (!(parent instanceof XmlTag) ||
+    if (!(parent instanceof XmlTag tag) ||
         !(parameters.getOriginalFile() instanceof XmlFile)) {
       return;
     }
     result.stopHere();
-    final XmlTag tag = (XmlTag)parent;
     final String namespace = tag.getNamespace();
     final String prefix = result.getPrefixMatcher().getPrefix();
     final int pos = prefix.indexOf(':');
@@ -239,7 +248,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public String advertise(@NotNull final CompletionParameters parameters) {
+  public String advertise(final @NotNull CompletionParameters parameters) {
     if (isXmlNameCompletion(parameters) && parameters.getCompletionType() == CompletionType.BASIC) {
       if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(TAG_NAME_COMPLETION_FEATURE, parameters.getPosition().getProject())) {
         final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION);
@@ -250,7 +259,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
+  public void beforeCompletion(final @NotNull CompletionInitializationContext context) {
     final int offset = context.getStartOffset();
     final PsiFile file = context.getFile();
     final XmlAttributeValue attributeValue = PsiTreeUtil.findElementOfClassAtOffset(file, offset, XmlAttributeValue.class, true);
@@ -283,12 +292,11 @@ public final class XmlCompletionContributor extends CompletionContributor {
       descriptorFiles = ContainerUtil.packNullables(findDescriptorFile(tag, containingFile));
     }
 
-    final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
-    final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<PsiElement>() {
+    final boolean acceptSystemEntities = containingFile.getFileType() == XmlFileType.INSTANCE;
+    final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<>() {
       @Override
-      public boolean execute(@NotNull final PsiElement element) {
-        if (element instanceof XmlEntityDecl) {
-          final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+      public boolean execute(final @NotNull PsiElement element) {
+        if (element instanceof XmlEntityDecl xmlEntityDecl) {
           if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
             final LookupElementBuilder _item = buildEntityLookupItem(xmlEntityDecl);
             if (_item != null) {
@@ -312,8 +320,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
     }
   }
 
-  @Nullable
-  private static LookupElementBuilder buildEntityLookupItem(@NotNull final XmlEntityDecl decl) {
+  private static @Nullable LookupElementBuilder buildEntityLookupItem(final @NotNull XmlEntityDecl decl) {
     final String name = decl.getName();
     if (name == null) {
       return null;

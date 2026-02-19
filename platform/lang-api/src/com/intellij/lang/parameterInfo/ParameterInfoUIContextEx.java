@@ -19,13 +19,11 @@ package com.intellij.lang.parameterInfo;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.EnumSet;
 
 /**
  * Richer interface for describing a popup hint contents.
- *
- * @author dcheryasov
  */
 public interface ParameterInfoUIContextEx extends ParameterInfoUIContext {
 

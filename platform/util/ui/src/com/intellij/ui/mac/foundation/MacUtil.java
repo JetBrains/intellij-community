@@ -1,40 +1,40 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.KeyEvent;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.ui.mac.foundation.Foundation.*;
+import static com.intellij.ui.mac.foundation.Foundation.createSelector;
+import static com.intellij.ui.mac.foundation.Foundation.getObjcClass;
+import static com.intellij.ui.mac.foundation.Foundation.invoke;
+import static com.intellij.ui.mac.foundation.Foundation.nsString;
+import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
 
-/**
- * @author pegov
- */
 public final class MacUtil {
   private static final Logger LOG = Logger.getInstance(MacUtil.class);
-  private static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
 
-  private MacUtil() {
-  }
+  private MacUtil() { }
 
-  @Nullable
-  public static ID findWindowForTitle(@Nullable String title) {
+  public static @Nullable ID findWindowForTitle(@Nullable String title) {
     if (title == null || title.isEmpty()) return null;
     final ID pool = invoke("NSAutoreleasePool", "new");
 
@@ -66,107 +66,109 @@ public final class MacUtil {
     return focusedWindow;
   }
 
-  public static synchronized void startModal(JComponent component, String key) {
-    try {
-      if (SwingUtilities.isEventDispatchThread()) {
-        EventQueue theQueue = component.getToolkit().getSystemEventQueue();
+  /** @deprecated the method became obsolete with the demise of sheets */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  public static void adjustFocusTraversal(@NotNull Disposable disposable) { }
 
-        while (component.getClientProperty(key) == Boolean.TRUE) {
-          AWTEvent event = theQueue.getNextEvent();
-          Object source = event.getSource();
-          if (event instanceof ActiveEvent) {
-            ((ActiveEvent)event).dispatch();
-          }
-          else if (source instanceof Component) {
-            ((Component)source).dispatchEvent(event);
-          }
-          else if (source instanceof MenuComponent) {
-            ((MenuComponent)source).dispatchEvent(event);
-          }
-          else {
-            LOG.debug("Unable to dispatch: " + event);
-          }
+  public static @NotNull ID getWindowFromJavaWindow(@Nullable Window w) {
+    if (w == null) {
+      return ID.NIL;
+    }
+    if (SystemInfo.isJetBrainsJvm) {
+      try {
+        Object cPlatformWindow = getPlatformWindow(w);
+        if (cPlatformWindow != null) {
+          Field ptr = cPlatformWindow.getClass().getSuperclass().getDeclaredField("ptr");
+          ptr.setAccessible(true);
+          return new ID(ptr.getLong(cPlatformWindow));
         }
       }
-      else {
-        assert false: "Should be called from Event-Dispatch Thread only!";
-        while (component.getClientProperty(key) == Boolean.TRUE) {
-          // TODO:
-          //wait();
-        }
+      catch (IllegalAccessException | NoSuchFieldException e) {
+        LOG.debug(e);
       }
     }
-    catch (InterruptedException ignored) {
-    }
+    return ID.NIL;
   }
 
-  public static synchronized void startModal(JComponent component) {
-    startModal(component, MAC_NATIVE_WINDOW_SHOWING);
-  }
-
-  public static boolean isFullKeyboardAccessEnabled() {
-    if (!SystemInfoRt.isMac) {
-      return false;
-    }
-
-    AtomicBoolean result = new AtomicBoolean();
-    executeOnMainThread(true, true, () -> {
-      result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").booleanValue());
-    });
-    return result.get();
-  }
-
-  public static void adjustFocusTraversal(@NotNull Disposable disposable) {
-    if (!SystemInfoRt.isMac) {
-      return;
-    }
-    final AWTEventListener listener = new AWTEventListener() {
-      @Override
-      public void eventDispatched(AWTEvent event) {
-        if (event instanceof KeyEvent
-            && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_TAB
-            && (!(event.getSource() instanceof JTextComponent))
-            && (!(event.getSource() instanceof JList))
-            && !isFullKeyboardAccessEnabled())
-          ((KeyEvent)event).consume();
-      }
-    };
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
-      }
-    });
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.KEY_EVENT_MASK);
-  }
-
-  public static ID findWindowFromJavaWindow(final Window w) {
-    ID windowId = null;
-    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
+  public static @Nullable Object getPlatformWindow(@NotNull Window w) {
+    if (SystemInfo.isJetBrainsJvm) {
       try {
         Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
         Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
-        Object peer = componentAccessor.getClass().getMethod("getPeer", Component.class).invoke(componentAccessor, w);
-        Class<?> cWindowPeerClass  = peer.getClass();
-        Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
-        Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
-        Class<?> cPlatformWindowClass = cPlatformWindow.getClass();
-        Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
-        windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
+        Method getPeer = componentAccessor.getClass().getMethod("getPeer", Component.class);
+        getPeer.setAccessible(true);
+        Object peer = getPeer.invoke(componentAccessor, w);
+        if (peer != null) {
+          Class<?> cWindowPeerClass = peer.getClass();
+          Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
+          Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
+          if (cPlatformWindow != null) {
+            return cPlatformWindow;
+          }
+        }
       }
       catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
         LOG.debug(e);
       }
     }
-    else {
-      String foremostWindowTitle = getWindowTitle(w);
-      windowId = findWindowForTitle(foremostWindowTitle);
-    }
-    return windowId;
+    return null;
   }
 
-  @Nullable
-  public static String getWindowTitle(Window documentRoot) {
+  public static boolean isNativeBoundsEmpty(@NotNull Window window) {
+    Object platformWindow = getPlatformWindow(window);
+    if (platformWindow != null) {
+      try {
+        Field boundsField = platformWindow.getClass().getDeclaredField("nativeBounds");
+        boundsField.setAccessible(true);
+        Object boundsObject = boundsField.get(platformWindow);
+        if (boundsObject instanceof Rectangle bounds) {
+          return bounds.isEmpty();
+        }
+      }
+      catch (NoSuchFieldException | IllegalAccessException e) {
+        LOG.debug(e);
+      }
+    }
+    return false;
+  }
+
+  public static void updateRootPane(@NotNull Window window, @NotNull JRootPane rootPane) {
+    try {
+      Object platformWindow = getPlatformWindow(window);
+      if (platformWindow == null) {
+        return;
+      }
+
+      Field field = platformWindow.getClass().getDeclaredField("CLIENT_PROPERTY_APPLICATOR");
+      field.setAccessible(true);
+      Object clientPropertyApplicator = field.get(platformWindow);
+
+      Method method = ReflectionUtil.getMethod(clientPropertyApplicator.getClass(), "attachAndApplyClientProperties", JComponent.class);
+      if (method != null) {
+        method.invoke(clientPropertyApplicator, rootPane);
+      }
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+    }
+    finally {
+      // https://youtrack.jetbrains.com/issue/IDEA-323593
+      window.revalidate();
+    }
+  }
+
+  public static ID findWindowFromJavaWindow(final Window w) {
+    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
+      ID window = getWindowFromJavaWindow(w);
+      if (!ID.NIL.equals(window)) {
+        return window;
+      }
+    }
+    return findWindowForTitle(getWindowTitle(w));
+  }
+
+  public static @Nullable String getWindowTitle(Window documentRoot) {
     String windowTitle = null;
     if (documentRoot instanceof Frame) {
       windowTitle = ((Frame)documentRoot).getTitle();
@@ -231,21 +233,5 @@ public final class MacUtil {
 
   public static @NotNull Runnable wakeUpNeo(@NotNull Object reason) {
     return new ActivityImpl(reason);
-  }
-
-  @NotNull
-  public static Color colorFromNative(ID color) {
-    final ID colorSpace = invoke("NSColorSpace", "genericRGBColorSpace");
-    final ID colorInSpace = invoke(color, "colorUsingColorSpace:", colorSpace);
-    final long red = invoke(colorInSpace, "redComponent").longValue();
-    final long green = invoke(colorInSpace, "greenComponent").longValue();
-    final long blue = invoke(colorInSpace, "blueComponent").longValue();
-    final long alpha = invoke(colorInSpace, "alphaComponent").longValue();
-    final double realAlpha = alpha != 0 && (int)((alpha >> 52) & 0x7ffL) == 0 ? 1.0 : Double.longBitsToDouble(alpha);
-    //noinspection UseJBColor
-    return new Color((float)Double.longBitsToDouble(red),
-                     (float)Double.longBitsToDouble(green),
-                     (float)Double.longBitsToDouble(blue),
-                     (float)realAlpha);
   }
 }

@@ -3,12 +3,10 @@ package com.intellij.uiDesigner;
 
 import com.intellij.ui.paint.LinePainter2D;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class HSpacer extends DesignSpacer{
   public HSpacer(){
     setSize(50,getHandleHeight());

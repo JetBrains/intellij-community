@@ -17,13 +17,13 @@ class MyTest {
 
   void m(int i) {
     String s = foo(switch (i) {default -> "str";});
-    String s1 = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">foo(switch (i) {case 1 -> new Object(); default -> "str";});</error>
+    String s1 = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">foo</error>(switch (i) {case 1 -> new Object(); default -> "str";});
     String s2 =  foo(() -> switch (i) {
             default -> "str";
         });
     String s3 = foo(() -> switch (i) {default -> bar();});
     String s4 = foo(() -> switch (i) {default -> { yield bar();}});
-    String s5 = <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">foo(() -> switch (i) {default -> { yield 1;}});</error>
+    String s5 = <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">foo</error>(() -> switch (i) {default -> { yield 1;}});
     String s6 = switch (i) {
       case 1 -> <error descr="Bad type in switch expression: int cannot be converted to java.lang.String">2</error>;
       default -> {
@@ -105,6 +105,15 @@ class MyTest {
     Runnable r = () -> <error descr="Target type for switch expression cannot be void">switch</error>(0) {
       default -> throw new IllegalArgumentException();
     };
+
+    var rv = switch (0) {
+      case 0 -> 42;
+      default -> <error descr="Expression type should not be 'void'">System.out.println(42)</error>;
+    };
+    
+    <error descr="Cannot infer type: variable initializer is 'null'">var</error> rv1 = switch (0) {
+      default -> null;
+    };
   }
 
   static void test(boolean b, int i) {
@@ -116,12 +125,30 @@ class MyTest {
 
     System.out.println(c.getCanonicalName());
   }
-  
-  static void testNull(int i) {
-    var v = switch(i) {
-      case 1 -> "abcd";
-      default -> null;
+
+  interface I {
+    void m();
+  }
+  interface I1 extends I {}
+  interface I2 extends I {}
+
+  static void n(I1 i1, I2 i2, int s) {
+    var i_ = switch (s) {
+      case 1 -> i1;
+      case 2 -> null;
+      default -> i2;
     };
-    System.out.println(v.<error descr="Cannot resolve method 'substring' in 'Object'">substring</error>(1));
+    if (i_ != null) {
+      i_.m();
+    }
+    
+    var i__ = switch (s) {
+      case 2 -> null;
+      case 1 -> i1;
+      default -> i2;
+    };
+    if (i__ != null) {
+      i__.m();
+    }
   }
 }

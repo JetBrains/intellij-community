@@ -1,10 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionService
+import com.intellij.codeInsight.completion.CompletionSorter
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER
 import com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.gradle.java.groovy.codeInsight.AbstractGradleGroovyCompletionContributor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
@@ -20,7 +27,6 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactIn
 import org.jetbrains.idea.reposearch.DependencySearchService
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.idea.reposearch.SearchParameters
-import org.jetbrains.plugins.gradle.codeInsight.AbstractGradleCompletionContributor
 import org.jetbrains.plugins.groovy.lang.completion.GrDummyIdentifierProvider.DUMMY_IDENTIFIER_DECAPITALIZED
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
@@ -32,7 +38,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 /**
  * @author Vladislav.Soroka
  */
-class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionContributor() {
+class MavenDependenciesGradleCompletionContributor : AbstractGradleGroovyCompletionContributor() {
   init {
     // map-style notation:
     // e.g.:
@@ -81,7 +87,8 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
             MavenVersionNegatingWeigher()))
           waitAndAdd(searchPromise, cld) { repo ->
             repo.items.forEach {
-              newResult.addElement(MavenDependencyCompletionUtil.lookupElement(it, it.version))
+              val version = it.version ?: return@forEach
+              newResult.addElement(MavenDependencyCompletionUtil.lookupElement(it, version))
             }
           }
         }
@@ -121,7 +128,7 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
           }
         }
         result.restartCompletionOnAnyPrefixChange()
-        val additionalData = CompletionData(suffix, quote)
+        val additionalData = CompletionData(completionPrefix, suffix, quote)
         if (version != null) {
           val newResult = result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(MavenVersionNegatingWeigher()))
           waitAndAdd(searchPromise, cld, completeVersions(newResult, additionalData))
@@ -191,7 +198,7 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
     internal const val VERSION_LABEL = "version"
     internal const val DEPENDENCIES_SCRIPT_BLOCK = "dependencies"
 
-    data class CompletionData(val suffix: String?, val quote: Char)
+    data class CompletionData(val completionPrefix: String, val suffix: String?, val quote: Char)
 
     val COMPLETION_DATA_KEY = Key.create<CompletionData>("COMPLETION_DATA")
 

@@ -1,0 +1,160 @@
+package com.intellij.tasks.context.java;
+
+import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.context.WorkingContextProvider;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+final class BreakpointsContextProvider extends WorkingContextProvider {
+   public @NotNull String getId() {
+      return "javaDebugger";// 21
+   }
+
+   public @NotNull String getDescription() {
+      return TaskBundle.message("java.debugger.breakpoints", new Object[0]);// 26
+   }
+
+   public void saveContext(@NotNull Project project, @NotNull Element toElement) throws WriteExternalException {
+      getBreakpointManager(project).writeExternal(toElement);// 31
+   }// 32
+
+   private static @NotNull BreakpointManager getBreakpointManager(@NotNull Project project) {
+      return DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();// 35
+   }
+
+   public void loadContext(@NotNull Project project, @NotNull Element fromElement) throws InvalidDataException {
+      ((DebuggerManagerImpl)DebuggerManager.getInstance(project)).loadState(fromElement);// 40
+   }// 41
+
+   public void clearContext(@NotNull Project project) {
+      BreakpointManager breakpointManager = getBreakpointManager(project);// 45
+
+      for(Breakpoint breakpoint : breakpointManager.getBreakpoints()) {// 46
+         ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(breakpoint));// 47
+      }
+
+   }// 49
+}
+
+class 'com/intellij/tasks/context/java/BreakpointsContextProvider' {
+   method 'getId ()Ljava/lang/String;' {
+      0      18
+      1      18
+      2      18
+   }
+
+   method 'getDescription ()Ljava/lang/String;' {
+      0      22
+      1      22
+      2      22
+      6      22
+      7      22
+      8      22
+      11      22
+   }
+
+   method 'saveContext (Lcom/intellij/openapi/project/Project;Lorg/jdom/Element;)V' {
+      10      26
+      11      26
+      12      26
+      13      26
+      14      26
+      15      26
+      16      26
+      17      26
+      18      27
+   }
+
+   method 'getBreakpointManager (Lcom/intellij/openapi/project/Project;)Lcom/intellij/debugger/ui/breakpoints/BreakpointManager;' {
+      8      30
+      9      30
+      a      30
+      b      30
+      c      30
+      d      30
+      e      30
+      17      30
+   }
+
+   method 'loadContext (Lcom/intellij/openapi/project/Project;Lorg/jdom/Element;)V' {
+      11      34
+      12      34
+      13      34
+      14      34
+      15      34
+      16      34
+      17      34
+      18      34
+      19      34
+      1a      34
+      1b      34
+      1c      35
+   }
+
+   method 'lambda$clearContext$0 (Lcom/intellij/debugger/ui/breakpoints/BreakpointManager;Lcom/intellij/debugger/ui/breakpoints/Breakpoint;)V' {
+      0      41
+      1      41
+      2      41
+      3      41
+      4      41
+      5      41
+   }
+
+   method 'clearContext (Lcom/intellij/openapi/project/Project;)V' {
+      9      38
+      a      38
+      b      38
+      c      38
+      d      38
+      e      40
+      f      40
+      10      40
+      11      40
+      12      40
+      13      40
+      14      40
+      15      40
+      16      40
+      17      40
+      21      40
+      22      40
+      23      40
+      24      40
+      25      40
+      26      40
+      27      40
+      28      40
+      29      40
+      2a      40
+      2b      40
+      2c      41
+      2d      41
+      2e      41
+      37      41
+      3f      44
+   }
+}
+
+Lines mapping:
+21 <-> 19
+26 <-> 23
+31 <-> 27
+32 <-> 28
+35 <-> 31
+40 <-> 35
+41 <-> 36
+45 <-> 39
+46 <-> 41
+47 <-> 42
+49 <-> 45
+Not mapped:
+48

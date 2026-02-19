@@ -1,7 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.elements.annotation
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -65,7 +69,7 @@ class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
     }
   }
 
-  override fun getFamilyName(): String {
-    return GroovyBundle.message("intention.family.name.add.required.attributes.to.map.constructor")
+  override fun getName(): String {
+    return GroovyBundle.message("intention.name.add.required.attributes.to.map.constructor")
   }
 }

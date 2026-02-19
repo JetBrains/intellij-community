@@ -15,13 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstTryPart;
+
 /**
  * The 'try' part.
  * @see PyExceptPart
  * @see PyFinallyPart
  * @see PyElsePart
- *
- * @author dcheryasov
  */
-public interface PyTryPart extends PyStatementPart {
+public interface PyTryPart extends PyAstTryPart, PyStatementPart {
 }

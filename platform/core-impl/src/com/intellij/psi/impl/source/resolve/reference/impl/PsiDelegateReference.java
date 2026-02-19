@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
@@ -7,9 +8,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Evdokimov
- */
 public class PsiDelegateReference implements PsiReference {
 
   private final PsiReference myDelegate;
@@ -18,27 +16,23 @@ public class PsiDelegateReference implements PsiReference {
     myDelegate = delegate;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myDelegate.getElement();
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myDelegate.getRangeInElement();
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return myDelegate.resolve();
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myDelegate.getCanonicalText();
   }
 
@@ -67,7 +61,7 @@ public class PsiDelegateReference implements PsiReference {
     return myDelegate.isSoft();
   }
 
-  public static PsiReference createSoft(PsiReference origin, final boolean soft) {
+  public static PsiReference createSoft(PsiReference origin, boolean soft) {
     return new PsiDelegateReference(origin) {
       @Override
       public boolean isSoft() {

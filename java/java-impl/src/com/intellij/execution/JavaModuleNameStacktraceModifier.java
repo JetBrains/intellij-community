@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaModuleNameStacktraceModifier implements ConsoleLineModifier {
+public final class JavaModuleNameStacktraceModifier implements ConsoleLineModifier {
   @Override
   public @Nullable String modify(@NotNull String line) {
     int nonWhitespaceIdx = StringUtil.skipWhitespaceForward(line, 0);

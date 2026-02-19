@@ -20,11 +20,16 @@ import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.Nls;
 
 public class PatchSyntaxException extends Exception {
+  private static final int NO_LINE_NUMBER = -1;
   private final int myLine;
 
   public PatchSyntaxException(int line, @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
     super(message);
     myLine = line;
+  }
+
+  public PatchSyntaxException(@Nls(capitalization = Nls.Capitalization.Sentence) String message) {
+    this(NO_LINE_NUMBER, message);
   }
 
   public int getLine() {
@@ -33,6 +38,8 @@ public class PatchSyntaxException extends Exception {
 
   @Override
   public String getMessage() {
-    return  super.getMessage() + VcsBundle.message("patch.apply.syntax.line", myLine);
+    return myLine == NO_LINE_NUMBER ?
+           super.getMessage() :
+           super.getMessage() + VcsBundle.message("patch.apply.syntax.line", myLine);
   }
 }

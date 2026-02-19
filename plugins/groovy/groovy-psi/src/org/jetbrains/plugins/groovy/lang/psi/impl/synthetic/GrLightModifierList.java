@@ -1,7 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,11 +26,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifier
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP;
 
 public class GrLightModifierList extends LightElement implements GrModifierList {
-
   private int myModifiers;
   private final List<GrAnnotation> myAnnotations = new ArrayList<>();
 
@@ -45,7 +52,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   public void addModifier(String modifier) {
-    int code = NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+    int code = NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier);
     assert code != 0;
     myModifiers |= code;
   }
@@ -121,8 +128,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   @Override
-  @NotNull
-  public GrLightAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull GrLightAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final GrLightAnnotation annotation = new GrLightAnnotation(getManager(), getLanguage(), qualifiedName, this);
     myAnnotations.add(annotation);
     return annotation;
@@ -167,7 +173,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
       }
     }
 
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       buffer.delete(buffer.length() - 1, buffer.length());
     }
     return buffer.toString();
@@ -178,9 +184,8 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     return PsiElement.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public PsiElement getModifier(@GrModifier.GrModifierConstant @NotNull @NonNls String name) {
+  public @Nullable PsiElement getModifier(@GrModifier.GrModifierConstant @NotNull @NonNls String name) {
     return null;
   }
 
@@ -210,11 +215,24 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     else if (modifierList != null) {
       for (String modifier : PsiModifier.MODIFIERS) {
         if (modifierList.hasExplicitModifier(modifier)) {
-          mod |= NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+          mod |= NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier);
         }
       }
     }
 
     setModifiers(mod);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GrLightModifierList list = (GrLightModifierList)o;
+    return myModifiers == list.myModifiers && Objects.equals(myAnnotations, list.myAnnotations);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myModifiers, myAnnotations);
   }
 }

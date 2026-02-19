@@ -1,0 +1,9 @@
+<idea-plugin visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <eelProvider implementation="com.intellij.platform.ide.impl.wsl.WslEelProvider" os="windows"/>
+    <eelMachineResolver implementation="com.intellij.platform.ide.impl.wsl.WslEelMachineResolver" os="windows"/>
+    <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
+                        serviceImplementation="com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager"/>
+    <multiRoutingFileSystemBackend implementation="com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend" os="windows"/>
+  </extensions>
+</idea-plugin>

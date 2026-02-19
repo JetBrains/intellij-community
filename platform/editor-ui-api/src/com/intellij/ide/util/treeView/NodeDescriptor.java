@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.project.Project;
@@ -6,25 +6,28 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
 import java.util.Comparator;
 
 public abstract class NodeDescriptor<E> {
-  public static final NodeDescriptor<?>[] EMPTY_ARRAY = new NodeDescriptor[0];
-  public static final int DEFAULT_WEIGHT = 30;
+  private static final NodeDescriptor<?>[] EMPTY_ARRAY = new NodeDescriptor[0];
+  private static final int DEFAULT_WEIGHT = 30;
+
+  public static NodeDescriptor<?>[] getEmptyArray() {
+    return EMPTY_ARRAY;
+  }
+
+  public static int getDefaultWeight() {
+    return DEFAULT_WEIGHT;
+  }
 
   protected final Project myProject;
   private final NodeDescriptor<?> myParentDescriptor;
 
   protected @NlsSafe String myName;
-  @Nullable protected Icon myClosedIcon;
+  protected @Nullable Icon myClosedIcon;
 
-  /**
-   * @deprecated Unused. Left for API compatibility.
-   */
-  @Deprecated
-  protected Icon myOpenIcon;
   protected Color myColor;
 
   private int myIndex = -1;
@@ -39,8 +42,7 @@ public abstract class NodeDescriptor<E> {
     myParentDescriptor = parentDescriptor;
   }
 
-  @Nullable
-  public NodeDescriptor<?> getParentDescriptor() {
+  public @Nullable NodeDescriptor<?> getParentDescriptor() {
     return myParentDescriptor;
   }
 
@@ -69,23 +71,6 @@ public abstract class NodeDescriptor<E> {
     return myName;
   }
 
-  /**
-   * @deprecated Use {@link #getIcon()} instead
-   */
-  @Deprecated
-  public final Icon getOpenIcon() {
-    return getIcon();
-  }
-
-  /**
-   * @deprecated Use {@link #getIcon()} instead
-   */
-  @Deprecated
-  public final Icon getClosedIcon() {
-    return getIcon();
-  }
-
-  @Nullable
   public final Icon getIcon() {
     return myClosedIcon;
   }
@@ -94,7 +79,6 @@ public abstract class NodeDescriptor<E> {
     return myColor;
   }
 
-  @Nullable
   public final Project getProject() {
     return myProject;
   }
@@ -108,7 +92,7 @@ public abstract class NodeDescriptor<E> {
     if (element instanceof WeighedItem) {
       return ((WeighedItem) element).getWeight();
     }
-    return DEFAULT_WEIGHT;
+    return getDefaultWeight();
   }
 
   public final long getChildrenSortingStamp() {
@@ -161,8 +145,7 @@ public abstract class NodeDescriptor<E> {
     }
 
     public static final class Delegate<T extends NodeDescriptor<?>> extends NodeComparator<T> {
-      @NotNull
-      private NodeComparator<? super T> myDelegate;
+      private @NotNull NodeComparator<? super T> myDelegate;
 
       public Delegate(@NotNull NodeComparator<? super T> delegate) {
         myDelegate = delegate;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -14,24 +14,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Describes an artifact's type from Project Settings | Artifacts
+ * @see Artifact
+ * @see ArtifactPropertiesProvider
+ */
 public abstract class ArtifactType {
-  public static final ExtensionPointName<ArtifactType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.artifactType");
+  public static final ExtensionPointName<ArtifactType> EP_NAME = new ExtensionPointName<>("com.intellij.packaging.artifactType");
   private final String myId;
   private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTitle;
-
-  /**
-   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
-   * Please use the constructor that accepts a messagePointer for {@link ArtifactType#myTitle}
-   */
-  @Deprecated
-  protected ArtifactType(@NonNls String id, @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
-    this(id, () -> title);
-  }
 
   protected ArtifactType(@NonNls String id, Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> title) {
     myId = id;
@@ -46,28 +42,24 @@ public abstract class ArtifactType {
     return myTitle.get();
   }
 
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
 
-  @Nullable
-  public String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem) {
+  public @Nullable String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem) {
     return getDefaultPathFor(sourceItem.getKindOfProducedElements());
   }
 
-  @Nullable
-  public abstract @NlsSafe String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
+  public abstract @Nullable @NlsSafe String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
 
   public boolean isSuitableItem(@NotNull PackagingSourceItem sourceItem) {
     return true;
   }
 
-  public static ArtifactType[] getAllTypes() {
-    return EP_NAME.getExtensions();
+  public static @NotNull List<ArtifactType> getAllTypes() {
+    return EP_NAME.getExtensionList();
   }
 
-  @Nullable
-  public static ArtifactType findById(@NotNull @NonNls String id) {
-    for (ArtifactType type : getAllTypes()) {
+  public static @Nullable ArtifactType findById(@NotNull @NonNls String id) {
+    for (ArtifactType type : EP_NAME.getIterable()) {
       if (id.equals(type.getId())) {
         return type;
       }
@@ -75,20 +67,17 @@ public abstract class ArtifactType {
     return null;
   }
 
-  @NotNull
-  public abstract CompositePackagingElement<?> createRootElement(@NotNull String artifactName);
+  public abstract @NotNull CompositePackagingElement<?> createRootElement(@NotNull String artifactName);
 
-  @NotNull
-  public List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
+  public @NotNull List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
     return Collections.emptyList();
   }
 
   public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement, @NotNull Artifact artifact, @NotNull ArtifactProblemsHolder manager) {
   }
 
-  @Nullable
-  public List<? extends PackagingElement<?>> getSubstitution(@NotNull Artifact artifact, @NotNull PackagingElementResolvingContext context,
-                                                             @NotNull ArtifactType parentType) {
+  public @Nullable List<? extends PackagingElement<?>> getSubstitution(@NotNull Artifact artifact, @NotNull PackagingElementResolvingContext context,
+                                                                       @NotNull ArtifactType parentType) {
     return null;
   }
 }

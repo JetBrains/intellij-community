@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,7 +6,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Factory;
@@ -14,13 +13,43 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ThrowableRunnable;
@@ -206,30 +235,30 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
     final PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("D.java",
                                                                                                                       "import java.util.Map.Entry");
     PsiImportStatement importStatement = file.getImportList().getImportStatements()[0];
-    assertTrue(!importStatement.isOnDemand());
+    assertFalse(importStatement.isOnDemand());
   }
 
   public void testDocCommentPrecededByLineComment() {
     final PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("D.java",
-                                                                                                                      "////////////////////////////////////////\n" +
-                                                                                                                      "/** */\n" +
-                                                                                                                                 "/////////////////////////////////////////////////\n" +
-                                                                                                                                                                                       "class Usage {\n" +
-                                                                                                                                                                                                         "}");
+                                                                                                      """
+                                                                                                        ////////////////////////////////////////
+                                                                                                        /** */
+                                                                                                        /////////////////////////////////////////////////
+                                                                                                        class Usage {
+                                                                                                        }""");
     final PsiClass psiClass = file.getClasses()[0];
     assertNotNull(psiClass.getDocComment());
   }
 
   public void testTopLevelEnumIsNotStatic() {
     final JavaPsiFacade facade = getJavaFacade();
-    final LanguageLevel prevLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    final LanguageLevel prevLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.getProject(), LanguageLevel.JDK_1_5);
     final PsiClass aClass;
     try {
       aClass = JavaPsiFacade.getElementFactory(getProject()).createEnum("E");
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(prevLanguageLevel);
+      IdeaTestUtil.setProjectLanguageLevel(facade.getProject(), prevLanguageLevel);
     }
     assertTrue(aClass.isEnum());
     assertFalse(aClass.hasModifierProperty(PsiModifier.STATIC));
@@ -237,7 +266,8 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDoNotExpandNestedChameleons() {
     PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A {{{}}}");
-    file.getNode();
+    //noinspection ResultOfMethodCallIgnored
+    file.getNode(); // load tree
 
     PsiCodeBlock initializer = file.getClasses()[0].getInitializers()[0].getBody();
     assertFalse(assertInstanceOf(initializer.getNode(), LazyParseableElement.class).isParsed());
@@ -259,7 +289,7 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiClass psiClass = file.getClasses()[0];
     try {
-      psiClass.addBefore(PsiParserFacade.SERVICE.getInstance(getProject()).createWhiteSpaceFromText(" "), psiClass.getLBrace());
+      psiClass.addBefore(PsiParserFacade.getInstance(getProject()).createWhiteSpaceFromText(" "), psiClass.getLBrace());
       fail();
     }
     catch (IllegalStateException e) {
@@ -387,7 +417,7 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       Document document = file.getViewProvider().getDocument();
       document.insertString(0, " ");
-      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).doCommitWithoutReparse(document);
+      PsiDocumentManager.getInstance(getProject()).commitDocument(document);
     });
 
     assertEquals(" class Foo {}", file.getText());

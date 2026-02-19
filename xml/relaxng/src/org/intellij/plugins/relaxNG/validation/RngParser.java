@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -40,7 +38,6 @@ import com.thaiopensource.xml.sax.Sax2XMLReaderCreator;
 import com.thaiopensource.xml.sax.XMLReaderCreator;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
-import org.jetbrains.annotations.NotNull;
 import org.kohsuke.rngom.ast.builder.BuildException;
 import org.kohsuke.rngom.ast.builder.IncludedGrammar;
 import org.kohsuke.rngom.ast.builder.SchemaBuilder;
@@ -62,29 +59,24 @@ import org.relaxng.datatype.DatatypeLibraryFactory;
 import org.relaxng.datatype.helpers.DatatypeLibraryLoader;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.StringReader;
 import java.util.concurrent.ConcurrentMap;
 
-public class RngParser {
+public final class RngParser {
   private static final Logger LOG = Logger.getInstance(RngParser.class);
 
-  private static final NotNullLazyValue<DatatypeLibraryFactory> DT_LIBRARY_FACTORY = new AtomicNotNullLazyValue<DatatypeLibraryFactory>() {
-    @NotNull
-    @Override
-    protected DatatypeLibraryFactory compute() {
-      return new BuiltinDatatypeLibraryFactory(new CachedDatatypeLibraryFactory(
-        new CascadingDatatypeLibraryFactory(createXsdDatatypeFactory(), new DatatypeLibraryLoader())) {
-          @Override
-          public synchronized DatatypeLibrary createDatatypeLibrary(String namespaceURI) {
-            return super.createDatatypeLibrary(namespaceURI);
-          }
-        });
-    }
-  };
+  private static final NotNullLazyValue<DatatypeLibraryFactory> DT_LIBRARY_FACTORY = NotNullLazyValue.atomicLazy(() -> {
+    return new BuiltinDatatypeLibraryFactory(new CachedDatatypeLibraryFactory(
+      new CascadingDatatypeLibraryFactory(createXsdDatatypeFactory(), new DatatypeLibraryLoader())) {
+      @Override
+      public synchronized DatatypeLibrary createDatatypeLibrary(String namespaceURI) {
+        return super.createDatatypeLibrary(namespaceURI);
+      }
+    });
+  });
 
   private static final ConcurrentMap<String, DPattern> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
@@ -101,7 +93,7 @@ public class RngParser {
 
   public static final DefaultHandler DEFAULT_HANDLER = new DefaultHandler() {
     @Override
-    public void error(SAXParseException e) throws SAXException {
+    public void error(SAXParseException e) {
       LOG.info("e.getMessage() = " + e.getMessage() + " [" + e.getSystemId() + "]");
       LOG.info(e);
     }
@@ -194,13 +186,14 @@ public class RngParser {
           final Schema schema = new MySchemaReader(descriptorFile).createSchema(inputSource, EMPTY_PROPS);
           final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<>();
           RelaxIncludeIndex.processForwardDependencies(descriptorFile, processor);
-          if (processor.getCollection().size() > 0) {
+          if (!processor.getCollection().isEmpty()) {
             return CachedValueProvider.Result.create(schema, processor.toArray(), descriptorFile);
           } else {
             return CachedValueProvider.Result.createSingleDependency(schema, descriptorFile);
           }
         } catch (Exception e) {
-          LOG.info(e);
+          VirtualFile vf = descriptorFile.getVirtualFile();
+          LOG.info("For descriptor file: " + (vf != null ? vf.getPath() : descriptorFile.getName()), e);
           return CachedValueProvider.Result.createSingleDependency(null, descriptorFile);
         }
       };

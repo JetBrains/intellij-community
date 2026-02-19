@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.paths;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -24,9 +24,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebReferencesAnnotatorBase.MyInfo[], WebReferencesAnnotatorBase.MyInfo[]> {
   private static final Logger LOG = Logger.getInstance(WebReferencesAnnotatorBase.class);
 
@@ -38,20 +35,18 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
 
   protected abstract WebReference @NotNull [] collectWebReferences(@NotNull PsiFile file);
 
-  @Nullable
-  protected static WebReference lookForWebReference(@NotNull PsiElement element) {
+  protected static @Nullable WebReference lookForWebReference(@NotNull PsiElement element) {
     return lookForWebReference(Arrays.asList(element.getReferences()));
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  private static WebReference lookForWebReference(Collection<PsiReference> references) {
+  private static @Nullable WebReference lookForWebReference(Collection<? extends PsiReference> references) {
     for (PsiReference reference : references) {
       if (reference instanceof WebReference) {
         return (WebReference)reference;
       }
       else if (reference instanceof PsiDynaReference) {
-        final WebReference webReference = lookForWebReference(((PsiDynaReference)reference).getReferences());
+        final WebReference webReference = lookForWebReference(((PsiDynaReference<?>)reference).getReferences());
         if (webReference != null) {
           return webReference;
         }
@@ -61,8 +56,8 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   @Override
-  public MyInfo[] collectInformation(@NotNull PsiFile file) {
-    final WebReference[] references = collectWebReferences(file);
+  public MyInfo[] collectInformation(@NotNull PsiFile psiFile) {
+    final WebReference[] references = collectWebReferences(psiFile);
     final MyInfo[] infos = new MyInfo[references.length];
 
     for (int i = 0; i < infos.length; i++) {
@@ -101,12 +96,12 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   @Override
-  public void apply(@NotNull PsiFile file, MyInfo[] infos, @NotNull AnnotationHolder holder) {
+  public void apply(@NotNull PsiFile psiFile, MyInfo[] infos, @NotNull AnnotationHolder holder) {
     if (infos == null || infos.length == 0) {
       return;
     }
 
-    final HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(file);
+    final HighlightDisplayLevel displayLevel = getHighlightDisplayLevel(psiFile);
 
     for (MyInfo info : infos) {
       if (!info.myResult) {
@@ -128,24 +123,21 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
   }
 
-  @NotNull
-  protected abstract @InspectionMessage String getErrorMessage(@NotNull String url);
+  protected abstract @NotNull @InspectionMessage String getErrorMessage(@NotNull String url);
 
   protected IntentionAction @NotNull [] getQuickFixes() {
     return IntentionAction.EMPTY_ARRAY;
   }
 
-  @NotNull
-  protected abstract HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context);
+  protected abstract @NotNull HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context);
 
-  @NotNull
-  private MyFetchResult checkUrl(String url) {
+  private @NotNull MyFetchResult checkUrl(String url) {
     synchronized (myFetchCacheLock) {
       final MyFetchCacheEntry entry = myFetchCache.get(url);
       final long currentTime = System.currentTimeMillis();
 
-      if (entry != null && currentTime - entry.getTime() < FETCH_CACHE_TIMEOUT) {
-        return entry.getFetchResult();
+      if (entry != null && currentTime - entry.time() < FETCH_CACHE_TIMEOUT) {
+        return entry.fetchResult();
       }
 
       final MyFetchResult fetchResult = doCheckUrl(url);
@@ -179,23 +171,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     return MyFetchResult.OK;
   }
 
-  private static final class MyFetchCacheEntry {
-    private final long myTime;
-    private final MyFetchResult myFetchResult;
-
-    private MyFetchCacheEntry(long time, @NotNull MyFetchResult fetchResult) {
-      myTime = time;
-      myFetchResult = fetchResult;
-    }
-
-    public long getTime() {
-      return myTime;
-    }
-
-    @NotNull
-    public MyFetchResult getFetchResult() {
-      return myFetchResult;
-    }
+  private record MyFetchCacheEntry(long time, @NotNull MyFetchResult fetchResult) {
   }
 
   private enum MyFetchResult {

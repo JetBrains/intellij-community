@@ -16,7 +16,11 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.*;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.DirtyFilesHolder;
 
 import java.io.IOException;
 import java.util.Collection;

@@ -1,99 +1,69 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogger;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
+import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.internal.statistic.service.fus.collectors.UsageCollectors.COUNTER_EP_NAME;
+
 /**
+ * Please do not implement any new collectors using this API directly.
+ * Please refer to <a href="https://youtrack.jetbrains.com/articles/IJPL-A-153/Fus-Collectors">FUS Collectors</a> and {@link EventLogGroup#registerEvent} doc comments for the new collector API.
  *
- * <p>Use it to record IDE events e.g. invoked action, opened dialog.</p><br/>
- *
- * To implement a new collector:
- * <ol>
- *   <li>Record events with {@link FUCounterUsageLogger#logEvent(Project, String, String)},
- *   {@link FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)},
- *   {@link FUCounterUsageLogger#logEvent(String, String)} or
- *   {@link FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)};
- *   </li>
- *   <li>Register collector in plugin.xml as {@code <statistics.counterUsagesCollector groupId="ID" version="1"/>};</li>
- *   <li>Specify collectors data scheme and implement custom validation rules if necessary.<br/>
- *   For more information see {@link SensitiveDataValidator};</li>
- *   <li>Create an <a href="https://youtrack.jetbrains.com/issues/FUS">issue</a> with group data scheme and descriptions
- *   to register it on the server in statistic metadata repository</li>
- * </ol>
- *
- * To test collector:
- * <ol>
- *  <li>
- *    If group is not registered on the server, add it to events test scheme with "Add Group to Events Test Scheme" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction}
- *  </li>
- *  <li>
- *    Open toolwindow with event logs with "Show Statistics Event Log" action.<br/>
- *    {@link com.intellij.internal.statistic.actions.OpenEventLogFileAction}
- *  </li>
- * </ol>
- *
+ * @see CounterUsagesCollector
  * @see ApplicationUsagesCollector
  * @see ProjectUsagesCollector
  */
 @ApiStatus.Internal
-public class FUCounterUsageLogger {
+@Service
+public final class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
-  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
-
-  @NonNls
-  private static final String[] GENERAL_GROUPS = new String[]{
-    "event.log", "performance", "ui.dialogs", "ui.settings",
-    "intentions", "run.configuration.exec",
-    "productivity", "completion.postfix", "notifications", "settings.changes"
-  };
+  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = StatisticsUploadAssistant.isUseTestStatisticsSendEndpoint() ? 1 : 5;
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
-  private static final FUCounterUsageLogger INSTANCE = new FUCounterUsageLogger();
-
-  @NotNull
-  public static FUCounterUsageLogger getInstance() {
-    return INSTANCE;
+  public static @NotNull FUCounterUsageLogger getInstance() {
+    return ApplicationManager.getApplication().getService(FUCounterUsageLogger.class);
   }
 
   private final Map<String, EventLogGroup> myGroups = new HashMap<>();
 
   public FUCounterUsageLogger() {
-    int version = FeatureUsageLogger.INSTANCE.getConfig().getVersion();
-    for (String group : GENERAL_GROUPS) {
-      // platform groups which record events for all languages,
-      // have the same version as a recorder to simplify further data analysis
-      register(new EventLogGroup(group, version));
-    }
-
-    for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensionList()) {
+    for (CounterUsageCollectorEP ep : COUNTER_EP_NAME.getExtensionList()) {
       registerGroupFromEP(ep);
     }
-    Extensions.getRootArea().getExtensionPoint(CounterUsageCollectorEP.EP_NAME).addExtensionPointListener(
-      new ExtensionPointListener<CounterUsageCollectorEP>() {
+
+    ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(COUNTER_EP_NAME).addExtensionPointListener(
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull CounterUsageCollectorEP extension, @NotNull PluginDescriptor pluginDescriptor) {
           registerGroupFromEP(extension);
@@ -116,54 +86,97 @@ public class FUCounterUsageLogger {
     }
   }
 
-  public static List<FeatureUsagesCollector> instantiateCounterCollectors() {
-    List<FeatureUsagesCollector> result = new ArrayList<>();
-    for (CounterUsageCollectorEP ep : CounterUsageCollectorEP.EP_NAME.getExtensions()) {
-      if (ep.implementationClass != null) {
-        result.add(ep.instantiateClass(ep.implementationClass, ApplicationManager.getApplication().getPicoContainer()));
+  public CompletableFuture<?> logRegisteredGroups() {
+    List<CompletableFuture<?>> futures = new ArrayList<>();
+    for (EventLogGroup group : myGroups.values()) {
+      futures.add(FeatureUsageLogger.getInstance().log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
+    }
+    futures.addAll(eventLogSystemCollectorsRegisteredEvents());
+    Map<String, StatisticsEventLogger> recorderLoggers = new HashMap<>();
+    for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
+      EventLogGroup group = collector.getGroup();
+      if (group != null) {
+        String recorder = group.getRecorder();
+        StatisticsEventLogger logger = recorderLoggers.get(recorder);
+        if (logger == null) {
+          logger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).getLogger();
+          recorderLoggers.put(recorder, logger);
+        }
+        futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
+      }
+      else {
+        try {
+          // get group id to check that either group or group id is overridden
+          if (StringUtil.isEmpty(collector.getGroupId())) {
+            LOG.error("Please override either getGroupId() or getGroup() with not empty string in " + collector.getClass().getName());
+          }
+        }
+        catch (IllegalStateException e) {
+          LOG.error(e.getMessage() + " in " + collector.getClass().getName());
+        }
       }
     }
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+  }
+
+  public static @NotNull List<FeatureUsagesCollector> instantiateCounterCollectors() {
+    List<FeatureUsagesCollector> result = new ArrayList<>(COUNTER_EP_NAME.getPoint().size());
+    COUNTER_EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
+      if (ep.implementationClass != null) {
+        result.add(createCounterCollector(ep, pluginDescriptor));
+      }
+      return Unit.INSTANCE;
+    });
     return result;
+  }
+
+  private static @NotNull FeatureUsagesCollector createCounterCollector(
+    @NotNull CounterUsageCollectorEP ep,
+    @NotNull PluginDescriptor pluginDescriptor
+  ) {
+    Class<Object> aClass;
+    try {
+      aClass = ApplicationManager.getApplication().loadClass(ep.implementationClass, pluginDescriptor);
+    }
+    catch (ClassNotFoundException e) {
+      throw new PluginException(e, pluginDescriptor.getPluginId());
+    }
+
+    Field instanceField;
+    try {
+      instanceField = aClass.getDeclaredField("INSTANCE");
+    }
+    catch (NoSuchFieldException e) {
+      return ApplicationManager.getApplication().instantiateClass(ep.implementationClass, pluginDescriptor);
+    }
+
+    instanceField.setAccessible(true);
+    try {
+      return (FeatureUsagesCollector)instanceField.get(null);
+    }
+    catch (IllegalAccessException e) {
+      throw new PluginException(e, pluginDescriptor.getPluginId());
+    }
   }
 
   private void register(@NotNull EventLogGroup group) {
     myGroups.put(group.getId(), group);
   }
 
-  public void logRegisteredGroups() {
-    for (EventLogGroup group : myGroups.values()) {
-      FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
-    }
-    for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
-      EventLogGroup group = collector.getGroup();
-      if (group != null) {
-        FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
-      }
-    }
-  }
-
   /**
-   * Records new <strong>project-wide</strong> event without context.
-   * <br/><br/>
-   * For events with context use {@link FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)},
-   * useful to report structured events.<br/><br/>
-   * <i>Example:</i><br/>
-   * "eventId": "tooltip.shown"
+   * Event log counter-system collectors aren't registered in EP,
+   * so we log 'registered' event for every StatisticsEventLoggerProvider event log collector.
    *
-   * @param project shows in which project event was invoked, useful to separate events from two simultaneously opened projects.
-   * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
-   * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   *
-   * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * @see StatisticsEventLoggerProvider#getEventLogSystemLogger$intellij_platform_statistics()
    */
-  public void logEvent(@Nullable Project project,
-                       @NonNls @NotNull String groupId,
-                       @NonNls @NotNull String eventId) {
-    final EventLogGroup group = findRegisteredGroupById(groupId);
-    if (group != null) {
-      final Map<String, Object> data = new FeatureUsageData().addProject(project).build();
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data);
+  private static List<CompletableFuture<?>> eventLogSystemCollectorsRegisteredEvents() {
+    List<CompletableFuture<?>> futures = new ArrayList<>();
+    for (StatisticsEventLoggerProvider statisticsEventLoggerProvider: StatisticsEventLogProviderUtil.getEventLogProviders()) {
+      EventLogGroup group = statisticsEventLoggerProvider.getEventLogSystemLogger$intellij_platform_statistics().getGroup();
+      StatisticsEventLogger logger = StatisticsEventLogProviderUtil.getEventLogProvider(group.getRecorder()).getLogger();
+      futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
     }
+    return futures;
   }
 
   /**
@@ -176,15 +189,17 @@ public class FUCounterUsageLogger {
    * @param project shows in which project event was invoked, useful to separate events from two simultaneously opened projects.
    * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
    * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
+   * @param data    information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
+   * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
+  @Deprecated
   public void logEvent(@Nullable Project project,
                        @NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId,
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data.addProject(project).build());
+      FeatureUsageLogger.getInstance().log(group, eventId, data.addProject(project).build());
     }
   }
 
@@ -192,24 +207,23 @@ public class FUCounterUsageLogger {
    * Records new <strong>application-wide</strong> event without context.
    * <br/><br/>
    * For events with context use {@link FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)},
-   * useful to report structured events.<br/>
-   * For project-wide events use {@link FUCounterUsageLogger#logEvent(Project, String, String)},
-   * useful to separate events from two simultaneously opened projects.<br/><br/>
+   * useful to report structured events.<br/><br/>
    *
    * <i>Example:</i><br/>
    * "eventId": "hector.clicked"
    *
    * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
    * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   *
    * @see FUCounterUsageLogger#logEvent(String, String, FeatureUsageData)
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
+  @Deprecated(forRemoval = true)
   public void logEvent(@NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId);
+      FeatureUsageLogger.getInstance().log(group, eventId);
     }
   }
 
@@ -224,21 +238,21 @@ public class FUCounterUsageLogger {
    *
    * @param groupId is used to simplify access to events, e.g. 'dialogs', 'intentions'.
    * @param eventId should be a <strong>verb</strong> because it shows which action happened, e.g. 'dialog.shown', 'project.opened'.
-   * @param data information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
-   *
+   * @param data    information about event context or related "items", e.g. "input_event":"Alt+Enter", "place":"MainMenu".
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
+   * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
+  @Deprecated
   public void logEvent(@NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId,
                        @NotNull FeatureUsageData data) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      FeatureUsageLogger.INSTANCE.log(group, eventId, data.build());
+      FeatureUsageLogger.getInstance().log(group, eventId, data.build());
     }
   }
 
-  @Nullable
-  private EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
+  private @Nullable EventLogGroup findRegisteredGroupById(@NotNull String groupId) {
     if (!myGroups.containsKey(groupId)) {
       LOG.error(
         "Cannot record event because group '" + groupId + "' is not registered. " +

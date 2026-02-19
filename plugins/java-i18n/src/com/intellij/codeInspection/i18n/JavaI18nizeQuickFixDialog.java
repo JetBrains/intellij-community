@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -6,12 +6,15 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -21,29 +24,53 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UI;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 import org.jetbrains.uast.UExpression;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
 
 public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQuickFixDialog {
+  private static final String RESOURCE_BUNDLE_EXPRESSION_USED = "RESOURCE_BUNDLE_EXPRESSION_USED";
   private final T myLiteralExpression;
 
   private final JLabel myPreviewLabel;
@@ -53,18 +80,21 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
   private final JPanel myJavaCodeInfoPanel;
   private final JPanel myPreviewPanel;
   private PsiClassType myResourceBundleType;
-  protected final ResourceBundleManager myResourceBundleManager;
+  final ResourceBundleManager myResourceBundleManager;
 
   private final boolean myShowJavaCodeInfo;
   private final boolean myShowPreview;
 
-  @NonNls public static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
-  @NonNls public static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
-  @NonNls public static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
+  private final ExecutorService myExecutorPool = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    "JavaI18nizeQuickFixDialog Executor Pool", AppExecutorUtil.getAppExecutorService(), 1);
+
+  public static final @NonNls String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
+  public static final @NonNls String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
+  public static final @NonNls String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
 
   public JavaI18nizeQuickFixDialog(@NotNull Project project,
-                                   @NotNull final PsiFile context,
-                                   @Nullable final T literalExpression,
+                                   final @NotNull PsiFile context,
+                                   final @Nullable T literalExpression,
                                    @NotNull String defaultPropertyValue,
                                    DialogCustomization customization,
                                    final boolean showJavaCodeInfo,
@@ -102,7 +132,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     if (myShowJavaCodeInfo) {
       LOG.assertTrue(resourceBundle != null);
       myResourceBundleType = factory.createType(resourceBundle);
-      @NonNls String defaultVarName = "resourceBundle";
+      @NonNls String defaultVarName = PropertiesComponent.getInstance(myProject).getValue(RESOURCE_BUNDLE_EXPRESSION_USED, "resourceBundle");
       final JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(project);
       PsiExpressionCodeFragment expressionCodeFragment =
         codeFragmentFactory.createExpressionCodeFragment(defaultVarName, myLiteralExpression.getSourcePsi(), myResourceBundleType, true);
@@ -179,7 +209,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     }
   }
 
-  public PropertyCreationHandler getPropertyCreationHandler() {
+  PropertyCreationHandler getPropertyCreationHandler() {
     if (useExistingProperty()) {
       return JavaI18nUtil.EMPTY_CREATION_HANDLER;
     }
@@ -194,13 +224,26 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     if (myShowJavaCodeInfo) {
       myJavaCodeInfoPanel.setVisible(showResourceBundleTextField(templateName, myProject));
     }
-    Set<String> result = JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression.getSourcePsi());
-    if (result.isEmpty()) {
-      result.add(getResourceBundleText());
-    }
 
-    myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(result));
-    SwingUtilities.invokeLater(() -> myRBEditorTextField.setSelectedIndex(0));
+    ReadAction
+      .nonBlocking(() -> JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression.getSourcePsi()))
+      .finishOnUiThread(ModalityState.any(), suggestedBundles -> {
+        if (suggestedBundles.isEmpty()) {
+          suggestedBundles.add(getResourceBundleText());
+          ContainerUtil.addIfNotNull(suggestedBundles, PropertiesComponent.getInstance(myProject).getValue(RESOURCE_BUNDLE_EXPRESSION_USED));
+        }
+        myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(suggestedBundles));
+        myRBEditorTextField.setSelectedIndex(0);
+      })
+      .submit(PooledThreadExecutor.INSTANCE);
+  }
+
+  @Override
+  protected void doOKAction() {
+    if (myShowJavaCodeInfo) {
+      PropertiesComponent.getInstance(myProject).setValue(RESOURCE_BUNDLE_EXPRESSION_USED, myRBEditorTextField.getText());
+    }
+    super.doOKAction();
   }
 
   public static boolean showResourceBundleTextField(String templateName, Project project) {
@@ -211,13 +254,15 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
   @Override
   protected void somethingChanged() {
     if (myShowPreview) {
-      myPreviewLabel.setText(getI18nizedText());
+      ReadAction
+        .nonBlocking(() -> getI18nizedText())
+        .finishOnUiThread(ModalityState.stateForComponent(myPreviewLabel), (@NlsSafe String text) -> myPreviewLabel.setText(text))
+        .submit(myExecutorPool);
     }
     super.somethingChanged();
   }
 
-  @Nullable
-  protected String getTemplateName() {
+  protected @Nullable String getTemplateName() {
     return myResourceBundleManager.getTemplateName();
   }
 
@@ -252,7 +297,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     String templateName = getTemplateName();
     LOG.assertTrue(templateName != null);
     FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
-    Map<String, String> attributes = new THashMap<>();
+    Map<String, String> attributes = new HashMap<>();
     attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
     attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));
@@ -289,11 +334,89 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
   }
 
   static class JavaExtensibilityData {
-    private JPanel myPreviewPanel;
-    private JPanel myJavaCodeInfoPanel;
-    private JPanel myPanel;
-    private JPanel myHyperLinkPanel;
-    private MultiLineLabel myPreviewLabel;
-    private JPanel myResourceBundleSuggester;
+    private final JPanel myPreviewPanel;
+    private final JPanel myJavaCodeInfoPanel;
+    private final JPanel myPanel;
+    private final JPanel myHyperLinkPanel;
+    private final MultiLineLabel myPreviewLabel;
+    private final JPanel myResourceBundleSuggester;
+
+    public JavaExtensibilityData() {
+      {
+        // GUI initializer generated by IntelliJ IDEA GUI Designer
+        // >>> IMPORTANT!! <<<
+        // DO NOT EDIT OR ADD ANY CODE HERE!
+        myPanel = new JPanel();
+        myPanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        myPanel.setMinimumSize(new Dimension(400, 400));
+        myPanel.setPreferredSize(new Dimension(400, 400));
+        myPreviewPanel = new JPanel();
+        myPreviewPanel.setLayout(new GridLayoutManager(2, 1, new Insets(5, 5, 5, 5), -1, -1));
+        myPreviewPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent");
+        myPanel.add(myPreviewPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        new Dimension(100, -1), null, null, 0, false));
+        myPreviewPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
+                                                                                             this.$$$getMessageFromBundle$$$(
+                                                                                               "messages/JavaI18nBundle",
+                                                                                               "i18n.quickfix.preview.panel.title"),
+                                                                                             TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                             TitledBorder.DEFAULT_POSITION, null, null));
+        myPreviewLabel = new MultiLineLabel();
+        myPreviewLabel.setText("####");
+        myPreviewPanel.add(myPreviewLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, 1,
+                                                               GridConstraints.SIZEPOLICY_FIXED, new Dimension(75, -1), null, null, 0,
+                                                               false));
+        myHyperLinkPanel = new JPanel();
+        myPreviewPanel.add(myHyperLinkPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                 GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                                 new Dimension(45, -1), null, 0, false));
+        final Spacer spacer1 = new Spacer();
+        myPanel.add(spacer1, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                 GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        myJavaCodeInfoPanel = new JPanel();
+        myJavaCodeInfoPanel.setLayout(new GridLayoutManager(1, 1, new Insets(5, 5, 5, 5), 4, -1));
+        myJavaCodeInfoPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+        myPanel.add(myJavaCodeInfoPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_FIXED, new Dimension(100, -1), null, null, 0,
+                                                             false));
+        myJavaCodeInfoPanel.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
+                                                                                               this.$$$getMessageFromBundle$$$(
+                                                                                                 "messages/JavaI18nBundle",
+                                                                                                 "i18n.quickfix.code.panel.title"),
+                                                                                               TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                               TitledBorder.DEFAULT_POSITION, null, null));
+        myResourceBundleSuggester = new JPanel();
+        myJavaCodeInfoPanel.add(myResourceBundleSuggester,
+                                new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      }
+    }
+
+    private static Method $$$cachedGetBundleMethod$$$ = null;
+
+    /** @noinspection ALL */
+    private String $$$getMessageFromBundle$$$(String path, String key) {
+      ResourceBundle bundle;
+      try {
+        Class<?> thisClass = this.getClass();
+        if ($$$cachedGetBundleMethod$$$ == null) {
+          Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+          $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+        }
+        bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+      }
+      catch (Exception e) {
+        bundle = ResourceBundle.getBundle(path);
+      }
+      return bundle.getString(key);
+    }
+
+    /** @noinspection ALL */
+    public JComponent $$$getRootComponent$$$() { return myPanel; }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dualView;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -19,7 +19,10 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JTree;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeModelEvent;
@@ -31,7 +34,10 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -128,7 +134,7 @@ public final class DualView extends JPanel {
   }
 
   private void refreshFlatModel() {
-    ((ListTableModel)myFlatView.getModel()).setItems(myTreeView.getFlattenItems());
+    ((ListTableModel)myFlatView.getModel()).setItems(new ArrayList<>(myTreeView.getFlattenItems()));
   }
 
   private static ColumnInfo[] createTreeColumns(DualViewColumnInfo[] columns) {
@@ -171,7 +177,7 @@ public final class DualView extends JPanel {
     myCurrentView = view;
     if (myCurrentView != null) {
       myCurrentView.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-      myCurrentView.setStriped(true);
+      myCurrentView.setShowGrid(false);
       final int row = myCurrentView.getSelectedRow();
       myCurrentView.scrollRectToVisible(myCurrentView.getCellRect(row, 0, true));
     }
@@ -233,9 +239,8 @@ public final class DualView extends JPanel {
         return createWrappedRenderer(super.getCellRenderer(row, column));
       }
 
-      @NotNull
       @Override
-      public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+      public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
         final Component c = super.prepareRenderer(renderer, row, column);
         if (c instanceof JComponent && !myFlatView.getCellSelectionEnabled()) {
           ((JComponent)c).setBorder(null);
@@ -412,15 +417,14 @@ public final class DualView extends JPanel {
   }
 
   private class MyTableCellRendererWrapper implements TableCellRendererWrapper {
-    @NotNull private final TableCellRenderer myRenderer;
+    private final @NotNull TableCellRenderer myRenderer;
 
     MyTableCellRendererWrapper(@NotNull TableCellRenderer renderer) {
       myRenderer = renderer;
     }
 
-    @NotNull
     @Override
-    public TableCellRenderer getBaseRenderer() {
+    public @NotNull TableCellRenderer getBaseRenderer() {
       return myRenderer;
     }
 

@@ -20,7 +20,9 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.util.List;
 

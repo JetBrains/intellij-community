@@ -8,24 +8,44 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyTupleParameter;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyStructuralType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class PyParameterInfoUtils {
 
-  @Nullable
-  public static PyArgumentList findArgumentList(PsiFile file, int contextOffset, int parameterListStart) {
+  public static @Nullable PyArgumentList findArgumentList(PsiFile file, int contextOffset, int parameterListStart) {
     final PyArgumentList argumentList =
       ParameterInfoUtilsBase.findParentOfType(file, contextOffset - 1, PyArgumentList.class);
 
@@ -41,7 +61,7 @@ public final class PyParameterInfoUtils {
       final PyCallExpression call = argumentList.getCallExpression();
       if (call != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withRemote().withTypeEvalContext(typeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext).withRemote();
 
         return call.multiResolveCallee(resolveContext)
           .stream()
@@ -54,7 +74,8 @@ public final class PyParameterInfoUtils {
   }
 
   /**
-   * builds the textual picture and the list of named parameters
+   * Builds a list of textual representation of parameters
+   * Returns two lists: parameters with type hints and parameters with type annotations
    *
    * @param parameters            parameters of a callable
    * @param indexToNamedParameter used to collect all named parameters of callable
@@ -62,26 +83,30 @@ public final class PyParameterInfoUtils {
    * @param hintFlags             mark parameter as deprecated/highlighted/strikeout
    * @param context               context to be used to get parameter representation
    */
-  public static List<String> buildParameterListHint(@NotNull List<PyCallableParameter> parameters,
-                                                    @NotNull final Map<Integer, PyCallableParameter> indexToNamedParameter,
-                                                    @NotNull final Map<PyCallableParameter, Integer> parameterToHintIndex,
-                                                    @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
-                                                    @NotNull TypeEvalContext context) {
-    final List<String> hintsList = new ArrayList<>();
+  public static List<ParameterDescription> buildParameterListHint(@NotNull List<PyCallableParameter> parameters,
+                                                                  final @NotNull Map<Integer, PyCallableParameter> indexToNamedParameter,
+                                                                  final @NotNull Map<PyCallableParameter, Integer> parameterToHintIndex,
+                                                                  final @NotNull Map<Integer, EnumSet<ParameterFlag>> hintFlags,
+                                                                  @NotNull TypeEvalContext context) {
     final int[] currentParameterIndex = new int[]{0};
+    final List<ParameterDescription> parameterDescriptions = new ArrayList<>();
     ParamHelper.walkDownParameters(
       parameters,
       new ParamHelper.ParamWalker() {
         @Override
         public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add("(");
+          hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
+          ParameterDescription parameterDescription = new ParameterDescription();
+          parameterDescription.setFullRepresentation("(");
+          parameterDescriptions.add(parameterDescription);
         }
 
         @Override
         public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(last ? ")" : "), ");
+          hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
+          ParameterDescription parameterDescription = new ParameterDescription();
+          parameterDescription.setFullRepresentation(last ? ")" : "), ");
+          parameterDescriptions.add(parameterDescription);
         }
 
         @Override
@@ -91,38 +116,50 @@ public final class PyParameterInfoUtils {
 
         @Override
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
-          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(last ? PySlashParameter.TEXT : (PySlashParameter.TEXT + ", "));
+          hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
+          ParameterDescription parameterDescription = new ParameterDescription(PyAstSlashParameter.TEXT, "", last);
+          parameterDescriptions.add(parameterDescription);
         }
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(last ? PySingleStarParameter.TEXT : (PySingleStarParameter.TEXT + ", "));
+          hintFlags.put(parameterDescriptions.size(), EnumSet.noneOf(ParameterFlag.class));
           currentParameterIndex[0]++;
+          ParameterDescription parameterDescription = new ParameterDescription(PyAstSingleStarParameter.TEXT, "", last);
+          parameterDescriptions.add(parameterDescription);
         }
 
         @Override
         public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
+          ParameterDescription parameterDescription = new ParameterDescription(parameter.getName(), "", last);
+          if (parameter.getParameter() instanceof PyNamedParameter) {
+            final String annotation = ((PyNamedParameter)parameter.getParameter()).getAnnotationValue();
+            if (annotation != null) {
+              String annotationText = ParamHelper.getNameInSignature(parameter) + ": " +
+                                      annotation.replaceAll("\n", "").replaceAll("\\s+", " ");
+              parameterDescription.setAnnotation(last ? annotationText : (annotationText + ", "));
+            }
+          }
           stringBuilder.append(parameter.getPresentableText(true, context, type -> type == null || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
-          final int hintIndex = hintsList.size();
+          final int hintIndex = parameterDescriptions.size();
           parameterToHintIndex.put(parameter, hintIndex);
           hintFlags.put(hintIndex, EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(stringBuilder.toString());
           currentParameterIndex[0]++;
+          parameterDescription.setFullRepresentation(stringBuilder.toString());
+          parameterDescriptions.add(parameterDescription);
         }
       }
     );
-    return hintsList;
+    return parameterDescriptions;
   }
 
-  public static void highlightParameter(@NotNull final PyCallableParameter parameter,
-                                        @NotNull final Map<PyCallableParameter, Integer> parameterToHintIndex,
-                                        @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
+  public static void highlightParameter(final @NotNull PyCallableParameter parameter,
+                                        final @NotNull Map<PyCallableParameter, Integer> parameterToHintIndex,
+                                        final @NotNull Map<Integer, EnumSet<ParameterFlag>> hintFlags,
                                         boolean mustHighlight) {
     final Integer hintIndex = parameterToHintIndex.get(parameter);
     if (mustHighlight && hintIndex != null && hintFlags.containsKey(hintIndex)) {
@@ -130,8 +167,7 @@ public final class PyParameterInfoUtils {
     }
   }
 
-  @NotNull
-  public static List<PyCallableParameter> getFlattenedTupleParameterComponents(@NotNull PyTupleParameter parameter) {
+  public static @NotNull List<PyCallableParameter> getFlattenedTupleParameterComponents(@NotNull PyTupleParameter parameter) {
     final List<PyCallableParameter> results = new ArrayList<>();
     for (PyParameter component : parameter.getContents()) {
       if (component instanceof PyNamedParameter) {
@@ -149,11 +185,11 @@ public final class PyParameterInfoUtils {
    *
    * @return index of last parameter
    */
-  public static int collectHighlights(@NotNull final PyCallExpression.PyArgumentsMapping mapping,
-                                      @NotNull final List<PyCallableParameter> parameterList,
-                                      @NotNull final Map<PyCallableParameter, Integer> parameterHintToIndex,
-                                      @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
-                                      @NotNull final List<PyExpression> flatArgs,
+  public static int collectHighlights(final @NotNull PyCallExpression.PyArgumentsMapping mapping,
+                                      final @NotNull List<PyCallableParameter> parameterList,
+                                      final @NotNull Map<PyCallableParameter, Integer> parameterHintToIndex,
+                                      final @NotNull Map<Integer, EnumSet<ParameterFlag>> hintFlags,
+                                      final @NotNull List<PyExpression> flatArgs,
                                       int currentParamOffset) {
     final PyCallableType callableType = mapping.getCallableType();
     assert callableType != null;
@@ -204,11 +240,11 @@ public final class PyParameterInfoUtils {
     return lastParamIndex;
   }
 
-  public static void highlightNext(@NotNull final PyCallableType callableType,
-                                   @NotNull final List<PyCallableParameter> parameterList,
-                                   @NotNull final Map<Integer, PyCallableParameter> indexToNamedParameter,
-                                   @NotNull final Map<PyCallableParameter, Integer> parameterToHintIndex,
-                                   @NotNull final Map<Integer, EnumSet<ParameterFlag>> hintFlags,
+  public static void highlightNext(final @NotNull PyCallableType callableType,
+                                   final @NotNull List<PyCallableParameter> parameterList,
+                                   final @NotNull Map<Integer, PyCallableParameter> indexToNamedParameter,
+                                   final @NotNull Map<PyCallableParameter, Integer> parameterToHintIndex,
+                                   final @NotNull Map<Integer, EnumSet<ParameterFlag>> hintFlags,
                                    boolean isArgsEmpty, int lastParamIndex) {
     boolean canOfferNext = true; // can we highlight next unfilled parameter
     for (EnumSet<ParameterFlag> set : hintFlags.values()) {
@@ -290,13 +326,12 @@ public final class PyParameterInfoUtils {
     return offset;
   }
 
-  @Nullable
-  public static ParameterHints buildParameterHints(@NotNull Pair<PyCallExpression, PyCallableType> callAndCallee,
-                                                   int currentParamOffset) {
+  public static @Nullable ParameterHints buildParameterHints(@NotNull Pair<PyCallExpression, PyCallableType> callAndCallee,
+                                                             int currentParamOffset) {
     final PyCallExpression callExpression = callAndCallee.getFirst();
     PyPsiUtils.assertValid(callExpression);
 
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(callExpression.getProject(), callExpression.getContainingFile());
     final PyCallableType callableType = callAndCallee.getSecond();
 
     final List<PyCallableParameter> parameters = callableType.getParameters(typeEvalContext);
@@ -312,12 +347,87 @@ public final class PyParameterInfoUtils {
     // formatting of hints: hint index -> flags. this includes flags for parens.
     final Map<Integer, EnumSet<ParameterFlag>> hintFlags = new HashMap<>();
 
-    final List<String> hintsList =
+    final List<ParameterDescription> hintsAndAnnotations =
       buildParameterListHint(parameters, indexToNamedParameter, parameterToHintIndex, hintFlags, typeEvalContext);
 
     highlightParameters(callExpression, callableType, parameters, mapping, indexToNamedParameter, parameterToHintIndex, hintFlags,
                         currentParamOffset);
 
-    return new ParameterHints(hintsList, hintFlags);
+    return new ParameterHints(hintsAndAnnotations, hintFlags);
+  }
+
+  public static class ParameterDescription {
+
+    private String name = "";
+    private String annotation = "";
+    private boolean isLast = false;
+    private String fullRepresentation = "";
+
+    public ParameterDescription() { }
+
+    public ParameterDescription(String name, String annotation, boolean isLast) {
+      this.name = name;
+      this.annotation = annotation;
+      this.isLast = isLast;
+    }
+
+    public void setFullRepresentation(String fullRepresentation) {
+      this.fullRepresentation = fullRepresentation;
+    }
+
+    public String getAnnotation() {
+      return annotation;
+    }
+
+    public void setAnnotation(String annotation) {
+      this.annotation = annotation;
+    }
+
+    public String getFullRepresentation(boolean showHints) {
+      StringBuilder stringBuilder = new StringBuilder();
+      if (showHints) {
+        if (fullRepresentation.isEmpty()) {
+          stringBuilder.append(name);
+          if (!annotation.isEmpty()) {
+            stringBuilder.append(": ").append(annotation);
+          }
+        }
+        else {
+          stringBuilder.append(fullRepresentation);
+          return stringBuilder.toString();
+        }
+      }
+      else {
+        stringBuilder.append(name);
+      }
+      if (!isLast) {
+        stringBuilder.append(", ");
+      }
+      return stringBuilder.toString();
+    }
+  }
+
+  public static class CallInfo {
+    private final PyCallExpression call;
+    private final PyCallableType callee;
+    private boolean isVisible;
+
+    public CallInfo(PyCallExpression call, PyCallableType callee, boolean isVisible) {
+      this.call = call;
+      this.callee = callee;
+      this.isVisible = isVisible;
+    }
+
+    public void setVisible(boolean visible) {
+      this.isVisible = visible;
+    }
+
+    public boolean isVisible() {
+      return this.isVisible;
+    }
+
+    public Pair<PyCallExpression, PyCallableType> getCallandCalleePair() {
+      return new Pair<>(call, callee);
+    }
   }
 }

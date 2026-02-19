@@ -1,30 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class EventProcessor {
   private Cursor myCursor;
 
@@ -54,17 +36,13 @@ public abstract class EventProcessor {
   }
 
   protected static ComponentDropLocation.Direction directionFromKey(final int keyCode) {
-    switch(keyCode) {
-      case KeyEvent.VK_RIGHT: return ComponentDropLocation.Direction.RIGHT;
-      case KeyEvent.VK_LEFT: return ComponentDropLocation.Direction.LEFT;
-      case KeyEvent.VK_UP: return ComponentDropLocation.Direction.UP;
-      case KeyEvent.VK_DOWN: return ComponentDropLocation.Direction.DOWN;
-      case KeyEvent.VK_END: return ComponentDropLocation.Direction.RIGHT;
-      case KeyEvent.VK_HOME: return ComponentDropLocation.Direction.LEFT;
-      case KeyEvent.VK_PAGE_UP: return ComponentDropLocation.Direction.UP;
-      case KeyEvent.VK_PAGE_DOWN: return ComponentDropLocation.Direction.DOWN;
-      default: return null;
-    }
+    return switch (keyCode) {
+      case KeyEvent.VK_RIGHT, KeyEvent.VK_END -> ComponentDropLocation.Direction.RIGHT;
+      case KeyEvent.VK_LEFT, KeyEvent.VK_HOME -> ComponentDropLocation.Direction.LEFT;
+      case KeyEvent.VK_UP, KeyEvent.VK_PAGE_UP -> ComponentDropLocation.Direction.UP;
+      case KeyEvent.VK_DOWN, KeyEvent.VK_PAGE_DOWN -> ComponentDropLocation.Direction.DOWN;
+      default -> null;
+    };
   }
 
   private static boolean isMoveToLast(final int keyCode) {
@@ -72,9 +50,8 @@ public abstract class EventProcessor {
            keyCode == KeyEvent.VK_PAGE_UP || keyCode == KeyEvent.VK_PAGE_DOWN;
   }
 
-  @Nullable
-  protected static ComponentDropLocation moveDropLocation(final GuiEditor editor, final ComponentDropLocation location,
-                                                 final ComponentDragObject dragObject, final KeyEvent e) {
+  protected static @Nullable ComponentDropLocation moveDropLocation(final GuiEditor editor, final ComponentDropLocation location,
+                                                                    final ComponentDragObject dragObject, final KeyEvent e) {
     ComponentDropLocation.Direction dir = directionFromKey(e.getKeyCode());
     boolean moveToLast = isMoveToLast(e.getKeyCode());
     if (dir != null && location != null) {

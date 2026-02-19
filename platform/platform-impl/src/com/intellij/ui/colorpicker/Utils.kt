@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:ApiStatus.Internal
+
 package com.intellij.ui.colorpicker
 
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
 /**
  * Convert (Alpha + HSB) color format to ARGB format.
  */
-fun ahsbToArgb(alpha: Int, hue: Float, saturation: Float, brightness: Float) =
+fun ahsbToArgb(alpha: Int, hue: Float, saturation: Float, brightness: Float): Int =
   (alpha shl 24) or (Color.HSBtoRGB(hue, saturation, brightness) and 0x00FFFFFF)

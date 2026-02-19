@@ -1,0 +1,28 @@
+{
+  "modules": {
+    "module": {
+      "productionTargets": [
+        "@community//module:module.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
+      ],
+      "testTargets": [],
+      "testJars": [],
+      "exports": [],
+      "moduleLibraries": {}
+    }
+  },
+  "projectLibraries": {
+    "kotlinc.analysis-api": {
+      "target": "@lib//:kotlinc-analysis-api",
+      "jars": [
+        "external/lib+/kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255/analysis-api-for-ide-2.3.255-dev-255.jar"
+      ],
+      "jarTargets": [
+        "@lib//kotlin-snapshot/org/jetbrains/kotlin/analysis-api-for-ide/2.3.255-dev-255:analysis-api-for-ide-2.3.255-dev-255.jar"
+      ],
+      "sourceJars": []
+    }
+  }
+}

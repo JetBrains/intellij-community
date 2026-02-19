@@ -1,7 +1,8 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.jsonRpc;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -16,29 +17,26 @@ import org.jetbrains.concurrency.Promise;
 public abstract class Client extends UserDataHolderBase {
   protected final Channel channel;
 
-  final IntObjectMap<AsyncPromise<Object>> messageCallbackMap = ContainerUtil.createConcurrentIntObjectMap();
+  final IntObjectMap<AsyncPromise<Object>> messageCallbackMap =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   protected Client(@NotNull Channel channel) {
     this.channel = channel;
   }
 
-  @NotNull
-  public final EventLoop getEventLoop() {
+  public final @NotNull EventLoop getEventLoop() {
     return channel.eventLoop();
   }
 
-  @NotNull
-  public final ByteBufAllocator getByteBufAllocator() {
+  public final @NotNull ByteBufAllocator getByteBufAllocator() {
     return channel.alloc();
   }
 
-  @NotNull
-  protected abstract ChannelFuture send(@NotNull ByteBuf message);
+  protected abstract @NotNull ChannelFuture send(@NotNull ByteBuf message);
 
   public abstract void sendHeartbeat();
 
-  @Nullable
-  final <T> Promise<T> send(int messageId, @NotNull ByteBuf message) {
+  final @Nullable <T> Promise<T> send(int messageId, @NotNull ByteBuf message) {
     ChannelFuture channelFuture = send(message);
     if (messageId == -1) {
       return null;

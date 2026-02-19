@@ -17,7 +17,11 @@ package org.intellij.lang.xpath;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.ParameterInfoUtils;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,8 +46,7 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         return call;
     }
 
-    @Nullable
-    private static XPathFunctionCall findFunctionCall(PsiFile psiFile, int offset) {
+    private static @Nullable XPathFunctionCall findFunctionCall(PsiFile psiFile, int offset) {
         PsiElement e = psiFile.findElementAt(offset);
         while (e != null) {
             final XPathFunctionCall call = PsiTreeUtil.getParentOfType(e, XPathFunctionCall.class);

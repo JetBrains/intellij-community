@@ -1,0 +1,3 @@
+[invokeFromClassCompanion.0.kt] Implicit 'invoke' 8 Foo()
+[invokeFromClassCompanionLib.kt] Implicit 'invoke' 9 Foo()
+[invokeFromClassCompanionLib1.kt] Implicit 'invoke' 3 Foo()

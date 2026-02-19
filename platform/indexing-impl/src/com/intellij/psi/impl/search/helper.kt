@@ -1,15 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search
 
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.Searcher
-import com.intellij.model.search.impl.*
-import com.intellij.openapi.progress.*
+import com.intellij.model.search.impl.InjectionInfo
+import com.intellij.model.search.impl.LanguageInfo
+import com.intellij.model.search.impl.ParametersRequest
+import com.intellij.model.search.impl.QueryRequest
+import com.intellij.model.search.impl.QueryResult
+import com.intellij.model.search.impl.Requests
+import com.intellij.model.search.impl.SearchersQuery
+import com.intellij.model.search.impl.Transformation
+import com.intellij.model.search.impl.ValueResult
+import com.intellij.model.search.impl.WordRequest
+import com.intellij.model.search.impl.XQuery
+import com.intellij.model.search.impl.XResult
+import com.intellij.model.search.impl.XTransformation
+import com.intellij.model.search.impl.decompose
+import com.intellij.model.search.impl.occurrenceProcessor
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicatorProvider
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.search.PsiSearchHelperImpl.CandidateFileInfo
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchSession
@@ -22,24 +42,36 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
+import org.jetbrains.annotations.TestOnly
+import java.util.ArrayDeque
+import java.util.Collections
+import java.util.EnumSet
+import java.util.Queue
 
 private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.searcher")
+
+@Suppress("UNCHECKED_CAST")
+internal fun <R : Any> searchers(parameters: SearchParameters<R>): List<Searcher<SearchParameters<R>, R>> {
+  return searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
+}
+
+@Internal
+@TestOnly
+fun registerSearcherForTesting(key: Class<*>, searcher: Searcher<*, *>, parentDisposable: Disposable) {
+  if (!ApplicationManager.getApplication().isUnitTestMode) throw IllegalStateException()
+  searchersExtension.addExplicitExtension(key, searcher, parentDisposable)
+}
 
 internal val indicatorOrEmpty: ProgressIndicator
   get() = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator())
 
+@Internal
 fun <R> runSearch(cs: CoroutineScope, project: Project, query: Query<R>): ReceiveChannel<R> {
   @Suppress("EXPERIMENTAL_API_USAGE")
   return cs.produce(capacity = Channel.UNLIMITED) {
-    runUnderIndicator {
+    coroutineToIndicator {
       runSearch(project, query, Processor {
-        require(channel.offer(it))
+        require(channel.trySend(it).isSuccess)
         true
       })
     }
@@ -95,7 +127,7 @@ private fun <B, R> handleParamRequest(progress: ProgressIndicator,
   }
 }
 
-private fun <R> collectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
+private fun <R : Any> collectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
   return DumbService.getInstance(parameters.project).runReadActionInSmartMode(Computable {
     if (parameters.areValid()) {
       doCollectSearchRequests(parameters)
@@ -106,11 +138,10 @@ private fun <R> collectSearchRequests(parameters: SearchParameters<R>): Collecti
   })
 }
 
-private fun <R> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
+private fun <R : Any> doCollectSearchRequests(parameters: SearchParameters<R>): Collection<Query<out R>> {
   val queries = ArrayList<Query<out R>>()
-
-  @Suppress("UNCHECKED_CAST")
-  val searchers = searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
+  queries.add(SearchersQuery(parameters))
+  val searchers = searchers(parameters)
   for (searcher: Searcher<SearchParameters<R>, R> in searchers) {
     ProgressManager.checkCanceled()
     queries += searcher.collectSearchRequests(parameters)
@@ -217,14 +248,14 @@ private class Layer<T>(
     }
 
     val globalsIds: Map<PsiSearchHelperImpl.TextIndexQuery, List<WordRequestInfo>> = globals.groupBy(
-      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.TextIndexQuery.fromWord(request.word, request.isCaseSensitive, null) },
+      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.TextIndexQuery.fromWord(request.word, request.isCaseSensitive, -1) },
       { (request: WordRequestInfo, _) -> progress.checkCanceled(); request }
     )
     return myHelper.processGlobalRequests(globalsIds, progress, scopeProcessors(globals))
   }
 
-  private fun scopeProcessors(globals: Collection<RequestAndProcessors>): Map<WordRequestInfo, Processor<in PsiElement>> {
-    val result = HashMap<WordRequestInfo, Processor<in PsiElement>>()
+  private fun scopeProcessors(globals: Collection<RequestAndProcessors>): Map<WordRequestInfo, Processor<in CandidateFileInfo>> {
+    val result = HashMap<WordRequestInfo, Processor<in CandidateFileInfo>>()
     for (requestAndProcessors: RequestAndProcessors in globals) {
       progress.checkCanceled()
       result[requestAndProcessors.request] = scopeProcessor(requestAndProcessors)
@@ -232,7 +263,7 @@ private class Layer<T>(
     return result
   }
 
-  private fun scopeProcessor(requestAndProcessors: RequestAndProcessors): Processor<in PsiElement> {
+  private fun scopeProcessor(requestAndProcessors: RequestAndProcessors): Processor<in CandidateFileInfo> {
     val (request: WordRequestInfo, processors: RequestProcessors) = requestAndProcessors
     val searcher = StringSearcher(request.word, request.isCaseSensitive, true, false)
     val adapted = MyBulkOccurrenceProcessor(project, processors)

@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.customizeActions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.lang.properties.PropertiesBundle;
@@ -23,14 +8,15 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,23 +29,24 @@ import java.util.Set;
  */
 public class DissociateResourceBundleAction extends AnAction {
 
-  public DissociateResourceBundleAction() {
-    super(Presentation.NULL_STRING, Presentation.NULL_STRING, AllIcons.FileTypes.Properties);
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
       return;
     }
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
-    assert resourceBundles.size() > 0;
+    assert !resourceBundles.isEmpty();
     dissociate(resourceBundles, project);
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
     if (!resourceBundles.isEmpty()) {
       final String actionText = resourceBundles.size() == 1 
@@ -86,13 +73,12 @@ public class DissociateResourceBundleAction extends AnAction {
     AbstractProjectViewPane currentProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
     if (currentProjectViewPane != null) {
       for (PsiFileSystemItem item : toUpdateInProjectView) {
-        currentProjectViewPane.updateFrom(item, false, true);
+        currentProjectViewPane.updateFrom(item, false, true, ProjectViewUpdateCause.PLUGIN_PROPERTIES);
       }
     }
   }
 
-  @NotNull
-  private static Collection<ResourceBundle> extractResourceBundles(final AnActionEvent event) {
+  private static @NotNull Collection<ResourceBundle> extractResourceBundles(final AnActionEvent event) {
     final Set<ResourceBundle> targetResourceBundles = new HashSet<>();
     final ResourceBundle[] chosenResourceBundles = event.getData(ResourceBundle.ARRAY_DATA_KEY);
     if (chosenResourceBundles != null) {
@@ -102,7 +88,7 @@ public class DissociateResourceBundleAction extends AnAction {
         }
       }
     }
-    final PsiElement[] psiElements = event.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
+    final PsiElement[] psiElements = event.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
     if (psiElements != null) {
       for (PsiElement element : psiElements) {
         final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(element);

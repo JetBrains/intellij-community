@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.components.BaseState
@@ -11,19 +11,19 @@ import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState
-import com.intellij.xdebugger.impl.inline.InlineWatch
-import com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Tag("breakpoint-manager")
 class BreakpointManagerState : BaseState() {
   @get:XCollection(propertyElementName = "default-breakpoints")
-  val defaultBreakpoints by list<BreakpointState<*, *, *>>()
+  val defaultBreakpoints by list<BreakpointState>()
 
   @get:XCollection(elementTypes = [BreakpointState::class, LineBreakpointState::class], style = XCollection.Style.v2)
-  val breakpoints by list<BreakpointState<*, *, *>>()
+  val breakpoints by list<BreakpointState>()
 
   @get:XCollection(propertyElementName = "breakpoints-defaults", elementTypes = [BreakpointState::class, LineBreakpointState::class])
-  val breakpointsDefaults by list<BreakpointState<*, *, *>>()
+  val breakpointsDefaults by list<BreakpointState>()
 
   @get:Tag("breakpoints-dialog")
   var breakpointsDialogProperties by property<XBreakpointsDialogState>()
@@ -32,7 +32,7 @@ class BreakpointManagerState : BaseState() {
 }
 
 @Tag("watches-manager")
-class WatchesManagerState : BaseState() {
+internal class WatchesManagerState : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
   val expressions by list<ConfigurationState>()
@@ -43,8 +43,8 @@ class WatchesManagerState : BaseState() {
 }
 
 @Tag("configuration")
-class ConfigurationState @JvmOverloads constructor(name: String? = null,
-                                                   expressions: List<XExpression>? = null) : BaseState() {
+internal class ConfigurationState @JvmOverloads constructor(name: String? = null,
+                                                   watches: List<XWatch>? = null) : BaseState() {
   @get:Attribute
   var name by string()
 
@@ -58,15 +58,20 @@ class ConfigurationState @JvmOverloads constructor(name: String? = null,
     if (name != null) {
       this.name = name
     }
-    if (expressions != null) {
+    if (watches != null) {
       expressionStates.clear()
-      expressions.mapTo(expressionStates) { WatchState(it) }
+      watches.mapTo(expressionStates) { watch ->
+        WatchState(watch.expression).apply {
+          canBePaused = watch.canBePaused
+          isPaused = watch.isPaused
+        }
+      }
     }
   }
 }
 
 @Tag("inline-watch")
-class InlineWatchState @JvmOverloads  constructor(expression: XExpression? = null, line: Int = -1, fileUrl: String? = null) : BaseState() {
+internal class InlineWatchState @JvmOverloads  constructor(expression: XExpression? = null, line: Int = -1, fileUrl: String? = null) : BaseState() {
 
   @get:Attribute
   var fileUrl by string()
@@ -82,18 +87,18 @@ class InlineWatchState @JvmOverloads  constructor(expression: XExpression? = nul
   }
 }
 
+@ApiStatus.Internal
 @Tag("watch")
 class WatchState : XExpressionState {
-  @Suppress("unused")
   constructor() : super()
 
   constructor(expression: XExpression) : super(expression)
-}
 
-@Tag("pin-to-top-manager")
-class PinToTopManagerState : BaseState() {
-    @get:XCollection(propertyElementName = "pinned-members")
-    var pinnedMembersList by list<PinnedItemInfo>()
+  @get:Attribute
+  var canBePaused: Boolean = true
+
+  @get:Attribute
+  var isPaused: Boolean = false
 }
 
 internal class XDebuggerState : BaseState() {

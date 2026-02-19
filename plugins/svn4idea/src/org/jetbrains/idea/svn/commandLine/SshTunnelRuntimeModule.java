@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -18,7 +18,11 @@ import java.util.List;
 
 import static com.intellij.execution.CommandLineUtil.toCommandLine;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.endsWithIgnoreCase;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.substringBefore;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
@@ -38,18 +42,15 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
     }
   }
 
-  @NotNull
-  private SvnConfiguration getConfiguration() {
+  private @NotNull SvnConfiguration getConfiguration() {
     return myRuntime.getVcs().getSvnConfiguration();
   }
 
-  @NotNull
-  private SvnConfigurationState getState() {
+  private @NotNull SvnConfigurationState getState() {
     return getConfiguration().getState();
   }
 
-  @NotNull
-  private String buildTunnelValue() {
+  private @NotNull String buildTunnelValue() {
     String sshPath = getState().sshExecutablePath;
     sshPath = !isEmpty(sshPath) ? sshPath : getExecutablePath(getConfiguration().getSshTunnelSetting());
 
@@ -59,8 +60,7 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
     return join(parameters, " ");
   }
 
-  @NotNull
-  private GeneralCommandLine buildTunnelCommandLine(@NotNull String sshPath) {
+  private @NotNull GeneralCommandLine buildTunnelCommandLine(@NotNull String sshPath) {
     GeneralCommandLine result = new GeneralCommandLine(sshPath);
     boolean isPuttyLinkClient = endsWithIgnoreCase(FileUtilRt.getNameWithoutExtension(sshPath), PUTTY_LINK_CLIENT_NAME);
     SvnConfigurationState state = getState();
@@ -83,8 +83,7 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
     return result;
   }
 
-  @NotNull
-  public static String getSshTunnelValue(@Nullable String tunnelSetting) {
+  public static @NotNull String getSshTunnelValue(@Nullable String tunnelSetting) {
     tunnelSetting = !isEmpty(tunnelSetting) ? tunnelSetting : DEFAULT_SSH_TUNNEL_VALUE;
     String svnSshVariableName = getSvnSshVariableName(tunnelSetting);
     String svnSshVariableValue = EnvironmentUtil.getValue(svnSshVariableName);

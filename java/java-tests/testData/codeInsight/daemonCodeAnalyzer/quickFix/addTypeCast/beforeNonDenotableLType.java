@@ -1,4 +1,4 @@
-// "Cast to 'java.lang.Object'" "false"
+// "Cast expression to 'java.lang.Object'" "false"
 class Scope<T> {
     T val;
     void f() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -8,7 +8,15 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -19,10 +27,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -54,7 +67,7 @@ public final class GrTypeComboBox extends ComboBox {
       return new GrTypeComboBox(type, expected, expected == null, expression, selectDef);
     }
     else {
-      if (type == PsiType.NULL) {
+      if (type == PsiTypes.nullType()) {
         type = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
       }
       return new GrTypeComboBox(type, null, true, expression, selectDef);
@@ -88,7 +101,7 @@ public final class GrTypeComboBox extends ComboBox {
       //suggest double as the second item after original BigDecimal
       addItem(new PsiTypeItem(type));
       types.remove(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
-      addItem(new PsiTypeItem(PsiType.DOUBLE));
+      addItem(new PsiTypeItem(PsiTypes.doubleType()));
     }
 
     for (String typeName : types.keySet()) {
@@ -103,7 +116,7 @@ public final class GrTypeComboBox extends ComboBox {
   public void addClosureTypesFrom(@Nullable PsiType type, @NotNull PsiElement context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final PsiType cl;
-    if (type == null || type == PsiType.NULL) {
+    if (type == null || type == PsiTypes.nullType()) {
       cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, context);
     }
     else {
@@ -112,8 +125,7 @@ public final class GrTypeComboBox extends ComboBox {
     addItem(new PsiTypeItem(cl, true));
   }
 
-  @Nullable
-  public PsiType getSelectedType() {
+  public @Nullable PsiType getSelectedType() {
     final Object selected = getSelectedItem();
     assert selected instanceof PsiTypeItem;
     return ((PsiTypeItem)selected).getType();
@@ -202,8 +214,7 @@ public final class GrTypeComboBox extends ComboBox {
   }
 
   private static final class PsiTypeItem {
-    @Nullable
-    private final PsiType myType;
+    private final @Nullable PsiType myType;
 
     private final boolean isClosure;
 
@@ -211,13 +222,12 @@ public final class GrTypeComboBox extends ComboBox {
       this(type, false);
     }
 
-    private PsiTypeItem(@Nullable final PsiType type, boolean closure) {
+    private PsiTypeItem(final @Nullable PsiType type, boolean closure) {
       myType = type;
       isClosure = closure;
     }
 
-    @Nullable
-    public PsiType getType() {
+    public @Nullable PsiType getType() {
       return myType;
     }
 

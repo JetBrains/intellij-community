@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("unused")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots
 
+import com.intellij.jps.impl.JpsIdePluginManagerImpl
 import com.intellij.jps.impl.JpsPluginBean
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -34,9 +34,12 @@ class TestCustomRootModelSerializerExtension : JpsModelSerializerExtension() {
 
       FileUtil.writeToFile(File(tempPluginRoot, "META-INF/services/${JpsModelSerializerExtension::class.java.name}"),
                            TestCustomRootModelSerializerExtension::class.java.name)
-      val pluginClassLoader = UrlClassLoader.build().parent(TestCustomRootModelSerializerExtension::class.java.classLoader).urls(tempPluginRoot.toURI().toURL()).get()
+      val pluginClassLoader = UrlClassLoader.build()
+        .parent(TestCustomRootModelSerializerExtension::class.java.classLoader)
+        .files(listOf(tempPluginRoot.toPath()))
+        .get()
       val pluginDescriptor = DefaultPluginDescriptor(PluginId.getId("com.intellij.custom.source.root.test"), pluginClassLoader)
-      JpsPluginBean.EP_NAME.point.registerExtension(JpsPluginBean(), pluginDescriptor, jpsPluginDisposable)
+      JpsIdePluginManagerImpl.EP_NAME.point.registerExtension(JpsPluginBean(), pluginDescriptor, jpsPluginDisposable)
     }
 
   }
@@ -58,16 +61,11 @@ class TestCustomSourceRootProperties(initialTestString: String?) : JpsElementBas
     set(value) {
       if (value != field) {
         field = value
-        fireElementChanged()
       }
     }
 
   override fun createCopy(): TestCustomSourceRootProperties {
     return TestCustomSourceRootProperties(testString)
-  }
-
-  override fun applyChanges(modified: TestCustomSourceRootProperties) {
-    testString = modified.testString
   }
 }
 

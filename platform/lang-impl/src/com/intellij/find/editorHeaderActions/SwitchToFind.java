@@ -1,20 +1,24 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindModel;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class SwitchToFind extends DumbAwareAction implements LightEditCompatible {
+@ApiStatus.Internal
+public final class SwitchToFind extends DumbAwareAction implements LightEditCompatible {
   public SwitchToFind(@NotNull JComponent shortcutHolder) {
     AnAction findAction = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND);
     if (findAction != null) {
@@ -38,8 +42,14 @@ public class SwitchToFind extends DumbAwareAction implements LightEditCompatible
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
+    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    if (search == null) return;
     if (KeymapUtil.isEmacsKeymap()) {
       // Emacs users are accustomed to the editor that executes 'find next' on subsequent pressing of shortcut that
       // activates 'incremental search'. Hence, we do the similar hack here for them.

@@ -1,0 +1,2 @@
+3 <bold>fun m()</bold> {}
+3 	<bold>fun m()</bold> {}

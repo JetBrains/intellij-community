@@ -1,5 +1,7 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +9,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.TaskBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -17,7 +19,7 @@ import java.net.URL;
 public class DeadlockWithCertificateDialogAction extends AnAction {
   public static final String SELF_SIGNED_SERVER_URL = "https://self-signed.certificates-tests.labs.intellij.net";
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     ApplicationManager.getApplication().invokeLater(() -> {
       URL location = null;
       try {
@@ -31,5 +33,10 @@ public class DeadlockWithCertificateDialogAction extends AnAction {
                                  TaskBundle.message("dialog.message.this.dialog.may.not.be.shown"),
                                  TaskBundle.message("dialog.title.deadlocking.dialog"), new ImageIcon(location));
     });
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

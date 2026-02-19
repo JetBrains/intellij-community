@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
@@ -6,14 +6,18 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
@@ -34,15 +38,25 @@ public final class EditSourceOnEnterKeyHandler {
 
   public static void install(@NotNull JComponent component, @Nullable Runnable whenPerformed) {
     onEnterKey(component, () -> {
-      if (Registry.is("edit.source.on.enter.key.disabled")) return false;
-      if (isOverriddenByAction(IdeActions.ACTION_EDIT_SOURCE)) return false;
-      if (isOverriddenByAction(IdeActions.ACTION_VIEW_SOURCE)) return false;
-      DataContext context = DataManager.getInstance().getDataContext(component);
-      List<Navigatable> navigatables = getNavigatables(context);
-      if (navigatables.isEmpty()) return false; // nowhere to navigate
-      boolean requestFocus = Registry.is("edit.source.on.enter.key.request.focus.in.editor");
-      navigatables.forEach(navigatable -> navigatable.navigate(requestFocus));
-      if (whenPerformed != null) whenPerformed.run();
+      if (Registry.is("edit.source.on.enter.key.disabled") ||
+          isOverriddenByAction(IdeActions.ACTION_EDIT_SOURCE) ||
+          isOverriddenByAction(IdeActions.ACTION_VIEW_SOURCE)) {
+        return false;
+      }
+
+      List<Navigatable> navigatables = getNavigatables(DataManager.getInstance().getDataContext(component));
+      // nowhere to navigate
+      if (navigatables.isEmpty()) {
+        return false;
+      }
+
+      boolean requestFocus = AdvancedSettings.getBoolean("edit.source.on.enter.key.request.focus.in.editor");
+      for (Navigatable navigatable : navigatables) {
+        navigatable.navigate(requestFocus);
+      }
+      if (whenPerformed != null) {
+        whenPerformed.run();
+      }
       return true;
     });
   }
@@ -54,7 +68,9 @@ public final class EditSourceOnEnterKeyHandler {
 
   private static @NotNull List<Navigatable> getNavigatables(@NotNull DataContext context) {
     Navigatable[] array = CommonDataKeys.NAVIGATABLE_ARRAY.getData(context);
-    if (array == null || array.length == 0) return Collections.emptyList();
+    if (array == null || array.length == 0) {
+      return Collections.emptyList();
+    }
 
     List<Navigatable> list = ContainerUtil.filter(array, Navigatable::canNavigateToSource);
     if (list.isEmpty() && Registry.is("edit.source.on.enter.key.non.source.navigation.enabled")) {
@@ -72,10 +88,12 @@ public final class EditSourceOnEnterKeyHandler {
   private static void onEnterKey(@NotNull JComponent component, @NotNull BooleanSupplier action) {
     ActionListener listener = component.getActionForKeyStroke(ENTER);
     component.registerKeyboardAction(event -> {
-      if (!action.getAsBoolean() && listener != null) {
-        // perform previous action if the specified action is failed
-        // it is needed to expand/collapse a tree node
-        listener.actionPerformed(event);
+      try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        if (!action.getAsBoolean() && listener != null) {
+          // perform previous action if the specified action is failed,
+          // it is needed to expand/collapse a tree node
+          listener.actionPerformed(event);
+        }
       }
     }, ENTER, JComponent.WHEN_FOCUSED);
   }

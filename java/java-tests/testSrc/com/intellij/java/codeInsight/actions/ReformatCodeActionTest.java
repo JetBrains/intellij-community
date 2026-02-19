@@ -3,11 +3,17 @@ package com.intellij.java.codeInsight.actions;
 
 import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.codeInsight.actions.ReformatFilesOptions;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,7 +23,6 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -30,34 +35,36 @@ import java.util.List;
 public class ReformatCodeActionTest extends JavaPsiTestCase {
   private static final String[] classNames = {"Vasya", "Main", "Oiie", "Ololo"};
   private static final String[] IMPORTS_LIST = new String[]{"import java.util.List;", "import java.util.Set;", "import java.util.Map"};
-  private static final String TEST_SOURCE = "%s" +
-                                            "public class %s {\n" +
-                                            "\n" +
-                                            "public void start(String str) {\n" +
-                                            "}\n" +
-                                            "\n" +
-                                            "public static void staticComesSecond(String[] args) {\n" +
-                                            "}\n" +
-                                            "\n" +
-                                            "int firstInt;\n" +
-                                            "static int notFirstStatic;\n" +
-                                            "final static String t = \"T\";\n" +
-                                            "\n" +
-                                            "}\n";
-  private static final String FORMATTED_SOURCE = "%s" +
-                                                 "public class %s {\n" +
-                                                 "\n" +
-                                                 "    public void start(String str) {\n" +
-                                                 "    }\n" +
-                                                 "\n" +
-                                                 "    public static void staticComesSecond(String[] args) {\n" +
-                                                 "    }\n" +
-                                                 "\n" +
-                                                 "    int firstInt;\n" +
-                                                 "    static int notFirstStatic;\n" +
-                                                 "    final static String t = \"T\";\n" +
-                                                 "\n" +
-                                                 "}\n";
+  private static final String TEST_SOURCE = """
+    %spublic class %s {
+
+    public void start(String str) {
+    }
+
+    public static void staticComesSecond(String[] args) {
+    }
+
+    int firstInt;
+    static int notFirstStatic;
+    final static String t = "T";
+
+    }
+    """;
+  private static final String FORMATTED_SOURCE = """
+    %spublic class %s {
+
+        public void start(String str) {
+        }
+
+        public static void staticComesSecond(String[] args) {
+        }
+
+        int firstInt;
+        static int notFirstStatic;
+        final static String t = "T";
+
+    }
+    """;
   private static final String TEMP_DIR_NAME = "dir";
   private PsiDirectory myWorkingDirectory;
 
@@ -70,8 +77,8 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
 
   public void testOptimizeAndReformatOnlySelectedFiles() throws IOException {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
-    List<PsiFile> forProcessing = ContainerUtil.newArrayList(files.get(0), files.get(1));
-    List<PsiFile> noProcessing = ContainerUtil.newArrayList(files.get(2), files.get(3));
+    List<PsiFile> forProcessing = List.of(files.get(0), files.get(1));
+    List<PsiFile> noProcessing = List.of(files.get(2), files.get(3));
 
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
@@ -87,7 +94,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     List<PsiFile> files = createTestFiles(srcDir, classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
-    performReformatActionOnModule(module, ContainerUtil.newArrayList(srcDir));
+    performReformatActionOnModule(module, List.of(srcDir));
 
     checkFormationAndImportsOptimizationFor(files);
   }
@@ -142,14 +149,22 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     return createTestFiles(parentDirectory.getVirtualFile(), fileNames);
   }
 
+  private static void checkReformatActionAvailableAndPerform(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    action.update(event);
+    assertTrue("Reformat code action is not enabled", event.getPresentation().isEnabled());
+    action.actionPerformed(event);
+  }
+
   protected void performReformatActionOnSelectedFiles(List<PsiFile> files) {
     final AnAction action = getReformatCodeAction();
-    action.actionPerformed(createEventFor(action, getVirtualFileArrayFrom(files), getProject()));
+    final AnActionEvent event = createEventFor(action, getVirtualFileArrayFrom(files), getProject());
+    checkReformatActionAvailableAndPerform(action, event);
   }
 
   protected void performReformatActionOnModule(Module module, List<VirtualFile> files) {
     final AnAction action = getReformatCodeAction();
-    action.actionPerformed(createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module)));
+    AnActionEvent event = createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module));
+    checkReformatActionAvailableAndPerform(action, event);
   }
 
   protected void checkFormationAndImportsOptimizationFor(List<PsiFile> @NotNull ... fileCollection) {
@@ -170,23 +185,26 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     }
   }
 
-  protected AnActionEvent createEventFor(AnAction action, final VirtualFile[] files, final Project project) {
-    return AnActionEvent.createFromAnAction(action, null, "", dataId -> {
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files;
-      if (CommonDataKeys.PROJECT.is(dataId)) return project;
-      return null;
-    });
+  private static @NotNull AnActionEvent createEventFor(@NotNull AnAction action,
+                                                       VirtualFile @NotNull [] files,
+                                                       @NotNull Project project) {
+    return AnActionEvent.createFromAnAction(action, null, "", SimpleDataContext.builder()
+      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, files)
+      .add(CommonDataKeys.PROJECT, project)
+      .build());
   }
 
-  protected AnActionEvent createEventFor(AnAction action, final List<VirtualFile> files, final Project project, @NotNull final AdditionalEventInfo eventInfo) {
-    return AnActionEvent.createFromAnAction(action, null, "", dataId -> {
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files.toArray(VirtualFile.EMPTY_ARRAY);
-      if (CommonDataKeys.PROJECT.is(dataId)) return project;
-      if (CommonDataKeys.EDITOR.is(dataId)) return eventInfo.getEditor();
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) return eventInfo.getModule();
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return eventInfo.getElement();
-      return null;
-    });
+  private static @NotNull AnActionEvent createEventFor(@NotNull AnAction action,
+                                                       @NotNull List<VirtualFile> files,
+                                                       @NotNull Project project,
+                                                       @NotNull AdditionalEventInfo eventInfo) {
+    return AnActionEvent.createFromAnAction(action, null, "", SimpleDataContext.builder()
+      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, files.toArray(VirtualFile.EMPTY_ARRAY))
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.EDITOR, eventInfo.getEditor())
+      .add(LangDataKeys.MODULE_CONTEXT, eventInfo.getModule())
+      .add(CommonDataKeys.PSI_ELEMENT, eventInfo.getElement())
+      .build());
   }
 
   @NotNull
@@ -212,7 +230,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     String path = dir.getVirtualFile().getPath() + "/" + newModuleName + ".iml";
 
     Module module = WriteAction
-      .compute(() -> ModuleManager.getInstance(getProject()).newModule(path, StdModuleTypes.JAVA.getId()));
+      .compute(() -> ModuleManager.getInstance(getProject()).newModule(path, JavaModuleType.getModuleType().getId()));
     PsiDirectory src = createDirectory(dir.getVirtualFile(), "src");
 
     PsiTestUtil.addSourceRoot(module, src.getVirtualFile());

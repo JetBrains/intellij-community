@@ -4,29 +4,29 @@ The repository contains sources code of SimagePlugins as well as demo maya proje
 
 <!-- TOC depthFrom:2 </fold>-->
 
-[W<fold text='...'>hat is this repository for](#what-is-this-repository-for)
+[W<fold text='...'>hat is this repository for](<fold text='...'>#what-is-this-repository-for</fold>)
 
-<fold text='unordered list: - [What is this reposi...k-to)'>- [What is this repository for](#what-is-this-repository-for)
-- [How do I get set up](#how-do-i-get-set-up)
-  <fold text='unordered list:   - [Requirements](#re...bles)'>  - [Requirements](#requirements)
-    - [Environment Variables](#environment-variables)</fold>
-- [Plugin List](#plugin-list)
-  <fold text='unordered list:   - [MxBezier3scalar](...rmer)'>  - [MxBezier3scalar](#mxbezier3scalar)
-    - [PushDeformer](#pushdeformer)
-    - [NoiseDeformer](#noisedeformer)
-    - [SmoothDeformer](#smoothdeformer)</fold>
-- [Who do I talk to](#who-do-i-talk-to)</fold>
+<fold text='unordered list: - [What is this reposi...k-to)'>- [What is this repository for](<fold text='...'>#what-is-this-repository-for</fold>)
+<fold text='- [How do I get set up...bles)'>- [How do I get set up](<fold text='...'>#how-do-i-get-set-up</fold>)
+    - [Requirements](<fold text='...'>#requirements</fold>)
+    - [Environment Variables](<fold text='...'>#environment-variables</fold>)</fold>
+<fold text='- [Plugin List](#plugi...rmer)'>- [Plugin List](<fold text='...'>#plugin-list</fold>)
+    - [MxBezier3scalar](<fold text='...'>#mxbezier3scalar</fold>)
+    - [PushDeformer](<fold text='...'>#pushdeformer</fold>)
+    - [NoiseDeformer](<fold text='...'>#noisedeformer</fold>)
+    - [SmoothDeformer](<fold text='...'>#smoothdeformer</fold>)</fold>
+- [Who do I talk to](<fold text='...'>#who-do-i-talk-to</fold>)</fold>
 
 <!-- /TOC </fold>-->
 
-<fold text='h2: ## What is this repository for'><fold text='h2: ## What is this repository for'>## What is this repository for
+<fold text='h2: ## What is this repository for'>## What is this repository for
 
 <fold text='unordered list: - Maya plugins for Sim... beta'>- Maya plugins for Simage Animation & Media Limited
 - Version: 0.0.1 beta</fold></fold>
 
 <fold text='h2: ## How do I get set up'>## How do I get set up
 
-You need to install Maya 2017 as well as Visual Studio 2017 first. After that, setup your [environment variables](#enviroment-variables). It is essential because Visual Studio need these variables to be able to compile successfully. The deliverable is called "SimagePlugins.mll" which contains several plugins (please check out [Plugin List](#plugin-list) below for more details).
+You need to install Maya 2017 as well as Visual Studio 2017 first. After that, setup your [environment variables](<fold text='...'>#enviroment-variables</fold>). It is essential because Visual Studio need these variables to be able to compile successfully. The deliverable is called "SimagePlugins.mll" which contains several plugins (please check out [Plugin List](<fold text='...'>#plugin-list</fold>) below for more details).
 
 <fold text='h3: ### Requirements'>### Requirements
 
@@ -146,4 +146,4 @@ deformer -type "Simage_SmoothDeformer"
 
 <fold text='unordered list: - Max Tong: maxtong198...e.hk>'>- Max Tong: maxtong198776@gmail.com
 
-- Simage Animation and Media Limited: <https://www.simage.hk></fold></fold></fold></fold>
+- Simage Animation and Media Limited: <https://www.simage.hk></fold></fold></fold>

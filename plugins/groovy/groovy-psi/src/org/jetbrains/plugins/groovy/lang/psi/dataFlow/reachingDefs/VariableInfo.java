@@ -5,9 +5,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public interface VariableInfo {
   VariableInfo[] EMPTY_ARRAY = new VariableInfo[0];
 

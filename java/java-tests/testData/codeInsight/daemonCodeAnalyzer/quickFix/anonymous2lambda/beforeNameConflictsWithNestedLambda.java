@@ -1,10 +1,10 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 
 import java.util.function.Consumer;
 
 class A {
   void anonymousToLambda(String s) {
-    String s12 = "";
+    String s2 = "";
     Consumer<String> consumer = new Consu<caret>mer<String>() {
       @Override
       public void accept(final String s) {

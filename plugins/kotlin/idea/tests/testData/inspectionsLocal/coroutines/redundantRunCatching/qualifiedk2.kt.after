@@ -1,0 +1,4 @@
+// WITH_STDLIB
+// IGNORE_K1
+
+fun foo() = run { 5 }

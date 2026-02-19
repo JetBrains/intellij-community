@@ -1,4 +1,4 @@
-// "Change 'new Object()' to 'new int[][]'" "true"
+// "Change 'new Object()' to 'new int[][]'" "true-preview"
 public class TTT {
     void f() {
         String s = new Object();

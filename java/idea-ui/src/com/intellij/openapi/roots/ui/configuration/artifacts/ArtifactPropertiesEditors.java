@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -16,8 +16,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JPanel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ArtifactPropertiesEditors {
   private final Map<@Nls(capitalization = Nls.Capitalization.Sentence) String, JPanel> myMainPanels;
@@ -94,8 +98,7 @@ public class ArtifactPropertiesEditors {
     }
   }
 
-  @Nullable
-  public String getHelpId(String title) {
+  public @Nullable String getHelpId(String title) {
     if (ArtifactPropertiesEditor.VALIDATION_TAB_POINTER.get().equals(title)) {
       return "reference.project.structure.artifacts.validation";
     }
@@ -112,6 +115,12 @@ public class ArtifactPropertiesEditors {
       }
     }
     return null;
+  }
+
+  public void disposeUIResources() {
+    for (PropertiesEditorInfo editor : myEditors) {
+      editor.myEditor.disposeUIResources();
+    }
   }
 
   private final class PropertiesEditorInfo {

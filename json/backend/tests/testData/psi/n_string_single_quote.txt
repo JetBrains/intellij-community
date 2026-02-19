@@ -1,0 +1,6 @@
+JsonFile: n_string_single_quote.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(SINGLE_QUOTED_STRING)(''single quote'')
+    PsiElement(])(']')

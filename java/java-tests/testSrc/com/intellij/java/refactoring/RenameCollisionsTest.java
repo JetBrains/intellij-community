@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -24,6 +10,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -33,7 +20,7 @@ import java.util.HashMap;
 /**
  * @author sashache
  */
-public class RenameCollisionsTest extends LightRefactoringTestCase {
+public class RenameCollisionsTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameCollisions/";
 
   @NotNull
@@ -89,6 +76,10 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
 
   public void testRenameMethodOuterStaticToInnerStatic() {
     doTest("siStaticMethod");
+  }
+
+  public void testRenameMethodInnerStaticToOuterStaticMoreParameters() {
+    doTest("staticMethod");
   }
 
   public void testRenameMethodStaticToAlien() {
@@ -171,7 +162,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
       doTest("y");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("There is already a field <b><code>y</code></b>. It will conflict with the renamed variable", e.getMessage());
+      Assert.assertEquals("An existing field <b><code>y</code></b> has the same name", e.getMessage());
       return;
     }
     fail("Conflicts were not found");
@@ -182,7 +173,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
       doTest("foo2");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("Method call would be linked to \"method <b><code>RenameTest.foo2(Long)</code></b>\" after rename", e.getMessage());
+      Assert.assertEquals("Different method <b><code>RenameTest.foo2(Long)</code></b> will be called after rename", e.getMessage());
       return;
     }
     fail("Conflicts were not found");
@@ -193,7 +184,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
       doTest("foo1");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("Method with same erasure is already defined in the class <b><code>RenameTest</code></b>", e.getMessage());
+      Assert.assertEquals("Method with the same erasure is already defined in class <b><code>RenameTest</code></b>", e.getMessage());
       return;
     }
     fail("Conflicts were not found");
@@ -244,6 +235,9 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
 
   public void testRenameTypeParamToSuper() {
     doTest("T");
+  }
+  public void testRenameSwitchToUnnamedJava21Preview() {
+    doTest("_");
   }
 
   public void testInnerClassNameCollisionWithSuperClassOfContainer() {

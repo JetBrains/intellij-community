@@ -1,0 +1,11 @@
+LineBreakpoint created at smartStepIntoInsideConstructor.kt:33
+LineBreakpoint created at smartStepIntoInsideConstructor.kt:38
+Run Java
+Connected to the target VM
+smartStepIntoInsideConstructor.kt:33
+smartStepIntoInsideConstructor.kt:5
+smartStepIntoInsideConstructor.kt:38
+smartStepIntoInsideConstructor.kt:17
+Disconnected from the target VM
+
+Process finished with exit code 0

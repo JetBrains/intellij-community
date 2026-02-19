@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.impl;
 
@@ -14,65 +14,61 @@ import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 
-/**
- * @author Dmitry Avdeev
- */
+@VisibleForTesting
 public final class TaskChangelistSupport implements EditChangelistSupport {
-  private final Project myProject;
-  private final TaskManagerImpl myTaskManager;
+  private final Project project;
 
   public TaskChangelistSupport(Project project) {
-    myProject = project;
-    myTaskManager = (TaskManagerImpl)TaskManager.getManager(project);
+    this.project = project;
   }
 
   @Override
-  public void installSearch(EditorTextField name, final EditorTextField comment) {
+  public void installSearch(@NotNull EditorTextField name, @NotNull EditorTextField comment) {
     Document document = name.getDocument();
-    final TaskAutoCompletionListProvider completionProvider =
-      new TaskAutoCompletionListProvider(myProject);
-
-    TextFieldWithAutoCompletion.installCompletion(document, myProject, completionProvider, false);
+    TaskAutoCompletionListProvider completionProvider = new TaskAutoCompletionListProvider(project);
+    TextFieldWithAutoCompletion.installCompletion(document, project, completionProvider, false);
   }
 
   @Override
-  public Consumer<LocalChangeList> addControls(JPanel bottomPanel, final LocalChangeList initial) {
-    final JCheckBox checkBox = new JCheckBox(TaskBundle.message("switch.changelist.track.context.checkbox"));
+  public @NotNull Consumer<@NotNull LocalChangeList> addControls(@NotNull JPanel bottomPanel, @Nullable LocalChangeList initial) {
+    TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(project);
+
+    JCheckBox checkBox = new JCheckBox(TaskBundle.message("switch.changelist.track.context.checkbox"));
     checkBox.setToolTipText(TaskBundle.message("switch.changelist.track.context.checkbox.tooltip"));
     checkBox.setSelected(initial == null ?
-                         myTaskManager.getState().trackContextForNewChangelist :
-                         myTaskManager.getAssociatedTask(initial) != null);
+                         taskManager.getState().trackContextForNewChangelist :
+                         taskManager.getAssociatedTask(initial) != null);
     bottomPanel.add(checkBox);
     return changeList -> {
       if (initial == null) {
-        myTaskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
+        taskManager.getState().trackContextForNewChangelist = checkBox.isSelected();
         if (checkBox.isSelected()) {
-          myTaskManager.trackContext(changeList);
+          taskManager.trackContext(changeList);
         }
         else {
-          myTaskManager.getActiveTask().addChangelist(new ChangeListInfo(changeList));
+          taskManager.getActiveTask().addChangelist(new ChangeListInfo(changeList));
         }
       }
       else {
-        final LocalTask associatedTask = myTaskManager.getAssociatedTask(changeList);
+        final LocalTask associatedTask = taskManager.getAssociatedTask(changeList);
         if (checkBox.isSelected()) {
           if (associatedTask == null) {
-            myTaskManager.trackContext(changeList);
+            taskManager.trackContext(changeList);
           }
         }
         else {
           if (associatedTask != null) {
-            myTaskManager.removeTask(associatedTask);
+            taskManager.removeTask(associatedTask);
           }
         }
       }
     };
-  }
-
-  @Override
-  public void changelistCreated(LocalChangeList changeList) {
   }
 }

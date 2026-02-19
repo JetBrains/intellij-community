@@ -1,8 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +6,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,7 +19,7 @@ import java.util.Set;
 /**
  * User : ktisha
  */
-public class PyNameSuggestionProvider implements NameSuggestionProvider {
+public final class PyNameSuggestionProvider implements NameSuggestionProvider {
   @Override
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {
     if (!(element instanceof PyElement)) return null;
@@ -42,8 +42,7 @@ public class PyNameSuggestionProvider implements NameSuggestionProvider {
     return SuggestedNameInfo.NULL_INFO;
   }
 
-  @NotNull
-  public static String toUnderscores(@NotNull final String name) {
+  public static @NotNull String toUnderscores(final @NotNull String name) {
     final StringBuilder result = new StringBuilder();
     for (int i = 0; i < name.length(); i++) {
       final char prev = i > 0 ? name.charAt(i - 1) : '\0';
@@ -62,10 +61,9 @@ public class PyNameSuggestionProvider implements NameSuggestionProvider {
     return result.toString();
   }
 
-  @NotNull
-  protected String toCamelCase(@NotNull final String name, boolean uppercaseFirstLetter) {
+  private static @NotNull String toCamelCase(final @NotNull String name, boolean uppercaseFirstLetter) {
     final List<String> strings = StringUtil.split(name, "_");
-    if (strings.size() > 0) {
+    if (!strings.isEmpty()) {
       final StringBuilder buf = new StringBuilder();
       String str = StringUtil.toLowerCase(strings.get(0));
       if (uppercaseFirstLetter) str = StringUtil.capitalize(str);

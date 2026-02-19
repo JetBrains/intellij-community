@@ -1,24 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AboutAction extends AnAction implements DumbAware, LightEditCompatible {
+public final class AboutAction extends AnAction implements DumbAware, LightEditCompatible {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(!ActionPlaces.isMacSystemMenuAction(e));
     e.getPresentation().setDescription(ActionsBundle.message("action.About.description.specialized", ApplicationNamesInfo.getInstance().getFullProductName()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -27,6 +32,6 @@ public class AboutAction extends AnAction implements DumbAware, LightEditCompati
   }
 
   public static void perform(@Nullable Project project) {
-    AboutPopup.show(WindowManager.getInstance().suggestParentWindow(project), false);
+    new AboutDialog(project).show();
   }
 }

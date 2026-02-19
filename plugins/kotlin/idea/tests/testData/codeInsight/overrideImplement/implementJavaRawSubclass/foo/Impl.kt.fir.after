@@ -1,0 +1,13 @@
+// ERROR: [ABSTRACT_MEMBER_NOT_IMPLEMENTED] Class 'C' is not abstract and does not implement abstract member: fun foo(x: (Mutable)List<String!>!, y: String!): B<String!>!
+// ERROR: [NOTHING_TO_OVERRIDE] 'foo' overrides nothing. Potential signatures for overriding: fun foo(x: (MutableList<Any?>..List<*>?), y: String!): (B<Any!>..B<*>?)
+import foo.A
+import foo.B
+
+class C : A() {
+    override fun foo(x: List<String?>?, y: String?): B<String?>? {
+        <selection><caret>TODO("Not yet implemented")</selection>
+    }
+}
+
+// MEMBER_K2: "foo(x: List<String?>?, y: String?): B<String?>?"
+// MEMBER_K1: "foo(x: (Mutable)List<(raw) Any?>!, y: String!): B<(raw) Any!>!"

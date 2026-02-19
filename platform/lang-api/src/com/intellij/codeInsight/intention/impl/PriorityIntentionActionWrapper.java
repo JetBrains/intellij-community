@@ -1,22 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Danila Ponomarenko
- */
-public final class PriorityIntentionActionWrapper implements IntentionAction, PriorityAction {
+public final class PriorityIntentionActionWrapper implements IntentionAction, PriorityAction, IntentionActionDelegate {
   private final IntentionAction myAction;
   private final Priority myPriority;
 
@@ -25,30 +22,27 @@ public final class PriorityIntentionActionWrapper implements IntentionAction, Pr
     myPriority = priority;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return myAction.getText();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myAction.getFamilyName();
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myAction.isAvailable(project, editor, file);
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return myAction.isAvailable(project, editor, psiFile);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myAction.invoke(project, editor, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    myAction.invoke(project, editor, psiFile);
   }
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return myAction.getElementToMakeWritable(file);
   }
 
@@ -63,25 +57,24 @@ public final class PriorityIntentionActionWrapper implements IntentionAction, Pr
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    IntentionAction delegate = ObjectUtils.tryCast(myAction.getFileModifierForPreview(target), IntentionAction.class);
-    return delegate == null ? null :
-           delegate == myAction ? this :
-           new PriorityIntentionActionWrapper(delegate, myPriority);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return myAction.generatePreview(project, editor, psiFile);
   }
 
-  @NotNull
-  public static IntentionAction highPriority(@NotNull IntentionAction action) {
+  @Override
+  public @NotNull IntentionAction getDelegate() {
+    return myAction;
+  }
+
+  public static @NotNull IntentionAction highPriority(@NotNull IntentionAction action) {
     return new PriorityIntentionActionWrapper(action, Priority.HIGH);
   }
 
-  @NotNull
-  public static IntentionAction normalPriority(@NotNull IntentionAction action) {
+  public static @NotNull IntentionAction normalPriority(@NotNull IntentionAction action) {
     return new PriorityIntentionActionWrapper(action, Priority.NORMAL);
   }
 
-  @NotNull
-  public static IntentionAction lowPriority(@NotNull IntentionAction action) {
+  public static @NotNull IntentionAction lowPriority(@NotNull IntentionAction action) {
     return new PriorityIntentionActionWrapper(action, Priority.LOW);
   }
 }

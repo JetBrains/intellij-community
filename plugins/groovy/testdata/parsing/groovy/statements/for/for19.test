@@ -1,0 +1,69 @@
+for(int i) {}
+
+for(int i = 1)
+
+for(int i,) {}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiElement(()('(')
+    In clause
+      Parameter
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('i')
+      PsiErrorElement:',' expected, got ')'
+        <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')
+  PsiElement(new line)('\n\n')
+  For statement
+    PsiElement(for)('for')
+    PsiElement(()('(')
+    Traditional FOR clause
+      Variable definitions
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(int)('int')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('i')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('1')
+      PsiErrorElement:',' or ';' expected, got ')'
+        <empty list>
+    PsiElement())(')')
+    PsiElement(new line)('\n\n')
+    For statement
+      PsiElement(for)('for')
+      PsiElement(()('(')
+      Traditional FOR clause
+        Variable definitions
+          Modifiers
+            <empty list>
+          Built in type
+            PsiElement(int)('int')
+          PsiWhiteSpace(' ')
+          Variable
+            PsiElement(identifier)('i')
+          PsiElement(,)(',')
+          PsiErrorElement:identifier expected, got ')'
+            <empty list>
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Block statement
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')

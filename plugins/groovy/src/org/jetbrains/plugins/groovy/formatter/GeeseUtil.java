@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.lang.ASTNode;
@@ -26,8 +26,7 @@ public final class GeeseUtil {
   private GeeseUtil() {
   }
 
-  @Nullable
-  public static ASTNode getClosureRBraceAtTheEnd(ASTNode node) {
+  public static @Nullable ASTNode getClosureRBraceAtTheEnd(ASTNode node) {
     IElementType elementType = node.getElementType();
     if (elementType == GroovyElementTypes.CLOSABLE_BLOCK) {
       PsiElement rBrace = ((GrClosableBlock)node.getPsi()).getRBrace();
@@ -49,8 +48,7 @@ public final class GeeseUtil {
            ((GrClosableBlock)e.getParent()).getRBrace() == e;
   }
 
-  @Nullable
-  public static PsiElement getNextNonWhitespaceToken(PsiElement e) {
+  public static @Nullable PsiElement getNextNonWhitespaceToken(PsiElement e) {
     PsiElement next = PsiTreeUtil.nextLeaf(e);
     while (next != null && next.getNode().getElementType() == TokenType.WHITE_SPACE) next = PsiTreeUtil.nextLeaf(next);
     return next;
@@ -82,8 +80,7 @@ public final class GeeseUtil {
 
     //search for start of the line
     cur = parent;
-    if (cur.getParent() instanceof GrMethodCall) {
-      GrMethodCall call = (GrMethodCall)cur.getParent();
+    if (cur.getParent() instanceof GrMethodCall call) {
       GrExpression invoked = call.getInvokedExpression();
       if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression)invoked).getReferenceNameElement() != null) {
         cur = ((GrReferenceExpression)invoked).getReferenceNameElement();

@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -15,14 +17,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.task.*;
-import com.intellij.ui.GuiUtils;
+import com.intellij.task.BuildTask;
+import com.intellij.task.ModuleBuildTask;
+import com.intellij.task.ProjectTask;
+import com.intellij.task.ProjectTaskContext;
+import com.intellij.task.ProjectTaskListener;
+import com.intellij.task.ProjectTaskManager;
+import com.intellij.task.ProjectTaskRunner;
+import com.intellij.task.ProjectTaskState;
+import com.intellij.task.TaskRunnerResults;
+import com.intellij.tracing.Tracer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +43,13 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -39,8 +58,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.BUILD_ACTIVITY;
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.BUILD_ORIGINATOR;
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.HAS_ERRORS;
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.INCREMENTAL;
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.MODULES;
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.TASK_RUNNER;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Arrays.stream;
@@ -49,9 +73,10 @@ import static java.util.stream.Collectors.groupingBy;
 /**
  * @author Vladislav.Soroka
  */
-@SuppressWarnings("deprecation")
 public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   private static final Logger LOG = Logger.getInstance(ProjectTaskManager.class);
+  private static final Key<Class<?>> BUILD_ORIGINATOR_KEY = Key.create("project task build originator");
+
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
   private final ProjectTaskListener myEventPublisher;
   private final List<ProjectTaskManagerListener> myListeners = new CopyOnWriteArrayList<>();
@@ -71,15 +96,29 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return run(createModulesBuildTask(modules, false, false, false));
   }
 
+  @ApiStatus.Internal
+  public ProjectTask createModulesFilesTask(VirtualFile @NotNull [] files) {
+    Map<Module, List<Pair<VirtualFile, Module>>> modulesMap = stream(files)
+      .map(file -> new Pair<>(file, ProjectFileIndex.getInstance(myProject).getModuleForFile(file, false)))
+      .filter(pair -> pair.second != null)
+      .collect(groupingBy(pair -> pair.second));
+
+    var tasks = map(
+      modulesMap.entrySet(),
+      entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, map(entry.getValue(), pair -> pair.first))
+    );
+
+    return new ProjectTaskList(tasks);
+  }
+
   @Override
   public Promise<Result> compile(VirtualFile @NotNull [] files) {
-    List<ModuleFilesBuildTask> buildTasks = map(
-      stream(files)
-        .collect(groupingBy(file -> ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(file, false)))
-        .entrySet(),
-      entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, entry.getValue())
-    );
-    return run(new ProjectTaskList(buildTasks));
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      return run(createModulesFilesTask(files));
+    }
+
+    ProjectTask task = ReadAction.nonBlocking(() -> this.createModulesFilesTask(files)).executeSynchronously();
+    return run(task);
   }
 
   @Override
@@ -108,22 +147,13 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   @Override
-  public ProjectTask createModulesBuildTask(Module module,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return createModulesBuildTask(ContainerUtil.ar(module), isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
-  }
-
-  @Override
-  public ProjectTask createModulesBuildTask(Module[] modules,
-                                            boolean isIncrementalBuild,
-                                            boolean includeDependentModules,
-                                            boolean includeRuntimeDependencies) {
-    return modules.length == 1
-           ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)
-           : new ProjectTaskList(map(Arrays.asList(modules), module ->
-             new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)));
+  public ProjectTask createModulesBuildTask(Module[] modules, boolean isIncrementalBuild, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests) {
+    if (modules.length == 1) {
+      return new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests);
+    }
+    return new ProjectTaskList(
+      map(Arrays.asList(modules), module -> new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies, includeTests))
+    );
   }
 
   @Override
@@ -134,6 +164,25 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
                                      buildableElement -> new ProjectModelBuildTaskImpl<>(buildableElement, isIncrementalBuild)));
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public @Nullable ExecutionEnvironment createProjectTaskExecutionEnvironment(@NotNull ProjectTask projectTask) {
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask);
+    if (toRun.isEmpty()) return null;
+    Map<ProjectTaskRunner, List<ProjectTask>> tasksMap = new LinkedHashMap<>();
+    for (Pair<ProjectTaskRunner, Collection<? extends ProjectTask>> pair : toRun) {
+      tasksMap.computeIfAbsent(pair.first, runner -> new ArrayList<>()).addAll(pair.second);
+    }
+    if (tasksMap.size() != 1) {
+      LOG.debug("Can not create single execution environment for tasks of different runners: '" + tasksMap + "'");
+      return null;
+    }
+    Map.Entry<ProjectTaskRunner, List<ProjectTask>> entry = tasksMap.entrySet().iterator().next();
+    ProjectTask[] tasks = entry.getValue().toArray(EMPTY_TASKS_ARRAY);
+    ProjectTaskRunner taskRunner = entry.getKey();
+    return taskRunner.createExecutionEnvironment(myProject, tasks);
+  }
+
   @Override
   public Promise<Result> run(@NotNull ProjectTask projectTask) {
     return run(new ProjectTaskContext(), projectTask);
@@ -141,33 +190,11 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @Override
   public Promise<Result> run(@NotNull ProjectTaskContext context, @NotNull ProjectTask projectTask) {
+    Tracer.Span buildSpan = Tracer.start("build");
     AsyncPromise<Result> promiseResult = new AsyncPromise<>();
-    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask, context);
 
-    Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
-      Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
-        groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
-          .filter(runner -> {
-            try {
-              return runner.canRun(myProject, aTask);
-            }
-            catch (ProcessCanceledException e) {
-              throw e;
-            }
-            catch (Exception e) {
-              LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
-            }
-            return false;
-          })
-          .findFirst()
-          .orElse(myDummyTaskRunner))
-      );
-      for (Map.Entry<ProjectTaskRunner, ? extends List<? extends ProjectTask>> entry : toBuild.entrySet()) {
-        toRun.add(Pair.create(entry.getKey(), entry.getValue()));
-      }
-    };
-    visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
-
+    buildSpan.complete();
     context.putUserData(ProjectTaskScope.KEY, new ProjectTaskScope() {
       @Override
       public @NotNull <T extends ProjectTask> List<T> getRequestedTasks(@NotNull Class<T> instanceOf) {
@@ -178,11 +205,17 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
       }
     });
 
+    Class<?> buildOriginatorFromProjectUserData = BUILD_ORIGINATOR_KEY.get(myProject);
+    if (buildOriginatorFromProjectUserData != null) {
+      myProject.putUserData(BUILD_ORIGINATOR_KEY, null);
+    }
 
-    IdeActivity activity = new IdeActivity(myProject, "build").startedWithData(data -> {
-      data.addData("task_runner_class", map(toRun, it -> it.first.getClass().getName()));
-    });
+    if (context.getBuildOriginatorClass() == null) {
+      context.setBuildOriginatorClass(buildOriginatorFromProjectUserData);
+    }
 
+    Pair<StructuredIdeActivity, List<EventPair<?>>> activity = reportBuildStart(
+      projectTask, context.getBuildOriginatorClass(), toRun);
     myEventPublisher.started(context);
 
     Runnable runnable = () -> {
@@ -192,14 +225,25 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
         }
         catch (ExecutionException e) {
           sendAbortedEmptyResult(context, new ResultConsumer(promiseResult));
-          activity.finished();
+          activity.first.finished(() -> activity.second);
+          return;
+        }
+      }
+
+      for (ProjectTaskManagerListenerExtensionPoint listener : ProjectTaskManagerListenerExtensionPoint.EP_NAME.getExtensionList()) {
+        try {
+          listener.beforeRun(myProject, context);
+        }
+        catch (ExecutionException e) {
+          sendAbortedEmptyResult(context, new ResultConsumer(promiseResult));
+          activity.first.finished(() -> activity.second);
           return;
         }
       }
 
       if (toRun.isEmpty()) {
         sendSuccessEmptyResult(context, new ResultConsumer(promiseResult));
-        activity.finished();
+        activity.first.finished(() -> activity.second);
         return;
       }
 
@@ -232,7 +276,91 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     else {
       runnable.run();
     }
+    promiseResult.onProcessed(result -> {
+      buildSpan.complete();
+    });
     return promiseResult;
+  }
+
+  private Pair<StructuredIdeActivity, List<EventPair<?>>> reportBuildStart(@NotNull ProjectTask projectTask,
+                                                                           Class<?> buildOriginator,
+                                                                           List<? extends Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
+    Ref<Boolean> incremental = new Ref<>(null);
+    AtomicInteger modules = new AtomicInteger(0);
+    visitTask(projectTask, tasks -> {
+      for (ProjectTask task : tasks) {
+        if (task instanceof BuildTask) {
+          boolean taskIncremental = ((BuildTask) task).isIncrementalBuild();
+          // if any of the tasks is full rebuild, assume everything is full rebuild
+          if (!taskIncremental) {
+            incremental.set(false);
+          }
+          else if (incremental.get() == null) {
+            incremental.set(true);
+          }
+        }
+
+        if (task instanceof ModuleBuildTask) {
+          modules.incrementAndGet();
+        }
+      }
+    });
+
+    List<EventPair<?>> fields = new SmartList<>();
+    fields.add(TASK_RUNNER.with(map(toRun, it -> it.first.getClass())));
+    if (incremental.get() != null) {
+      fields.add(INCREMENTAL.with(incremental.get()));
+    }
+    if (modules.get() > 0) {
+      fields.add(MODULES.with(modules.get()));
+    }
+    if (buildOriginator != null) {
+      fields.add(BUILD_ORIGINATOR.with(buildOriginator));
+    }
+    return Pair.create(BUILD_ACTIVITY.started(myProject, () -> fields), fields);
+  }
+
+  private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask) {
+    return groupByRunner(projectTask, null);
+  }
+
+  private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask,
+                                                                                         @Nullable ProjectTaskContext context) {
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
+    Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
+      Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
+        groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
+          .filter(runner -> {
+            try {
+              return runner.canRun(myProject, aTask, context);
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Throwable e) {
+              LOG.error("Broken project task runner: " + runner.getClass().getName(), e);
+            }
+            return false;
+          })
+          .findFirst()
+          .orElse(myDummyTaskRunner))
+      );
+      for (Map.Entry<ProjectTaskRunner, ? extends List<? extends ProjectTask>> entry : toBuild.entrySet()) {
+        toRun.add(Pair.create(entry.getKey(), entry.getValue()));
+      }
+    };
+    visitTask(projectTask, taskClassifier);
+    return toRun;
+  }
+
+  private static void visitTask(@NotNull ProjectTask projectTask, Consumer<? super Collection<? extends ProjectTask>> taskClassifier) {
+    visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
+  }
+
+  public static void putBuildOriginator(@Nullable Project project, @NotNull Class<?> clazz) {
+    if (BUILD_ORIGINATOR_KEY.get(project) == null) {
+      BUILD_ORIGINATOR_KEY.set(project, clazz);
+    }
   }
 
   @ApiStatus.Experimental
@@ -250,7 +378,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
   }
 
-  private static @NotNull Supplier<List<String>> moduleOutputPathsProvider(@NotNull Module module) {
+  private static @NotNull Function0<List<String>> moduleOutputPathsProvider(@NotNull Module module) {
     return () -> ReadAction.compute(() -> {
       return JBIterable.of(OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().getClassesRoots())
         .filterMap(file -> file.isDirectory() && !file.getFileSystem().isReadOnly() ? file.getPath() : null)
@@ -258,7 +386,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
   }
 
-  public final void addListener(@NotNull ProjectTaskManagerListener listener) {
+  public void addListener(@NotNull ProjectTaskManagerListener listener) {
     myListeners.add(listener);
   }
 
@@ -295,7 +423,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return run(createBuildTask(isIncrementalBuild, buildableElements));
   }
 
-  private static class DummyTaskRunner extends ProjectTaskRunner {
+  private static final class DummyTaskRunner extends ProjectTaskRunner {
     @Override
     public Promise<Result> run(@NotNull Project project,
                                @NotNull ProjectTaskContext context,
@@ -325,6 +453,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
             for (ProjectTaskManagerListener listener : myListeners) {
               listener.afterRun(result);
             }
+            for (ProjectTaskManagerListenerExtensionPoint listener : ProjectTaskManagerListenerExtensionPoint.EP_NAME.getExtensionList()) {
+              listener.afterRun(myProject, result);
+            }
             notify(result);
           }
           catch (ExecutionException e) {
@@ -344,12 +475,12 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
 
     private void notify(@NotNull Result result) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
         if (!myProject.isDisposed()) {
           myEventPublisher.finished(result);
         }
         myPromise.setResult(result);
-      }, ModalityState.defaultModalityState());
+      });
     }
   }
 
@@ -357,7 +488,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private final ProjectTaskContext myContext;
     private final ResultConsumer myResultConsumer;
     private final AtomicInteger myProgressCounter;
-    private final IdeActivity myActivity;
+    private final Pair<StructuredIdeActivity, List<EventPair<?>>> myActivity;
     private final AtomicBoolean myErrorsFlag;
     private final AtomicBoolean myAbortedFlag;
     private final Map<ProjectTask, ProjectTaskState> myTasksState = new ConcurrentHashMap<>();
@@ -365,7 +496,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private ProjectTaskResultsAggregator(@NotNull ProjectTaskContext context,
                                          @NotNull ResultConsumer resultConsumer,
                                          int expectedResults,
-                                         @NotNull IdeActivity activity) {
+                                         Pair<StructuredIdeActivity, List<EventPair<?>>> activity) {
       myContext = context;
       myResultConsumer = resultConsumer;
       myProgressCounter = new AtomicInteger(expectedResults);
@@ -402,7 +533,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
           myResultConsumer.accept(new MyResult(myContext, myTasksState, myAbortedFlag.get(), myErrorsFlag.get()));
         }
         finally {
-          myActivity.finished();
+          List<EventPair<?>> events = new ArrayList<>(myActivity.second);
+          events.add(HAS_ERRORS.with(myErrorsFlag.get()));
+          myActivity.first.finished(() -> events);
         }
       }
     }
@@ -470,157 +603,4 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
       return myResult.anyTaskMatches(predicate);
     }
   }
-  //<editor-fold desc="Deprecated methods. To be removed in 2020.1">
-
-  /**
-   * @deprecated use {@link #run(ProjectTask)}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void run(@NotNull ProjectTask projectTask, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(run(projectTask), callback);
-  }
-
-  /**
-   * @deprecated use {@link #run(ProjectTaskContext, ProjectTask)}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void run(@NotNull ProjectTaskContext context,
-                  @NotNull ProjectTask projectTask,
-                  @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(run(context, projectTask), callback);
-  }
-
-  /**
-   * @deprecated use {@link #buildAllModules()}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void buildAllModules(@Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(buildAllModules(), callback);
-  }
-
-  /**
-   * @deprecated use {@link #rebuildAllModules()}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void rebuildAllModules(@Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(rebuildAllModules(), callback);
-  }
-
-  /**
-   * @deprecated use {@link #build(Module[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void build(Module @NotNull [] modules, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(build(modules), callback);
-  }
-
-  /**
-   * @deprecated use {@link #rebuild(Module[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void rebuild(Module @NotNull [] modules, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(rebuild(modules), callback);
-  }
-
-  /**
-   * @deprecated use {@link #compile(VirtualFile[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void compile(VirtualFile @NotNull [] files, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(compile(files), callback);
-  }
-
-  /**
-   * @deprecated use {@link #build(ProjectModelBuildableElement[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void build(ProjectModelBuildableElement @NotNull [] buildableElements, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(build(buildableElements), callback);
-  }
-
-  /**
-   * @deprecated use {@link #rebuild(ProjectModelBuildableElement[])}
-   */
-  @Override
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void rebuild(ProjectModelBuildableElement @NotNull [] buildableElements, @Nullable ProjectTaskNotification callback) {
-    assertUnsupportedOperation(callback);
-    notifyIfNeeded(rebuild(buildableElements), callback);
-  }
-
-  private static void notifyIfNeeded(@NotNull Promise<Result> promise, @Nullable ProjectTaskNotification callback) {
-    if (callback != null) {
-      promise
-        .onSuccess(
-          result -> callback.finished(result.getContext(), new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0)))
-        .onError(throwable -> callback.finished(new ProjectTaskContext(), new ProjectTaskResult(true, 0, 0)));
-    }
-  }
-
-  private static void assertUnsupportedOperation(@Nullable ProjectTaskNotification callback) {
-    if (callback instanceof ProjectTaskNotificationAdapter) {
-      throw new UnsupportedOperationException("Please, provide implementation for non-deprecated methods");
-    }
-  }
-
-  private static final class ProjectTaskNotificationAdapter implements ProjectTaskNotification {
-    private final AsyncPromise<Result> myPromise;
-    private final ProjectTaskContext myContext;
-
-    private ProjectTaskNotificationAdapter(@NotNull AsyncPromise<Result> promise, @NotNull ProjectTaskContext context) {
-      myPromise = promise;
-      myContext = context;
-    }
-
-    @Override
-    public void finished(@NotNull ProjectTaskResult executionResult) {
-      myPromise.setResult(new Result() {
-        @Override
-        public @NotNull ProjectTaskContext getContext() {
-          return myContext;
-        }
-
-        @Override
-        public boolean isAborted() {
-          return executionResult.isAborted();
-        }
-
-        @Override
-        public boolean hasErrors() {
-          return executionResult.getErrors() > 0;
-        }
-
-        @Override
-        public boolean anyTaskMatches(@NotNull BiPredicate<? super ProjectTask, ? super ProjectTaskState> predicate) {
-          return executionResult.anyMatch(predicate);
-        }
-      });
-    }
-  }
-  //</editor-fold>
 }

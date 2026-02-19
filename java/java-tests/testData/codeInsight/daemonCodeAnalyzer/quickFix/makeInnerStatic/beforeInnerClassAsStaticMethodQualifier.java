@@ -1,4 +1,4 @@
-// "Make 'C2' static" "true"
+// "Make 'C2' static" "true-preview"
 class C {
 
   {

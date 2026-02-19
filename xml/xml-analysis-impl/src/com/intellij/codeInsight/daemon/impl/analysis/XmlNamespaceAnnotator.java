@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -16,19 +17,18 @@ import org.jetbrains.annotations.NotNull;
 public class XmlNamespaceAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       String namespace = tag.getNamespace();
       for (XmlNSColorProvider provider : XmlNSColorProvider.EP_NAME.getExtensionList()) {
         TextAttributesKey key = provider.getKeyForNamespace(namespace, tag);
         if (key != null) {
           TextRange range = XmlTagUtil.getStartTagRange(tag);
           if (range != null) {
-            holder.newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(range).textAttributes(key).create();
+            holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(range).textAttributes(key).create();
           }
           TextRange endTagRange = XmlTagUtil.getEndTagRange(tag);
           if (endTagRange != null) {
-            holder.newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity.INFORMATION).range(endTagRange).textAttributes(key).create();
+            holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(endTagRange).textAttributes(key).create();
           }
           return;
         }

@@ -16,14 +16,11 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.PsiElement;
 
-/**
- * @author ilyas
- */
 public interface GrTypeCastExpression extends GrExpression {
   GrTypeElement getCastTypeElement();
 

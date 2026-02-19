@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.python.community.helpersLocator` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "community-helpersLocator_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "community-helpersLocator",
+  module_name = "intellij.python.community.helpersLocator",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":community-helpersLocator_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/diagnostic",
+  ]
+)
+
+jvm_library(
+  name = "community-helpersLocator_test_lib",
+  module_name = "intellij.python.community.helpersLocator",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":community-helpersLocator",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.community.helpersLocator` end

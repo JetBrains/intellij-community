@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -14,7 +15,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
 
 /**
  * @author Dmitry Avdeev
@@ -25,6 +27,7 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
 
   public YouTrackRepositoryEditor(final Project project, final YouTrackRepository repository, Consumer<? super YouTrackRepository> changeListener) {
     super(project, repository, changeListener);
+    myPasswordLabel.setText(TaskBundle.message("label.token"));
 
     // Setup document for completion and highlighting
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDefaultSearch.getDocument());
@@ -37,7 +40,7 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
     super.afterTestConnection(connectionSuccessful);
     // highlight query if connection was successful
     if (connectionSuccessful) {
-      DaemonCodeAnalyzer.getInstance(myProject).restart();
+      DaemonCodeAnalyzer.getInstance(myProject).restart(this);
     }
   }
 
@@ -47,9 +50,8 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
     super.apply();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     mySearchLabel = new JBLabel(TaskBundle.message("label.search"), SwingConstants.RIGHT);
     myDefaultSearch = new LanguageTextField(YouTrackLanguage.INSTANCE, myProject, myRepository.getDefaultSearch());
     installListener(myDefaultSearch);
@@ -57,7 +59,7 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
   }
 
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     super.setAnchor(anchor);
     mySearchLabel.setAnchor(anchor);
   }

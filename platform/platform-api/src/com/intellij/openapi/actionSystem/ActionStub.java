@@ -1,95 +1,88 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartFMap;
+import com.intellij.openapi.project.ProjectType;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * The main (and single) purpose of this class is provide lazy initialization
- * of the actions. ClassLoader eats a lot of time on startup to load the actions' classes.
- *
- * @author Vladimir Kondratyev
+ * The main (and single) purpose of this class is to provide lazy initialization
+ * of the actions.
+ * ClassLoader eats up a lot of time on startup to load the actions' classes.
  */
-@SuppressWarnings("ComponentNotRegistered")
 public final class ActionStub extends AnAction implements ActionStubBase {
   private static final Logger LOG = Logger.getInstance(ActionStub.class);
 
-  private final String myClassName;
-  private final String myProjectType;
-  private final Supplier<Presentation> myTemplatePresentation;
-  private final String myId;
-  private final PluginDescriptor myPlugin;
-  private final String myIconPath;
-  private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
-  private final SmartList<Supplier<String>> mySynonyms = new SmartList<>();
+  private final @NotNull String className;
+  private final @NotNull String id;
+  private final @NotNull PluginDescriptor plugin;
+  private final @Nullable String iconPath;
+  private final @Nullable ProjectType projectType;
+  private final @NotNull Supplier<Presentation> templatePresentation;
+  private List<Supplier<String>> synonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
                     @NotNull PluginDescriptor plugin,
                     @Nullable String iconPath,
-                    @Nullable String projectType,
+                    @Nullable ProjectType projectType,
                     @NotNull Supplier<Presentation> templatePresentation) {
-    myPlugin = plugin;
-    myClassName = actionClass;
-    myProjectType = projectType;
-    myTemplatePresentation = templatePresentation;
+    className = actionClass;
     LOG.assertTrue(!id.isEmpty());
-    myId = id;
-    myIconPath = iconPath;
-  }
-
-  public void addActionTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
-    myActionTextOverrides = myActionTextOverrides.plus(place, text);
-  }
-
-  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
-    myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
+    this.id = id;
+    this.plugin = plugin;
+    this.iconPath = iconPath;
+    this.projectType = projectType;
+    this.templatePresentation = templatePresentation;
   }
 
   @Override
   public void addSynonym(@NotNull Supplier<String> text) {
-    mySynonyms.add(text);
-  }
-
-  @NotNull
-  @Override
-  public PluginDescriptor getPlugin() {
-    return myPlugin;
-  }
-
-  @NotNull
-  @Override
-  Presentation createTemplatePresentation() {
-    return myTemplatePresentation.get();
-  }
-
-  @NotNull
-  public String getClassName() {
-    return myClassName;
+    if (synonyms == Collections.<Supplier<String>>emptyList()) {
+      synonyms = new SmartList<>(text);
+    }
+    else {
+      synonyms.add(text);
+    }
   }
 
   @Override
-  @NotNull
-  public String getId() {
-    return myId;
+  public @NotNull PluginDescriptor getPlugin() {
+    return plugin;
   }
 
-  public ClassLoader getLoader() {
-    return myPlugin.getPluginClassLoader();
+  @ApiStatus.Internal
+  @Override
+  public @NotNull Presentation createTemplatePresentation() {
+    return templatePresentation.get();
+  }
+
+  public @NotNull String getClassName() {
+    return className;
   }
 
   @Override
-  public String getIconPath() {
-    return myIconPath;
+  public @NotNull String getId() {
+    return id;
+  }
+
+  @Override
+  public @Nullable String getIconPath() {
+    return iconPath;
+  }
+
+  public @Nullable ProjectType getProjectType() {
+    return projectType;
   }
 
   @Override
@@ -101,30 +94,26 @@ public final class ActionStub extends AnAction implements ActionStubBase {
    * Copies template presentation and shortcuts set to {@code targetAction}.
    */
   @ApiStatus.Internal
-  public final void initAction(@NotNull AnAction targetAction) {
-    copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
+  public void initAction(@NotNull AnAction targetAction) {
+    copyTemplatePresentation(getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
-    for (String place : myActionTextOverrides.keySet()) {
-      targetAction.addTextOverride(place, Objects.requireNonNull(myActionTextOverrides.get(place)));
-    }
-    for (Supplier<String> synonym : mySynonyms) {
+    copyActionTextOverrides(targetAction);
+    for (Supplier<String> synonym : synonyms) {
       targetAction.addSynonym(synonym);
     }
-  }
-
-  public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {
-    if (targetPresentation.getIcon() == null && sourcePresentation.getIcon() != null) {
-      targetPresentation.setIcon(sourcePresentation.getIcon());
-    }
-    if (StringUtil.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
-      targetPresentation.setTextWithMnemonic(sourcePresentation.getTextWithPossibleMnemonic());
-    }
-    if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {
-      targetPresentation.setDescription(sourcePresentation.getDescription());
+    if (targetAction instanceof ActionGroup &&
+        !(targetAction instanceof CustomComponentAction) &&
+        !targetAction.getTemplatePresentation().isPerformGroup()) {
+      LOG.error(new PluginException(String.format(
+        "ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
+        id, targetAction.getClass().getName()), plugin.getPluginId()));
     }
   }
 
-  public String getProjectType() {
-    return myProjectType;
+  public static void copyTemplatePresentation(@NotNull Presentation sourcePresentation,
+                                              @NotNull Presentation targetPresentation) {
+    // Note: actions can update templatePresentation in constructor.
+    // We apply stub properties only after that. It could be confusing.
+    targetPresentation.copyUnsetTemplateProperties(sourcePresentation);
   }
 }

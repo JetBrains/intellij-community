@@ -1,9 +1,9 @@
 from __future__ import nested_scopes
 
+import ctypes
 import os
+import signal
 import traceback
-import warnings
-
 import pydevd_file_utils
 
 try:
@@ -17,11 +17,16 @@ except:
     OrderedDict = dict
 
 import inspect
-from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
-    ValuesPolicy
+from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, \
+    dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
+    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_PY311, \
+    IS_PY37_OR_GREATER
 import sys
 from _pydev_bundle import pydev_log
-from _pydev_imps._pydev_saved_modules import threading
+from _pydev_imps._pydev_saved_modules import threading, thread
+from _pydevd_bundle.pydevd_asyncio_provider import get_eval_async_expression_in_context
+from array import array
+from collections import deque
 
 
 def _normpath(filename):
@@ -37,16 +42,24 @@ def save_main_module(file, module_name):
     sys.modules[module_name] = sys.modules['__main__']
     sys.modules[module_name].__name__ = module_name
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=DeprecationWarning)
-        warnings.simplefilter("ignore", category=PendingDeprecationWarning)
+    try:
+        from importlib.machinery import ModuleSpec
+        from importlib.util import module_from_spec
+        m = module_from_spec(ModuleSpec('__main__', loader=None))
+    except:
+        # A fallback for Python <= 3.4
         from imp import new_module
+        m = new_module('__main__')
 
-    m = new_module('__main__')
     sys.modules['__main__'] = m
-    if hasattr(sys.modules[module_name], '__loader__'):
-        m.__loader__ = getattr(sys.modules[module_name], '__loader__')
-    m.__file__ = file
+    orig_module = sys.modules[module_name]
+    for attr in ['__loader__', '__spec__']:
+        if hasattr(orig_module, attr):
+            orig_attr = getattr(orig_module, attr)
+            setattr(m, attr, orig_attr)
+
+    if file is not None:
+        m.__file__ = file
 
     return m
 
@@ -95,6 +108,23 @@ else:
         return isinstance(x, basestring)
 
 
+def patch_traceback_311():
+    # Workaround until https://github.com/python/cpython/issues/99103 is fixed
+    import traceback
+    def _byte_offset_pydev(str, offset):
+        try:
+            return traceback._byte_offset_orig(str, offset)
+        except:
+            return 0
+
+    traceback._byte_offset_orig = traceback._byte_offset_to_character_offset
+    traceback._byte_offset_to_character_offset = _byte_offset_pydev
+
+
+if IS_PY311:
+    patch_traceback_311()
+
+
 def to_string(x):
     if is_string(x):
         return x
@@ -123,26 +153,29 @@ else:
 
 def get_clsname_for_code(code, frame):
     clsname = None
-    if len(code.co_varnames) > 0:
-        # We are checking the first argument of the function
-        # (`self` or `cls` for methods).
-        first_arg_name = code.co_varnames[0]
-        if first_arg_name in frame.f_locals:
-            first_arg_obj = frame.f_locals[first_arg_name]
-            if inspect.isclass(first_arg_obj):  # class method
-                first_arg_class = first_arg_obj
-            else:  # instance method
-                first_arg_class = first_arg_obj.__class__
-            func_name = code.co_name
-            if hasattr(first_arg_class, func_name):
-                method = getattr(first_arg_class, func_name)
-                func_code = None
-                if hasattr(method, 'func_code'):  # Python2
-                    func_code = method.func_code
-                elif hasattr(method, '__code__'):  # Python3
-                    func_code = method.__code__
-                if func_code and func_code == code:
-                    clsname = first_arg_class.__name__
+    try:
+        if len(code.co_varnames) > 0:
+            # We are checking the first argument of the function
+            # (`self` or `cls` for methods).
+            first_arg_name = code.co_varnames[0]
+            if first_arg_name in frame.f_locals:
+                first_arg_obj = frame.f_locals[first_arg_name]
+                if inspect.isclass(first_arg_obj):  # class method
+                    first_arg_class = first_arg_obj
+                else:  # instance method
+                    first_arg_class = first_arg_obj.__class__
+                func_name = code.co_name
+                if hasattr(first_arg_class, func_name):
+                    method = getattr(first_arg_class, func_name)
+                    func_code = None
+                    if hasattr(method, 'func_code'):  # Python2
+                        func_code = method.func_code
+                    elif hasattr(method, '__code__'):  # Python3
+                        func_code = method.__code__
+                    if func_code and func_code == code:
+                        clsname = first_arg_class.__name__
+    except Exception as e:
+        pydev_log.warn(str(e))
 
     return clsname
 
@@ -534,9 +567,9 @@ def dump_threads(stream=None):
 
 
 def take_first_n_coll_elements(coll, n):
-    if coll.__class__ in (list, tuple):
+    if coll.__class__ in (list, tuple, array, str):
         return coll[:n]
-    elif coll.__class__ in (set, frozenset):
+    elif coll.__class__ in (set, frozenset, deque):
         buf = []
         for i, x in enumerate(coll):
             if i >= n:
@@ -573,10 +606,6 @@ def is_numpy_container(type_qualifier, var_type, var):
     return var_type == "ndarray" and type_qualifier == "numpy" and hasattr(var, "shape")
 
 
-def is_numeric_container(type_qualifier, var_type, var):
-    return is_numpy_container(type_qualifier, var_type, var) or is_pandas_container(type_qualifier, var_type, var)
-
-
 def is_builtin(x):
     return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
 
@@ -589,7 +618,9 @@ def is_numpy(x):
            or 'float' in type_name or 'complex' in type_name
 
 
-def should_evaluate_full_value(val):
+def should_evaluate_full_value(val, group_type=GET_FRAME_NORMAL_GROUP):
+    if group_type == GET_FRAME_RETURN_GROUP:
+        return None
     return LOAD_VALUES_POLICY == ValuesPolicy.SYNC \
            or ((is_builtin(type(val)) or is_numpy(type(val))) and not isinstance(val, (list, tuple, dict, set, frozenset))) \
            or (is_in_unittests_debugging_mode() and isinstance(val, Exception))
@@ -599,57 +630,145 @@ def should_evaluate_shape():
     return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
 
 
-def _series_to_str(s, max_items, show_index=True):
-    res = []
-    i = 0
-    for item in s.iteritems():
-        # item: (index, value)
-        if show_index:
-            res.append(str(item))
-        else:
-            res.append(str(item[1]))
-        i += 1
-        if i > max_items:
-            break
-    return ' '.join(res)
+def has_attribute_safe(obj, attr_name):
+    """Evaluates the existence of attribute without accessing it."""
+    attr = inspect.getattr_static(obj, attr_name, None)
+    return attr is not None
 
 
-def _df_to_str(df, max_items, rows_sep=', '):
-    res = []
-    for c in df.columns:
-        res.append(str(c))
-    rows = []
-    i = 0
-    for item in df.iterrows():
-        # item: (index, Series)
-        ind = "[%s: " % item[0]
-        values = _series_to_str(item[1], max_items, show_index=False)
-        rows.append(ind + values + "]")
-        i += item[1].size
-        if i > max_items:
-            break
-    res.append(rows_sep.join(rows))
-    return ' '.join(res)
+def is_safe_to_access(obj, attr_name):
+    """Evaluates the safety of attribute accessibility via `obj.attr_name`.
 
+    Direct attribute access can occasionally lead to unsafe conditions. A typical
+    scenario is when an extension class contains a property that might attempt to
+    access a field before its initialization. This function aims to verify the safety
+    of attribute access in the most risk-free manner. As an example, it leverages the
+    `inspect` module, facilitating attribute retrieval without triggering any
+    descriptor functionality.
 
-def pandas_to_str(df, type_name, max_items):
-    try:
-        if type_name == "Series":
-            return _series_to_str(df, max_items)
-        elif type_name == "DataFrame":
-            return _df_to_str(df, max_items)
-        else:
-            return str(df)
-    except Exception as e:
-        pydev_log.warn("Failed to format pandas variable: " + str(e))
-        return str(df)
+    Note
+    ----
+    This function performs a strict check for potential side-effects, the access can be safe even if `False` is returned.
+    This might need to be checked more precisely for some special types.
+    """
 
+    attr = inspect.getattr_static(obj, attr_name, None)
 
-def format_numpy_array(num_array, max_items):
-    return str(num_array[:max_items]).replace('\n', ',').strip()
+    # Filter out objects that don't contain the given attribute
+    if attr is None:
+        return False
+
+    # Should we check for other descriptor types here?
+    if inspect.isgetsetdescriptor(attr) or isinstance(attr, property):
+        return False
+
+    return True
 
 
 def is_in_unittests_debugging_mode():
     debugger = get_global_debugger()
     if debugger:
         return debugger.stop_on_failed_tests
+
+
+def is_current_thread_main_thread():
+    if hasattr(threading, 'main_thread'):
+        return threading.current_thread() is threading.main_thread()
+
+    return isinstance(threading.current_thread(), threading._MainThread)
+
+
+def eval_expression(expression, globals, locals):
+    eval_func = get_eval_async_expression_in_context()
+    if eval_func is not None:
+        return eval_func(expression, globals, locals, False)
+
+    return eval(expression, globals, locals)
+
+
+def kill_thread(thread):
+    if not thread.is_alive():
+        return
+
+    thread_id = thread.ident
+
+    if IS_PY37_OR_GREATER:
+        tid = ctypes.c_long(thread_id)
+    else:
+        tid = ctypes.c_ulong(thread_id)
+
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(SystemExit))
+
+    if res == 0:
+        pydev_log.debug("Thread with ID '%s' not found" % thread_id)
+    elif res > 1:
+        pydev_log.debug("More then one thread with ID '%s' found" % thread_id)
+    else:
+        pydev_log.debug("Successfully raised an exception in thread with ID '%s'"
+                        % thread_id)
+    pydev_log.debug("Thread with ID '%s' is stopped" % thread_id)
+
+
+def interrupt_main_thread(main_thread=None):
+    """
+    Generates a KeyboardInterrupt in the main thread by sending a Ctrl+C
+    or by calling thread.interrupt_main().
+
+    :param main_thread:
+        Needed because Jython needs main_thread._thread.interrupt() to be called.
+
+    Note: if unable to send a Ctrl+C, the KeyboardInterrupt will only be raised
+    when the next Python instruction is about to be executed (so, it won't interrupt
+    a sleep(1000)).
+    """
+    if main_thread is None:
+        main_thread = threading.main_thread()
+
+    pydev_log.debug("Interrupt main thread.")
+    called = False
+    try:
+        if os.name == "posix":
+            # On Linux we can't interrupt 0 as in Windows because it's
+            # actually owned by a process -- on the good side, signals
+            # work much better on Linux!
+            os.kill(os.getpid(), signal.SIGINT)
+            called = True
+
+        elif os.name == "nt":
+            # This generates a Ctrl+C only for the current process and not
+            # to the process group!
+            # Note: there doesn't seem to be any public documentation for this
+            # function (although it seems to be  present from Windows Server 2003 SP1 onwards
+            # according to: https://www.geoffchappell.com/studies/windows/win32/kernel32/api/index.htm)
+            ctypes.windll.kernel32.CtrlRoutine(0)
+
+            # The code below is deprecated because it actually sends a Ctrl+C
+            # to the process group, so, if this was a process created without
+            # passing `CREATE_NEW_PROCESS_GROUP` the  signal may be sent to the
+            # parent process and to sub-processes too (which is not ideal --
+            # for instance, when using pytest-xdist, it'll actually stop the
+            # testing, even when called in the subprocess).
+
+            # if hasattr_checked(signal, 'CTRL_C_EVENT'):
+            #     os.kill(0, signal.CTRL_C_EVENT)
+            # else:
+            #     # Python 2.6
+            #     ctypes.windll.kernel32.GenerateConsoleCtrlEvent(0, 0)
+            called = True
+
+    except:
+        # If something went wrong, fallback to interrupting when the next
+        # Python instruction is being called.
+        pydev_log.error("Error interrupting main thread (using fallback).")
+
+    if not called:
+        try:
+            # In this case, we don't really interrupt a sleep() nor IO operations
+            # (this makes the KeyboardInterrupt be sent only when the next Python
+            # instruction is about to be executed).
+            if hasattr(thread, "interrupt_main"):
+                thread.interrupt_main()
+            else:
+                main_thread._thread.interrupt()  # Jython
+        except:
+            pydev_log.error("Error on interrupt main thread fallback.")

@@ -1,13 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDeclarationStatement
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringFactory
@@ -15,7 +27,6 @@ import com.intellij.refactoring.move.moveInner.MoveInnerImpl
 import com.intellij.refactoring.openapi.impl.MoveInnerRefactoringImpl
 
 internal class ClassProblemsTest : ProjectProblemsViewTest() {
-
   fun testRename() = doClassTest { psiClass, factory ->
     psiClass.nameIdentifier?.replace(factory.createIdentifier("Bar"))
   }
@@ -63,6 +74,49 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
       assertFalse(hasReportedProblems<PsiClass>(refClass))
     }
   }
+  
+  fun testClassOverrideBecamePrivate() {
+    myFixture.addClass("""
+        package foo;
+        
+        public abstract class Parent {
+          abstract void test();
+        }
+    """.trimIndent())
+    val targetClass = myFixture.addClass("""
+        package foo;
+        
+        public class Foo extends Parent {
+          void test() {}
+        }
+    """.trimIndent())
+    val refClass = myFixture.addClass("""
+        package foo;
+        
+        public class Usage {
+          void use() {
+            Foo foo = new Foo();
+            foo.test();
+          }
+        }
+    """.trimIndent())
+    
+    doTest(targetClass) {
+      changeClass(targetClass) { psiClass, factory -> 
+        psiClass.methods[0].parameterList.add(factory.createParameterFromText("int a", psiClass))
+      }
+
+      changeClass(targetClass) { psiClass, _ ->
+        psiClass.methods[0].modifierList.setModifierProperty(PsiModifier.PUBLIC, true)
+      }
+      
+      changeClass(targetClass) { psiClass, factory ->
+        psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
+      }
+    }
+    
+    assertTrue(hasReportedProblems<PsiMethod>(refClass))
+  }
 
   fun testMakeClassInterface() {
     val targetClass = myFixture.addClass("""
@@ -83,7 +137,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
     doTest(targetClass) {
       changeClass(targetClass) { psiClass, factory ->
         val classKeyword = PsiTreeUtil.getPrevSiblingOfType(psiClass.nameIdentifier, PsiKeyword::class.java)
-        val interfaceKeyword = factory.createKeyword(PsiKeyword.INTERFACE)
+        val interfaceKeyword = factory.createKeyword(JavaKeywords.INTERFACE)
         classKeyword?.replace(interfaceKeyword)
       }
       assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))

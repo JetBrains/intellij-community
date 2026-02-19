@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ import java.util.Map;
 /**
  * Inspection tool that checks if entries are duplicated by others.
  */
+@ApiStatus.Internal
 public class IgnoreFileDuplicateEntryInspection extends LocalInspectionTool {
   /**
    * Reports problems at file level. Checks if entries are duplicated by other entries.

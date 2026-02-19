@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -9,13 +10,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
-public class AddManyTestProcesses extends DumbAwareAction {
+public final class AddManyTestProcesses extends DumbAwareAction {
   public AddManyTestProcesses() {
     super("Add Many Test Processes");
   }
@@ -27,7 +27,7 @@ public class AddManyTestProcesses extends DumbAwareAction {
       final int finalI = i;
       new Task.Backgroundable(project, "Test process", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+        public void run(final @NotNull ProgressIndicator indicator) {
           for (int j = 0; j < 10000; j++) {
             TimeoutUtil.sleep(1);
             indicator.setText("foo " + j);
@@ -38,5 +38,10 @@ public class AddManyTestProcesses extends DumbAwareAction {
         }
       }.queue();
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -50,7 +50,7 @@ class PyUnifiedStubsTest : PyTestCase() {
     doTest { level, file ->
       val functionStub = file.topLevelFunctions[0].stub
       val paramListStub: StubElement<*> = functionStub!!.childrenStubs[0]
-      assertNotNull("Function should contain star argument stub", paramListStub.findChildStubByType(PyElementTypes.SINGLE_STAR_PARAMETER))
+      assertNotNull("Function should contain star argument stub", paramListStub.findChildStubByType(PyStubElementTypes.SINGLE_STAR_PARAMETER))
       level.isPython2
     }
   }
@@ -58,7 +58,7 @@ class PyUnifiedStubsTest : PyTestCase() {
   fun testAnnotations() {
     doTest { level, file ->
       val functionStub = file.topLevelFunctions[0].stub
-      assertNotNull("Function should contain annotation stub", functionStub!!.findChildStubByType(PyElementTypes.ANNOTATION))
+      assertNotNull("Function should contain annotation stub", functionStub!!.findChildStubByType(PyStubElementTypes.ANNOTATION))
       level.isPython2
     }
   }

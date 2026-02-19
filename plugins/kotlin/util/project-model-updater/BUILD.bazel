@@ -1,0 +1,34 @@
+### auto-generated section `build kotlin.util.project-model-updater` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "project-model-updater_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "project-model-updater",
+  module_name = "kotlin.util.project-model-updater",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":project-model-updater_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlin/reflect",
+    "//platform/util/jdom",
+  ]
+)
+
+jvm_library(
+  name = "project-model-updater_test_lib",
+  module_name = "kotlin.util.project-model-updater",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":project-model-updater",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.util.project-model-updater` end

@@ -1,18 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.ServerPageFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
@@ -25,12 +32,17 @@ import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
-  @Nullable
+  private final boolean myShowShortFilePath;
+
+  ClassGroupingRule(boolean showShortFilePath) {
+    myShowShortFilePath = showShortFilePath;
+  }
+
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
     }
@@ -77,7 +89,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
 
     final VirtualFile virtualFile = topLevelFile.getVirtualFile();
     if (virtualFile != null) {
-      return new FileGroupingRule.FileUsageGroup(topLevelFile.getProject(), virtualFile);
+      return new FileGroupingRule.FileUsageGroup(topLevelFile.getProject(), virtualFile, myShowShortFilePath);
     }
     return null;
   }
@@ -88,7 +100,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     return index < 0? name : name.substring(0, index);
   }
 
-  private static class ClassUsageGroup implements UsageGroup, TypeSafeDataProvider {
+  private static class ClassUsageGroup implements UsageGroup, UiDataProvider {
     private final SmartPsiElementPointer<PsiClass> myClassPointer;
     private final @NlsSafe String myText;
     private final String myQName;
@@ -101,28 +113,23 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    @Override
-    public void update() {
-    }
-
-    private static @NlsSafe String createText(PsiClass aClass) {
+    private static @NotNull @NlsSafe String createText(@NotNull PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {
         text = containingClass.getName() + '.' + text;
         containingClass = containingClass.getContainingClass();
       }
-      return text;
+      return StringUtil.notNullize(text);
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
     @Override
-    @NotNull
-    public String getText(UsageView view) {
+    public @NotNull String getPresentableGroupText() {
       return myText;
     }
 
@@ -141,10 +148,12 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       return psiClass != null && psiClass.isValid();
     }
 
+    @Override
     public int hashCode() {
       return myQName.hashCode();
     }
 
+    @Override
     public boolean equals(Object object) {
       return object instanceof ClassUsageGroup && myQName.equals(((ClassUsageGroup)object).myQName);
     }
@@ -168,21 +177,18 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiClass());
-      }
-      if (UsageView.USAGE_INFO_KEY == key) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        return getPsiClass();
+      });
+      sink.lazy(UsageView.USAGE_INFO_KEY, () -> {
         PsiClass psiClass = getPsiClass();
-        if (psiClass != null) {
-          sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(psiClass));
-        }
-      }
+        return psiClass == null ? null : new UsageInfo(psiClass);
+      });
     }
   }
 }

@@ -1,68 +1,66 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.reference.SoftReference
-import com.jetbrains.extensions.getSdk
-import com.jetbrains.python.packaging.PyPIPackageCache
-import com.jetbrains.python.packaging.PyPackageManager
-import java.lang.ref.WeakReference
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 /**
  * Reports usages of packages and versions
  */
-class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
-  override fun getMetrics(project: Project) = getPackages(project)
-
-  override fun requiresReadAccess(): Boolean = true
-
-  override fun getGroupId() = "python.packages"
-
-  override fun getVersion() = 2
-}
-
-private fun getPackages(project: Project): Set<MetricEvent> {
-  val result = HashSet<MetricEvent>()
-  for (module in project.modules) {
-    val sdk = module.getSdk() ?: continue
-    val usageData = FeatureUsageData().addPythonSpecificInfo(sdk)
-    PyPackageManager.getInstance(sdk).getRequirements(module)?.apply {
-      val packageNames = getPyPiPackagesCache()
-      filter { it.name.toLowerCase() in packageNames }.forEach { req ->
-        ProgressManager.checkCanceled()
-        val version = req.versionSpecs.firstOrNull()?.version?.trim() ?: "unknown"
-        result.add(MetricEvent("python_package_installed",
-                               usageData.copy() // Not to calculate interpreter on each call
-                                 .addData("package", req.name)
-                                 .addData("package_version", version)))
-      }
+internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
+  override suspend fun collect(project: Project): Set<MetricEvent> = buildSet {
+    for (sdk in project.sdks.filter(PythonSdkUtil::isPythonSdk)) {
+      val manager = PythonPackageManager.forSdk(project, sdk)
+      addAll(manager.getDeclaredPackages())
+      addAll(manager.getInstalledPackages())
     }
   }
-  return result
-}
 
-private fun getPyPiPackagesCache() = PyPIPackageCache.getInstance().packageNames.map(String::toLowerCase).toSet()
+  override fun getGroup(): EventLogGroup = GROUP
+
+  private val GROUP = EventLogGroup("python.packages", 9)
+
+  //full list is stored in metadata, see FUS-1218 for more details
+  private val PYTHON_PACKAGE_INSTALLED = registerPythonSpecificEvent(GROUP,
+                                                                     "python_package_installed",
+                                                                     PACKAGE_FIELD,
+                                                                     PACKAGE_VERSION_FIELD)
+
+  private val PYTHON_PACKAGE_INSTALLED_IN_SDK = GROUP.registerVarargEvent("python_packages_installed_in_sdk",
+                                                                          EXECUTION_TYPE,
+                                                                          INTERPRETER_TYPE,
+                                                                          PACKAGE_FIELD,
+                                                                          PACKAGE_VERSION_FIELD)
 
 
-class PyPackageUsagesValidationRule : CustomValidationRule() {
-  private var packagesRef: WeakReference<Set<String>>? = null
-  @Synchronized
-  private fun getPackages(): Set<String> {
-    SoftReference.dereference(packagesRef)?.let { return it }
-    val pyPiPackages = getPyPiPackagesCache()
-    packagesRef = WeakReference(pyPiPackages)
-    return pyPiPackages
+  private suspend fun PythonPackageManager.getDeclaredPackages(): Set<MetricEvent> {
+    val dependencies = extractDependenciesCached()?.getOrNull() ?: return emptySet()
+    val usageData = getPythonSpecificInfo(sdk)
+    return dependencies.mapTo(HashSet()) { dep ->
+      PYTHON_PACKAGE_INSTALLED.metric(usageData + listOf(
+        PACKAGE_FIELD.with(dep.name),
+        PACKAGE_VERSION_FIELD.with(dep.version),
+      ))
+    }
   }
 
-  override fun acceptRuleId(ruleId: String?) = "python_packages" == ruleId
-
-  override fun doValidate(data: String, context: EventContext) =
-    if (data.toLowerCase() in getPackages()) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+  private suspend fun PythonPackageManager.getInstalledPackages(): Set<MetricEvent> {
+    return listInstalledPackages().mapTo(HashSet()) { pkg ->
+      PYTHON_PACKAGE_INSTALLED_IN_SDK.metric(
+        PACKAGE_FIELD.with(pkg.name),
+        PACKAGE_VERSION_FIELD.with(pkg.version),
+        EXECUTION_TYPE.with(sdk.executionType.value),
+        INTERPRETER_TYPE.with(sdk.interpreterType.value),
+      )
+    }
+  }
 }
+
+val PACKAGE_FIELD = EventFields.StringValidatedByDictionary("package", "python_packages.ndjson")
+val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("package_version", "version")

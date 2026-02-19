@@ -1,0 +1,56 @@
+### auto-generated section `build kotlin.base.fe10.kdoc` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_kdoc",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.K1Deprecation",
+  ]
+)
+
+jvm_library(
+  name = "kdoc",
+  module_name = "kotlin.base.fe10.kdoc",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_kdoc",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/psi",
+    "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/base/project-structure",
+    "//platform/util",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//java/java-indexing-impl:indexing-impl",
+  ]
+)
+
+jvm_library(
+  name = "kdoc_test_lib",
+  module_name = "kotlin.base.fe10.kdoc",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_kdoc",
+  runtime_deps = [
+    ":kdoc",
+    "//platform/core-api:core_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//plugins/kotlin/base/psi:psi_test_lib",
+    "//plugins/kotlin/base/indices:indices_test_lib",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//platform/util:util_test_lib",
+    "//plugins/kotlin/base/fe10/analysis:analysis_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//java/java-indexing-impl:indexing-impl_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.base.fe10.kdoc` end

@@ -7,12 +7,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.tasks" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.java.debugger" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.tasks" />
-    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" />
   </component>
 </module>

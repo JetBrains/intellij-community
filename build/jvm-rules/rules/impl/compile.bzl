@@ -1,0 +1,259 @@
+# Copyright 2018 The Bazel Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
+load(
+    "@rules_kotlin//kotlin/internal:defs.bzl",
+    "JAVA_TOOLCHAIN_TYPE",
+    KotlinInfo = "KtJvmInfo",
+    _KtCompilerPluginInfo = "KtCompilerPluginInfo",
+    _KtPluginConfiguration = "KtPluginConfiguration",
+)
+load("//:rules/common-attrs.bzl", "add_dicts")
+load("//:rules/impl/associates.bzl", "get_associates")
+load("//:rules/impl/builder-args.bzl", "init_builder_args")
+load("//:rules/impl/compiler-plugins.bzl", "collect_compiler_plugins_for_export", "compiler_plugins_from", "exported_compiler_plugins_from")
+load("//:rules/impl/javac-options.bzl", "JavacOptions")
+load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions")
+load("//:rules/resource.bzl", "ResourceGroupInfo")
+
+visibility("private")
+
+def find_java_toolchain(ctx, target):
+    return ctx.toolchains[JAVA_TOOLCHAIN_TYPE].java if JAVA_TOOLCHAIN_TYPE in ctx.toolchains else target[java_common.JavaToolchainInfo]
+
+def _java_info(target):
+    return target[JavaInfo] if JavaInfo in target else None
+
+def _partitioned_srcs(srcs):
+    kt_srcs = []
+    java_srcs = []
+    form_srcs = []
+
+    for f in srcs:
+        if f.path.endswith(".kt"):
+            kt_srcs.append(f)
+        elif f.path.endswith(".java"):
+            java_srcs.append(f)
+        elif f.path.endswith(".form"):
+            form_srcs.append(f)
+
+    return struct(
+        kt = kt_srcs,
+        java = java_srcs,
+        forms = form_srcs,
+        all_srcs = kt_srcs + java_srcs + form_srcs,
+        src_jars = [],
+    )
+
+def _compute_transitive_jars(dep_infos, prune_transitive_deps):
+    compile_jars = [d.compile_jars for d in dep_infos]
+    if prune_transitive_deps:
+        return compile_jars
+
+    transitive_compile_time_jars = [d.transitive_compile_time_jars for d in dep_infos]
+    return compile_jars + transitive_compile_time_jars
+
+def _jvm_deps(ctx, associated_targets, deps, runtime_deps):
+    """Encapsulates jvm dependency metadata."""
+    if not len(associated_targets) == 0:
+        deps_dict = {it.label: True for it in deps}
+        intersection = [it.label for it in associated_targets if it.label in deps_dict]
+        if intersection:
+            fail(
+                "\n------\nTargets should only be put in associates= or deps=, not both:\n%s" %
+                ",\n ".join(["    %s" % x for x in intersection]),
+            )
+
+    dep_infos = [_java_info(d) for d in associated_targets + deps]
+
+    # reduced classpath, exclude transitive deps from compilation
+    #prune_transitive_deps = toolchains.kt.experimental_prune_transitive_deps and "kt_experimental_prune_transitive_deps_incompatible" not in ctx.attr.tags
+    prune_transitive_deps = True and "kt_experimental_prune_transitive_deps_incompatible" not in ctx.attr.tags
+    transitive = _compute_transitive_jars(dep_infos, prune_transitive_deps)
+
+    return struct(
+        deps = dep_infos,
+        compile_jars = depset(transitive = transitive),
+        runtime_deps = [_java_info(d) for d in runtime_deps],
+    )
+
+def kt_jvm_produce_jar_actions(ctx, isTest = False):
+    """Sets up a compile action for a jar.
+
+    Args:
+        ctx: Invoking rule ctx, used for attr, actions, and label.
+    Returns:
+        A struct containing the providers JavaInfo (`java`) and `kt` (KtJvmInfo). This struct is not intended to be
+        used as a legacy provider -- rather the caller should transform the result.
+    """
+    srcs = _partitioned_srcs(ctx.files.srcs)
+    associates = get_associates(ctx)
+    compile_deps = _jvm_deps(
+        ctx = ctx,
+        associated_targets = associates.targets,
+        deps = ctx.attr.deps,
+        runtime_deps = ctx.attr.runtime_deps,
+    )
+
+    perTargetPlugins = ctx.attr.plugins if hasattr(ctx.attr, "plugins") else []
+    plugins = compiler_plugins_from(perTargetPlugins + exported_compiler_plugins_from(ctx.attr.deps))
+
+    output_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
+
+    transitiveInputs = [compile_deps.compile_jars]
+    _collect_runtime_jars(perTargetPlugins, transitiveInputs)
+    _collect_runtime_jars(ctx.attr.deps, transitiveInputs)
+
+    builder_result = _run_jvm_builder(
+        ctx = ctx,
+        output_jar = output_jar,
+        srcs = srcs,
+        resources = [r[ResourceGroupInfo] for r in ctx.attr.resources],
+        associates = associates,
+        compile_deps = compile_deps,
+        transitiveInputs = transitiveInputs,
+        plugins = plugins,
+    )
+
+    compile_jar = builder_result.abi_jar
+    kotlin_cri_storage_file = builder_result.kotlin_cri_storage_file
+
+    source_jar = java_common.pack_sources(
+        ctx.actions,
+        output_source_jar = ctx.outputs.srcjar,
+        sources = srcs.kt + srcs.java,
+        source_jars = srcs.src_jars,
+        java_toolchain = find_java_toolchain(ctx, ctx.attr._java_toolchain),
+    )
+
+    java_info = JavaInfo(
+        output_jar = output_jar,
+        compile_jar = compile_jar,
+        source_jar = source_jar,
+        deps = compile_deps.deps,
+        runtime_deps = [_java_info(d) for d in ctx.attr.runtime_deps],
+        exports = [_java_info(d) for d in getattr(ctx.attr, "exports", [])],
+        neverlink = getattr(ctx.attr, "neverlink", False),
+    )
+
+    return struct(
+        java = java_info,
+        kt = KotlinInfo(
+            srcs = ctx.files.srcs,
+            module_name = associates.module_name,
+            module_jars = associates.jars,
+            exported_compiler_plugins = collect_compiler_plugins_for_export(ctx.attr.exported_compiler_plugins, ctx.attr.exports) if not isTest else depset(),
+            # intellij aspect needs this
+            outputs = struct(
+                jars = [struct(
+                    class_jar = output_jar,
+                    ijar = compile_jar,
+                    source_jars = [source_jar],
+                )],
+                kotlin_cri_storage_file = kotlin_cri_storage_file,
+            ),
+            transitive_compile_time_jars = java_info.transitive_compile_time_jars,
+            transitive_source_jars = java_info.transitive_source_jars,
+            all_output_jars = [output_jar],
+        ),
+    )
+
+def _run_jvm_builder(
+        ctx,
+        output_jar,
+        srcs,
+        resources,
+        associates,
+        compile_deps,
+        transitiveInputs,
+        plugins):
+    """Runs the necessary JvmBuilder actions to compile a jar
+
+    Returns:
+        Struct with fields:
+          abi_jar: ABI jar
+          kotlin_cri_storage_file: (optional) the generated kotlin cri storage file or None
+    """
+
+    kotlin_cri_storage_file = None
+
+    kotlin_inc_threshold = ctx.attr._kotlin_inc_threshold[BuildSettingInfo].value
+    if kotlin_inc_threshold == -1:
+        kotlinc_options = ctx.attr.kotlinc_opts[KotlincOptions]
+        kotlin_inc_threshold = kotlinc_options.inc_threshold
+    java_inc_threshold = ctx.attr._java_inc_threshold[BuildSettingInfo].value
+
+    args = init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
+    args.add("--out", output_jar)
+
+    outputs = [output_jar]
+    abi_jar = output_jar
+    abi_jar = ctx.actions.declare_file(ctx.label.name + ".abi.jar")
+    outputs.append(abi_jar)
+    args.add("--abi-out", abi_jar)
+
+    if len(srcs.kt) > 0:
+        kotlin_cri_storage_file = ctx.actions.declare_file(ctx.label.name + ".kotlinCriStorage")
+        outputs.append(kotlin_cri_storage_file)
+        args.add("--kotlin-cri-out", kotlin_cri_storage_file)
+
+    javac_opts = ctx.attr.javac_opts[JavacOptions] if ctx.attr.javac_opts else None
+    if javac_opts and javac_opts.add_exports:
+        args.add_all("--add-export", javac_opts.add_exports)
+    if javac_opts and javac_opts.no_proc:
+        args.add("--no-proc")
+
+    isIncremental = (kotlin_inc_threshold != -1 and len(srcs.kt) >= kotlin_inc_threshold) or (java_inc_threshold != -1 and len(srcs.java) >= java_inc_threshold)
+    if not isIncremental:
+        args.add("--non-incremental")
+
+    javaCount = len(srcs.java)
+    args.add("--java-count", javaCount)
+
+    all_resources = [f for r in resources for f in r.files]
+
+    java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
+
+    ctx.actions.run(
+        mnemonic = "JvmCompile",
+        env = {
+            "MALLOC_ARENA_MAX": "2",
+        },
+        inputs = depset(srcs.all_srcs + all_resources, transitive = transitiveInputs),
+        outputs = outputs,
+        tools = [ctx.file._jvm_builder_launcher, ctx.file._jvm_builder],
+        executable = java_runtime.java_executable_exec_path,
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "1",
+            "supports-worker-cancellation": "1",
+            "supports-path-mapping": "1",
+            "supports-multiplex-sandboxing": "1",
+        },
+        arguments = ctx.attr._jvm_builder_jvm_flags[BuildSettingInfo].value + [
+            ctx.file._jvm_builder_launcher.path,
+            ctx.file._jvm_builder.path,
+            args,
+        ],
+        progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, "" if isIncremental else ", non-incremental"),
+    )
+
+    return struct(abi_jar = abi_jar, kotlin_cri_storage_file = kotlin_cri_storage_file)
+
+def _collect_runtime_jars(targets, transitive):
+    for t in targets:
+        if JavaInfo in t:
+            transitive.append(t[JavaInfo].plugins.processor_jars)

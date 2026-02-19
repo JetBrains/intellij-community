@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.completion.storage
 
@@ -31,18 +17,23 @@ import java.nio.file.Files
  */
 open class UniqueFilesProvider(private val baseFileName: String,
                                private val rootDirectoryPath: String,
-                               private val logsDirectoryName: String) : FilePathProvider() {
-    private companion object {
-        const val MAX_ALLOWED_SEND_SIZE = 2 * 1024 * 1024
+                               private val logsDirectoryName: String,
+                               private val storageSizeLimit: Int = MAX_STORAGE_SEND_SIZE) : FilePathProvider {
+    companion object {
+        private const val MAX_STORAGE_SEND_SIZE = 30 * 1024 * 1024
+
+        fun extractChunkNumber(filename: String): Int? {
+            return filename.substringAfter("_").substringBefore(".gz").toIntOrNull()
+        }
     }
 
     override fun cleanupOldFiles() {
         val files = getDataFiles()
-        val sizeToSend = files.fold(0L, { totalSize, file -> totalSize + file.length() })
-        if (sizeToSend > MAX_ALLOWED_SEND_SIZE) {
-            var currentSize = sizeToSend
+        val storageSize = files.fold(0L) { totalSize, file -> totalSize + file.length() }
+        if (storageSize > storageSizeLimit) {
+            var currentSize = storageSize
             val iterator = files.iterator()
-            while (iterator.hasNext() && currentSize > MAX_ALLOWED_SEND_SIZE) {
+            while (iterator.hasNext() && currentSize > storageSizeLimit) {
                 val file = iterator.next()
                 val fileSize = file.length()
                 Files.delete(file.toPath())
@@ -54,25 +45,14 @@ open class UniqueFilesProvider(private val baseFileName: String,
     override fun getUniqueFile(): File {
         val dir = getStatsDataDirectory()
 
-        val currentMaxIndex = dir.filesOnly()
-                .filter { it.name.startsWith(baseFileName) }
-                .map { it.name.substringAfter('_') }
-                .filter { it.isIntConvertable() }
-                .map(String::toInt)
-                .max()
-
+        val currentMaxIndex = listChunks().maxOfOrNull { it.number }
         val newIndex = if (currentMaxIndex != null) currentMaxIndex + 1 else 0
 
-        return File(dir, "${baseFileName}_$newIndex")
+        return File(dir, "${baseFileName}_$newIndex.gz")
     }
 
     override fun getDataFiles(): List<File> {
-        val dir = getStatsDataDirectory()
-        return dir.filesOnly()
-                .filter { it.name.startsWith(baseFileName) }
-                .filter { it.name.substringAfter('_').isIntConvertable() }
-                .sortedBy { it.getChunkNumber() }
-                .toList()
+        return listChunks().map { it.file }
     }
 
     override fun getStatsDataDirectory(): File {
@@ -83,15 +63,8 @@ open class UniqueFilesProvider(private val baseFileName: String,
         return dir
     }
 
-    private fun File.getChunkNumber() = this.name.substringAfter('_').toInt()
-
-    private fun String.isIntConvertable(): Boolean {
-        return try {
-            this.toInt()
-            true
-        } catch (e: NumberFormatException) {
-            false
-        }
+    private fun listChunks(): List<Chunk> {
+        return getStatsDataDirectory().filesOnly().mapNotNull { it.asChunk() }.sortedBy { it.number }.toList()
     }
 
     private fun File.filesOnly(): Sequence<File> {
@@ -109,4 +82,14 @@ open class UniqueFilesProvider(private val baseFileName: String,
 
         return files.asSequence()
     }
+
+    private fun File.asChunk(): Chunk? {
+        if (!isFile) return null
+        val filename = name
+        if (!filename.startsWith(baseFileName)) return null
+        val number = extractChunkNumber(filename)
+        return if (number == null) null else Chunk(this, number)
+    }
+
+    private data class Chunk(val file: File, val number: Int)
 }

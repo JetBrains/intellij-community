@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.components.service
@@ -6,26 +6,46 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.eel.EelDescriptor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 
 /**
  * Use this service to resolve an SDK request to a given component allowing
- * the platform to guess or automatically suggest a possible option (or wait
- * for an option to be completed).
+ * the platform to guess or automatically suggest a possible option (or wait for an option to be completed).
  *
- * The lookup process can take some time to resolve. The code can be executed
- * from any thread. There is no guaranty callbacks happen from EDT thread too.
+ * The lookup process can take some time to resolve.
+ * The code can be executed from any thread.
+ * There is no guaranty callbacks happen from EDT thread too.
  */
+@ApiStatus.Internal
 interface SdkLookup {
   fun createBuilder(): SdkLookupBuilder
+
   fun lookup(lookup: SdkLookupParameters)
+  fun lookupBlocking(lookup: SdkLookupParameters)
 
   companion object {
     @JvmStatic
-    fun newLookupBuilder() = service<SdkLookup>().createBuilder()
+    fun newLookupBuilder(): SdkLookupBuilder = getInstance().createBuilder()
+
+    @JvmStatic
+    fun getInstance(): SdkLookup = service<SdkLookup>()
   }
+}
+
+enum class SdkLookupDownloadDecision {
+  /** ignore this SDK and continue lookup, it may end with the same SDK Download suggestiom **/
+  SKIP,
+
+  /** stop lookup on this callback, it will notify other callbacks with null **/
+  STOP,
+
+  /** wait for the SDK to complete download, it may deadlock if executed from a modal dialog/progress **/
+  WAIT
 }
 
 enum class SdkLookupDecision {
@@ -42,11 +62,28 @@ interface SdkLookupBuilder {
   @Contract(pure = true)
   fun withProgressIndicator(indicator: ProgressIndicator): SdkLookupBuilder
 
+  /**
+   * If [withEel] is set, project *must* be on the same eel.
+   */
+  @ApiStatus.Internal
   @Contract(pure = true)
   fun withProject(project: Project?): SdkLookupBuilder
 
+  /**
+   * If [withProject] is set, eel *must* be on the same eel as project.
+   */
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun withEel(eelDescriptor: EelDescriptor?): SdkLookupBuilder
+
   @Contract(pure = true)
   fun withProgressMessageTitle(@ProgressTitle message: String): SdkLookupBuilder
+
+  /**
+   * Specifies the reason for the SDK lookup.
+   */
+  @Contract(pure = true)
+  fun withLookupReason(@Nls message: String): SdkLookupBuilder
 
   /**
    * Use these SDKs to test first, the [withSdkName] option has a higher priority
@@ -70,17 +107,30 @@ interface SdkLookupBuilder {
   fun withSdkHomeFilter(filter: (String) -> Boolean): SdkLookupBuilder
 
   /**
+   * A notification that is invoked at the moment when a downloading SDK
+   * is detected. It is a good chance the SDK matches the requested parameters
+   */
+  @Contract(pure = true)
+  fun onDownloadingSdkDetected(handler : (Sdk) -> SdkLookupDownloadDecision) : SdkLookupBuilder
+
+  /**
    * A notification that is invoked at the moment where we failed to find
-   * a suitable SDK from a given name, project. At that moment we star
+   * a suitable SDK from a given name, project. At that moment, we star
    * looking for a possible SDK suggestions. Return `false` from the
    * callback to stop the search.
    */
   @Contract(pure = true)
   fun onBeforeSdkSuggestionStarted(handler: () -> SdkLookupDecision): SdkLookupBuilder
 
+  /**
+   * Called on each detected SDK local candidate, that matches filters
+   */
   @Contract(pure = true)
   fun onLocalSdkSuggested(handler: (UnknownSdkLocalSdkFix) -> SdkLookupDecision): SdkLookupBuilder
 
+  /**
+   * Called on each detected SDK download candidate, that matches filters
+   */
   @Contract(pure = true)
   fun onDownloadableSdkSuggested(handler: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision): SdkLookupBuilder
 
@@ -97,7 +147,7 @@ interface SdkLookupBuilder {
    * [withSdkHomeFilter] is not tested for this call!
    */
   @Contract(pure = true)
-  fun onSdkNameResolved(callback: (Sdk?) -> Unit) : SdkLookupBuilder
+  fun onSdkNameResolved(handler: (Sdk?) -> Unit) : SdkLookupBuilder
 
   /**
    * The [Sdk.getSdkType] may not match the proposed sdk type [withSdkType] if the
@@ -113,21 +163,33 @@ interface SdkLookupBuilder {
    */
   @Contract(pure = true)
   fun onSdkResolved(handler: (Sdk?) -> Unit): SdkLookupBuilder
+
+  /**
+   * This callback is executed before the resolved Sdk fix is found
+   */
+  @Contract(pure = true)
+  fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision) : SdkLookupBuilder
 }
 
+@ApiStatus.Internal
 interface SdkLookupParameters {
   val project: Project?
 
+  val eelDescriptor: EelDescriptor?
+
   val progressMessageTitle: String?
   val progressIndicator: ProgressIndicator?
+  val lookupReason: String?
 
   val sdkName: String?
 
   val sdkType: SdkType?
 
+  val onDownloadingSdkDetected : (Sdk) -> SdkLookupDownloadDecision
   val onBeforeSdkSuggestionStarted: () -> SdkLookupDecision
   val onLocalSdkSuggested: (UnknownSdkLocalSdkFix) -> SdkLookupDecision
   val onDownloadableSdkSuggested: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision
+  val onSdkFixResolved : (UnknownSdkFixAction) -> SdkLookupDecision
 
   val sdkHomeFilter: ((String) -> Boolean)?
   val versionFilter: ((String) -> Boolean)?

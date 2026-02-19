@@ -16,7 +16,13 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.config.Config;
@@ -32,7 +38,7 @@ import java.util.List;
  */
 public final class GenerateToStringUtils {
 
-    private static final Logger log = Logger.getInstance("#GenerateToStringUtils");
+    private static final Logger LOG = Logger.getInstance(GenerateToStringUtils.class);
 
     private GenerateToStringUtils() {}
 
@@ -57,7 +63,7 @@ public final class GenerateToStringUtils {
     public static PsiField @NotNull [] filterAvailableFields(PsiClass clazz,
                                                              boolean includeSuperClass,
                                                              FilterPattern pattern) {
-        if (log.isDebugEnabled()) log.debug("Filtering fields using the pattern: " + pattern);
+        if (LOG.isDebugEnabled()) LOG.debug("Filtering fields using the pattern: " + pattern);
         List<PsiField> availableFields = new ArrayList<>();
         collectAvailableFields(clazz, clazz, includeSuperClass, pattern, availableFields, new HashSet<>());
         return availableFields.toArray(PsiField.EMPTY_ARRAY);
@@ -106,7 +112,7 @@ public final class GenerateToStringUtils {
      * @return methods available for this action after the filter process.
      */
     public static PsiMethod @NotNull [] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
-        if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
+        if (LOG.isDebugEnabled()) LOG.debug("Filtering methods using the pattern: " + pattern);
         List<PsiMethod> availableMethods = new ArrayList<>();
         collectAvailableMethods(clazz, clazz, pattern, availableMethods, new HashSet<>());
         return availableMethods.toArray(PsiMethod.EMPTY_ARRAY);
@@ -133,7 +139,7 @@ public final class GenerateToStringUtils {
 
             // must not return void
             final PsiType returnType = method.getReturnType();
-            if (returnType == null || PsiType.VOID.equals(returnType)) {
+            if (returnType == null || PsiTypes.voidType().equals(returnType)) {
                 continue;
             }
 
@@ -160,8 +166,8 @@ public final class GenerateToStringUtils {
                 continue;
             }
 
-            if (log.isDebugEnabled())
-                log.debug("Adding the method " + methodName + " as there is not a field for this getter");
+            if (LOG.isDebugEnabled())
+                LOG.debug("Adding the method " + methodName + " as there is not a field for this getter");
             availableMethods.add(method);
         }
     }

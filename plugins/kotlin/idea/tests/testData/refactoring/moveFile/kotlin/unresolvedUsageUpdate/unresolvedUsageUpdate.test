@@ -1,0 +1,7 @@
+{
+  "mainFile": "a/Main.kt",
+  "type": "MOVE_FILES",
+  "targetPackage": "c",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
+}

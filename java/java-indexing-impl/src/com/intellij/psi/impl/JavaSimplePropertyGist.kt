@@ -1,40 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiField
-import com.intellij.psi.impl.cache.RecordUtil
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
-import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.stub.JavaStubImplUtil
 import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.util.gist.GistManager
+import com.intellij.util.gist.PsiFileGist
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.EnumeratorStringDescriptor
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.DataInput
 import java.io.DataOutput
 
-fun getFieldOfGetter(method: PsiMethodImpl): PsiField? = resolveFieldFromIndexValue(method, true)
+fun getFieldOfGetter(method: PsiMethod): PsiField? = resolveFieldFromIndexValue(method, true)
 
-fun getFieldOfSetter(method: PsiMethodImpl): PsiField? = resolveFieldFromIndexValue(method, false)
+fun getFieldOfSetter(method: PsiMethod): PsiField? = resolveFieldFromIndexValue(method, false)
 
-private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean): PsiField? {
+private fun resolveFieldFromIndexValue(method: PsiMethod, isGetter: Boolean): PsiField? {
   val file = method.containingFile
   if (file.fileType != JavaFileType.INSTANCE) return null
   val id = JavaStubImplUtil.getMethodStubIndex(method)
@@ -44,19 +43,21 @@ private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean)
       val psiClass = method.containingClass
       val project = psiClass!!.project
       val expr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(indexValue.propertyRefText, psiClass)
-      return PropertyUtil.getSimplyReturnedField(expr)
+      return PropertyUtilBase.getSimplyReturnedField(expr)
     }
   }
   return null
 }
 
-@VisibleForTesting
-val javaSimplePropertyGist = GistManager.getInstance().newPsiFileGist("java.simple.property", 1, SimplePropertiesExternalizer()) { file ->
-  findSimplePropertyCandidates(file.node.lighterAST)
+@get:VisibleForTesting
+val javaSimplePropertyGist: PsiFileGist<Int2ObjectMap<PropertyIndexValue>> by lazy {
+  GistManager.getInstance().newPsiFileGist("java.simple.property", 3, SimplePropertiesExternalizer()) { file ->
+    findSimplePropertyCandidates(file.node.lighterAST)
+  }
 }
 
 private val allowedExpressions by lazy {
-  TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION)
+  TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION, ElementType.PARENTH_EXPRESSION)
 }
 
 private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<PropertyIndexValue> {
@@ -82,7 +83,6 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
       var isConstructor = true
       var isGetter = true
 
-      var isBooleanReturnType = false
       var isVoidReturnType = false
       var setterParameterName: String? = null
 
@@ -95,16 +95,16 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
             if (children.size != 1) return null
             val typeElement = children[0]
             if (typeElement.tokenType == JavaTokenType.VOID_KEYWORD) isVoidReturnType = true
-            if (typeElement.tokenType == JavaTokenType.BOOLEAN_KEYWORD) isBooleanReturnType = true
             isConstructor = false
           }
           JavaElementType.PARAMETER_LIST -> {
-            if (isGetter) {
-              if (LightTreeUtil.firstChildOfType(tree, child, JavaElementType.PARAMETER) != null) return null
-            }
-            else {
+            if (LightTreeUtil.firstChildOfType(tree, child, JavaElementType.PARAMETER) == null) {
+              isGetter = true
+              if (isVoidReturnType) return null
+            } else {
               val parameters = LightTreeUtil.getChildrenOfType(tree, child, JavaElementType.PARAMETER)
               if (parameters.size != 1) return null
+              isGetter = false
               setterParameterName = JavaLightTreeUtil.getNameIdentifierText(tree, parameters[0])
               if (setterParameterName == null) return null
             }
@@ -115,21 +115,6 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
           }
           JavaTokenType.IDENTIFIER -> {
             if (isConstructor) return null
-            val name = RecordUtil.intern(tree.charTable, child)
-            when (PropertyUtil.getMethodNameGetterFlavour(name)) {
-              PropertyUtilBase.GetterFlavour.NOT_A_GETTER -> {
-                if (PropertyUtil.isSetterName(name)) {
-                  isGetter = false
-                }
-                else {
-                  return null
-                }
-              }
-              PropertyUtilBase.GetterFlavour.BOOLEAN -> if (!isBooleanReturnType) return null
-              else -> {
-              }
-            }
-            if (isVoidReturnType && isGetter) return null
           }
         }
       }
@@ -144,8 +129,10 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
         ?.takeIf { it.tokenType == JavaElementType.EXPRESSION_STATEMENT }
         ?.let { LightTreeUtil.firstChildOfType(tree, it, JavaElementType.ASSIGNMENT_EXPRESSION) }
       if (assignment == null || LightTreeUtil.firstChildOfType(tree, assignment, JavaTokenType.EQ) == null) return null
-      val operands = LightTreeUtil.getChildrenOfType(tree, assignment, ElementType.EXPRESSION_BIT_SET)
-      if (operands.size != 2 || LightTreeUtil.toFilteredString(tree, operands[1], null) != setterParameterName) return null
+      val operands = JavaLightTreeUtil.getExpressionChildren(tree, assignment)
+      if (operands.size != 2) return null
+      val unwrapped = JavaLightTreeUtil.skipParenthesesDown(tree, operands[1])
+      if (unwrapped == null || LightTreeUtil.toFilteredString(tree, unwrapped, null) != setterParameterName) return null
       val lhsText = LightTreeUtil.toFilteredString(tree, operands[0], null)
       if (lhsText == setterParameterName) return null
       return lhsText
@@ -195,7 +182,7 @@ private class SimplePropertiesExternalizer : DataExternalizer<Int2ObjectMap<Prop
     repeat(size) {
       val id = DataInputOutputUtil.readINT(input)
       val value = PropertyIndexValue(EnumeratorStringDescriptor.INSTANCE.read(input), input.readBoolean())
-      values.put(id, value)
+      values[id] = value
     }
     return values
   }

@@ -1,17 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnBundle;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 /**
  * @author alex
@@ -26,7 +33,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
   private JCheckBox myAllowSaveCheckBox;
   private JPasswordField myPasswordText;
 
-  @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
+  private static final @NonNls String HELP_ID = "vcs.subversion.authentication";
 
   public SimpleCredentialsDialog(Project project) {
     super(project, true);
@@ -125,7 +132,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
     gb.gridy += 1;
     if (! myAllowSave) {
       final JLabel cannotSaveLabel = new JLabel(SvnBundle.message("svn.cannot.save.credentials.store-auth-creds"));
-      cannotSaveLabel.setForeground(UIUtil.getInactiveTextColor());
+      cannotSaveLabel.setForeground(NamedColorUtil.getInactiveTextColor());
       panel.add(cannotSaveLabel, gb);
       gb.gridy += 1;
     }
@@ -154,7 +161,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
 
   @Override
   public boolean isOKActionEnabled() {
-    return myUserNameText != null && myUserNameText.getText().trim().length() > 0
+    return myUserNameText != null && !myUserNameText.getText().trim().isEmpty()
            && myPasswordText != null && myPasswordText.getPassword() != null;
   }
 

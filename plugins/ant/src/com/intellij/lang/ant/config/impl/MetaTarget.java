@@ -1,22 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
+import com.intellij.lang.ant.config.AntBuildListener;
+import com.intellij.lang.ant.config.AntBuildModelBase;
+import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -37,7 +28,7 @@ public class MetaTarget implements AntBuildTargetBase {
   private final @Nls String myName;
   private final @Nls String myDescription;
 
-  public MetaTarget(final AntBuildFileBase buildFile, @Nls final String displayName, final List<String> targets) {
+  public MetaTarget(final AntBuildFileBase buildFile, final @Nls String displayName, final List<String> targets) {
     myBuildFile = buildFile;
     myTargets = targets;
     myName = displayName;
@@ -53,9 +44,8 @@ public class MetaTarget implements AntBuildTargetBase {
     return myBuildFile;
   }
 
-  @NotNull
   @Override
-  public List<@NlsSafe String> getTargetNames() {
+  public @NotNull List<@NlsSafe String> getTargetNames() {
     return myTargets;
   }
 
@@ -65,8 +55,7 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   @Override
-  @Nullable
-  public @NlsSafe String getDisplayName() {
+  public @Nullable @NlsSafe String getDisplayName() {
     return getName();
   }
 
@@ -83,7 +72,7 @@ public class MetaTarget implements AntBuildTargetBase {
   @Override
   public @NonNls String getActionId() {
     final String modelName = myBuildFile.getModel().getName();
-    if (modelName == null || modelName.length() == 0) {
+    if (modelName == null || modelName.isEmpty()) {
       return null;
     }
     return AntConfiguration.getActionIdPrefix(myBuildFile.getProject()) +
@@ -99,14 +88,12 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   @Override
-  @Nullable
-  public Navigatable getOpenFileDescriptor() {
+  public @Nullable Navigatable getOpenFileDescriptor() {
     return null;
   }
 
   @Override
-  @Nullable
-  public BuildTask findTask(final String taskName) {
+  public @Nullable BuildTask findTask(final String taskName) {
     return null;
   }
 
@@ -116,11 +103,11 @@ public class MetaTarget implements AntBuildTargetBase {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getContainingFile() {
+  public @Nullable VirtualFile getContainingFile() {
     return myBuildFile.getVirtualFile();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -141,6 +128,7 @@ public class MetaTarget implements AntBuildTargetBase {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int code = myBuildFile.hashCode();
     for (String name : myTargets) {

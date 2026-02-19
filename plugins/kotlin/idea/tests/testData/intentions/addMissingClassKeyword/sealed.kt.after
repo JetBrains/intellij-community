@@ -1,0 +1,4 @@
+// DISABLE_ERRORS
+sealed class Foo {
+    abstract fun foo()
+}

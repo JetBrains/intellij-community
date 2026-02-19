@@ -1,28 +1,70 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
+import com.intellij.psi.impl.compiled.ClsModifierListImpl;
+import com.intellij.psi.impl.compiled.ClsParameterImpl;
+import com.intellij.psi.impl.compiled.ClsReferenceListImpl;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.ref.GCWatcher;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.DecompilerPreset;
+import org.jetbrains.java.decompiler.IdeaDecompilerSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -159,7 +201,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals("field1", field1.getName());
 
     PsiType type1 = field1.getType();
-    assertEquals(PsiType.INT, type1);
+    assertEquals(PsiTypes.intType(), type1);
     assertEquals("int", type1.getPresentableText());
     assertTrue(type1 instanceof PsiPrimitiveType);
 
@@ -179,7 +221,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertNotNull(initializer);
     assertEquals("123", initializer.getText());
     assertEquals(123, initializer.getValue());
-    assertEquals(PsiType.INT, initializer.getType());
+    assertEquals(PsiTypes.intType(), initializer.getType());
 
     assertFalse(field2.hasInitializer());
     assertNull(field2.getInitializer());
@@ -276,17 +318,82 @@ public class ClsPsiTest extends LightIdeaTestCase {
       assertEquals("o", parameters[1].getName());
     };
 
-    DumbServiceImpl.getInstance(getProject()).runInDumbMode(checkNames);
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), checkNames::run);
     checkNames.run();
   }
 
-  public void testModifiers() {
-    PsiClass aClass = getFile().getClasses()[0];
-    assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
-    assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
-    assertEquals("public", aClass.getMethods()[0].getModifierList().getText());
-    assertEquals("private", aClass.getMethods()[1].getModifierList().getText());
-    assertEquals("private synchronized", aClass.getMethods()[2].getModifierList().getText());
+  public void testNoMirrorNotSetWarnings() {
+    List<String> warnings = new ArrayList<>();
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
+        warnings.add(message);
+        return super.processWarn(category, message, t);
+      }
+    }, () -> {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      PsiMethod[] methods = aClass.getMethods();
+      PsiMethod constructor = Arrays.stream(methods)
+        .filter(t -> t.isConstructor())
+        .findFirst().get();
+      ClsModifierListImpl modifierList = (ClsModifierListImpl)constructor.getModifierList();
+      ClsReferenceListImpl throwsList = (ClsReferenceListImpl)constructor.getThrowsList();
+
+      // We are actually most interested in the side effect of calls to getText() (we want to ensure no warnings are being logged)
+
+      assertNotNull(modifierList.getMirror());
+      assertEquals("public", modifierList.getText());
+      assertNotNull(modifierList.getMirror()); // assert that calling getText() does not set a mirror
+
+      assertNotNull(throwsList.getMirror());
+      assertEquals("", throwsList.getText());
+      assertNotNull(throwsList.getMirror()); // assert that calling getText() does not set a mirror
+    });
+
+    assertEmpty(warnings);
+  }
+
+  public void testModifiers_high() {
+    final var originalState = IdeaDecompilerSettings.getInstance().getState();
+    IdeaDecompilerSettings.State state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH);
+    IdeaDecompilerSettings.getInstance().loadState(state);
+    try {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
+      assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
+
+      PsiMethod methodM1 = aClass.getMethods()[1];
+      assertEquals("private", methodM1.getModifierList().getText());
+
+      PsiMethod methodM2 = aClass.getMethods()[2];
+      assertEquals("private synchronized", methodM2.getModifierList().getText());
+    }
+    finally {
+      IdeaDecompilerSettings.getInstance().loadState(originalState);
+    }
+  }
+
+  public void testModifiers_medium() {
+    final var originalState = IdeaDecompilerSettings.getInstance().getState();
+    IdeaDecompilerSettings.State state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.MEDIUM);
+    IdeaDecompilerSettings.getInstance().loadState(state);
+    try {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
+      assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
+
+      PsiMethod constructor = aClass.getMethods()[0];
+      assertEquals("public", constructor.getModifierList().getText());
+
+      PsiMethod methodM1 = aClass.getMethods()[1];
+      assertEquals("private", methodM1.getModifierList().getText());
+
+      PsiMethod methodM2 = aClass.getMethods()[2];
+      assertEquals("private synchronized", methodM2.getModifierList().getText());
+    }
+    finally {
+      IdeaDecompilerSettings.getInstance().loadState(originalState);
+    }
   }
 
   public void testEnum() {
@@ -324,28 +431,32 @@ public class ClsPsiTest extends LightIdeaTestCase {
 
     PsiModifierList modifierList = aClass.getModifierList();
     assertNotNull(modifierList);
-    PsiAnnotation[] annotations = modifierList.getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(modifierList);
 
     PsiMethod method = aClass.getMethods()[1];
-    annotations = method.getModifierList().getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(method.getModifierList());
 
     PsiParameter[] params = method.getParameterList().getParameters();
     assertEquals(1, params.length);
     modifierList = params[0].getModifierList();
     assertNotNull(modifierList);
-    annotations = modifierList.getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(modifierList);
 
     modifierList = aClass.getFields()[0].getModifierList();
     assertNotNull(modifierList);
-    annotations = modifierList.getAnnotations();
+    checkAnnotations(modifierList);
+
+    PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    assertEquals(1, typeParameters.length);
+    checkAnnotations(typeParameters[0]);
+  }
+
+  private void checkAnnotations(@NotNull PsiAnnotationOwner annotationOwner) {
+    PsiAnnotation[] annotations = annotationOwner.getAnnotations();
     assertEquals(1, annotations.length);
     assertEquals("@pack.Annotation", annotations[0].getText());
+    assertNotNull(annotationOwner.findAnnotation("pack.Annotation"));
+    assertTrue(annotationOwner.hasAnnotation("pack.Annotation"));
   }
 
   public void testAnnotationMethods() {
@@ -358,7 +469,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
       try {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
         assertTrue(String.valueOf(defaultValue), defaultValue instanceof PsiBinaryExpression);
-        PsiPrimitiveType type = method.getName().startsWith("f") ? PsiType.FLOAT : PsiType.DOUBLE;
+        PsiPrimitiveType type = method.getName().startsWith("f") ? PsiTypes.floatType() : PsiTypes.doubleType();
         assertEquals(type, ((PsiBinaryExpression)defaultValue).getType());
       }
       catch (Exception e) {
@@ -480,7 +591,14 @@ public class ClsPsiTest extends LightIdeaTestCase {
     WriteAction.run(() -> copyVFile.delete(this));
     assertFalse(clsFile.isValid());
     assertFalse(mirror.isValid());
-    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror))
-      .contains(PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
+    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror)).contains(
+      PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
+  }
+
+  public void testClsArrayTypeCreation() {
+    PsiJavaFile file = getFile("ClsContainer");
+    PsiType type = file.getClasses()[0].getMethods()[3].getReturnType();
+    TypeNullability nullability = type.getNullability();
+    assertEquals(Nullability.NOT_NULL, nullability.nullability());
   }
 }

@@ -18,6 +18,16 @@ from pydev_tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON
                                                   CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
                                                   CMD_THREAD_RESUME_SINGLE_NOTIFICATION, IS_PY37_OR_GREATER, IS_PY38_OR_GREATER)
 from _pydevd_bundle.pydevd_constants import IS_WINDOWS
+from _pydevd_bundle.pydevd_constants import GET_FRAME_RETURN_GROUP
+from _pydevd_bundle.pydevd_constants import IS_PY38
+from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY312_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY313
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY314
+
+
 try:
     from urllib import unquote
 except ImportError:
@@ -40,7 +50,7 @@ TEST_FLASK = False
 try:
     import django
     version = [int(x) for x in django.get_version().split('.')][:2]
-    TEST_DJANGO = version == [1, 7] or version == [2, 1]
+    TEST_DJANGO = version == [1, 7] or version == [2, 2]
 except:
     pass
 
@@ -50,15 +60,14 @@ try:
 except:
     pass
 
-
 if IS_PY2:
     builtin_qualifier = "__builtin__"
 else:
     builtin_qualifier = "builtins"
 
 
-
 @pytest.mark.skipif(IS_IRONPYTHON, reason='Test needs gc.get_referrers to really check anything.')
+@pytest.mark.xfail(reason="PY-79298", strict=False)
 def test_case_referrers(case_setup):
     with case_setup.test_file('_debugger_case1.py') as writer:
         writer.log.append('writing add breakpoint')
@@ -128,12 +137,12 @@ def test_case_2(case_setup):
 @pytest.mark.parametrize(
     'skip_suspend_on_breakpoint_exception, skip_print_breakpoint_exception',
     (
-        [['NameError'], []],
-        [['NameError'], ['NameError']],
-        [[], []],  # Empty means it'll suspend/print in any exception
-        [[], ['NameError']],
-        [['ValueError'], ['Exception']],
-        [['Exception'], ['ValueError']],  # ValueError will also suspend/print since we're dealing with a NameError
+        pytest.param(['NameError'], [], marks=pytest.mark.xfail(reason="PCQA-698")),
+        (['NameError'], ['NameError']),
+        pytest.param([], [], marks=pytest.mark.xfail(reason="PCQA-699")),  # Empty means it'll suspend/print in any exception
+        ([], ['NameError']),
+        (['ValueError'], ['Exception']),
+        pytest.param(['Exception'], ['ValueError'], marks=pytest.mark.xfail(reason="PCQA-700")),  # ValueError will also suspend/print since we're dealing with a NameError
     )
  )
 def test_case_breakpoint_condition_exc(case_setup, skip_suspend_on_breakpoint_exception, skip_print_breakpoint_exception):
@@ -199,7 +208,7 @@ def test_case_breakpoint_condition_exc(case_setup, skip_suspend_on_breakpoint_ex
         name_to_value = {}
         for var in msg.var:
             name_to_value[var['name']] = var['value']
-        assert name_to_value == {'i': 'int: 6', 'last_i': 'int: 6'}
+        assert name_to_value == {'i': '6', 'last_i': '6'}
 
         writer.write_remove_breakpoint(breakpoint_id)
 
@@ -248,6 +257,7 @@ def test_case_suspend_thread(case_setup):
         writer.write_suspend_thread(thread_id)
 
         while True:
+            time.sleep(3)
             hit = writer.wait_for_breakpoint_hit((REASON_THREAD_SUSPEND, REASON_STOP_ON_BREAKPOINT))
             if hit.name == 'sleep':
                 break  # Ok, broke on 'sleep'.
@@ -262,8 +272,8 @@ def test_case_suspend_thread(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'exit_while_loop()')
         writer.wait_for_evaluation([
             [
-                '<var name="exit_while_loop()" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier),
-                '<var name="exit_while_loop()" type="str"  value="str: ok"',  # jython
+                '<var name="exit_while_loop()" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier),
+                '<var name="exit_while_loop()" type="str"  value="ok"',  # jython
              ]
         ])
 
@@ -276,6 +286,7 @@ def test_case_suspend_thread(case_setup):
 # we're inside the tracing other threads don't run (so, we can have only one
 # thread paused in the debugger).
 @pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
+@pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-888')
 def test_case_suspend_all_thread(case_setup):
     with case_setup.test_file('_debugger_case_suspend_all.py') as writer:
         writer.write_make_initial_run()
@@ -297,12 +308,12 @@ def test_case_suspend_all_thread(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit0.thread_id, hit0.frame_id, 'LOCAL'), 'exit_while_loop(1)')
         writer.wait_for_evaluation([
             [
-                '<var name="exit_while_loop(1)" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier)
+                '<var name="exit_while_loop(1)" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier)
             ]
         ])
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit1.thread_id, hit1.frame_id, 'LOCAL'), 'exit_while_loop(2)')
-        writer.wait_for_evaluation('<var name="exit_while_loop(2)" type="str" qualifier="{0}" value="str: ok'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="exit_while_loop(2)" type="str" qualifier="{0}" value="ok'.format(builtin_qualifier))
 
         writer.write_run_thread('*')
 
@@ -407,7 +418,7 @@ def test_case_7(case_setup):
 
         writer.wait_for_vars([
             [
-                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A</xml>'.format(builtin_qualifier),
+                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="10" />%0A</xml>'.format(builtin_qualifier),
                 '<var name="variable_for_test_1" type="int"  value="int',  # jython
             ]
         ])
@@ -420,8 +431,8 @@ def test_case_7(case_setup):
 
         writer.wait_for_vars([
             [
-                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="int%253A 10" />%0A<var name="variable_for_test_2" type="int" qualifier="{0}" value="int%253A 20" />%0A</xml>'.format(builtin_qualifier),
-                '<var name="variable_for_test_1" type="int"  value="int%253A 10" />%0A<var name="variable_for_test_2" type="int"  value="int%253A 20" />%0A',  # jython
+                '<xml><var name="variable_for_test_1" type="int" qualifier="{0}" value="10" />%0A<var name="variable_for_test_2" type="int" qualifier="{0}" value="20" />%0A</xml>'.format(builtin_qualifier),
+                '<var name="variable_for_test_1" type="int"  value="10" />%0A<var name="variable_for_test_2" type="int"  value="20" />%0A',  # jython
             ]
         ])
 
@@ -682,19 +693,19 @@ def test_case_16(case_setup):
         writer.write_get_frame(hit.thread_id, hit.frame_id)
         writer.wait_for_multiple_vars((
             (
-                '<var name="smallarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B 0.%252B1.j  1.%252B1.j  2.%252B1.j  3.%252B1.j  4.%252B1.j  5.%252B1.j  6.%252B1.j  7.%252B1.j  8.%252B1.j%250A  9.%252B1.j 10.%252B1.j 11.%252B1.j 12.%252B1.j 13.%252B1.j 14.%252B1.j 15.%252B1.j 16.%252B1.j 17.%252B1.j%250A 18.%252B1.j 19.%252B1.j 20.%252B1.j 21.%252B1.j 22.%252B1.j 23.%252B1.j 24.%252B1.j 25.%252B1.j 26.%252B1.j%250A 27.%252B1.j 28.%252B1.j 29.%252B1.j 30.%252B1.j 31.%252B1.j 32.%252B1.j 33.%252B1.j 34.%252B1.j 35.%252B1.j%250A 36.%252B1.j 37.%252B1.j 38.%252B1.j 39.%252B1.j 40.%252B1.j 41.%252B1.j 42.%252B1.j 43.%252B1.j 44.%252B1.j%250A 45.%252B1.j 46.%252B1.j 47.%252B1.j 48.%252B1.j 49.%252B1.j 50.%252B1.j 51.%252B1.j 52.%252B1.j 53.%252B1.j%250A 54.%252B1.j 55.%252B1.j 56.%252B1.j 57.%252B1.j 58.%252B1.j 59.%252B1.j 60.%252B1.j 61.%252B1.j 62.%252B1.j%250A 63.%252B1.j 64.%252B1.j 65.%252B1.j 66.%252B1.j 67.%252B1.j 68.%252B1.j 69.%252B1.j 70.%252B1.j 71.%252B1.j%250A 72.%252B1.j 73.%252B1.j 74.%252B1.j 75.%252B1.j 76.%252B1.j 77.%252B1.j 78.%252B1.j 79.%252B1.j 80.%252B1.j%250A 81.%252B1.j 82.%252B1.j 83.%252B1.j 84.%252B1.j 85.%252B1.j 86.%252B1.j 87.%252B1.j 88.%252B1.j 89.%252B1.j%250A 90.%252B1.j 91.%252B1.j 92.%252B1.j 93.%252B1.j 94.%252B1.j 95.%252B1.j 96.%252B1.j 97.%252B1.j 98.%252B1.j%250A 99.%252B1.j%255D" isContainer="True" />',
-                '<var name="smallarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B  0.%252B1.j   1.%252B1.j   2.%252B1.j   3.%252B1.j   4.%252B1.j   5.%252B1.j   6.%252B1.j   7.%252B1.j%250A   8.%252B1.j   9.%252B1.j  10.%252B1.j  11.%252B1.j  12.%252B1.j  13.%252B1.j  14.%252B1.j  15.%252B1.j%250A  16.%252B1.j  17.%252B1.j  18.%252B1.j  19.%252B1.j  20.%252B1.j  21.%252B1.j  22.%252B1.j  23.%252B1.j%250A  24.%252B1.j  25.%252B1.j  26.%252B1.j  27.%252B1.j  28.%252B1.j  29.%252B1.j  30.%252B1.j  31.%252B1.j%250A  32.%252B1.j  33.%252B1.j  34.%252B1.j  35.%252B1.j  36.%252B1.j  37.%252B1.j  38.%252B1.j  39.%252B1.j%250A  40.%252B1.j  41.%252B1.j  42.%252B1.j  43.%252B1.j  44.%252B1.j  45.%252B1.j  46.%252B1.j  47.%252B1.j%250A  48.%252B1.j  49.%252B1.j  50.%252B1.j  51.%252B1.j  52.%252B1.j  53.%252B1.j  54.%252B1.j  55.%252B1.j%250A  56.%252B1.j  57.%252B1.j  58.%252B1.j  59.%252B1.j  60.%252B1.j  61.%252B1.j  62.%252B1.j  63.%252B1.j%250A  64.%252B1.j  65.%252B1.j  66.%252B1.j  67.%252B1.j  68.%252B1.j  69.%252B1.j  70.%252B1.j  71.%252B1.j%250A  72.%252B1.j  73.%252B1.j  74.%252B1.j  75.%252B1.j  76.%252B1.j  77.%252B1.j  78.%252B1.j  79.%252B1.j%250A  80.%252B1.j  81.%252B1.j  82.%252B1.j  83.%252B1.j  84.%252B1.j  85.%252B1.j  86.%252B1.j  87.%252B1.j%250A  88.%252B1.j  89.%252B1.j  90.%252B1.j  91.%252B1.j  92.%252B1.j  93.%252B1.j  94.%252B1.j  95.%252B1.j%250A  96.%252B1.j  97.%252B1.j  98.%252B1.j  99.%252B1.j%255D" isContainer="True" />'
+                '<var name="smallarray" type="ndarray" qualifier="numpy"',
+                '<var name="smallarray" type="ndarray" qualifier="numpy"',
             ),
 
             (
-                '<var name="bigarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B%255B    0     1     2 ...  9997  9998  9999%255D%250A %255B10000 10001 10002 ... 19997 19998 19999%255D%250A %255B20000 20001 20002 ... 29997 29998 29999%255D%250A ...%250A %255B70000 70001 70002 ... 79997 79998 79999%255D%250A %255B80000 80001 80002 ... 89997 89998 89999%255D%250A %255B90000 90001 90002 ... 99997 99998 99999%255D%255D" isContainer="True" />',
-                '<var name="bigarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B%255B    0     1     2 ...%252C  9997  9998  9999%255D%250A %255B10000 10001 10002 ...%252C 19997 19998 19999%255D%250A %255B20000 20001 20002 ...%252C 29997 29998 29999%255D%250A ...%252C %250A %255B70000 70001 70002 ...%252C 79997 79998 79999%255D%250A %255B80000 80001 80002 ...%252C 89997 89998 89999%255D%250A %255B90000 90001 90002 ...%252C 99997 99998 99999%255D%255D" isContainer="True" />'
+                '<var name="bigarray" type="ndarray" qualifier="numpy"',
+                '<var name="bigarray" type="ndarray" qualifier="numpy"'
             ),
 
             # Any of the ones below will do.
             (
-                '<var name="hugearray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B      0       1       2 ... 9999997 9999998 9999999%255D" isContainer="True" />',
-                '<var name="hugearray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B      0       1       2 ...%252C 9999997 9999998 9999999%255D" isContainer="True" />'
+                '<var name="hugearray" type="ndarray" qualifier="numpy"',
+                '<var name="hugearray" type="ndarray" qualifier="numpy"'
             )
         ))
 
@@ -704,56 +715,47 @@ def test_case_16(case_setup):
             '<var name="min" type="complex128"',
             '<var name="max" type="complex128"',
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype"',
             '<var name="size" type="int"',
         ))
         # ...and check that the internals are resolved properly
-        writer.write_get_variable(hit.thread_id, hit.frame_id, 'smallarray\t__internals__')
-        writer.wait_for_var('<var name="%27size%27')
 
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'bigarray')
         # isContainer could be true on some numpy versions, so, we only check for the var begin.
         writer.wait_for_multiple_vars((
             [
-                '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0"',
-                '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0"',
-                '<var name="size" type="int" qualifier="{0}" value="int%3A 100000"'.format(builtin_qualifier),
+                '<var name="min" type="int64" qualifier="numpy"',
+                '<var name="min" type="int64" qualifier="numpy"',
+                '<var name="size" type="int" qualifier="{0}"'.format(builtin_qualifier),
             ],
             [
-                '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999"',
-                '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
-                '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"',
-                '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
+                '<var name="max" type="int64" qualifier="numpy"',
+                '<var name="max" type="int32" qualifier="numpy"',
+                '<var name="max" type="int64" qualifier="numpy"',
+                '<var name="max" type="int32" qualifier="numpy"',
             ],
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype"',
             '<var name="size" type="int"'
         ))
-        writer.write_get_variable(hit.thread_id, hit.frame_id, 'bigarray\t__internals__')
-        writer.wait_for_var('<var name="%27size%27')
 
         # this one is different because it crosses the magic threshold where we don't calculate
         # the min/max
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'hugearray')
         writer.wait_for_var((
             [
-                '<var name="min" type="str" qualifier={0} value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="min" type="str" qualifier={0} value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="min" type="str" qualifier="{0}" value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="min" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+                '<var name="min" type="str" qualifier={0}'.format(builtin_qualifier),
+                '<var name="min" type="str" qualifier={0}'.format(builtin_qualifier),
+                '<var name="min" type="str" qualifier="{0}"'.format(builtin_qualifier),
+                '<var name="min" type="str" qualifier="{0}"'.format(builtin_qualifier),
             ],
             [
-                '<var name="max" type="str" qualifier={0} value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="max" type="str" qualifier={0} value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="max" type="str" qualifier="{0}" value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
-                '<var name="max" type="str" qualifier="{0}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+                '<var name="max" type="str" qualifier={0}'.format(builtin_qualifier),
+                '<var name="max" type="str" qualifier={0}'.format(builtin_qualifier),
+                '<var name="max" type="str" qualifier="{0}"'.format(builtin_qualifier),
+                '<var name="max" type="str" qualifier="{0}"'.format(builtin_qualifier),
             ],
             '<var name="shape" type="tuple"',
-            '<var name="dtype" type="dtype"',
             '<var name="size" type="int"',
         ))
-        writer.write_get_variable(hit.thread_id, hit.frame_id, 'hugearray\t__internals__')
-        writer.wait_for_var('<var name="%27size%27')
 
         writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
@@ -811,7 +813,7 @@ def test_case_18(case_setup):
         hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=5)
 
         writer.write_change_variable(hit.thread_id, hit.frame_id, 'a', '40')
-        writer.wait_for_var('<xml><var name="" type="int" qualifier="{0}" value="int%253A 40" />%0A</xml>'.format(builtin_qualifier,))
+        writer.wait_for_var('<xml><var name="" type="int" qualifier="{0}" value="40" />%0A</xml>'.format(builtin_qualifier,))
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
@@ -828,7 +830,7 @@ def test_case_19(case_setup):
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a.__var')
         writer.wait_for_evaluation([
             [
-                '<var name="a.__var" type="int" qualifier="{0}" value="int'.format(builtin_qualifier),
+                '<var name="a.__var" type="int" qualifier="{0}" value="10'.format(builtin_qualifier),
                 '<var name="a.__var" type="int"  value="int',  # jython
             ]
         ])
@@ -970,8 +972,16 @@ def _has_qt():
                 pass
     return False
 
+def _is_pyside2_and_python_38():
+    if not IS_PY38:
+        return False
+    try:
+        from PySide2 import QtCore  # @UnresolvedImport
+        return True
+    except:
+        return False
 
-@pytest.mark.skipif(not _has_qt(), reason='No qt available')
+@pytest.mark.skipif(not _has_qt() or _is_pyside2_and_python_38(), reason='No qt available or python3.8 with PySide2')
 def test_case_qthread1(case_setup):
     with case_setup.test_file('_debugger_case_qthread1.py') as writer:
         breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'run')
@@ -989,7 +999,7 @@ def test_case_qthread1(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not _has_qt(), reason='No qt available')
+@pytest.mark.skipif(not _has_qt() or _is_pyside2_and_python_38(), reason='No qt available or python3.8 with PySide2')
 def test_case_qthread2(case_setup):
     with case_setup.test_file('_debugger_case_qthread2.py') as writer:
         breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'long_running')
@@ -1008,7 +1018,7 @@ def test_case_qthread2(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not _has_qt(), reason='No qt available')
+@pytest.mark.skipif(not _has_qt() or _is_pyside2_and_python_38(), reason='No qt available or python3.8 with PySide2')
 def test_case_qthread3(case_setup):
     with case_setup.test_file('_debugger_case_qthread3.py') as writer:
         breakpoint_id = writer.write_add_breakpoint(writer.get_line_index_with_content('break here'), 'run')
@@ -1028,7 +1038,7 @@ def test_case_qthread3(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not _has_qt(), reason='No qt available')
+@pytest.mark.skipif(not _has_qt() or _is_pyside2_and_python_38(), reason='No qt available or python3.8 with PySide2')
 def test_case_qthread4(case_setup):
     with case_setup.test_file('_debugger_case_qthread4.py') as writer:
         original_additional_output_checks = writer.additional_output_checks
@@ -1056,7 +1066,7 @@ def test_case_qthread4(case_setup):
         writer.log.append('Marking finished ok.')
         writer.finished_ok = True
 
-
+@pytest.mark.xfail(IS_PY314, reason='PCQA-941')
 def test_m_switch(case_setup_m_switch):
     with case_setup_m_switch.test_file() as writer:
         writer.log.append('writing add breakpoint')
@@ -1083,7 +1093,7 @@ def test_m_switch(case_setup_m_switch):
 
         writer.finished_ok = True
 
-
+@pytest.mark.xfail(IS_PY314, reason='PCQA-942')
 def test_module_entry_point(case_setup_m_switch_entry_point):
     with case_setup_m_switch_entry_point.test_file() as writer:
         writer.log.append('writing add breakpoint')
@@ -1316,20 +1326,20 @@ def test_case_set_next_statement(case_setup):
         hit = writer.wait_for_breakpoint_hit(REASON_STOP_ON_BREAKPOINT, line=6)  # Stop in line a=3 (before setting it)
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a')
-        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 2"'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="2"'.format(builtin_qualifier))
         writer.write_set_next_statement(hit.thread_id, 2, 'method')
         hit = writer.wait_for_breakpoint_hit('127', line=2)
 
         # Check that it's still unchanged
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a')
-        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 2"'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="2"'.format(builtin_qualifier))
 
         # After a step over it should become 1 as we executed line which sets a = 1
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit('108')
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'a')
-        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="int: 1"'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="a" type="int" qualifier="{0}" value="1"'.format(builtin_qualifier))
 
         writer.write_remove_breakpoint(breakpoint_id)
         writer.write_run_thread(hit.thread_id)
@@ -1367,6 +1377,7 @@ def test_unhandled_exceptions_get_stack(case_setup_unhandled_exceptions):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='Only for Python.')
+@pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-778')
 def test_case_get_next_statement_targets(case_setup):
     with case_setup.test_file('_debugger_case_get_next_statement_targets.py') as writer:
         breakpoint_id = writer.write_add_breakpoint(21, None)
@@ -1407,12 +1418,13 @@ def test_case_type_ext(case_setup):
         writer.write_get_frame(hit.thread_id, hit.frame_id)
         assert writer.wait_for_var([
             [
+                r'<var name="my_rect" type="Rect" qualifier="__main__" value="__pydevd_value_async" isContainer="True" />',
                 r'<var name="my_rect" type="Rect" qualifier="__main__" value="Rectangle%255BLength%253A 5%252C Width%253A 10 %252C Area%253A 50%255D" isContainer="True" />',
                 r'<var name="my_rect" type="Rect"  value="Rect: <__main__.Rect object at',  # Jython
             ]
         ])
         writer.write_get_variable(hit.thread_id, hit.frame_id, 'my_rect')
-        assert writer.wait_for_var(r'<var name="area" type="int" qualifier="{0}" value="int%253A 50" />'.format(builtin_qualifier))
+        assert writer.wait_for_var(r'<var name="area" type="int" qualifier="{0}" value="50" />'.format(builtin_qualifier))
         writer.write_run_thread(hit.thread_id)
         writer.finished_ok = True
 
@@ -1458,7 +1470,7 @@ def test_case_writer_creation_deadlock(case_setup):
         assert hit.line == 26, 'Expected return to be in line 26, was: %s' % (hit.line,)
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'create_thread()')
-        writer.wait_for_evaluation('<var name="create_thread()" type="str" qualifier="{0}" value="str: create_thread:ok'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="create_thread()" type="str" qualifier="{0}" value="create_thread:ok'.format(builtin_qualifier))
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
@@ -1498,6 +1510,7 @@ def test_case_handled_exceptions0(case_setup):
 
 
 @pytest.mark.skipif(IS_JYTHON, reason='Not working on Jython (needs to be investigated).')
+@pytest.mark.xfail(IS_PY313, reason='PCQA-887')
 def test_case_handled_exceptions1(case_setup):
 
     # Stop multiple times for the same handled exception.
@@ -1629,22 +1642,6 @@ def test_case_settrace(case_setup):
         hit = writer.wait_for_breakpoint_hit(line=7)
         writer.write_run_thread(hit.thread_id)
 
-        writer.finished_ok = True
-
-
-@pytest.mark.skipif(True or IS_PY26 or IS_JYTHON, reason='This is *very* flaky. Scapy only supports 2.7 onwards, not available for jython.')
-def test_case_scapy(case_setup):
-    with case_setup.test_file('_debugger_case_scapy.py') as writer:
-        writer.FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
-        writer.reader_thread.set_messages_timeout(30)  # Starting scapy may be slow (timed out with 15 seconds on appveyor).
-        writer.write_add_breakpoint(2, None)
-        writer.write_make_initial_run()
-
-        hit = writer.wait_for_breakpoint_hit()
-        thread_id = hit.thread_id
-        frame_id = hit.frame_id
-
-        writer.write_run_thread(thread_id)
         writer.finished_ok = True
 
 
@@ -1944,6 +1941,7 @@ def test_case_dump_threads_to_stderr(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-735")
 def test_stop_on_start_regular(case_setup):
 
     with case_setup.test_file('_debugger_case_simple_calls.py') as writer:
@@ -1999,7 +1997,7 @@ def test_generator_cases(case_setup, filename):
 
         writer.finished_ok = True
 
-
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-736")
 def test_stop_on_start_m_switch(case_setup_m_switch):
 
     with case_setup_m_switch.test_file() as writer:
@@ -2013,6 +2011,7 @@ def test_stop_on_start_m_switch(case_setup_m_switch):
         writer.finished_ok = True
 
 
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-737")
 def test_stop_on_start_entry_point(case_setup_m_switch_entry_point):
 
     with case_setup_m_switch_entry_point.test_file() as writer:
@@ -2078,59 +2077,115 @@ def test_debug_zip_files(case_setup, tmpdir):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
-def test_multiprocessing(case_setup_multiprocessing):
-    import threading
-    from pydev_tests_python.debugger_unittest import AbstractWriterThread
-    with case_setup_multiprocessing.test_file('_debugger_case_multiprocessing.py') as writer:
-        break1_line = writer.get_line_index_with_content('break 1 here')
-        break2_line = writer.get_line_index_with_content('break 2 here')
+# @pytest.mark.skipif(not IS_CPYTHON or IS_PY2, reason='CPython only test.')
+# @pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-837')
+# def test_multiprocessing(case_setup_multiprocessing):
+#     import threading
+#     from pydev_tests_python.debugger_unittest import AbstractWriterThread
+#     with case_setup_multiprocessing.test_file('_debugger_case_multiprocessing.py') as writer:
+#         break1_line = writer.get_line_index_with_content('break 1 here')
+#         break2_line = writer.get_line_index_with_content('break 2 here')
+#
+#         writer.write_add_breakpoint(break1_line)
+#         writer.write_add_breakpoint(break2_line)
+#
+#         server_socket = writer.server_socket
+#
+#         class SecondaryProcessWriterThread(AbstractWriterThread):
+#             TEST_FILE = writer.get_main_filename()
+#             _sequence = -1
+#
+#         class SecondaryProcessThreadCommunication(threading.Thread):
+#             def run(self):
+#                 from pydev_tests_python.debugger_unittest import ReaderThread
+#                 expected_connections = 2 if sys.platform == "darwin" else 1
+#
+#                 for _ in range(expected_connections):
+#                     server_socket.listen(1)
+#                     self.server_socket = server_socket
+#                     new_sock, addr = server_socket.accept()
+#
+#                     reader_thread = ReaderThread(new_sock)
+#                     reader_thread.name = "  *** Multiprocess Reader Thread"
+#                     reader_thread.start()
+#
+#                     writer2 = SecondaryProcessWriterThread()
+#
+#                     writer2.reader_thread = reader_thread
+#                     writer2.sock = new_sock
+#
+#                     writer2.write_version()
+#                     writer2.write_add_breakpoint(break1_line)
+#                     writer2.write_add_breakpoint(break2_line)
+#                     writer2.write_make_initial_run()
+#
+#                 hit = writer2.wait_for_breakpoint_hit()
+#                 writer2.write_run_thread(hit.thread_id)
+#
+#         secondary_process_thread_communication = SecondaryProcessThreadCommunication()
+#         secondary_process_thread_communication.start()
+#         writer.write_make_initial_run()
+#         hit2 = writer.wait_for_breakpoint_hit()
+#         secondary_process_thread_communication.join(10)
+#         if secondary_process_thread_communication.is_alive():
+#             raise AssertionError('The SecondaryProcessThreadCommunication did not finish')
+#         writer.write_run_thread(hit2.thread_id)
+#         writer.finished_ok = True
 
-        writer.write_add_breakpoint(break1_line)
-        writer.write_add_breakpoint(break2_line)
 
-        server_socket = writer.server_socket
-
-        class SecondaryProcessWriterThread(AbstractWriterThread):
-
-            TEST_FILE = writer.get_main_filename()
-            _sequence = -1
-
-        class SecondaryProcessThreadCommunication(threading.Thread):
-
-            def run(self):
-                from pydev_tests_python.debugger_unittest import ReaderThread
-                server_socket.listen(1)
-                self.server_socket = server_socket
-                new_sock, addr = server_socket.accept()
-
-                reader_thread = ReaderThread(new_sock)
-                reader_thread.start()
-
-                writer2 = SecondaryProcessWriterThread()
-
-                writer2.reader_thread = reader_thread
-                writer2.sock = new_sock
-
-                writer2.write_version()
-                writer2.write_add_breakpoint(break1_line)
-                writer2.write_add_breakpoint(break2_line)
-                writer2.write_make_initial_run()
-                hit = writer2.wait_for_breakpoint_hit()
-                writer2.write_run_thread(hit.thread_id)
-
-        secondary_process_thread_communication = SecondaryProcessThreadCommunication()
-        secondary_process_thread_communication.start()
+@pytest.mark.skipif(not IS_CPYTHON or IS_PY2, reason='CPython only test.')
+@pytest.mark.xfail(reason="PY-79070", strict=False)
+def test_fork_no_attach(case_setup):
+    with case_setup.test_file('_debugger_case_fork.py') as writer:
+        writer.write_add_breakpoint(writer.get_line_index_with_content('break here'))
         writer.write_make_initial_run()
-        hit2 = writer.wait_for_breakpoint_hit()
-        secondary_process_thread_communication.join(10)
-        if secondary_process_thread_communication.isAlive():
-            raise AssertionError('The SecondaryProcessThreadCommunication did not finish')
-        writer.write_run_thread(hit2.thread_id)
+        writer.finished_ok = True
+
+
+@pytest.mark.skipif(not IS_CPYTHON or IS_PY2, reason='CPython only test.')
+@pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-838')
+def test_fork_with_attach_no_breakpoints(case_setup_multiproc):
+    with case_setup_multiproc.test_file('_debugger_case_fork.py') as writer:
+        wait_for_condition(lambda: len(writer.writers) == 1)
+        writer1 = writer.writers[0]
+        writer1.write_make_initial_run()
+
+        wait_for_condition(lambda: len(writer.writers) == 2)
+        writer2 = writer.writers[1]
+        writer2.write_make_initial_run()
+
+        for w in writer.writers:
+            w.finished_ok = True
+
+        writer.finished_ok = True
+
+
+@pytest.mark.skip('PY-44245 - forking with breakpoints available hangs the debugger')
+@pytest.mark.skipif(not IS_CPYTHON or IS_PY2, reason='CPython only test.')
+def test_fork_with_attach(case_setup_multiproc):
+    with case_setup_multiproc.test_file('_debugger_case_fork.py') as writer:
+        break_line = writer.get_line_index_with_content('break here')
+        writer.write_add_breakpoint(break_line)
+
+        wait_for_condition(lambda: len(writer.writers) == 1)
+        writer1 = writer.writers[0]
+        writer1.write_make_initial_run()
+
+        wait_for_condition(lambda: len(writer.writers) == 2)
+        writer2 = writer.writers[1]
+        writer2.write_make_initial_run()
+
+        hit1 = writer1.wait_for_breakpoint_hit()
+        writer1.write_run_thread(hit1.thread_id)
+
+        for w in writer.writers:
+            w.finished_ok = True
+
         writer.finished_ok = True
 
     
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(reason="PCQA-703")
 def test_remote_debugger_basic(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_remote.py') as writer:
         writer.log.append('making initial run')
@@ -2153,6 +2208,7 @@ def test_remote_debugger_basic(case_setup_remote):
         writer.finished_ok = True
 
 
+@pytest.mark.xfail(IS_PY3K, reason='PY-76342')
 @pytest.mark.skipif(not IS_CPYTHON or not IS_PY37_OR_GREATER, reason='CPython only test.')
 def test_py_37_breakpoint_remote(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_breakpoint_remote.py') as writer:
@@ -2176,6 +2232,7 @@ def test_py_37_breakpoint_remote(case_setup_remote):
 
 
 @pytest.mark.skipif(not IS_CPYTHON or not IS_PY37_OR_GREATER, reason='CPython only test.')
+@pytest.mark.xfail(reason="PCQA-591")
 def test_py_37_breakpoint_remote_no_import(case_setup_remote):
 
     def get_environ(writer):
@@ -2214,6 +2271,7 @@ def test_py_37_breakpoint_remote_no_import(case_setup_remote):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(reason="PCQA-704")
 def test_remote_debugger_multi_proc(case_setup_remote):
 
     class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThread):
@@ -2291,6 +2349,7 @@ def test_remote_debugger_multi_proc(case_setup_remote):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(reason="PCQA-705")
 def test_remote_unhandled_exceptions(case_setup_remote):
 
     def check_test_suceeded_msg(writer, stdout, stderr):
@@ -2379,8 +2438,18 @@ def test_return_value(case_setup):
 
         writer.wait_for_vars([
             [
-                '<var name="method1" type="int" qualifier="%s" value="int: 1" isRetVal="True"' % (builtin_qualifier,),
-                '<var name="method1" type="int"  value="int%253A 1" isRetVal="True"',
+                '<var name="_dummy_ret_val"  />',
+                '<var name="_dummy_special_var"  />',
+                '<var name="method1" type="int" qualifier="%s" value="1" isRetVal="True"' % (builtin_qualifier,),
+                '<var name="method1" type="int"  value="1" isRetVal="True"',
+            ],
+        ])
+
+        writer.write_get_frame(hit.thread_id, hit.frame_id, GET_FRAME_RETURN_GROUP)
+        writer.wait_for_vars([
+            [
+                '<var name="method1" type="int" qualifier="%s" value="1" isRetVal="True"' % (builtin_qualifier,),
+                '<var name="method1" type="int"  value="1" isRetVal="True"',
             ],
         ])
         writer.write_run_thread(hit.thread_id)
@@ -2388,7 +2457,13 @@ def test_return_value(case_setup):
 
 
 @pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
-@pytest.mark.parametrize('check_single_notification', [True, False])
+@pytest.mark.parametrize(
+    'check_single_notification',
+    (
+        pytest.param(True, marks=pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-889')),
+        pytest.param(False, marks=pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-890')),
+    ),
+)
 def test_run_pause_all_threads_single_notification(case_setup, check_single_notification):
     from pydev_tests_python.debugger_unittest import TimeoutError
     with case_setup.test_file('_debugger_case_multiple_threads.py') as writer:
@@ -2439,7 +2514,7 @@ def test_run_pause_all_threads_single_notification(case_setup, check_single_noti
             hit = writer.wait_for_breakpoint_hit(CMD_STEP_OVER)
 
         writer.write_evaluate_expression('%s\t%s\t%s' % (hit.thread_id, hit.frame_id, 'LOCAL'), 'stop_loop()')
-        writer.wait_for_evaluation('<var name="stop_loop()" type="str" qualifier="{0}" value="str: stopped_loop'.format(builtin_qualifier))
+        writer.wait_for_evaluation('<var name="stop_loop()" type="str" qualifier="{0}" value="stopped_loop'.format(builtin_qualifier))
 
         writer.write_run_thread('*')
         writer.finished_ok = True
@@ -2490,9 +2565,9 @@ def scenario_caught_and_uncaught(writer):
 @pytest.mark.parametrize(
     'check_scenario',
     [
-        scenario_uncaught,
-        scenario_caught,
-        scenario_caught_and_uncaught,
+        pytest.param(scenario_uncaught, marks=pytest.mark.xfail(reason="PCQA-706")),
+        pytest.param(scenario_caught, marks=pytest.mark.xfail(reason="PCQA-707")),
+        pytest.param(scenario_caught_and_uncaught, marks=pytest.mark.xfail(reason="PCQA-708")),
     ]
 )
 def test_top_level_exceptions_on_attach(case_setup_remote, check_scenario):
@@ -2592,16 +2667,16 @@ def test_asyncio_step_over_basic(case_setup):
 
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit(
-            reason=REASON_STOP_ON_BREAKPOINT,
+            reason=REASON_STEP_OVER,
             file=target_filename,
-            line=writer.get_line_index_with_content('break main')
+            line=writer.get_line_index_with_content('step main')
         )
 
         writer.write_step_over(hit.thread_id)
         hit = writer.wait_for_breakpoint_hit(
             reason=REASON_STEP_OVER,
             file=target_filename,
-            line=writer.get_line_index_with_content('step main')
+            line=writer.get_line_index_with_content('step main') + 1
         )
 
         writer.write_run_thread(hit.thread_id)

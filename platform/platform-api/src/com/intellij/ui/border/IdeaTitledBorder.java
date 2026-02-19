@@ -8,9 +8,13 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JSeparator;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 /**
  * @author evgeny zakrevsky
@@ -79,6 +83,14 @@ public class IdeaTitledBorder extends TitledBorder {
     Dimension minimumSize = getMinimumSize(c);
     c.setMinimumSize(new Dimension(Math.max(minimumSize.width, c.getMinimumSize().width),
                                    Math.max(minimumSize.height, c.getMinimumSize().height)));
+  }
+
+  public Insets getInsideInsets() {
+    return insideInsets;
+  }
+
+  public Insets getOutsideInsets() {
+    return outsideInsets;
   }
 
   @Override

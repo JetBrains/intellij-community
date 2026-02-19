@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,15 +23,21 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getContent() {
+  public @Nullable @NonNls String getContent() {
     final VirtualFile vFile = getVirtualFile();
     if (vFile == null) {
       return null;
     }
     Document doc = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(vFile));
-    return doc == null ? null : doc.getText();
+    if (doc == null) {
+      return null;
+    }
+    else {
+      // In some cases like Jupyter Notebooks we need to make TextPresentationTransformers.toPersistent to have a correct text representation
+      // In the case of Jupyter Notebooks it is a JSON representation of the notebook instead of representation with #%% cells separators
+      String docText = doc.getText();
+      return ReadAction.compute(() -> TextPresentationTransformers.toPersistent(docText, vFile).toString());
+    }
   }
 
   @Override
@@ -47,34 +54,30 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
     }
   }
 
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     VirtualFile vFile = myFile.getVirtualFile();
     return vFile == null || !vFile.isValid() ? null : vFile;
   }
 
   @Override
-  @NotNull
-  public FilePath getFile() {
+  public @NotNull FilePath getFile() {
     return myFile;
   }
 
   @Override
-  @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return VcsRevisionNumber.NULL;
   }
 
-  @NotNull
-  public static ContentRevision create(@NotNull FilePath file) {
+  public static @NotNull ContentRevision create(@NotNull FilePath file) {
     if (file.getFileType().isBinary()) {
       return new CurrentBinaryContentRevision(file);
     }
     return new CurrentContentRevision(file);
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "CurrentContentRevision:" + myFile;
   }
 }

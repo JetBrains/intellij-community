@@ -1,11 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.postfix.templates.editable.*;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateEditor;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -17,6 +21,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +31,9 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.util.Set;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.*;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalConditions;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalLiveTemplate;
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.readExternalTopmostAttribute;
 
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
@@ -70,24 +77,28 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new SwitchStatementPostfixTemplate(),
     new TryStatementPostfixTemplate(),
     new TryWithResourcesPostfixTemplate(),
-    new StreamPostfixTemplate()
+    new StreamPostfixTemplate(),
+
+    new AsListToListPostfixTemplate(this),
+    new ListOfToListPostfixTemplate(this),
+    new NewArrayListToListPostfixTemplate(this),
+    new NewHashSetToSetPostfixTemplate(this),
+    new LocalDateToJavaSqlDatePostfixTemplate(this),
+    new JavaUtilDateToLocalDatePostfixTemplate(this)
   );
 
-  @NotNull
   @Override
-  public Set<PostfixTemplate> getTemplates() {
+  public @NotNull Set<PostfixTemplate> getTemplates() {
     return myBuiltinTemplates;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "builtin.java";
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return JavaBundle.message("postfix.template.provider.name");
   }
 
@@ -97,8 +108,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   }
 
   @Override
-  public void preExpand(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public void preExpand(final @NotNull PsiFile file, final @NotNull Editor editor) {
+    ThreadingAssertions.assertEventDispatchThread();
     if (isSemicolonNeeded(file, editor)) {
       ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
         EditorModificationUtil.insertStringAtCaret(editor, ";", false, false);
@@ -108,14 +119,12 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   }
 
   @Override
-  public void afterExpand(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public void afterExpand(final @NotNull PsiFile file, final @NotNull Editor editor) {
   }
 
-  @NotNull
   @Override
-  public PsiFile preCheck(final @NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
-    Document document = copyFile.getViewProvider().getDocument();
-    assert document != null;
+  public @NotNull PsiFile preCheck(final @NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
+    Document document = copyFile.getFileDocument();
     CharSequence sequence = document.getCharsSequence();
     StringBuilder fileContentWithSemicolon = new StringBuilder(sequence);
     if (isSemicolonNeeded(copyFile, realEditor)) {
@@ -131,9 +140,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     return JavaCompletionContributor.semicolonNeeded(file, startOffset);
   }
 
-  @Nullable
   @Override
-  public PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
+  public @Nullable PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
     if (templateToEdit == null ||
         templateToEdit instanceof JavaEditablePostfixTemplate &&
         // cannot be editable until there is no UI for editing template variables    
@@ -150,9 +158,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public JavaEditablePostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
+  public @Nullable JavaEditablePostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
     TemplateImpl liveTemplate = readExternalLiveTemplate(template, this);
     if (liveTemplate == null) return null;
     Set<JavaPostfixTemplateExpressionCondition> conditions = readExternalConditions(template, JavaPostfixTemplateProvider::readExternal);
@@ -174,11 +181,13 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     }
   }
 
-  @Nullable
-  private static JavaPostfixTemplateExpressionCondition readExternal(@NotNull Element condition) {
+  private static @Nullable JavaPostfixTemplateExpressionCondition readExternal(@NotNull Element condition) {
     String id = condition.getAttributeValue(PostfixTemplateExpressionCondition.ID_ATTR);
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition();
+    }
+    if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayReferenceExpressionCondition.ID.equals(id)) {
+      return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayReferenceExpressionCondition();
     }
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition();

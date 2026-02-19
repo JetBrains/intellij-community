@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing;
 
@@ -18,13 +18,11 @@ public abstract class ScalarIndexExtension<K> extends FileBasedIndexExtension<K,
    *
    * @deprecated use {@link VoidDataExternalizer#INSTANCE}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final DataExternalizer<Void> VOID_DATA_EXTERNALIZER = VoidDataExternalizer.INSTANCE;
 
-  @NotNull
   @Override
-  public final DataExternalizer<Void> getValueExternalizer() {
+  public final @NotNull DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
 }

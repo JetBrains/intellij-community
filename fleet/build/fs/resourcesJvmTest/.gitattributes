@@ -1,0 +1,3 @@
+example-abi-crlf.txt eol=crlf
+example-abi-lf.txt eol=lf
+example-abi-cr.txt eol=cr

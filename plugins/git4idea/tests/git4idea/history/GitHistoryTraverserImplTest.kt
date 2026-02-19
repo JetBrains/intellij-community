@@ -1,34 +1,57 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.util.containers.getIfSingle
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.log.createLogData
+import git4idea.GitCommit
+import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.makeCommit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.random.nextInt
 
 class GitHistoryTraverserImplTest : GitSingleRepoTest() {
+  private lateinit var testCs: CoroutineScope
   private lateinit var logData: VcsLogData
 
   private val traverser: GitHistoryTraverser
-    get() = GitHistoryTraverserImpl(repo.project, logData)
+    get() = GitHistoryTraverserImpl(repo.project, logData, testRootDisposable)
 
   override fun setUp() {
     super.setUp()
-    logData = createLogData(repo, logProvider, testRootDisposable)
+    VcsLogData.getIndexingRegistryValue().setValue(true)
+    @Suppress("RAW_SCOPE_CREATION")
+    testCs = CoroutineScope(SupervisorJob())
+    logData = createLogDataIn(testCs, repo, logProvider)
+  }
+
+  override fun tearDown() {
+    try {
+      runBlocking {
+        testCs.coroutineContext.job.cancelAndJoin()
+      }
+      VcsLogData.getIndexingRegistryValue().resetToDefault()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test files from commits made by user`() {
@@ -36,23 +59,23 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     touch(file, "content")
 
     val authorCommits = mutableSetOf<Hash>()
-    val author = VcsUserImpl("Name", "name@server.com")
-    val anotherUser = VcsUserImpl("Another Name", "another.name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
+    val anotherUser = VcsUserUtil.createUser("Another Name", "another.name@server.com")
     repeat(5) {
       authorCommits.add(HashImpl.build(makeCommit(author, file)))
       makeCommit(anotherUser, file)
     }
 
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
 
-    traverser.withIndex(listOf(repo.root), testRootDisposable) { indexedRoots ->
+    traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       val authorCommitIds = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.Author(author))
-      traverse(indexedRoot.root) { (commitId, _) ->
+      traverser.traverse(indexedRoot.root) { (commitId, _) ->
         if (commitId in authorCommitIds) {
           loadFullDetailsLater(commitId) { details ->
             assertTrue(details.id in authorCommits)
-            assertTrue(ChangesUtil.getFiles(details.changes.stream()).getIfSingle()!!.name.startsWith("file"))
+            assertTrue(areOnlyFilesInCommit(details, setOf("file.txt")))
           }
         }
         true
@@ -76,14 +99,14 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     makeCommit(anotherFile)
     makeCommit(file)
 
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
 
     val maxCommitsHistoryCount = 5
     var fileInCommitCount = 0
     var commitsCounter = 0
     traverser.traverse(repo.root) { (commitId, _) ->
       loadFullDetailsLater(commitId) { details ->
-        if (ChangesUtil.getFiles(details.changes.stream()).getIfSingle()!!.name.startsWith("file")) {
+        if (areOnlyFilesInCommit(details, setOf("file.txt"))) {
           fileInCommitCount++
         }
       }
@@ -100,8 +123,8 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     val anotherFile = "anotherFile.txt"
     touch(anotherFile, "content")
 
-    val author = VcsUserImpl("Name", "name@server.com")
-    val anotherUser = VcsUserImpl("Another Name", "another.name@server.com")
+    val author = VcsUserUtil.createUser("Name", "name@server.com")
+    val anotherUser = VcsUserUtil.createUser("Another Name", "another.name@server.com")
 
     makeCommit(author, file)
     makeCommit(anotherUser, file)
@@ -112,14 +135,14 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     makeCommit(anotherUser, anotherFile)
     makeCommit(anotherUser, file)
 
-    logData.refreshAndWait(repo, withIndex = true)
-    traverser.withIndex(listOf(repo.root), testRootDisposable) { indexedRoots ->
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
+    traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       val authorCommitIds = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.Author(author))
       val fileCommits = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.File(filePath))
 
       val authorCommitsWithFile = authorCommitIds.intersect(fileCommits)
-      val actualLastCommitByUserWithFile = authorCommitsWithFile.map { indexedRoot.loadTimedCommit(it) }.maxBy { it.timestamp }!!
+      val actualLastCommitByUserWithFile = authorCommitsWithFile.map { indexedRoot.loadTimedCommit(it) }.maxByOrNull { it.timestamp }!!
       val expectedCommitByUserWithFile = GitHistoryUtils.collectCommitsMetadata(project, repo.root, lastCommitByUserWithFile)!!.single()
       assertEquals(expectedCommitByUserWithFile.commitTime, actualLastCommitByUserWithFile.timestamp)
     }
@@ -132,11 +155,11 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
       makeCommit(file)
     }
 
-    logData.refreshAndWait(repo, withIndex = false)
+    logData.refreshAndWait(repo, waitIndexFinishing = false)
     val indexingWaiter = CompletableFuture<GitHistoryTraverser.IndexedRoot>()
-    val indexWaiterDisposable = Disposable {}
+    val indexWaiterDisposable = Disposer.newDisposable()
     var blockExecutedCount = 0
-    traverser.withIndex(listOf(repo.root), indexWaiterDisposable) { indexedRoots ->
+    traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       blockExecutedCount++
       indexingWaiter.complete(indexedRoot)
@@ -162,7 +185,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     repeat(expectedCommitsCount - 1) {
       makeCommit(file)
     }
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
 
     var commitsCount = 0
     traverser.traverse(
@@ -183,7 +206,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     repeat(expectedCommitsCount - 1) {
       makeCommit(file)
     }
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
 
     val commitHashes = mutableSetOf<Hash>()
     traverser.traverse(
@@ -219,5 +242,17 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     }
     catch (e: IllegalArgumentException) {
     }
+  }
+
+  private fun areOnlyFilesInCommit(commit: GitCommit, fileNames: Collection<String>): Boolean {
+    val fileNamesMap = fileNames.associateWith { false }.toMutableMap()
+    for (change in commit.changes) {
+      val fileName = ChangesUtil.getFilePath(change).name
+      if (fileName !in fileNamesMap) {
+        return false
+      }
+      fileNamesMap[fileName] = true
+    }
+    return fileNamesMap.values.all { it }
   }
 }

@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.util.rt.java8` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "rt-java8",
+  module_name = "intellij.platform.util.rt.java8",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = ["@lib//:jetbrains-annotations"]
+)
+
+jvm_library(
+  name = "rt-java8_test_lib",
+  module_name = "intellij.platform.util.rt.java8",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [":rt-java8"]
+)
+### auto-generated section `build intellij.platform.util.rt.java8` end

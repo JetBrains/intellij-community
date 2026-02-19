@@ -1,0 +1,3 @@
+val x = if (true) {
+
+}

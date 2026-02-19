@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -13,11 +14,15 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringParser;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,17 +33,16 @@ import java.util.List;
  * Intention to add documentation string for function
  * (with checked format)
  */
-public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
+public final class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.insert.docstring.stub");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
-    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(psiFile, editor.getCaretModel().getOffset());
     if (elementAt == null) {
       return false;
     }
@@ -95,7 +99,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
    * @return false if no structured docstring format was specified initially and user didn't select any, true otherwise
    */
   public static boolean ensureNotPlainDocstringFormat(@NotNull PsiElement anchor) {
-    final Module module = DocStringUtil.getModuleForElement(anchor);
+    final Module module = DocStringParser.getModuleForElement(anchor);
     if (module == null) {
       return false;
     }
@@ -114,6 +118,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
       if (i < 0) {
         return false;
       }
+      SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
       settings.setFormat(DocStringFormat.fromNameOrPlain(values.get(i)));
     }
     return true;

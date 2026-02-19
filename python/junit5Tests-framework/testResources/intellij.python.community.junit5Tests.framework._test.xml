@@ -1,0 +1,14 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.community.wintools"/>
+    <module name="intellij.libraries.sshd.osgi"/>
+    <module name="intellij.libraries.system.stubs.jupiter"/>
+    <module name="intellij.libraries.testcontainers"/>
+    <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.platform.testFramework.junit5.projectStructure"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.python.psi.impl"/>
+  </dependencies>
+</idea-plugin>

@@ -1,0 +1,10 @@
+package pack
+
+import topLevelExtensionFunction
+
+fun usage() {
+    "".topLevelExtensionFunction()<caret>
+}
+
+// ELEMENT: topLevelExtensionFunction
+// TAIL_TEXT: "() for String in <root>"

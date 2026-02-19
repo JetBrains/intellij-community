@@ -11,30 +11,34 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyConvertStaticMethodToFunctionIntention extends PyBaseIntentionAction {
+public final class PyConvertStaticMethodToFunctionIntention extends PyBaseIntentionAction {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.static.method.to.function");
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.convert.static.method.to.function");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
-    final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final PsiElement element = PyUtil.findNonWhitespaceAtOffset(psiFile, editor.getCaretModel().getOffset());
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (function == null) return false;
     final PyClass containingClass = function.getContainingClass();

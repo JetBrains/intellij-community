@@ -1,0 +1,121 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.refactoring.safeDelete
+
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.util.JavaPsiRecordUtil
+import com.intellij.refactoring.util.RefactoringDescriptionLocation
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.removeOverrideModifier
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeParameter
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import java.util.ArrayDeque
+
+@K1Deprecation
+fun PsiElement.canDeleteElement(): Boolean {
+    if (this is KtObjectDeclaration && isObjectLiteral()) return false
+
+    if (this is KtParameter) {
+        val parameterList = parent as? KtParameterList ?: return false
+        val declaration = parameterList.parent as? KtDeclaration ?: return false
+        return declaration !is KtPropertyAccessor
+    }
+
+    return this is KtClassOrObject
+            || this is KtSecondaryConstructor
+            || this is KtNamedFunction
+            || this is PsiMethod
+            || this is PsiClass
+            || this is KtProperty
+            || this is KtTypeParameter
+            || this is KtTypeAlias
+}
+
+@K1Deprecation
+fun PsiMethod.cleanUpOverrides() {
+    val superMethods = findSuperMethods(true)
+    for (overridingMethod in OverridingMethodsSearch.search(this, true).findAll()) {
+        if (JavaPsiRecordUtil.getRecordComponentForAccessor(overridingMethod) != null) continue;
+        val currentSuperMethods = overridingMethod.findSuperMethods(true).asSequence() + superMethods.asSequence()
+        if (currentSuperMethods.all { superMethod -> superMethod.unwrapped == unwrapped }) {
+            overridingMethod.unwrapped?.removeOverrideModifier()
+        }
+    }
+}
+
+@K1Deprecation
+fun checkParametersInMethodHierarchy(parameter: PsiParameter): Collection<PsiElement>? {
+    val method = parameter.declarationScope as PsiMethod
+
+    val parametersToDelete = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(ThrowableComputable<Collection<PsiElement>?, RuntimeException> { 
+            runReadAction { collectParametersHierarchy(method, parameter) }
+        }, KotlinBundle.message("progress.title.collect.hierarchy", parameter.name), true, parameter.project)
+    if (parametersToDelete == null || parametersToDelete.size <= 1 || isUnitTestMode()) return parametersToDelete
+
+    val message = KotlinBundle.message("override.declaration.delete.multiple.parameters", 
+                                       ElementDescriptionUtil.getElementDescription(method, RefactoringDescriptionLocation.WITHOUT_PARENT))
+    val exitCode = Messages.showOkCancelDialog(parameter.project, message, IdeBundle.message("title.warning"), Messages.getQuestionIcon())
+    return if (exitCode == Messages.OK) parametersToDelete else null
+}
+
+// TODO: generalize breadth-first search
+private fun collectParametersHierarchy(method: PsiMethod, parameter: PsiParameter): Set<PsiElement> {
+    val queue = ArrayDeque<PsiMethod>()
+    val visited = HashSet<PsiMethod>()
+    val parametersToDelete = HashSet<PsiElement>()
+
+    queue.add(method)
+    while (!queue.isEmpty()) {
+        val currentMethod = queue.poll()
+
+        visited += currentMethod
+        addParameter(currentMethod, parametersToDelete, parameter)
+
+        currentMethod.findSuperMethods(true)
+            .filter { it !in visited }
+            .forEach { queue.offer(it) }
+        OverridingMethodsSearch.search(currentMethod)
+            .asIterable()
+            .filter { it !in visited }
+            .forEach { queue.offer(it) }
+    }
+    return parametersToDelete
+}
+
+private fun addParameter(method: PsiMethod, result: MutableSet<PsiElement>, parameter: PsiParameter) {
+    val parameterIndex = parameter.unwrapped!!.parameterIndex()
+
+    if (method is KtLightMethod) {
+        val declaration = method.kotlinOrigin
+        if (declaration is KtFunction) {
+            result.add(declaration.valueParameters[parameterIndex])
+        }
+    } else {
+        result.add(method.parameterList.parameters[parameterIndex])
+    }
+}

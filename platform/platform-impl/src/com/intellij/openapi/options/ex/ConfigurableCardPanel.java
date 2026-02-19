@@ -2,7 +2,8 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -20,12 +21,16 @@ import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -130,7 +135,12 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
               panel.add(BorderLayout.CENTER, component);
               component = panel;
             }
-            component.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
+            if (component.getLayout() instanceof GridLayout) {
+              // GridLayout uses SpacingConfiguration.verticalComponentGap = 6 as a part of components
+              component.setBorder(JBUI.Borders.empty(5, 16, 10, 16));
+            } else{
+              component.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
+            }
           }
           if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
             JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
@@ -220,7 +230,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
    * This is a wrapper for a component created by a configurable.
    * It allows to use a dedicated UI disposable instead of a dialog disposable.
    */
-  private static final class Wrapper extends JPanel implements Disposable, DataProvider {
+  private static final class Wrapper extends JPanel implements Disposable, UiDataProvider {
     private final Configurable myConfigurable;
 
     private Wrapper(@NotNull Configurable configurable, @NotNull JComponent component) {
@@ -234,8 +244,8 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      return UI_DISPOSABLE.is(dataId) ? this : null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(UI_DISPOSABLE, this);
     }
 
     @Override

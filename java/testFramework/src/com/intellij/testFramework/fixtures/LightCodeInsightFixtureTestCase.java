@@ -5,6 +5,6 @@ package com.intellij.testFramework.fixtures;
  * @deprecated Use {@link LightJavaCodeInsightFixtureTestCase} for Java-dependent tests,
  * {@link BasePlatformTestCase} for non-Java dependent tests
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class LightCodeInsightFixtureTestCase extends LightJavaCodeInsightFixtureTestCase {
 }

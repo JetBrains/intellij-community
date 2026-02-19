@@ -1,13 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.apiUsage;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.ULambdaExpression;
 import org.jetbrains.uast.UMethod;
 
 /**
@@ -24,6 +29,22 @@ public interface ApiUsageProcessor {
    * @param qualifier  is optionally a qualified expression of the reference.
    */
   default void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) { }
+
+  /**
+   * Process implicit reference from lambda to a class which would be found in the bytecode:
+   * <pre>
+   * class I {
+   *   static void f(Runnable r) {}
+   * }
+   *
+   * // target represents Runnable interface
+   * f(() -> println());
+   * </pre>
+   *
+   * @param sourceNode can be used to get actual PSI element to highlight in inspections via {@code sourceNode.sourcePsi}
+   * @param target     resolved API element
+   */
+  default void processLambda(@NotNull ULambdaExpression sourceNode, @NotNull PsiModifierListOwner target) { }
 
   /**
    * Process reference to an imported API element.
@@ -53,7 +74,7 @@ public interface ApiUsageProcessor {
   /**
    * Process overriding of a super class' method.
    *
-   * @param method           method that overrides the parent's method. {@code method.uastAnchor.sourcePsi} can be be used to highlight name declaration.
+   * @param method           method that overrides the parent's method. {@code method.uastAnchor.sourcePsi} can be used to highlight name declaration.
    * @param overriddenMethod super class' method being overridden
    */
   default void processMethodOverriding(@NotNull UMethod method, @NotNull PsiMethod overriddenMethod) {}

@@ -1,11 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Lists;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -13,21 +20,26 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import icons.PythonIcons;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.icons.PythonIcons;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonConsoleToolWindow {
+@Service(Service.Level.PROJECT)
+public final class PythonConsoleToolWindow {
   public static final Key<RunContentDescriptor> CONTENT_DESCRIPTOR = Key.create("CONTENT_DESCRIPTOR");
 
-  public static final Function<Content, RunContentDescriptor>
-    CONTENT_TO_DESCRIPTOR_FUNCTION = input -> input != null ? input.getUserData(CONTENT_DESCRIPTOR) : null;
+  public static final Function<Content, RunContentDescriptor> CONTENT_TO_DESCRIPTOR_FUNCTION = input -> {
+    return input == null ? null : input.getUserData(CONTENT_DESCRIPTOR);
+  };
 
   private final Project myProject;
 
@@ -42,11 +54,11 @@ public class PythonConsoleToolWindow {
   }
 
   public List<RunContentDescriptor> getConsoleContentDescriptors() {
-    return FluentIterable.from(Lists.newArrayList(getToolWindow(myProject).getContentManager().getContents()))
-      .transform(CONTENT_TO_DESCRIPTOR_FUNCTION).filter(
-        Predicates.notNull()).toList();
+    return FluentIterable.from(List.of(getToolWindow(myProject).getContentManager().getContents()))
+      .transform(CONTENT_TO_DESCRIPTOR_FUNCTION)
+      .filter(Predicates.notNull())
+      .toList();
   }
-
 
   public void init(final @NotNull ToolWindow toolWindow, final @NotNull RunContentDescriptor contentDescriptor) {
     setContent(toolWindow, contentDescriptor);
@@ -54,22 +66,29 @@ public class PythonConsoleToolWindow {
     if (!myInitialized) {
       doInit(toolWindow);
     }
+
+    if (toolWindow instanceof ToolWindowEx toolWindowEx) {
+      toolWindowEx.setTabActions(new NewConsoleAction());
+    }
   }
 
   public boolean isInitialized() {
     return myInitialized;
   }
 
-  private void doInit(@NotNull final ToolWindow toolWindow) {
+  private void doInit(final @NotNull ToolWindow toolWindow) {
     myInitialized = true;
 
-    toolWindow.setToHideOnEmptyContent(true);
-
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+      private ToolWindowManagerEventType lastChangeType = null;
+
       @Override
-      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        ToolWindow window = getToolWindow(myProject);
-        if (window.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager,
+                               @NotNull ToolWindow affectedToolWindow,
+                               @NotNull ToolWindowManagerEventType changeType) {
+        if (lastChangeType == changeType || !affectedToolWindow.getId().equals(toolWindow.getId())) return;
+        lastChangeType = changeType;
+        if (lastChangeType == ToolWindowManagerEventType.ActivateToolWindow && affectedToolWindow.getContentManager().getContentCount() == 0) {
           PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
           runner.run(true);
         }
@@ -93,15 +112,19 @@ public class PythonConsoleToolWindow {
     toolWindow.getContentManager().setSelectedContent(content);
   }
 
-  public ToolWindow getToolWindow() {
+  public @NotNull ToolWindow getToolWindow() {
     return getToolWindow(myProject);
   }
 
-  public static ToolWindow getToolWindow(Project project) {
+  public static @NotNull ToolWindow getToolWindow(@NotNull Project project) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     ToolWindow consoleToolWindow = toolWindowManager.getToolWindow(PythonConsoleToolWindowFactory.ID);
     if (consoleToolWindow == null) {
-      consoleToolWindow = toolWindowManager.registerToolWindow(PythonConsoleToolWindowFactory.ID, true, ToolWindowAnchor.BOTTOM);
+      consoleToolWindow = toolWindowManager.registerToolWindow(PythonConsoleToolWindowFactory.ID, builder -> {
+        builder.hideOnEmptyContent = false;
+        builder.anchor = ToolWindowAnchor.BOTTOM;
+        return Unit.INSTANCE;
+      });
       consoleToolWindow.setIcon(PythonIcons.Python.PythonConsoleToolWindow);
     }
     return consoleToolWindow;
@@ -114,7 +137,7 @@ public class PythonConsoleToolWindow {
   private static Content createContent(final @NotNull RunContentDescriptor contentDescriptor) {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, contentDescriptor.getDisplayName(), false);
+    Content content = ContentFactory.getInstance().createContent(panel, contentDescriptor.getDisplayName(), false);
     content.setCloseable(true);
 
     resetContent(contentDescriptor, panel, content);
@@ -141,8 +164,34 @@ public class PythonConsoleToolWindow {
     getToolWindow(myProject).activate(runnable);
   }
 
-  @Nullable
-  public RunContentDescriptor getSelectedContentDescriptor() {
+  public @Nullable RunContentDescriptor getSelectedContentDescriptor() {
     return CONTENT_TO_DESCRIPTOR_FUNCTION.apply(getToolWindow(myProject).getContentManager().getSelectedContent());
+  }
+
+  private static class NewConsoleAction extends AnAction implements DumbAware {
+    NewConsoleAction() {
+      super(PyBundle.messagePointer("console.new.console"), PyBundle.messagePointer("console.new.console.description"),
+            AllIcons.General.Add);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project != null) {
+        PydevConsoleRunner runner =
+          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE));
+        runner.run(true);
+      }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 }

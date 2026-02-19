@@ -15,7 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -27,18 +31,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
-public class GroovySynchronizationOnVariableInitializedWithLiteralInspection extends BaseInspection {
+public final class GroovySynchronizationOnVariableInitializedWithLiteralInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.synchronization.on.variable.ref.which.was.initialized.with.literal");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -51,8 +53,7 @@ public class GroovySynchronizationOnVariableInitializedWithLiteralInspection ext
         return;
       }
       final PsiElement referent = ((PsiReference) lock).resolve();
-      if (referent instanceof GrVariable) {
-        final GrVariable variable = (GrVariable) referent;
+      if (referent instanceof GrVariable variable) {
         final GrExpression initializer = variable.getInitializerGroovy();
         if (initializer == null) {
           return;
@@ -61,8 +62,7 @@ public class GroovySynchronizationOnVariableInitializedWithLiteralInspection ext
           return;
         }
         registerError(lock);
-      } else if (referent instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable) referent;
+      } else if (referent instanceof PsiVariable variable) {
         final PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
           return;

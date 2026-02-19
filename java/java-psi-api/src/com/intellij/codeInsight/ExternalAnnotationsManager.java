@@ -1,21 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.util.messages.Topic;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ExternalAnnotationsManager {
   public static final String ANNOTATIONS_XML = "annotations.xml";
-
-  public static final Topic<ExternalAnnotationsListener> TOPIC = Topic.create("external annotations", ExternalAnnotationsListener.class);
 
   /**
    * Describes where to place the new annotation
@@ -37,15 +40,13 @@ public abstract class ExternalAnnotationsManager {
      */
     NEED_ASK_USER,
     /**
-     * User actively cancelled the annotation addition, so it should not be added at all. 
+     * User actively cancelled the annotation addition, so it should not be added at all.
      */
     NOWHERE
   }
 
-  private static final NotNullLazyKey<ExternalAnnotationsManager, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ExternalAnnotationsManager.class);
-
   public static ExternalAnnotationsManager getInstance(@NotNull Project project) {
-    return INSTANCE_KEY.getValue(project);
+    return project.getService(ExternalAnnotationsManager.class);
   }
 
   public abstract boolean hasAnnotationRootsForFile(@NotNull VirtualFile file);
@@ -57,7 +58,7 @@ public abstract class ExternalAnnotationsManager {
   /**
    * Returns external annotations with fully qualified name of {@code annotationFQN}
    * associated with {@code listOwner}.
-   *
+   * <p>
    * Multiple results may be returned for repeatable annotations and annotations
    * from several external annotations roots.
    *
@@ -67,11 +68,39 @@ public abstract class ExternalAnnotationsManager {
    */
   public abstract @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
+  /**
+   * Returns external annotations with fully qualified names contained in {@code annotationFQNs}
+   * associated with {@code listOwner}.
+   * <p>
+   * Multiple results may be returned for repeatable annotations and annotations
+   * from several external annotations roots.
+   *
+   * @param listOwner API element to return external annotations of
+   * @param annotationFQNs collection of fully qualified names of the annotations to search for
+   * @return external annotations of the {@code listOwner}
+   */
+  public @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationFQNs) {
+    PsiAnnotation[] annotations = findExternalAnnotations(listOwner);
+    //There's an implementation in Kotlin tests which violates the new contract of findExternalAnnotations(listOwner) and returns null
+    //noinspection ConstantValue
+    return annotations == null ? Collections.emptyList() : 
+           ContainerUtil.filter(annotations, annotation -> annotationFQNs.contains(annotation.getQualifiedName()));
+  }
+
 
   // Method used in Kotlin plugin
   public abstract boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
-  public abstract PsiAnnotation @Nullable [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
+  public abstract @NotNull PsiAnnotation @NotNull [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
+
+  /**
+   * @param parent a type owner (field, method, or parameter)
+   * @param typePath a type path. See {@code ExternalTypeAnnotationContainer} for syntax
+   * @return external type annotations for a given type path
+   */
+  public @NotNull PsiAnnotation @NotNull [] findExternalTypeAnnotations(@NotNull PsiModifierListOwner parent, @NotNull String typePath) {
+    return PsiAnnotation.EMPTY_ARRAY;
+  }
 
   /**
    * Returns external annotations associated with default
@@ -96,7 +125,7 @@ public abstract class ExternalAnnotationsManager {
   /**
    * Returns external annotations with fully qualified name of {@code annotationFQN}
    * associated with default constructor of the {@code aClass}, if the constructor exists.
-   *
+   * <p>
    * Multiple annotations may be returned since there may be repeatable annotations
    * or annotations from several external annotations roots.
    *
@@ -134,7 +163,17 @@ public abstract class ExternalAnnotationsManager {
    */
   public abstract @NotNull AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 
+  /**
+   * @return null if were unable to load external annotations
+   */
   public abstract @Nullable List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
 
   public static class CanceledConfigurationException extends RuntimeException {}
+
+  /**
+   * @param owner element to add annotation
+   * @return {@code true} if external annotations are already configured for this element and no user interaction is required,
+   *         {@code false} otherwise
+   */
+  public abstract boolean hasConfiguredAnnotationRoot(@NotNull PsiModifierListOwner owner);
 }

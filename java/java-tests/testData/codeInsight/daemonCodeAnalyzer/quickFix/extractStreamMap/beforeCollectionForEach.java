@@ -1,4 +1,4 @@
-// "Extract variable 'trimmed' to 'stream().map' operation" "true"
+// "Extract variable 'trimmed' to 'stream().map' operation" "true-preview"
 import java.util.Collection;
 
 public class StreamExtract {

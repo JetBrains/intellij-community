@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
@@ -13,7 +14,7 @@ import com.intellij.packaging.elements.PackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +38,11 @@ public class MovePackagingElementAction extends DumbAwareAction {
     final boolean b = isEnabled();
     e.getPresentation().setEnabled(b);
     e.getPresentation().setText(JavaUiBundle.message("action.text.0.disabled.if.elements.are.sorted", getTemplatePresentation().getText()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private boolean isEnabled() {

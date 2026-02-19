@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.picker;
 
 import com.intellij.jna.JnaLoader;
@@ -6,17 +6,33 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
+import java.awt.AWTException;
+import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Image;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.Window;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
+@ApiStatus.Internal
 public abstract class ColorPipetteBase implements ColorPipette {
   private final Alarm myColorListenersNotifier = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   protected final JComponent myParent;
@@ -57,8 +73,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     return myRobot.getPixelColor(location.x, location.y);
   }
 
-  @Nullable
-  protected Color getInitialColor() {
+  protected @Nullable Color getInitialColor() {
     return myInitialColor;
   }
 
@@ -72,9 +87,8 @@ public abstract class ColorPipetteBase implements ColorPipette {
     myCurrentColor = color;
   }
 
-  @Nullable
   @Override
-  public Color getColor() {
+  public @Nullable Color getColor() {
     return myCurrentColor;
   }
 
@@ -86,8 +100,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     return picker;
   }
 
-  @Nullable
-  protected Point updateLocation() {
+  protected @Nullable Point updateLocation() {
     PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return null;
 
@@ -99,13 +112,11 @@ public abstract class ColorPipetteBase implements ColorPipette {
     return mouseLocation;
   }
 
-  @Nullable
-  protected Dialog getPickerDialog() {
+  protected @Nullable Dialog getPickerDialog() {
     return myPickerFrame;
   }
 
-  @NotNull
-  protected Dialog getOrCreatePickerDialog() {
+  protected @NotNull Dialog getOrCreatePickerDialog() {
     if (myPickerFrame == null) {
       Window owner = SwingUtilities.getWindowAncestor(myParent);
       if (owner instanceof Dialog) {
@@ -135,12 +146,8 @@ public abstract class ColorPipetteBase implements ColorPipette {
       @Override
       public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
-          case KeyEvent.VK_ESCAPE:
-            cancelPipette();
-            break;
-          case KeyEvent.VK_ENTER:
-            pickAndClose();
-            break;
+          case KeyEvent.VK_ESCAPE -> cancelPipette();
+          case KeyEvent.VK_ENTER -> pickAndClose();
         }
       }
     });
@@ -153,7 +160,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     return myPickerFrame;
   }
 
-  protected void notifyListener(@NotNull final Color c, int delayMillis) {
+  protected void notifyListener(final @NotNull Color c, int delayMillis) {
     if (!myColorListenersNotifier.isDisposed()) {
       myColorListenersNotifier.cancelAllRequests();
       myColorListenersNotifier.addRequest(() -> myColorListener.colorChanged(c, this), delayMillis);
@@ -185,8 +192,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     setColor(null);
   }
 
-  @Nullable
-  private static Robot createRobot() {
+  private static @Nullable Robot createRobot() {
     try {
       return new Robot();
     }

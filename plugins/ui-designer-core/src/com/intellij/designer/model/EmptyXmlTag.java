@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
 import com.intellij.lang.ASTNode;
@@ -6,13 +6,23 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
@@ -21,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.Map;
 
@@ -31,9 +41,8 @@ import java.util.Map;
 public class EmptyXmlTag implements XmlTag {
   public static XmlTag INSTANCE = new EmptyXmlTag();
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
@@ -42,15 +51,13 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getNamespace() {
+  public @NotNull String getNamespace() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getLocalName() {
+  public @NotNull String getLocalName() {
     return "";
   }
 
@@ -127,15 +134,13 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getNamespacePrefix() {
+  public @NotNull String getNamespacePrefix() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getNamespaceByPrefix(@NonNls String prefix) {
+  public @NotNull String getNamespaceByPrefix(@NonNls String prefix) {
     return "";
   }
 
@@ -154,15 +159,13 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getLocalNamespaceDeclarations() {
+  public @NotNull Map<String, String> getLocalNamespaceDeclarations() {
     return Collections.emptyMap();
   }
 
-  @NotNull
   @Override
-  public XmlTagValue getValue() {
+  public @NotNull XmlTagValue getValue() {
     return new XmlTagValue() {
       @Override
       public XmlTagChild @NotNull [] getChildren() {
@@ -174,21 +177,18 @@ public class EmptyXmlTag implements XmlTag {
         return XmlText.EMPTY_ARRAY;
       }
 
-      @NotNull
       @Override
-      public String getText() {
+      public @NotNull String getText() {
         return "";
       }
 
-      @NotNull
       @Override
-      public TextRange getTextRange() {
+      public @NotNull TextRange getTextRange() {
         throw new IncorrectOperationException();
       }
 
-      @NotNull
       @Override
-      public String getTrimmedText() {
+      public @NotNull String getTrimmedText() {
         return "";
       }
 
@@ -247,15 +247,13 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public Project getProject() throws PsiInvalidElementAccessException {
+  public @NotNull Project getProject() throws PsiInvalidElementAccessException {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     throw new IncorrectOperationException();
   }
 
@@ -456,12 +454,12 @@ public class EmptyXmlTag implements XmlTag {
   }
 
   @Override
-  public <T> T getCopyableUserData(Key<T> key) {
+  public <T> T getCopyableUserData(@NotNull Key<T> key) {
     return null;
   }
 
   @Override
-  public <T> void putCopyableUserData(Key<T> key, @Nullable T value) {
+  public <T> void putCopyableUserData(@NotNull Key<T> key, @Nullable T value) {
 
   }
 
@@ -483,15 +481,13 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     throw new IncorrectOperationException();
   }
 

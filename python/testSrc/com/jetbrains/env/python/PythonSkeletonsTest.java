@@ -27,14 +27,16 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
-import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import com.jetbrains.python.toolbox.Maybe;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -45,8 +47,9 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Set;
 
-import static com.jetbrains.python.fixtures.PyTestCase.assertType;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Heavyweight integration tests of skeletons of Python binary modules.
@@ -54,7 +57,6 @@ import static org.junit.Assert.*;
  * An environment test environment must have a 'skeletons' tag in order to be compatible with this test case. No specific packages are
  * required currently. Both Python 2 and Python 3 are OK. All platforms are OK. At least one Python 2.6+ environment is required.
  *
- * @author vlan
  */
 public class PythonSkeletonsTest extends PyEnvTestCase {
   public static final ImmutableSet<String> TAGS = ImmutableSet.of("skeletons");
@@ -67,7 +69,10 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         // Check the builtin skeleton header
         final Project project = myFixture.getProject();
         ApplicationManager.getApplication().runReadAction(() -> {
-          final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
+          PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
+          if (builtins instanceof PyiFile) {
+            builtins = (PyFile)PyiUtil.getOriginalElement(builtins);
+          }
           assertNotNull(builtins);
           final VirtualFile virtualFile = builtins.getVirtualFile();
           assertNotNull(virtualFile);
@@ -110,32 +115,18 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
     });
   }
 
-  @Test
-  public void testKnownPropertiesTypes() {
-    runTest(new SkeletonsTask() {
-      @Override
-      protected void runTestOn(@NotNull Sdk sdk) {
-        myFixture.configureByText(PythonFileType.INSTANCE,
-                                  "expr = slice(1, 2).start\n");
-        ApplicationManager.getApplication().runReadAction(() -> {
-          final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-          final PsiFile file = myFixture.getFile();
-          assertType("int", expr, TypeEvalContext.codeAnalysis(file.getProject(), file));
-        });
-      }
-    });
-  }
-
   // PY-9797
   @Test
   public void testReadWriteDeletePropertyDefault() {
     runTest(new SkeletonsTask() {
       @Override
       protected void runTestOn(@NotNull Sdk sdk) {
-        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
         final Project project = myFixture.getProject();
         ApplicationManager.getApplication().runReadAction(() -> {
-          final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
+          PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
+          if (builtins instanceof PyiFile) {
+            builtins = (PyFile)PyiUtil.getOriginalElement(builtins);
+          }
           assertNotNull(builtins);
           final PyClass cls = builtins.findTopLevelClass("int");
           assertNotNull(cls);

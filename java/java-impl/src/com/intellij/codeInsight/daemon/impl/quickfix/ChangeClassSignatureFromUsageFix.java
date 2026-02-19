@@ -1,36 +1,41 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
+import com.intellij.refactoring.changeClassSignature.Existing;
+import com.intellij.refactoring.changeClassSignature.New;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Danila Ponomarenko
- */
 public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   private final PsiClass myClass;
   private final PsiReferenceParameterList myParameterList;
@@ -41,14 +46,13 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
     myParameterList = parameterList;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("change.class.signature.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (!myClass.isValid() || !myParameterList.isValid() || myClass instanceof PsiCompiledElement) {
       return false;
     }
@@ -68,7 +72,20 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiReferenceParameterList parameterList = PsiTreeUtil.findSameElementInCopy(myParameterList, psiFile);
+    PsiTypeParameter[] classTypeParameters = myClass.getTypeParameters();
+    List<TypeParameterInfoView> parameters = createTypeParameters(JavaCodeFragmentFactory.getInstance(project),
+                                                                  Arrays.asList(classTypeParameters),
+                                                                  Arrays.asList(parameterList.getTypeParameterElements()));
+    String className = "class " + myClass.getName();
+    String originClassDeclaration = className + (classTypeParameters.length == 0 ? "" : "<" + StringUtil.join(classTypeParameters, p -> p.getName(), ",") + ">");
+    String modifiedClassDeclaration = className + "<" + StringUtil.join(parameters, p -> p.getInfo().getName(classTypeParameters), ", ") + ">";
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, originClassDeclaration, modifiedClassDeclaration);
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     final PsiTypeParameterList classTypeParameterList = myClass.getTypeParameterList();
     if (classTypeParameterList == null) {
       return;
@@ -86,10 +103,9 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
     dialog.show();
   }
 
-  @NotNull
-  private static List<TypeParameterInfoView> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
-                                                                  @NotNull List<? extends PsiTypeParameter> classTypeParameters,
-                                                                  @NotNull List<? extends PsiTypeElement> typeElements) {
+  private static @NotNull List<TypeParameterInfoView> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
+                                                                           @NotNull List<? extends PsiTypeParameter> classTypeParameters,
+                                                                           @NotNull List<? extends PsiTypeElement> typeElements) {
     final TypeParameterNameSuggester suggester = new TypeParameterNameSuggester(classTypeParameters);
 
     List<TypeParameterInfoView> result = new ArrayList<>();
@@ -99,7 +115,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
         final PsiTypeParameter typeParameter = classTypeParameters.get(listIndex);
 
         if (isAssignable(typeParameter, typeElement.getType())) {
-          result.add(new TypeParameterInfoView(new TypeParameterInfo.Existing(listIndex++), null, null));
+          result.add(new TypeParameterInfoView(new Existing(listIndex++), null, null));
           continue;
         }
       }
@@ -123,11 +139,11 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       else {
         suggestedName = suggester.suggestUnusedName("T");
       }
-      final PsiTypeCodeFragment boundFragment = ChangeClassSignatureDialog.createTableCodeFragment(boundType, typeElement, factory, true);
-      result.add(new TypeParameterInfoView(new TypeParameterInfo.New(suggestedName, defaultType, null),
+      final PsiTypeCodeFragment boundFragment = CommonJavaRefactoringUtil.createTableCodeFragment(boundType, typeElement, factory, true);
+      result.add(new TypeParameterInfoView(new New(suggestedName, defaultType, null),
                                            boundFragment,
                                            boundType == null ? factory.createTypeCodeFragment(suggestedName, typeElement, true)
-                                                             : ChangeClassSignatureDialog
+                                                             : CommonJavaRefactoringUtil
                                              .createTableCodeFragment(boundType, typeElement, factory, false)));
     }
     return result;
@@ -162,8 +178,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       }
     }
 
-    @NotNull
-    private String suggestUnusedName(@NotNull String name) {
+    private @NotNull String suggestUnusedName(@NotNull String name) {
       String unusedName = name;
       int i = 0;
       while (true) {
@@ -174,8 +189,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       }
     }
 
-    @NotNull
-    public String suggest(@NotNull PsiClassType type) {
+    public @NotNull String suggest(@NotNull PsiClassType type) {
       return suggestUnusedName(StringUtil.toUpperCase(type.getClassName().substring(0, 1)));
     }
   }

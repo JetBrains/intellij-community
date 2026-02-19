@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
@@ -6,146 +6,189 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class ChangeListManager implements ChangeListModification {
-  @NotNull
-  public static ChangeListManager getInstance(@NotNull Project project) {
+  public static @NotNull ChangeListManager getInstance(@NotNull Project project) {
+    if (project.isDefault()) throw new IllegalArgumentException("Can't create ChangeListManager for default project");
     return project.getService(ChangeListManager.class);
   }
 
-  public abstract void scheduleUpdate();
-
   /**
-   * @deprecated use {@link #scheduleUpdate()}
+   * Invoke callback when current CLM refresh is completed, without any visible progress.
+   * <p/>
+   * WARNING: This callback WILL NOT wait for async unchanged files update if VCS is using a custom {@link VcsManagedFilesHolder}.
+   * These can be listened via {@link ChangeListListener#unchangedFileStatusChanged(boolean)} or on a per-VCS basis.
    */
-  @Deprecated
-  public void scheduleUpdate(boolean updateUnversionedFiles) {
-    scheduleUpdate();
+  public void invokeAfterUpdate(boolean callbackOnAwt, @NotNull Runnable afterUpdate) {
+    InvokeAfterUpdateMode mode = callbackOnAwt ? InvokeAfterUpdateMode.SILENT : InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED;
+    invokeAfterUpdate(afterUpdate, mode, null, null);
   }
 
-
-  public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                         @NotNull InvokeAfterUpdateMode mode,
-                                         @Nullable @NlsContexts.ProgressTitle String title,
-                                         @Nullable ModalityState state);
+  /**
+   * Invoke callback when current refresh is completed. Show background progress while waiting.
+   *
+   * @param cancellable Whether the progress can be cancelled. If progress is cancelled, callback will not be called.
+   * @param title       Operation name to use as prefix for progress text
+   * @param afterUpdate Callback that will be called in {@link com.intellij.openapi.progress.Task#onFinished()}
+   */
+  public void invokeAfterUpdateWithProgress(boolean cancellable,
+                                            @Nullable @NlsContexts.ProgressTitle String title,
+                                            @NotNull Runnable afterUpdate) {
+    InvokeAfterUpdateMode mode = cancellable ? InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE
+                                             : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
+    invokeAfterUpdate(afterUpdate, mode, title, null);
+  }
 
   /**
-   * @deprecated use {@link #invokeAfterUpdate(Runnable, InvokeAfterUpdateMode, String, ModalityState)}
+   * Invoke callback when current refresh is completed with modal progress.
+   *
+   * @param cancellable Whether the progress can be cancelled. If progress is cancelled, callback will be called without waiting for the current CLM refresh to finish.
+   * @param title       Operation name to use as prefix for progress dialog title
+   * @param afterUpdate Callback that will be called in {@link com.intellij.openapi.progress.Task#onFinished()}
    */
-  @Deprecated
+  public void invokeAfterUpdateWithModal(boolean cancellable,
+                                         @Nullable @NlsContexts.DialogTitle String title,
+                                         @NotNull Runnable afterUpdate) {
+    InvokeAfterUpdateMode mode = cancellable ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE
+                                             : InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE;
+    invokeAfterUpdate(afterUpdate, mode, title, null);
+  }
+
+  /**
+   * @see #invokeAfterUpdate(boolean, Runnable)
+   * @see #invokeAfterUpdateWithProgress
+   * @see #invokeAfterUpdateWithModal
+   */
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
-                                         @Nullable @NlsContexts.ProgressTitle String title,
-                                         @Nullable Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
+                                         @Nullable @Nls String title,
                                          @Nullable ModalityState state);
 
 
+  /**
+   * Whether changelists are enabled.
+   * <p/>
+   * Ex: Changelists can be disabled if the only VCS in the project is 'Git' in a "Staging Area" commit mode.
+   * <p/>
+   * When disabled:
+   * <ul>
+   * <li/> All modification requests on changelists will log an error.
+   * <li/> All read requests will return a single 'blank' default changelist.
+   * </ul>
+   */
   public abstract boolean areChangeListsEnabled();
 
   public abstract int getChangeListsNumber();
 
-  @NotNull
-  public List<LocalChangeList> getChangeListsCopy() {
+  /**
+   * @deprecated Use {@link #getChangeLists()} instead.
+   */
+  @Deprecated
+  public @NotNull @Unmodifiable List<LocalChangeList> getChangeListsCopy() {
     return getChangeLists();
   }
 
-  @NotNull
-  public abstract List<LocalChangeList> getChangeLists();
+  public abstract @NotNull @Unmodifiable List<LocalChangeList> getChangeLists();
 
-  @NotNull
-  public abstract Collection<Change> getAllChanges();
+  public abstract @NotNull Collection<Change> getAllChanges();
 
   /**
-   *  Currently active change list.
-   *  @see #setDefaultChangeList(String)
-   *  @see #setDefaultChangeList(LocalChangeList)
+   * Currently active change list.
+   * All new {@link Change} will be moved into this changelist by default.
+   *
+   * @see #setDefaultChangeList(String)
+   * @see #setDefaultChangeList(LocalChangeList)
+   * @see com.intellij.openapi.vcs.impl.PartialChangesUtil#computeUnderChangeListSync
    */
-  @NotNull
-  public abstract LocalChangeList getDefaultChangeList();
+  public abstract @NotNull LocalChangeList getDefaultChangeList();
 
-  @NotNull
-  public abstract @NlsSafe String getDefaultListName();
+  public abstract @NotNull @NlsSafe String getDefaultListName();
 
 
-  @NotNull
-  public abstract List<File> getAffectedPaths();
+  /**
+   * @return all files that belong to some changelist (have an associated {@link Change}).
+   */
+  public abstract @NotNull @Unmodifiable List<File> getAffectedPaths();
 
-  @NotNull
-  public abstract List<VirtualFile> getAffectedFiles();
+  public abstract @NotNull @Unmodifiable List<VirtualFile> getAffectedFiles();
 
   /**
    * @return if a file belongs to some changelist
    */
   public abstract boolean isFileAffected(@NotNull VirtualFile file);
 
-
-  @Nullable
-  public abstract LocalChangeList findChangeList(@NlsSafe String name);
-
-  @Nullable
-  public abstract LocalChangeList getChangeList(@Nullable @NonNls String id);
-
-
-  @NotNull
-  public abstract List<LocalChangeList> getChangeLists(@NotNull Change change);
-
-  @NotNull
-  public abstract List<LocalChangeList> getChangeLists(@NotNull VirtualFile file);
-
-  @Nullable
-  public abstract LocalChangeList getChangeList(@NotNull Change change);
-
-  @Nullable
-  public abstract LocalChangeList getChangeList(@NotNull VirtualFile file);
-
-  @Nullable
-  public abstract @NlsSafe String getChangeListNameIfOnlyOne(Change[] changes);
-
-
-  @Nullable
-  public abstract Change getChange(@NotNull VirtualFile file);
-
-  @Nullable
-  public abstract Change getChange(FilePath file);
-
-
-  @NotNull
-  public abstract FileStatus getStatus(@NotNull FilePath file);
-
-  @NotNull
-  public abstract FileStatus getStatus(@NotNull VirtualFile file);
-
-  public abstract boolean isUnversioned(VirtualFile file);
-
-  @NotNull
-  public abstract List<FilePath> getUnversionedFilesPaths();
-
-  @NotNull
-  public abstract Collection<Change> getChangesIn(@NotNull VirtualFile dir);
-
-  @NotNull
-  public abstract Collection<Change> getChangesIn(@NotNull FilePath path);
-
-  @NotNull
-  public abstract ThreeState haveChangesUnder(@NotNull VirtualFile vf);
+  /**
+   * @see LocalChangeList#getName()
+   */
+  public abstract @Nullable LocalChangeList findChangeList(@NlsSafe String name);
 
   /**
-   * @deprecated Use {@link com.intellij.openapi.vcs.ProjectLevelVcsManager#getVcsFor}
+   * @see LocalChangeList#getId()
    */
-  @Nullable
-  @Deprecated
-  public abstract AbstractVcs getVcsFor(@NotNull Change change);
+  public abstract @Nullable LocalChangeList getChangeList(@Nullable @NonNls String id);
+
+
+  public abstract @NotNull @Unmodifiable List<LocalChangeList> getChangeLists(@NotNull Change change);
+
+  public abstract @NotNull @Unmodifiable List<LocalChangeList> getChangeLists(@NotNull VirtualFile file);
+
+  public abstract @Nullable LocalChangeList getChangeList(@NotNull Change change);
+
+  public abstract @Nullable LocalChangeList getChangeList(@NotNull VirtualFile file);
+
+  public abstract @Nullable @NlsSafe String getChangeListNameIfOnlyOne(Change[] changes);
+
+
+  public abstract @Nullable Change getChange(@NotNull VirtualFile file);
+
+  public abstract @Nullable Change getChange(FilePath file);
+
+
+  public abstract @NotNull FileStatus getStatus(@NotNull FilePath file);
+
+  public abstract @NotNull FileStatus getStatus(@NotNull VirtualFile file);
+
+  public abstract boolean isUnversioned(@NotNull VirtualFile file);
+
+  public abstract @NotNull List<FilePath> getUnversionedFilesPaths();
+
+  public abstract boolean isResolvedConflict(@NotNull FilePath file);
+  public abstract @NotNull List<FilePath> getResolvedConflictPaths();
+
+  /**
+   * @return All the changes under a given path (inc. from other VCS roots)
+   * @see com.intellij.vcsUtil.VcsImplUtil#filterChangesUnderFiles
+   */
+  public abstract @NotNull @Unmodifiable Collection<Change> getChangesIn(@NotNull VirtualFile dir);
+
+  /**
+   * @return All the changes under a given path (inc. from other VCS roots)
+   * @see com.intellij.vcsUtil.VcsImplUtil#filterChangesUnder
+   */
+  public abstract @NotNull @Unmodifiable Collection<Change> getChangesIn(@NotNull FilePath path);
+
+  /**
+   * Check if a directory has modified children in {@link #getAllChanges().
+   *
+   * @return {@code ThreeState.YES} if directory has an immediate modified child,
+   * {@code ThreeState.UNSURE} if directory has non-immediate modified child (depth > 1),
+   * {@code ThreeState.NO} if directory has no modified children.
+   */
+  public abstract @NotNull ThreeState haveChangesUnder(@NotNull VirtualFile vf);
 
 
   /**
@@ -162,73 +205,80 @@ public abstract class ChangeListManager implements ChangeListModification {
 
 
   /**
-   * @deprecated use {@link LocalCommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
+   * @deprecated use {@link CommitExecutor#LOCAL_COMMIT_EXECUTOR} extension point
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated(forRemoval = true)
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
-  @NotNull
-  public abstract List<CommitExecutor> getRegisteredExecutors();
+  public abstract @NotNull @Unmodifiable List<CommitExecutor> getRegisteredExecutors();
 
-  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<? extends Change> changes);
+  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull @Unmodifiable List<? extends Change> changes);
 
 
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
 
+  /**
+   * Remove an empty changelist that is not needed anymore.
+   * Ex: can be called after committing or shelving all changes in a changelist.
+   *
+   * @param silently whether to prompt user about removal, see {@link  VcsConfiguration#REMOVE_EMPTY_INACTIVE_CHANGELISTS}.
+   */
   public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently);
 
   /**
+   * @return an empty array.
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract IgnoredFileBean @NotNull [] getFilesToIgnore();
 
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
   public abstract boolean isIgnoredFile(@NotNull FilePath file);
 
-  @NotNull
-  public abstract List<FilePath> getIgnoredFilePaths();
+  public abstract @NotNull List<FilePath> getIgnoredFilePaths();
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void setFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
    */
-  @Deprecated
-  public abstract void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles);
-
-  /**
-   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addDirectoryToIgnoreImplicitly(@NotNull @NlsSafe String path);
 
   /**
-   * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.
+   * Files that were modified without an explicit checkout (ex: in Perforce).
+   *
+   * @see FileStatus#HIJACKED
    */
-  @Deprecated
-  public abstract void removeImplicitlyIgnoredDirectory(@NotNull @NlsSafe String path);
+  public abstract @NotNull @Unmodifiable List<VirtualFile> getModifiedWithoutEditing();
 
+  /**
+   * Files that were checked-out from another branch, different from the rest of the repository (ex: in Subversion).
+   *
+   * @see FileStatus#SWITCHED
+   */
+  public abstract @Nullable @NlsSafe String getSwitchedBranch(@NotNull VirtualFile file);
 
-  @NotNull
-  public abstract List<VirtualFile> getModifiedWithoutEditing();
+  /**
+   * Whether {@link ChangeListManager} updating is temporally disabled to preserve changes-to-changelist mapping during a complex operation.
+   * Ex: during 'shelve-change branch-unshelve' routine.
+   *
+   * @see com.intellij.openapi.vcs.changes.ChangeListManagerEx#freeze(String)
+   */
+  public abstract @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String isFreezed();
 
-  @Nullable
-  public abstract @NlsSafe String getSwitchedBranch(@NotNull VirtualFile file);
-
-
-  @Nullable
-  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String isFreezed();
-
+  /**
+   * Show an error message if the manager is frozen and action cannot be performed.
+   *
+   * @see #isFreezed()
+   */
   public abstract boolean isFreezedWithNotification(@NlsContexts.DialogTitle @Nullable String modalTitle);
 
-  @Deprecated // used in TeamCity
-  public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
-
+  @Deprecated(forRemoval = true)
+  public abstract void reopenFiles(@NotNull @Unmodifiable List<? extends FilePath> paths);
 }

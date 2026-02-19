@@ -17,16 +17,22 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.InternalFileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -48,33 +54,67 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-import org.intellij.lang.xpath.xslt.associations.impl.AnyXMLDescriptor;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.List;
-import java.util.*;
+import java.util.ResourceBundle;
+import java.util.Vector;
 
 class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   implements CheckableRunConfigurationEditor<XsltRunConfiguration> {
@@ -89,61 +129,253 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   }
 
   static class Editor implements PanelWithAnchor {
-    private JTabbedPane myComponent;
+    private final JTabbedPane myComponent;
 
-    private TextFieldWithBrowseButton myXsltFile;
-    private ComboboxWithBrowseButton myXmlInputFile;
-    private TextFieldWithBrowseButton myOutputFile;
-    private JCheckBox myOpenOutputFile;
-    private JCheckBox myOpenInBrowser;
+    private final TextFieldWithBrowseButton myXsltFile;
+    private final ComboboxWithBrowseButton myXmlInputFile;
+    private final TextFieldWithBrowseButton myOutputFile;
+    private final JCheckBox myOpenOutputFile;
+    private final JCheckBox myOpenInBrowser;
     private final JBTable myParameters;
 
-    private ButtonGroup myOutputOptions;
-    private JBRadioButton myShowInConsole;
-    private JCheckBox mySaveToFile;
-    private JRadioButton myShowInStdout;
+    private final ButtonGroup myOutputOptions;
+    private final JBRadioButton myShowInConsole;
+    private final JCheckBox mySaveToFile;
+    private final JRadioButton myShowInStdout;
 
-    private RawCommandLineEditor myVmArguments;
-    private JCheckBox mySmartErrorHandling;
-    private TextFieldWithBrowseButton myWorkingDirectory;
+    private final RawCommandLineEditor myVmArguments;
+    private final JCheckBox mySmartErrorHandling;
+    private final TextFieldWithBrowseButton myWorkingDirectory;
 
-    private ButtonGroup myJdkOptions;
-    private JRadioButton myJdkChoice;
-    private JRadioButton myModuleChoice;
-    private ComboBox<Object> myModule;
+    private final ButtonGroup myJdkOptions;
+    private final JRadioButton myJdkChoice;
+    private final JRadioButton myModuleChoice;
+    private final ComboBox<Object> myModule;
     private SdkComboBox myJDK;
-    private ComboBox<FileType> myFileType;
-    private JPanel myClasspathAndJDKPanel;
-    private JPanel myPanelSettings;
-    private JPanel myPanelAdvanced;
-    private JBLabel myXSLTScriptFileLabel;
-    private JPanel myParametersPanel;
+    private final ComboBox<FileType> myFileType;
+    private final JPanel myClasspathAndJDKPanel;
+    private final JPanel myPanelSettings;
+    private final JPanel myPanelAdvanced;
+    private final JBLabel myXSLTScriptFileLabel;
+    private final JPanel myParametersPanel;
     private JComponent anchor;
 
-    private final AnyXMLDescriptor myXmlDescriptor;
+    private final FileChooserDescriptor myXmlDescriptor;
     private final FileChooserDescriptor myXsltDescriptor;
 
-    Editor(final Project project) {
-      final PsiManager psiManager = PsiManager.getInstance(project);
+    Editor(Project project) {
+      {
+        // GUI initializer generated by IntelliJ IDEA GUI Designer
+        // >>> IMPORTANT!! <<<
+        // DO NOT EDIT OR ADD ANY CODE HERE!
+        myComponent = new JBTabbedPane();
+        myPanelSettings = new JPanel();
+        myPanelSettings.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        myComponent.addTab(this.$$$getMessageFromBundle$$$("messages/XPathBundle", "tab.title.settings"), myPanelSettings);
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel1.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+        myPanelSettings.add(panel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                        null, null, 0, false));
+        panel1.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null,
+                                                                                  this.$$$getMessageFromBundle$$$("messages/XPathBundle",
+                                                                                                                  "border.title.output"),
+                                                                                  TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                  TitledBorder.DEFAULT_POSITION, null, null));
+        mySaveToFile = new JCheckBox();
+        this.$$$loadButtonText$$$(mySaveToFile, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "checkbox.save.to.file"));
+        mySaveToFile.setToolTipText(this.$$$getMessageFromBundle$$$("messages/XPathBundle",
+                                                                    "html.save.xslt.output.to.specified.file.br.em.warning.em.this.file.will.be.overwritten.without.confirmation.html"));
+        panel1.add(mySaveToFile, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myOutputFile = new TextFieldWithBrowseButton();
+        panel1.add(myOutputFile, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myOpenOutputFile = new JCheckBox();
+        this.$$$loadButtonText$$$(myOpenOutputFile,
+                                  this.$$$getMessageFromBundle$$$("messages/XPathBundle", "checkbox.open.file.in.editor.after.execution"));
+        panel1.add(myOpenOutputFile, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                         GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
+        myShowInConsole = new JBRadioButton();
+        this.$$$loadButtonText$$$(myShowInConsole,
+                                  this.$$$getMessageFromBundle$$$("messages/XPathBundle", "radio.button.show.in.extra.console.tab"));
+        myShowInConsole.setToolTipText(this.$$$getMessageFromBundle$$$("messages/XPathBundle",
+                                                                       "show.xslt.output.in.separate.tab.stdout.will.just.receive.xslt.error.messages"));
+        panel1.add(myShowInConsole, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myShowInStdout = new JRadioButton();
+        this.$$$loadButtonText$$$(myShowInStdout,
+                                  this.$$$getMessageFromBundle$$$("messages/XPathBundle", "radio.button.show.in.default.console"));
+        myShowInStdout.setToolTipText(this.$$$getMessageFromBundle$$$("messages/XPathBundle",
+                                                                      "show.xslt.output.in.standard.run.console.mixed.with.other.error.messages"));
+        panel1.add(myShowInStdout, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JPanel panel2 = new JPanel();
+        panel2.setLayout(new GridLayoutManager(1, 2, new Insets(0, 4, 0, 0), -1, -1));
+        panel1.add(panel2, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null,
+                                               null, 0, false));
+        final JLabel label1 = new JLabel();
+        this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "label.highlight.output.as"));
+        panel2.add(label1,
+                   new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myFileType = new ComboBox();
+        myFileType.setToolTipText(this.$$$getMessageFromBundle$$$("messages/XPathBundle",
+                                                                  "output.highlighting.is.experimental.please.turn.it.off.if.it.s.causing.trouble"));
+        panel2.add(myFileType, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                   null, 0, false));
+        myOpenInBrowser = new JCheckBox();
+        this.$$$loadButtonText$$$(myOpenInBrowser, this.$$$getMessageFromBundle$$$("messages/XPathBundle",
+                                                                                   "checkbox.open.file.in.web.browser.after.execution"));
+        panel1.add(myOpenInBrowser, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
+        final JPanel panel3 = new JPanel();
+        panel3.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel3.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+        myPanelSettings.add(panel3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                        null, null, 0, false));
+        panel3.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
+                                                                                  this.$$$getMessageFromBundle$$$("messages/XPathBundle",
+                                                                                                                  "border.title.input"),
+                                                                                  TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                  TitledBorder.DEFAULT_POSITION, null, null));
+        final JLabel label2 = new JLabel();
+        this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "label.choose.xml.input.file"));
+        panel3.add(label2,
+                   new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myXSLTScriptFileLabel = new JBLabel();
+        myXSLTScriptFileLabel.setEnabled(true);
+        this.$$$loadLabelText$$$(myXSLTScriptFileLabel, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "label.xslt.script.file"));
+        myXSLTScriptFileLabel.setVerticalAlignment(0);
+        panel3.add(myXSLTScriptFileLabel,
+                   new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myXsltFile = new TextFieldWithBrowseButton();
+        panel3.add(myXsltFile, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                   GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myXmlInputFile = new ComboboxWithBrowseButton();
+        panel3.add(myXmlInputFile, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myParametersPanel = new JPanel();
+        myParametersPanel.setLayout(new BorderLayout(0, 0));
+        myParametersPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent");
+        myPanelSettings.add(myParametersPanel, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_BOTH,
+                                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                   GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                   GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(-1, 150), null,
+                                                                   0, false));
+        myParametersPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$(
+                                                                                                  "messages/XPathBundle", "border.title.parameters"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null,
+                                                                                                null));
+        myPanelAdvanced = new JPanel();
+        myPanelAdvanced.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
+        myComponent.addTab(this.$$$getMessageFromBundle$$$("messages/XPathBundle", "tab.title.advanced"), myPanelAdvanced);
+        final JLabel label3 = new JLabel();
+        this.$$$loadLabelText$$$(label3, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "label.vm.arguments"));
+        myPanelAdvanced.add(label3, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                        null,
+                                                        0, false));
+        final Spacer spacer1 = new Spacer();
+        myPanelAdvanced.add(spacer1, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                         GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        mySmartErrorHandling = new JCheckBox();
+        this.$$$loadButtonText$$$(mySmartErrorHandling,
+                                  this.$$$getMessageFromBundle$$$("messages/XPathBundle", "checkbox.smart.error.handling"));
+        myPanelAdvanced.add(mySmartErrorHandling, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                      GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                      null, null, null, 0, false));
+        myClasspathAndJDKPanel = new JPanel();
+        myClasspathAndJDKPanel.setLayout(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), -1, -1));
+        myClasspathAndJDKPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+        myPanelAdvanced.add(myClasspathAndJDKPanel,
+                            new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, true));
+        myModuleChoice = new JRadioButton();
+        this.$$$loadButtonText$$$(myModuleChoice, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "radio.button.from.module"));
+        myClasspathAndJDKPanel.add(myModuleChoice, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                       GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                       GridConstraints.SIZEPOLICY_FIXED,
+                                                                       null, null, null, 0, false));
+        myModule = new ComboBox();
+        myClasspathAndJDKPanel.add(myModule, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                 GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                                 GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myJdkChoice = new JRadioButton();
+        this.$$$loadButtonText$$$(myJdkChoice, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "radio.button.use.jdk"));
+        myClasspathAndJDKPanel.add(myJdkChoice, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                    null, null, null, 0, false));
+        final JLabel label4 = new JLabel();
+        this.$$$loadLabelText$$$(label4, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "label.classpath.and.jdk"));
+        myClasspathAndJDKPanel.add(label4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                               GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                               null,
+                                                               null, 0, false));
+        myVmArguments = new RawCommandLineEditor();
+        myPanelAdvanced.add(myVmArguments, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myWorkingDirectory = new TextFieldWithBrowseButton();
+        myPanelAdvanced.add(myWorkingDirectory,
+                            new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label5 = new JLabel();
+        this.$$$loadLabelText$$$(label5, this.$$$getMessageFromBundle$$$("messages/XPathBundle", "label.working.directory"));
+        myPanelAdvanced.add(label5, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                        null,
+                                                        0, false));
+        label2.setLabelFor(myXmlInputFile);
+        myXSLTScriptFileLabel.setLabelFor(myXsltFile);
+        label3.setLabelFor(myVmArguments);
+        label5.setLabelFor(myWorkingDirectory);
+        myOutputOptions = new ButtonGroup();
+        myOutputOptions.add(myShowInConsole);
+        myOutputOptions.add(myShowInStdout);
+        myJdkOptions = new ButtonGroup();
+        myJdkOptions.add(myModuleChoice);
+        myJdkOptions.add(myJdkChoice);
+      }
+      var psiManager = PsiManager.getInstance(project);
+      myXsltDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(XmlFileType.INSTANCE)
+        .withFileFilter(file -> {
+          var psiFile = psiManager.findFile(file);
+          return psiFile != null && XsltSupport.isXsltFile(psiFile);
+        })
+        .withTitle(XPathBundle.message("dialog.title.choose.xslt.file"));
 
-      myXsltDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-        @Override
-        public boolean isFileVisible(final VirtualFile file, boolean showHiddenFiles) {
-          if (file.isDirectory()) return true;
-          if (!super.isFileVisible(file, showHiddenFiles)) return false;
-
-          return ReadAction.compute(() -> {
-            final PsiFile psiFile = psiManager.findFile(file);
-            return psiFile != null && XsltSupport.isXsltFile(psiFile);
-          });
-        }
-      };
-      final TextComponentAccessor<JTextField> projectDefaultAccessor = new TextComponentAccessor<JTextField>() {
+      final TextComponentAccessor<JTextField> projectDefaultAccessor = new TextComponentAccessor<>() {
         @Override
         public String getText(JTextField component) {
           final String text = component.getText();
           final VirtualFile baseDir = project.getBaseDir();
-          return text.length() > 0 ? text : (baseDir != null ? baseDir.getPresentableUrl() : "");
+          return !text.isEmpty() ? text : (baseDir != null ? baseDir.getPresentableUrl() : "");
         }
 
         @Override
@@ -151,7 +383,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           component.setText(text);
         }
       };
-      myXsltFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.xslt.file"), null, project, myXsltDescriptor, projectDefaultAccessor);
+      myXsltFile.addBrowseFolderListener(project, myXsltDescriptor, projectDefaultAccessor);
       myXsltFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
         final VirtualFileManager fileMgr = VirtualFileManager.getInstance();
         final FileAssociationsManager associationsManager = FileAssociationsManager.getInstance(project);
@@ -161,7 +393,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           final String text = myXsltFile.getText();
           final JComboBox comboBox = myXmlInputFile.getComboBox();
           final Object oldXml = getXmlInputFile(); //NON-NLS
-          if (text.length() != 0) {
+          if (!text.isEmpty()) {
             final ComboBoxModel model = comboBox.getModel();
 
             boolean found = false;
@@ -195,15 +427,19 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
 
       myXmlInputFile.getComboBox().setEditable(true);
 
-      myXmlDescriptor = new AnyXMLDescriptor(false);
-      myXmlInputFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.xml.file"), null, project, myXmlDescriptor, new TextComponentAccessor<JComboBox>() {
+      myXmlDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        .withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", "XML"), FileAssociationsManager.Holder.XML_FILES)
+        .withTitle(XPathBundle.message("dialog.title.choose.xml.file"));
+      myXmlInputFile.addBrowseFolderListener(project, myXmlDescriptor, new TextComponentAccessor<>() {
         @Override
         public String getText(JComboBox comboBox) {
           Object item = comboBox.getEditor().getItem();
-          if (item.toString().length() == 0) {
-            final String text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
+          if (item.toString().isEmpty()) {
+            var text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
+            if (text == null) text = "";
             final VirtualFile file =
-              VirtualFileManager.getInstance().findFileByUrl(VfsUtil.pathToUrl(text.replace(File.separatorChar, '/')));
+              VirtualFileManager.getInstance()
+                .findFileByUrl(VfsUtil.pathToUrl(text.replace(File.separatorChar, '/')));
             if (file != null && !file.isDirectory()) {
               final VirtualFile parent = file.getParent();
               assert parent != null;
@@ -219,9 +455,9 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         }
       });
 
-      myOutputFile.addBrowseFolderListener(XPathBundle.message("dialog.title.choose.output.file"),
-                                           XPathBundle.message("label.selected.file.will.be.overwritten.during.execution"),
-                                           project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor());
+      myOutputFile.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+        .withTitle(XPathBundle.message("dialog.title.choose.output.file"))
+        .withDescription(XPathBundle.message("label.selected.file.will.be.overwritten.during.execution")));
 
       final ItemListener outputStateListener = new ItemListener() {
         @Override
@@ -290,8 +526,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         final Module[] modules = ModuleManager.getInstance(project).getModules();
         myModule.setModel(new DefaultComboBoxModel<>(ArrayUtil.mergeArrays(new Object[]{"<default>"}, modules)));
         myModule.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-          if (value instanceof Module) {
-            final Module module = (Module)value;
+          if (value instanceof Module module) {
             final String moduleName = ReadAction.compute(() -> module.getName());
             label.setText(moduleName);
             label.setIcon(ModuleType.get(module).getIcon());
@@ -325,8 +560,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       myJdkChoice.addItemListener(updateListener);
       updateJdkState();
 
-      myWorkingDirectory
-        .addBrowseFolderListener(XPathBundle.message("dialog.title.working.directory"), null, project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      myWorkingDirectory.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(XPathBundle.message("dialog.title.working.directory")));
 
       myVmArguments.setDialogCaption("VM Arguments");
 
@@ -335,6 +570,78 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
 
       setAnchor(myShowInConsole);
     }
+
+    private static Method $$$cachedGetBundleMethod$$$ = null;
+
+    /** @noinspection ALL */
+    private String $$$getMessageFromBundle$$$(String path, String key) {
+      ResourceBundle bundle;
+      try {
+        Class<?> thisClass = this.getClass();
+        if ($$$cachedGetBundleMethod$$$ == null) {
+          Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+          $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+        }
+        bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+      }
+      catch (Exception e) {
+        bundle = ResourceBundle.getBundle(path);
+      }
+      return bundle.getString(key);
+    }
+
+    /** @noinspection ALL */
+    private void $$$loadLabelText$$$(JLabel component, String text) {
+      StringBuffer result = new StringBuffer();
+      boolean haveMnemonic = false;
+      char mnemonic = '\0';
+      int mnemonicIndex = -1;
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '&') {
+          i++;
+          if (i == text.length()) break;
+          if (!haveMnemonic && text.charAt(i) != '&') {
+            haveMnemonic = true;
+            mnemonic = text.charAt(i);
+            mnemonicIndex = result.length();
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      component.setText(result.toString());
+      if (haveMnemonic) {
+        component.setDisplayedMnemonic(mnemonic);
+        component.setDisplayedMnemonicIndex(mnemonicIndex);
+      }
+    }
+
+    /** @noinspection ALL */
+    private void $$$loadButtonText$$$(AbstractButton component, String text) {
+      StringBuffer result = new StringBuffer();
+      boolean haveMnemonic = false;
+      char mnemonic = '\0';
+      int mnemonicIndex = -1;
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '&') {
+          i++;
+          if (i == text.length()) break;
+          if (!haveMnemonic && text.charAt(i) != '&') {
+            haveMnemonic = true;
+            mnemonic = text.charAt(i);
+            mnemonicIndex = result.length();
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      component.setText(result.toString());
+      if (haveMnemonic) {
+        component.setMnemonic(mnemonic);
+        component.setDisplayedMnemonicIndex(mnemonicIndex);
+      }
+    }
+
+    /** @noinspection ALL */
+    public JComponent $$$getRootComponent$$$() { return myComponent; }
 
     @Override
     public JComponent getAnchor() {
@@ -355,11 +662,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
       for (FileType fileType : fileTypes) {
         // get rid of file types useless for highlighting
-        if (fileType == StdFileTypes.CLASS ||
-            fileType == ProjectFileType.INSTANCE ||
-            fileType == WorkspaceFileType.INSTANCE ||
-            fileType == ModuleFileType.INSTANCE ||
-            fileType == StdFileTypes.GUI_DESIGNER_FORM) {
+        if (fileType.isBinary() || fileType instanceof InternalFileType) {
           continue;
         }
 
@@ -464,8 +767,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       myJDK.setEnabled(getSelectedIndex(myJdkOptions) == XsltRunConfiguration.JdkChoice.JDK.ordinal());
     }
 
-    @Nullable
-    private Module getModule() {
+    private @Nullable Module getModule() {
       final Object selectedItem = myModule.getSelectedItem();
       return selectedItem instanceof Module ? (Module)selectedItem : null;
     }
@@ -514,6 +816,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           this.value = value;
         }
 
+        @Override
         public boolean equals(Object o) {
           if (this == o) return true;
           if (o == null || getClass() != o.getClass()) return false;
@@ -523,6 +826,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           return name.equals(param.name) && value.equals(param.value);
         }
 
+        @Override
         public int hashCode() {
           int result = name.hashCode();
           result = 29 * result + value.hashCode();
@@ -627,8 +931,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   }
 
   @Override
-  @NotNull
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     myEditor = new Editor(myProject);
     return myEditor.getComponent();
   }

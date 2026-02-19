@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -9,19 +9,30 @@ import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   public static final Key<Boolean> CHAIN_QUALIFIER = Key.create("CHAIN_QUALIFIER");
   public static final ClassConditionKey<JavaChainLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaChainLookupElement.class);
@@ -31,15 +42,15 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   public JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
     this(qualifier, main, ".");
   }
+  
   public JavaChainLookupElement(LookupElement qualifier, LookupElement main, String separator) {
     super(main);
     myQualifier = qualifier;
     mySeparator = separator;
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return maybeAddParentheses(myQualifier.getLookupString()) + mySeparator + getDelegate().getLookupString();
   }
 
@@ -48,17 +59,12 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   @Override
-  public Set<String> getAllLookupStrings() {
-    final Set<String> strings = getDelegate().getAllLookupStrings();
-    final THashSet<String> result = new THashSet<>();
-    result.addAll(strings);
-    result.add(getLookupString());
-    return result;
+  public @NotNull Set<String> getAllLookupStrings() {
+    return Set.of(getLookupString());
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return maybeAddParentheses(myQualifier.toString()) + mySeparator + getDelegate();
   }
 
@@ -66,8 +72,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return getQualifierObject() instanceof PsiMethod ? s + "()" : s;
   }
 
-  @Nullable
-  private Object getQualifierObject() {
+  private @Nullable Object getQualifierObject() {
     Object qObject = myQualifier.getObject();
     if (qObject instanceof ResolveResult) {
       qObject = ((ResolveResult)qObject).getElement();
@@ -81,7 +86,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
     final LookupElementPresentation qualifierPresentation = new LookupElementPresentation();
     myQualifier.renderElement(qualifierPresentation);
@@ -161,10 +166,11 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return true;
   }
 
-  @NotNull
-  private LookupElement getComparableQualifier() {
+  private @Nullable LookupElement getComparableQualifier() {
     final CastingLookupElementDecorator casting = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY);
-    return casting == null ? myQualifier : casting.getDelegate();
+    LookupElement qualifier = casting == null ? myQualifier : casting.getDelegate();
+    if (qualifier.getObject() instanceof PsiClass) return null;
+    return qualifier;
   }
 
   @Override
@@ -172,13 +178,13 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
-
-    return getComparableQualifier().equals(((JavaChainLookupElement)o).getComparableQualifier());
+    if (!mySeparator.equals(((JavaChainLookupElement)o).mySeparator)) return false;
+    return Objects.equals(getComparableQualifier(), ((JavaChainLookupElement)o).getComparableQualifier());
   }
 
   @Override
   public int hashCode() {
-    return 31 * super.hashCode() + getComparableQualifier().hashCode();
+    return 31 * super.hashCode() + Objects.hashCode(getComparableQualifier());
   }
 
   @Override
@@ -188,5 +194,23 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
       return JavaCompletionUtil.getQualifiedMemberReferenceType(JavaCompletionUtil.getLookupElementType(myQualifier), (PsiMember)object);
     }
     return ((PsiVariable) object).getType();
+  }
+
+  /**
+   * @param base base item to create a chain
+   * @param item nested item
+   * @return false if the chain looks redundant, and it's better not to suggest it.
+   */
+  static boolean isReasonableChain(LookupElement base, LookupElement item) {
+    PsiElement baseElement = base.getPsiElement();
+    PsiElement itemElement = item.getPsiElement();
+    if (baseElement == null || itemElement == null) return true;
+    if (baseElement.equals(itemElement)) return false;
+    if (itemElement instanceof PsiMember member) {
+      PsiClass itemClass = member.getContainingClass();
+      if (itemClass == null || itemClass.equals(baseElement)) return true;
+      if (PsiTreeUtil.isAncestor(itemClass, baseElement, true)) return false;
+    }
+    return true;
   }
 }

@@ -32,7 +32,7 @@ public interface RegExpChar extends RegExpAtom, RegExpClassElement {
         /** An octal encoded character value, e.g.: \0141 */
         OCT,
 
-        /** A unicode escape character, e.g.: \u0061 */
+        /** A unicode escape character, e.g.: \uFFFD */
         UNICODE,
 
         /** A named character, e.g.: \N{LATIN SMALL LETTER A} */

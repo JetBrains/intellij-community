@@ -4,17 +4,20 @@ package com.jetbrains.python.psi.search;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
+
+public final class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final PySuperMethodsSearch.SearchParameters queryParameters,
-                         @NotNull final Processor<? super PsiElement> consumer) {
+  public boolean execute(final @NotNull PySuperMethodsSearch.SearchParameters queryParameters,
+                         final @NotNull Processor<? super PsiElement> consumer) {
     final PyFunction func = queryParameters.getDerivedMethod();
     final String name = func.getName();
     final PyClass containingClass = func.getContainingClass();

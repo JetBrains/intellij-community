@@ -1,9 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.SdkAdditionalData
+import com.intellij.openapi.projectRoots.SdkModel
+import com.intellij.openapi.projectRoots.SdkModificator
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkType
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -16,8 +21,8 @@ class SdkTypeRegistrationTest : HeavyPlatformTestCase() {
       val sdk = sdkTable.createSdk("foo", MockSdkType.getInstance())
       val modificator = sdk.sdkModificator
       modificator.sdkAdditionalData = MockSdkAdditionalData("bar")
-      modificator.commitChanges()
       runWriteAction {
+        modificator.commitChanges()
         sdkTable.addJdk(sdk, testRootDisposable)
       }
       assertEquals("foo", assertOneElement(sdkTable.getSdksOfType(MockSdkType.getInstance())).name)
@@ -48,7 +53,7 @@ class SdkTypeRegistrationTest : HeavyPlatformTestCase() {
         Disposer.dispose(sdkTypeDisposable)
       }
     })
-    SdkType.EP_NAME.getPoint().registerExtension(MockSdkType(), sdkTypeDisposable)
+    SdkType.EP_NAME.point.registerExtension(MockSdkType(), sdkTypeDisposable)
   }
 }
 
@@ -60,9 +65,9 @@ private class MockSdkType : SdkType("Mock") {
 
   override fun suggestHomePath(): String? = null
 
-  override fun isValidSdkHome(path: String?): Boolean = false
+  override fun isValidSdkHome(path: String): Boolean = false
 
-  override fun suggestSdkName(currentSdkName: String?, sdkHome: String?): String = ""
+  override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = ""
 
   override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
 
@@ -72,7 +77,7 @@ private class MockSdkType : SdkType("Mock") {
     additional.setAttribute("data", (additionalData as MockSdkAdditionalData).data)
   }
 
-  override fun loadAdditionalData(additional: Element): SdkAdditionalData? {
+  override fun loadAdditionalData(additional: Element): SdkAdditionalData {
     return MockSdkAdditionalData(additional.getAttributeValue("data") ?: "")
   }
 }

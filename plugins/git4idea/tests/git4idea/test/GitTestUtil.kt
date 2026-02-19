@@ -1,21 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitTestUtil")
 
 package git4idea.test
 
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.Executor.*
+import com.intellij.openapi.vcs.Executor.append
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
+import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.test.VcsPlatformTestContext
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
@@ -67,10 +72,10 @@ fun createFileStructure(rootDir: VirtualFile, vararg paths: String) {
   rootDir.refresh(false, true)
 }
 
-internal fun initRepo(project: Project, repoRoot: Path, makeInitialCommit: Boolean) {
+internal fun initRepo(project: Project?, repoRoot: Path, makeInitialCommit: Boolean) {
   Files.createDirectories(repoRoot)
   cd(repoRoot.toString())
-  git(project, "init")
+  gitInit(project)
   setupDefaultUsername(project)
   setupLocalIgnore(repoRoot)
   if (makeInitialCommit) {
@@ -80,7 +85,7 @@ internal fun initRepo(project: Project, repoRoot: Path, makeInitialCommit: Boole
   }
 }
 
-private fun setupLocalIgnore(repoRoot: Path) {
+internal fun setupLocalIgnore(repoRoot: Path) {
   repoRoot.resolve(".git/info/exclude").write(".shelf")
 }
 
@@ -96,7 +101,7 @@ fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean
   setupDefaultUsername()
 }
 
-internal fun setupDefaultUsername(project: Project) {
+internal fun setupDefaultUsername(project: Project?) {
   setupUsername(project, USER_NAME, USER_EMAIL)
 }
 
@@ -104,7 +109,7 @@ internal fun GitPlatformTest.setupDefaultUsername() {
   setupDefaultUsername(project)
 }
 
-internal fun setupUsername(project: Project, name: String, email: String) {
+internal fun setupUsername(project: Project?, name: String, email: String) {
   assertFalse("Can not set empty user name ", name.isEmpty())
   assertFalse("Can not set empty user email ", email.isEmpty())
   git(project, "config user.name '$name'")
@@ -128,11 +133,19 @@ internal fun createRepository(project: Project, root: Path, makeInitialCommit: B
   return registerRepo(project, root)
 }
 
-internal fun GitRepository.createSubRepository(name: String): GitRepository {
+internal fun VcsPlatformTestContext.createRepository(project: Project, root: Path, makeInitialCommit: Boolean): GitRepository {
+  initRepo(project, root, makeInitialCommit)
+  LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.resolve(GitUtil.DOT_GIT))!!
+  return registerRepo(project, root)
+}
+
+internal fun GitRepository.createSubRepository(name: String, addToGitIgnore: Boolean = true): GitRepository {
   val childRoot = File(this.root.path, name)
-  HeavyPlatformTestCase.assertTrue(childRoot.mkdir())
+  HeavyPlatformTestCase.assertTrue(childRoot.mkdirs())
   val repo = createRepository(this.project, childRoot.path)
-  this.tac(".gitignore", name)
+  if (addToGitIgnore) {
+    this.tac(".gitignore", name)
+  }
   return repo
 }
 
@@ -177,13 +190,13 @@ fun GitPlatformTest.makeCommit(author: VcsUser, file: String): String {
 }
 
 fun findGitLogProvider(project: Project): GitLogProvider {
-  val providers = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project)
+  val providers = VcsLogProvider.LOG_PROVIDER_EP.getExtensionList(project)
     .filter { provider -> provider.supportedVcs == GitVcs.getKey() }
   assertEquals("Incorrect number of GitLogProviders", 1, providers.size)
   return providers[0] as GitLogProvider
 }
 
-internal fun makePushSpec(repository: GitRepository, from: String, to: String): PushSpec<GitPushSource, GitPushTarget> {
+internal fun makePushSpec(repository: GitRepository, from: String, to: String, canChangeUpstream: Boolean = false): PushSpec<GitPushSource, GitPushTarget> {
   val source = repository.branches.findLocalBranch(from)!!
   var target: GitRemoteBranch? = repository.branches.findBranchByName(to) as GitRemoteBranch?
   val newBranch: Boolean
@@ -196,7 +209,11 @@ internal fun makePushSpec(repository: GitRepository, from: String, to: String): 
   else {
     newBranch = false
   }
-  return PushSpec(GitPushSource.create(source), GitPushTarget(target, newBranch))
+  val pushTarget = GitPushTarget(target, newBranch)
+  if (canChangeUpstream) {
+    pushTarget.shouldSetNewUpstream(true)
+  }
+  return PushSpec(GitPushSource.create(source), pushTarget)
 }
 
 internal fun GitRepository.resolveConflicts() {
@@ -206,4 +223,11 @@ internal fun GitRepository.resolveConflicts() {
 
 internal fun getPrettyFormatTagForFullCommitMessage(project: Project): String {
   return if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project)) "%B" else "%s%n%n%-b"
+}
+
+internal fun filterChangesByFileName(targetCommit: VcsFullCommitDetails, fileNames: Collection<String>): List<Change> {
+  return targetCommit.changes.filter {
+    val name = it.beforeRevision?.file?.name ?: it.afterRevision?.file?.name
+    name in fileNames
+  }
 }

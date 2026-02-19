@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.parsing;
 
 import com.intellij.openapi.util.TextRange;
@@ -13,11 +13,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
-import static com.jetbrains.python.PyStringFormatParser.*;
+import static com.jetbrains.python.PyStringFormatParser.ConstantChunk;
+import static com.jetbrains.python.PyStringFormatParser.FormatStringChunk;
+import static com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk;
+import static com.jetbrains.python.PyStringFormatParser.PercentSubstitutionChunk;
+import static com.jetbrains.python.PyStringFormatParser.SubstitutionChunk;
+import static com.jetbrains.python.PyStringFormatParser.filterSubstitutions;
+import static com.jetbrains.python.PyStringFormatParser.parseNewStyleFormat;
+import static com.jetbrains.python.PyStringFormatParser.parsePercentFormat;
 
-/**
- * @author yole
- */
+
 public class PyStringFormatParserTest extends TestCase {
   public void testSimple() {
     List<FormatStringChunk> chunks = parsePercentFormat("abc");

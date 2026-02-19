@@ -1,16 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class SimpleBinaryContentRevision implements BinaryContentRevision {
-  @NotNull private final FilePath myPath;
-  @NotNull private final String myRevisionPresentationName;
+  private final @NotNull FilePath myPath;
+  private final @NotNull String myRevisionPresentationName;
 
 
   public SimpleBinaryContentRevision(@NotNull FilePath path) {
@@ -24,25 +26,21 @@ public abstract class SimpleBinaryContentRevision implements BinaryContentRevisi
     myRevisionPresentationName = presentationName;
   }
 
-  @Nullable
   @Override
-  public String getContent() {
+  public @Nullable String getContent() {
     throw new IllegalStateException();
   }
 
-  @NotNull
   @Override
-  public FilePath getFile() {
+  public @NotNull FilePath getFile() {
     return myPath;
   }
 
-  @NotNull
   @Override
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return new VcsRevisionNumber() {
-      @NotNull
       @Override
-      public String asString() {
+      public @NotNull String asString() {
         return myRevisionPresentationName;
       }
 

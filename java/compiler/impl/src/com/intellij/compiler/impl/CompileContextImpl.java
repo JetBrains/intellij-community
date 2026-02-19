@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.compiler.impl;
 
@@ -26,11 +26,11 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.UUID;
 
-public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
+public final class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
   private static final Logger LOG = Logger.getInstance(CompileContextImpl.class);
   private final Project myProject;
   private final CompilerTask myBuildSession;
@@ -40,8 +40,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final boolean myMake;
   private final boolean myIsRebuild;
   private final boolean myIsAnnotationProcessorsEnabled;
-  private boolean myRebuildRequested;
-  private String myRebuildReason;
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
@@ -50,7 +48,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   public CompileContextImpl(@NotNull Project project,
                             @NotNull CompilerTask compilerSession,
                             @NotNull CompileScope compileScope,
-                            boolean isMake, boolean isRebuild) {
+                            boolean isMake,
+                            boolean isRebuild) {
     myProject = project;
     myMessages = new MessagesContainer(project);
     myBuildSession = compilerSession;
@@ -65,7 +64,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     final Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(compileScope);
     if (sessionId != null) {
       // in case compilation is started as a part of some execution session,
-      // all compilation tasks should have the same sessionId in order for successive task not to clean messages
+      // all compilation tasks should have the same sessionId in order for a successive task not to clean messages
       // from previous compilation tasks run within this execution session
       compilerSession.setSessionId(sessionId);
     }
@@ -73,8 +72,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myShouldUpdateProblemsView = workspaceConfig.MAKE_PROJECT_ON_SAVE;
   }
 
-  @NotNull
-  public CompilerTask getBuildSession() {
+  public @NotNull CompilerTask getBuildSession() {
     return myBuildSession;
   }
 
@@ -87,8 +85,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -98,20 +95,15 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-    addMessage(category, message, url, lineNum, columnNum, null);
-  }
-
-  @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
-    final CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
+  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable, final Collection<String> moduleNames) {
+    CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
     if (msg != null) {
       addToProblemsView(msg);
     }
   }
 
   @Override
-  public void addMessage(CompilerMessage msg) {
+  public void addMessage(@NotNull CompilerMessage msg) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.info("addMessage: " + msg + " this=" + this);
     }
@@ -143,27 +135,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void requestRebuildNextTime(String message) {
-    if (!myRebuildRequested) {
-      myRebuildRequested = true;
-      myRebuildReason = message;
-    }
-  }
-
-  @Override
-  public boolean isRebuildRequested() {
-    return myRebuildRequested;
-  }
-
-  @Override
-  @Nullable
-  public String getRebuildReason() {
-    return myRebuildReason;
-  }
-
-  @Override
-  @NotNull
-  public ProgressIndicator getProgressIndicator() {
+  public @NotNull ProgressIndicator getProgressIndicator() {
     return myBuildSession.getIndicator();
   }
 
@@ -208,7 +180,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void addScope(final CompileScope additionalScope) {
+  public void addScope(@NotNull CompileScope additionalScope) {
     myCompileScope = new CompositeScope(myCompileScope, additionalScope);
   }
 

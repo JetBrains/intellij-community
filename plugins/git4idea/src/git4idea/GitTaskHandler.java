@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.dvcs.branch.DvcsTaskHandler;
@@ -23,8 +23,8 @@ import static git4idea.branch.GitBranchUtil.sortBranchesByName;
  * @author Dmitry Avdeev
  */
 final class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
-  @NotNull private final GitBrancher myBrancher;
-  @NotNull private final GitRefNameValidator myNameValidator;
+  private final @NotNull GitBrancher myBrancher;
+  private final @NotNull GitRefNameValidator myNameValidator;
 
   GitTaskHandler(@NotNull Project project) {
     super(GitRepositoryManager.getInstance(project), project, "branch");
@@ -60,9 +60,8 @@ final class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
            branches.findLocalBranch(info.getName()) != null;
   }
 
-  @NotNull
   @Override
-  protected Iterable<TaskInfo> getAllBranches(@NotNull GitRepository repository) {
+  protected @NotNull Iterable<TaskInfo> getAllBranches(@NotNull GitRepository repository) {
     GitBranchesCollection branches = repository.getBranches();
     List<TaskInfo> list = new ArrayList<>(ContainerUtil.map(sortBranchesByName(branches.getLocalBranches()),
                                                             (Function<GitBranch, TaskInfo>)branch -> new TaskInfo(branch.getName(),
@@ -84,9 +83,8 @@ final class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
     return myNameValidator.checkInput(branchName);
   }
 
-  @NotNull
   @Override
-  public String cleanUpBranchName(@NotNull String suggestedName) {
+  public @NotNull String cleanUpBranchName(@NotNull String suggestedName) {
     return myNameValidator.cleanUpBranchName(suggestedName);
   }
 }

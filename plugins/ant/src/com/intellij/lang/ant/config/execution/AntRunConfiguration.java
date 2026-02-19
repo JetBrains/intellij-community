@@ -1,8 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.lang.ant.AntBundle;
@@ -28,8 +33,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,9 +55,8 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     return configuration;
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new AntConfigurationSettingsEditor();
   }
 
@@ -70,9 +76,8 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     return target == null ? null : target.getDisplayName();
   }
 
-  @NotNull
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
+  public @NotNull RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     return new AntRunProfileState(env);
   }
 
@@ -88,13 +93,11 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     mySettings.writeExternal(element);
   }
 
-  @Nullable
-  public AntBuildTarget getTarget() {
+  public @Nullable AntBuildTarget getTarget() {
     return GlobalAntConfiguration.getInstance().findTarget(getProject(), mySettings.myFileUrl, mySettings.myTargetName);
   }
 
-  @NotNull
-  public List<BuildFileProperty> getProperties() {
+  public @NotNull List<BuildFileProperty> getProperties() {
     return Collections.unmodifiableList(mySettings.myProperties);
   }
 
@@ -219,9 +222,8 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
       copyProperties(ContainerUtil.filter(myPropTable.getElements(), property -> !myPropTable.isEmpty(property)), config.mySettings.myProperties);
     }
 
-    @NotNull
     @Override
-    protected JComponent createEditor() {
+    protected @NotNull JComponent createEditor() {
       myTextField = new ExtendableTextField().addBrowseExtension(myAction, this);
 
       final JPanel panel = new JPanel(new BorderLayout());
@@ -237,11 +239,10 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
 
   private static class PropertiesTable extends ListTableWithButtons<BuildFileProperty> {
     @Override
-    protected ListTableModel createListModel() {
-      final ColumnInfo nameColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.name")) {
-        @Nullable
+    protected ListTableModel<BuildFileProperty> createListModel() {
+      final ColumnInfo<BuildFileProperty, @NlsContexts.ListItem String> nameColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.name")) {
         @Override
-        public String valueOf(BuildFileProperty property) {
+        public @Nullable String valueOf(BuildFileProperty property) {
           return property.getPropertyName();
         }
 
@@ -250,10 +251,9 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
           property.setPropertyName(value);
         }
       };
-      final ColumnInfo valueColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.value")) {
-        @Nullable
+      final ColumnInfo<BuildFileProperty, @NlsContexts.ListItem String> valueColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.value")) {
         @Override
-        public String valueOf(BuildFileProperty property) {
+        public @Nullable String valueOf(BuildFileProperty property) {
           return property.getPropertyValue();
         }
 
@@ -262,7 +262,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
           property.setPropertyValue(value);
         }
       };
-      return new ListTableModel(nameColumn, valueColumn);
+      return new ListTableModel<>(nameColumn, valueColumn);
     }
 
     @Override
@@ -300,15 +300,14 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
         return true;
       }
 
-      @Nullable
       @Override
-      protected String getDescription(BuildFileProperty element) {
+      protected @Nullable String getDescription(BuildFileProperty element) {
         return null;
       }
     }
   }
 
-  private static void copyProperties(final Iterable<? extends BuildFileProperty> from, final List<? super BuildFileProperty> to) {
+  private static void copyProperties(final Iterable<BuildFileProperty> from, final List<? super BuildFileProperty> to) {
     to.clear();
     for (BuildFileProperty p : from) {
       to.add(p.clone());

@@ -1,9 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.DeleteProvider;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -15,12 +25,24 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -36,16 +58,27 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.JetgroovyIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DMethodElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DNamedElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DRootElement;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellRenderer;
@@ -53,7 +86,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -62,7 +97,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class DynamicToolWindowWrapper {
+@Service(Service.Level.PROJECT)
+public final class DynamicToolWindowWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicToolWindowWrapper.class);
 
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
@@ -86,7 +122,7 @@ public class DynamicToolWindowWrapper {
   }
 
   public static DynamicToolWindowWrapper getInstance(Project project) {
-    return ServiceManager.getService(project, DynamicToolWindowWrapper.class);
+    return project.getService(DynamicToolWindowWrapper.class);
   }
 
   public TreeTable getTreeTable() {
@@ -206,7 +242,7 @@ public class DynamicToolWindowWrapper {
 
     myTreeTable = new MyTreeTable(myTreeTableModel);
 
-    new TreeTableSpeedSearch(myTreeTable, o -> {
+    TreeTableSpeedSearch.installOn(myTreeTable, o -> {
       final Object node = o.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {
         final Object object = ((DefaultMutableTreeNode)node).getUserObject();
@@ -217,11 +253,7 @@ public class DynamicToolWindowWrapper {
       return "";
     });
 
-    PopupHandler.installUnknownPopupHandler(
-      myTreeTable,
-      new DefaultActionGroup(new RemoveDynamicAction()),
-      ActionManager.getInstance()
-    );
+    PopupHandler.installPopupMenu(myTreeTable, new DefaultActionGroup(new RemoveDynamicAction()), "DynamicToolWindowWrapperPopup");
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
@@ -263,15 +295,14 @@ public class DynamicToolWindowWrapper {
 
         String newTypeValue = ((MyPropertyTypeCellEditor)e.getSource()).getCellEditorValue();
 
-        if (newTypeValue == null || tree == null) {
+        if (tree == null) {
           myTreeTable.editingStopped(e);
           return;
         }
 
         try {
           final PsiType type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(newTypeValue, null);
-          String canonical = type.getCanonicalText();
-          if (canonical != null) newTypeValue = canonical;
+          newTypeValue = type.getCanonicalText();
         }
         catch (IncorrectOperationException ex) {
           //do nothing in case bad string is entered
@@ -292,12 +323,11 @@ public class DynamicToolWindowWrapper {
         final Object editingPropertyObject = myTreeTable.getValueAt(tree.getRowForPath(editingTypePath), CLASS_OR_ELEMENT_NAME_COLUMN);
         final Object editingClassObject = myTreeTable.getValueAt(tree.getRowForPath(editingClassPath), CLASS_OR_ELEMENT_NAME_COLUMN);
 
-        if (!(editingPropertyObject instanceof DItemElement) || !(editingClassObject instanceof DClassElement)) {
+        if (!(editingPropertyObject instanceof DItemElement dynamicElement) || !(editingClassObject instanceof DClassElement)) {
           myTreeTable.editingStopped(e);
           return;
         }
 
-        final DItemElement dynamicElement = (DItemElement)editingPropertyObject;
         final String name = dynamicElement.getName();
         final String className = ((DClassElement)editingClassObject).getName();
 
@@ -318,8 +348,7 @@ public class DynamicToolWindowWrapper {
 
     RefactoringListenerManager.getInstance(myProject).addListenerProvider(new RefactoringElementListenerProvider() {
       @Override
-      @Nullable
-      public RefactoringElementListener getListener(final PsiElement element) {
+      public @Nullable RefactoringElementListener getListener(final PsiElement element) {
         if (element instanceof PsiClass) {
           final String qualifiedName = ((PsiClass)element).getQualifiedName();
 
@@ -413,11 +442,8 @@ public class DynamicToolWindowWrapper {
         final Object classRow = parent.getLastPathComponent();
         final Object dynamicRow = selectionPath.getLastPathComponent();
 
-        if (!(classRow instanceof DefaultMutableTreeNode)) return;
-        if (!(dynamicRow instanceof DefaultMutableTreeNode)) return;
-
-        final DefaultMutableTreeNode dynamicItemNode = (DefaultMutableTreeNode)dynamicRow;
-        final DefaultMutableTreeNode classNode = (DefaultMutableTreeNode)classRow;
+        if (!(classRow instanceof DefaultMutableTreeNode classNode)) return;
+        if (!(dynamicRow instanceof DefaultMutableTreeNode dynamicItemNode)) return;
 
         final boolean removeClass = classNode.getChildCount() == 1;
         if (!removeDynamicElement(dynamicItemNode, isShowDialog, rowsCount)) return;
@@ -484,8 +510,7 @@ public class DynamicToolWindowWrapper {
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
   }
 
-  @Nullable
-  private TreeTableTree getTree() {
+  private @Nullable TreeTableTree getTree() {
     return myTreeTable != null ? myTreeTable.getTree() : null;
   }
 
@@ -569,8 +594,7 @@ public class DynamicToolWindowWrapper {
         append(classShortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
 
-      if (value instanceof DItemElement) {
-        final DItemElement itemElement = ((DItemElement)value);
+      if (value instanceof DItemElement itemElement) {
         final String name = itemElement.getName();
 
         appendName(name);
@@ -635,53 +659,48 @@ public class DynamicToolWindowWrapper {
     }
   }
 
-  private class MyTreeTable extends TreeTable implements DataProvider {
+  private class MyTreeTable extends TreeTable implements UiDataProvider {
     MyTreeTable(TreeTableModel treeTableModel) {
       super(treeTableModel);
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        return getSelectedElement();
-      }
-      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-        final PsiElement element = getSelectedElement();
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new DeleteProvider() {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
-        if (element == null) return null;
-        return element.getContainingFile();
-      }
-      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-        return new DeleteProvider() {
-          @Override
-          public void deleteElement(@NotNull DataContext dataContext) {
-            deleteRow();
-          }
+        @Override
+        public void deleteElement(@NotNull DataContext dataContext) {
+          deleteRow();
+        }
 
-          @Override
-          public boolean canDeleteElement(@NotNull DataContext dataContext) {
-            return myTreeTable.getTree().getSelectionPaths() != null;
-          }
-        };
-      }
-
-      return null;
+        @Override
+        public boolean canDeleteElement(@NotNull DataContext dataContext) {
+          return myTreeTable.getTree().getSelectionPaths() != null;
+        }
+      });
+      TreePath path = getTree().getSelectionPath();
+      if (path == null) return;
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        return getElementFromPath(path);
+      });
+      sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+        PsiElement element = getElementFromPath(path);
+        return element == null ? null : element.getContainingFile();
+      });
     }
 
-    private PsiElement getSelectedElement() {
-      final TreePath path = getTree().getSelectionPath();
-
-      if (path == null) return null;
+    private @Nullable PsiElement getElementFromPath(@NotNull TreePath path) {
       final Object selectedObject = path.getLastPathComponent();
-      if (!(selectedObject instanceof DefaultMutableTreeNode)) return null;
+      if (!(selectedObject instanceof DefaultMutableTreeNode selectedNode)) return null;
 
-      final DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)selectedObject;
       final Object userObject = selectedNode.getUserObject();
       if (!(userObject instanceof DNamedElement)) return null;
 
-      if (userObject instanceof DClassElement) {
-        final DClassElement classElement = (DClassElement)userObject;
+      if (userObject instanceof DClassElement classElement) {
 
         try {
           PsiType type  = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(classElement.getName(), null);
@@ -697,8 +716,7 @@ public class DynamicToolWindowWrapper {
         catch (IncorrectOperationException e) {
           return null;
         }
-      } else if (userObject instanceof DItemElement) {
-        final DItemElement itemElement = (DItemElement)userObject;
+      } else if (userObject instanceof DItemElement itemElement) {
 
         final TreeNode parentNode = selectedNode.getParent();
         if (!(parentNode instanceof DefaultMutableTreeNode)) return null;

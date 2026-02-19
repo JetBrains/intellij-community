@@ -1,0 +1,5 @@
+fun foo() {
+    while (<selection><caret>true</selection>) {
+        println("hello")
+    }
+}

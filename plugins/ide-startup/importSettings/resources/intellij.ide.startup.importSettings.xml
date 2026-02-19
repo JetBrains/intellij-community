@@ -1,0 +1,58 @@
+<idea-plugin visibility="internal" package="com.intellij.ide.startup.importSettings">
+  <actions>
+    <!--suppress PluginXmlI18n -->
+    <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: Show Import Settings Dialog" internal="true"/>
+    <action id="StartWizardAction" class="com.intellij.ide.startup.importSettings.testActions.StartWizardAction" text="[INTERNAL] 5 Transfer: StartWizardAction" internal="true"/>
+    <action id="OnboardingTestDialogAction" class="com.intellij.ide.startup.importSettings.testActions.OnboardingTestDialogAction" text="[INTERNAL] 4 Transfer: Onboarding Test Dialog Action" internal="true"/>
+    <!--suppress PluginXmlCapitalization -->
+    <action id="TransferSettingsDemoAction" class="com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDemoAction"
+            internal="true" text="Test transfer settings"/>
+  </actions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.startupWizardPages"
+                    interface="com.intellij.ide.startup.importSettings.data.StartupWizardService"
+                    dynamic="true" />
+    <extensionPoint name="transferSettings.vscode.pluginMapping"
+                    interface="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.VSCodePluginMapping"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.transferSettings.externalProjectImportChecker"
+                    interface="com.intellij.ide.startup.importSettings.transfer.ExternalProjectImportChecker"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.transferSettings.thirdPartyProductSettingsTransfer"
+                    interface="com.intellij.ide.startup.importSettings.transfer.ThirdPartyProductSettingsTransfer"
+                    dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.transferSettings.thirdPartyProductSettingItem"
+                    interface="com.intellij.ide.startup.importSettings.transfer.ThirdPartyProductSettingItemProvider"
+                    dynamic="true" />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.StartupWizardService" open="true"
+                        serviceImplementation="com.intellij.ide.startup.importSettings.data.DisabledStartupWizardPages"/>
+
+    <transferSettings.thirdPartyProductSettingsTransfer id="VSCodeSettingsTransfer"
+                                                       implementation="com.intellij.ide.startup.importSettings.transfer.VsCodeSettingsTransfer"/>
+
+    <!--suppress PluginXmlDynamicPlugin -->
+    <ideStartupWizard implementation="com.intellij.ide.startup.importSettings.IdeStartupWizardImpl"/>
+
+    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
+                        serviceImplementation="com.intellij.ide.startup.importSettings.data.SettingsServiceImpl"/>
+
+    <registryKey defaultValue="true" description="Hide import settings sync in unlogged mode" key="import.setting.unlogged.sync.hide" restartRequired="false" />
+
+    <transferSettings.vscode.pluginMapping id="CommonPluginMapping"
+                                           implementation="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.CommonPluginMapping"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector"/>
+
+    <statistics.validation.customValidationRule implementation="com.intellij.ide.startup.importSettings.fus.KnownPluginValidationRule"/>
+    <transferSettings.externalProjectImportChecker implementation="com.intellij.ide.startup.importSettings.transfer.backend.CargoExternalProjectImportChecker"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.ide.startup.importSettings.jb.JbAfterRestartSettingsApplier" topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
+  </applicationListeners>
+</idea-plugin>

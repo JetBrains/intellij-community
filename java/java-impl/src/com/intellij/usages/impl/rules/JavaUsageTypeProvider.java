@@ -1,32 +1,57 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
-import gnu.trove.THashSet;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 
-/**
- * @author yole
- */
-public class JavaUsageTypeProvider implements UsageTypeProviderEx {
+public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   @Override
-  public UsageType getUsageType(final PsiElement element) {
+  public UsageType getUsageType(final @NotNull PsiElement element) {
     return getUsageType(element, UsageTarget.EMPTY_ARRAY);
   }
 
   @Override
-  public UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
+  public UsageType getUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
     UsageType classUsageType = getClassUsageType(element, targets);
     if (classUsageType != null) return classUsageType;
 
@@ -40,16 +65,13 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return null;
   }
 
-  @Nullable
-  private static UsageType getMethodUsageType(PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
+  private static @Nullable UsageType getMethodUsageType(PsiElement element) {
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (containerMethod != null) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         final PsiExpression qualifier = referenceExpression.getQualifierExpression();
         final PsiElement p = referenceExpression.getParent();
-        if (p instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)p;
+        if (p instanceof PsiMethodCallExpression callExpression) {
           final PsiMethod calledMethod = callExpression.resolveMethod();
           if (calledMethod == containerMethod) {
             return UsageType.RECURSION;
@@ -88,7 +110,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     }
 
     for (PsiParameter parameter : parameters) {
-      if (HighlightControlFlowUtil.isAssigned(parameter)) return false;
+      if (VariableAccessUtils.variableIsAssigned(parameter)) return false;
     }
 
     return true;
@@ -99,8 +121,8 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     supers1Q.add(m1);
     final Queue<PsiMethod> supers2Q = new ArrayDeque<>();
     supers2Q.add(m2);
-    Set<PsiMethod> supers1 = new THashSet<>();
-    Set<PsiMethod> supers2 = new THashSet<>();
+    Set<PsiMethod> supers1 = new HashSet<>();
+    Set<PsiMethod> supers2 = new HashSet<>();
     while (true) {
       PsiMethod me1;
       if ((me1 = supers1Q.poll()) != null) {
@@ -136,8 +158,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     */
   }
 
-  @Nullable
-  private static UsageType getClassUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
+  private static @Nullable UsageType getClassUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
     final PsiJavaCodeReferenceElement codeReference = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
     if(codeReference != null && isNestedClassOf(codeReference,targets)){
       return UsageType.CLASS_NESTED_CLASS_ACCESS;
@@ -148,12 +169,15 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       return UsageType.ANNOTATION;
     }
 
+    if (element.getParent() instanceof PsiTypeElement && element.getParent().getParent() instanceof PsiPattern) {
+      return UsageType.PATTERN;
+    }
+
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
     if (referenceList != null) {
       PsiElement parent = referenceList.getParent();
-      if (parent instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)parent;
+      if (parent instanceof PsiClass aClass) {
         if (aClass.getExtendsList() == referenceList || aClass.getImplementsList() == referenceList) return UsageType.CLASS_EXTENDS_IMPLEMENTS_LIST;
         if (aClass.getPermitsList() == referenceList) return UsageType.CLASS_PERMITS_LIST;
       }
@@ -185,11 +209,8 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
       return UsageType.CLASS_NEW_OPERATOR;
     }
 
-    if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression expression = (PsiReferenceExpression)element;
-      if (expression.resolve() instanceof PsiClass) {
-        return UsageType.CLASS_STATIC_MEMBER_ACCESS;
-      }
+    if (element instanceof PsiReferenceExpression expression && expression.resolve() instanceof PsiClass) {
+      return UsageType.CLASS_STATIC_MEMBER_ACCESS;
     }
 
     final PsiParameter psiParameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);

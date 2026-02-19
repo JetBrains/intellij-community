@@ -5,6 +5,9 @@ import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -37,7 +40,9 @@ public class JavaCheckRegexpWithFlagsTest extends JavaCodeInsightTestCase {
                                                             new RegExpParserDefinition());
 
     // the 1.8 mock jdk has the needed Pattern class
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk18());
+    Sdk jdk18 = IdeaTestUtil.getMockJdk18();
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk18, myProject));
+    PsiTestUtil.removeAllRoots(myModule, jdk18);
 
     configureByText(JavaFileType.INSTANCE, getJavaText(regExp, flags));
     final PsiFile regexpFile = setUpRegexpInjectionAndGetRegexpFile();

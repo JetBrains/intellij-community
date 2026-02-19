@@ -1,4 +1,4 @@
-// "Replace 'IntStream.range().mapToObj()' with 'list.get(...).stream()'" "true"
+// "Replace 'IntStream.range().mapToObj()' with 'list.get(...).stream()'" "true-preview"
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,7 @@ public class Test extends ArrayList<String> {
         /*comment4*/
         // comment 0
         String[] arr2 = list.get(0).stream().map(s -> s + /*comment2*/"!!!" + // comment3
-                s)
+                        s)
             .toArray(String[]::new);
     }
 }

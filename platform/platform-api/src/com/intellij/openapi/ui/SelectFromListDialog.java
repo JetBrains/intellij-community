@@ -17,17 +17,21 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
-import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 
 
 public class SelectFromListDialog extends DialogWrapper {
@@ -74,7 +78,7 @@ public class SelectFromListDialog extends DialogWrapper {
     return myMainPanel;
   }
 
-  public void addToDialog(JComponent userComponent, @NotNull String borderLayoutConstraints) {
+  public void addToDialog(JComponent userComponent, @NonNls @NotNull String borderLayoutConstraints) {
     LOG.assertTrue(!borderLayoutConstraints.equals(BorderLayout.CENTER), "Can't add any component to center");
     myMainPanel.add(userComponent, borderLayoutConstraints);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.ui.CheckboxTree;
@@ -10,18 +10,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 public final class PushLogTreeUtil {
-  @NonNls
-  public static final String EDIT_MODE_PROP = "tree.edit.mode";
+  public static final @NonNls String EDIT_MODE_PROP = "tree.edit.mode";
 
-  @Nullable
-  public static Object getTagAtForRenderer(CheckboxTree.CheckboxTreeCellRenderer renderer, MouseEvent e) {
+  public static @Nullable Object getTagAtForRenderer(CheckboxTree.CheckboxTreeCellRenderer renderer, MouseEvent e) {
     JTree tree = (JTree)e.getSource();
     Object tag = null;
     final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
@@ -32,8 +31,7 @@ public final class PushLogTreeUtil {
       final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
       final int row = tree.getRowForLocation(e.getX(), e.getY());
       tree.getCellRenderer().getTreeCellRendererComponent(tree, treeNode, false, false, true, row, true);
-      if (treeNode instanceof RepositoryNode) {
-        RepositoryNode repositoryNode = (RepositoryNode)treeNode;
+      if (treeNode instanceof RepositoryNode repositoryNode) {
         int checkBoxWidth = repositoryNode.isCheckboxVisible() ? renderer.getCheckbox().getWidth() : 0;
         tag = renderer.getTextRenderer().getFragmentTagAt(dx - checkBoxWidth);
       }

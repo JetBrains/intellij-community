@@ -1,4 +1,4 @@
-// "Initialize variable 'x'" "true"
+// "Initialize variable 'x'" "true-preview"
 class Foo {
   {
     int x = 0;

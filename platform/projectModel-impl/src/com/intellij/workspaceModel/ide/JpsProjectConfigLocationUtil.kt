@@ -1,0 +1,42 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.ide
+
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.project.ProjectStoreOwner
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import org.jetbrains.annotations.ApiStatus
+import kotlin.io.path.invariantSeparatorsPathString
+
+/**
+ * Returns `null` for the default project
+ */
+@ApiStatus.Internal
+@RequiresBlockingContext
+fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
+  return getJpsProjectConfigLocation(project, WorkspaceModel.getInstance(project).getVirtualFileUrlManager())
+}
+
+@ApiStatus.Internal
+fun getJpsProjectConfigLocation(project: Project, virtualFileUrlManager: VirtualFileUrlManager): JpsProjectConfigLocation? {
+  if (project !is ProjectStoreOwner) {
+    return null
+  }
+
+  val storeDescriptor = project.componentStore.storeDescriptor
+  val dotIdea = storeDescriptor.dotIdea
+  if (dotIdea == null) {
+    val projectFileUrl = VfsUtilCore.pathToUrl(storeDescriptor.presentableUrl.invariantSeparatorsPathString)
+    val iprFile = virtualFileUrlManager.getOrCreateFromUrl(projectFileUrl)
+    return JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
+  }
+  else {
+    val ideaFolder = dotIdea.toVirtualFileUrl(virtualFileUrlManager)
+    val baseUrl = VfsUtilCore.pathToUrl(storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString)
+    return JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.getOrCreateFromUrl(baseUrl), ideaFolder)
+  }
+}

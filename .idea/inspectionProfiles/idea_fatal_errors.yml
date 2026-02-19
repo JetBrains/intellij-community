@@ -1,0 +1,11 @@
+baseProfile: idea.fatal.errors
+include:
+  - "default_ignores.yml"
+inspections:
+  - group: GLOBAL
+    enabled: false
+  - inspection: ActionIsNotPreviewFriendly
+  - inspection: MissingActionUpdateThread
+  - inspection: JComponentDataProviderInspection
+  - inspection: UnresolvedPropertyKey
+    enabled: false

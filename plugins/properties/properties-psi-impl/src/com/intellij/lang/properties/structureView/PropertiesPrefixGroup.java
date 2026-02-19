@@ -1,33 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.editor.PropertyStructureViewElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
-import java.util.List;
 
 public class PropertiesPrefixGroup implements Group {
   private final @NotNull Collection<TreeElement> myProperties;
@@ -45,33 +26,24 @@ public class PropertiesPrefixGroup implements Group {
     mySeparator = separator;
   }
 
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myPresentableName;
   }
 
-  @NotNull
-  public String getSeparator() {
+  public @NotNull String getSeparator() {
     return mySeparator;
   }
 
-  @NotNull
-  public String getPrefix() {
+  public @NotNull String getPrefix() {
     return myPrefix;
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return new ItemPresentation() {
       @Override
       public String getPresentableText() {
         return myPresentableName;
-      }
-
-      @Override
-      public String getLocationString() {
-        return null;
       }
 
       @Override
@@ -82,11 +54,11 @@ public class PropertiesPrefixGroup implements Group {
   }
 
   @Override
-  @NotNull
-  public Collection<TreeElement> getChildren() {
+  public @NotNull Collection<TreeElement> getChildren() {
     return myProperties;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -98,6 +70,7 @@ public class PropertiesPrefixGroup implements Group {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myPrefix.hashCode();
   }

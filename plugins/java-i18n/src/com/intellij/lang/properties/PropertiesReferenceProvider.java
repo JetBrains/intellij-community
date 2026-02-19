@@ -5,6 +5,7 @@ import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlTagBase;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -63,6 +64,13 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
   static boolean isNonDynamicAttribute(PsiElement element) {
     return PsiTreeUtil.getChildOfAnyType(element, OuterLanguageElement.class, JspXmlTagBase.class) == null;
+  }
+
+  @Override
+  public boolean acceptsHints(@NotNull PsiElement element, PsiReferenceService.@NotNull Hints hints) {
+    if (!myProvider.acceptsHint(hints)) return false;
+
+    return super.acceptsHints(element, hints);
   }
 
   @Override

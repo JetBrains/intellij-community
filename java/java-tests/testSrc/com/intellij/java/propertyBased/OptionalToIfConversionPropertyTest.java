@@ -9,7 +9,16 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -41,18 +50,19 @@ public class OptionalToIfConversionPropertyTest extends LightJavaCodeInsightFixt
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testCompilabilityAfterConversion() {
-    myFixture.addClass("package com.jetbrains;\n" +
-                       "import java.util.Optional;\n" +
-                       "import java.util.stream.Stream;\n" +
-                       "\n" +
-                       "class A {\n" +
-                       "  void foo() {\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package com.jetbrains;
+                         import java.util.Optional;
+                         import java.util.stream.Stream;
+
+                         class A {
+                           void foo() {
+                           }
+                         }""");
     PropertyChecker.customized()
       .checkScenarios(() -> this::doTestCompilabilityAfterConversion);
   }

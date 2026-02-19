@@ -1,25 +1,32 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
-public class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.MODULES);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return PsiUtil.isModuleFile(holder.getFile()) ? new ExportedToSelfVisitor(holder) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
@@ -31,7 +38,7 @@ public class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJav
     }
 
     @Override
-    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+    public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
       super.visitPackageAccessibilityStatement(statement);
       PsiJavaModule javaModule = PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class);
       if (javaModule != null) {

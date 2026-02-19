@@ -3,13 +3,13 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -18,21 +18,45 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.lang.java.parser.JavaParserUtil.done;
+import static com.intellij.lang.java.parser.JavaParserUtil.exprType;
+import static com.intellij.lang.java.parser.JavaParserUtil.getLanguageLevel;
+import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CLASS_INITIALIZER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FIELD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPLICIT_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_MODULE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_STATIC_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PACKAGE_STATEMENT;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ * See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class FileParser {
-  protected static final TokenSet IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
-    ElementType.MODIFIER_BIT_SET,
-    TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
+  protected final TokenSet IMPORT_LIST_STOPPER_SET;
   private final JavaParser myParser;
+  private final TokenSet IMPLICIT_CLASS_INDICATORS;
+  private final OldParserWhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = OldParserWhiteSpaceAndCommentSetHolder.INSTANCE;
 
   public FileParser(@NotNull JavaParser javaParser) {
-    myParser = javaParser;
+    this.myParser = javaParser;
+    this.IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
+      ElementType.MODIFIER_BIT_SET,
+      TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
+    this.IMPLICIT_CLASS_INDICATORS =
+      TokenSet.create(METHOD, FIELD,
+                      CLASS_INITIALIZER);
   }
 
   public void parse(@NotNull PsiBuilder builder) {
-    parseFile(builder, FileParser::stopImportListParsing, JavaPsiBundle.INSTANCE, "expected.class.or.interface");
+    parseFile(builder, this::stopImportListParsing, JavaPsiBundle.INSTANCE, "expected.class.or.interface");
   }
 
   public void parseFile(@NotNull PsiBuilder builder,
@@ -46,6 +70,7 @@ public class FileParser {
     PsiBuilder.Marker firstDeclaration = null;
 
     PsiBuilder.Marker invalidElements = null;
+    boolean isImplicitClass = false;
     while (!builder.eof()) {
       if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
         builder.advanceLexer();
@@ -60,10 +85,13 @@ public class FileParser {
           invalidElements = null;
         }
         if (firstDeclarationOk == null) {
-          firstDeclarationOk = exprType(declaration) != JavaElementType.MODIFIER_LIST;
-          if (firstDeclarationOk) {
-            firstDeclaration = declaration;
-          }
+          firstDeclarationOk = exprType(declaration) != MODIFIER_LIST;
+        }
+        if (firstDeclaration == null) {
+          firstDeclaration = declaration;
+        }
+        if (!isImplicitClass && IMPLICIT_CLASS_INDICATORS.contains(exprType(declaration))) {
+          isImplicitClass = true;
         }
         continue;
       }
@@ -80,23 +108,28 @@ public class FileParser {
     }
 
     if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {
-      impListInfo.first.setCustomEdgeTokenBinders(PRECEDING_COMMENT_BINDER, null);  // pass comments behind fake import list
-      firstDeclaration.setCustomEdgeTokenBinders(SPECIAL_PRECEDING_COMMENT_BINDER, null);
+      impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(getLanguageLevel(builder)),
+                                                  null);  // pass comments behind fake import list
+      firstDeclaration.setCustomEdgeTokenBinders(
+        myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(getLanguageLevel(builder)), null);
+    }
+    if (isImplicitClass) {
+      PsiBuilder.Marker beforeFirst = firstDeclaration.precede();
+      done(beforeFirst, IMPLICIT_CLASS, builder, myWhiteSpaceAndCommentSetHolder);
     }
   }
 
-  private static boolean stopImportListParsing(PsiBuilder b) {
+  private boolean stopImportListParsing(PsiBuilder b) {
     IElementType type = b.getTokenType();
     if (IMPORT_LIST_STOPPER_SET.contains(type) || DeclarationParser.isRecordToken(b, type)) return true;
     if (type == JavaTokenType.IDENTIFIER) {
       String text = b.getTokenText();
-      if (PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text)) return true;
+      if (JavaKeywords.OPEN.equals(text) || JavaKeywords.MODULE.equals(text)) return true;
     }
     return false;
   }
 
-  @Nullable
-  protected PsiBuilder.Marker parseInitial(PsiBuilder builder) {
+  protected @Nullable PsiBuilder.Marker parseInitial(PsiBuilder builder) {
     return myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.FILE);
   }
 
@@ -106,7 +139,7 @@ public class FileParser {
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
       PsiBuilder.Marker modList = builder.mark();
       myParser.getDeclarationParser().parseAnnotations(builder);
-      done(modList, JavaElementType.MODIFIER_LIST);
+      done(modList, MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo();
         return;
@@ -121,11 +154,10 @@ public class FileParser {
 
     semicolon(builder);
 
-    done(statement, JavaElementType.PACKAGE_STATEMENT);
+    done(statement, PACKAGE_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
   }
 
-  @NotNull
-  protected Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
+  protected @NotNull Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
     PsiBuilder.Marker list = builder.mark();
 
     boolean isEmpty = true;
@@ -165,31 +197,58 @@ public class FileParser {
       list = precede;
     }
 
-    done(list, JavaElementType.IMPORT_LIST);
+    done(list, IMPORT_LIST, builder, myWhiteSpaceAndCommentSetHolder);
     return Pair.create(list, isEmpty);
   }
 
-  @Nullable
-  protected PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
+  protected @Nullable PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
     if (builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD) return null;
 
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    boolean isStatic = expect(builder, JavaTokenType.STATIC_KEYWORD);
-    IElementType type = isStatic ? JavaElementType.IMPORT_STATIC_STATEMENT : JavaElementType.IMPORT_STATEMENT;
+    String identifierText = builder.getTokenText();
+    IElementType type = getImportType(builder);
+    boolean isStatic = type == IMPORT_STATIC_STATEMENT;
+    boolean isModule = type == IMPORT_MODULE_STATEMENT;
+    final boolean isOk;
+    if (isModule) {
+      isOk = myParser.getModuleParser().parseName(builder) != null;
+    }
+    else {
+      isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
+    }
 
-    boolean isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
-    if (isOk) {
+    //if it is `module` we should expect either `;` or `identifier`
+    if (isOk && !isModule && !isStatic && builder.getTokenType() != JavaTokenType.SEMICOLON &&
+        JavaKeywords.MODULE.equals(identifierText)) {
+      JavaParserUtil.error(builder, JavaPsiBundle.message("expected.identifier.or.semicolon"));
+    }
+    else if (isOk) {
       semicolon(builder);
     }
 
-    done(statement, type);
+    done(statement, type, builder, myWhiteSpaceAndCommentSetHolder);
     return statement;
   }
 
-  @NotNull
-  private static @NlsContexts.ParsingError String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
+  private @NotNull IElementType getImportType(@NotNull PsiBuilder builder) {
+    IElementType type = builder.getTokenType();
+    if (type == JavaTokenType.STATIC_KEYWORD) {
+      builder.advanceLexer();
+      return IMPORT_STATIC_STATEMENT;
+    }
+    if (type == JavaTokenType.IDENTIFIER &&
+        JavaKeywords.MODULE.equals(builder.getTokenText()) &&
+        builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
+      builder.remapCurrentToken(JavaTokenType.MODULE_KEYWORD);
+      builder.advanceLexer();
+      return IMPORT_MODULE_STATEMENT;
+    }
+    return IMPORT_STATEMENT;
+  }
+
+  private static @NotNull @NlsContexts.ParsingError String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
     return bundle.getMessage(errorMessageKey);
   }
 }

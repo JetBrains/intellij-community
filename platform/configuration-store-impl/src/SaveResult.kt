@@ -1,26 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
-import com.intellij.util.SmartList
-import com.intellij.util.throwIfNotEmpty
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.addSuppressed
 
-@ApiStatus.Internal
-class SaveResult {
-  companion object {
-    val EMPTY = SaveResult()
-  }
+internal class SaveResult {
+  private var error: Throwable? = null
 
-  private val errors: MutableList<Throwable> = SmartList()
-  val readonlyFiles: MutableList<SaveSessionAndFile> = SmartList()
-
-  @Suppress("MemberVisibilityCanBePrivate")
-  var isChanged = false
+  @JvmField
+  val readonlyFiles: MutableList<SaveSessionAndFile> = mutableListOf()
 
   @Synchronized
-  fun addError(error: Throwable) {
-    errors.add(error)
+  fun addError(t: Throwable) {
+    error = addSuppressed(error, t)
   }
 
   @Synchronized
@@ -28,34 +20,12 @@ class SaveResult {
     readonlyFiles.add(info)
   }
 
-  fun addErrors(list: List<Throwable>) {
-    if (list.isEmpty()) {
-      return
-    }
-
-    synchronized(this) {
-      errors.addAll(list)
-    }
-  }
-
   @Synchronized
-  fun appendTo(saveResult: SaveResult) {
-    if (this === EMPTY) {
-      return
+  fun rethrow() {
+    error?.let {
+      throw it
     }
-
-    synchronized(saveResult) {
-      saveResult.errors.addAll(errors)
-      saveResult.readonlyFiles.addAll(readonlyFiles)
-
-      if (isChanged) {
-        saveResult.isChanged = isChanged
-      }
-    }
-  }
-
-  @Synchronized
-  fun throwIfErrored() {
-    throwIfNotEmpty(errors)
   }
 }
+
+internal data class SaveSessionAndFile(@JvmField val session: SaveSession, @JvmField val file: VirtualFile)

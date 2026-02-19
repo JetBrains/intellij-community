@@ -1,0 +1,32 @@
+LineBreakpoint created at stepOutWithCounterInCoroutineScope.kt:29
+Run Java
+Connected to the target VM
+stepOutWithCounterInCoroutineScope.kt:29
+stepOutWithCounterInCoroutineScope.kt:16
+stepOutWithCounterInCoroutineScope.kt:14
+stepOutWithCounterInCoroutineScope.kt:15
+stepOutWithCounterInCoroutineScope.kt:29
+stepOutWithCounterInCoroutineScope.kt:16
+stepOutWithCounterInCoroutineScope.kt:14
+stepOutWithCounterInCoroutineScope.kt:15
+stepOutWithCounterInCoroutineScope.kt:29
+stepOutWithCounterInCoroutineScope.kt:16
+stepOutWithCounterInCoroutineScope.kt:14
+stepOutWithCounterInCoroutineScope.kt:15
+stepOutWithCounterInCoroutineScope.kt:29
+stepOutWithCounterInCoroutineScope.kt:16
+stepOutWithCounterInCoroutineScope.kt:14
+stepOutWithCounterInCoroutineScope.kt:15
+stepOutWithCounterInCoroutineScope.kt:29
+stepOutWithCounterInCoroutineScope.kt:16
+Compile bytecode for x
+Compile bytecode for y
+stepOutWithCounterInCoroutineScope.kt:29
+resuming stepOutWithCounterInCoroutineScope.kt:29
+resuming stepOutWithCounterInCoroutineScope.kt:29
+resuming stepOutWithCounterInCoroutineScope.kt:29
+resuming stepOutWithCounterInCoroutineScope.kt:29
+resuming stepOutWithCounterInCoroutineScope.kt:29
+Disconnected from the target VM
+
+Process finished with exit code 0

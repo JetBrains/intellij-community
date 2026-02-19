@@ -1,23 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.find.EditorSearchSession;
+import com.intellij.find.FindUsagesCollector;
 import com.intellij.find.SearchReplaceComponent;
 import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.largeFilesEditor.Utils;
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.largeFilesEditor.editor.Page;
-import com.intellij.largeFilesEditor.search.actions.*;
+import com.intellij.largeFilesEditor.search.actions.FindForwardBackwardAction;
+import com.intellij.largeFilesEditor.search.actions.LargeFileFindAllAction;
+import com.intellij.largeFilesEditor.search.actions.LargeFilePrevNextOccurrenceAction;
+import com.intellij.largeFilesEditor.search.actions.LargeFileStatusTextAction;
+import com.intellij.largeFilesEditor.search.actions.LargeFileToggleAction;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearchCallback;
 import com.intellij.largeFilesEditor.search.searchTask.CloseSearchTask;
 import com.intellij.largeFilesEditor.search.searchTask.FileDataProviderForSearch;
 import com.intellij.largeFilesEditor.search.searchTask.SearchTaskOptions;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
@@ -36,15 +47,18 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.io.IOException;
 import java.util.List;
 
-public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
+@ApiStatus.Internal
+public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
   private static final int CONTEXT_ONE_SIDE_LENGTH = 100;
   private static final long STATUS_TEXT_LIFE_TIME = 3000;
 
@@ -110,14 +124,17 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
 
   @Override
   public void onSearchActionHandlerExecuted() {
-    largeFileEditor.getEditor().setHeaderComponent(mySearchReplaceComponent);
+    InternalUICustomization uiCustomization = InternalUICustomization.getInstance();
+    JComponent component =
+      uiCustomization == null ? mySearchReplaceComponent : uiCustomization.configureLfeSearchReplaceComponent(mySearchReplaceComponent);
+
+    largeFileEditor.getEditor().setHeaderComponent(component);
     mySearchReplaceComponent.requestFocusInTheSearchFieldAndSelectContent(largeFileEditor.getProject());
     mySearchReplaceComponent.getSearchTextComponent().selectAll();
   }
 
-  @NotNull
   @Override
-  public LargeFileEditor getLargeFileEditor() {
+  public @NotNull LargeFileEditor getLargeFileEditor() {
     return largeFileEditor;
   }
 
@@ -128,7 +145,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
       .setSearchDirectionForward(forwardDirection)
       .setSearchBounds(fromPageNumber, SearchTaskOptions.NO_LIMIT,
                        toPageNumber, SearchTaskOptions.NO_LIMIT)
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected())
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
       .setWholeWords(myToggleWholeWordsAction.isSelected())
       .setRegularExpression(myToggleRegularExpression.isSelected())
       .setContextOneSideLength(CONTEXT_ONE_SIDE_LENGTH);
@@ -244,7 +261,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     SearchTaskOptions options = new SearchTaskOptions()
       .setSearchDirectionForward(directionForward)
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected())
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
       .setWholeWords(myToggleWholeWordsAction.isSelected())
       .setRegularExpression(myToggleRegularExpression.isSelected())
       .setContextOneSideLength(CONTEXT_ONE_SIDE_LENGTH);
@@ -316,7 +333,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
         if (options.loopedPhase) {
           setNewStatusText(EditorBundle.message("large.file.editor.message.search.is.completed.and.no.more.matches"));
           mySearchReplaceComponent.setNotFoundBackground();
-          if (!(largeFileEditor.getEditor().getHeaderComponent() instanceof SearchReplaceComponent)) {
+          if (EditorSearchSession.getSearchReplaceComponent(largeFileEditor.getEditor()) == null) {
             String message = EditorBundle.message("large.file.editor.message.some.string.not.found", options.stringToFind);
             showSimpleHintInEditor(message, largeFileEditor.getEditor());
           }
@@ -386,7 +403,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
         .getInstance(largeFileEditor.getProject())
         .requestFocus(largeFileEditor.getEditor().getContentComponent(), false);
       largeFileEditor.getEditorModel().setHighlightingCloseSearchResultsEnabled(false);
-      if (largeFileEditor.getEditor().getHeaderComponent() instanceof SearchReplaceComponent) {
+      if (EditorSearchSession.getSearchReplaceComponent(largeFileEditor.getEditor()) != null) {
         largeFileEditor.getEditor().setHeaderComponent(null);
       }
     }
@@ -454,7 +471,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     SearchTaskOptions options = new SearchTaskOptions()
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
       .setStringToFind(mySearchReplaceComponent.getSearchTextComponent().getText())
-      .setCaseSensetive(myToggleCaseSensitiveAction.isSelected())
+      .setCaseSensitive(myToggleCaseSensitiveAction.isSelected())
       .setWholeWords(myToggleWholeWordsAction.isSelected())
       .setRegularExpression(myToggleRegularExpression.isSelected())
       .setSearchDirectionForward(true)
@@ -548,7 +565,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
                              new DefaultCustomComponentAction(
                                () -> RegExHelpPopup.createRegExLink(
                                  new HtmlBuilder().append(HtmlChunk.text("?").bold()).wrapWithHtmlBody().toString(),
-                                 null, null, "FindInFile")),
+                                 null, FindUsagesCollector.FIND_IN_FILE)),
                              myStatusTextAction)
       //.addSearchFieldActions(new RestorePreviousSettingsAction())
       .withCloseAction(this::onEscapePressed)
@@ -560,14 +577,6 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
       @Override
       public void searchFieldDocumentChanged() {
         onSearchParametersChanged();
-      }
-
-      @Override
-      public void replaceFieldDocumentChanged() {
-      }
-
-      @Override
-      public void multilineStateChanged() {
       }
     });
   }
@@ -655,7 +664,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
 
-  private class CloseSearchResultsListSelectionListener implements ListSelectionListener {
+  private final class CloseSearchResultsListSelectionListener implements ListSelectionListener {
     private final JBList<SearchResult> list;
 
     CloseSearchResultsListSelectionListener(JBList<SearchResult> list) {

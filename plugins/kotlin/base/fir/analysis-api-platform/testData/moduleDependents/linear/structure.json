@@ -1,0 +1,20 @@
+{
+  "libraries": [
+      { "name": "L1" }
+  ],
+  "modules" : [
+    { "name": "A", "dependencies": ["B"] },
+    { "name": "B", "dependencies": ["C"] },
+    { "name": "C", "dependencies": ["D"] },
+    { "name": "D", "dependencies": ["E"] },
+    { "name": "E", "dependencies": ["L1"] }
+  ],
+  "targets": [
+    { "library": "L1" },
+    { "module": "A" },
+    { "module": "B" },
+    { "module": "C" },
+    { "module": "D" },
+    { "module": "E" }
+  ]
+}

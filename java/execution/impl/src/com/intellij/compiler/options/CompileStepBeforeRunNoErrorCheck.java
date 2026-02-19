@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.execution.BeforeRunTask;
@@ -8,16 +8,17 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class CompileStepBeforeRunNoErrorCheck
-  extends BeforeRunTaskProvider<CompileStepBeforeRunNoErrorCheck.MakeBeforeRunTaskNoErrorCheck> {
+public final class CompileStepBeforeRunNoErrorCheck
+  extends BeforeRunTaskProvider<CompileStepBeforeRunNoErrorCheck.MakeBeforeRunTaskNoErrorCheck> implements DumbAware {
   public static final Key<MakeBeforeRunTaskNoErrorCheck> ID = Key.create("MakeNoErrorCheck");
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public CompileStepBeforeRunNoErrorCheck(@NotNull Project project) {
     myProject = project;

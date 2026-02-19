@@ -1,4 +1,4 @@
-// "Remove type arguments" "true"
+// "Remove type arguments" "true-preview"
 
 import java.util.function.Function;
 public class TestClassRenamed {

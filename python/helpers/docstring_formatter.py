@@ -1,31 +1,39 @@
+import argparse
+import json
 import os
 import re
 import sys
 import textwrap
 
-import six
 from six import text_type, u
 
 ENCODING = 'utf-8'
-_stdin = os.fdopen(sys.stdin.fileno(), 'rb')
-_stdout = os.fdopen(sys.stdout.fileno(), 'wb')
-_stderr = os.fdopen(sys.stderr.fileno(), 'wb')
+
+# regexp from sphinxcontrib/napoleon/docstring.py:35 and py2only/docutils/parsers/rst/states.py:1107
+TAGS_START = re.compile(
+    r'(\.\. \S+::)|:(?![: ])([^:\\]|\\.|:(?!([ `]|$)))*(?<! ):( +|$)')
 
 
-def read_safe():
-    return _stdin.read().decode(ENCODING)
+def format_fragments(fragments_list):
+    formatted_fragments = []
 
+    for element in fragments_list:
+        formatted = format_rest(element['myDescription'])
+        if formatted.startswith('<p>') and formatted.endswith('</p>\n'):
+            formatted = formatted[len('<p>'):][:-len('</p>\n')]
+        formatted_fragments.append({
+            'myName': element['myName'],
+            'myDescription': formatted,
+            'myFragmentType': element['myFragmentType']
+        })
 
-def print_safe(s, error=False):
-    stream = _stderr if error else _stdout
-    stream.write(s.encode(ENCODING))
-    stream.flush()
+    return formatted_fragments
 
 
 def format_rest(docstring):
     from docutils import nodes
     from docutils.core import publish_string
-    from docutils.frontend import OptionParser
+    from docutils.frontend import get_default_settings
     from docutils.nodes import Text, field_body, field_name, SkipNode
     from docutils.parsers.rst import directives
     from docutils.parsers.rst.directives.admonitions import BaseAdmonition
@@ -50,7 +58,7 @@ def format_rest(docstring):
         def __init__(self, document):
             # Copied from epydoc.markup.restructuredtext._EpydocHTMLTranslator
             if self.settings is None:
-                settings = OptionParser([HTMLWriter()]).get_default_values()
+                settings = get_default_settings(HTMLWriter())
                 self.__class__.settings = settings
             document.settings = self.settings
 
@@ -125,19 +133,19 @@ def format_rest(docstring):
             return HTMLTranslator.starttag(self, node, tagname, suffix, **attributes)
 
         def visit_rubric(self, node):
-            self.body.append(self.starttag(node, 'h1', '', CLASS='rubric'))
+            self.body.append(self.starttag(node, 'h4', '', CLASS='rubric'))
 
         def depart_rubric(self, node):
-            self.body.append('</h1>\n')
+            self.body.append('</h4>\n')
 
         def visit_note(self, node):
-            self.body.append('<h1 class="heading">Note</h1>\n')
+            self.body.append('<h4 class="heading">Note</h4>\n')
 
         def depart_note(self, node):
             pass
 
         def visit_seealso(self, node):
-            self.body.append('<h1 class="heading">See Also</h1>\n')
+            self.body.append('<h4 class="heading">See Also</h4>\n')
 
         def depart_seealso(self, node):
             pass
@@ -221,6 +229,7 @@ def format_rest(docstring):
             self.output = ''
 
     writer = _DocumentPseudoWriter()
+    docstring = add_blank_line_before_first_tag(docstring)
     publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
                                                                  'halt_level': 10000,
                                                                  'warning_stream': None,
@@ -230,6 +239,16 @@ def format_rest(docstring):
     visitor = RestHTMLTranslator(document)
     document.walkabout(visitor)
     return u('').join(visitor.body)
+
+
+def add_blank_line_before_first_tag(docstring):
+    input_lines = docstring.splitlines()
+    for i, line in enumerate(input_lines):
+        if TAGS_START.match(line):
+            if i > 0 and not input_lines[i - 1].isspace():
+                input_lines.insert(i, '')
+            break
+    return '\n'.join(input_lines)
 
 
 def format_google(docstring):
@@ -244,77 +263,62 @@ def format_numpy(docstring):
     return format_rest(transformed)
 
 
-def format_epytext(docstring):
-    if six.PY3:
-        return u('Epydoc is not compatible with Python 3 interpreter')
-
-    import epydoc.markup.epytext
-    from epydoc.markup import DocstringLinker
-    from epydoc.markup.epytext import parse_docstring, ParseError, _colorize
-
-    def _add_para(doc, para_token, stack, indent_stack, errors):
-        """Colorize the given paragraph, and add it to the DOM tree."""
-        para = _colorize(doc, para_token, errors)
-        if para_token.inline:
-            para.attribs['inline'] = True
-        stack[-1].children.append(para)
-
-    epydoc.markup.epytext._add_para = _add_para
-    ParseError.is_fatal = lambda self: False
-
-    errors = []
-
-    class EmptyLinker(DocstringLinker):
-        def translate_indexterm(self, indexterm):
-            return ""
-
-        def translate_identifier_xref(self, identifier, label=None):
-            return identifier
-
-    docstring = parse_docstring(docstring, errors)
-    docstring, fields = docstring.split_fields()
-    html = docstring.to_html(EmptyLinker())
-
-    if errors and not html:
-        # It's not possible to recover original stacktraces of the errors
-        error_lines = '\n'.join(text_type(e) for e in errors)
-        raise Exception('Error parsing docstring. Probable causes:\n' + error_lines)
-
-    return html
+def format_body(docstring_format, input_body):
+    formatter = {
+        'rest': format_rest,
+        'google': format_google,
+        'numpy': format_numpy,
+    }.get(docstring_format, format_rest)
+    return formatter(input_body)
 
 
 def main():
+    _stdin = os.fdopen(sys.stdin.fileno(), 'rb')
+    _stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+    _stderr = os.fdopen(sys.stderr.fileno(), 'wb')
+
+    def read_safe():
+        return _stdin.read().decode(ENCODING)
+
+    def print_safe(s, error=False):
+        stream = _stderr if error else _stdout
+        stream.write(s.encode(ENCODING))
+        stream.flush()
+
     # Remove existing Sphinx extensions registered via
     # sphinxcontrib setuptools namespace package, as they
     # conflict with sphinxcontrib.napoleon that we bundle.
     sys.modules.pop('sphinxcontrib', None)
 
-    args = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--format', default='rest', nargs='?', const='rest')
+    parser.add_argument('--fragments', action="store_true")
+    parser.add_argument('--input', type=argparse.FileType('rb'), default=_stdin, nargs='?', const=_stdin)
+    args = parser.parse_args()
 
-    docstring_format = args[0] if args else 'rest'
-    if len(args) > 1:
+    if args.input:
         try:
-            f = open(args[1], 'rb')
-            text = f.read().decode('utf-8')
+            text = args.input.read().decode(ENCODING)
         finally:
-            f.close()
+            args.input.close()
     else:
         text = read_safe()
 
-    formatter = {
-        'rest': format_rest,
-        'google': format_google,
-        'numpy': format_numpy,
-        'epytext': format_epytext
-    }.get(docstring_format, format_rest)
-
-    html = formatter(text)
-    print_safe(html)
-
-
-if __name__ == '__main__':
     try:
-        main()
+        if args.fragments:
+            input_json = json.loads(text)
+            formatted_body = format_body(args.format, input_json['body'])
+            formatted_fragments = format_fragments(input_json['fragments'])
+            print_safe(json.dumps({
+                'body': formatted_body,
+                'fragments': formatted_fragments,
+            }, ensure_ascii=False, separators=(',', ':'), sort_keys=True))
+        else:
+            print_safe(format_body(args.format, text))
     except ImportError:
         print_safe('sys.path = %s\n\n' % sys.path, error=True)
         raise
+
+
+if __name__ == '__main__':
+    main()

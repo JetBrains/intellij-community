@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.lang.*;
-import com.intellij.openapi.diagnostic.LogUtil;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
+import com.intellij.lang.LighterAST;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -11,21 +14,23 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntStack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance(LightStubBuilder.class);
+
+  @ApiStatus.Internal
   public static final ThreadLocal<LighterAST> FORCED_AST = new ThreadLocal<>();
 
   @Override
-  public StubElement buildStubTree(@NotNull PsiFile file) {
+  public StubElement<?> buildStubTree(@NotNull PsiFile file) {
     LighterAST tree = FORCED_AST.get();
     if (tree == null) {
       FileType fileType = file.getFileType();
@@ -37,55 +42,61 @@ public class LightStubBuilder implements StubBuilder {
         LOG.error("Unexpected PsiFile instance: " + file + ", " + file.getClass());
         return null;
       }
-      if (((PsiFileImpl)file).getElementTypeForStubBuilder() == null) {
+      LanguageStubDescriptor stubDescriptor = ((PsiFileImpl)file).getStubDescriptor();
+      if (stubDescriptor == null) {
         LOG.error("File is not of IStubFileElementType: " + file);
         return null;
       }
 
       FileASTNode node = file.getNode();
-      tree = node.getElementType() instanceof ILightStubFileElementType ? node.getLighterAST() : new TreeBackedLighterAST(node);
+      IElementType nodeElementType = node.getElementType();
+      if (nodeElementType != stubDescriptor.getFileElementType()) {
+        // this is the case for JSP files. They have Java as language.
+        tree = new TreeBackedLighterAST(node);
+      }
+      else {
+        tree = node.getLighterAST();
+      }
     }
     else {
-      FORCED_AST.set(null);
+      FORCED_AST.remove();
     }
 
-    StubElement rootStub = createStubForFile(file, tree);
+    StubElement<?> rootStub = createStubForFile(file, tree);
     buildStubTree(tree, tree.getRoot(), rootStub);
     return rootStub;
   }
 
-  @NotNull
-  @SuppressWarnings("unchecked")
-  protected StubElement createStubForFile(@NotNull PsiFile file, @NotNull LighterAST tree) {
-    return new PsiFileStubImpl(file);
+  protected @NotNull StubElement<?> createStubForFile(@NotNull PsiFile file, @NotNull LighterAST tree) {
+    return new PsiFileStubImpl<>(file);
   }
 
-  protected void buildStubTree(@NotNull LighterAST tree, @NotNull LighterASTNode root, @NotNull StubElement rootStub) {
-    final Stack<LighterASTNode> parents = new Stack<>();
-    final IntStack childNumbers = new IntArrayList();
-    final BooleanStack parentsStubbed = new BooleanStack();
-    final Stack<List<LighterASTNode>> kinderGarden = new Stack<>();
-    final Stack<StubElement> parentStubs = new Stack<>();
+  protected void buildStubTree(@NotNull LighterAST tree, @NotNull LighterASTNode root, @NotNull StubElement<?> rootStub) {
+    Stack<LighterASTNode> parents = new Stack<>();
+    IntStack childNumbers = new IntArrayList();
+    BooleanStack parentsStubbed = new BooleanStack();
+    Stack<List<LighterASTNode>> kinderGarden = new Stack<>();
+    Stack<StubElement<?>> parentStubs = new Stack<>();
 
     LighterASTNode parent = null;
     LighterASTNode element = root;
     List<LighterASTNode> children = null;
     int childNumber = 0;
-    StubElement parentStub = rootStub;
+    StubElement<?> parentStub = rootStub;
     boolean immediateParentStubbed = true;
 
     nextElement:
     while (element != null) {
       ProgressManager.checkCanceled();
 
-      final StubElement stub = createStub(tree, element, parentStub);
+      StubElement<?> stub = createStub(tree, element, parentStub);
       boolean hasStub = stub != parentStub || parent == null;
       if (hasStub && !immediateParentStubbed) {
-        ((ObjectStubBase) stub).markDangling();
+        ((ObjectStubBase<?>)stub).markDangling();
       }
 
       if (parent == null || !skipNode(tree, parent, element)) {
-        final List<LighterASTNode> kids = tree.getChildren(element);
+        List<LighterASTNode> kids = tree.getChildren(element);
         if (!kids.isEmpty()) {
           if (parent != null) {
             parents.push(parent);
@@ -123,25 +134,19 @@ public class LightStubBuilder implements StubBuilder {
     }
   }
 
-  @NotNull
-  private static StubElement createStub(@NotNull LighterAST tree, @NotNull LighterASTNode element, @NotNull StubElement parentStub) {
-    final IElementType elementType = element.getTokenType();
-    if (elementType instanceof IStubElementType) {
-      if (elementType instanceof ILightStubElementType) {
-        final ILightStubElementType lightElementType = (ILightStubElementType)elementType;
-        if (lightElementType.shouldCreateStub(tree, element, parentStub)) {
-          return lightElementType.createStub(tree, element, parentStub);
-        }
-      }
-      else {
-        LOG.error("Element is not of ILightStubElementType: " + LogUtil.objectAndClass(elementType) + ", " + element);
-      }
+  private static @NotNull StubElement<?> createStub(@NotNull LighterAST tree,
+                                                    @NotNull LighterASTNode element,
+                                                    @NotNull StubElement<?> parentStub) {
+    IElementType elementType = element.getTokenType();
+    LightStubElementFactory<?, ?> factory = StubElementRegistryService.getInstance().getLightStubFactory(elementType);
+    if (factory != null && factory.shouldCreateStub(tree, element, parentStub)) {
+      return factory.createStub(tree, element, parentStub);
     }
 
     return parentStub;
   }
 
-  private boolean skipNode(@NotNull LighterAST tree, @NotNull LighterASTNode parent, @NotNull LighterASTNode node) {
+  private boolean skipNode(LighterAST tree, LighterASTNode parent, LighterASTNode node) {
     if (tree instanceof TreeBackedLighterAST) {
       return skipChildProcessingWhenBuildingStubs(((TreeBackedLighterAST)tree).unwrap(parent), ((TreeBackedLighterAST)tree).unwrap(node));
     }

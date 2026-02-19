@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -7,19 +7,27 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
-  @NonNls String DEFAULT_SCHEME_NAME = "Default";
-  @NonNls String DEFAULT_SCHEME_ALIAS = "Classic Light";
+
+  static @NonNls @NotNull String getDefaultSchemeName() {
+    return EditorColorsManager.getDefaultSchemeName();
+  }
 
   void setName(String name);
 
   void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes);
+
+  default TextAttributes getAttributes(@Nullable TextAttributesKey key, boolean useDefaults) {
+    return getAttributes(key);
+  }
 
   @NotNull
   Color getDefaultBackground();
@@ -52,6 +60,12 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setEditorFontName(String fontName);
 
   int getEditorFontSize();
+  /**
+   * Floating-point version of {@link #getEditorFontSize()}
+   */
+  default float getEditorFontSize2D() {
+    return getEditorFontSize();
+  }
 
   /**
    * Sets font size. Note, that this method checks that {@code fontSize} is within bounds and could change it if it is
@@ -60,30 +74,29 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setEditorFontSize(int fontSize);
+  /**
+   * Floating-point version of {@link #setEditorFontSize(int)}
+   */
+  default void setEditorFontSize(float fontSize) {
+    setEditorFontSize((int)(fontSize + 0.5));
+  }
 
   /**
    * @deprecated Quick documentation component's font size is stored in application level property, and can be obtained
    * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#getQuickDocFontSize()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default FontSize getQuickDocFontSize() { return FontSize.SMALL; }
 
   /**
    * @deprecated Quick documentation component's font size is stored in application level property, and can be set
    * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#setQuickDocFontSize(FontSize)}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setQuickDocFontSize(@NotNull FontSize fontSize) {}
 
   @NotNull
   Font getFont(EditorFontType key);
-
-  /**
-   * @deprecated Use {@link #getFontPreferences()} and {@link ModifiableFontPreferences}
-   * to change fonts.
-   */
-  @Deprecated
-  void setFont(EditorFontType key, Font font);
 
   float getLineSpacing();
 
@@ -98,6 +111,10 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setLineSpacing(float lineSpacing);
+
+  boolean isUseLigatures();
+
+  void setUseLigatures(boolean useLigatures);
 
   Object clone();
 
@@ -121,10 +138,25 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setConsoleFontName(String fontName);
 
   int getConsoleFontSize();
+  /**
+   * Floating-point version of {@link #getConsoleFontSize()}
+   */
+  default float getConsoleFontSize2D() {
+    return getConsoleFontSize();
+  }
   void setConsoleFontSize(int fontSize);
+  /**
+   * Floating-point version of {@link #setConsoleFontSize(int)}
+   */
+  default void setConsoleFontSize(float fontSize) {
+    setConsoleFontSize((int)(fontSize + 0.5));
+  }
 
   float getConsoleLineSpacing();
   void setConsoleLineSpacing(float lineSpacing);
 
   void readExternal(Element parentNode);
+
+  @ApiStatus.Internal
+  boolean isReadOnly();
 }

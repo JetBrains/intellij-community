@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -14,129 +17,126 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.Alarm;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.CountDownLatch;
 
-final class PsiChangeHandler extends PsiTreeChangeAdapter {
+final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   private static final ExtensionPointName<ChangeLocalityDetector> EP_NAME = new ExtensionPointName<>("com.intellij.daemon.changeLocalityDetector");
-  private /*NOT STATIC!!!*/ final Key<Boolean> UPDATE_ON_COMMIT_ENGAGED = Key.create("UPDATE_ON_COMMIT_ENGAGED");
 
   private final Project myProject;
-  private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = ContainerUtil.createWeakMap();
+  private final Map<Document, List<Change>> changedElements = new WeakHashMap<>(); // guarded by changedElements
   private final FileStatusMap myFileStatusMap;
+  private final Alarm myUpdateFileStatusAlarm;
 
-  PsiChangeHandler(@NotNull Project project, @NotNull MessageBusConnection connection, @NotNull Disposable parentDisposable) {
+  private record Change(@NotNull PsiElement psiElement, boolean whiteSpaceOptimizationAllowed) {}
+
+  PsiChangeHandler(@NotNull Project project, @NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Disposable parentDisposable) {
     myProject = project;
-    myFileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
+    myFileStatusMap = daemonCodeAnalyzerEx.getFileStatusMap();
+    DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocument(document));
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
       @Override
-      public void beforeDocumentChange(@NotNull DocumentEvent event) {
-        Document document = event.getDocument();
-        PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-        if (documentManager.getSynchronizer().isInSynchronization(document)) {
-          return;
-        }
-
-        PsiFile psi = documentManager.getCachedPsiFile(document);
-        if (psi == null || !psi.getViewProvider().isEventSystemEnabled()) {
-          return;
-        }
-
-        if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) == null) {
-          document.putUserData(UPDATE_ON_COMMIT_ENGAGED, Boolean.TRUE);
-          documentManager.addRunOnCommit(document, () -> {
-            if (document.getUserData(UPDATE_ON_COMMIT_ENGAGED) != null) {
-              updateChangesForDocument(document);
-              document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null);
-            }
-          });
-        }
+      public void documentChanged(@NotNull DocumentEvent event) {
+        myFileStatusMap.addDocumentCompositeDirtyRange(event);
       }
     }), parentDisposable);
-
-    connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
-      @Override
-      public void transactionStarted(final @NotNull Document doc, final @NotNull PsiFile file) {
-      }
-
-      @Override
-      public void transactionCompleted(final @NotNull Document document, final @NotNull PsiFile file) {
-        updateChangesForDocument(document);
-        document.putUserData(UPDATE_ON_COMMIT_ENGAGED, null); // ensure we don't call updateChangesForDocument() twice which can lead to whole file re-highlight
-      }
-    });
+    myUpdateFileStatusAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
-  private void updateChangesForDocument(final @NotNull Document document) {
-    ApplicationManager.getApplication().assertIsWriteThread();
-    if (myProject.isDisposed()) return;
-    List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
-    if (toUpdate == null) {
-      // The document has been changed, but psi hasn't
-      // We may still need to rehighlight the file if there were changes inside highlighted ranges.
-      if (UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) return;
-
-      // don't create PSI for files in other projects
-      PsiElement file = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
-      if (file == null) return;
-
-      toUpdate = Collections.singletonList(Pair.create(file, true));
+  private void updateChangesForDocument(@NotNull Document document) {
+    if (myProject.isDisposed()) {
+      return;
+    }
+    // don't create PSI for files in other projects
+    PsiFile psiFile = getRawCachedPsiFile(document);
+    if (psiFile != null) {
+      synchronized (changedElements) {
+        List<Change> toUpdate = changedElements.get(document);
+        if (toUpdate == null) {
+          // The document has been changed, but psi hasn't
+          // We may still need to rehighlight the file if there were changes inside highlighted ranges.
+          if (!UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
+            toUpdate = new ArrayList<>();
+            toUpdate.add(new Change(psiFile, true));
+            changedElements.putIfAbsent(document, toUpdate);
+          }
+        }
+      }
+    }
+    Editor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+    PsiFile selectedPsiFile;
+    if (selectedEditor == null) {
+      selectedPsiFile = null;
+    }
+    else {
+      selectedPsiFile = getRawCachedPsiFile(selectedEditor.getDocument());
     }
     Application application = ApplicationManager.getApplication();
-    final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    if (editor != null && !application.isUnitTestMode()) {
+    if (selectedPsiFile != null && !application.isUnitTestMode()) {
       application.invokeLater(() -> {
-        if (!editor.isDisposed()) {
-          EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
-          PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-          ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, file);
+        if (!selectedEditor.isDisposed() &&
+            selectedEditor.getMarkupModel() instanceof EditorMarkupModel markupModel) {
+          ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, selectedPsiFile);
         }
-      }, ModalityState.stateForComponent(editor.getComponent()), myProject.getDisposed());
+      }, ModalityState.stateForComponent(selectedEditor.getComponent()), myProject.getDisposed());
     }
 
-    for (Pair<PsiElement, Boolean> changedElement : toUpdate) {
-      PsiElement element = changedElement.getFirst();
-      Boolean whiteSpaceOptimizationAllowed = changedElement.getSecond();
-      updateByChange(element, document, whiteSpaceOptimizationAllowed);
+    synchronized (myUpdateFileStatusAlarm) {
+      myUpdateFileStatusAlarm.cancelAllRequests();
+      myUpdateFileStatusAlarm.addRequest(this, 0);
     }
-    changedElements.remove(document);
+  }
+
+  private PsiFile getRawCachedPsiFile(@NotNull Document document) {
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    return virtualFile == null || !virtualFile.isValid() ? null : TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, CodeInsightContexts.anyContext());
   }
 
   @Override
   public void childAdded(@NotNull PsiTreeChangeEvent event) {
-    queueElement(event.getParent(), true, event);
+    queueElement(event.getParent(), true, event.getFile());
   }
 
   @Override
   public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-    queueElement(event.getParent(), true, event);
+    queueElement(event.getParent(), true, event.getFile());
   }
 
   @Override
   public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-    queueElement(event.getNewChild(), typesEqual(event.getNewChild(), event.getOldChild()), event);
+    queueElement(event.getNewChild(), typesEqual(event.getNewChild(), event.getOldChild()), event.getFile());
   }
 
-  private static boolean typesEqual(final PsiElement newChild, final PsiElement oldChild) {
+  private static boolean typesEqual(PsiElement newChild, PsiElement oldChild) {
     return newChild != null && oldChild != null && newChild.getClass() == oldChild.getClass();
   }
 
@@ -145,13 +145,13 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     if (((PsiTreeChangeEventImpl)event).isGenericChange()) {
       return;
     }
-    queueElement(event.getParent(), true, event);
+    queueElement(event.getParent(), true, event.getFile());
   }
 
   @Override
   public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-    queueElement(event.getOldParent(), true, event);
-    queueElement(event.getNewParent(), true, event);
+    queueElement(event.getOldParent(), true, event.getFile());
+    queueElement(event.getNewParent(), true, event.getFile());
   }
 
   @Override
@@ -160,7 +160,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     // mark file dirty just in case
     PsiFile psiFile = event.getFile();
     if (psiFile != null) {
-      myFileStatusMap.markFileScopeDirtyDefensively(psiFile, event);
+      Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(psiFile);
+      if (document != null) {
+        myFileStatusMap.markFileScopeDirtyDefensively(document, event);
+      }
     }
   }
 
@@ -169,104 +172,182 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
       Object oldValue = event.getOldValue();
-      if (oldValue instanceof VirtualFile && shouldBeIgnored((VirtualFile)oldValue)) {
-        // ignore workspace.xml
-        return;
+      // ignore workspace.xml
+      if (!(oldValue instanceof VirtualFile vf) || shouldHandle(vf)) {
+        myFileStatusMap.markAllFilesDirty(event);
       }
-      myFileStatusMap.markAllFilesDirty(event);
     }
   }
 
-  private void queueElement(@NotNull PsiElement child, final boolean whitespaceOptimizationAllowed, @NotNull PsiTreeChangeEvent event) {
-    ApplicationManager.getApplication().assertIsWriteThread();
-    PsiFile file = event.getFile();
-    if (file == null) file = child.getContainingFile();
-    if (file == null) {
+  private void queueElement(@NotNull PsiElement child, boolean whitespaceOptimizationAllowed, @Nullable PsiFile psiFile) {
+    if (psiFile == null) {
+      psiFile = child.getContainingFile();
+    }
+    if (psiFile == null) {
       myFileStatusMap.markAllFilesDirty(child);
       return;
     }
 
-    if (!child.isValid()) return;
+    if (!child.isValid()) {
+      return;
+    }
 
     PsiDocumentManagerImpl pdm = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-    Document document = pdm.getCachedDocument(file);
+    Document document = pdm.getCachedDocument(psiFile);
     if (document != null) {
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null && ProjectFileIndex.getInstance(myProject).isExcluded(virtualFile)) {
+        // ignore changes in excluded files
+        return;
+      }
       if (pdm.getSynchronizer().getTransaction(document) == null) {
         // content reload, language level change or some other big change
         myFileStatusMap.markAllFilesDirty(child);
         return;
       }
 
-      List<Pair<PsiElement, Boolean>> toUpdate = changedElements.get(document);
-      if (toUpdate == null) {
-        toUpdate = new SmartList<>();
-        changedElements.put(document, toUpdate);
-      }
-      toUpdate.add(Pair.create(child, whitespaceOptimizationAllowed));
+      storeChangedElement(child, document, whitespaceOptimizationAllowed);
     }
   }
 
-  private void updateByChange(@NotNull PsiElement child, final @NotNull Document document, final boolean whitespaceOptimizationAllowed) {
-    ApplicationManager.getApplication().assertIsWriteThread();
-    final PsiFile file;
+  private void storeChangedElement(@NotNull PsiElement child, @NotNull Document document, boolean whitespaceOptimizationAllowed) {
+    synchronized (changedElements) {
+      List<Change> toUpdate = changedElements.computeIfAbsent(document, __->new ArrayList<>());
+      toUpdate.add(new Change(child, whitespaceOptimizationAllowed));
+    }
+  }
+
+  // handle queued elements
+  @Override
+  public void run() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
+    ReadAction.run(() -> {
+      // assume changedElement won't change under read action
+      flushUpdateFileStatusQueue();
+    });
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  void flushUpdateFileStatusQueue() {
+    ApplicationManager.getApplication().assertReadAccessAllowed(); // only inside read/write action we can modify changedUpdate
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    List<Map.Entry<Document, List<Change>>> entries;
+    synchronized (changedElements) {
+      entries = new ArrayList<>(changedElements.entrySet());
+      changedElements.clear();
+    }
+    for (Map.Entry<Document, List<Change>> entry : entries) {
+      Document document = entry.getKey();
+      List<Change> changes = entry.getValue();
+      for (Change change : changes) {
+        doUpdateChild(document, change.psiElement(), change.whiteSpaceOptimizationAllowed());
+      }
+    }
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private void doUpdateChild(@NotNull Document document, @NotNull PsiElement child, boolean whitespaceOptimizationAllowed) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    if (myProject.isDisposed()) {
+      return;
+    }
+    PsiFile psiFile;
     try {
-      file = child.getContainingFile();
+      psiFile = child.getContainingFile();
     }
     catch (PsiInvalidElementAccessException e) {
+      return;
+    }
+    // CCE can be thrown from incorrectly implemented PSI, e.g.
+    // in GoStubbedElementImpl: public GoFile getContainingFile() { return (GoFile)super.getContainingFile(); }
+    catch (ClassCastException e) {
       myFileStatusMap.markAllFilesDirty(e);
       return;
     }
-    if (file == null || file instanceof PsiCompiledElement) {
+    if (psiFile == null || psiFile instanceof PsiCompiledElement) {
       myFileStatusMap.markAllFilesDirty(child);
       return;
     }
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null && shouldBeIgnored(virtualFile)) {
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile != null && !shouldHandle(virtualFile)) {
       // ignore workspace.xml
       return;
     }
 
-    int fileLength = file.getTextLength();
-    if (!file.getViewProvider().isPhysical()) {
-      myFileStatusMap.markFileScopeDirty(document, new TextRange(0, fileLength), fileLength, "Non-physical file update: "+file);
+    if (!psiFile.getViewProvider().isPhysical()) {
+      myFileStatusMap.markWholeFileScopeDirty(document, "Non-physical file update: " + psiFile);
       return;
     }
 
-    PsiElement element = whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document) ? child : child.getParent();
+    TextRange existingDirtyScope = myFileStatusMap.getFileDirtyScopeForAllPassesCombined(document);
+    PsiElement element = child instanceof PsiFile || whitespaceOptimizationAllowed &&
+                                                     UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)
+                         ? child : child.getParent();
     while (true) {
       if (element == null || element instanceof PsiFile || element instanceof PsiDirectory) {
-        myFileStatusMap.markAllFilesDirty("Top element: "+element);
-        return;
+        myFileStatusMap.markAllFilesDirty("Top element: " + element+"; changed child: "+child);
+        break;
       }
 
-      final PsiElement scope = getChangeHighlightingScope(element);
+      PsiElement scope = getChangeHighlightingScope(element);
       if (scope != null) {
-        myFileStatusMap.markFileScopeDirty(document, scope.getTextRange(), fileLength, "Scope: "+scope);
-        return;
+        TextRange scopeRange = scope.getTextRange();
+        // if some unrelated scope already marked dirty, we shouldn't just add another scope and return,
+        // because between these two dirty whitespaces might easily be some other non-whitespace PSI,
+        // and this PSI element is not expected to be highlighted alone, which could lead to unexpected highlighter disappearances
+        // see DaemonRespondToChangesTest.testPutArgumentsOnSeparateLinesIntentionMustNotRemoveErrorHighlighting
+        if (existingDirtyScope == null || scopeRange.contains(existingDirtyScope)) {
+          myFileStatusMap.markScopeDirty(document, scopeRange, scope);
+          break;
+        }
+        existingDirtyScope = existingDirtyScope.union(scopeRange);
       }
 
       element = element.getParent();
     }
   }
 
-  private boolean shouldBeIgnored(@NotNull VirtualFile virtualFile) {
-    return ProjectUtil.isProjectOrWorkspaceFile(virtualFile) ||
-           ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
+  private boolean shouldHandle(@NotNull VirtualFile virtualFile) {
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307614, EA-698479")) {
+      return !ProjectUtil.isProjectOrWorkspaceFile(virtualFile) &&
+             !ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
+    }
   }
 
   private static @Nullable PsiElement getChangeHighlightingScope(@NotNull PsiElement element) {
     DefaultChangeLocalityDetector defaultDetector = null;
     for (ChangeLocalityDetector detector : EP_NAME.getExtensionList()) {
-      if (detector instanceof DefaultChangeLocalityDetector) {
+      if (detector instanceof DefaultChangeLocalityDetector def) {
         // run default detector last
         assert defaultDetector == null : defaultDetector;
-        defaultDetector = (DefaultChangeLocalityDetector)detector;
+        defaultDetector = def;
         continue;
       }
-      final PsiElement scope = detector.getChangeHighlightingDirtyScopeFor(element);
-      if (scope != null) return scope;
+      PsiElement scope = detector.getChangeHighlightingDirtyScopeFor(element);
+      if (scope != null) {
+        return scope;
+      }
     }
     assert defaultDetector != null : "com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector is unregistered";
     return defaultDetector.getChangeHighlightingDirtyScopeFor(element);
+  }
+
+  @TestOnly
+  void waitForUpdateFileStatusQueue() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    CountDownLatch s = new CountDownLatch(1);
+    // synchronized to avoid data race when myUpdateFileStatusAlarm.cancel() in updateChangesForDocument called, then (from interleaved thread) waitForUpdateFileStatusQueue() called, then myUpdateFileStatusAlarm.addRequest() called, resulting in immediate return from waitForUpdateFileStatusQueue method because alarm is temporarily empty
+    synchronized (myUpdateFileStatusAlarm) {
+      myUpdateFileStatusAlarm.addRequest(() -> s.countDown(), 0);
+    }
+    try {
+      s.await();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

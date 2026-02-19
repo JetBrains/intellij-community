@@ -1,18 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PresentableLookupValue;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.paths.PsiDynaReference;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ObjectPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferencesWrapper;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -23,18 +32,23 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.patterns.StandardPatterns.not;
 
 /**
  * @deprecated see {@link CompletionContributor}
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-@Deprecated
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance(CompletionData.class);
   public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(CharPattern.javaIdentifierPartCharacter());
+  public static final Key<PsiReference> LOOKUP_ELEMENT_PSI_REFERENCE = Key.create("lookup element psi reference");
   private final List<CompletionVariant> myCompletionVariants = new ArrayList<>();
 
   protected CompletionData(){ }
@@ -52,12 +66,13 @@ public class CompletionData {
   /**
    * @deprecated see {@link CompletionContributor}
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(final PsiReference reference, final Set<? super LookupElement> set, @NotNull final PsiElement position, final PsiFile file) {
+  public void completeReference(final PsiReference reference, final Set<? super LookupElement> set, final @NotNull PsiElement position, final PsiFile file) {
     final CompletionVariant[] variants = findVariants(position, file);
     boolean hasApplicableVariants = false;
     for (CompletionVariant variant : variants) {
@@ -117,31 +132,20 @@ public class CompletionData {
     @Override
     void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
                                  final CompletionData completionData) {
-      completeReference(reference, position, set, TailType.NONE, TrueFilter.INSTANCE, this);
+      completeReference(reference, position, set, TailTypes.noneType(), TrueFilter.INSTANCE, this);
     }
   };
 
-  /**
-   * @deprecated {@link CompletionUtil#findReferencePrefix} instead
-   */
-  @Deprecated
-  @Nullable
-  public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
-    return CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
-  }
-
-  /**
-   * @deprecated Use {@link CompletionUtil} methods instead
-   */
-  @Deprecated
-  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile, ElementPattern<Character> prefixStartTrim) {
+  private static @NotNull String findPrefixStatic(@Nullable PsiElement insertedElement,
+                                                  int offsetInFile,
+                                                  @NotNull ElementPattern<Character> prefixStartTrim) {
     if(insertedElement == null) return "";
 
     final Document document = insertedElement.getContainingFile().getViewProvider().getDocument();
     assert document != null;
     LOG.assertTrue(!PsiDocumentManager.getInstance(insertedElement.getProject()).isUncommited(document), "Uncommitted");
 
-    final String prefix = getReferencePrefix(insertedElement, offsetInFile);
+    final String prefix = CompletionUtil.findReferencePrefix(insertedElement, offsetInFile);
     if (prefix != null) return prefix;
 
     if (insertedElement.getTextRange().equals(insertedElement.getContainingFile().getTextRange()) || insertedElement instanceof PsiComment) {
@@ -154,18 +158,15 @@ public class CompletionData {
   /**
    * @deprecated Use {@link CompletionUtil} methods instead
    */
-  @Deprecated
-  public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public static @NotNull String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
     return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);
   }
 
-  /**
-   * @deprecated Use {@link CompletionUtil} methods instead
-   */
-  @Deprecated
-  public static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
+  private static @NotNull String findPrefixDefault(@NotNull PsiElement insertedElement, int offset, @NotNull ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
-    if (substr.length() == 0 || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
+    if (substr.isEmpty() || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
 
     substr = substr.trim();
 
@@ -174,26 +175,25 @@ public class CompletionData {
     return substr.substring(i).trim();
   }
 
-  @NotNull
-  public static LookupElement objectToLookupItem(final @NotNull Object object) {
-    if (object instanceof LookupElement) return (LookupElement)object;
+  public static @NotNull LookupElement objectToLookupItem(final @NotNull Object object) {
+    if (object instanceof LookupElement lookupElement) return lookupElement;
 
     String s = null;
-    TailType tailType = TailType.NONE;
-    if (object instanceof PsiElement){
-      s = PsiUtilCore.getName((PsiElement)object);
+    TailType tailType = TailTypes.noneType();
+    if (object instanceof PsiElement psiElement){
+      s = PsiUtilCore.getName(psiElement);
     }
-    else if (object instanceof PsiMetaData) {
-      s = ((PsiMetaData)object).getName();
+    else if (object instanceof PsiMetaData metaData) {
+      s = metaData.getName();
     }
-    else if (object instanceof String) {
-      s = (String)object;
+    else if (object instanceof String string) {
+      s = string;
     }
-    else if (object instanceof PresentableLookupValue) {
-      s = ((PresentableLookupValue)object).getPresentation();
+    else if (object instanceof PresentableLookupValue lookupValue) {
+      s = lookupValue.getPresentation();
     }
     if (s == null) {
-      throw new AssertionError("Null string for object: " + object + " of class " + object.getClass());
+      throw PluginException.createByClass("Null string for object: " + object + " of " + object.getClass(), null, object.getClass());
     }
 
     LookupItem<?> item = new LookupItem<>(object, s);
@@ -206,19 +206,17 @@ public class CompletionData {
   protected void addLookupItem(Set<? super LookupElement> set, TailType tailType, @NotNull Object completion, final CompletionVariant variant) {
     LookupElement ret = objectToLookupItem(completion);
 
-    if (!(ret instanceof LookupItem)) {
+    if (!(ret instanceof LookupItem item)) {
       set.add(ret);
       return;
     }
 
-    LookupItem item = (LookupItem)ret;
-
     InsertHandler<?> insertHandler = variant.getInsertHandler();
     if(insertHandler != null && item.getInsertHandler() == null) {
       item.setInsertHandler(insertHandler);
-      item.setTailType(TailType.UNKNOWN);
+      item.setTailType(TailTypes.unknownType());
     }
-    else if (tailType != TailType.NONE) {
+    else if (tailType != TailTypes.noneType()) {
       item.setTailType(tailType);
     }
     final Map<Object, Object> itemProperties = variant.getItemProperties();
@@ -230,32 +228,32 @@ public class CompletionData {
   }
 
   protected void completeReference(PsiReference reference, PsiElement position, Set<? super LookupElement> set, TailType tailType, ElementFilter filter, CompletionVariant variant) {
-    if (reference instanceof PsiMultiReference) {
-      for (PsiReference ref : getReferences((PsiMultiReference)reference)) {
+    if (reference instanceof PsiMultiReference multiReference) {
+      for (PsiReference ref : getReferences(multiReference)) {
         completeReference(ref, position, set, tailType, filter, variant);
       }
     }
-    else if (reference instanceof PsiDynaReference) {
-      for (PsiReference ref : ((PsiDynaReference<?>)reference).getReferences()) {
+    else if (reference instanceof PsiReferencesWrapper wrapper) {
+      for (PsiReference ref : wrapper.getReferences()) {
         completeReference(ref, position, set, tailType, filter, variant);
       }
     }
     else{
       final Object[] completions = reference.getVariants();
+      putSourceInformation(reference, completions);
       for (Object completion : completions) {
         if (completion == null) {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));
           continue;
         }
-        if (completion instanceof PsiElement) {
-          final PsiElement psiElement = (PsiElement)completion;
+        if (completion instanceof PsiElement psiElement) {
           if (filter.isClassAcceptable(psiElement.getClass()) && filter.isAcceptable(psiElement, position)) {
             addLookupItem(set, tailType, completion, variant);
           }
         }
         else {
-          if (completion instanceof LookupItem) {
-            final Object o = ((LookupItem)completion).getObject();
+          if (completion instanceof LookupItem<?> lookupItem) {
+            final Object o = lookupItem.getObject();
             if (o instanceof PsiElement) {
               if (!filter.isClassAcceptable(o.getClass()) || !filter.isAcceptable(o, position)) continue;
             }
@@ -267,6 +265,14 @@ public class CompletionData {
             LOG.error("Caused by variant from reference: " + reference.getClass(), e);
           }
         }
+      }
+    }
+  }
+
+  private static void putSourceInformation(@NotNull PsiReference reference, Object[] referencesAsObjects) {
+    for (Object referenceAsObject : referencesAsObjects) {
+      if (referenceAsObject instanceof UserDataHolderBase userDataHolderBaseReference) {
+        userDataHolderBaseReference.putUserData(LOOKUP_ELEMENT_PSI_REFERENCE, reference);
       }
     }
   }

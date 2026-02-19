@@ -1,16 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
+import javax.swing.SwingUtilities;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Robot;
+import java.awt.Window;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -57,6 +66,12 @@ public final class IJSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
+  public static @NotNull Component getFocusedComponentInWindowOrSelf(@NotNull Component component) {
+    Window window = ComponentUtil.getWindow(component);
+    Component focusedComponent = window == null ? null : WindowManagerEx.getInstanceEx().getFocusedComponent(window);
+    return focusedComponent != null ? focusedComponent : component;
+  }
+
   public static HyperlinkEvent createHyperlinkEvent(@Nullable String href, @NotNull Object source) {
     URL url = null;
     try {
@@ -79,7 +94,7 @@ public final class IJSwingUtilities {
     if (c instanceof RootPaneContainer) {
       JRootPane rootPane = ((RootPaneContainer)c).getRootPane();
       if (rootPane != null) {
-        UIUtil.decorateWindowHeader(rootPane);
+        ComponentUtil.decorateWindowHeader(rootPane);
       }
     }
 
@@ -93,7 +108,7 @@ public final class IJSwingUtilities {
 
   public static void moveMousePointerOn(Component component) {
     if (component != null && component.isShowing()) {
-      if (Registry.is("ide.settings.move.mouse.on.default.button", false)) {
+      if (AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.settings.move.mouse.on.default.button")) {
         Point point = component.getLocationOnScreen();
         int dx = component.getWidth() / 2;
         int dy = component.getHeight() / 2;

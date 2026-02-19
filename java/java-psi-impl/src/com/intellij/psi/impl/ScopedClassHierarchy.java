@@ -1,39 +1,61 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author peter
- */
 class ScopedClassHierarchy {
-  private static final TObjectHashingStrategy<PsiClass> CLASS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiClass>() {
+  private static final HashingStrategy<PsiClass> CLASS_HASHING_STRATEGY = new HashingStrategy<PsiClass>() {
     @Override
-    public int computeHashCode(PsiClass object) {
-      return StringUtil.notNullize(object.getQualifiedName()).hashCode();
+    public int hashCode(PsiClass object) {
+      return object == null ? 0 : Strings.notNullize(object.getQualifiedName()).hashCode();
     }
 
     @Override
     public boolean equals(PsiClass o1, PsiClass o2) {
-      final String qname1 = o1.getQualifiedName();
-      if (qname1 != null) return qname1.equals(o2.getQualifiedName());
+      if (o1 == o2) {
+        return true;
+      }
+      if (o1 == null || o2 == null) {
+        return false;
+      }
 
+      String qname1 = o1.getQualifiedName();
+      if (qname1 != null) {
+        return qname1.equals(o2.getQualifiedName());
+      }
       return o1.getManager().areElementsEquivalent(o1, o2);
     }
   };
@@ -66,8 +88,7 @@ class ScopedClassHierarchy {
     }
   }
 
-  @NotNull
-  private static List<PsiType> getSuperTypes(PsiClass psiClass) {
+  private static @NotNull List<PsiType> getSuperTypes(PsiClass psiClass) {
     List<PsiType> superTypes = new ArrayList<>();
     if (psiClass instanceof PsiAnonymousClass) {
       ContainerUtil.addIfNotNull(superTypes, ((PsiAnonymousClass)psiClass).getBaseClassType());
@@ -77,20 +98,21 @@ class ScopedClassHierarchy {
     return superTypes;
   }
 
-  @NotNull
-  static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
+  static @NotNull ScopedClassHierarchy getHierarchy(final @NotNull PsiClass psiClass, final @NotNull GlobalSearchScope resolveScope) {
+    if (psiClass instanceof PsiAnonymousClass) {
+      return new ScopedClassHierarchy(psiClass, resolveScope);
+    }
     return CachedValuesManager.getCachedValue(psiClass, () -> {
       Map<GlobalSearchScope, ScopedClassHierarchy> result = ConcurrentFactoryMap.createMap(resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1));
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }).get(resolveScope);
   }
 
-  @Nullable
-  static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass derivedClass, @NotNull GlobalSearchScope scope, @NotNull PsiClass superClass) {
+  static @Nullable PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass derivedClass, @NotNull GlobalSearchScope scope, @NotNull PsiClass superClass) {
     ScopedClassHierarchy hierarchy = getHierarchy(derivedClass, scope);
     Map<PsiClass, PsiClassType.ClassResolveResult> map = hierarchy.mySupersWithSubstitutors;
     if (map == null) {
-      map = new THashMap<>(CLASS_HASHING_STRATEGY);
+      map = CollectionFactory.createCustomHashingStrategyMap(CLASS_HASHING_STRATEGY);
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
       hierarchy.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), map);
       if (stamp.mayCacheNow()) {
@@ -105,8 +127,7 @@ class ScopedClassHierarchy {
     return cachedClass == superClass ? cachedSubstitutor : mirrorSubstitutor(superClass, cachedClass, cachedSubstitutor);
   }
 
-  @NotNull
-  private static PsiSubstitutor mirrorSubstitutor(@NotNull PsiClass from, @NotNull final PsiClass to, @NotNull PsiSubstitutor substitutor) {
+  private static @NotNull PsiSubstitutor mirrorSubstitutor(@NotNull PsiClass from, final @NotNull PsiClass to, @NotNull PsiSubstitutor substitutor) {
     Iterator<PsiTypeParameter> baseParams = PsiUtil.typeParametersIterator(to);
     Iterator<PsiTypeParameter> candidateParams = PsiUtil.typeParametersIterator(from);
 
@@ -136,8 +157,7 @@ class ScopedClassHierarchy {
     return list;
   }
 
-  @NotNull
-  private List<PsiClassType.ClassResolveResult> calcImmediateSupersWithCapturing() {
+  private @NotNull List<PsiClassType.ClassResolveResult> calcImmediateSupersWithCapturing() {
     PsiUtilCore.ensureValid(myPlaceClass);
     List<PsiClassType.ClassResolveResult> list = new ArrayList<>();
     for (PsiClassType type : myPlaceClass.getSuperTypes()) {
@@ -160,9 +180,8 @@ class ScopedClassHierarchy {
     return list;
   }
 
-  @NotNull
-  private Map<PsiClass, PsiSubstitutor> calcAllMemberSupers(final LanguageLevel level) {
-    final Map<PsiClass, PsiSubstitutor> map = new THashMap<>();
+  private @NotNull Map<PsiClass, PsiSubstitutor> calcAllMemberSupers(final LanguageLevel level) {
+    final Map<PsiClass, PsiSubstitutor> map = new HashMap<>();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myPlaceClass.getProject());
     new PairProcessor<PsiClass, PsiSubstitutor>() {
       @Override

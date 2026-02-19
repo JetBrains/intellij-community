@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.CommonBundle;
@@ -20,16 +20,22 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class DevkitActionsUtil {
   private static final Logger LOG = Logger.getInstance(DevkitActionsUtil.class);
@@ -47,8 +53,7 @@ public final class DevkitActionsUtil {
    * @param directory directory to analyse dependencies on.
    * @return null if the selection dialog has been cancelled, selected plugin descriptor otherwise.
    */
-  @Nullable
-  public static XmlFile choosePluginModuleDescriptor(@NotNull PsiDirectory directory) {
+  public static @Nullable XmlFile choosePluginModuleDescriptor(@NotNull PsiDirectory directory) {
     Project project = directory.getProject();
     Module module = getModule(directory);
     if (module != null) {
@@ -65,8 +70,7 @@ public final class DevkitActionsUtil {
     return null;
   }
 
-  @Nullable
-  private static List<XmlFile> choosePluginModuleDescriptors(@NotNull Module module) {
+  private static @Nullable @Unmodifiable List<XmlFile> choosePluginModuleDescriptors(@NotNull Module module) {
     List<Module> pluginModules = getCandidatePluginModules(module);
     if (pluginModules.isEmpty()) {
       return Collections.emptyList();
@@ -86,8 +90,7 @@ public final class DevkitActionsUtil {
     return null;
   }
 
-  @Nullable
-  private static List<Module> showPluginModuleSelectionDialog(@NotNull Project project, @NotNull List<Module> pluginModules) {
+  private static @Nullable List<Module> showPluginModuleSelectionDialog(@NotNull Project project, @NotNull List<Module> pluginModules) {
     String message = DevKitBundle.message("select.plugin.module.to.patch");
     ChoosePluginModuleDialog chooseModulesDialog = new ChoosePluginModuleDialog(project, pluginModules, message, null);
     chooseModulesDialog.setSingleSelectionMode();
@@ -106,8 +109,7 @@ public final class DevkitActionsUtil {
    * Returns all modules that depend on the current one and have plugin descriptors.<br>
    * If the module itself is a plugin module, it is returned immediately.
    */
-  @NotNull
-  public static List<Module> getCandidatePluginModules(@NotNull Module module) {
+  public static @NotNull List<Module> getCandidatePluginModules(@NotNull Module module) {
     XmlFile currentModulePluginXml = PluginModuleType.getPluginXml(module);
     if (currentModulePluginXml != null) {
       return Collections.singletonList(module);
@@ -126,9 +128,8 @@ public final class DevkitActionsUtil {
   }
 
   /**
-   * @throws IncorrectOperationException
    */
-  public static void checkCanCreateClass(PsiDirectory directory, String name) {
+  public static void checkCanCreateClass(@NotNull PsiDirectory directory, String name) {
     PsiDirectory currentDir = directory;
     String packageName = StringUtil.getPackageName(name);
     if (!packageName.isEmpty()) {
@@ -160,8 +161,7 @@ public final class DevkitActionsUtil {
     return JavaDirectoryService.getInstance().createClass(directory, name, classTemplateName, false, properties);
   }
 
-  @Nullable
-  private static Module getModule(PsiDirectory dir) {
+  private static @Nullable Module getModule(PsiDirectory dir) {
     Project project = dir.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 

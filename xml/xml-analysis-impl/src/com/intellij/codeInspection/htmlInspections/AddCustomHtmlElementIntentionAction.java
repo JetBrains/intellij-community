@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -30,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
   private final String myName;
   private final @IntentionName String myText;
-  @NotNull private final Key<HtmlUnknownElementInspection> myInspectionKey;
+  private final @NotNull Key<HtmlUnknownElementInspection> myInspectionKey;
 
   public AddCustomHtmlElementIntentionAction(@NotNull Key<HtmlUnknownElementInspection> inspectionKey, String name, @IntentionName String text) {
     myInspectionKey = inspectionKey;
@@ -39,19 +27,17 @@ public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myText;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlAnalysisBundle.message("html.quickfix.family");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
@@ -61,5 +47,22 @@ public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return generateXmlEntitiesInspectionDiffPreview(project, myInspectionKey.toString(), myName);
+  }
+
+  public static @NotNull IntentionPreviewInfo generateXmlEntitiesInspectionDiffPreview(@NotNull Project project, @NotNull String key, @NotNull String name) {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    final var tool = profile.getInspectionTool(key, project);
+    if (tool != null && tool.getTool() instanceof XmlEntitiesInspection inspection) {
+      final String list = inspection.getAdditionalEntries();
+      return new IntentionPreviewInfo.CustomDiff(UnknownFileType.INSTANCE,
+                                                 list,
+                                                 list.isBlank() ? name : list + "," + name);
+    }
+    return IntentionPreviewInfo.EMPTY;
   }
 }

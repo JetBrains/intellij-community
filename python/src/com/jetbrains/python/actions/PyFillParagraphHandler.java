@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.editorActions.fillParagraph.ParagraphFillHandler;
@@ -10,7 +10,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,17 +23,16 @@ import java.util.List;
 /**
  * User : ktisha
  */
-public class PyFillParagraphHandler extends ParagraphFillHandler {
+public final class PyFillParagraphHandler extends ParagraphFillHandler {
 
   @Override
-  @NotNull
-  protected String getPrefix(@NotNull final PsiElement element) {
+  protected @NotNull String getPrefix(final @NotNull PsiElement element) {
     final PyStringLiteralExpression stringLiteralExpression =
       PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
     if (stringLiteralExpression != null) {
       final String text = stringLiteralExpression.getText();
       final Pair<String,String> quotes =
-        PyStringLiteralUtil.getQuotes(text);
+        PyStringLiteralCoreUtil.getQuotes(text);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
       if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
         String indent = getIndent(stringLiteralExpression);
@@ -65,15 +68,14 @@ public class PyFillParagraphHandler extends ParagraphFillHandler {
     return indent;
   }
 
-  @NotNull
   @Override
-  protected String getPostfix(@NotNull PsiElement element) {
+  protected @NotNull String getPostfix(@NotNull PsiElement element) {
     final PyStringLiteralExpression stringLiteralExpression =
       PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
     if (stringLiteralExpression != null) {
       final String text = stringLiteralExpression.getText();
       final Pair<String,String> quotes =
-        PyStringLiteralUtil.getQuotes(text);
+        PyStringLiteralCoreUtil.getQuotes(text);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteralExpression, PyDocStringOwner.class);
       if (docStringOwner != null && stringLiteralExpression.equals(docStringOwner.getDocStringExpression())) {
         String indent = getIndent(stringLiteralExpression);

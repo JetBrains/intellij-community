@@ -1,80 +1,82 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.*;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.xml.impl.DomApplicationComponent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * @author peter
+ * Use {@link DomService#getDomFileCandidates}.
  */
-public final class DomFileIndex extends ScalarIndexExtension<String>{
-  public static final ID<String,Void> NAME = ID.create("DomFileIndex");
-  private final DataIndexer<String,Void, FileContent> myDataIndexer;
+@ApiStatus.Internal
+public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomIndexKey> {
+  private static final ID<DomIndexKey, Void> INDEX_ID = ID.create("DomFileIndex");
+  private static final String NULL_NAMESPACE = "-NULL-";
 
-  public DomFileIndex() {
-    myDataIndexer = new DataIndexer<String, Void, FileContent>() {
+  @Override
+  public @NotNull ID<DomIndexKey, Void> getName() {
+    return INDEX_ID;
+  }
+
+  public static @NotNull Collection<VirtualFile> findFiles(@NotNull String rootTagName,
+                                                           @Nullable String namespace,
+                                                           @NotNull GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(INDEX_ID, new DomIndexKey(rootTagName, ObjectUtils.notNull(namespace, NULL_NAMESPACE)), scope);
+  }
+
+  @Override
+  public @NotNull DataIndexer<DomIndexKey, Void, FileContent> getIndexer() {
+    return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<String, Void> map(@NotNull final FileContent inputData) {
-        Set<String> namespaces = new HashSet<>();
-        final XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
-        ContainerUtil.addIfNotNull(namespaces, header.getPublicId());
-        ContainerUtil.addIfNotNull(namespaces, header.getSystemId());
-        ContainerUtil.addIfNotNull(namespaces, header.getRootTagNamespace());
-        final String tagName = header.getRootTagLocalName();
-        if (StringUtil.isNotEmpty(tagName)) {
-          Map<String, Void> result = new HashMap<>();
-          final DomApplicationComponent component = DomApplicationComponent.getInstance();
-          for (final DomFileDescription description : component.getFileDescriptions(tagName)) {
-            final String[] strings = description.getAllPossibleRootTagNamespaces();
-            if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
-              result.put(description.getRootElementClass().getName(), null);
-            }
-          }
-          for (final DomFileDescription description : component.getAcceptingOtherRootTagNameDescriptions()) {
-            final String[] strings = description.getAllPossibleRootTagNamespaces();
-            if (strings.length == 0 || ContainerUtil.intersects(Arrays.asList(strings), namespaces)) {
-              result.put(description.getRootElementClass().getName(), null);
-            }
-          }
-          return result;
+      public @NotNull Map<DomIndexKey, Void> map(@NotNull FileContent inputData) {
+        XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
+        String rootTagName = header.getRootTagLocalName();
+        if (rootTagName == null) {
+          return Collections.emptyMap();
         }
-        return Collections.emptyMap();
+
+        String[] namespaces = new String[]{header.getPublicId(), header.getSystemId(), header.getRootTagNamespace(), NULL_NAMESPACE};
+        Map<DomIndexKey, Void> set = new HashMap<>(namespaces.length);
+        for (String t : namespaces) {
+          if (t != null) {
+            set.put(new DomIndexKey(rootTagName, t), null);
+          }
+        }
+        return set;
       }
     };
   }
 
   @Override
-  @NotNull
-  public ID<String, Void> getName() {
-    return NAME;
+  public @NotNull KeyDescriptor<DomIndexKey> getKeyDescriptor() {
+    return new DomIndexKeyDescriptor();
   }
 
   @Override
-  @NotNull
-  public DataIndexer<String, Void, FileContent> getIndexer() {
-    return myDataIndexer;
-  }
-
-  @NotNull
-  @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
-    return EnumeratorStringDescriptor.INSTANCE;
-  }
-
-  @NotNull
-  @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE);
   }
 
   @Override
@@ -84,6 +86,61 @@ public final class DomFileIndex extends ScalarIndexExtension<String>{
 
   @Override
   public int getVersion() {
-    return DomApplicationComponent.getInstance().getCumulativeVersion(false);
+    return 0;
   }
+
+  public static class DomIndexKey {
+    private final @NotNull String myRootTagName;
+    private final @NotNull String myNamespace;
+
+    private DomIndexKey(@NotNull String rootTagName, @NotNull String namespace) {
+      myRootTagName = rootTagName;
+      myNamespace = namespace;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DomIndexKey key = (DomIndexKey)o;
+      return myRootTagName.equals(key.myRootTagName) && myNamespace.equals(key.myNamespace);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myRootTagName, myNamespace);
+    }
+
+    @Override
+    public String toString() {
+      return "DomIndexKey{" +
+             "myRootTagName='" + myRootTagName + '\'' +
+             ", myNamespace='" + myNamespace + '\'' +
+             '}';
+    }
+  }
+
+  private static class DomIndexKeyDescriptor implements KeyDescriptor<DomIndexKey> {
+    @Override
+    public boolean isEqual(DomIndexKey val1, DomIndexKey val2) {
+      return val1.equals(val2);
+    }
+
+    @Override
+    public DomIndexKey read(@NotNull DataInput in) throws IOException {
+      return new DomIndexKey(EnumeratorStringDescriptor.INSTANCE.read(in), EnumeratorStringDescriptor.INSTANCE.read(in));
+    }
+
+    @Override
+    public int getHashCode(DomIndexKey value) {
+      return value.hashCode();
+    }
+
+    @Override
+    public void save(@NotNull DataOutput out, DomIndexKey value) throws IOException {
+      EnumeratorStringDescriptor.INSTANCE.save(out, value.myRootTagName);
+      EnumeratorStringDescriptor.INSTANCE.save(out, value.myNamespace);
+    }
+  }
+
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
@@ -19,8 +19,17 @@ public interface PsiScopeProcessor {
    */
   boolean execute(@NotNull PsiElement element, @NotNull ResolveState state);
 
-  @Nullable
-  default <T> T getHint(@NotNull Key<T> hintKey) {
+  /**
+   * Called if the reference is imported but unresolved, so the target may not exist 
+   * due to incomplete project setup.
+   *
+   * @return false to stop processing.
+   */
+  default boolean executeForUnresolved() {
+    return true;
+  }
+
+  default @Nullable <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }
 

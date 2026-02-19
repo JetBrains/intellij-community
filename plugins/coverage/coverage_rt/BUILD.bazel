@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.java.coverage.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-coverage-rt",
+  module_name = "intellij.java.coverage.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//plugins/testng_rt:testng-rt",
+    "@lib//:test_n_g-provided",
+    "@lib//:intellij-test-discovery",
+    "//java/java-runtime:rt",
+    "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+  ]
+)
+
+jvm_library(
+  name = "java-coverage-rt_test_lib",
+  module_name = "intellij.java.coverage.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":java-coverage-rt",
+    "//plugins/testng_rt:testng-rt_test_lib",
+    "@lib//:test_n_g-provided",
+    "//java/java-runtime:rt_test_lib",
+    "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent_test_lib",
+  ]
+)
+### auto-generated section `build intellij.java.coverage.rt` end

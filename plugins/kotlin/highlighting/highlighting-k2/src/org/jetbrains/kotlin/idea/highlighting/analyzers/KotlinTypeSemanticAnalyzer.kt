@@ -1,0 +1,153 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.highlighting.analyzers
+
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory.highlightName
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
+import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtIntersectionType
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.KtValueArgumentList
+
+internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+        highlightSimpleNameExpression(expression)
+    }
+
+    override fun visitIntersectionType(intersectionType: KtIntersectionType) {
+        for (element in intersectionType.children) {
+            val typeReference = element as? KtTypeReference ?: continue
+            val infoType = with(session) {
+                when(val type = typeReference.type) {
+                    is KaTypeParameterType -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
+                    else -> type.symbol?.toInfoType()
+                }
+            } ?: continue
+            highlight(typeReference, infoType)
+        }
+    }
+
+    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): Unit = with(session) {
+        if (expression.isCalleeExpression()) return
+        val parent = expression.parent
+
+        if (parent is KtInstanceExpressionWithLabel) {
+            // Do nothing: 'super' and 'this' are highlighted as a keyword
+            return
+        }
+
+        if (expression.isPartOfIntersectionType()) {
+            // highlighted by visitIntersectionType()
+            return
+        }
+
+        if (expression.isConstructorCallReference()) {
+            // Do not highlight constructor call as class reference
+            return
+        }
+
+        val symbol = expression.mainReference.resolveToSymbol() as? KaClassifierSymbol ?: return
+
+        if (isAnnotationCall(expression, symbol)) {
+            // highlighted by AnnotationEntryHighlightingVisitor
+            return
+        }
+
+        val color = symbol.toInfoType()
+
+        highlight(expression, color)
+    }
+
+    private fun KaClassifierSymbol.toInfoType(): HighlightInfoType = when (this) {
+        is KaAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
+        is KaNamedClassSymbol -> when (this.classKind) {
+            KaClassKind.CLASS -> if (this.isData) {
+                KotlinHighlightInfoTypeSemanticNames.DATA_CLASS
+            } else {
+                when (this.modality) {
+                    KaSymbolModality.FINAL, KaSymbolModality.SEALED, KaSymbolModality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
+                    KaSymbolModality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+                }
+            }
+
+            KaClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
+            KaClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+            KaClassKind.OBJECT ->
+                if (this.isData) KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT else KotlinHighlightInfoTypeSemanticNames.OBJECT
+
+            KaClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+            KaClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
+            KaClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
+        }
+
+        is KaTypeAliasSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
+        is KaTypeParameterSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
+    }
+
+    private fun highlight(element: PsiElement, color: HighlightInfoType) {
+        holder.add(highlightName(element, color)?.create())
+    }
+
+    private fun KaSession.isAnnotationCall(expression: KtSimpleNameExpression, target: KaSymbol): Boolean {
+        val isKotlinAnnotation = target is KaConstructorSymbol
+                && target.isPrimary
+                && (target.containingDeclaration as? KaClassSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS
+
+        if (!isKotlinAnnotation) {
+            val targetIsAnnotation = when (val targetPsi = target.psi) {
+                is KtClass -> targetPsi.isAnnotation()
+                is PsiClass -> targetPsi.isAnnotationType
+                else -> false
+            }
+
+            if (!targetIsAnnotation) {
+                return false
+            }
+        }
+
+        val annotationEntry = PsiTreeUtil.getParentOfType(
+            expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
+        )
+        return annotationEntry?.atSymbol != null
+    }
+}
+
+fun KtSimpleNameExpression.isCalleeExpression(): Boolean =
+    (parent as? KtCallExpression)?.calleeExpression == this
+
+fun KtSimpleNameExpression.isConstructorCallReference(): Boolean {
+    val type = parent as? KtUserType ?: return false
+    val typeReference = type.parent as? KtTypeReference ?: return false
+    val constructorCallee = typeReference.parent as? KtConstructorCalleeExpression ?: return false
+    return constructorCallee.constructorReferenceExpression == this
+}
+
+private fun KtSimpleNameExpression.isPartOfIntersectionType(): Boolean {
+    val type = parent as? KtUserType ?: return false
+    val typeReference = type.parent as? KtTypeReference ?: return false
+    return typeReference.parent is KtIntersectionType
+}

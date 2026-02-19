@@ -1,14 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.UClassInitializer
+import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UDeclarationEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UParameterEx
+import org.jetbrains.uast.UTypeReferenceExpression
+import org.jetbrains.uast.UastFacade
 
-class GrUClass(val grElement: GrTypeDefinition,
+class GrUClass(private val grElement: GrTypeDefinition,
                parentProvider: () -> UElement?) : UClass, UAnchorOwner, UDeclarationEx, PsiClass by grElement {
 
   override val sourcePsi: GrTypeDefinition = grElement
@@ -30,7 +49,7 @@ class GrUClass(val grElement: GrTypeDefinition,
     }
   }
 
-  override val uastAnchor: UIdentifier?
+  override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val uastParent: UElement? by lazy(parentProvider)
@@ -51,7 +70,7 @@ class GrUClass(val grElement: GrTypeDefinition,
 }
 
 
-class GrUMethod(val grElement: GrMethod,
+class GrUMethod(private val grElement: GrMethod,
                 parentProvider: () -> UElement?) : UMethod, UAnchorOwner, UDeclarationEx, PsiMethod by grElement {
   override val uastParent: UElement? by lazy(parentProvider)
 
@@ -75,7 +94,7 @@ class GrUMethod(val grElement: GrMethod,
 
 }
 
-class GrUParameter(val grElement: GrParameter,
+class GrUParameter(private val grElement: GrParameter,
                    parentProvider: () -> UElement?) : UParameterEx, UAnchorOwner, PsiParameter by grElement {
   override val uastParent: UElement? by lazy(parentProvider)
 

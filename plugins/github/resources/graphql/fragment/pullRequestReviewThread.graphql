@@ -1,9 +1,0 @@
-fragment pullRequestReviewThread on PullRequestReviewThread {
-    ...nodeInfo
-    isResolved
-    comments(first: 100) {
-        nodes {
-            ...pullRequestReviewComment
-        }
-    }
-}

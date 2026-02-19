@@ -1,10 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEmptyStatement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLabeledStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiParameterListOwner;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchStatement;
+import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +47,17 @@ public final class BlockUtils {
    */
   public static PsiStatement addBefore(PsiStatement anchor, PsiStatement... newStatements) {
     if (newStatements.length == 0) throw new IllegalArgumentException();
+    if (anchor instanceof PsiBlockStatement) {
+      PsiCodeBlock codeBlock = ((PsiBlockStatement)anchor).getCodeBlock();
+      PsiJavaToken brace = codeBlock.getLBrace();
+      if (brace != null) {
+        PsiElement result = brace;
+        for (PsiStatement statement : newStatements) {
+          result = codeBlock.addAfter(statement, result);
+        }
+        return (PsiStatement)result;
+      }
+    }
     PsiStatement oldStatement = anchor;
     PsiElement parent = oldStatement.getParent();
     while (parent instanceof PsiLabeledStatement) {
@@ -87,8 +123,7 @@ public final class BlockUtils {
     return (T)result.getCodeBlock().getStatements()[0];
   }
 
-  @Nullable
-  public static PsiElement getBody(PsiElement element) {
+  public static @Nullable PsiElement getBody(PsiElement element) {
     if (element instanceof PsiLoopStatement) {
       final PsiStatement loopBody = ((PsiLoopStatement)element).getBody();
       return loopBody instanceof PsiBlockStatement ? ((PsiBlockStatement)loopBody).getCodeBlock() : loopBody;
@@ -112,6 +147,8 @@ public final class BlockUtils {
   }
 
   public static void unwrapTryBlock(PsiTryStatement tryStatement) {
+    PsiUtilCore.ensureValid(tryStatement);
+
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
       return;
@@ -196,22 +233,28 @@ public final class BlockUtils {
     return false;
   }
 
-  public static void inlineCodeBlock(@NotNull PsiStatement orig, PsiCodeBlock codeBlock) {
+  /**
+   * Method inlines the statements inside <code>codeBlock</code> replacing <code>statement</code>.
+   *
+   * @param statement statement to delete
+   * @param codeBlock a block with statements to inline
+   * @return a first inlined statement, or null if <code>codeBlock</code> doesn't contain any statements.
+   */
+  public static @Nullable PsiElement inlineCodeBlock(@NotNull PsiStatement statement, @NotNull PsiCodeBlock codeBlock) {
     PsiJavaToken lBrace = codeBlock.getLBrace();
     PsiJavaToken rBrace = codeBlock.getRBrace();
-    if (lBrace == null || rBrace == null) return;
+    if (lBrace == null || rBrace == null) return null;
 
-    final PsiElement[] children = codeBlock.getChildren();
-    if (children.length > 2) {
-      final PsiElement added =
-        orig.getParent().addRangeBefore(
-          children[1],
-          children[children.length - 2],
-          orig);
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
+    final PsiElement first = PsiTreeUtil.skipWhitespacesForward(lBrace);
+    PsiElement added = null;
+    if (first != rBrace) {
+      assert first != null;
+      added = statement.getParent().addRangeBefore(first, rBrace.getPrevSibling(), statement);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(statement.getManager());
       codeStyleManager.reformat(added);
     }
-    orig.delete();
+    statement.delete();
+    return added;
   }
 
   public static PsiBlockStatement createBlockStatement(Project project) {

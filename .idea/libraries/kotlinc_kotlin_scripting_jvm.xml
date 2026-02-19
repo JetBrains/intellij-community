@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-scripting-jvm" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.4.0-dev-3554">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.0-dev-3554/kotlin-scripting-jvm-2.4.0-dev-3554.jar">
+          <sha256sum>e72503a273abca9a9485e0994db3a8d63bfce190254e60f912ebab880a950492</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.0-dev-3554/kotlin-scripting-jvm-2.4.0-dev-3554.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.0-dev-3554/kotlin-scripting-jvm-2.4.0-dev-3554-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

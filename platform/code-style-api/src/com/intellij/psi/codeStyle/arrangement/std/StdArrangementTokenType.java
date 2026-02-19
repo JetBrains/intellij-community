@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,19 +7,17 @@ import org.jetbrains.annotations.NotNull;
  * Type of {@link StdArrangementSettingsToken}. Defines UI role used to display the token. Used to differentiate between semantically
  * different tokens when constructing matchers.
  * (see {@link com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher.StdMatcherBuilderImpl}).
- *
- * @author Roman.Shein
  */
 public class StdArrangementTokenType {
-  @NotNull private final StdArrangementTokenUiRole myUiRole;
-  @NotNull private final String myId;
+  private final @NotNull StdArrangementTokenUiRole myUiRole;
+  private final @NotNull String myId;
 
   public StdArrangementTokenType(@NotNull StdArrangementTokenUiRole uiRole, @NotNull String id) {
     myUiRole = uiRole;
     myId = id;
   }
 
-  @NotNull public StdArrangementTokenUiRole getUiRole() {
+  public @NotNull StdArrangementTokenUiRole getUiRole() {
     return myUiRole;
   }
 
@@ -49,10 +33,9 @@ public class StdArrangementTokenType {
   @Override
   public boolean equals(Object o) {
     if (this == o) {return true;}
-    if (!(o instanceof StdArrangementTokenType)) {
+    if (!(o instanceof StdArrangementTokenType oType)) {
       return false;
     }
-    StdArrangementTokenType oType = (StdArrangementTokenType) o;
     return oType.myId.equals(myId) && myUiRole == oType.myUiRole;
   }
 

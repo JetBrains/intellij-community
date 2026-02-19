@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
@@ -6,13 +6,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.psi.search.UsageSearchContext.*;
+import static com.intellij.psi.search.UsageSearchContext.IN_CODE;
+import static com.intellij.psi.search.UsageSearchContext.IN_COMMENTS;
+import static com.intellij.psi.search.UsageSearchContext.IN_PLAIN_TEXT;
+import static com.intellij.psi.search.UsageSearchContext.IN_STRINGS;
 
 /**
  * @author Maxim.Mossienko
@@ -33,8 +36,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     myProject = project;
 
     if (scope instanceof GlobalSearchScope) {
-      filesToScan = new THashSet<>();
-      filesToScan2 = new THashSet<>();
+      filesToScan = new HashSet<>();
+      filesToScan2 = new HashSet<>();
     }
   }
 
@@ -96,9 +99,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     filesToScan2 = map;
   }
 
-  @NotNull
   @Override
-  public Set<VirtualFile> getFilesSetToScan() {
+  public @NotNull Set<VirtualFile> getFilesSetToScan() {
     assert !myTransactionStarted;
     if (filesToScan == null) {
       return Collections.emptySet();

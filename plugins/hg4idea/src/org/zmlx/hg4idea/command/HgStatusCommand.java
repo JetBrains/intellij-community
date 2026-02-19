@@ -26,12 +26,24 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgChange;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileStatusEnum;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.STATUS_CMD_ERROR;
 
 public final class HgStatusCommand {
 
@@ -40,7 +52,7 @@ public final class HgStatusCommand {
   private static final int ITEM_COUNT = 3;
   private static final int STATUS_INDEX = 0;
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private final boolean myIncludeAdded;
   private final boolean myIncludeModified;
@@ -51,8 +63,8 @@ public final class HgStatusCommand {
   private final boolean myIncludeCopySource;
   private boolean myCleanStatus = false; // should be always false, except checking file existence in revision
 
-  @Nullable private final HgRevisionNumber myBaseRevision;
-  @Nullable private final HgRevisionNumber myTargetRevision;
+  private final @Nullable HgRevisionNumber myBaseRevision;
+  private final @Nullable HgRevisionNumber myTargetRevision;
 
   public void cleanFilesOption(boolean clean) {
     myCleanStatus = clean;
@@ -208,7 +220,7 @@ public final class HgStatusCommand {
         String title = HgBundle.message("action.hg4idea.status.error");
         LOG.warn(title + errors.toString());
         String message = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errors, HtmlChunk::text)).toString();
-        VcsNotifier.getInstance(myProject).logInfo("hg.status.command.error", title, message);
+        VcsNotifier.getInstance(myProject).logInfo(STATUS_CMD_ERROR, title, message);
         return changes;
       }
       LOG.debug(errors.toString());
@@ -238,24 +250,20 @@ public final class HgStatusCommand {
     return changes;
   }
 
-  @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo) {
+  public @NotNull Collection<VirtualFile> getFiles(@NotNull VirtualFile repo) {
     return getFiles(repo, (Collection<FilePath>)null);
   }
 
-  @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
+  public @NotNull Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable List<VirtualFile> files) {
     //noinspection RedundantTypeArguments incorrect inspection, javac fails
     return getFiles(repo, files != null ? ContainerUtil.<VirtualFile, FilePath>map(files, VcsUtil::getFilePath) : null);
   }
 
-  @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
+  public @NotNull Collection<VirtualFile> getFiles(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
     return ContainerUtil.mapNotNull(getFilePaths(repo, paths), FilePath::getVirtualFile);
   }
 
-  @NotNull
-  public Collection<FilePath> getFilePaths(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
+  public @NotNull Collection<FilePath> getFilePaths(@NotNull VirtualFile repo, @Nullable Collection<FilePath> paths) {
     Collection<FilePath> resultFiles = new HashSet<>();
     Set<HgChange> change = executeInCurrentThread(repo, paths);
     for (HgChange hgChange : change) {

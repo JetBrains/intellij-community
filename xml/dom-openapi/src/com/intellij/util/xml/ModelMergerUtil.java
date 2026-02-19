@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.util.CommonProcessors;
@@ -22,16 +8,17 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-/**
- * @author peter
- */
-public class ModelMergerUtil {
+public final class ModelMergerUtil {
 
-  @Nullable
-  public static <T> T getFirstImplementation(final T t) {
+  public static @Nullable <T> T getFirstImplementation(final T t) {
     T cur = t;
     while (cur instanceof MergedObject) {
       final List<T> implementations = ((MergedObject<T>)cur).getImplementations();
@@ -40,8 +27,7 @@ public class ModelMergerUtil {
     return cur;
   }
 
-  @Nullable
-  public static <T, V> V getImplementation(final Class<V> clazz, final Collection<T> elements) {
+  public static @Nullable <T, V> V getImplementation(final Class<V> clazz, final Collection<T> elements) {
     for (final T element : elements) {
       final V implementation = getImplementation(element, clazz);
       if (implementation != null) {
@@ -51,15 +37,13 @@ public class ModelMergerUtil {
     return null;
   }
 
-  @Nullable
-  public static <T, V> V getImplementation(final Class<V> clazz, final T... elements) {
+  public static @Nullable <T, V> V getImplementation(final Class<V> clazz, final T... elements) {
     return getImplementation(clazz, Arrays.asList(elements));
   }
 
-  @Nullable
-  public static <T, V> V getImplementation(final T element, final Class<V> clazz) {
+  public static @Nullable <T, V> V getImplementation(final T element, final Class<V> clazz) {
     if (element == null) return null;
-    CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>() {
+    CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<>() {
       @Override
       public boolean process(final T t) {
         return !ReflectionUtil.isAssignable(clazz, t.getClass()) || super.process(t);
@@ -69,10 +53,9 @@ public class ModelMergerUtil {
     return (V)processor.getFoundValue();
   }
 
-  @NotNull
-  public static <T, V> Collection<V> getImplementations(final T element, final Class<V> clazz) {
+  public static @NotNull <T, V> Collection<V> getImplementations(final T element, final Class<V> clazz) {
     if (element == null) return Collections.emptyList();
-    CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<T>() {
+    CommonProcessors.CollectProcessor<T> processor = new CommonProcessors.CollectProcessor<>() {
       @Override
       public boolean process(final T t) {
         return !ReflectionUtil.isAssignable(clazz, t.getClass()) || super.process(t);
@@ -82,8 +65,7 @@ public class ModelMergerUtil {
     return (Collection<V>)processor.getResults();
   }
 
-  @NotNull
-  public static <T> List<T> getImplementations(T element) {
+  public static @Unmodifiable @NotNull <T> List<T> getImplementations(T element) {
     if (element instanceof MergedObject) {
       final MergedObject<T> mergedObject = (MergedObject<T>)element;
       return mergedObject.getImplementations();
@@ -96,8 +78,7 @@ public class ModelMergerUtil {
     }
   }
 
-  @NotNull
-  public static <T> List<T> getFilteredImplementations(final T element) {
+  public static @NotNull <T> List<T> getFilteredImplementations(final T element) {
     if (element == null) return Collections.emptyList();
     List<T> result = new ArrayList<>();
     Processor<T> processor = Processors.cancelableCollectProcessor(result);
@@ -105,8 +86,7 @@ public class ModelMergerUtil {
     return result;
   }
 
-  @NotNull
-  public static <T> Processor<T> createFilteringProcessor(final Processor<? super T> processor) {
+  public static @NotNull <T> Processor<T> createFilteringProcessor(final Processor<? super T> processor) {
     return new ImplementationProcessor<>(processor, false);
   }
 

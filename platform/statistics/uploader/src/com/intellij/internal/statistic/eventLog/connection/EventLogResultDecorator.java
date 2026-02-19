@@ -12,7 +12,7 @@ public interface EventLogResultDecorator {
 
   void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content, @NotNull String logPath);
 
-  void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content);
+  void onFailed(@Nullable LogEventRecordRequest request, int error, @Nullable String content);
 
   @NotNull
   StatisticsResult onFinished();

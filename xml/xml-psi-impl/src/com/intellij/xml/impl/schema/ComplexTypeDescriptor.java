@@ -1,16 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.resolve.XmlResolveReferenceSupport;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -22,49 +28,56 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class ComplexTypeDescriptor extends TypeDescriptor {
   protected final XmlNSDescriptorImpl myDocumentDescriptor;
 
   private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
-    new FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement>() {
+    new FieldCache<>() {
 
-    @Override
-    protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement context) {
-      return complexTypeDescriptor.doCollectElements(context);
-    }
+      @Override
+      protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement context) {
+        return complexTypeDescriptor.doCollectElements(context);
+      }
 
-    @Override
-    protected XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      return complexTypeDescriptor.myElementDescriptors;
-    }
+      @Override
+      protected XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        return complexTypeDescriptor.myElementDescriptors;
+      }
 
-    @Override
-    protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
-                            final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
-    }
-  };
+      @Override
+      protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
+                              final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
+      }
+    };
 
   private static final FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement> myAttributeDescriptorsCache =
-    new FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement>() {
-    @Override
-    protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
-      return complexTypeDescriptor.doCollectAttributes();
-    }
+    new FieldCache<>() {
+      @Override
+      protected XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
+        return complexTypeDescriptor.doCollectAttributes();
+      }
 
-    @Override
-    protected final XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
-      return complexTypeDescriptor.myAttributeDescriptors;
-    }
+      @Override
+      protected XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
+        return complexTypeDescriptor.myAttributeDescriptors;
+      }
 
-    @Override
-    protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
-                            final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
-    }
-  };
+      @Override
+      protected void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
+                              final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
+      }
+    };
 
   private final Map<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache =
     ConcurrentFactoryMap.createMap(key -> CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
@@ -81,20 +94,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   private volatile XmlElementDescriptor[] myElementDescriptors;
   private volatile XmlAttributeDescriptor[] myAttributeDescriptors;
-  @NonNls
-  private static final String PROHIBITED_ATTR_VALUE = "prohibited";
-  @NonNls
-  private static final String OTHER_NAMESPACE_ATTR_VALUE = "##other";
+  private static final @NonNls String PROHIBITED_ATTR_VALUE = "prohibited";
+  private static final @NonNls String OTHER_NAMESPACE_ATTR_VALUE = "##other";
 
-  @NonNls private static final String TRUE_ATTR_VALUE = "true";
-  @NonNls private static final String REF_ATTR_NAME = "ref";
-  @NonNls private static final String NAME_ATTR_NAME = "name";
-  @NonNls private static final String ELEMENT_TAG_NAME = "element";
-  @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
+  private static final @NonNls String TRUE_ATTR_VALUE = "true";
+  private static final @NonNls String REF_ATTR_NAME = "ref";
+  private static final @NonNls String NAME_ATTR_NAME = "name";
+  private static final @NonNls String ELEMENT_TAG_NAME = "element";
+  private static final @NonNls String ATTRIBUTE_TAG_NAME = "attribute";
   private boolean myHasAnyInContentModel;
-  @NonNls private static final String RESTRICTION_TAG_NAME = "restriction";
-  @NonNls private static final String EXTENSION_TAG_NAME = "extension";
-  @NonNls private static final String BASE_ATTR_NAME = "base";
+  private static final @NonNls String RESTRICTION_TAG_NAME = "restriction";
+  private static final @NonNls String EXTENSION_TAG_NAME = "extension";
+  private static final @NonNls String BASE_ATTR_NAME = "base";
 
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
     super(tag);
@@ -102,14 +113,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   @SuppressWarnings("ConstantConditions")
-  @NotNull
   @Override
-  public XmlTag getDeclaration() {
+  public @NotNull XmlTag getDeclaration() {
     return super.getDeclaration();
   }
 
-  @Nullable
-  public XmlElementsGroup getTopGroup() {
+  public @Nullable XmlElementsGroup getTopGroup() {
     return XmlElementsGroupProcessor.computeGroups(myDocumentDescriptor, myTag);
   }
 
@@ -336,8 +345,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       if (base != null) {
         TypeDescriptor descriptor = info.documentDescriptor.findTypeDescriptor(base);
 
-        if (descriptor instanceof ComplexTypeDescriptor) {
-          ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
+        if (descriptor instanceof ComplexTypeDescriptor complexTypeDescriptor) {
           if (complexTypeDescriptor._canContainTag(localName, namespace, complexTypeDescriptor.myTag, context, visited,
                                                    getContextInfo(info, base), restriction || XmlNSDescriptorImpl.equalsToSchemaName(tag,
                                                                                                                       RESTRICTION_TAG_NAME))) {
@@ -354,7 +362,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         XmlAttributeValue element = ref.getValueElement();
         final PsiElement psiElement;
         if (element != null) {
-          psiElement = SchemaReferencesProvider.createTypeOrElementOrAttributeReference(element).resolve();
+          psiElement = ApplicationManager.getApplication().getService(XmlResolveReferenceSupport.class).resolveSchemaTypeOrElementOrAttributeReference(element);
           if (psiElement instanceof XmlTag) descriptorTag = (XmlTag)psiElement;
         }
       }
@@ -447,8 +455,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         visited.add(base);
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(base);
 
-        if (descriptor instanceof ComplexTypeDescriptor) {
-          ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
+        if (descriptor instanceof ComplexTypeDescriptor complexTypeDescriptor) {
           if (dependencies != null) {
             XmlTag declaration = complexTypeDescriptor.getDeclaration();
             dependencies.add(declaration.getContainingFile());

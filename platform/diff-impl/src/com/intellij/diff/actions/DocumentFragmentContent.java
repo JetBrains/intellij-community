@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions;
 
 import com.intellij.diff.contents.DiffContentBase;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.LineCol;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,20 +16,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import gnu.trove.TIntFunction;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.IntUnaryOperator;
 
 /**
  * Represents sub text of other content.
  */
-public class DocumentFragmentContent extends DiffContentBase implements DocumentContent {
-  // TODO: reuse DocumentWindow ?
+@ApiStatus.Internal
+public final class DocumentFragmentContent extends DiffContentBase implements DocumentContent {
+  private final @NotNull DocumentContent myOriginal;
+  private final @NotNull RangeMarker myRangeMarker;
 
-  @NotNull private final DocumentContent myOriginal;
-  @NotNull private final RangeMarker myRangeMarker;
-
-  @NotNull private final MyDocumentsSynchronizer mySynchronizer;
+  private final @NotNull MyDocumentsSynchronizer mySynchronizer;
 
   private int myAssignments = 0;
 
@@ -56,43 +44,37 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
     myRangeMarker = rangeMarker;
 
     Document document1 = myOriginal.getDocument();
-
-    Document document2 = EditorFactory.getInstance().createDocument("");
-    document2.putUserData(UndoManager.ORIGINAL_DOCUMENT, document1);
+    Document document2 = DocumentsSynchronizer.createFakeDocument(document1);
 
     mySynchronizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, document2);
 
-    TIntFunction originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
+    IntUnaryOperator originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
     putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, value -> {
       if (!myRangeMarker.isValid()) return -1;
       int line = value + document1.getLineNumber(myRangeMarker.getStartOffset());
-      return originalLineConvertor != null ? originalLineConvertor.execute(line) : line;
+      return originalLineConvertor != null ? originalLineConvertor.applyAsInt(line) : line;
     });
   }
 
-  @NotNull
-  private static RangeMarker createRangeMarker(@NotNull Document document, @NotNull TextRange range) {
+  private static @NotNull RangeMarker createRangeMarker(@NotNull Document document, @NotNull TextRange range) {
     RangeMarker rangeMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
     rangeMarker.setGreedyToLeft(true);
     rangeMarker.setGreedyToRight(true);
     return rangeMarker;
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return mySynchronizer.getDocument2();
   }
 
-  @Nullable
   @Override
-  public VirtualFile getHighlightFile() {
+  public @Nullable VirtualFile getHighlightFile() {
     return myOriginal.getHighlightFile();
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull LineCol position) {
+  public @Nullable Navigatable getNavigatable(@NotNull LineCol position) {
     if (!myRangeMarker.isValid()) return null;
     int offset = position.toOffset(getDocument());
     int originalOffset = offset + myRangeMarker.getStartOffset();
@@ -100,15 +82,13 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
     return myOriginal.getNavigatable(originalPosition);
   }
 
-  @Nullable
   @Override
-  public FileType getContentType() {
+  public @Nullable FileType getContentType() {
     return myOriginal.getContentType();
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getNavigatable(new LineCol(0));
   }
 
@@ -126,12 +106,12 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
   }
 
   private static class MyDocumentsSynchronizer extends DocumentsSynchronizer {
-    @NotNull private final RangeMarker myRangeMarker;
+    private final @NotNull RangeMarker myRangeMarker;
 
     MyDocumentsSynchronizer(@Nullable Project project,
-                                   @NotNull RangeMarker range,
-                                   @NotNull Document document1,
-                                   @NotNull Document document2) {
+                            @NotNull RangeMarker range,
+                            @NotNull Document document1,
+                            @NotNull Document document2) {
       super(project, document1, document2);
       myRangeMarker = range;
     }
@@ -140,8 +120,13 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
     protected void onDocumentChanged1(@NotNull DocumentEvent event) {
       if (!myRangeMarker.isValid()) {
         myDocument2.setReadOnly(false);
-        replaceString(myDocument2, 0, myDocument2.getTextLength(), DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
-        myDocument2.setReadOnly(true);
+        try {
+          replaceString(myDocument2, 0, myDocument2.getTextLength(),
+                        DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
+        }
+        finally {
+          myDocument2.setReadOnly(true);
+        }
         return;
       }
       CharSequence newText = myDocument1.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset());
@@ -161,18 +146,41 @@ public class DocumentFragmentContent extends DiffContentBase implements Document
 
     @Override
     public void startListen() {
-      if (myRangeMarker.isValid()) {
-        myDocument2.setReadOnly(false);
-        CharSequence nexText = myDocument1.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset());
-        replaceString(myDocument2, 0, myDocument2.getTextLength(), nexText);
-        myDocument2.setReadOnly(!myDocument1.isWritable());
-      }
-      else {
-        myDocument2.setReadOnly(false);
-        replaceString(myDocument2, 0, myDocument2.getTextLength(), DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
-        myDocument2.setReadOnly(true);
-      }
+      // no need to set myDuringModification - listeners are not added yet
+      CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (myRangeMarker.isValid()) {
+            myDocument2.setReadOnly(false);
+            CharSequence nexText = myRangeMarker.getTextRange().subSequence(myDocument1.getCharsSequence());
+            myDocument2.setText(nexText);
+            myDocument2.setReadOnly(!myDocument1.isWritable());
+          }
+          else {
+            myDocument2.setReadOnly(false);
+            try {
+              myDocument2.setText(DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
+            } finally {
+              myDocument2.setReadOnly(true);
+            }
+          }
+        });
+      });
+
       super.startListen();
+    }
+
+    @RequiresEdt
+    private void replaceString(@NotNull Document document,
+                               int startOffset,
+                               int endOffset,
+                               @NotNull CharSequence newText) {
+      try {
+        myDuringModification = true;
+        document.replaceString(startOffset, endOffset, newText);
+      }
+      finally {
+        myDuringModification = false;
+      }
     }
   }
 }

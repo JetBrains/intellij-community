@@ -20,9 +20,6 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public interface EvaluatedXmlName {
 
   XmlName getXmlName();

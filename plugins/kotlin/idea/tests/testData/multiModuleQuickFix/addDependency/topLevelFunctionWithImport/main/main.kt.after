@@ -1,0 +1,11 @@
+// "Add dependency on module 'jvm'" "true"
+// DISABLE_ERRORS
+package bar
+
+import bar.foo.fooMethod
+
+fun main() {
+  <caret>fooMethod()
+}
+
+// IGNORE_K1

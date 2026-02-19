@@ -1,0 +1,12 @@
+// PROBLEM: Variable 'foo' is assigned to itself
+// IGNORE_K1
+
+class Foo {
+    var foo: Int = 1
+}
+
+fun test(a: Any) {
+    if (a is Foo) {
+        a.foo = <caret>a.foo
+    }
+}

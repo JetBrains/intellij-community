@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
@@ -21,6 +7,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
@@ -34,15 +21,17 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
   private final CachedValue<Boolean> myHidden = new CachedValueImpl<>(
-    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.INSTANCE));
+    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.getInstance()));
   private final Condition<RefactoringSupportProvider> myCondition = provider -> getRefactoringHandler(provider) != null;
+
+  public BasePlatformRefactoringAction() {
+    setInjectedContext(true);
+  }
 
   @Override
   protected final RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
@@ -67,7 +56,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
       }
     }
 
-    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null && psiElements.length > 1) {
       RefactoringActionHandler handler = getHandler(psiElements[0].getLanguage(), psiElements[0]);
       if (handler != null && isEnabledOnElements(psiElements)) {
@@ -92,11 +81,10 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     return null;
   }
 
-  @Nullable
-  protected RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+  protected @Nullable RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
     if (providers.isEmpty()) return null;
-    if (element == null) return getRefactoringHandler(providers.get(0));
+    if (element == null) return getRefactoringHandler(providers.getFirst());
     for (RefactoringSupportProvider provider : providers) {
       if (provider.isAvailable(element)) {
         return getRefactoringHandler(provider, element);
@@ -112,7 +100,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected boolean isAvailableForLanguage(final Language language) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
     return ContainerUtil.find(providers, myCondition) != null;
   }
 
@@ -126,11 +114,9 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     return false;
   }
 
-  @Nullable
-  protected abstract RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider);
+  protected abstract @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider);
 
-  @Nullable
-  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
+  protected @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
     return getRefactoringHandler(provider);
   }
 
@@ -140,7 +126,17 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   }
 
   private boolean calcHidden() {
-    for(Language l: Language.getRegisteredLanguages()) {
+    List<Language> languages = new ArrayList<>(Language.getRegisteredLanguages());
+    languages.sort((o1, o2) -> {
+      // Java supports most of refactorings,
+      // so it is faster to just check it first without loading all language extensions
+      if ("JAVA".equals(o1.getID())) return -1;
+      if ("JAVA".equals(o2.getID())) return 1;
+
+      return o1.getID().compareTo(o2.getID());
+    });
+
+    for (Language l: languages) {
       if (isAvailableForLanguage(l)) {
         return false;
       }

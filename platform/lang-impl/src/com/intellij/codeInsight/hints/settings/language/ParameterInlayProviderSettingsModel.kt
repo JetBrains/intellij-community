@@ -1,30 +1,66 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.hints.HintInfoFilter
+import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayParameterHintsProvider
+import com.intellij.codeInsight.hints.Option
+import com.intellij.codeInsight.hints.ParameterHintsPass
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory
+import com.intellij.codeInsight.hints.getLanguageForSettingKey
+import com.intellij.codeInsight.hints.isParameterHintsEnabledForLanguage
+import com.intellij.codeInsight.hints.parameters.collectExcludeListConfig
+import com.intellij.codeInsight.hints.setShowParameterHintsForLanguage
+import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.ParameterHintsSettingsPanel
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ParameterInlayProviderSettingsModel(
   val provider: InlayParameterHintsProvider,
-  val language: Language
-) : InlayProviderSettingsModel(
-  isParameterHintsEnabledForLanguage(language), "parameter.hints.old") {
+  language: Language
+) : InlayProviderSettingsModel(isParameterHintsEnabledForLanguage(language), ID, language) {
+  companion object {
+    val ID: String = "parameter.hints.old"
+  }
+
+  @Deprecated("Not used in new UI")
   override val mainCheckBoxLabel: String
     get() = provider.mainCheckboxText
   override val name: String
     get() = CodeInsightBundle.message("settings.inlay.parameter.hints.panel.name")
-
+  override val group: InlayGroup
+    get() = InlayGroup.PARAMETERS_GROUP
   override val previewText: String?
     get() = null
-  override val component by lazy {
+
+  override fun getCasePreview(case: ImmediateConfigurable.Case?): String? {
+    return getCasePreview(language, provider, case)
+  }
+
+  override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language {
+    return language
+  }
+
+  override fun getCaseDescription(case: ImmediateConfigurable.Case): String? {
+    return provider.getProperty("inlay.parameters." + case.id)
+  }
+
+  override val component: ParameterHintsSettingsPanel by lazy {
     ParameterHintsSettingsPanel(
-      language = language,
-      blackListSupported = provider.isBlackListSupported
+      collectExcludeListConfig(language, provider),
     )
   }
 
@@ -40,8 +76,40 @@ class ParameterInlayProviderSettingsModel(
     )
   }
 
-  override fun collectAndApply(editor: Editor, file: PsiFile) = throw UnsupportedOperationException()
+  override fun collectData(editor: Editor, file: PsiFile): Runnable {
+    fun createPass(): ParameterHintsPass {
+      return ParameterHintsPass(file, editor, HintInfoFilter { true }, true).also {
+        it.setContext(defaultContext())
+      }
+    }
 
+    val pass = createPass()
+    ProgressManager.getInstance().runProcess({
+                                               val backup = ParameterInlayProviderSettingsModel(provider, language)
+                                               val enabled = ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
+                                               backup.reset()
+                                               try {
+                                                 apply()
+                                                 val case = CASE_KEY.get(editor)
+                                                 ParameterHintsPresentationManager.getInstance().setPreviewMode(editor, !isEnabled || case != null && !case.value)
+                                                 provider.supportedOptions.forEach { it.set(true) }
+                                                 setShowParameterHintsForLanguage(true, language)
+                                                 pass.collectInformation(ProgressIndicatorBase())
+                                               }
+                                               finally {
+                                                 backup.apply()
+                                                 setShowParameterHintsForLanguage(enabled, language)
+                                               }
+                                             }, DaemonProgressIndicator())
+
+    val passToCleanupHints = createPass()
+    return Runnable {
+      passToCleanupHints.doApplyInformationToEditor()
+      pass.doApplyInformationToEditor()
+    }
+  }
+
+  override val description: String? = provider.description
 
   override fun toString(): String = name
 

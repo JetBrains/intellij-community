@@ -1,23 +1,14 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.html.impl.providers.HtmlAttributeValueProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -26,6 +17,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -44,7 +36,7 @@ import java.util.StringTokenizer;
 import static com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor.isInjectedWithoutValidation;
 
 public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
-  @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(REQUIRED_ATTRIBUTES_SHORT_NAME);
+  public static final @NonNls Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(REQUIRED_ATTRIBUTES_SHORT_NAME);
   protected static final Logger LOG = Logger.getInstance(RequiredAttributesInspectionBase.class);
   public @NlsSafe String myAdditionalRequiredHtmlAttributes = "";
 
@@ -59,9 +51,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return REQUIRED_ATTRIBUTES_SHORT_NAME;
   }
 
@@ -75,7 +65,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
     myAdditionalRequiredHtmlAttributes = appendName(getAdditionalEntries(), text);
   }
 
-  public static LocalQuickFix getIntentionAction(String name) {
+  public static @NotNull LocalQuickFix getIntentionAction(String name) {
     return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlAnalysisBundle.message(
       "html.quickfix.add.optional.html.attribute", name));
   }
@@ -108,16 +98,16 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
     }
 
     if (requiredAttributes != null) {
-      for (final String attrName : requiredAttributes) {
+      for (String attrName : requiredAttributes) {
         if (!hasAttribute(tag, attrName) &&
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
-          LocalQuickFix insertRequiredAttributeIntention = isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
-          final String localizedMessage = XmlAnalysisBundle.message("xml.inspections.element.doesnt.have.required.attribute", name, attrName);
+          LocalQuickFix insertRequiredAttributeIntention =
+            isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
           reportOneTagProblem(
             tag,
             attrName,
-            localizedMessage,
+            XmlAnalysisBundle.message("xml.inspections.element.doesnt.have.required.attribute", name, attrName),
             insertRequiredAttributeIntention,
             holder,
             getIntentionAction(attrName),
@@ -129,6 +119,10 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
   }
 
   private static boolean hasAttribute(XmlTag tag, String attrName) {
+    if (JBIterable.from(HtmlAttributeValueProvider.EP_NAME.getExtensionList())
+          .filterMap(it -> it.getCustomAttributeValue(tag, attrName)).first() != null) {
+      return true;
+    }
     final XmlAttribute attribute = tag.getAttribute(attrName);
     if (attribute == null) return false;
     if (attribute.getValueElement() != null) return true;
@@ -142,26 +136,28 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
                                    @NotNull @InspectionMessage String localizedMessage,
                                    final LocalQuickFix basicIntention,
                                    ProblemsHolder holder,
-                                   final LocalQuickFix addAttributeFix,
+                                   @NotNull LocalQuickFix addAttributeFix,
                                    boolean isOnTheFly) {
     boolean htmlTag = false;
 
     if (tag instanceof HtmlTag) {
       htmlTag = true;
-      if(isAdditionallyDeclared(getAdditionalEntries(), name)) return;
+      if (isAdditionallyDeclared(getAdditionalEntries(), name)) return;
     }
 
     LocalQuickFix[] fixes;
     ProblemHighlightType highlightType;
     if (htmlTag) {
-      fixes = basicIntention == null ? new LocalQuickFix[] {addAttributeFix} : new LocalQuickFix[]{addAttributeFix, basicIntention};
+      fixes = basicIntention == null ? new LocalQuickFix[]{addAttributeFix} : new LocalQuickFix[]{addAttributeFix, basicIntention};
       highlightType = isInjectedWithoutValidation(tag) ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     }
     else {
-      fixes = basicIntention == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {basicIntention};
+      fixes = basicIntention == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{basicIntention};
       highlightType = ProblemHighlightType.ERROR;
     }
-    addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
+    if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
+      addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
+    }
   }
 
   private static void addElementsForTag(XmlTag tag,
@@ -169,7 +165,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
                                         ProblemHighlightType error,
                                         ProblemsHolder holder,
                                         boolean isOnTheFly,
-                                        LocalQuickFix... fixes) {
+                                        @NotNull LocalQuickFix @NotNull ... fixes) {
     registerProblem(message, error, holder, XmlTagUtil.getStartTagNameElement(tag), fixes);
     if (isOnTheFly) {
       registerProblem(message, error, holder, XmlTagUtil.getEndTagNameElement(tag), fixes);

@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.keymap.KeymapManager
@@ -26,8 +26,8 @@ import javax.swing.JLabel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
-                                    private val project: Project) : ComboBox<E>(model) {
+class ComboBoxWithAutoCompletion<E : Any>(model: ComboBoxModel<E>,
+                                          private val project: Project) : ComboBox<E>(model) {
 
   private val autoPopupController = AutoPopupController.getInstance(project)
 
@@ -40,6 +40,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   private var selectingItem = false
 
+  @Nls
   private var myPlaceHolder: String? = null
 
   init {
@@ -51,6 +52,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
   override fun setSelectedItem(anObject: Any?) {
     selectingItem = true
     super.setSelectedItem(anObject)
+    editor.item = anObject
     selectingItem = false
   }
 
@@ -66,13 +68,55 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
     myEditableComponent?.requestFocus()
   }
 
-  fun getText() = myEditor?.document?.text
+  @Nls
+  fun getText(): String? {
+    return myEditor?.document?.text
+  }
+
+  fun updatePreserving(update: () -> Unit) {
+    val oldItem = item
+    if (oldItem != null) {
+      update()
+      item = oldItem
+      return
+    }
+
+    val editorField = myEditableComponent
+    val editor = editorField?.editor
+    if (editor != null) {
+      val oldText = editorField.text
+      val offset = editor.caretModel.offset
+      val selectionStart = editor.selectionModel.selectionStart
+      val selectionStartPosition = editor.selectionModel.selectionStartPosition
+      val selectionEnd = editor.selectionModel.selectionEnd
+      val selectionEndPosition = editor.selectionModel.selectionEndPosition
+      update()
+      editorField.text = oldText
+      editor.caretModel.moveToOffset(offset)
+      editor.selectionModel.setSelection(selectionStartPosition, selectionStart, selectionEndPosition, selectionEnd)
+      return
+    }
+
+    update()
+  }
 
   fun setPlaceholder(@Nls placeHolder: String) {
     myPlaceHolder = placeHolder
     myEditor?.apply {
       setPlaceholder(myPlaceHolder)
     }
+  }
+
+  fun selectAll() {
+    myEditableComponent?.selectAll()
+  }
+
+  fun addDocumentListener(listener: DocumentListener) {
+    myEditableComponent?.addDocumentListener(listener)
+  }
+
+  fun removeDocumentListener(listener: DocumentListener) {
+    myEditableComponent?.removeDocumentListener(listener)
   }
 
   private fun initEditor() {
@@ -103,9 +147,9 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
   }
 
   private fun showCompletion() {
-    if (myEditor != null) {
+    myEditor?.let {
       hidePopup()
-      autoPopupController.scheduleAutoPopup(myEditor!!, CompletionType.BASIC) { true }
+      autoPopupController.scheduleAutoPopup(it)
     }
   }
 
@@ -138,10 +182,8 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
       private fun collectItems(): List<E> {
         val items = mutableListOf<E>()
-        if (model.size != 0) {
-          for (i in 0 until model.size) {
-            items += model.getElementAt(i)
-          }
+        for (i in 0 until model.size) {
+          items += model.getElementAt(i)
         }
         return items
       }
@@ -152,7 +194,8 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   private fun isFieldCleared(e: DocumentEvent) = e.oldLength != 0 && getCurrentText(e).isEmpty()
 
-  private fun isItemSelected(e: DocumentEvent) = e.oldLength == 0 && getCurrentText(e).isNotEmpty() && getCurrentText(e) in getItems().map { it.toString() }
+  private fun isItemSelected(e: DocumentEvent) = e.oldLength == 0 && getCurrentText(e).isNotEmpty() &&
+                                                 getCurrentText(e) in getItems().map { it.toString() }
 
   private fun getCurrentText(e: DocumentEvent) = getText() ?: e.newFragment
 

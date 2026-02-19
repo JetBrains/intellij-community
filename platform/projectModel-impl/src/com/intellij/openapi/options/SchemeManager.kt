@@ -1,11 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options
 
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.function.Predicate
 
+@ApiStatus.NonExtendable
 abstract class SchemeManager<T> {
-
   abstract val allSchemes: List<T>
 
   open val isEmpty: Boolean
@@ -14,7 +18,8 @@ abstract class SchemeManager<T> {
   abstract val activeScheme: T?
 
   /**
-   * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)
+   * If schemes are lazily loaded, you can use this method to delay scheme selection.
+   * The scheme will then be located by its name upon the first use.
    */
   abstract var currentSchemeName: String?
 
@@ -26,13 +31,15 @@ abstract class SchemeManager<T> {
 
   abstract fun reload()
 
-  @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
-  fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
-    @Suppress("UNCHECKED_CAST")
-    addScheme(scheme as T, replaceExisting)
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated(message = "Use reload()", replaceWith = ReplaceWith("reload()"))
+  open fun reload(retainFilter: ((scheme: T) -> Boolean)?) {
+    reload()
   }
 
-  fun addScheme(scheme: T): Unit = addScheme(scheme, true)
+  fun addScheme(scheme: T) {
+    addScheme(scheme, replaceExisting = true)
+  }
 
   abstract fun addScheme(scheme: T, replaceExisting: Boolean)
 
@@ -41,28 +48,42 @@ abstract class SchemeManager<T> {
   abstract fun setCurrentSchemeName(schemeName: String?, notify: Boolean)
 
   @JvmOverloads
-  open fun setCurrent(scheme: T?, notify: Boolean = true, processChangeSynchronously: Boolean = false) {
-  }
+  open fun setCurrent(scheme: T?, notify: Boolean = true, processChangeSynchronously: Boolean = false) { }
 
   abstract fun removeScheme(scheme: T): Boolean
 
   abstract fun removeScheme(name: String): T?
 
   /**
-   * Must be called before [.loadSchemes].
-   *
-   * Scheme manager processor must be LazySchemeProcessor
+   * Must be called before [loadSchemes].
+   * Scheme manager processor must be [com.intellij.configurationStore.LazySchemeProcessor].
    */
-  open fun loadBundledScheme(resourceName: String, requestor: Any) {}
+  @ApiStatus.Internal
+  abstract fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T?
+
+  @ApiStatus.Internal
+  interface LoadBundleSchemeRequest<T> {
+    val pluginId: PluginId
+    val schemeKey: String
+    fun loadBytes(): ByteArray
+    fun createScheme(): T
+  }
+
+  @ApiStatus.Internal
+  abstract fun loadBundledSchemes(providers: Sequence<LoadBundleSchemeRequest<T>>)
 
   @JvmOverloads
-  open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Predicate<T>? = null) {
-  }
+  open fun setSchemes(newSchemes: List<T>, newCurrentScheme: T? = null, removeCondition: Predicate<T>? = null) { }
 
   /**
    * Bundled / read-only (or overriding) scheme cannot be renamed or deleted.
    */
-  open fun isMetadataEditable(scheme: T): Boolean = true
+  abstract fun isMetadataEditable(scheme: T): Boolean
 
-  open fun save(errors: MutableList<Throwable>) {}
+  abstract fun save()
+
+  /**
+   * Returns the category which settings of this scheme belong to.
+   */
+  abstract fun getSettingsCategory(): SettingsCategory
 }

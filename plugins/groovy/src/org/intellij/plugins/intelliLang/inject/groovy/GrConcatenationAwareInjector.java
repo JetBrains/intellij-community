@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.Language;
@@ -7,18 +7,30 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils.InjectionInfo;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.java.InjectionCache;
@@ -34,19 +46,27 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public final class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
+  public void getLanguagesToInject(final @NotNull MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
     if (operands.length == 0) return;
 
     final PsiFile file = operands[0].getContainingFile();
@@ -58,12 +78,13 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     new InjectionProcessor(Configuration.getProjectInstance(project), support, operands) {
       @Override
       protected void processInjection(Language language,
-                                      List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                      List<InjectionInfo> list,
                                       boolean settingsAvailable,
                                       boolean unparsable) {
-        InjectorUtils.registerInjection(language, list, file, registrar);
-        InjectorUtils.registerSupport(support, settingsAvailable, list.get(0).getFirst(), language);
-        InjectorUtils.putInjectedFileUserData(list.get(0).getFirst(), language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable);
+        InjectorUtils.registerInjection(language, file, list, registrar, registrar -> {
+          InjectorUtils.registerSupport(registrar, support, settingsAvailable);
+          registrar.frankensteinInjection(unparsable);
+        });
       }
 
       @Override
@@ -81,8 +102,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     }.processInjections();
   }
 
-  @NotNull
-  private static String getStringPresentation(@Nullable PsiElement operand) {
+  private static @NotNull String getStringPresentation(@Nullable PsiElement operand) {
     if (operand instanceof GrStringInjection) {
       return operand.getText();
     }
@@ -107,12 +127,12 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
       final PsiElement topBlock = ControlFlowUtils.findControlFlowOwner(firstOperand);
       final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof GrCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
+      final Set<PsiModifierListOwner> visitedVars = new HashSet<>();
       final LinkedList<PsiElement> places = new LinkedList<>();
       places.add(firstOperand);
       final GrInjectionUtil.AnnotatedElementVisitor visitor = new GrInjectionUtil.AnnotatedElementVisitor() {
         @Override
-        public boolean visitMethodParameter(GrExpression expression, GrCall methodCall) {
+        public boolean visitMethodParameter(@NotNull GrExpression expression, @NotNull GrCall methodCall) {
           final GrArgumentList list = methodCall.getArgumentList();
           assert list != null;
 
@@ -139,8 +159,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
           if (methodName != null && areThereInjectionsWithName(methodName, false)) {
             final GroovyResolveResult result = methodCall.advancedResolve();
             PsiElement element = result.getElement();
-            if (element instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod)element;
+            if (element instanceof PsiMethod method) {
               final PsiParameter[] parameters = method.getParameterList().getParameters();
               int index = GrInjectionUtil.findParameterIndex(expression, methodCall);
               if (index >= 0) {
@@ -152,7 +171,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
         }
 
         @Override
-        public boolean visitMethodReturnStatement(GrReturnStatement parent, PsiMethod method) {
+        public boolean visitMethodReturnStatement(@NotNull GrReturnStatement parent, @NotNull PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
             process(method, method, -1);
           }
@@ -160,12 +179,11 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
         }
 
         @Override
-        public boolean visitVariable(PsiVariable variable) {
+        public boolean visitVariable(@NotNull PsiVariable variable) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
               final PsiElement element = psiReference.getElement();
-              if (element instanceof GrExpression) {
-                final GrExpression refExpression = (GrExpression)element;
+              if (element instanceof GrExpression refExpression) {
                 places.add(refExpression);
                 if (!myUnparsable) {
                   myUnparsable = checkUnparsableReference(refExpression);
@@ -184,7 +202,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
         }
 
         @Override
-        public boolean visitAnnotationParameter(GrAnnotationNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
+        public boolean visitAnnotationParameter(@NotNull GrAnnotationNameValuePair nameValuePair, @NotNull PsiAnnotation psiAnnotation) {
           final String paramName = nameValuePair.getName();
           final String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
           if (areThereInjectionsWithName(methodName, false)) {
@@ -198,25 +216,33 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
         }
 
         @Override
-        public boolean visitReference(GrReferenceExpression expression) {
+        public boolean visitReference(@NotNull GrReferenceExpression expression) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
           final PsiElement e = expression.resolve();
           if (e instanceof PsiVariable && !(e instanceof GrBindingVariable)) {
-            if (e instanceof PsiParameter) {
-              final PsiParameter p = (PsiParameter)e;
+            if (e instanceof PsiParameter p) {
               final PsiElement declarationScope = p.getDeclarationScope();
               final PsiMethod method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
               final PsiParameterList parameterList = method == null ? null : method.getParameterList();
-              // don't check catchblock parameters & etc.
+              // don't check catch block parameters & etc.
               if (!(parameterList == null || parameterList != e.getParent()) &&
                   areThereInjectionsWithName(method.getName(), false)) {
-                final int parameterIndex = parameterList.getParameterIndex((PsiParameter)e);
+                final int parameterIndex = parameterList.getParameterIndex(p);
                 process((PsiModifierListOwner)e, method, parameterIndex);
               }
             }
             visitVariable((PsiVariable)e);
           }
           return !myShouldStop;
+        }
+
+        @Override
+        public boolean visitBinaryExpression(@NotNull GrBinaryExpression expression) {
+          PsiMethod method = GrInjectionUtil.getMethodFromLeftShiftOperator(expression);
+          PsiParameter parameter = GrInjectionUtil.getSingleParameterFromMethod(method);
+
+          if (method != null && parameter != null) process(parameter, method, 0);
+          return false;
         }
       };
 
@@ -259,8 +285,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
 
     private static boolean checkUnparsableReference(GrExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof GrAssignmentExpression) {
-        final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)parent;
+      if (parent instanceof GrAssignmentExpression assignmentExpression) {
         final IElementType operation = assignmentExpression.getOperationTokenType();
         if (assignmentExpression.getLValue() == expression && operation == GroovyTokenTypes.mPLUS_ASSIGN ) {
           return true;
@@ -317,7 +342,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
       if (language == null) return;
 
       String languageID = language.getID();
-      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<>();
+      List<InjectionInfo> list = new ArrayList<>();
 
       boolean unparsable = false;
 
@@ -330,18 +355,18 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
           unparsable = true;
           prefix.append(getStringPresentation(operand));
           if (i == myOperands.length - 1) {
-            Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> last = ContainerUtil.getLastItem(list);
-            assert last != null;
-            InjectedLanguage injected = last.second;
-            list.set(list.size() - 1, Trinity.create(last.first, InjectedLanguage.create(injected.getID(), injected.getPrefix(),
-                                                                                         prefix.toString(), false), last.third));
+            InjectionInfo last = ContainerUtil.getLastItem(list);
+            if (last != null) {
+              InjectedLanguage injected = last.language();
+              list.set(list.size() - 1, new InjectionInfo(last.host(), InjectedLanguage.create(injected.getID(), injected.getPrefix(),
+                                                                                               prefix.toString(), false), last.range()));
+            }
           }
         }
-        else {
+        else if (operand instanceof PsiLanguageInjectionHost host) {
           InjectedLanguage injectedLanguage = InjectedLanguage.create(languageID, prefix.toString(), "", false);
-          TextRange range = manipulator.getRangeInElement(operand);
-          PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)operand;
-          list.add(Trinity.create(host, injectedLanguage, range));
+          TextRange range = manipulator.getRangeInElement(host);
+          list.add(new InjectionInfo(host, injectedLanguage, range));
           prefix.setLength(0);
         }
       }
@@ -352,7 +377,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     }
 
     protected void processInjection(Language language,
-                                    List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                    List<InjectionInfo> list,
                                     boolean settingsAvailable, boolean unparsable) {
     }
   }

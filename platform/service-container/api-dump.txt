@@ -1,0 +1,9 @@
+a:com.intellij.openapi.extensions.AbstractExtensionPointBean
+- com.intellij.openapi.extensions.PluginAware
+- p:myPluginDescriptor:com.intellij.openapi.extensions.PluginDescriptor
+- <init>():V
+- f:findClass(java.lang.String):java.lang.Class
+- getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+- getPluginId():com.intellij.openapi.extensions.PluginId
+- f:setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+f:com.intellij.serviceContainer.ContextKt

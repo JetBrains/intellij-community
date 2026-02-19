@@ -1,17 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaImportsLayoutSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
-public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
+public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements JavaImportsLayoutSettings {
   public int STATIC_FIELDS_ORDER_WEIGHT = 1;
   public int FIELDS_ORDER_WEIGHT = 2;
   public int CONSTRUCTORS_ORDER_WEIGHT = 3;
@@ -42,6 +47,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public boolean SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON = false;
   public boolean SPACE_IN_NAMED_ARGUMENT = true;
   public boolean ALIGN_MULTILINE_LIST_OR_MAP = true;
+  public boolean WRAP_CHAIN_CALLS_AFTER_DOT = false;
   public boolean SPACE_WITHIN_LIST_OR_MAP = false;
   public boolean ALIGN_NAMED_ARGS_IN_MAP = true;
   @Property(externalName = "space_before_closure_left_brace")
@@ -52,6 +58,23 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public boolean SPACE_AROUND_REGEX_OPERATORS = true;
   public boolean SPACE_BEFORE_ASSERT_SEPARATOR = false;
   public boolean SPACE_AFTER_ASSERT_SEPARATOR = true;
+
+  /**
+   * "record R (int param) {}"
+   * or
+   * "record R(int param) {}"
+   */
+  public boolean SPACE_BEFORE_RECORD_PARENTHESES = false;
+
+  public boolean ENABLE_GROOVYDOC_FORMATTING = true;
+
+  // GINQ
+  public int GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_ALWAYS;
+  public int GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean GINQ_INDENT_ON_CLAUSE = true;
+  public int GINQ_HAVING_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean GINQ_INDENT_HAVING_CLAUSE = true;
+  public boolean GINQ_SPACE_AFTER_KEYWORD = true;
 
   //imports
   public boolean USE_FQ_CLASS_NAMES = false;
@@ -154,6 +177,10 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
     LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
   }
 
+  public boolean isGroovyDocFormattingAllowed() {
+    return ENABLE_GROOVYDOC_FORMATTING;
+  }
+
   @SuppressWarnings("deprecation")
   @Override
   protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
@@ -166,13 +193,11 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
     INNER_CLASSES_ORDER_WEIGHT = rootSettings.INNER_CLASSES_ORDER_WEIGHT;
   }
 
-  @NotNull
-  public static GroovyCodeStyleSettings getInstance(@NotNull PsiFile file) {
+  public static @NotNull GroovyCodeStyleSettings getInstance(@NotNull PsiFile file) {
     return CodeStyle.getCustomSettings(file, GroovyCodeStyleSettings.class);
   }
 
-  @NotNull
-  public static GroovyCodeStyleSettings getInstance(@NotNull Editor editor) {
+  public static @NotNull GroovyCodeStyleSettings getInstance(@NotNull Editor editor) {
     return CodeStyle.getSettings(editor).getCustomSettings(GroovyCodeStyleSettings.class);
   }
 }

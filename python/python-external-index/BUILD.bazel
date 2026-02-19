@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.python.externalIndex` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "externalIndex_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "externalIndex",
+  module_name = "intellij.python.externalIndex",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":externalIndex_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/workspace/storage",
+    "//platform/projectModel-impl",
+    "//platform/backend/workspace",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+  ]
+)
+
+jvm_library(
+  name = "externalIndex_test_lib",
+  module_name = "intellij.python.externalIndex",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":externalIndex",
+    "//platform/core-api:core_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+    "//platform/projectModel-impl:projectModel-impl_test_lib",
+    "//platform/backend/workspace:workspace_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.externalIndex` end

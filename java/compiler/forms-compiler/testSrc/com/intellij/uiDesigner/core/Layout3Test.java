@@ -17,8 +17,10 @@ package com.intellij.uiDesigner.core;
 
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
 

@@ -8,7 +8,6 @@ import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -16,37 +15,52 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.PyDataFlowKt;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.inspections.quickfix.AddGlobalQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentExpression;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyConditionalStatementPart;
+import com.jetbrains.python.psi.PyExpressionCodeFragment;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTypeParameter;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.PyWithStatement;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyDelStatementNavigator;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class PyUnboundLocalVariableInspection extends PyInspection {
-  private static final Key<Set<ScopeOwner>> LARGE_FUNCTIONS_KEY = Key.create("PyUnboundLocalVariableInspection.LargeFunctions");
-
+public final class PyUnboundLocalVariableInspection extends PyInspection {
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
-    session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<>());
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 final @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
+    Set<ScopeOwner> LARGE_FUNCTIONS = new HashSet<>();
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -70,12 +84,15 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
         return;
       }
+      if (PyDataFlowKt.isUnreachableByControlFlow(node, myTypeEvalContext)) {
+        return;
+      }
       final String name = node.getReferencedName();
       if (name == null) {
         return;
       }
       final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node, name);
-      final Set<ScopeOwner> largeFunctions = getSession().getUserData(LARGE_FUNCTIONS_KEY);
+      final Set<ScopeOwner> largeFunctions = LARGE_FUNCTIONS;
       assert largeFunctions != null;
       if (owner == null || largeFunctions.contains(owner)) {
         return;
@@ -101,7 +118,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       }
       final ScopeVariable variable;
       try {
-        variable = scope.getDeclaredVariable(anchor, name);
+        variable = scope.getDeclaredVariable(anchor, name, myTypeEvalContext);
       }
       catch (DFALimitExceededException e) {
         largeFunctions.add(owner);
@@ -114,6 +131,10 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         }
         final PsiPolyVariantReference ref = node.getReference(getResolveContext());
         final PsiElement resolved = ref.resolve();
+        // type parameter list is not included in CFG
+        if (resolved instanceof PyTypeParameter) {
+          return;
+        }
         final boolean isBuiltin = PyBuiltinCache.getInstance(node).isBuiltin(resolved);
         if (owner instanceof PyClass) {
           if (isBuiltin || ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
@@ -124,9 +145,6 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         if (resolvedUnderWithStatement(node, resolved) || resolvedUnderAssignmentExpressionAndCondition(node, resolved)) {
-          return;
-        }
-        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(node)) {
           return;
         }
         if (owner instanceof PyFile) {
@@ -170,7 +188,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
              ) != null;
     }
 
-    private static boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {
+    private boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {
       final String nodeName = node.getReferencedName();
       final Scope scope = ControlFlowCache.getScope(owner);
       final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
@@ -181,13 +199,12 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       }
       final Ref<Boolean> first = Ref.create(true);
       ControlFlowUtil.iteratePrev(num, instructions, instruction -> {
-        if (instruction instanceof ReadWriteInstruction) {
-          final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+        if (instruction instanceof ReadWriteInstruction rwInstruction) {
           final String name = rwInstruction.getName();
           final PsiElement element = rwInstruction.getElement();
           if (element != null && name != null && name.equals(nodeName) && instruction.num() < num) {
             try {
-              if (scope.getDeclaredVariable(element, name) == null) {
+              if (scope.getDeclaredVariable(element, name, myTypeEvalContext) == null) {
                 final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
                 if (access.isReadAccess()) {
                   first.set(false);

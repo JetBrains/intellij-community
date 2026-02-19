@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -13,10 +13,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,15 +28,13 @@ public final class InconsistentPropertiesEndsInspectionProvider implements Incon
   private static final Set<Character> PROPERTY_VALUE_END_CHECK_SYMBOLS = Set.of('!', '?', '.', ':', ';');
   private static final char NULL = '\0';
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "REPORT_INCONSISTENT_PROPERTIES_ENDS";
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return JavaI18nBundle.message("inconsistent.bundle.report.inconsistent.properties.ends");
   }
 
@@ -49,7 +47,7 @@ public final class InconsistentPropertiesEndsInspectionProvider implements Incon
                     RefManager refManager,
                     ProblemDescriptionsProcessor processor) {
     for (PropertiesFile file : files) {
-      final Set<String> filePropertyKeys = new THashSet<>(propertiesFilesNamesMaps.get(file).keySet());
+      final Set<String> filePropertyKeys = new HashSet<>(propertiesFilesNamesMaps.get(file).keySet());
       PropertiesFile parent = parents.get(file);
       while (parent != null) {
         final Collection<String> commonKeys = ContainerUtil.intersection(propertiesFilesNamesMaps.get(parent).keySet(), filePropertyKeys);

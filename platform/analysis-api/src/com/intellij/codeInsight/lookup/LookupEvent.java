@@ -1,33 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
-public class LookupEvent extends EventObject {
+public final class LookupEvent extends EventObject {
 
-  private final Lookup myLookup;
-  private final LookupElement myItem;
+  private final @NotNull Lookup myLookup;
+  private final @Nullable LookupElement myItem;
   private final char myCompletionChar;
   private final boolean myCanceledExplicitly;
 
-  public LookupEvent(Lookup lookup, boolean canceledExplicitly){
+  public LookupEvent(@NotNull Lookup lookup, boolean canceledExplicitly) {
     super(lookup);
     myLookup = lookup;
     myItem = null;
@@ -35,7 +22,7 @@ public class LookupEvent extends EventObject {
     myCanceledExplicitly = canceledExplicitly;
   }
 
-  public LookupEvent(Lookup lookup, LookupElement item, char completionChar) {
+  public LookupEvent(@NotNull Lookup lookup, @Nullable LookupElement item, char completionChar) {
     super(lookup);
     myLookup = lookup;
     myItem = item;
@@ -43,16 +30,16 @@ public class LookupEvent extends EventObject {
     myCanceledExplicitly = false;
   }
 
-  public Lookup getLookup(){
+  public @NotNull Lookup getLookup() {
     return myLookup;
   }
 
-  @Nullable("in case ENTER was pressed when no suggestions were available")
-  public LookupElement getItem(){
+  public @Nullable("in case ENTER was pressed when no suggestions were available")
+  LookupElement getItem() {
     return myItem;
   }
 
-  public char getCompletionChar(){
+  public char getCompletionChar() {
     return myCompletionChar;
   }
 

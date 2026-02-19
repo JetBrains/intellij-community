@@ -1,116 +1,22 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.yaml" allow-bundled-update="true">
   <name>YAML</name>
   <id>org.jetbrains.plugins.yaml</id>
   <vendor>JetBrains</vendor>
   <category>Languages</category>
   <description><![CDATA[
-  Adds support for the <a href="https://yaml.org/">YAML</a> language.
+    Provides syntax highlighting and editor features for <a href="https://yaml.org/">YAML</a> language.
   ]]></description>
 
-  <depends>com.intellij.modules.lang</depends>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- YAML -->
-    <additionalTextAttributes scheme="Default" file="colorSchemes/YAMLDefault.xml"/>
-    <additionalTextAttributes scheme="Darcula" file="colorSchemes/YAMLDarcula.xml"/>
-
-    <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
-    <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLEnterAtIndentHandler" order="first"/>
-    <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
-    <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
-    <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
-    <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
-    <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
-    <colorSettingsPage implementation="org.jetbrains.yaml.YAMLColorsPage"/>
-    <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
-    <lang.findUsagesProvider language="yaml" id="yamlFindUsagesProvider" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
-    <lang.foldingBuilder language="yaml" id="YAMLFoldingBuilder" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
-    <fileType name="YAML" implementationClass="org.jetbrains.yaml.YAMLFileType" fieldName="YML" language="yaml" extensions="yml;yaml"/>
-    <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
-    <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
-    <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLCodeStyleSettingsProvider"/>
-    <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
-    <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
-    <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
-    <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
-
-    <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
-
-    <completion.contributor order="first" language="yaml" id="YamlJsonSchema"
-                            implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaCompletionContributor"/>
-    <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider"
-                                id="YamlJsonSchemaDocumentationProvider" order="first"/>
-    <gotoDeclarationHandler implementation="org.jetbrains.yaml.schema.YamlJsonSchemaGotoDeclarationHandler" order="last"/>
-    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
-                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
-    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.YAMLKeyValue"
-                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLKeyValueKeyManipulator"/>
-    <breadcrumbsInfoProvider implementation="org.jetbrains.yaml.breadcrumbs.YAMLBreadcrumbsInfoProvider"/>
-    <elementDescriptionProvider implementation="org.jetbrains.yaml.psi.impl.YAMLElementDescriptionProvider"/>
-    <readWriteAccessDetector implementation="org.jetbrains.yaml.resolve.YAMLAnchorReadWriteAccessDetector"/>
-    <renameInputValidator implementation="org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator" order="first"/>
-    <renameInputValidator implementation="org.jetbrains.yaml.resolve.YAMLAnchorRenameInputValidator" order="first"/>
-    <lang.refactoringSupport language="yaml" implementationClass="org.jetbrains.yaml.resolve.YAMLRefactoringSupportProvider"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.yaml.resolve.YAMLRenamePsiElementProcessor"/>
-    <multiHostInjector implementation="org.jetbrains.yaml.schema.YamlJsonSchemaLanguageInjector"/>
-    <annotator language="yaml" implementationClass="org.jetbrains.yaml.annotator.YAMLSameLineCompositeValueErrorAnnotator"/>
-    <applicationService serviceImplementation="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
-    <editorSmartKeysConfigurable instance="org.jetbrains.yaml.smart.YAMLSmartOptionsProvider"
-                                 id="editor.preferences.yamlOptions"
-                                 displayName="YAML"/>
-
-    <localInspection language="yaml" bundle="messages.YAMLBundle"
-                     shortName="YAMLUnresolvedAlias"
-                     key="inspections.unresolved.alias.name" level="ERROR"
-                     groupKey="inspections.group.name" enabledByDefault="true"
-                     implementationClass="org.jetbrains.yaml.inspections.YAMLUnresolvedAliasInspection"/>
-    <localInspection language="yaml" bundle="messages.YAMLBundle"
-                     shortName="YAMLRecursiveAlias"
-                     key="inspections.recursive.alias.name" level="ERROR"
-                     groupKey="inspections.group.name" enabledByDefault="true"
-                     implementationClass="org.jetbrains.yaml.inspections.YAMLRecursiveAliasInspection"/>
-    <localInspection language="yaml" bundle="messages.YAMLBundle"
-                     shortName="YAMLDuplicatedKeys" level="ERROR"
-                     key="inspections.duplicated.keys.name"
-                     groupKey="inspections.group.name" enabledByDefault="true"
-                     implementationClass="org.jetbrains.yaml.inspections.YAMLDuplicatedKeysInspection"/>
-    <localInspection language="yaml" bundle="messages.YAMLBundle"
-                     shortName="YAMLUnusedAnchor"
-                     key="inspections.unused.anchor.name" level="WARNING"
-                     groupKey="inspections.group.name" enabledByDefault="true"
-                     implementationClass="org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection"/>
-
-    <localInspection language="yaml" bundle="messages.YAMLBundle"
-                     shortName="YAMLSchemaValidation"
-                     key="inspections.schema.validation.name"
-                     groupKey="inspections.group.name"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection"/>
-    <localInspection language="yaml" bundle="messages.YAMLBundle"
-                     shortName="YAMLSchemaDeprecation"
-                     key="inspections.schema.deprecation.name"
-                     groupKey="inspections.group.name"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij.json">
-    <jsonLikePsiWalkerFactory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
-    <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij.spellchecker">
-    <support language="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
-  </extensions>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.yaml.customStructureViewFactory"
-                    interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory"
-                    dynamic="true">
-    </extensionPoint>
-  </extensionPoints>
-
+  <dependencies>
+    <!-- this dependency is used in 'intellij.yaml.backend' only, so it can be removed from the plugin when we can mark the latter as
+         'required in backend mode' (IJPL-177060) and the Marketplace will treat dependencies of such modules as required for the IDE
+         running in the monolith mode -->
+    <module name="intellij.json"/>
+  </dependencies>
+  <content namespace="jetbrains">
+    <module name="intellij.yaml.backend"/><!-- should be marked as 'required in backend mode' when IJPL-177060 is fixed -->
+    <module name="intellij.yaml" loading="embedded"/>
+    <module name="intellij.yaml.frontend.split"/><!-- should be marked as 'required in frontend mode' when IJPL-177060 is fixed -->
+    <module name="intellij.yaml.helm"/>
+  </content>
 </idea-plugin>

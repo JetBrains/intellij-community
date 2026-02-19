@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -13,12 +14,12 @@ import com.intellij.testFramework.replaceService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.StandardWatchEventKinds
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class FileLoggerTest : HeavyPlatformTestCase() {
@@ -37,13 +38,15 @@ class FileLoggerTest : HeavyPlatformTestCase() {
       `when`(getUniqueFile()).thenReturn(logFile)
     }
 
-    CompletionTrackerInitializer.isEnabledInTests = true
+    project.messageBus.connect(testRootDisposable).subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer())
   }
 
   override fun tearDown() {
-    CompletionTrackerInitializer.isEnabledInTests = false
     try {
       dir.deleteRecursively()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
       super.tearDown()
@@ -62,7 +65,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
     val loggerProvider = CompletionFileLoggerProvider()
 
-    val logger = loggerProvider.newCompletionLogger(Language.ANY)
+    val logger = loggerProvider.newCompletionLogger(Language.ANY.displayName, shouldLogElementFeatures = true)
 
     val documentMock = mock(Document::class.java).apply {
       `when`(text).thenReturn("")
@@ -83,7 +86,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
     val watchService = FileSystems.getDefault().newWatchService()
     val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY)
 
-    logger.completionStarted(lookup, true, 2, System.currentTimeMillis())
+    logger.completionStarted(lookup, 0, true, 2, System.currentTimeMillis())
 
     logger.completionCancelled(true, emptyMap(), System.currentTimeMillis())
     loggerProvider.dispose()

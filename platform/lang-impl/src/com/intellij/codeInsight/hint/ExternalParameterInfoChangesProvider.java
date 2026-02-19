@@ -27,8 +27,8 @@ public interface ExternalParameterInfoChangesProvider {
     Topic.create("ExternalParameterInfoChangesProvider topic", ExternalParameterInfoChangesProvider.class);
 
   /**
-   * Sends update request to {@link ParameterInfoController}.
-   * @see ParameterInfoController
+   * Sends update request to {@link ParameterInfoControllerBase}.
+   * @see ParameterInfoControllerBase
    * @param editor editor that parameter info belongs, or null to update controller unconditionally
    * @param offset start of argument list on which parameter info was called
    */

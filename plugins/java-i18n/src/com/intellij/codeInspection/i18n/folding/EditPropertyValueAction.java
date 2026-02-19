@@ -1,19 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.java.i18n.JavaI18nBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -33,13 +44,17 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.IconUtil;
@@ -49,14 +64,27 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class EditPropertyValueAction extends BaseRefactoringAction {
+public final class EditPropertyValueAction extends BaseRefactoringAction {
   private static final Key<Boolean> EDITABLE_PROPERTY_VALUE = Key.create("editable.property.value");
   private static final KeyStroke SHIFT_ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
 
@@ -70,9 +98,8 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     return false;
   }
 
-  @Nullable
   @Override
-  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
+  protected @NotNull RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new Handler();
   }
 
@@ -95,7 +122,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   public static boolean isEnabled(@NotNull Editor editor) {
-    if (isFeatureDisabled() || !(editor instanceof EditorImpl) || editor.getProject() == null) {
+    if (!(editor instanceof EditorImpl) || editor.getProject() == null) {
       return false;
     }
     FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(editor.getCaretModel().getOffset());
@@ -103,14 +130,13 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     return getEditableElement(region) != null;
   }
 
-  @Nullable
-  public static PsiElement getEditableElement(@NotNull FoldRegion region) {
+  static @Nullable PsiElement getEditableElement(@NotNull FoldRegion region) {
     PsiElement psiElement = EditorFoldingInfo.get(region.getEditor()).getPsiElement(region);
     return psiElement == null || psiElement.getUserData(EDITABLE_PROPERTY_VALUE) == null ? null : psiElement;
   }
 
-  public static void doEdit(@NotNull Editor editor) {
-    if (isFeatureDisabled() || !(editor instanceof EditorImpl) || editor.getProject() == null) {
+  static void doEdit(@NotNull Editor editor) {
+    if (!(editor instanceof EditorImpl) || editor.getProject() == null) {
       return;
     }
     FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(editor.getCaretModel().getOffset());
@@ -130,7 +156,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     Ref<JBPopup> popupRef = new Ref<>();
     EditorTextField textField = new EditorTextField(unescaped.first, editor.getProject(), FileTypes.PLAIN_TEXT) {
       @Override
-      protected EditorEx createEditor() {
+      protected @NotNull EditorEx createEditor() {
         EditorEx e = super.createEditor();
         e.getCaretModel().moveToOffset(Math.max(0, Math.min(e.getDocument().getTextLength(), unescaped.second)));
         e.setHorizontalScrollbarVisible(true);
@@ -235,31 +261,19 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
       }
       else if (escaped) {
         escaped = false;
-        String replacement;
-        switch (c) {
-          case '\n':
-            replacement = "";
-            break;
-          case 'r':
-            replacement = "\n";
-            break;
-          case 'n':
-            replacement = "\r";
-            break;
-          case 'u':
-          case 'U':
-            replacement = null;
-            break;
-          default:
-            replacement = Character.toString(c);
-            break;
-        }
+        String replacement = switch (c) {
+          case '\n' -> "";
+          case 'r' -> "\n";
+          case 'n' -> "\r";
+          case 'u', 'U' -> null;
+          default -> Character.toString(c);
+        };
         if (replacement != null) {
           i = replaceEscapePair(b, i, replacement, offsets);
         }
       }
     }
-    String result = StringUtil.convertLineSeparators(b.toString(), "\n", offsets);
+    String result = Strings.convertLineSeparators(b.toString(), "\n", offsets);
     return Pair.create(result, offsets[0]);
   }
 
@@ -282,7 +296,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
 
       @Override
       public Insets getInsets() {
-        return JBUI.emptyInsets();
+        return JBInsets.emptyInsets();
       }
     };
     button.setLook(ActionButtonLook.INPLACE_LOOK);
@@ -299,19 +313,15 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
                            SwingConstants.LEFT));
     }
     if (key != null) {
-      panel.add(new JLabel(key, AllIcons.Nodes.Property, SwingConstants.LEFT));
+      panel.add(new JLabel(key, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property), SwingConstants.LEFT));
     }
+    panel.setOpaque(!ExperimentalUI.isNewUI());
     return EditPropertyValueTooltipManager.showTooltip(editor, panel, true);
   }
 
-  public static void registerFoldedElement(@NotNull PsiElement element, @NotNull Document document) {
-    if (isFeatureDisabled()) return;
+  static void registerFoldedElement(@NotNull PsiElement element, @NotNull Document document) {
     element.putUserData(EDITABLE_PROPERTY_VALUE, Boolean.TRUE);
     EditPropertyValueTooltipManager.initializeForDocument(document);
-  }
-
-  private static boolean isFeatureDisabled() {
-    return !Experiments.getInstance().isFeatureEnabled("property.value.inplace.editing");
   }
 
   private static final class MyEnterAction extends AnAction {
@@ -355,6 +365,8 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
             new VisualPosition(regionStartPosition.line, regionStartPosition.column + placeholderColumn));
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           UndoManager.getInstance(project).undoableActionPerformed(new UndoableAction() {
+            private long myPerformedTimestamp = -1L;
+
             @Override
             public void undo() {
               if (foldRegion.isValid()) {
@@ -377,6 +389,16 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
             @Override
             public boolean isGlobal() {
               return false;
+            }
+
+            @Override
+            public long getPerformedNanoTime() {
+              return myPerformedTimestamp;
+            }
+
+            @Override
+            public void setPerformedNanoTime(long performedTimestamp) {
+              myPerformedTimestamp = performedTimestamp;
             }
           });
         }, targetPsiFile);
@@ -411,9 +433,14 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
       presentation.setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
     }
 
-    private static class Handler extends EditorWriteActionHandler {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    private static final class Handler extends EditorWriteActionHandler {
       @Override
-      public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, caret, dataContext);
       }
     }

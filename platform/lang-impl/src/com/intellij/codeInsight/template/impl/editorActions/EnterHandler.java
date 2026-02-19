@@ -23,8 +23,10 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class EnterHandler extends BaseEnterHandler {
   private final EditorActionHandler myOriginalHandler;
 
@@ -39,7 +41,7 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, Caret caret, DataContext dataContext) {
     final Project project = editor.getProject();
     if (project != null && TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
       return;

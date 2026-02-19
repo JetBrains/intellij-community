@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.filters.Filter;
@@ -15,13 +15,10 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Font;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class AbstractMavenConsoleFilter implements Filter {
 
   private final Pattern myPattern;
@@ -35,9 +32,8 @@ public abstract class AbstractMavenConsoleFilter implements Filter {
 
   protected abstract boolean lightCheck(String line);
 
-  @Nullable
   @Override
-  public Result applyFilter(@NotNull String line, int entireLength) {
+  public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
     if (!lightCheck(line)) return null;
 
     Matcher matcher = myPattern.matcher(line);

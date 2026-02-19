@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -12,16 +12,15 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.io.File;
 
-/**
- * @author irengrig
- */
 public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
+  protected final Project myProject;
   private final FileStatusManager myFileStatusManager;
   private final boolean myIgnoreFileStatus;
 
@@ -30,6 +29,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
   }
 
   public VirtualFileListCellRenderer(final Project project, final boolean ignoreFileStatus) {
+    myProject = project;
     myIgnoreFileStatus = ignoreFileStatus;
     myFileStatusManager = FileStatusManager.getInstance(project);
   }
@@ -46,8 +46,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
                   : UIUtil.getListBackground());
   }
 
-  @Nls
-  protected String getName(FilePath path) {
+  protected @Nls String getName(FilePath path) {
     return path.getName();
   }
 
@@ -72,7 +71,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
     if (path.isDirectory()) {
       setIcon(PlatformIcons.FOLDER_ICON);
     } else {
-      setIcon(path.getFileType().getIcon());
+      setIcon(VcsUtil.getIcon(myProject, path));
     }
   }
 

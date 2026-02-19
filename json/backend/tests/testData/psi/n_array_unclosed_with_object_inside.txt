@@ -1,0 +1,8 @@
+JsonFile: n_array_unclosed_with_object_inside.json
+  JsonArray
+    PsiElement([)('[')
+    JsonObject
+      PsiElement({)('{')
+      PsiElement(})('}')
+    PsiErrorElement:',' or ']' expected
+      <empty list>

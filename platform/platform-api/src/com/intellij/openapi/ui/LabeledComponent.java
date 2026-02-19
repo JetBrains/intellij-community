@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.BundleBase;
@@ -13,8 +13,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Insets;
 import java.util.Objects;
 
 public class LabeledComponent<Comp extends JComponent> extends JPanel implements PanelWithAnchor {
@@ -30,15 +33,13 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     insertLabel();
   }
 
-  @NotNull
-  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull @NlsContexts.Label String text) {
+  public static @NotNull <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component, @NotNull @NlsContexts.Label String text) {
     return create(component, text, BorderLayout.NORTH);
   }
 
-  @NotNull
-  public static <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component,
-                                                                        @NotNull @NlsContexts.Label String text,
-                                                                        @NonNls String labelConstraint) {
+  public static @NotNull <Comp extends JComponent> LabeledComponent<Comp> create(@NotNull Comp component,
+                                                                                 @NotNull @NlsContexts.Label String text,
+                                                                                 @NonNls String labelConstraint) {
     LabeledComponent<Comp> labeledComponent = new LabeledComponent<>();
     labeledComponent.setComponent(component);
     labeledComponent.setText(text);
@@ -90,8 +91,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     }
   }
 
-  @NonNls
-  public String getComponentClass() {
+  public @NonNls String getComponentClass() {
     return myComponent == null ? null : getComponent().getClass().getName();
   }
 
@@ -145,6 +145,11 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   public void setAnchor(@Nullable JComponent labelAnchor) {
     myAnchor = labelAnchor;
     myLabel.setAnchor(labelAnchor);
+  }
+
+  @Override
+  public @Nullable JComponent getOwnAnchor() {
+    return myLabel;
   }
 
   public static class TextWithMnemonic {

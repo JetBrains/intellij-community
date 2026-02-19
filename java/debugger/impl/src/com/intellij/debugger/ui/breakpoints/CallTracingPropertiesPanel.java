@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.ui.breakpoints;
 
@@ -14,8 +14,11 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -28,9 +31,8 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     myStartTracing = new JBCheckBox(JavaDebuggerBundle.message("checkbox.start.tracing"));
     myEndTracing = new JBCheckBox(JavaDebuggerBundle.message("checkbox.stop.tracing"));
     JButton filters = new JButton(JavaDebuggerBundle.message("checkbox.tracking.filters"));
@@ -90,7 +92,7 @@ public class CallTracingPropertiesPanel extends XBreakpointCustomPropertiesPanel
     boolean changed = breakpoint.getProperties().setTRACING_START(myStartTracing.isSelected());
     changed = breakpoint.getProperties().setTRACING_END(myEndTracing.isSelected()) || changed;
     if (changed) {
-      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+      ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointChanged();
     }
   }
 }

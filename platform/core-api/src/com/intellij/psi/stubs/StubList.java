@@ -1,19 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 
 /**
  * A storage for stub-related data, shared by all stubs in one file. More memory-efficient, than keeping the same data in stub objects themselves.
  */
-abstract class StubList extends AbstractList<StubBase<?>> {
+@ApiStatus.Internal
+public abstract class StubList extends AbstractList<StubBase<?>> {
   /** A list to hold ids of stub children at contiguous ranges, to avoid allocating separate lists in each parent stub */
   private final MostlyUShortIntList myJoinedChildrenList;
 
@@ -31,16 +39,16 @@ abstract class StubList extends AbstractList<StubBase<?>> {
    */
   private final MostlyUShortIntList myStubData;
 
-  @Nullable private TempState myTempState = new TempState();
+  private @Nullable TempState myTempState = new TempState();
 
-  StubList(int initialCapacity) {
+  public StubList(int initialCapacity) {
     myStubData = new MostlyUShortIntList(initialCapacity * 3);
     myJoinedChildrenList = new MostlyUShortIntList(initialCapacity);
     myJoinedChildrenList.add(0); // indices in this list should be non-zero
   }
 
-  IStubElementType<?, ?> getStubType(int id) {
-    return (IStubElementType<?, ?>)IElementType.find(getStubTypeIndex(id));
+  public @NotNull IElementType getStubElementType(int id) {
+    return IElementType.find(getStubTypeIndex(id));
   }
 
   short getStubTypeIndex(int id) {
@@ -59,11 +67,11 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     return myStubData.get(childrenStartIndex(id));
   }
 
-  int getChildrenCount(int id) {
+  public int getChildrenCount(int id) {
     return myStubData.get(childrenCountIndex(id));
   }
 
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
+  public void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
     int stubId = size();
     stub.id = stubId;
 
@@ -79,7 +87,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     return parentId >= 0 && childId != parentId + 1 && getChildrenCount(parentId) == 0;
   }
 
-  void addStub(int childId, int parentId, short elementTypeIndex) {
+  public void addStub(int childId, int parentId, short elementTypeIndex) {
     assert myTempState != null;
 
     myStubData.add(elementTypeIndex); myStubData.add(0); myStubData.add(0);
@@ -126,14 +134,16 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  void prepareForChildren(int parentId, int childrenCount) {
+  @ApiStatus.Internal
+  public void prepareForChildren(int parentId, int childrenCount) {
     assert myTempState != null;
     myTempState.prepareForChildren(parentId, childrenCount);
   }
 
-  @Nullable
-  abstract StubBase<?> getCachedStub(int index);
+  @ApiStatus.Internal
+  public abstract @Nullable StubBase<?> getCachedStub(int index);
 
+  @Unmodifiable
   List<StubBase<?>> getChildrenStubs(int id) {
     int count = getChildrenCount(id);
     if (count == 0) return Collections.emptyList();
@@ -146,7 +156,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  private List<StubBase<?>> idSubList(MostlyUShortIntList idList, int start, int count) {
+  private @Unmodifiable List<StubBase<?>> idSubList(MostlyUShortIntList idList, int start, int count) {
     return new AbstractList<StubBase<?>>() {
       @Override
       public StubBase<?> get(int index) {
@@ -161,13 +171,13 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     };
   }
 
-  private TIntObjectHashMap<MostlyUShortIntList> tempMap() {
+  private IntObjectMap<MostlyUShortIntList> tempMap() {
     assert myTempState != null;
     return Objects.requireNonNull(myTempState.myTempJoinedChildrenMap);
   }
 
   @Nullable
-  <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(int id, @NotNull IStubElementType<S, P> elementType) {
+  <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(int id, @NotNull IElementType elementType) {
     int count = getChildrenCount(id);
     int start = getChildrenStart(id);
     switch (getChildrenStorage(start)) {
@@ -177,10 +187,9 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  @Nullable
-  private <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
-                                                                                 IntUnaryOperator idList,
-                                                                                 int start, int end) {
+  private @Nullable <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IElementType elementType,
+                                                                                           IntUnaryOperator idList,
+                                                                                           int start, int end) {
     for (int i = start; i < end; ++i) {
       int id = idList.applyAsInt(i);
       if (elementType.getIndex() == getStubTypeIndex(id)) {
@@ -196,7 +205,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
    * with all stubs re-targeted to that copy.
    */
   @NotNull
-  StubList finalizeLoadingStage() {
+  @ApiStatus.Internal
+  public StubList finalizeLoadingStage() {
     if (myTempState != null) {
       myTempState = null;
       myJoinedChildrenList.trimToSize();
@@ -206,21 +216,24 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   @NotNull
-  List<StubElement<?>> toPlainList() {
+  @Unmodifiable
+  @ApiStatus.Internal
+  public List<StubElement<?>> toPlainList() {
     //noinspection unchecked
     return (List)this;
   }
 
-  boolean isChildrenLayoutOptimal() {
+  @ApiStatus.Internal
+  public boolean isChildrenLayoutOptimal() {
     return myTempState == null || myTempState.myTempJoinedChildrenMap == null;
   }
 
-  boolean areChildrenNonAdjacent(int childId, int parentId) {
+  public boolean areChildrenNonAdjacent(int childId, int parentId) {
     return getParentIndex(childId - 1) != parentId;
   }
 
-  private class TempState {
-    @Nullable TIntObjectHashMap<MostlyUShortIntList> myTempJoinedChildrenMap;
+  private final class TempState {
+    @Nullable IntObjectMap<MostlyUShortIntList> myTempJoinedChildrenMap;
 
     int myCurrentParent = -1;
     int myExpectedChildrenCount;
@@ -267,7 +280,9 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
 
     private void switchChildrenToTempMap(int parentId) {
-      if (myTempJoinedChildrenMap == null) myTempJoinedChildrenMap = new TIntObjectHashMap<>();
+      if (myTempJoinedChildrenMap == null) {
+        myTempJoinedChildrenMap = ContainerUtil.createConcurrentIntObjectMap();
+      }
 
       int start = getChildrenStart(parentId);
       int count = getChildrenCount(parentId);
@@ -283,7 +298,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
       }
 
       MostlyUShortIntList prev = myTempJoinedChildrenMap.put(parentId, ids);
-      assert prev == null;
+      assert prev == null: parentId;
 
       myStubData.set(childrenStartIndex(parentId), IN_TEMP_MAP);
     }
@@ -305,7 +320,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
 }
 
-class MaterialStubList extends StubList {
+final class MaterialStubList extends StubList {
   /** The list of all stubs ordered by id. The order is DFS (except maybe temporarily during construction, fixed by {@link #finalizeLoadingStage()} later) */
   private final ArrayList<StubBase<?>> myPlainList;
 
@@ -315,14 +330,15 @@ class MaterialStubList extends StubList {
   }
 
   @Override
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
+  public void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
     super.addStub(stub, parent, type);
     myPlainList.add(stub);
   }
 
   @NotNull
   @Override
-  StubList finalizeLoadingStage() {
+  @ApiStatus.Internal
+  public StubList finalizeLoadingStage() {
     if (!isChildrenLayoutOptimal()) {
       return createOptimizedCopy();
     }
@@ -331,8 +347,7 @@ class MaterialStubList extends StubList {
     return super.finalizeLoadingStage();
   }
 
-  @NotNull
-  private StubList createOptimizedCopy() {
+  private @NotNull StubList createOptimizedCopy() {
     MaterialStubList copy = new MaterialStubList(size());
     new Object() {
       void visitStub(StubBase<?> stub, int parentId) {
@@ -353,7 +368,7 @@ class MaterialStubList extends StubList {
 
     for (int i = 0; i < copy.size(); i++) {
       StubBase<?> stub = copy.get(i);
-      stub.myStubList = copy;
+      stub.setStubList(copy);
       stub.id = i;
     }
 
@@ -372,7 +387,8 @@ class MaterialStubList extends StubList {
 
   @Nullable
   @Override
-  StubBase<?> getCachedStub(int index) {
+  @ApiStatus.Internal
+  public StubBase<?> getCachedStub(int index) {
     return get(index);
   }
 }

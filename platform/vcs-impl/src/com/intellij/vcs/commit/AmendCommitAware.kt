@@ -3,29 +3,19 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.VcsUser
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.CancellablePromise
 
 @ApiStatus.Experimental
 interface AmendCommitAware {
   fun isAmendCommitSupported(): Boolean
+  fun isAmendSpecificCommitSupported(): Boolean
 
   @Throws(VcsException::class)
   fun getLastCommitMessage(root: VirtualFile): String?
 
-  fun getAmendCommitDetails(root: VirtualFile): CancellablePromise<EditedCommitDetails>
-}
+  fun getAmendCommitDetails(root: VirtualFile, commitToAmend: CommitToAmend): CancellablePromise<EditedCommitDetails>
 
-@ApiStatus.Experimental
-interface EditedCommitDetails {
-  val currentUser: VcsUser?
-  val commit: VcsFullCommitDetails
+  suspend fun getAmendSpecificCommitTargets(root: VirtualFile, limit: Int): List<CommitToAmend.Specific>? = null
 }
-
-@ApiStatus.Experimental
-class EditedCommitDetailsImpl(
-  override val currentUser: VcsUser?,
-  override val commit: VcsFullCommitDetails
-) : EditedCommitDetails

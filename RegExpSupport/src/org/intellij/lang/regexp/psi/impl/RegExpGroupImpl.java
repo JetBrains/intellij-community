@@ -26,6 +26,7 @@ import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpPattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   public RegExpGroupImpl(ASTNode astNode) {
@@ -38,30 +39,16 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   }
 
   @Override
-  public RegExpPattern getPattern() {
+  public @NotNull RegExpPattern getPattern() {
     final ASTNode node = getNode().findChildByType(RegExpElementTypes.PATTERN);
-    return node != null ? (RegExpPattern)node.getPsi() : null;
+    assert node != null;
+    return (RegExpPattern)node.getPsi();
   }
 
   @Override
   public boolean isCapturing() {
     final Type type = getType();
     return type == Type.CAPTURING_GROUP || type == Type.NAMED_GROUP || type == Type.QUOTED_NAMED_GROUP || type == Type.PYTHON_NAMED_GROUP;
-  }
-
-  /** @deprecated use #getType */
-  @Deprecated
-  @Override
-  public boolean isPythonNamedGroup() {
-    return getType() == Type.PYTHON_NAMED_GROUP;
-  }
-
-  /** @deprecated use #getType */
-  @Deprecated
-  @Override
-  public boolean isRubyNamedGroup() {
-    final Type type = getType();
-    return type == Type.NAMED_GROUP || type == Type.QUOTED_NAMED_GROUP;
   }
 
   @Override
@@ -113,6 +100,20 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   }
 
   @Override
+  public @Nullable PsiElement getNameIdentifier() {
+    final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
+    return nameNode == null ? null : nameNode.getPsi();
+  }
+
+  public static boolean isPcreConditionalGroup(ASTNode node) {
+    return node != null && node.findChildByType(RegExpTT.PCRE_CONDITIONS) != null;
+  }
+
+  public static boolean isPcreDefine(ASTNode node) {
+    return node != null && node.findChildByType(RegExpTT.PCRE_DEFINE) != null;
+  }
+
+  @Override
   public String getGroupName() {
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
     return nameNode != null ? nameNode.getText() : null;
@@ -126,5 +127,10 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
+  }
+
+  @Override
+  public int getTextOffset() {
+    return getFirstChild().getNextSibling().getTextOffset();
   }
 }

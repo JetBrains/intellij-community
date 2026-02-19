@@ -1,0 +1,9 @@
+LineBreakpoint created at functionRightBrace.kt:6
+Run Java
+Connected to the target VM
+functionRightBrace.kt:6
+functionRightBrace.kt:7
+Compile bytecode for y * 2
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.statistics.impl
 
 import com.intellij.CommonBundle
@@ -6,25 +6,27 @@ import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.reference.SoftReference
 import com.intellij.util.ScrambledInputStream
 import com.intellij.util.ScrambledOutputStream
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import org.jetbrains.annotations.TestOnly
 import java.io.BufferedOutputStream
 import java.io.IOException
+import java.lang.ref.SoftReference
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.ArrayList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.inputStream
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   private val units = ArrayList(Collections.nCopies<SoftReference<StatisticsUnit>>(UNIT_COUNT, null))
@@ -40,7 +42,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
 
     var useCount = 0
     for (conjunct in info.conjuncts) {
-      useCount = Math.max(doGetUseCount(conjunct), useCount)
+      useCount = max(doGetUseCount(conjunct), useCount)
     }
     return useCount
   }
@@ -58,7 +60,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
 
     var recency = Integer.MAX_VALUE
     for (conjunct in info.conjuncts) {
-      recency = Math.min(doGetRecency(conjunct), recency)
+      recency = min(doGetRecency(conjunct), recency)
     }
     return recency
   }
@@ -77,8 +79,6 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
     if (ApplicationManager.getApplication().isUnitTestMode && !testingStatistics) {
       return
     }
-
-    ApplicationManager.getApplication().assertIsWriteThread()
 
     for (conjunct in info.conjuncts) {
       doIncUseCount(conjunct)
@@ -113,7 +113,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   }
 
   private fun getUnit(unitNumber: Int): StatisticsUnit {
-    var unit = SoftReference.dereference(units[unitNumber])
+    var unit = units[unitNumber]?.get()
     if (unit == null) {
       unit = loadUnit(unitNumber)
       units[unitNumber] = SoftReference(unit)
@@ -122,7 +122,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   }
 
   private fun saveUnit(unitNumber: Int) {
-    val unit = SoftReference.dereference(units[unitNumber]) ?: return
+    val unit = units[unitNumber]?.get() ?: return
     try {
       ScrambledOutputStream(BufferedOutputStream(getPathToUnit(unitNumber).outputStream())).use {
         out -> unit.write(out)
@@ -170,9 +170,9 @@ private fun loadUnit(unitNumber: Int): StatisticsUnit {
   return unit
 }
 
-private fun getUnitNumber(key1: String) = Math.abs(key1.hashCode() % UNIT_COUNT)
+private fun getUnitNumber(key1: String) = abs(key1.hashCode() % UNIT_COUNT)
 
 private fun getPathToUnit(unitNumber: Int) = storeDir.resolve("unit.$unitNumber")
 
 private val storeDir: Path
-  get() = appSystemDir.resolve("stat")
+  get() = getSystemDir().resolve("stat")

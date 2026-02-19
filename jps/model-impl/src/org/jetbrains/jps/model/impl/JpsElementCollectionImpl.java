@@ -1,28 +1,24 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.impl;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.FilteringIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementCollection;
+import org.jetbrains.jps.model.JpsElementCreator;
+import org.jetbrains.jps.model.JpsElementType;
+import org.jetbrains.jps.model.JpsTypedElement;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
+@ApiStatus.Internal
 public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
   private final List<E> myElements;
   private final Map<E, E> myCopyToOriginal;
@@ -30,14 +26,14 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
 
   JpsElementCollectionImpl(JpsElementChildRole<E> role) {
     myChildRole = role;
-    myElements = new SmartList<>();
+    myElements = new ArrayList<>();
     myCopyToOriginal = null;
   }
 
-  private JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
+  protected JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
     myChildRole = original.myChildRole;
-    myElements = new SmartList<>();
-    myCopyToOriginal = new HashMap<>();
+    myElements = new ArrayList<>(original.myElements.size());
+    myCopyToOriginal = new HashMap<>(original.myElements.size());
     for (E e : original.myElements) {
       //noinspection unchecked
       final E copy = (E)e.getBulkModificationSupport().createCopy();
@@ -53,13 +49,12 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   }
 
   @Override
-  public <X extends JpsTypedElement<P>, P extends JpsElement> Iterable<X> getElementsOfType(@NotNull final JpsElementType<P> type) {
+  public <X extends JpsTypedElement<P>, P extends JpsElement> Iterable<X> getElementsOfType(final @NotNull JpsElementType<P> type) {
     return new JpsElementIterable<>(type);
   }
 
-  @NotNull
   @Override
-  public E addChild(@NotNull JpsElementCreator<E> creator) {
+  public @NotNull E addChild(@NotNull JpsElementCreator<E> creator) {
     return addChild(creator.create());
   }
 
@@ -67,10 +62,6 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   public <X extends E> X addChild(X element) {
     myElements.add(element);
     setParent(element, this);
-    final JpsEventDispatcher eventDispatcher = getEventDispatcher();
-    if (eventDispatcher != null) {
-      eventDispatcher.fireElementAdded(element, myChildRole);
-    }
     return element;
   }
 
@@ -78,10 +69,6 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   public void removeChild(@NotNull E element) {
     final boolean removed = myElements.remove(element);
     if (removed) {
-      final JpsEventDispatcher eventDispatcher = getEventDispatcher();
-      if (eventDispatcher != null) {
-        eventDispatcher.fireElementRemoved(element, myChildRole);
-      }
       setParent(element, null);
     }
   }
@@ -94,39 +81,12 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     }
   }
 
-  @NotNull
   @Override
-  public JpsElementCollectionImpl<E> createCopy() {
+  public @NotNull JpsElementCollectionImpl<E> createCopy() {
     return new JpsElementCollectionImpl<>(this);
   }
 
-  @Override
-  public void applyChanges(@NotNull JpsElementCollectionImpl<E> modified) {
-    Set<E> toRemove = new LinkedHashSet<>(myElements);
-    List<E> toAdd = new ArrayList<>();
-    final Map<E, E> copyToOriginal = modified.myCopyToOriginal;
-    for (E element : modified.myElements) {
-      final E original = copyToOriginal != null ? copyToOriginal.get(element) : null;
-      if (original != null) {
-        //noinspection unchecked
-        ((BulkModificationSupport<E>)original.getBulkModificationSupport()).applyChanges(element);
-        toRemove.remove(original);
-      }
-      else {
-        //noinspection unchecked
-        final E copy = (E)element.getBulkModificationSupport().createCopy();
-        toAdd.add(copy);
-      }
-    }
-    for (E e : toRemove) {
-      removeChild(e);
-    }
-    for (E e : toAdd) {
-      addChild(e);
-    }
-  }
-
-  private class JpsElementIterable<X extends JpsTypedElement<P>, P extends JpsElement> implements Iterable<X> {
+  private final class JpsElementIterable<X extends JpsTypedElement<P>, P extends JpsElement> implements Iterable<X> {
     private final JpsElementType<? extends JpsElement> myType;
 
     JpsElementIterable(JpsElementType<P> type) {

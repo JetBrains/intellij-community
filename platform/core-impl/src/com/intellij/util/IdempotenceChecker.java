@@ -1,32 +1,60 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.diagnostic.PluginException;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public final class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
   private static final Set<Class<?>> ourReportedValueClasses = Collections.synchronizedSet(new HashSet<>());
-  private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
+  private static final ThreadLocal<AtomicInteger> ourRandomCheckNesting = ThreadLocal.withInitial(() -> new AtomicInteger());
   @SuppressWarnings("SSBasedInspection") private static final ThreadLocal<List<String>> ourLog = new ThreadLocal<>();
-  private static final RegistryValue ourRateCheckProperty = Registry.get("platform.random.idempotence.check.rate");
+
+  private static final Supplier<RegistryValue> rateCheckProperty = new SynchronizedClearableLazy<>(() -> {
+    return Registry.get("platform.random.idempotence.check.rate");
+  });
 
   /**
    * Perform some basic checks whether the two given objects are equivalent and interchangeable,
@@ -70,29 +98,79 @@ public final class IdempotenceChecker {
                                           @Nullable T fresh,
                                           @NotNull Class<?> providerClass,
                                           @Nullable Computable<? extends T> recomputeValue) {
+    checkEquivalence(existing, fresh, providerClass, recomputeValue, null);
+  }
+
+  /**
+   * Perform some basic checks whether the two given objects are equivalent and interchangeable,
+   * as described in e.g {@link com.intellij.psi.util.CachedValue} contract. This method should be used
+   * in places caching results of various computations, which are expected to be idempotent:
+   * they can be performed several times, or on multiple threads, and the results should be interchangeable.<p></p>
+   * <p>
+   * What to do if you get an error from here:
+   * <ul>
+   *   <li>
+   *     Start by looking carefully at the computation (which usually can be found by navigating the stack trace)
+   *     and find out why it could be non-idempotent. See common culprits below.</li>
+   *   <li>
+   *     Add logging inside the computation by using {@link #logTrace}.
+   *   </li>
+   *   <li>
+   *     If the computation is complex and depends on other caches, you could try to perform
+   *     {@code IdempotenceChecker.checkEquivalence()} for their results as well, localizing the error.</li>
+   *   <li>
+   *     If it's a test, you could try reproducing and debugging it. To increase the probability of failure,
+   *     you can temporarily add {@code Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable())}
+   *     to perform the idempotence check on every cache access. Note that this can make your test much slower.
+   *   </li>
+   * </ul>
+   * <p>
+   * Common culprits:
+   * <ul>
+   *   <li>Caching and returning a mutable object (e.g. array or List), which clients then mutate from different threads;
+   *   to fix, either clone the return value or use unmodifiable wrappers</li>
+   *   <li>Depending on a {@link ThreadLocal} or method parameters with different values.</li>
+   *   <li>For failures from {@link #applyForRandomCheck}: outdated cached value (not all dependencies are specified, or their modification counters aren't properly incremented)</li>
+   * </ul>
+   *  @param existing the value computed on the first invocation
+   *
+   * @param fresh               the value computed a bit later, expected to be equivalent
+   * @param providerClass       a class of the function performing the computation, used to prevent reporting the same error multiple times
+   * @param recomputeValue      optionally, a way to recalculate the value one more time with {@link #isLoggingEnabled()} true,
+   *                            and include the log collected via {@link #logTrace} into exception report.
+   * @param contextInfoSupplier a supplier that may provide additional contextual information to log
+   */
+  static <T> void checkEquivalence(@Nullable T existing,
+                                   @Nullable T fresh,
+                                   @NotNull Class<?> providerClass,
+                                   @Nullable Computable<? extends T> recomputeValue,
+                                   @Nullable Supplier<String> contextInfoSupplier) {
     String msg = checkValueEquivalence(existing, fresh);
     if (msg != null) {
-      reportFailure(existing, fresh, providerClass, recomputeValue, msg);
+      reportFailure(existing, fresh, providerClass, recomputeValue,
+                    msg + (contextInfoSupplier == null ? "" : "\n" + contextInfoSupplier.get()));
     }
   }
 
   private static <T> void reportFailure(@Nullable T existing,
                                         @Nullable T fresh,
                                         @NotNull Class<?> providerClass,
-                                        @Nullable Computable<? extends T> recomputeValue, String msg) {
-    boolean shouldReport = ApplicationManager.getApplication().isUnitTestMode() || ourReportedValueClasses.add(providerClass);
+                                        @Nullable Computable<? extends T> recomputeValue,
+                                        @NotNull String msg) {
+    boolean shouldReport = (ApplicationManager.getApplication().isUnitTestMode()
+                           || ourReportedValueClasses.add(providerClass))
+                           &&  !"true".equals(System.getProperty("idea.disable.idempotence.checker", "false"));
     if (shouldReport) {
       if (recomputeValue != null) {
         msg += recomputeWithLogging(existing, fresh, recomputeValue);
       }
-      LOG.error(msg);
+      LOG.error(PluginException.createByClass(msg + " ("+providerClass+")", null, providerClass));
     }
   }
 
-  @NotNull
-  private static <T> String recomputeWithLogging(@Nullable T existing,
-                                                 @Nullable T fresh,
-                                                 @NotNull Computable<? extends T> recomputeValue) {
+  private static @NotNull <T> String recomputeWithLogging(@Nullable T existing,
+                                                          @Nullable T fresh,
+                                                          @NotNull Computable<? extends T> recomputeValue) {
     ResultWithLog<T> rwl = computeWithLogging(recomputeValue);
     T freshest = rwl.result;
     @NonNls String msg = "\n\nRecomputation gives " + objAndClass(freshest);
@@ -116,8 +194,7 @@ public final class IdempotenceChecker {
    * @return Both the computation result and the log
    * @see #logTrace(String)
    */
-  @NotNull
-  public static <T> ResultWithLog<T> computeWithLogging(Computable<? extends T> recomputeValue) {
+  public static @NotNull <T> ResultWithLog<T> computeWithLogging(@NotNull Computable<? extends T> recomputeValue) {
     List<String> threadLog = ourLog.get();
     boolean outermost = threadLog == null;
     if (outermost) {
@@ -126,11 +203,11 @@ public final class IdempotenceChecker {
     try {
       int start = threadLog.size();
       T result = recomputeValue.compute();
-      return new ResultWithLog<>(result, threadLog.subList(start, threadLog.size()));
+      return new ResultWithLog<>(result, new ArrayList<>(threadLog.subList(start, threadLog.size())));
     }
     finally {
       if (outermost) {
-        ourLog.set(null);
+        ourLog.remove();
       }
     }
   }
@@ -138,10 +215,10 @@ public final class IdempotenceChecker {
   private static @NonNls String objAndClass(Object o) {
     if (o == null) return "null";
 
-    String s = o.toString();
+    String s = o instanceof Object[] ? Arrays.toString((Object[])o) : o.toString();
     return s.contains(o.getClass().getSimpleName()) || o instanceof String || o instanceof Number || o instanceof Class
            ? s
-           : s + " (class " + o.getClass().getName() + ")";
+           : s + " (" + (o.getClass().isArray() ? o.getClass().getComponentType()+"[]": o.getClass()) + ")";
   }
 
   private static String checkValueEquivalence(@Nullable Object existing, @Nullable Object fresh) {
@@ -178,6 +255,9 @@ public final class IdempotenceChecker {
       }
       return whichIsField("size", existing, fresh, checkCollectionSizes(((Map<?,?>)existing).size(), ((Map<?,?>)fresh).size()));
     }
+    if (isExpectedToHaveSaneEquals(existing) && !existing.equals(fresh)) {
+      return reportProblem(existing, fresh);
+    }
     if (existing instanceof PsiNamedElement) {
       return checkPsiEquivalence((PsiElement)existing, (PsiElement)fresh);
     }
@@ -191,25 +271,22 @@ public final class IdempotenceChecker {
       }
       return null;
     }
-    if (isExpectedToHaveSaneEquals(existing) && !existing.equals(fresh)) {
-      return reportProblem(existing, fresh);
-    }
     return null;
   }
 
-  private static boolean isOrderedMap(Object o) {
+  private static boolean isOrderedMap(@NotNull Object o) {
     return o instanceof LinkedHashMap || o instanceof SortedMap;
   }
 
-  private static boolean isOrderedSet(Object o) {
+  private static boolean isOrderedSet(@NotNull Object o) {
     return o instanceof LinkedHashSet || o instanceof SortedSet;
   }
 
   private static String whichIsField(@NotNull @NonNls String field, @NotNull Object existing, @NotNull Object fresh, @Nullable String msg) {
-    return msg == null ? null : appendDetail(msg, "which is " + field + " of " + existing + " and " + fresh);
+    return msg == null ? null : appendDetail(msg, "which is `." + field + "` of " + existing + " and " + fresh);
   }
 
-  private static Object @Nullable [] asArray(Object o) {
+  private static Object @Nullable [] asArray(@NotNull Object o) {
     if (o instanceof Object[]) return (Object[])o;
     if (o instanceof Map.Entry) return new Object[]{((Map.Entry<?,?>)o).getKey(), ((Map.Entry<?,?>)o).getValue()};
     if (o instanceof Pair) return new Object[]{((Pair<?,?>)o).first, ((Pair<?,?>)o).second};
@@ -233,7 +310,8 @@ public final class IdempotenceChecker {
   }
 
   private static boolean isExpectedToHaveSaneEquals(@NotNull Object existing) {
-    return existing instanceof Comparable;
+    return existing instanceof Comparable
+           || existing instanceof Symbol;
   }
 
   @Contract("null,_->!null;_,null->!null")
@@ -253,6 +331,7 @@ public final class IdempotenceChecker {
     if (existing instanceof Map && fresh instanceof Map && isOrderedMap(existing) == isOrderedMap(fresh)) return true;
     if (existing instanceof Set && fresh instanceof Set && isOrderedSet(existing) == isOrderedSet(fresh)) return true;
     if (existing instanceof List && fresh instanceof List) return true;
+    if (existing instanceof PsiNamedElement && fresh instanceof PsiNamedElement) return true; // ClsClassImpl might be equal to PsiClass
     return ContainerUtil.intersects(allSupersWithEquals.get(existing.getClass()), allSupersWithEquals.get(fresh.getClass()));
   }
 
@@ -295,7 +374,7 @@ public final class IdempotenceChecker {
     return null;
   }
 
-  private static String checkArrayEquivalence(Object[] a1, Object[] a2, Object original1) {
+  private static String checkArrayEquivalence(Object @NotNull [] a1, Object @NotNull [] a2, @NotNull Object original1) {
     int len1 = a1.length;
     int len2 = a2.length;
     if (len1 != len2) {
@@ -311,12 +390,13 @@ public final class IdempotenceChecker {
     return null;
   }
 
-  private static String reportProblem(Object o1, Object o2) {
+  private static @NotNull String reportProblem(@Nullable Object o1, @Nullable Object o2) {
     return appendDetail("Non-idempotent computation: it returns different results when invoked multiple times or on different threads:",
                         objAndClass(o1) + " != " + objAndClass(o2));
   }
 
-  private static String appendDetail(@NonNls String message, @NonNls String detail) {
+  @Contract(pure = true)
+  private static @NotNull String appendDetail(@NotNull @NonNls String message, @NotNull @NonNls String detail) {
     return message + "\n  " + StringUtil.trimLog(detail, 10_000);
   }
 
@@ -324,15 +404,15 @@ public final class IdempotenceChecker {
    * @return whether random checks are enabled and it makes sense to call a potentially expensive {@link #applyForRandomCheck} at all.
    */
   public static boolean areRandomChecksEnabled() {
-    return ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest();
+    return ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest();
   }
 
   /**
    * Useful when your test checks how many times a specific code was called, and random checks make that test flaky.
    */
   @TestOnly
-  public static void disableRandomChecksUntil(Disposable parentDisposable) {
-    ourRateCheckProperty.setValue(0, parentDisposable);
+  public static void disableRandomChecksUntil(@NotNull Disposable parentDisposable) {
+    rateCheckProperty.get().setValue(0, parentDisposable);
   }
 
   /**
@@ -340,11 +420,11 @@ public final class IdempotenceChecker {
    * (depending on "platform.random.idempotence.check.rate" registry value)
    * the computation is re-run and checked for consistency with that cached value.
    */
-  public static <T> void applyForRandomCheck(T data, Object provider, Computable<? extends T> recomputeValue) {
+  public static <T> void applyForRandomCheck(@NotNull T data, @NotNull Object provider, @NotNull Computable<? extends T> recomputeValue) {
     if (areRandomChecksEnabled() && shouldPerformRandomCheck()) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
-      Integer prevNesting = ourRandomCheckNesting.get();
-      ourRandomCheckNesting.set(prevNesting + 1);
+      AtomicInteger prevNesting = ourRandomCheckNesting.get();
+      prevNesting.incrementAndGet();
       try {
         T fresh = recomputeValue.compute();
         if (stamp.mayCacheNow()) {
@@ -352,19 +432,19 @@ public final class IdempotenceChecker {
         }
       }
       finally {
-        ourRandomCheckNesting.set(prevNesting);
+        prevNesting.decrementAndGet();
       }
     }
   }
 
   private static boolean shouldPerformRandomCheck() {
-    int rate = ourRateCheckProperty.asInteger();
-    return rate > 0 && ThreadLocalRandom.current().nextInt(rate) == 0;
+    int rate = rateCheckProperty.get().asInteger();
+    return rate > 0 && ThreadLocalRandom.current().nextInt(rate) == 0 && !ApplicationManagerEx.isInStressTest();
   }
 
   @TestOnly
   public static boolean isCurrentThreadInsideRandomCheck() {
-    return ourRandomCheckNesting.get() > 0;
+    return ourRandomCheckNesting.get().get() > 0;
   }
 
   /**
@@ -385,7 +465,7 @@ public final class IdempotenceChecker {
     }
   }
 
-  public static class ResultWithLog<T> {
+  public static final class ResultWithLog<T> {
     private final T result;
     private final List<String> log;
 

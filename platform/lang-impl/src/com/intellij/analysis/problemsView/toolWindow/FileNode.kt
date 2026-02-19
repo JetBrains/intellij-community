@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.icons.AllIcons
@@ -14,15 +14,16 @@ import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 import java.util.Objects.hash
 
-internal class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
+class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
 
-  override fun getLeafState() = if (parentDescriptor is Root) LeafState.NEVER else LeafState.DEFAULT
+  override val descriptor: OpenFileDescriptor?
+    get() = project?.let { OpenFileDescriptor(it, file) }
 
-  override fun getName() = file.presentableName ?: file.name
+  override fun getLeafState(): LeafState = if (parentDescriptor is Root) LeafState.NEVER else LeafState.DEFAULT
 
-  override fun getVirtualFile() = file
+  override fun getName(): String = file.presentableName
 
-  override fun getDescriptor() = project?.let { OpenFileDescriptor(it, file) }
+  override fun getVirtualFile(): VirtualFile = file
 
   override fun update(project: Project, presentation: PresentationData) {
     presentation.addText(name, REGULAR_ATTRIBUTES)
@@ -47,7 +48,7 @@ internal class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
     return root?.getChildren(file) ?: super.getChildren()
   }
 
-  override fun hashCode() = hash(project, file)
+  override fun hashCode(): Int = hash(project, file)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

@@ -1,8 +1,14 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.lineMover;
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiUtil;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
@@ -15,7 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JsonLineMover extends LineMover {
+public final class JsonLineMover extends LineMover {
   private enum Direction {
     Same,
     Inside,
@@ -88,34 +94,28 @@ public class JsonLineMover extends LineMover {
     return true;
   }
 
-  @NotNull
-  private static Pair<PsiElement, PsiElement> expandCommentsInRange(@NotNull Pair<PsiElement, PsiElement> range) {
+  private static @NotNull Pair<PsiElement, PsiElement> expandCommentsInRange(@NotNull Pair<PsiElement, PsiElement> range) {
     final PsiElement upper = JsonPsiUtil.findFurthestSiblingOfSameType(range.getFirst(), false);
     final PsiElement lower = JsonPsiUtil.findFurthestSiblingOfSameType(range.getSecond(), true);
     return Pair.create(upper, lower);
   }
 
   @Override
-  public void beforeMove(@NotNull Editor editor, @NotNull MoveInfo info, boolean down) {
-
-  }
-
-  @Override
   public void afterMove(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
     int diff = (info.toMove.endLine - info.toMove.startLine) - (info.toMove2.endLine - info.toMove2.startLine);
     switch (myDirection) {
-      case Same:
+      case Same -> {
         addCommaIfNeeded(editor.getDocument(), down ? info.toMove.endLine - 1 - diff : info.toMove2.endLine - 1 + diff);
         trimCommaIfNeeded(editor.getDocument(), file, down ? info.toMove.endLine : info.toMove2.endLine + diff);
-        break;
-      case Inside:
+      }
+      case Inside -> {
         if (!down) {
           addCommaIfNeeded(editor.getDocument(), info.toMove2.startLine - 1);
         }
         trimCommaIfNeeded(editor.getDocument(), file, down ? info.toMove.startLine : info.toMove2.startLine);
         trimCommaIfNeeded(editor.getDocument(), file, down ? info.toMove.endLine : info.toMove2.endLine + diff);
-        break;
-      case Outside:
+      }
+      case Outside -> {
         addCommaIfNeeded(editor.getDocument(), down ? info.toMove.startLine : info.toMove2.startLine);
         trimCommaIfNeeded(editor.getDocument(), file, down ? info.toMove.endLine : info.toMove2.endLine + diff);
         if (down) {
@@ -123,7 +123,7 @@ public class JsonLineMover extends LineMover {
           addCommaIfNeeded(editor.getDocument(), info.toMove.endLine);
           trimCommaIfNeeded(editor.getDocument(), file, info.toMove.endLine);
         }
-        break;
+      }
     }
   }
 

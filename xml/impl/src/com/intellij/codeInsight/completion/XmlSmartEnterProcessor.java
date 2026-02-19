@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
@@ -25,21 +11,22 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.CheckEmptyTagInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
 public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance(XmlSmartEnterProcessor.class);
 
   @Override
-  public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+  public boolean process(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
     return completeEndTag(project, editor, psiFile);
   }
 
@@ -79,11 +66,15 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
             final TextRange textRange = xmlAttribute.getTextRange();
             caretAt = valueElement == null
                       ? textRange.getStartOffset()
-                      : getClosingQuote(xmlAttribute).length() == 0 ? textRange.getEndOffset() : caretAt;
+                      : getClosingQuote(xmlAttribute).isEmpty() ? textRange.getEndOffset() : caretAt;
           }
 
           if (tagNameText == null) {
-            tagNameText = text.subSequence(tagAtCaret.getTextRange().getStartOffset() + 1, caretAt);
+            int start = tagAtCaret.getTextRange().getStartOffset() + 1;
+            if (start > caretAt) {
+              return false;
+            }
+            tagNameText = text.subSequence(start, caretAt);
           }
 
           final PsiElement element = psiFile.findElementAt(probableCommaOffset);
@@ -172,8 +163,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
     commit(editor);
   }
 
-  @Nullable
-  private static XmlTag findClosestUnclosedTag(final XmlTag tag) {
+  private static @Nullable XmlTag findClosestUnclosedTag(final XmlTag tag) {
     XmlTag unclosedTag = tag;
     while (unclosedTag != null) {
       final PsiElement lastChild = unclosedTag.getLastChild();
@@ -194,7 +184,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   protected boolean shouldInsertClosingTag(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret) {
-    return xmlAttribute == null || getClosingQuote(xmlAttribute).length() != 0;
+    return xmlAttribute == null || !getClosingQuote(xmlAttribute).isEmpty();
   }
 
   protected String getClosingPart(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret, final boolean emptyTag) {
@@ -204,8 +194,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
               ">");
   }
 
-  @NotNull
-  protected static CharSequence getClosingQuote(@Nullable final XmlAttribute attribute) {
+  protected static @NotNull CharSequence getClosingQuote(final @Nullable XmlAttribute attribute) {
     if (attribute == null) {
       return "";
     }
@@ -216,7 +205,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
     }
 
     final String s = element.getText();
-    if (s != null && s.length() > 0) {
+    if (s != null && !s.isEmpty()) {
       if (s.charAt(0) == '"' && s.charAt(s.length() - 1) != '"') {
         return "\"";
       }

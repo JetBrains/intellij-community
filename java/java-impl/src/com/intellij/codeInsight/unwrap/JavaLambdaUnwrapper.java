@@ -16,7 +16,14 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +40,7 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
      super.collectAffectedElements(e, toExtract);
      return JavaAnonymousUnwrapper.findElementToExtractFrom(e);
   }
@@ -46,7 +53,7 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
     if (body instanceof PsiExpression || body instanceof PsiCodeBlock && ((PsiCodeBlock)body).getStatementCount() == 1) {
       List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
       if (returnExpressions.size() == 1
-          && !PsiType.VOID.equals(returnExpressions.get(0).getType())
+          && !PsiTypes.voidType().equals(returnExpressions.get(0).getType())
           && JavaAnonymousUnwrapper.toAssignment(context, from, returnExpressions.get(0))) {
         return;
       }

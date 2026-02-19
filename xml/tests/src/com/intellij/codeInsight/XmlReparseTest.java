@@ -19,7 +19,11 @@ package com.intellij.codeInsight;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractReparseTestCase;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.xml.XmlFile;
@@ -42,9 +46,10 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     String s2 = "</a>";
 
     prepareFile(s1, s2);
-    final String beforeReparse = DebugUtil.treeToString(((XmlFileImpl)myDummyFile).getTreeElement(), true);
+    final String beforeReparse = DebugUtil.treeToString(((XmlFileImpl)myDummyFile).getTreeElement(), false);
     insert("");
-    assertEquals("Tree changed after empty reparse", beforeReparse, DebugUtil.treeToString(((XmlFileImpl)myDummyFile).getTreeElement(), true));
+    assertEquals("Tree changed after empty reparse", beforeReparse, DebugUtil.treeToString(((XmlFileImpl)myDummyFile).getTreeElement(),
+                                                                                           false));
   }
 
   public void testTagData1() {
@@ -130,12 +135,14 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   }
 
   public void testXmlReparseProblem() throws IncorrectOperationException {
-    prepareFile("<table>\n" +
-                "    <tr>\n" +
-                "<td>\n" +
-                "<table width"," </td>\n" +
-               "    </tr>\n" +
-               "</table>");
+    prepareFile("""
+                  <table>
+                      <tr>
+                  <td>
+                  <table width""", """
+                   </td>
+                      </tr>
+                  </table>""");
     insert("=");
   }
   private static final String marker = "<marker>";

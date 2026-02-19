@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -11,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -32,30 +34,27 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
     myName = parameter.getName();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return GroovyBundle.message("remove.parameter.0", myName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("remove.unused.parameter");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    PsiElement at = psiFile.findElementAt(editor.getCaretModel().getOffset());
     GrParameter parameter = PsiTreeUtil.getParentOfType(at, GrParameter.class);
 
     return parameter != null && myName.equals(parameter.getName());
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
-    GrParameter parameter = PsiTreeUtil.getParentOfType(at, GrParameter.class);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    GrParameter parameter = getParameter(editor, psiFile);
     if (parameter == null) return;
 
     if (!FileModificationService.getInstance().prepareFileForWrite(parameter.getContainingFile())) return;
@@ -63,6 +62,13 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
     GrMethod method = (GrMethod)parameter.getDeclarationScope();
     GrChangeSignatureProcessor processor = new GrChangeSignatureProcessor(parameter.getProject(), createChangeInfo(method, parameter));
     processor.run();
+  }
+
+  private static @Nullable GrParameter getParameter(Editor editor, PsiFile file) {
+    PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
+    GrParameter parameter = PsiTreeUtil.getParentOfType(at, GrParameter.class);
+    if (parameter == null) return null;
+    return parameter;
   }
 
   private static GrChangeInfoImpl createChangeInfo(GrMethod method, GrParameter parameter) {
@@ -80,6 +86,15 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
     return new GrChangeInfoImpl(method, null, wrapper, method.getName(), params, null, false);
   }
 
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    GrParameter parameter = getParameter(editor, psiFile);
+    if (parameter == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    parameter.delete();
+    return IntentionPreviewInfo.DIFF;
+  }
 
   @Override
   public boolean startInWriteAction() {

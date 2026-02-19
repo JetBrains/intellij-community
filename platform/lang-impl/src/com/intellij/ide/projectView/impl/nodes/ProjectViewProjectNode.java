@@ -1,28 +1,42 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PathElementIdProvider;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModuleDescription;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-public class ProjectViewProjectNode extends AbstractProjectNode {
+public class ProjectViewProjectNode extends AbstractProjectNode implements PathElementIdProvider {
   public ProjectViewProjectNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, project, viewSettings);
+  }
+
+  @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
   }
 
   @Override
@@ -38,10 +52,17 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       return Collections.emptyList();
     }
 
-    List<VirtualFile> topLevelContentRoots = ProjectViewDirectoryHelper.getInstance(project).getTopLevelRoots();
+    ProjectViewDirectoryHelper projectViewHelper = ProjectViewDirectoryHelper.getInstance(project);
 
-    Set<ModuleDescription> modules = new LinkedHashSet<>(topLevelContentRoots.size());
-    for (VirtualFile root : topLevelContentRoots) {
+    // All project roots except those that are under module content roots
+    List<VirtualFile> projectRoots = ProjectRootUtilsKt.getProjectRoots(project);
+
+    // top level roots but not under project roots
+    List<VirtualFile> topLevelRootsOutsideOfProjectRoots = ContainerUtil
+      .filter(projectViewHelper.getTopLevelRoots(), topLevelRoot -> !VfsUtilCore.isUnderFiles(topLevelRoot, projectRoots));
+
+    Set<ModuleDescription> modules = new LinkedHashSet<>(topLevelRootsOutsideOfProjectRoots.size());
+    for (VirtualFile root : topLevelRootsOutsideOfProjectRoots) {
       Module module = ModuleUtilCore.findModuleForFile(root, project);
       if (module != null) {
         modules.add(new LoadedModuleDescriptionImpl(module));
@@ -54,26 +75,16 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
       }
     }
 
-
     List<AbstractTreeNode<?>> nodes = new ArrayList<>(modulesAndGroups(modules));
-
-    String baseDirPath = project.getBasePath();
-    VirtualFile baseDir = baseDirPath == null ? null : LocalFileSystem.getInstance().findFileByPath(baseDirPath);
-    if (baseDir != null) {
-      PsiManager psiManager = PsiManager.getInstance(project);
-      VirtualFile[] files = baseDir.getChildren();
-      ProjectFileIndex projectFileIndex = null;
-      for (VirtualFile file : files) {
-        if (!file.isDirectory()) {
-          if (projectFileIndex == null) {
-            projectFileIndex = ProjectFileIndex.SERVICE.getInstance(getProject());
-          }
-          if (projectFileIndex.getModuleForFile(file, false) == null) {
-            PsiFile psiFile = psiManager.findFile(file);
-            if (psiFile != null) {
-              nodes.add(new PsiFileNode(getProject(), psiFile, getSettings()));
-            }
-          }
+    PsiManager psiManager = PsiManager.getInstance(project);
+    for (var projectRoot : projectRoots) {
+      var psiDirectory = psiManager.findDirectory(projectRoot);
+      if (psiDirectory != null) {
+        nodes.add(new PsiDirectoryNode(myProject, psiDirectory, getSettings()));
+      } else {
+        var psiFile = psiManager.findFile(projectRoot);
+        if (psiFile != null) {
+          nodes.add(new PsiFileNode(myProject, psiFile, getSettings()));
         }
       }
     }
@@ -84,9 +95,8 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return nodes;
   }
 
-  @NotNull
   @Override
-  protected AbstractTreeNode<?> createModuleGroup(@NotNull final Module module) {
+  protected @NotNull AbstractTreeNode<?> createModuleGroup(final @NotNull Module module) {
     List<VirtualFile> roots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelModuleRoots(module, getSettings());
     if (roots.size() == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots.get(0));
@@ -111,9 +121,28 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return new ProjectViewUnloadedModuleNode(getProject(), moduleDescription, getSettings());
   }
 
-  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroupNode(@NotNull final ModuleGroup moduleGroup) {
+  protected @NotNull AbstractTreeNode createModuleGroupNode(final @NotNull ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
+  }
+
+  @Override
+  public @NotNull String getPathElementId() {
+    if (shouldUseSimplifiedProjectTreeState()) {
+      return "ROOT";
+    }
+    else {
+      return TreeState.defaultPathElementId(this);
+    }
+  }
+
+  @Override
+  public @Nullable String getPathElementType() {
+    if (shouldUseSimplifiedProjectTreeState()) {
+      return GENERIC_PROJECT_VIEW_NODE_TYPE;
+    }
+    else {
+      return null;
+    }
   }
 }

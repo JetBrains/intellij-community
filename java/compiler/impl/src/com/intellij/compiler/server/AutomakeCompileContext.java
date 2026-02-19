@@ -1,10 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.MessagesContainer;
 import com.intellij.compiler.impl.ProjectCompileScope;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,6 +20,8 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
@@ -35,9 +41,8 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     myAnnotationProcessingEnabled = CompilerConfiguration.getInstance(project).isAnnotationProcessorsEnabled();
   }
 
-  @NotNull
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -61,14 +66,13 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return true;
   }
 
-  @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum) {
-    addMessage(category, message, url, lineNum, columnNum, null);
-  }
 
   @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum, Navigatable navigatable) {
-    createAndAddMessage(category, message, url, lineNum, columnNum, navigatable);
+  public void addMessage(@NotNull CompilerMessageCategory category,
+                         @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                         @Nullable String url, int lineNum, int columnNum, @Nullable Navigatable navigatable,
+                         Collection<String> moduleNames) {
+    createAndAddMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
   }
 
   @Override
@@ -79,11 +83,9 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   @Nullable
   CompilerMessage createAndAddMessage(CompilerMessageCategory category,
                                       @Nls String message,
-                                      @Nullable String url,
-                                      int lineNum,
-                                      int columnNum,
-                                      Navigatable navigatable) {
-    return myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
+                                      @Nullable String url, int lineNum, int columnNum, Navigatable navigatable,
+                                      final Collection<String> moduleNames) {
+    return myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
   }
 
   @Override
@@ -91,25 +93,9 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return myMessages.getMessageCount(category);
   }
 
-  @NotNull
   @Override
-  public ProgressIndicator getProgressIndicator() {
+  public @NotNull ProgressIndicator getProgressIndicator() {
     return myIndicator;
-  }
-
-  @Override
-  public void requestRebuildNextTime(String message) {
-  }
-
-  @Override
-  public boolean isRebuildRequested() {
-    return false;
-  }
-
-  @Nullable
-  @Override
-  public String getRebuildReason() {
-    return null;
   }
 
   @Override
@@ -118,7 +104,7 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   }
 
   @Override
-  public VirtualFile getModuleOutputDirectory(@NotNull final Module module) {
+  public VirtualFile getModuleOutputDirectory(final @NotNull Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, false);
   }
 

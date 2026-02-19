@@ -1,0 +1,14 @@
+// "Remove redundant 'is' check" "true"
+
+interface Base
+interface Derived: Base
+
+fun foo(bar: Base):Int {
+    return when {
+        bar is Derived -> 0
+        bar <caret>!is Base -> 42
+        else -> 1
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessIsCheckFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessIsCheckFix

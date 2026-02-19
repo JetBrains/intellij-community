@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -45,35 +45,26 @@ public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntList,
     protected MyIndexStorage(@NotNull Path storageFile) throws IOException {
       super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, IntArrayExternalizer.INSTANCE, 4 * 1024, false);
     }
-
-    @Override
-    protected void checkCanceled() {
-      ProgressManager.checkCanceled();
-    }
   }
 
   private static final IndexExtension<Integer, IntList, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {
-    @NotNull
     @Override
-    public IndexId<Integer, IntList> getName() {
+    public @NotNull IndexId<Integer, IntList> getName() {
       return IndexId.create("jvm.discovered.tests");
     }
 
-    @NotNull
     @Override
-    public DataIndexer<Integer, IntList, UsedSources> getIndexer() {
+    public @NotNull DataIndexer<Integer, IntList, UsedSources> getIndexer() {
       return inputData -> inputData.myUsedMethods;
     }
 
-    @NotNull
     @Override
-    public KeyDescriptor<Integer> getKeyDescriptor() {
+    public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
       return EnumeratorIntegerDescriptor.INSTANCE;
     }
 
-    @NotNull
     @Override
-    public DataExternalizer<IntList> getValueExternalizer() {
+    public @NotNull DataExternalizer<IntList> getValueExternalizer() {
       return IntArrayExternalizer.INSTANCE;
     }
 

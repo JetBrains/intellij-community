@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -6,138 +6,87 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectPaneSelectInTarget;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.*;
-import com.intellij.ide.scratch.ScratchUtil;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.projectView.impl.canBeSelected.CanBeSelectedInProjectPaneProvider;
+import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformUtils;
-import org.jdom.Element;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.accessibility.AccessibleContext;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
-import java.awt.*;
+import java.awt.Font;
 
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
-import static java.awt.EventQueue.isDispatchThread;
 
-public class ProjectViewPane extends AbstractProjectViewPSIPane {
-  @NonNls public static final String ID = "ProjectPane";
-  private static final String USE_FILE_NESTING_RULES = "use-file-nesting-rules";
-
-  private boolean myUseFileNestingRules = true;
+public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
+  public static final @NonNls String ID = "ProjectPane";
 
   public ProjectViewPane(Project project) {
     super(project);
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  public String getTitle() {
+  public void configureAsyncSupport(@NotNull ProjectViewPaneSupport support) {
+    support.setMultiSelectionEnabled(false);
+  }
+
+  @Override
+  public @NotNull String getTitle() {
     return IdeBundle.message("title.project");
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.General.ProjectTab;
   }
 
 
-  @NotNull
   @Override
-  public SelectInTarget createSelectInTarget() {
+  public @NotNull SelectInTarget createSelectInTarget() {
     return new ProjectPaneSelectInTarget(myProject);
   }
 
-  @NotNull
   @Override
-  protected AbstractTreeUpdater createTreeUpdater(@NotNull AbstractTreeBuilder treeBuilder) {
-    return new ProjectViewTreeUpdater(treeBuilder);
-  }
-
-  @NotNull
-  @Override
-  protected ProjectAbstractTreeStructureBase createStructure() {
+  protected @NotNull ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectViewPaneTreeStructure();
   }
 
-  @NotNull
   @Override
-  protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
-    return new ProjectViewTree(treeModel) {
-      @Override
-      public String toString() {
-        return getTitle() + " " + super.toString();
-      }
-
-      @Override
-      public void setFont(Font font) {
-        if (Registry.is("bigger.font.in.project.view")) {
-          font = font.deriveFont(font.getSize() + 1.0f);
-        }
-        super.setFont(font);
-      }
-    };
+  protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
+    return new MyProjectViewTree(treeModel, getTitle());
   }
 
-  @NotNull
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return "ProjectPane";
-  }
-
-  @Override
-  public void readExternal(@NotNull Element element) {
-    super.readExternal(element);
-    String useFileNestingRules = JDOMExternalizerUtil.readField(element, USE_FILE_NESTING_RULES);
-    myUseFileNestingRules = useFileNestingRules == null || Boolean.parseBoolean(useFileNestingRules);
-  }
-
-  @Override
-  public void writeExternal(Element element) {
-    super.writeExternal(element);
-    if (!myUseFileNestingRules) {
-      JDOMExternalizerUtil.writeField(element, USE_FILE_NESTING_RULES, String.valueOf(false));
-    }
-  }
-
-  @Override
-  public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
-    actionGroup.addAction(new ConfigureFilesNestingAction()).setAsSecondary(true);
   }
 
   /**
    * @return {@code true} if 'Project View' have more than one top-level module node or have top-level module group nodes
    */
   private boolean hasSeveralTopLevelModuleNodes() {
-    if (!isDispatchThread()) return true; // do not check nodes during building
+    if (!EDT.isCurrentThreadEdt()) return true; // do not check nodes during building
     // TODO: have to rewrite this logic without using walking in a tree
     TreeModel treeModel = myTree.getModel();
     Object root = treeModel.getRoot();
@@ -162,8 +111,9 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     return false;
   }
 
-  boolean isUseFileNestingRules() {
-    return myUseFileNestingRules;
+  @Override
+  public boolean isFileNestingEnabled() {
+    return true;
   }
 
   // should be first
@@ -172,43 +122,9 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     return 0;
   }
 
-  private final class ProjectViewTreeUpdater extends AbstractTreeUpdater {
-    private ProjectViewTreeUpdater(final AbstractTreeBuilder treeBuilder) {
-      super(treeBuilder);
-    }
-
-    @Override
-    public boolean addSubtreeToUpdateByElement(@NotNull Object element) {
-      if (element instanceof PsiDirectory && !myProject.isDisposed()) {
-        final PsiDirectory dir = (PsiDirectory)element;
-        final ProjectTreeStructure treeStructure = (ProjectTreeStructure)myTreeStructure;
-        PsiDirectory dirToUpdateFrom = dir;
-
-        // optimization
-        // isEmptyMiddleDirectory can be slow when project VFS is not fully loaded (initial dumb mode).
-        // It's easiest to disable the optimization in any dumb mode
-        if (!treeStructure.isFlattenPackages() && treeStructure.isHideEmptyMiddlePackages() && !DumbService.isDumb(myProject)) {
-          while (dirToUpdateFrom != null && ProjectViewDirectoryHelper.getInstance(myProject).isEmptyMiddleDirectory(dirToUpdateFrom, true)) {
-            dirToUpdateFrom = dirToUpdateFrom.getParentDirectory();
-          }
-        }
-        boolean addedOk;
-        while (!(addedOk = super.addSubtreeToUpdateByElement(dirToUpdateFrom == null? myTreeStructure.getRootElement() : dirToUpdateFrom))) {
-          if (dirToUpdateFrom == null) {
-            break;
-          }
-          dirToUpdateFrom = dirToUpdateFrom.getParentDirectory();
-        }
-        return addedOk;
-      }
-
-      return super.addSubtreeToUpdateByElement(element);
-    }
-  }
-
-  private final class ProjectViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
-    ProjectViewPaneTreeStructure() {
-      super(ProjectViewPane.this.myProject, ID);
+  protected class ProjectViewPaneTreeStructure extends ProjectTreeStructure implements ProjectViewSettings {
+    protected ProjectViewPaneTreeStructure() {
+      super(ProjectViewPane.this.myProject, ProjectViewPane.this.getId());
     }
 
     @Override
@@ -218,7 +134,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
     @Override
     public boolean isShowExcludedFiles() {
-      return ProjectView.getInstance(myProject).isShowExcludedFiles(ID);
+      return ProjectView.getInstance(myProject).isShowExcludedFiles(getId());
     }
 
     @Override
@@ -227,13 +143,8 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public boolean isShowVisibilityIcons() {
-      return ProjectView.getInstance(myProject).isShowVisibilityIcons(ID);
-    }
-
-    @Override
     public boolean isUseFileNestingRules() {
-      return myUseFileNestingRules;
+      return ProjectView.getInstance(myProject).isUseFileNestingRules(getId());
     }
 
     @Override
@@ -242,52 +153,8 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
   }
 
-  private final class ConfigureFilesNestingAction extends DumbAwareAction {
-    private ConfigureFilesNestingAction() {
-      super(IdeBundle.messagePointer("action.file.nesting.in.project.view"));
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      final ProjectView projectView = ProjectView.getInstance(myProject);
-      e.getPresentation().setEnabledAndVisible(projectView.getCurrentProjectViewPane() == ProjectViewPane.this);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      final FileNestingInProjectViewDialog dialog = new FileNestingInProjectViewDialog(myProject);
-      dialog.reset(myUseFileNestingRules);
-      dialog.show();
-      if (dialog.isOK()) {
-        dialog.apply(useFileNestingRules -> {
-          myUseFileNestingRules = useFileNestingRules;
-          ProjectViewState.getInstance(myProject).setUseFileNestingRules(useFileNestingRules);
-          ProjectViewState.getDefaultInstance().setUseFileNestingRules(useFileNestingRules);
-        });
-        updateFromRoot(true);
-      }
-    }
-  }
-
-  @Override
-  protected BaseProjectTreeBuilder createBuilder(@NotNull DefaultTreeModel model) {
-    return null;
-  }
-
   public static boolean canBeSelectedInProjectView(@NotNull Project project, @NotNull VirtualFile file) {
-    final VirtualFile archiveFile;
-
-    if(file.getFileSystem() instanceof ArchiveFileSystem)
-      archiveFile = ((ArchiveFileSystem)file.getFileSystem()).getLocalByEntry(file);
-    else
-      archiveFile = null;
-
-    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    return (archiveFile != null && index.getContentRootForFile(archiveFile, false) != null) ||
-           index.getContentRootForFile(file, false) != null ||
-           index.isInLibrary(file) ||
-           Comparing.equal(file.getParent(), project.getBaseDir()) ||
-           ScratchUtil.isScratch(file);
+    return CanBeSelectedInProjectPaneProvider.canBeSelected(project, file);
   }
 
   @Override
@@ -298,5 +165,41 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @Override
   public boolean supportsShowExcludedFiles() {
     return true;
+  }
+
+  @Override
+  public boolean supportsShowScratchesAndConsoles() {
+    return true;
+  }
+
+  private static class MyProjectViewTree extends ProjectViewTree {
+    private final @NotNull String myTitle;
+
+    MyProjectViewTree(@NotNull DefaultTreeModel treeModel, @NotNull String title) {
+      super(treeModel);
+      myTitle = title;
+    }
+
+    @Override
+    public String toString() {
+      return myTitle + " " + super.toString();
+    }
+
+    @Override
+    public void setFont(Font font) {
+      if (AdvancedSettings.getBoolean("bigger.font.in.project.view")) {
+        font = font.deriveFont(font.getSize() + 1.0f);
+      }
+      super.setFont(font);
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = super.getAccessibleContext();
+        accessibleContext.setAccessibleName(IdeBundle.message("project.structure.tree.accessible.name"));
+      }
+      return accessibleContext;
+    }
   }
 }

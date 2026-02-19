@@ -15,16 +15,25 @@
  */
 package com.android.tools.adtui.webp;
 
-
 import com.google.webp.libwebp;
 import org.jetbrains.annotations.NotNull;
 
-import javax.imageio.*;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.stream.ImageOutputStream;
-import java.awt.*;
-import java.awt.image.*;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.IndexColorModel;
+import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
+import java.awt.image.SampleModel;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteOrder;
@@ -34,13 +43,13 @@ import java.util.Locale;
 /**
  * Encoder for WebP. This needs the webp jni library loaded to function.
  */
-public class WebpImageWriterSpi extends ImageWriterSpi {
+public final class WebpImageWriterSpi extends ImageWriterSpi {
   WebpImageWriterSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
     version = WebpNativeLibHelper.getEncoderVersion();
-    suffixes = WebpMetadata.WEBP_SUFFIXES;
-    names = WebpMetadata.WEBP_FORMAT_NAMES;
-    MIMETypes = WebpMetadata.WEBP_MIME_TYPES;
+    suffixes = WebpMetadata.Companion.getWEBP_SUFFIXES();
+    names = WebpMetadata.Companion.getWEBP_FORMAT_NAMES();
+    MIMETypes = WebpMetadata.Companion.getWEBP_MIME_TYPES();
     pluginClassName = WebpWriter.class.getName();
     outputTypes = new Class<?>[]{ImageOutputStream.class};
   }
@@ -98,8 +107,8 @@ public class WebpImageWriterSpi extends ImageWriterSpi {
     return "WebP Image Encoder";
   }
 
-  private static class WebpWriter extends ImageWriter {
-    public WebpWriter(ImageWriterSpi originatingProvider) {
+  private static final class WebpWriter extends ImageWriter {
+    private WebpWriter(ImageWriterSpi originatingProvider) {
       super(originatingProvider);
     }
 
@@ -216,17 +225,15 @@ public class WebpImageWriterSpi extends ImageWriterSpi {
       stream.write(encoded);
     }
 
-    @NotNull
-    private static Raster getRaster(@NotNull IIOImage image) {
+    private static @NotNull Raster getRaster(@NotNull IIOImage image) {
       boolean rasterOnly = image.hasRaster();
       if (rasterOnly) {
         return image.getRaster();
       }
       else {
         RenderedImage renderedImage = image.getRenderedImage();
-        if (renderedImage instanceof BufferedImage) {
+        if (renderedImage instanceof BufferedImage bufferedImage) {
           // Convert indexed to RGB
-          BufferedImage bufferedImage = (BufferedImage)renderedImage;
           if (renderedImage.getColorModel() instanceof IndexColorModel) {
             //noinspection UndesirableClassUsage
             BufferedImage rgb = new BufferedImage(bufferedImage.getWidth(), bufferedImage.getHeight(), BufferedImage.TYPE_INT_ARGB);

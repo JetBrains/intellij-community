@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -15,14 +15,12 @@ import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConfiguration> extends RunConfigurationProducer<T> {
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected JavaRunConfigurationProducerBase(ConfigurationFactory configurationFactory) {
     super(configurationFactory);
   }
@@ -43,7 +41,7 @@ public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConf
     if (context != null) {
       final RunnerAndConfigurationSettings template = context.getRunManager().getConfigurationTemplate(getConfigurationFactory());
       final Module contextModule = context.getModule();
-      final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+      final Module predefinedModule = ((ModuleBasedConfiguration<?, ?>)template.getConfiguration()).getConfigurationModule().getModule();
       if (predefinedModule != null) {
         configuration.setModule(predefinedModule);
         return true;
@@ -75,9 +73,8 @@ public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConf
     return scope;
   }
 
-  @Nullable
   @Override
-  public ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
+  public @Nullable ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
     ConfigurationFromContext fromContext = super.createConfigurationFromContext(context);
     if (fromContext != null) {
       JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration((RunConfigurationBase)fromContext.getConfiguration(),

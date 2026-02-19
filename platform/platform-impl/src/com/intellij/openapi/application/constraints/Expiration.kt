@@ -4,8 +4,14 @@ package com.intellij.openapi.application.constraints
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ObjectUtils
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.CompletionHandler
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.SupervisorJob
+import java.lang.ref.Reference
 
 /**
  * Capable of invoking a handler whenever something expires -
@@ -48,7 +54,7 @@ abstract class AbstractExpiration : Expiration {
     get() = job.isCompleted
 
   @Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-  @UseExperimental(InternalCoroutinesApi::class)
+  @OptIn(InternalCoroutinesApi::class)
   override fun invokeOnExpiration(handler: Runnable): Expiration.Handle =
     job.invokeOnCompletion(onCancelling = true) { handler.run() }.toHandlerRegistration()
 
@@ -73,7 +79,7 @@ class JobExpiration(override val job: Job) : AbstractExpiration()
  * is really used, because registering a child Disposable within the Disposer tree happens lazily.
  */
 class DisposableExpiration(private val disposable: Disposable) : AbstractExpiration() {
-  override val job by lazy {
+  override val job: CompletableJob by lazy {
     SupervisorJob().also { job ->
       disposable.cancelJobOnDisposal(job, weaklyReferencedJob = true)  // the job doesn't leak through Disposer
     }
@@ -100,7 +106,7 @@ fun Expiration.Companion.composeExpiration(expirationSet: Collection<Expiration>
   }
 }
 
-fun Expiration.invokeOnExpiration(block: () -> Unit) = invokeOnExpiration(Runnable(block))
+fun Expiration.invokeOnExpiration(block: () -> Unit): Expiration.Handle = invokeOnExpiration(Runnable(block))
 
 fun Expiration.cancelJobOnExpiration(job: Job): Expiration.Handle {
   return invokeOnExpiration {
@@ -127,7 +133,7 @@ internal fun Disposable.cancelJobOnDisposal(job: Job,
 
   if (!Disposer.tryRegister(this, childRef)) {
     Disposer.dispose(childRef)  // runs disposableBlock()
-    ObjectUtils.reachabilityFence(child)
+    Reference.reachabilityFence(child)
     return AutoCloseable { }
   }
   else {

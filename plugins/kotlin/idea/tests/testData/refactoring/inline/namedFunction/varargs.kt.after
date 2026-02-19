@@ -1,0 +1,9 @@
+// WITH_STDLIB
+
+fun main(args: Array<String>) {
+    val elements = arrayOf(1, 2, 3, 4, 5)
+    val list = if (elements.size > 0) elements.asList() else emptyList()
+    val foundElement = list.firstOrNull { it: Int -> it > 3 }
+}
+
+// IGNORE_K1

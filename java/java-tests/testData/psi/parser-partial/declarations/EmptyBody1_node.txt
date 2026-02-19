@@ -1,0 +1,5 @@
+test.java.file
+  LBRACE
+  ERROR_ELEMENT
+    <empty list>
+  WHITE_SPACE

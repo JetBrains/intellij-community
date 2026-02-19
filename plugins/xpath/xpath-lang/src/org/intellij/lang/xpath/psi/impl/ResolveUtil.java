@@ -17,7 +17,13 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlAttribute;
@@ -28,9 +34,14 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public final class ResolveUtil {
   private final Set<PsiElement> myHistory = new ReferenceOpenHashSet<>();
@@ -38,9 +49,8 @@ public final class ResolveUtil {
   private ResolveUtil() {
   }
 
-  @Nullable
-  public static Collection<XmlFile> getDependencies(XmlFile element) {
-    final CommonProcessors.CollectUniquesProcessor<XmlFile> processor = new CommonProcessors.CollectUniquesProcessor<XmlFile>() {
+  public static @Nullable Collection<XmlFile> getDependencies(XmlFile element) {
+    final CommonProcessors.CollectUniquesProcessor<XmlFile> processor = new CommonProcessors.CollectUniquesProcessor<>() {
       @Override
       public boolean process(XmlFile file) {
         if (!getResults().contains(file)) {
@@ -53,8 +63,7 @@ public final class ResolveUtil {
     return processor.getResults();
   }
 
-  @Nullable
-  public static PsiFile resolveFile(String name, PsiFile baseFile) {
+  public static @Nullable PsiFile resolveFile(String name, PsiFile baseFile) {
     if (baseFile == null) return null;
 
     final VirtualFile virtualFile = VfsUtilCore.findRelativeFile(name, baseFile.getVirtualFile());
@@ -67,8 +76,7 @@ public final class ResolveUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiFile resolveFile(XmlAttribute location, PsiFile baseFile) {
+  public static @Nullable PsiFile resolveFile(XmlAttribute location, PsiFile baseFile) {
     if (location == null) return null;
     final XmlAttributeValue valueElement = location.getValueElement();
     if (valueElement == null) return null;
@@ -133,11 +141,10 @@ public final class ResolveUtil {
     }
   }
 
-  @Nullable
-  public static PsiElement resolve(final Matcher matcher) {
+  public static @Nullable PsiElement resolve(final Matcher matcher) {
     if (matcher == null) return null;
     final List<PsiElement> found = process(matcher, true);
-    return found.size() > 0 ? found.get(0) : null;
+    return !found.isEmpty() ? found.get(0) : null;
   }
 
   public static PsiElement[] collect(final Matcher matcher) {
@@ -171,7 +178,7 @@ public final class ResolveUtil {
       if (matcher.isRecursive()) {
         root.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             final Matcher.Result match = matcher.match(tag);
             if (match != null) {
               if (match.chain != null) {
@@ -191,7 +198,7 @@ public final class ResolveUtil {
         root.acceptChildren(new XmlElementVisitor() {
 
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             final Matcher.Result match = matcher.match(tag);
             if (match != null) {
               if (match.chain != null) {
@@ -222,14 +229,12 @@ public final class ResolveUtil {
     PsiElement getResult();
   }
 
-  @Nullable
-  public static PsiElement treeWalkUp(final XmlProcessor processor, PsiElement elt) {
+  public static @Nullable PsiElement treeWalkUp(final XmlProcessor processor, PsiElement elt) {
     if (elt == null) return null;
 
     PsiElement cur = elt;
     do {
-      if (cur instanceof XmlTag) {
-        final XmlTag tag = (XmlTag)cur;
+      if (cur instanceof XmlTag tag) {
         if (!processor.process(tag)) {
           if (processor instanceof ResolveProcessor) {
             return ((ResolveProcessor)processor).getResult();

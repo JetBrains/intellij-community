@@ -16,7 +16,7 @@ class Test {
 
 class Test1 {
     {
-        Runnable b = Test1 :: <error descr="Reference to 'length' is ambiguous, both 'length(String)' and 'length(Integer)' match">length</error>;
+        Runnable b = Test1 :: <error descr="Cannot resolve method 'length'">length</error>;
         Comparable<String> c = Test1 :: length;
         Comparable<Integer> c1 =  Test1 :: length;
     }
@@ -38,5 +38,5 @@ class Test2 {
 
     void foo(Integer i) {}
 
-    Object o = <error descr="Object is not a functional interface">Test2::foo</error>;
+    Object o = <error descr="java.lang.Object is not a functional interface">Test2::foo</error>;
 }

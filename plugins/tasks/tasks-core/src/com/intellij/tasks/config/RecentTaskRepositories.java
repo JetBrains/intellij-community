@@ -1,33 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.XmlSerializer;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "RecentTaskRepositories", storages = @Storage("other.xml"))
+@State(name = "RecentTaskRepositories", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
+@Service(Service.Level.APP)
 public final class RecentTaskRepositories implements PersistentStateComponent<Element>, Disposable {
-  private final Set<TaskRepository> myRepositories = new ObjectOpenCustomHashSet<>(HASHING_STRATEGY);
+  private final Set<TaskRepository> myRepositories = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
 
-  private static final Hash.Strategy<TaskRepository> HASHING_STRATEGY = new Hash.Strategy<>() {
+  private static final HashingStrategy<TaskRepository> HASHING_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(@Nullable TaskRepository object) {
       return object == null || object.getUrl() == null ? 0 : object.getUrl().hashCode();
@@ -39,9 +47,9 @@ public final class RecentTaskRepositories implements PersistentStateComponent<El
     }
   };
 
-  public RecentTaskRepositories() {
+  public RecentTaskRepositories(@NotNull CoroutineScope coroutineScope) {
     // remove repositories pertaining to non-existent types
-    TaskRepositoryType.addEPListChangeListener(this, () -> {
+    TaskRepositoryType.addEPListChangeListener(coroutineScope, () -> {
       List<Class<?>> possibleRepositoryClasses = TaskRepositoryType.getRepositoryClasses();
       myRepositories.removeIf(repository -> {
         return !ContainerUtil.exists(possibleRepositoryClasses, clazz -> clazz.isAssignableFrom(repository.getClass()));
@@ -50,13 +58,13 @@ public final class RecentTaskRepositories implements PersistentStateComponent<El
   }
 
   public static RecentTaskRepositories getInstance() {
-    return ServiceManager.getService(RecentTaskRepositories.class);
+    return ApplicationManager.getApplication().getService(RecentTaskRepositories.class);
   }
 
   public Set<TaskRepository> getRepositories() {
-    return new ObjectOpenCustomHashSet<>(ContainerUtil.findAll(myRepositories, repository -> {
-      return !StringUtil.isEmptyOrSpaces(repository.getUrl());
-    }), HASHING_STRATEGY);
+    Set<TaskRepository> set = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
+    set.addAll(ContainerUtil.findAll(myRepositories, repository -> !StringUtil.isEmptyOrSpaces(repository.getUrl())));
+    return set;
   }
 
   public void addRepositories(Collection<TaskRepository> repositories) {

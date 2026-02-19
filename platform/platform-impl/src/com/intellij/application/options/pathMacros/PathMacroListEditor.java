@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,19 +10,14 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.text.StringTokenizer;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author dsl
- */
-public class PathMacroListEditor {
-  JPanel myPanel;
-  private JTextField myIgnoredVariables;
-  private JPanel myPathVariablesPanel;
+public final class PathMacroListEditor {
+
+  private final PathMacroListEditorUI ui;
   private final PathMacroTable myPathMacroTable;
 
   public PathMacroListEditor() {
@@ -45,7 +26,7 @@ public class PathMacroListEditor {
 
   public PathMacroListEditor(final Collection<String> undefinedMacroNames) {
     myPathMacroTable = undefinedMacroNames != null ? new PathMacroTable(undefinedMacroNames) : new PathMacroTable();
-    myPathVariablesPanel.add(
+    ui = new PathMacroListEditorUI(
       ToolbarDecorator.createDecorator(myPathMacroTable)
         .setAddAction(new AnActionButtonRunnable() {
           @Override
@@ -53,23 +34,23 @@ public class PathMacroListEditor {
             myPathMacroTable.addMacro();
           }
         }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myPathMacroTable.removeSelectedMacros();
-        }
-      }).setEditAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          myPathMacroTable.editMacro();
-        }
-      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
+          @Override
+          public void run(AnActionButton button) {
+            myPathMacroTable.removeSelectedMacros();
+          }
+        }).setEditAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myPathMacroTable.editMacro();
+          }
+        }).disableUpDownActions().createPanel());
 
     fillIgnoredVariables();
   }
 
   private void fillIgnoredVariables() {
     final Collection<String> ignored = PathMacros.getInstance().getIgnoredMacroNames();
-    myIgnoredVariables.setText(StringUtil.join(ignored, ";"));
+    ui.ignoredVariables.setText(StringUtil.join(ignored, ";"));
   }
 
   private boolean isIgnoredModified() {
@@ -78,7 +59,7 @@ public class PathMacroListEditor {
   }
 
   private Collection<String> parseIgnoredVariables() {
-    final String s = myIgnoredVariables.getText();
+    final String s = ui.ignoredVariables.getText();
     final List<String> ignored = new ArrayList<>();
     final StringTokenizer st = new StringTokenizer(s, ";");
     while (st.hasMoreElements()) {
@@ -99,7 +80,7 @@ public class PathMacroListEditor {
   }
 
   public JComponent getPanel() {
-    return myPanel;
+    return ui.getContent();
   }
 
   public void reset() {

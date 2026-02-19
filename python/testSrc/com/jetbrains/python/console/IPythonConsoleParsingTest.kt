@@ -1,10 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
-import com.intellij.lang.ASTFactory
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.ParsingTestCase
+import com.jetbrains.python.PyLanguageFacade
+import com.jetbrains.python.PyLanguageFacadeImpl
 import com.jetbrains.python.PythonDialectsTokenSetContributor
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.PythonTokenSetContributor
@@ -25,9 +26,10 @@ class IPythonConsoleParsingTest : ParsingTestCase(
 
   override fun setUp() {
     super.setUp()
+    application.registerService(PyLanguageFacade::class.java, PyLanguageFacadeImpl())
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor::class.java)
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PythonTokenSetContributor())
-    addExplicitExtension<ASTFactory>(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())
+    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())
   }
 
   override fun getTestDataPath() = "${PathManager.getHomePath()}/community/python/testData/console/ipython"

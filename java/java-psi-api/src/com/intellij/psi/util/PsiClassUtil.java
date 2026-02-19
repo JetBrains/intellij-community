@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -26,17 +27,36 @@ public final class PsiClassUtil {
     }
     if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     if (mustNotBeAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
+    return aClass.getContainingClass() == null ||
+           aClass.hasModifierProperty(PsiModifier.STATIC) ||
+           aClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
-  @NotNull
-  public static Comparator<PsiClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
-    return (c1, c2) -> {
-      VirtualFile file1 = PsiUtilCore.getVirtualFile(c1);
-      VirtualFile file2 = PsiUtilCore.getVirtualFile(c2);
-      if (file1 == null) return file2 == null ? 0 : -1;
-      if (file2 == null) return 1;
-      return scope.compare(file2, file1);
-    };
+  public static @NotNull Comparator<PsiClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
+    return Comparator.comparing(c -> PsiUtilCore.getVirtualFile(c),
+                                Comparator.nullsFirst((file1, file2) -> scope.compare(file2, file1)));
+  }
+
+  /**
+   * Checks if the given class is a throwable. The behavior is unspecified if the class or any of its superclasses is malformed.
+   * 
+   * @param psiClass class to test
+   * @return true if class is {@code java.lang.Throwable} or legally inherits from it.
+   */
+  public static boolean isThrowable(@NotNull PsiClass psiClass) {
+    if (psiClass instanceof PsiAnonymousClass) {
+      psiClass = ((PsiAnonymousClass)psiClass).getBaseClassType().resolve();
+    }
+    while (true) {
+      if (psiClass == null) return false;
+      if (psiClass.isInterface()) return false;
+      if (psiClass.getTypeParameters().length > 0) return false; // Valid throwables are never generic
+      if (CommonClassNames.JAVA_LANG_THROWABLE.equals(psiClass.getQualifiedName())) return true;
+      PsiClassType[] types = psiClass.getExtendsListTypes();
+      if (types.length == 0) return false;
+      PsiClassType type = types[0];
+      if (type.getParameterCount() != 0) return false;
+      psiClass = type.resolve();
+    }
   }
 }

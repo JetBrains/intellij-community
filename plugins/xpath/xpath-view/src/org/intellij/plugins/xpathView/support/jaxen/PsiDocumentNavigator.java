@@ -25,7 +25,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProcessingInstruction;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.intellij.plugins.xpathView.util.MyPsiUtil;
 import org.jaxen.DefaultNavigator;
@@ -116,7 +125,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return getProcessingInstructionTarget(pi);
     }
 
-    public static String getProcessingInstructionTarget(XmlProcessingInstruction pi) {
+    public static @NotNull String getProcessingInstructionTarget(XmlProcessingInstruction pi) {
         final PsiElement[] children = pi.getChildren();
         LOG.assertTrue(children[1] instanceof XmlToken && ((XmlToken)children[1]).getTokenType() == XmlTokenType.XML_NAME, "Unknown PI structure");
 
@@ -134,8 +143,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    @NotNull
-    public String getProcessingInstructionData(Object obj) {
+    public @NotNull String getProcessingInstructionData(Object obj) {
         LOG.assertTrue(obj instanceof XmlProcessingInstruction);
 
         XmlProcessingInstruction pi = (XmlProcessingInstruction)obj;
@@ -265,8 +273,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    @NotNull
-    public String getCommentStringValue(Object comment) {
+    public @NotNull String getCommentStringValue(Object comment) {
         LOG.assertTrue(comment instanceof XmlComment);
 
         PsiElement c = (PsiElement)comment;
@@ -280,8 +287,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    @NotNull
-    public String getElementStringValue(Object element) {
+    public @NotNull String getElementStringValue(Object element) {
         LOG.assertTrue(element instanceof XmlTag);
 
         final TextCollector collector = new TextCollector();
@@ -290,8 +296,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    @NotNull
-    public String getAttributeStringValue(Object attr) {
+    public @NotNull String getAttributeStringValue(Object attr) {
         LOG.assertTrue(attr instanceof XmlAttribute);
         return StringUtil.notNullize(((XmlAttribute)attr).getValue());
     }
@@ -309,8 +314,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
     @Override
-    @NotNull
-    public String getTextStringValue(Object txt) {
+    public @NotNull String getTextStringValue(Object txt) {
 
         if (txt instanceof XmlText) {
           return ((XmlText)txt).getValue();
@@ -340,7 +344,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         }
 
         @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
           final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
           final String value = attribute.getValue();
           if ((value != null &&
@@ -358,7 +362,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         private final StringBuffer builder = new StringBuffer();
 
         @Override
-        public void visitXmlText(XmlText text) {
+        public void visitXmlText(@NotNull XmlText text) {
             builder.append(text.getValue());
         }
 

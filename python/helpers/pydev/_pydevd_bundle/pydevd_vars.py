@@ -8,7 +8,9 @@ from _pydev_bundle.pydev_imports import quote
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
+from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
+from _pydevd_bundle.pydevd_asyncio_provider import get_eval_async_expression
 
 try:
     from StringIO import StringIO
@@ -25,7 +27,8 @@ from _pydev_imps._pydev_saved_modules import threading
 import traceback
 from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, execfile
-from _pydevd_bundle.pydevd_utils import VariableWithOffset
+from _pydevd_bundle.pydevd_utils import VariableWithOffset, eval_expression
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
 
 SENTINEL_VALUE = []
 DEFAULT_DF_FORMAT = "s"
@@ -52,7 +55,7 @@ def _iter_frames(initialFrame):
 
 def dump_frames(thread_id):
     sys.stdout.write('dumping frames\n')
-    if thread_id != get_current_thread_id(threading.currentThread()):
+    if thread_id != get_current_thread_id(threading.current_thread()):
         raise VariableError("find_frame: must execute on same thread")
 
     curFrame = get_frame()
@@ -93,7 +96,7 @@ def get_additional_frames_by_id(thread_id):
 def find_frame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
     try:
-        curr_thread_id = get_current_thread_id(threading.currentThread())
+        curr_thread_id = get_current_thread_id(threading.current_thread())
         if thread_id != curr_thread_id:
             try:
                 return get_custom_frame(thread_id, frame_id)  # I.e.: thread_id could be a stackless frame id + thread_id.
@@ -181,7 +184,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
            not the frame (as we don't care about the frame in this case).
     """
     if scope == 'BY_ID':
-        if thread_id != get_current_thread_id(threading.currentThread()):
+        if thread_id != get_current_thread_id(threading.current_thread()):
             raise VariableError("getVariable: must execute on same thread")
 
         try:
@@ -259,7 +262,23 @@ def get_offset(attrs):
     return offset
 
 
-def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
+def _resolve_default_variable_fields(var, resolver, offset):
+    return resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+
+def _resolve_custom_variable_fields(var, var_expr, resolver, offset, type_renderer, frame_info=None):
+    val_dict = OrderedDict()
+    if type_renderer.is_default_children or type_renderer.append_default_children:
+        default_val_dict = _resolve_default_variable_fields(var, resolver, offset)
+        if len(val_dict) == 0:
+            return default_val_dict
+        for (name, value) in default_val_dict.items():
+            val_dict[name] = value
+
+    return val_dict
+
+
+def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs, user_type_renderers={}):
     """
     Resolve compound variable in debugger scopes by its name and attributes
 
@@ -268,6 +287,7 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
     :param scope: can be BY_ID, EXPRESSION, GLOBAL, LOCAL, FRAME
     :param attrs: after reaching the proper scope, we have to get the attributes until we find
             the proper location (i.e.: obj\tattr1\tattr2)
+    :param user_type_renderers: a dictionary with user type renderers
     :return: a dictionary of variables's fields
 
     :note: PyCharm supports progressive loading of large collections and uses the `attrs`
@@ -281,9 +301,20 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
 
     var = getVariable(thread_id, frame_id, scope, attrs)
 
+    var_expr = ".".join(attrs.split('\t'))
+
     try:
         _type, _typeName, resolver = get_type(var)
-        return _typeName, resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+        type_renderer = try_get_type_renderer_for_var(var, user_type_renderers)
+        if type_renderer is not None and offset == 0:
+            frame_info = (thread_id, frame_id)
+            return _typeName, _resolve_custom_variable_fields(
+                var, var_expr, resolver, offset, type_renderer, frame_info
+            )
+
+        return _typeName, _resolve_default_variable_fields(var, resolver, offset)
+
     except:
         sys.stderr.write('Error evaluating: thread_id: %s\nframe_id: %s\nscope: %s\nattrs: %s\n' % (
             thread_id, frame_id, scope, orig_attrs,))
@@ -308,19 +339,24 @@ def resolve_var_object(var, attrs):
     return var
 
 
-def resolve_compound_var_object_fields(var, attrs):
+def resolve_compound_var_object_fields(var, attrs, user_type_renderers={}):
     """
     Resolve compound variable by its object and attributes
 
     :param var: an object of variable
     :param attrs: a sequence of variable's attributes separated by \t (i.e.: obj\tattr1\tattr2)
+    :param user_type_renderers: a dictionary with user type renderers
     :return: a dictionary of variables's fields
     """
+    namespace = var
+
     offset = get_offset(attrs)
 
     attrs = attrs.split('\t', 1)[1] if offset else attrs
 
     attr_list = attrs.split('\t')
+
+    var_expr = ".".join(attr_list)
 
     for k in attr_list:
         type, _typeName, resolver = get_type(var)
@@ -328,7 +364,14 @@ def resolve_compound_var_object_fields(var, attrs):
 
     try:
         type, _typeName, resolver = get_type(var)
-        return resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+        type_renderer = try_get_type_renderer_for_var(var, user_type_renderers)
+        if type_renderer is not None and offset == 0:
+            return _resolve_custom_variable_fields(
+                var, var_expr, resolver, offset, type_renderer
+            )
+
+        return _resolve_default_variable_fields(var, resolver, offset)
     except:
         traceback.print_exc()
 
@@ -356,40 +399,44 @@ def custom_operation(thread_id, frame_id, scope, attrs, style, code_or_file, ope
         traceback.print_exc()
 
 
-def eval_in_context(expression, globals, locals):
-    result = None
+def get_eval_exception_msg(expression, locals):
+    s = StringIO()
+    traceback.print_exc(file=s)
+    result = s.getvalue()
+
     try:
-        result = eval(expression, globals, locals)
+        try:
+            etype, value, tb = sys.exc_info()
+            result = value
+        finally:
+            etype = value = tb = None
+    except:
+        pass
+
+    result = ExceptionOnEvaluate(result)
+
+    # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
+    try:
+        if '__' in expression:
+            # Try to handle '__' name mangling...
+            split = expression.split('.')
+            curr = locals.get(split[0])
+            for entry in split[1:]:
+                if entry.startswith('__') and not hasattr(curr, entry):
+                    entry = '_%s%s' % (curr.__class__.__name__, entry)
+                curr = getattr(curr, entry)
+
+            result = curr
+    except:
+        pass
+    return result
+
+
+def eval_in_context(expression, globals, locals):
+    try:
+        result = eval_expression(expression, globals, locals)
     except Exception:
-        s = StringIO()
-        traceback.print_exc(file=s)
-        result = s.getvalue()
-
-        try:
-            try:
-                etype, value, tb = sys.exc_info()
-                result = value
-            finally:
-                etype = value = tb = None
-        except:
-            pass
-
-        result = ExceptionOnEvaluate(result)
-
-        # Ok, we have the initial error message, but let's see if we're dealing with a name mangling error...
-        try:
-            if '__' in expression:
-                # Try to handle '__' name mangling...
-                split = expression.split('.')
-                curr = locals.get(split[0])
-                for entry in split[1:]:
-                    if entry.startswith('__') and not hasattr(curr, entry):
-                        entry = '_%s%s' % (curr.__class__.__name__, entry)
-                    curr = getattr(curr, entry)
-
-                result = curr
-        except:
-            pass
+        result = get_eval_exception_msg(expression, locals)
     return result
 
 
@@ -410,6 +457,9 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
 
     try:
         expression = str(expression.replace('@LINE@', '\n'))
+        eval_func = get_eval_async_expression()
+        if eval_func is not None:
+            return eval_func(expression, updated_globals, frame, doExec, get_eval_exception_msg)
 
         if doExec:
             try:
@@ -457,11 +507,20 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
 
         if attr[:7] == "Globals":
             attr = attr[8:]
+            if is_complex(attr):
+                Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_globals)
+                return value
             if attr in frame.f_globals:
                 frame.f_globals[attr] = value
                 return frame.f_globals[attr]
         else:
             if pydevd_save_locals.is_save_locals_available():
+                if is_complex(attr):
+                    if IS_PY313_OR_GREATER:
+                        Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
+                    else:
+                        Exec('%s=%s' % (attr, expression), frame.f_locals, frame.f_locals)
+                    return value
                 frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
@@ -474,6 +533,12 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
     except Exception:
         traceback.print_exc()
 
+def is_complex(attr):
+    complex_indicators = ['[', ']', '.']
+    for indicator in complex_indicators:
+        if attr.find(indicator) != -1:
+            return True
+    return False
 
 MAXIMUM_ARRAY_SIZE = float('inf')
 
@@ -487,6 +552,9 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
+
+    if rows == 0 and cols == 0:
+        return xml
 
     # there is no obvious rule for slicing (at least 5 choices)
     if len(array) == 1 and (rows > 1 or cols > 1):
@@ -521,6 +589,30 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
     return xml
 
 
+def tf_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_xml(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def torch_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        if tensor.requires_grad:
+            tensor = tensor.detach()
+        return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_xml(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def tf_sparse_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        import tensorflow as tf
+        return tf_to_xml(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    except ImportError:
+        pass
+
+
 class ExceedingArrayDimensionsException(Exception):
     pass
 
@@ -529,6 +621,19 @@ def array_to_meta_xml(array, name, format):
     type = array.dtype.kind
     slice = name
     l = len(array.shape)
+
+    if l == 0:
+        rows, cols = 0, 0
+        bounds = (0, 0)
+        return array, slice_to_xml(name, rows, cols, format, "", bounds), rows, cols, format
+
+    try:
+        import numpy as np
+        if isinstance(array, np.recarray) and l > 1:
+            slice = "{}['{}']".format(slice, array.dtype.names[0])
+            array = array[array.dtype.names[0]]
+    except ImportError:
+        pass
 
     # initial load, compute slice
     if format == '%':
@@ -554,20 +659,11 @@ def array_to_meta_xml(array, name, format):
         # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
         # explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
         # we use kind of a hack - get information about memory from C_CONTIGUOUS
-        is_row = array.flags['C_CONTIGUOUS']
-
-        if is_row:
-            rows = 1
-            cols = len(array)
-            if cols < len(array):
-                reslice = '[0:%s]' % (cols)
-            array = array[0:cols]
-        else:
-            cols = 1
-            rows = len(array)
-            if rows < len(array):
-                reslice = '[0:%s]' % (rows)
-            array = array[0:rows]
+        cols = 1
+        rows = len(array)
+        if rows < len(array):
+            reslice = '[0:%s]' % (rows)
+        array = array[0:rows]
     elif l == 2:
         rows = array.shape[-2]
         cols = array.shape[-1]
@@ -600,7 +696,10 @@ def get_formatted_row_elements(row, iat, dim, cols, format, dtypes):
         val = iat[row, c] if dim > 1 else iat[row]
         col_formatter = get_column_formatter_by_type(format, dtypes[c])
         try:
-            yield ("%" + col_formatter) % (val,)
+            if val != val:
+                yield "nan"
+            else:
+                yield ("%" + col_formatter) % (val,)
         except TypeError:
             yield ("%" + DEFAULT_DF_FORMAT) % (val,)
 
@@ -620,6 +719,13 @@ def get_label(label):
 
 DATAFRAME_HEADER_LOAD_MAX_SIZE = 100
 
+class IAtPolarsAccessor:
+    def __init__(self, ps):
+        self.ps = ps
+
+    def __getitem__(self, row):
+        return self.ps[row]
+
 
 def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     """
@@ -634,7 +740,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
     """
     original_df = df
-    dim = len(df.axes)
+    dim = len(df.axes) if hasattr(df, 'axes') else -1
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
     format = format.replace('%', '')
@@ -645,8 +751,8 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
                 kind = df.dtype.kind
             except AttributeError:
                 try:
-                    kind = df.dtypes[0].kind
-                except (IndexError, KeyError):
+                    kind = df.dtypes.iloc[0].kind
+                except (IndexError, KeyError, AttributeError):
                     kind = 'O'
             format = array_default_format(kind)
         else:
@@ -679,27 +785,46 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
             else:
                 bounds = (0, 0)
             col_bounds[col] = bounds
+    elif dim == -1:
+        dtype = '0'
+        dtypes[0] = dtype
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
         col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
 
-    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
+    if dim > 1:
+        df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
+    elif dim == -1:
+        df = df[roffset: roffset + rows]
+    else:
+        df = df.iloc[roffset: roffset + rows]
+
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
 
     def col_to_format(column_type):
         return get_column_formatter_by_type(format, column_type)
 
-    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+    if dim == -1:
+        iat = IAtPolarsAccessor(df)
+    elif dim == 1 or len(df.columns.unique()) == len(df.columns):
+        iat = df.iat
+    else:
+        iat = df.iloc
 
     def formatted_row_elements(row):
         return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
 
     xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
 
-    xml += array_data_to_xml(rows, cols, formatted_row_elements, format)
+    # we already have here formatted_row_elements, so we pass here %s as a default format
+    xml += array_data_to_xml(rows, cols, formatted_row_elements, format='%s')
     return xml
+
+def dataset_to_xml(dataset, name, roffset, coffset, rows, cols, format):
+    return dataframe_to_xml(dataset.to_pandas(), name, roffset, coffset, rows, cols, format)
 
 
 def array_data_to_xml(rows, cols, get_row, format):
@@ -713,19 +838,19 @@ def array_data_to_xml(rows, cols, get_row, format):
 
 def slice_to_xml(slice, rows, cols, format, type, bounds):
     return '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-           (slice, rows, cols, quote(format), type, bounds[1], bounds[0])
+           (quote(slice), rows, cols, quote(format), type, quote(str(bounds[1])), quote(str(bounds[0])))
 
 
 def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
     xml = "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
     for col in range(cols):
-        col_label = quote(get_label(df.axes[1].values[col]) if dim > 1 else str(col))
+        col_label = quote(get_label(df.axes[1][col]) if dim > 1 else str(col))
         bounds = col_bounds[col]
         col_format = "%" + col_to_format(dtypes[col])
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
-               (str(col), col_label, dtypes[col], col_to_format(dtypes[col]), col_format % bounds[1], col_format % bounds[0])
+               (str(col), col_label, dtypes[col], col_to_format(dtypes[col]), quote(str(col_format % bounds[1])), quote(str(col_format % bounds[0])))
     for row in range(rows):
-        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), get_label(df.axes[0].values[row]))
+        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), quote(get_label(df.axes[0][row] if dim != -1 else str(row))))
     xml += "</headerdata>\n"
     return xml
 
@@ -740,10 +865,16 @@ def is_able_to_format_number(format):
 
 TYPE_TO_XML_CONVERTERS = {
     "ndarray": array_to_xml,
+    "recarray": array_to_xml,
     "DataFrame": dataframe_to_xml,
     "Series": dataframe_to_xml,
     "GeoDataFrame": dataframe_to_xml,
-    "GeoSeries": dataframe_to_xml
+    "GeoSeries": dataframe_to_xml,
+    "EagerTensor": tf_to_xml,
+    "ResourceVariable": tf_to_xml,
+    "SparseTensor": tf_sparse_to_xml,
+    "Tensor": torch_to_xml,
+    "Dataset": dataset_to_xml
 }
 
 

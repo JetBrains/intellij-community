@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -21,13 +22,14 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-class JumpFromRemoteFileToLocalAction extends AnAction {
+final class JumpFromRemoteFileToLocalAction extends AnAction {
   private final HttpVirtualFile myFile;
   private final Project myProject;
 
@@ -44,6 +46,11 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Collection<VirtualFile> files = findLocalFiles(myProject, Urls.newFromVirtualFile(myFile), myFile.getName());
     if (files.isEmpty()) {
@@ -57,7 +64,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
     else {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(new ArrayList<>(files))
-        .setRenderer(new ColoredListCellRenderer<VirtualFile>() {
+        .setRenderer(new ColoredListCellRenderer<>() {
           @Override
           protected void customizeCellRenderer(@NotNull JList<? extends VirtualFile> list,
                                                VirtualFile value,
@@ -77,7 +84,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
     }
   }
 
-  private static Collection<VirtualFile> findLocalFiles(Project project, Url url, String fileName) {
+  private static @Unmodifiable Collection<VirtualFile> findLocalFiles(Project project, Url url, String fileName) {
     for (LocalFileFinder finder : LocalFileFinder.EP_NAME.getExtensions()) {
       final VirtualFile file = finder.findLocalFile(url, project);
       if (file != null) {
@@ -85,7 +92,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
       }
     }
 
-    return FilenameIndex.getVirtualFilesByName(project, fileName, GlobalSearchScope.allScope(project));
+    return FilenameIndex.getVirtualFilesByName(fileName, GlobalSearchScope.allScope(project));
   }
 
   private static void navigateToFile(Project project, @NotNull VirtualFile file) {

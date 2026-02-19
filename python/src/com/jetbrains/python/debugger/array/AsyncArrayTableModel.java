@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.array;
 
 import com.google.common.cache.CacheBuilder;
@@ -21,13 +21,18 @@ import com.jetbrains.python.debugger.ArrayChunkBuilder;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.containerview.DataViewStrategy;
-import com.jetbrains.python.debugger.containerview.PyDataViewerPanel;
+import com.jetbrains.python.debugger.containerview.PyDataViewerCommunityPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 public class AsyncArrayTableModel extends AbstractTableModel {
@@ -37,7 +42,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   private final int myRows;
   private final int myColumns;
-  private final PyDataViewerPanel myDataProvider;
+  private final PyDataViewerCommunityPanel myDataProvider;
 
 
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
@@ -48,12 +53,12 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   private final LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
     new CacheLoader<>() {
       @Override
-      public ListenableFuture<ArrayChunk> load(@NotNull final Pair<Integer, Integer> key) throws Exception {
+      public ListenableFuture<ArrayChunk> load(final @NotNull Pair<Integer, Integer> key) throws Exception {
 
         return ListenableFutureTask.create(() -> {
           ArrayChunk chunk = myDebugValue.getFrameAccessor()
             .getArrayItems(myDebugValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
-                           Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second), myDataProvider.getFormat());
+                           Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second), myDataProvider.getDataViewerModel().getFormat());
           handleChunkAdded(key.first, key.second, chunk);
           return chunk;
         });
@@ -62,7 +67,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   public AsyncArrayTableModel(int rows,
                               int columns,
-                              PyDataViewerPanel provider,
+                              PyDataViewerCommunityPanel provider,
                               PyDebugValue debugValue,
                               DataViewStrategy strategy) {
     myRows = rows;
@@ -78,11 +83,6 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     fireTableChanged(
       new TableModelEvent(this, 0, getRowCount() - 1, TableModelEvent.ALL_COLUMNS, TableModelEvent.UPDATE)
     );
-  }
-
-  @Override
-  public boolean isCellEditable(int row, int col) {
-    return false;
   }
 
   @Override
@@ -124,7 +124,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
                          int toRow,
                          int fromCol,
                          int toCol,
-                         @NotNull Consumer<ArrayChunk> whenLoaded) {
+                         @NotNull Consumer<? super ArrayChunk> whenLoaded) {
 
     myQueue.queue(new Update(updateMessage) {
       @Override
@@ -136,7 +136,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
             try {
               ArrayChunk chunk = myDebugValue.getFrameAccessor()
                 .getArrayItems(myDebugValue, fromRow, fromCol, toRow - fromRow + 1, toCol - fromCol + 1,
-                               myDataProvider.getFormat());
+                               myDataProvider.getDataViewerModel().getFormat());
 
               if (chunk != null) {
                 whenLoaded.accept(chunk);
@@ -152,8 +152,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   }
 
   public String correctStringValue(@NotNull Object value) {
-    if (value instanceof String) {
-      String corrected = (String)value;
+    if (value instanceof String corrected) {
       if (myStrategy.isNumeric(myDebugValue.getType())) {
         if (corrected.startsWith("'") || corrected.startsWith("\"")) {
           corrected = corrected.substring(1, corrected.length() - 1);
@@ -229,7 +228,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         for (int r = 0; r < CHUNK_ROW_SIZE; r++) {
           System.arraycopy(data[roffset * CHUNK_ROW_SIZE + r], coffset * CHUNK_COL_SIZE, chunkData[r], 0, CHUNK_COL_SIZE);
         }
-        myChunkCache.put(key, new ListenableFuture<ArrayChunk>() {
+        myChunkCache.put(key, new ListenableFuture<>() {
           @Override
           public void addListener(@NotNull Runnable listener, @NotNull Executor executor) {
 

@@ -1,23 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.treeConflict;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.SimpleContentRevision;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
@@ -27,7 +39,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.UIBundle;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -35,7 +47,11 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.BackgroundTaskGroup;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnContentRevision;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
@@ -43,14 +59,22 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.ui.MessageDialogBuilder.yesNo;
 import static com.intellij.openapi.ui.Messages.showOkCancelDialog;
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.findValidParentAccurately;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath;
 import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 import static com.intellij.util.ExceptionUtil.rethrowAllAsUnchecked;
 import static com.intellij.util.containers.ContainerUtil.filter;
@@ -63,18 +87,18 @@ import static java.util.stream.Collectors.toMap;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final TreeConflictDescription myDescription;
-  @NotNull private final Change myChange;
-  @NotNull private final FilePath myOldFilePath;
-  @NotNull private final FilePath myNewFilePath;
-  @NotNull private final String myOldPresentation;
-  @NotNull private final String myNewPresentation;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull TreeConflictDescription myDescription;
+  private final @NotNull Change myChange;
+  private final @NotNull FilePath myOldFilePath;
+  private final @NotNull FilePath myNewFilePath;
+  private final @NotNull String myOldPresentation;
+  private final @NotNull String myNewPresentation;
   private final SvnRevisionNumber myCommittedRevision;
   private Boolean myAdd;
 
-  @NotNull private final List<Change> myTheirsChanges;
-  @NotNull private final List<Change> myTheirsBinaryChanges;
+  private final @NotNull List<Change> myTheirsChanges;
+  private final @NotNull List<Change> myTheirsBinaryChanges;
   private List<FilePatch> myTextPatches;
   private final VirtualFile myBaseForPatch;
   private boolean myThereAreCreations;
@@ -101,9 +125,9 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @RequiresEdt
   public void execute() {
-    String messageKey =
-      myChange.isMoved() ? "confirmation.resolve.tree.conflict.merge.moved" : "confirmation.resolve.tree.conflict.merge.renamed";
-    String message = message(messageKey, myOldPresentation, myNewPresentation);
+    String message = myChange.isMoved()
+                     ? message("confirmation.resolve.tree.conflict.merge.moved", myOldPresentation, myNewPresentation)
+                     : message("confirmation.resolve.tree.conflict.merge.renamed", myOldPresentation, myNewPresentation);
     int ok = showOkCancelDialog(myVcs.getProject(), message, message("dialog.title.resolve.tree.conflict"), Messages.getQuestionIcon());
     if (Messages.OK != ok) return;
 
@@ -160,9 +184,9 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private class TreeConflictApplyTheirsPatchExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
-    @NotNull private final SvnVcs myVcs;
+    private final @NotNull SvnVcs myVcs;
     private final VirtualFile myBaseDir;
-    @NotNull private final AsyncPromise<VcsException> myPromise;
+    private final @NotNull AsyncPromise<VcsException> myPromise;
 
     TreeConflictApplyTheirsPatchExecutor(@NotNull SvnVcs vcs, final VirtualFile baseDir) {
       myVcs = vcs;
@@ -190,7 +214,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
             List<FilePatch> patches = ApplyPatchSaveToFileExecutor.toOnePatchGroup(patchGroupsToApply, myBaseDir);
             new PatchApplier(Objects.requireNonNull(myProject), myBaseDir, patches, localList, null).execute(false, true);
             myThereAreCreations =
-              patches.stream().anyMatch(patch -> patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName()));
+              ContainerUtil.exists(patches, patch -> patch.isNewFile() || !Objects.equals(patch.getAfterName(), patch.getBeforeName()));
           }
           catch (IOException e) {
             myException = new VcsException(e);
@@ -214,7 +238,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   private void createPatches() throws VcsException {
     List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myVcs.getProject(), myTheirsChanges, Objects.requireNonNull(myBaseForPatch).toNioPath(), false);
-    myTextPatches = map(patches, TextFilePatch.class::cast);
+    myTextPatches = map(patches, patch -> patch);
   }
 
   @RequiresEdt
@@ -255,8 +279,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void processBinaryChangeError(@NotNull Throwable error) throws VcsException {
-    if (error instanceof VcsException) {
-      VcsException vcsError = (VcsException)error;
+    if (error instanceof VcsException vcsError) {
       if (vcsError.isWarning()) {
         addError(vcsError);
       }
@@ -295,8 +318,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
   }
 
-  @Nullable
-  private Collection<FilePath> chooseBinaryFiles(@NotNull List<Change> changes, @NotNull Set<FilePath> paths) {
+  private @Nullable Collection<FilePath> chooseBinaryFiles(@NotNull List<Change> changes, @NotNull Set<FilePath> paths) {
     return AbstractVcsHelper.getInstance(myVcs.getProject()).selectFilePathsToProcess(
       new ArrayList<>(paths),
       message("dialog.title.resolve.tree.conflict"), message("dialog.message.select.binary.files.to.patch"),
@@ -316,8 +338,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   @RequiresEdt
-  @NotNull
-  private List<Change> convertPaths(@NotNull List<Change> changes) throws VcsException {
+  private @NotNull List<Change> convertPaths(@NotNull List<Change> changes) throws VcsException {
     initAddOption();
 
     List<Change> result = new ArrayList<>();
@@ -330,20 +351,17 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     return result;
   }
 
-  @Nullable
-  private ContentRevision convertBeforeRevision(@Nullable ContentRevision revision) throws VcsException {
+  private @Nullable ContentRevision convertBeforeRevision(@Nullable ContentRevision revision) throws VcsException {
     return revision != null ? toSimpleRevision(revision, true) : null;
   }
 
-  @Nullable
-  private ContentRevision convertAfterRevision(@NotNull Change change, @Nullable ContentRevision revision) throws VcsException {
+  private @Nullable ContentRevision convertAfterRevision(@NotNull Change change, @Nullable ContentRevision revision) throws VcsException {
     if (revision == null) return null;
     return myAdd && (change.getBeforeRevision() == null || change.isMoved() || change.isRenamed()) ? revision : toSimpleRevision(revision,
                                                                                                                                  true);
   }
 
-  @NotNull
-  private SimpleContentRevision toSimpleRevision(@NotNull ContentRevision revision, boolean rebasePath) throws VcsException {
+  private @NotNull SimpleContentRevision toSimpleRevision(@NotNull ContentRevision revision, boolean rebasePath) throws VcsException {
     return new SimpleContentRevision(revision.getContent(),
                                      rebasePath ? rebasePath(myOldFilePath, myNewFilePath, revision.getFile()) : myNewFilePath,
                                      revision.getRevisionNumber().asString());
@@ -357,8 +375,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
            afterPath != null && isAncestor(path.getPath(), afterPath.getPath(), true);
   }
 
-  @NotNull
-  private static FilePath rebasePath(@NotNull FilePath oldBase, @NotNull FilePath newBase, @NotNull FilePath path) {
+  private static @NotNull FilePath rebasePath(@NotNull FilePath oldBase, @NotNull FilePath newBase, @NotNull FilePath path) {
     String relativePath = Objects.requireNonNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
     return VcsUtil.getFilePath(newBase.getPath() + "/" + relativePath, path.isDirectory());
   }
@@ -419,7 +436,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @RequiresEdt
   private void initAddOption() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myAdd == null) {
       myAdd = getAddedFilesPlaceOption();
     }
@@ -440,7 +457,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
              .yesText(message("button.keep"))
              .noText(message("button.move"))
              .doNotAsk(
-               new DialogWrapper.DoNotAskOption() {
+               new DoNotAskOption() {
                  @Override
                  public boolean isToBeShown() {
                    return true;
@@ -463,17 +480,16 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
                    return true;
                  }
 
-                 @NotNull
                  @Override
-                 public String getDoNotShowMessage() {
-                   return UIBundle.message("dialog.options.do.not.ask");
+                 public @NotNull String getDoNotShowMessage() {
+                   return IdeCoreBundle.message("dialog.options.do.not.ask");
                  }
                })
              .show();
   }
 
   private static boolean containAdditions(@NotNull List<Change> changes) {
-    return changes.stream().anyMatch(change -> change.getBeforeRevision() == null || change.isMoved() || change.isRenamed());
+    return ContainerUtil.exists(changes, change -> change.getBeforeRevision() == null || change.isMoved() || change.isRenamed());
   }
 
   private static boolean isBinaryContentRevision(@Nullable ContentRevision revision) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -13,10 +13,16 @@ import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -26,11 +32,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import gnu.trove.THashSet;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -46,24 +53,33 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenSettingsCache;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
+import static org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4;
+import static org.jetbrains.idea.maven.dom.MavenPropertyResolver.containsActiveDependencyPropertiesPlugin;
+import static org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0;
 
 public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
+  public static final String MULTIPROJECT_DIR_PROP = "maven.multiModuleProjectDirectory";
+  public static final Set<String> PROPS_RESOLVING_TO_MY_ELEMENT = Set.of(
+    TIMESTAMP_PROP, "build.timestamp", "maven.home", "maven.version", "maven.build.version");
 
-  @Nullable
-  protected final MavenDomProjectModel myProjectDom;
+  protected final @Nullable MavenDomProjectModel myProjectDom;
   protected final MavenProject myMavenProject;
   private final boolean mySoft;
 
@@ -75,8 +91,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     PsiElement result = doResolve();
     if (result == null) {
       if (MavenDomUtil.isMavenFile(getElement())) {
@@ -119,8 +134,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   // See org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator.createValueSources()
-  @Nullable
-  protected PsiElement doResolve() {
+  protected @Nullable PsiElement doResolve() {
     boolean hasPrefix = false;
     String unprefixed = myText;
 
@@ -154,8 +168,21 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       return getBaseDir(mavenProject);
     }
 
-    if (myText.equals(TIMESTAMP_PROP)) {
+    if (PROPS_RESOLVING_TO_MY_ELEMENT.contains(myText)) {
       return myElement;
+    }
+
+
+    if (myText.equals(MULTIPROJECT_DIR_PROP)) {
+      MavenProject rootProject = myProjectsManager.findRootProject(myMavenProject);
+      if (rootProject == null) return null;
+      return getBaseDir(rootProject);
+    }
+
+    if (isModel410() && (myText.equals("project.rootDirectory") || myText.equals("session.rootDirectory") || myText.equals("session.topDirectory"))) {
+      MavenProject rootProject = myProjectsManager.findRootProject(myMavenProject);
+      if (rootProject == null) return null;
+      return getBaseDir(rootProject);
     }
 
     if (hasPrefix) {
@@ -213,6 +240,31 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       if (result != null) return result;
     }
 
+    if (myProjectDom != null && containsActiveDependencyPropertiesPlugin(mavenProject)) {
+      var split = myText.split(":");
+      if (split.length == 3 || split.length == 4) {
+        var groupId = split[0];
+        var artifactId = split[1];
+        var type = split[2];
+        var classifier = split.length == 4 ? split[3] : null;
+        var results = MavenDomProjectProcessorUtils.searchDependencyUsages(myProjectDom, groupId, artifactId);
+        if (results.size() == 1) {
+          return results.iterator().next().getXmlTag();
+        }
+
+        var filteredResults = ContainerUtil.filter(results, dep -> {
+          var isClassifierMatched = StringUtil.isEmpty(classifier) && StringUtil.isEmpty(dep.getClassifier().getStringValue());
+          isClassifierMatched |= StringUtil.equals(classifier, dep.getClassifier().getStringValue());
+          var isTypeMatched = "jar".equals(type) && StringUtil.isEmpty(dep.getType().getStringValue());
+          isTypeMatched |= StringUtil.equals(type, dep.getType().getStringValue());
+          return isTypeMatched && isClassifierMatched;
+        });
+        if (!filteredResults.isEmpty()) {
+          return filteredResults.iterator().next().getXmlTag();
+        }
+      }
+    }
+
     if ("java.home".equals(myText)) {
       PsiElement element = resolveToCustomSystemProperty("java.home", MavenUtil.getModuleJreHome(myProjectsManager, mavenProject));
       if (element != null) {
@@ -263,11 +315,20 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       return resolveSettingsModelProperty();
     }
 
+    PsiElement resolved = resolveAsParsedVersion(myText, mavenProject);
+    if (resolved != null) {
+      return resolved;
+    }
+
     return null;
   }
 
-  @Nullable
-  private PsiElement resolveToCustomSystemProperty(@NotNull String propertyName, @Nullable String propertyValue) {
+  private boolean isModel410() {
+    var e = getElement();
+    return MavenDomUtil.isProjectFileWithModel410(e.getContainingFile());
+  }
+
+  private @Nullable PsiElement resolveToCustomSystemProperty(@NotNull String propertyName, @Nullable String propertyValue) {
     if (propertyValue == null) return null;
 
     PsiFile propFile = PsiFileFactory.getInstance(myProject).createFileFromText("SystemProperties.properties", PropertiesLanguage.INSTANCE,
@@ -280,8 +341,14 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     return PsiManager.getInstance(myProject).findDirectory(mavenProject.getDirectoryFile());
   }
 
+  private PsiDirectory getRootDir(@NotNull MavenProject mavenProject) {
+    MavenProject root = MavenProjectsManager.getInstance(myProject).findRootProject(mavenProject);
+    if (root == null) return getBaseDir(mavenProject);
+    return PsiManager.getInstance(myProject).findDirectory(root.getDirectoryFile());
+  }
+
   private PsiElement resolveConfigFileProperty(@SystemIndependent String fileRelativePath, String propertyValue) {
-    VirtualFile baseDir = VfsUtil.findFileByIoFile(MavenUtil.getBaseDir(myMavenProject.getDirectoryFile()), false);
+    VirtualFile baseDir = VfsUtil.findFile(MavenUtil.getBaseDir(myMavenProject.getDirectoryFile()), false);
     if (baseDir != null) {
       VirtualFile mavenConfigFile = baseDir.findFileByRelativePath(fileRelativePath);
       if (mavenConfigFile != null) {
@@ -301,11 +368,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     return myElement;
   }
 
-  @Nullable
-  private PsiElement resolveSettingsModelProperty() {
-    if (!schemaHasProperty(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, myText)) return null;
+  private @Nullable PsiElement resolveSettingsModelProperty() {
+    if (!schemaHasProperty(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL_1_2, myText)) return null;
 
-    for (VirtualFile each : myProjectsManager.getGeneralSettings().getEffectiveSettingsFiles()) {
+    for (VirtualFile each : MavenSettingsCache.getInstance(myProject).getEffectiveVirtualSettingsFiles()) {
       MavenDomSettingsModel settingsDom = MavenDomUtil.getMavenDomModel(myProject, each, MavenDomSettingsModel.class);
       if (settingsDom == null) continue;
       PsiElement result = MavenDomUtil.findTag(settingsDom, myText);
@@ -314,17 +380,16 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     return myElement;
   }
 
-  @Nullable
-  private PsiElement resolveModelProperty(@NotNull MavenDomProjectModel projectDom,
-                                          @NotNull final String path,
-                                          @NotNull final Set<DomElement> recursionGuard) {
+  private @Nullable PsiElement resolveModelProperty(@NotNull MavenDomProjectModel projectDom,
+                                                    final @NotNull String path,
+                                                    final @NotNull Set<DomElement> recursionGuard) {
     if (!recursionGuard.add(projectDom)) return null;
 
     String pathWithProjectPrefix = "project." + path;
 
     if (!MavenModelClassesProperties.isPathValid(MavenModelClassesProperties.MAVEN_PROJECT_CLASS, path)
-      && !MavenModelClassesProperties.isPathValid(MavenModelClassesProperties.MAVEN_MODEL_CLASS, path)) {
-      if (!schemaHasProperty(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, pathWithProjectPrefix)) return null;
+        && !MavenModelClassesProperties.isPathValid(MavenModelClassesProperties.MAVEN_MODEL_CLASS, path)) {
+      if (!schemaHasProperty(getSchemaUrl(), pathWithProjectPrefix)) return null;
     }
 
     PsiElement result = MavenDomUtil.findTag(projectDom, pathWithProjectPrefix);
@@ -362,7 +427,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   @Override
   public Object @NotNull [] getVariants() {
     List<Object> result = new ArrayList<>();
-    collectVariants(result, new THashSet<>());
+    collectVariants(result, new HashSet<>());
     return ArrayUtil.toObjectArray(result);
   }
 
@@ -390,20 +455,31 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
 
     PsiDirectory baseDir = getBaseDir(mavenProject);
     addVariant(result, "basedir", baseDir, prefix, RepositoryLibraryLogo);
+
+    if (isModel410()) {
+      PsiDirectory rootDir = getRootDir(mavenProject);
+      addVariant(result, "rootDirectory", rootDir, "project.", RepositoryLibraryLogo);
+      addVariant(result, "rootDirectory", rootDir, "session.", RepositoryLibraryLogo);
+      addVariant(result, "topDirectory", rootDir, "session.", RepositoryLibraryLogo);
+    }
+    addVariant(result, "basedir", baseDir, prefix, RepositoryLibraryLogo);
     if (prefix == null) {
       result.add(createLookupElement(baseDir, "project.baseUri", RepositoryLibraryLogo));
       result.add(createLookupElement(baseDir, "pom.baseUri", RepositoryLibraryLogo));
-      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(RepositoryLibraryLogo));
+      result.add(LookupElementBuilder.create(MULTIPROJECT_DIR_PROP).withIcon(RepositoryLibraryLogo));
+      for (String property : PROPS_RESOLVING_TO_MY_ELEMENT) {
+        result.add(LookupElementBuilder.create(property).withIcon(RepositoryLibraryLogo));
+      }
     }
 
-    processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {
+    processSchema(getSchemaUrl(), (property, descriptor) -> {
       if (property.startsWith("project.")) {
         addVariant(result, property.substring("project.".length()), descriptor, prefix, RepositoryLibraryLogo);
       }
       return null;
     });
 
-    processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, (property, descriptor) -> {
+    processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL_1_2, (property, descriptor) -> {
       result.add(createLookupElement(descriptor, property, RepositoryLibraryLogo));
       return null;
     });
@@ -436,8 +512,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     }
 
     for (Object key : myMavenProject.getProperties().keySet()) {
-      if (key instanceof String) {
-        String property = (String)key;
+      if (key instanceof String property) {
         if (variants.add(property)) {
           result.add(LookupElementBuilder.create(property).withIcon(PlatformIcons.PROPERTY_ICON));
         }
@@ -490,7 +565,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     collectPropertiesFileVariants(file, prefix, result, variants);
   }
 
-  protected static void collectPropertiesFileVariants(@Nullable PropertiesFile file, @Nullable String prefix, List<Object> result, Set<? super String> variants) {
+  protected static void collectPropertiesFileVariants(@Nullable PropertiesFile file,
+                                                      @Nullable String prefix,
+                                                      List<Object> result,
+                                                      Set<? super String> variants) {
     if (file == null) return;
 
     for (IProperty each : file.getProperties()) {
@@ -511,17 +589,27 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       .withPresentableText(name);
   }
 
-  @Nullable
-  private <T> T processSchema(String schema, SchemaProcessor<T> processor) {
+  private @NotNull String getSchemaUrl() {
+    if (isAtLeastMaven4(myVirtualFile, myProject)
+        && myProjectDom != null
+        && MODEL_VERSION_4_1_0.equals(myProjectDom.getModelVersion().getValue())
+    ) {
+      return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_1_URL;
+    }
+    else {
+      return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_0_URL;
+    }
+  }
+
+  private @Nullable <T> T processSchema(String schema, SchemaProcessor<T> processor) {
     VirtualFile file = MavenSchemaProvider.getSchemaFile(schema);
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    if (!(psiFile instanceof XmlFile)) return null;
+    if (!(psiFile instanceof XmlFile xmlFile)) return null;
 
-    XmlFile xmlFile = (XmlFile)psiFile;
     XmlDocument document = xmlFile.getDocument();
     XmlNSDescriptor desc = (XmlNSDescriptor)document.getMetaData();
     XmlElementDescriptor[] descriptors = desc.getRootElementsDescriptors(document);
-    return doProcessSchema(descriptors, null, processor, new THashSet<>());
+    return doProcessSchema(descriptors, null, processor, new HashSet<>());
   }
 
   private static <T> T doProcessSchema(XmlElementDescriptor[] descriptors,
@@ -573,20 +661,66 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
-    return new LocalQuickFix[]{new LocalQuickFix() {
-      @Override
-      public @IntentionFamilyName @NotNull String getFamilyName() {
-        return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
-      }
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
+    return new LocalQuickFix[]{new MyLocalQuickFix()};
+  }
 
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiElement psiElement = ObjectUtils.notNull(myElement.getFirstChild(), myElement);
+  private static class MyLocalQuickFix implements LocalQuickFix {
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return MavenDomBundle.message("fix.ignore.unresolved.maven.property");
+    }
 
-        DefaultXmlSuppressionProvider xmlSuppressionProvider = new DefaultXmlSuppressionProvider();
-        xmlSuppressionProvider.suppressForTag(psiElement, MavenPropertyPsiReferenceProvider.UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID);
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      PsiElement psiElement = ObjectUtils.notNull(element.getFirstChild(), element);
+
+      DefaultXmlSuppressionProvider xmlSuppressionProvider = new DefaultXmlSuppressionProvider();
+      xmlSuppressionProvider.suppressForTag(psiElement, MavenPropertyPsiReferenceProvider.UNRESOLVED_MAVEN_PROPERTY_QUICKFIX_ID);
+    }
+  }
+
+  /**
+   * If "build-helper-maven-plugin" has `parse-version` goal, probably it could resolve properties starting with a defined prefix
+   * to something related to the version from the `version` tag (e.g., `${parsedVersion.majorVersion}`)
+   *
+   * @see <a href="https://www.mojohaus.org/build-helper-maven-plugin/parse-version-mojo.html#propertyPrefix">mojohaus documentation</a>
+   */
+  private @Nullable PsiElement resolveAsParsedVersion(@NotNull String propertyText, @NotNull MavenProject mavenProject) {
+    String prefix = getBuildHelperParseablePrefix();
+    if (prefix == null || !propertyText.startsWith(prefix + ".")) return null;
+
+    MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
+    if (domProjectModel == null) {
+      return myElement;
+    }
+    XmlTag versionTag = MavenDomUtil.findTag(domProjectModel, "project.version");
+    if (versionTag == null) {
+      return myElement;
+    }
+    else {
+      return versionTag;
+    }
+  }
+
+  private @Nullable String getBuildHelperParseablePrefix() {
+    MavenPlugin buildHelperPlugin = myMavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
+    if (buildHelperPlugin == null) return null;
+
+    Optional<MavenPlugin.Execution> execution = buildHelperPlugin.getExecutions().stream()
+      .filter(it -> it.getGoals().contains("parse-version"))
+      .findFirst();
+    if (execution.isEmpty()) return null;
+
+    String propertyPrefix = "parsedVersion"; // default value
+    Element configuration = execution.get().getConfigurationElement();
+    if (configuration != null) {
+      Element customPrefix = configuration.getChild("propertyPrefix");
+      if (customPrefix != null) {
+        propertyPrefix = customPrefix.getTextTrim();
       }
-    }};
+    }
+    return propertyPrefix;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,7 +21,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
@@ -36,21 +40,38 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
+@ApiStatus.Internal
 public final class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateImpl myTemplate;
   private final Runnable myNodeChanged;
@@ -59,7 +80,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
   private final JTextField myDescription;
   private final Editor myTemplateEditor;
 
-  private JComboBox myExpandByCombo;
+  private JComboBox<String> myExpandByCombo;
   private final @NlsContexts.ListItem String myDefaultShortcutItem;
   private JCheckBox myCbReformat;
 
@@ -105,7 +126,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       }
     });
 
-    new UiNotifyConnector(this, new Activatable() {
+    UiNotifyConnector.installOn(this, new Activatable() {
       @Override
       public void hideNotify() {
         disposeContextPopup();
@@ -181,8 +202,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     myTemplate.parseSegments();
   }
 
-  @NotNull
-  private JComponent createNorthPanel() {
+  private @NotNull JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
@@ -238,6 +258,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
         }
       }
     });
+    myExpandByCombo.setSelectedItem(getShortcutText());
     expandWithLabel.setLabelFor(myExpandByCombo);
 
     panel.add(myExpandByCombo, gbConstraints);
@@ -249,6 +270,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     gbConstraints.gridy++;
     gbConstraints.gridwidth = 3;
     myCbReformat = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.reformat.according.to.style"));
+    myCbReformat.setSelected(myTemplate.isToReformat());
     panel.add(myCbReformat, gbConstraints);
 
     for (final TemplateOptionalProcessor processor: myOptions.keySet()) {
@@ -267,8 +289,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
-  @NotNull
-  private List<TemplateContextType> getApplicableContexts() {
+  private @NotNull List<TemplateContextType> getApplicableContexts() {
     List<TemplateContextType> result = new ArrayList<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
       if (myContext.isEnabled(type)) {
@@ -300,7 +321,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
         if (type instanceof EverywhereContextType) {
           ownName = CodeInsightBundle.message("dialog.edit.template.context.other");
         }
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append(oldPrefix.equals(prefix) ? ", " : "; ");
         }
         if (!oldPrefix.equals(prefix)) {
@@ -313,7 +334,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       String contexts = CodeInsightBundle.message("dialog.edit.template.applicable.in.contexts", sb.toString());
       change.setText(CodeInsightBundle.message("link.change.context"));
 
-      final boolean noContexts = sb.length() == 0;
+      final boolean noContexts = sb.isEmpty();
       if (noContexts) {
         contexts = CodeInsightBundle.message("dialog.edit.template.no.applicable.contexts");
         ctxLabel.setIcon(AllIcons.General.BalloonWarning);
@@ -350,11 +371,13 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     });
 
     updateLabel.run();
-    return new FormBuilder().addLabeledComponent(ctxLabel, change).getPanel();
+    return new FormBuilder()
+      .addComponent(ctxLabel)
+      .addComponent(change)
+      .getPanel();
   }
 
-  @NotNull
-  private static @NlsContexts.Label String presentableName(TemplateContextType type) {
+  private static @NotNull @NlsContexts.Label String presentableName(TemplateContextType type) {
     return UIUtil.removeMnemonic(type.getPresentableName());
   }
 
@@ -381,13 +404,13 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         final Object o = ((DefaultMutableTreeNode)value).getUserObject();
         if (o instanceof Pair) {
-          getTextRenderer().append((String)((Pair)o).second);
+          getTextRenderer().append((String)((Pair<?, ?>)o).second);
         }
       }
     }, root) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
-        final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
+        final TemplateContextType type = (TemplateContextType)((Pair<?, ?>)node.getUserObject()).first;
         if (type != null) {
           boolean enabled = node.isChecked();
           context.setEnabled(type, enabled);
@@ -398,7 +421,6 @@ public final class LiveTemplateSettingsEditor extends JPanel {
           }
         }
         onChange.run();
-
       }
     };
 
@@ -426,8 +448,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return Pair.create(panel, checkboxTree);
   }
 
-  @NotNull
-  private static List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
+  private static @Unmodifiable @NotNull List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
     return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
   }
 
@@ -475,22 +496,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
   void resetUi() {
     myKeyField.setText(myTemplate.getKey());
     myDescription.setText(myTemplate.getDescription());
-
-    if(myTemplate.getShortcutChar() == TemplateSettings.DEFAULT_CHAR) {
-      myExpandByCombo.setSelectedItem(myDefaultShortcutItem);
-    }
-    else if(myTemplate.getShortcutChar() == TemplateSettings.TAB_CHAR) {
-      myExpandByCombo.setSelectedItem(getTab());
-    }
-    else if(myTemplate.getShortcutChar() == TemplateSettings.ENTER_CHAR) {
-      myExpandByCombo.setSelectedItem(getEnter());
-    }
-    else if (myTemplate.getShortcutChar() == TemplateSettings.SPACE_CHAR) {
-      myExpandByCombo.setSelectedItem(getSpace());
-    }
-    else {
-      myExpandByCombo.setSelectedItem(getNone());
-    }
+    myExpandByCombo.setSelectedItem(getShortcutText());
 
     CommandProcessor.getInstance().executeCommand(
       null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
@@ -513,6 +519,16 @@ public final class LiveTemplateSettingsEditor extends JPanel {
 
     updateHighlighter();
     validateEditVariablesButton();
+  }
+
+  private @NlsContexts.ListItem String getShortcutText() {
+    return switch (myTemplate.getShortcutChar()) {
+      case TemplateSettings.DEFAULT_CHAR -> myDefaultShortcutItem;
+      case TemplateSettings.TAB_CHAR -> getTab();
+      case TemplateSettings.ENTER_CHAR -> getEnter();
+      case TemplateSettings.SPACE_CHAR -> getSpace();
+      default -> getNone();
+    };
   }
 
   private void editVariables() {
@@ -577,8 +593,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true), modalityState), modalityState), modalityState);
   }
 
-  @NotNull
-  private Map<String, Variable> parseVariables() {
+  private @NotNull Map<String, Variable> parseVariables() {
     Map<String,Variable> map = TemplateImplUtil.parseVariables(myTemplateEditor.getDocument().getCharsSequence());
     map.keySet().removeAll(TemplateImpl.INTERNAL_VARS_SET);
     return map;
@@ -600,4 +615,3 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return CodeInsightBundle.message("template.shortcut.none");
   }
 }
-

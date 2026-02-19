@@ -1,4 +1,5 @@
 import attr
+import attrs
 from typing import ClassVar
 
 
@@ -72,3 +73,15 @@ class E1:
 class F1:
     foo = "bar"  # <- has no type annotation, so doesn't count.
     baz: str
+
+
+@attrs.define
+class D1:
+    x: int = attrs.NOTHING
+    y: int
+
+
+@attrs.define
+class D2:
+    x: int = attrs.field(default=attrs.NOTHING)
+    y: int

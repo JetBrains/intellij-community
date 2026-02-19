@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,34 +9,44 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.ui.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.CommonActionsPanel;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.util.List;
 
-class QuickListPanel {
+final class QuickListPanel {
   private final CollectionListModel<String> myActionsModel;
-  private JPanel myPanel;
+  private final QuickListContent content;
   private final JBList<String> myActionsList;
-  JTextField myName;
-  private JTextField myDescription;
-  private JPanel myListPanel;
+  final JTextField myName;
   QuickList item;
 
-  QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
-    myActionsModel = new CollectionListModel<>();
+  QuickListPanel(final @NotNull CollectionListModel<QuickList> model) {
+    myActionsModel = new MyCollectionListModel();
     myActionsList = new JBList<>(myActionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
     myActionsList.setEnabled(true);
 
-    myListPanel.add(ToolbarDecorator.createDecorator(myActionsList)
+    content = new QuickListContent(ToolbarDecorator.createDecorator(myActionsList)
                       .setAddAction(new AnActionButtonRunnable() {
                         @Override
                         public void run(AnActionButton button) {
@@ -63,7 +73,7 @@ class QuickListPanel {
                           }
                         }
                       })
-                      .addExtraAction(new AnActionButton(KeyMapBundle.message("keymap.action.add.separator"), AllIcons.General.SeparatorH) {
+                      .addExtraAction(new DumbAwareAction(KeyMapBundle.message("keymap.action.add.separator"), null, AllIcons.General.SeparatorH) {
                         @Override
                         public void actionPerformed(@NotNull AnActionEvent e) {
                           myActionsModel.add(QuickList.SEPARATOR_ID);
@@ -75,7 +85,8 @@ class QuickListPanel {
                         CommonActionsPanel.Buttons.REMOVE.getText(),
                         CommonActionsPanel.Buttons.UP.getText(),
                         CommonActionsPanel.Buttons.DOWN.getText())
-                      .createPanel(), BorderLayout.CENTER);
+                      .createPanel());
+    myName = content.name;
   }
 
   public void apply() {
@@ -84,7 +95,7 @@ class QuickListPanel {
     }
 
     item.setName(myName.getText().trim());
-    item.setDescription(myDescription.getText().trim());
+    item.setDescription(content.description.getText().trim());
 
     ListModel<String> model = myActionsList.getModel();
     int size = model.getSize();
@@ -110,9 +121,9 @@ class QuickListPanel {
       return;
     }
 
-    myName.setText(item.getName());
+    myName.setText(item.getDisplayName());
     myName.setEnabled(QuickListsManager.getInstance().getSchemeManager().isMetadataEditable(item));
-    myDescription.setText(item.getDescription());
+    content.description.setText(item.getDescription());
 
     myActionsModel.removeAll();
     for (String id : item.getActionIds()) {
@@ -127,10 +138,19 @@ class QuickListPanel {
   }
 
   public JPanel getPanel() {
-    return myPanel;
+    return content.getContent();
   }
 
-  private static class MyListCellRenderer extends DefaultListCellRenderer {
+  private static final class MyCollectionListModel extends CollectionListModel<String> {
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      String element = getElementAt(oldIndex);
+      remove(oldIndex);
+      add(newIndex, element);
+    }
+  }
+
+  private static final class MyListCellRenderer extends DefaultListCellRenderer {
     @Override
     public @NotNull Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean selected, boolean focused) {
       super.getListCellRendererComponent(list, value, index, selected, focused);

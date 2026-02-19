@@ -1,156 +1,228 @@
-/*
- * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.pme.launcher;
 
-import com.pme.exe.ExeFormat;
+import com.pme.exe.Bin;
 import com.pme.exe.ExeReader;
-import com.pme.exe.SectionReader;
+import com.pme.exe.ImageDataDirectory;
+import com.pme.exe.ImageSectionHeader;
+import com.pme.exe.Section;
 import com.pme.exe.res.DirectoryEntry;
 import com.pme.exe.res.RawResource;
 import com.pme.exe.res.ResourceSectionReader;
 import com.pme.exe.res.StringTableDirectory;
 import com.pme.exe.res.icon.IconResourceInjector;
-import com.pme.exe.res.vi.StringTable;
 import com.pme.exe.res.vi.VersionInfo;
 import com.pme.util.OffsetTrackingInputStream;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-/**
- * @author Sergey Zhulin
- * Date: May 6, 2006
- * Time: 10:43:01 AM
- */
+import static java.lang.String.format;
+
 public class LauncherGenerator {
-  private File myTemplate;
-  private File myExePath;
+  private final Path myTemplate;
+  private final Path myExePath;
   private StringTableDirectory myStringTableDirectory;
   private DirectoryEntry myRoot;
   private ExeReader myReader;
   private VersionInfo myVersionInfo;
 
-  public LauncherGenerator(File template, File exePath) {
+  public LauncherGenerator(Path template, Path exePath) {
     myTemplate = template;
     myExePath = exePath;
   }
 
-  public void load() throws  IOException {
-    RandomAccessFile stream = new RandomAccessFile(myTemplate, "r");
-    ExeReader formatReader = new ExeReader(myTemplate.getName(), ExeFormat.UNKNOWN);
-    formatReader.read(stream);
-    stream.seek(0L);
-    myReader = new ExeReader(myTemplate.getName(), formatReader.getExeFormat());
-    myReader.read(stream);
-    stream.close();
-    SectionReader sectionReader = myReader.getSectionReader(".rsrc");
-    ResourceSectionReader resourceReader = (ResourceSectionReader) sectionReader.getMember(".rsrc");
-    myRoot = resourceReader.getRoot();
-    DirectoryEntry subDir = myRoot.findSubDir("IRD6");
-    myStringTableDirectory = new StringTableDirectory(subDir);
+  public void load() throws IOException {
+    myReader = new ExeReader(myTemplate.getFileName().toString());
+    try (var stream = new OffsetTrackingInputStream(new DataInputStream(Files.newInputStream(myTemplate)))) {
+      myReader.read(stream);
+    }
 
-    RawResource versionInfoResource = getVersionInfoResource();
-    ByteArrayInputStream bytesStream = new ByteArrayInputStream(versionInfoResource.getBytes().getBytes());
+    var resourceSection = (ResourceSectionReader)myReader.getSectionReader(Section.RESOURCES_SECTION_NAME);
+    myRoot = resourceSection.getRoot();
 
+    var subDir = myRoot.findSubDir(DirectoryEntry.RT_STRING);
+    myStringTableDirectory = subDir != null ? new StringTableDirectory(subDir) : null;
+
+    var versionInfoResource = getVersionInfoResource();
     myVersionInfo = new VersionInfo();
-    myVersionInfo.read(new OffsetTrackingInputStream(new DataInputStream(bytesStream)));
+    myVersionInfo.read(new OffsetTrackingInputStream(new DataInputStream(new ByteArrayInputStream(versionInfoResource.getBytes()))));
   }
 
   private RawResource getVersionInfoResource() {
-    DirectoryEntry viDir = myRoot.findSubDir("IRD16").findSubDir( "IRD1" );
-    return viDir.getRawResource(0);
-  }
-
-  private void saveVersionInfo() throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    myVersionInfo.resetOffsets(0);
-    myVersionInfo.write(new DataOutputStream(baos));
-    getVersionInfoResource().setBytes(baos.toByteArray());
+    return myRoot.findSubDir(DirectoryEntry.RT_VERSION).findSubDir(1).getRawResource();
   }
 
   public void generate() throws IOException {
-    myStringTableDirectory.save();
+    if (myStringTableDirectory != null) {
+      myStringTableDirectory.save();
+    }
+
     saveVersionInfo();
 
     myReader.resetOffsets(0);
     myReader.sectionVirtualAddressFixup();
 
-    myExePath.getParentFile().mkdirs();
-    myExePath.createNewFile();
-    RandomAccessFile exeStream = new RandomAccessFile(myExePath, "rw");
-    myReader.write(exeStream);
-    exeStream.close();
+    Files.deleteIfExists(myExePath);
+    Files.createDirectories(myExePath.getParent());
+    try (var stream = new DataOutputStream(Files.newOutputStream(myExePath))) {
+      myReader.write(stream);
+    }
 
-//    verifyVersionInfo();
+    verifySize();
+    verifySections();
+    verifyVersionInfo();
+  }
+
+  private void saveVersionInfo() throws IOException {
+    var out = new ByteArrayOutputStream();
+    myVersionInfo.resetOffsets(0);
+    myVersionInfo.write(new DataOutputStream(out));
+    getVersionInfoResource().setBytes(out.toByteArray());
+  }
+
+  private void verifySize() throws IOException {
+    long fileSize = Files.size(myExePath), exeSize = myReader.sizeInBytes();
+    if (fileSize != exeSize) {
+      throw new RuntimeException(format("Produced file size mismatch, on disk: %d, in memory %d", fileSize, exeSize));
+    }
+  }
+
+  private void verifySections() {
+    var imageOptionalHeader = myReader.getPeHeader().getImageOptionalHeader();
+    int FileAlignment = (int)imageOptionalHeader.getFileAlignment().getValue();
+    int SectionAlignment = (int)imageOptionalHeader.getSectionAlignment().getValue();
+
+    var errors = new ArrayList<String>();
+    var sections = myReader.getSectionHeaders();
+    for (var header : sections) {
+      var name = header.getSectionName();
+      long sizeOfRawData = header.getSizeOfRawData().getValue();
+      long pointerToRawData = header.getPointerToRawData().getValue();
+      long virtualAddress = header.getVirtualAddress().getValue();
+      long virtualSize = header.getVirtualSize().getValue();
+      if (pointerToRawData == 0) {
+        errors.add(format("Section '%s' may not have zero PointerToRawData", name));
+      }
+      if (virtualAddress == 0) {
+        errors.add(format("Section '%s' may not have zero VirtualAddress", name));
+      }
+      if (sizeOfRawData % FileAlignment != 0) {
+        errors.add(format("SizeOfRawData of section '%s' isn't dividable by 'FileAlignment' (%#x): %#x", name, FileAlignment, sizeOfRawData));
+      }
+      if (pointerToRawData % FileAlignment != 0) {
+        errors.add(format("PointerToRawData of section '%s' isn't dividable by 'FileAlignment' (%#x): %#x", name, FileAlignment, pointerToRawData));
+      }
+      if (virtualAddress % SectionAlignment != 0) {
+        errors.add(format("VirtualAddress of section '%s' isn't dividable by 'SectionAlignment' (%#x): %#x", name, SectionAlignment, virtualAddress));
+      }
+      if (name.equals(Section.RESOURCES_SECTION_NAME) && virtualSize < sizeOfRawData) {
+        errors.add(format("VirtualSize of section '%s' is smaller than SizeOfRawData (%#x): %#x", name, sizeOfRawData, virtualSize));
+      }
+    }
+
+    var imageDataDirs = imageOptionalHeader.getImageDataDirectories();
+    check(errors, "resources",
+          imageDataDirs.get(ImageDataDirectory.IMAGE_DIRECTORY_ENTRY_RESOURCE),
+          getSection(sections, Section.RESOURCES_SECTION_NAME));
+    check(errors, "relocations",
+          imageDataDirs.get(ImageDataDirectory.IMAGE_DIRECTORY_ENTRY_BASERELOC),
+          getSection(sections, Section.RELOCATIONS_SECTION_NAME));
+
+    // SizeOfImage: The size of the image, in bytes, including all headers. Must be a multiple of SectionAlignment.
+    long sizeOfImage = imageOptionalHeader.getSizeOfImage().getValue();
+    if (sizeOfImage % SectionAlignment != 0) {
+      errors.add(format("SizeOfImage isn't dividable by 'SectionAlignment' (%#x): %#x", SectionAlignment, sizeOfImage));
+    }
+
+    if (!errors.isEmpty()) {
+      var msg = new StringBuilder();
+      msg.append("Output verification failed with ").append(errors.size()).append(" error");
+      if (errors.size() > 1) msg.append("s");
+      msg.append(":\n");
+      for (String error : errors) {
+        msg.append('\t').append(error).append('\n');
+      }
+      throw new RuntimeException(msg.toString());
+    }
+  }
+
+  private static void check(List<String> errors, String name, ImageDataDirectory idd, ImageSectionHeader ish) {
+    long iddSize = idd.getSize().getValue();
+    long ishVirtualSize = ish.getVirtualSize().getValue();
+    if (iddSize != ishVirtualSize) {
+      errors.add(format("Incorrect '%s' sizes: %#x, %#x", name, iddSize, ishVirtualSize));
+    }
+
+    long iddAddress = idd.getVirtualAddress().getValue();
+    long ishAddress = ish.getVirtualAddress().getValue();
+    if (iddAddress != ishAddress) {
+      errors.add(format("Incorrect '%s' virtual address: %#x, %#x", name, iddAddress, ishAddress));
+    }
+  }
+
+  private static ImageSectionHeader getSection(Bin.ArrayOfBins<ImageSectionHeader> sections, String name) {
+    for (var header : sections) {
+      if (name.equals(header.getSectionName())) {
+        return header;
+      }
+    }
+    throw new IllegalStateException("Cannot find section with name " + name);
   }
 
   private void verifyVersionInfo() throws IOException {
-    String versionInfoPath = myExePath + ".version";
-    RandomAccessFile versionInfoStream = new RandomAccessFile(versionInfoPath, "rw");
-    try {
-      myVersionInfo.resetOffsets(0);
-      myVersionInfo.write(versionInfoStream);
-    }
-    finally {
-      versionInfoStream.close();
-    }
+    var data1 = new ByteArrayOutputStream((int)myVersionInfo.sizeInBytes());
+    myVersionInfo.resetOffsets(0);
+    myVersionInfo.write(new DataOutputStream(data1));
 
-    VersionInfo copy = new VersionInfo();
-    copy.read(new OffsetTrackingInputStream(new DataInputStream(new FileInputStream(versionInfoPath))));
+    var copy = new VersionInfo();
+    copy.read(new OffsetTrackingInputStream(new DataInputStream(new ByteArrayInputStream(data1.toByteArray()))));
+    copy.resetOffsets(0);
+    var data2 = new ByteArrayOutputStream((int)copy.sizeInBytes());
+    copy.write(new DataOutputStream(data2));
+
+    if (!Arrays.equals(data1.toByteArray(), data2.toByteArray())) {
+      throw new IllegalStateException("Load and save of VersionInfo produced different binary results");
+    }
   }
 
   public void setResourceString(int id, String value) {
+    if (myStringTableDirectory == null) throw new IllegalStateException("Cannot find string table in " + myTemplate);
     myStringTableDirectory.setString(id, value);
   }
 
   public void setVersionInfoString(String key, String value) {
-    StringTable stringTable = myVersionInfo.getStringFileInfo().getFirstStringTable();
-    if (stringTable != null) {
-      stringTable.setStringValue(key, value);
-    }
+    myVersionInfo.getStringFileInfo().getSoleStringTable().setStringValue(key, value);
   }
 
+  @SuppressWarnings("unused")
   public void injectBitmap(int id, byte[] bitmapFileData) {
-    DirectoryEntry subDirBmp = myRoot.findSubDir("IRD2").findSubDir("IRD" + id);
-    RawResource bmpRes = subDirBmp.getRawResource(0);
-    // strip off BITMAPFILEHEADER
-    byte[] bitmapResourceData = new byte[bitmapFileData.length-14];
+    DirectoryEntry subDirBmp = myRoot.findSubDir(DirectoryEntry.RT_BITMAP).findSubDir(id);
+    RawResource bmpRes = subDirBmp.getRawResource();
+    // strip off file header
+    byte[] bitmapResourceData = new byte[bitmapFileData.length - 14];
     System.arraycopy(bitmapFileData, 14, bitmapResourceData, 0, bitmapResourceData.length);
     bmpRes.setBytes(bitmapResourceData);
   }
 
   public void injectIcon(int id, final InputStream iconStream) throws IOException {
-    Path f = Files.createTempFile("launcher", "ico");
-    try {
-      Files.copy(iconStream, f, StandardCopyOption.REPLACE_EXISTING);
-    }
-    finally {
-      iconStream.close();
-    }
-    new IconResourceInjector().injectIcon(f.toFile(), myRoot, "IRD" + id);
+    IconResourceInjector.injectIcon(iconStream, myRoot, id);
   }
 
-  public void setVersionNumber(int majorVersion, int minorVersion, int bugfixVersion) {
-    int mostSignificantVersion = majorVersion << 16 | minorVersion;
-    int leastSignificantVersion = bugfixVersion << 16;
-    myVersionInfo.getFixedFileInfo().setFileVersion(mostSignificantVersion, leastSignificantVersion);
-    myVersionInfo.getFixedFileInfo().setProductVersion(mostSignificantVersion, leastSignificantVersion);
+  public void setFileVersionNumber(int[] parts) {
+    myVersionInfo.getFixedFileInfo().setFileVersion(parts[0] << 16 | parts[1], parts[2] << 16 | parts[3]);
+  }
+
+  public void setProductVersionNumber(int[] parts) {
+    myVersionInfo.getFixedFileInfo().setProductVersion(parts[0] << 16 | parts[1], parts[2] << 16 | parts[3]);
   }
 }

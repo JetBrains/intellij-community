@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.suggested
 
@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
 
 class SuggestedRefactoringChangeCollector(
@@ -22,7 +23,7 @@ class SuggestedRefactoringChangeCollector(
     private set
 
   override fun editingStarted(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     require(declaration.isValid)
     state = refactoringSupport.stateChanges.createInitialState(declaration)
     updateAvailabilityIndicator()
@@ -34,28 +35,28 @@ class SuggestedRefactoringChangeCollector(
     UndoManager.getInstance(project).undoableActionPerformed(EditingStartedUndoableAction(document, project))
   }
 
-  override fun nextSignature(declaration: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    require(declaration.isValid)
-    state = state?.let { refactoringSupport.stateChanges.updateState(it, declaration) }
+  override fun nextSignature(anchor: PsiElement, refactoringSupport: SuggestedRefactoringSupport) {
+    ThreadingAssertions.assertEventDispatchThread()
+    require(anchor.isValid)
+    state = state?.let { refactoringSupport.stateChanges.updateState(it, anchor) }
     updateAvailabilityIndicator()
     amendStateInBackground()
   }
 
   override fun inconsistentState() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     state = state?.withErrorLevel(ErrorLevel.INCONSISTENT)
     updateAvailabilityIndicator()
   }
 
   override fun reset() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     state = null
     updateAvailabilityIndicator()
   }
 
   fun undoToState(state: SuggestedRefactoringState) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     this.state = state
     updateAvailabilityIndicator()
     amendStateInBackground()
@@ -66,8 +67,10 @@ class SuggestedRefactoringChangeCollector(
     var initialState = state ?: return
     val stateLock = Any()
     require(initialState.errorLevel != ErrorLevel.INCONSISTENT)
-    val psiFile = initialState.declaration.containingFile
-    val project = initialState.declaration.project
+    val anchor = initialState.anchor
+    if (!anchor.isValid) return
+    val psiFile = anchor.containingFile
+    val project = psiFile.project
     val psiDocumentManager = PsiDocumentManager.getInstance(project)
     val document = psiDocumentManager.getDocument(psiFile)!!
 
@@ -86,6 +89,7 @@ class SuggestedRefactoringChangeCollector(
           }
         }
       }
+      .coalesceBy(this)
       .inSmartMode(project)
       .expireWhen {
         synchronized(stateLock) { state !== initialState }
@@ -96,14 +100,17 @@ class SuggestedRefactoringChangeCollector(
 
   private fun updateAvailabilityIndicator() {
     val state = this.state
+    val publisher = availabilityIndicator.project.messageBus.syncPublisher(SuggestedRefactoringAvailabilityListener.TOPIC)
     if (state == null || state.oldSignature == state.newSignature && state.errorLevel == ErrorLevel.NO_ERRORS) {
       availabilityIndicator.clear()
+      publisher.cleared()
       return
     }
 
     val refactoringSupport = state.refactoringSupport
-    if (!state.declaration.isValid || refactoringSupport.nameRange(state.declaration) == null) {
+    if (!state.anchor.isValid || refactoringSupport.nameRange(state.anchor) == null) {
       availabilityIndicator.disable()
+      publisher.disabled()
       return
     }
 
@@ -111,11 +118,12 @@ class SuggestedRefactoringChangeCollector(
       refactoringSupport.availability.detectAvailableRefactoring(state)
     else
       null
-    availabilityIndicator.update(state.declaration, refactoringData, refactoringSupport)
+    availabilityIndicator.update(state.anchor, refactoringData, refactoringSupport)
+    publisher.updated(state)
   }
 
   @set:TestOnly
-  var _amendStateInBackgroundEnabled = !ApplicationManager.getApplication().isUnitTestMode
+  var _amendStateInBackgroundEnabled: Boolean = !ApplicationManager.getApplication().isUnitTestMode
     set(value) {
       if (value != field) {
         field = value

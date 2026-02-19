@@ -2,11 +2,11 @@
 package com.intellij.formatting;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor;
+import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.actions.DirectoryFormattingOptions;
 import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.codeInsight.actions.TextRangeType;
-import com.intellij.formatting.fileSet.NamedScopeDescriptor;
-import com.intellij.formatting.fileSet.PatternDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
@@ -16,7 +16,12 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-@SuppressWarnings("SameParameterValue")
 public class ExcludedFilesFormatterTest extends FileSetTestCase {
 
   public static final String UNFORMATTED_SAMPLE = "<a><b></b></a>";
@@ -59,7 +63,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
     VirtualFile f2 = createFile("src/subdir/f2.xml", UNFORMATTED_SAMPLE);
     VirtualFile f3 = createFile("src/subdir/test/f3.xml", UNFORMATTED_SAMPLE);
     NamedScopesHolder localHolder = NamedScopeManager.getInstance(getProject());
-    @SuppressWarnings("unused") NamedScope testScope = createScope(localHolder, "testScope", "file:*2.xml");
+    createScope(localHolder, "testScope", "file:*2.xml");
     CodeStyle.getSettings(getProject()).getExcludedFiles().addDescriptor(new NamedScopeDescriptor("testScope"));
     try {
       formatProjectFiles(false, false);
@@ -109,7 +113,7 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
     assertFormatted(f3);
   }
 
-  private static NamedScope createScope(@NotNull NamedScopesHolder holder, @NotNull String name, @NotNull String pattern)
+  private static @NotNull NamedScope createScope(@NotNull NamedScopesHolder holder, @NotNull String name, @NotNull String pattern)
     throws ParsingException {
     PackageSet fileSet = PackageSetFactory.getInstance().compile(pattern);
     NamedScope scope = holder.createScope(name, fileSet);
@@ -117,10 +121,10 @@ public class ExcludedFilesFormatterTest extends FileSetTestCase {
     return scope;
   }
 
-  private void addPatternExclusions(String... patterns) {
+  private void addPatternExclusions(String @NotNull ... patterns) {
     CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     for (String pattern : patterns) {
-      settings.getExcludedFiles().addDescriptor(new PatternDescriptor(pattern));
+      settings.getExcludedFiles().addDescriptor(new GlobPatternDescriptor(pattern));
     }
   }
 

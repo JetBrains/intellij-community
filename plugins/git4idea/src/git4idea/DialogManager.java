@@ -1,13 +1,15 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static com.intellij.openapi.util.NlsContexts.Button;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -27,13 +29,13 @@ public class DialogManager {
     dialogManager().showDialog(dialog);
   }
 
-  public static int showMessage(@NotNull @DialogMessage final String message,
-                                @NotNull @DialogTitle final String title,
+  public static int showMessage(final @NotNull @DialogMessage String message,
+                                final @NotNull @DialogTitle String title,
                                 final String @NotNull @Button [] options,
                                 final int defaultButtonIndex,
                                 final int focusedButtonIndex,
-                                @Nullable final Icon icon,
-                                @Nullable final DialogWrapper.DoNotAskOption dontAskOption) {
+                                final @Nullable Icon icon,
+                                final @Nullable DoNotAskOption dontAskOption) {
     return dialogManager().showMessageDialog(message, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption);
   }
 
@@ -86,12 +88,11 @@ public class DialogManager {
                                   int defaultButtonIndex,
                                   int focusedButtonIndex,
                                   @Nullable Icon icon,
-                                  @Nullable DialogWrapper.DoNotAskOption dontAskOption) {
+                                  @Nullable DoNotAskOption dontAskOption) {
     return Messages.showDialog(message, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption);
   }
 
-  @NotNull
-  private static DialogManager dialogManager() {
-    return ServiceManager.getService(DialogManager.class);
+  private static @NotNull DialogManager dialogManager() {
+    return ApplicationManager.getApplication().getService(DialogManager.class);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.conflicts;
 
 import com.intellij.diff.merge.MergeCallback;
@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer.DiffEditorTitleCustomizerList;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -36,17 +38,15 @@ import static java.util.Collections.singletonList;
 public class GitMergeHandler {
   private static final Logger LOG = Logger.getInstance(GitMergeHandler.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final MergeDialogCustomizer myDialogCustomizer;
+  private final @NotNull Project myProject;
+  private final @NotNull MergeDialogCustomizer myDialogCustomizer;
 
   public GitMergeHandler(@NotNull Project project, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     myProject = project;
     myDialogCustomizer = mergeDialogCustomizer;
   }
 
-  @Nls
-  @NotNull
-  public String loadMergeDescription() {
+  public @Nls @NotNull String loadMergeDescription() {
     return myDialogCustomizer.getMultipleFileMergeDescription(emptyList());
   }
 
@@ -58,8 +58,7 @@ public class GitMergeHandler {
            conflict.getStatus(ConflictSide.THEIRS) != Status.DELETED;
   }
 
-  @NotNull
-  public Resolver resolveConflict(@NotNull GitConflict conflict, @NotNull VirtualFile file, boolean isReversed) throws VcsException {
+  public @NotNull Resolver resolveConflict(@NotNull GitConflict conflict, @NotNull VirtualFile file, boolean isReversed) throws VcsException {
     VirtualFile root = conflict.getRoot();
     FilePath path = conflict.getFilePath();
 
@@ -92,12 +91,21 @@ public class GitMergeHandler {
       }
     }
     finally {
-      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ContainerUtil.map(conflicts, GitConflict::getFilePath), null);
+      List<FilePath> filePaths = ContainerUtil.map(conflicts, GitConflict::getFilePath);
+      VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(filePaths, null);
+
+      List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(filePaths, GitMergeHandler::getExistingFileOrParent);
+      VfsUtil.markDirtyAndRefresh(true, false, true, VfsUtilCore.toVirtualFileArray(virtualFiles));
     }
   }
 
-  @NotNull
-  public static MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull Collection<? extends GitConflict> conflicts) {
+  private static @Nullable VirtualFile getExistingFileOrParent(@NotNull FilePath filePath) {
+    VirtualFile file = filePath.getVirtualFile();
+    if (file != null) return file;
+    return filePath.getVirtualFileParent();
+  }
+
+  public static @NotNull MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull Collection<? extends GitConflict> conflicts) {
     MultiMap<VirtualFile, GitConflict> byRoot = MultiMap.create();
     for (GitConflict conflict : conflicts) {
       byRoot.putValue(conflict.getRoot(), conflict);
@@ -106,15 +114,15 @@ public class GitMergeHandler {
   }
 
   public static final class Resolver {
-    @NotNull private final Project myProject;
-    @NotNull private final GitConflict myConflict;
+    private final @NotNull Project myProject;
+    private final @NotNull GitConflict myConflict;
     private final boolean myIsReversed;
-    @NotNull private final MergeData myMergeData;
-    @NotNull private final VirtualFile myFile;
+    private final @NotNull MergeData myMergeData;
+    private final @NotNull VirtualFile myFile;
 
-    @NotNull private final String myWindowTitle;
-    @NotNull private final List<String> myContentTitles;
-    @NotNull private final DiffEditorTitleCustomizerList myTitleCustomizerList;
+    private final @NotNull String myWindowTitle;
+    private final @NotNull List<String> myContentTitles;
+    private final @NotNull DiffEditorTitleCustomizerList myTitleCustomizerList;
 
     private volatile boolean myIsValid = true;
 
@@ -136,18 +144,15 @@ public class GitMergeHandler {
       myTitleCustomizerList = titleCustomizerList;
     }
 
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
 
-    @NotNull
-    public VirtualFile getVirtualFile() {
+    public @NotNull VirtualFile getVirtualFile() {
       return myFile;
     }
 
-    @NotNull
-    public MergeData getMergeData() {
+    public @NotNull MergeData getMergeData() {
       return myMergeData;
     }
 
@@ -160,33 +165,26 @@ public class GitMergeHandler {
           LOG.error(String.format("Unexpected exception during the git operation: file - %s)", myConflict.getFilePath()), e);
         }
       }
-      VcsDirtyScopeManager.getInstance(myProject).filesDirty(singletonList(myFile), emptyList());
+      VcsDirtyScopeManager.getInstance(myProject).fileDirty(myFile);
     }
 
-    @Nullable
-    private ConflictSide getResolutionSide(@NotNull MergeResult result) {
-      switch (result) {
-        case LEFT:
-          return !myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
-        case RIGHT:
-          return myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
-        default:
-          return null;
-      }
+    private @Nullable ConflictSide getResolutionSide(@NotNull MergeResult result) {
+      return switch (result) {
+        case LEFT -> !myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
+        case RIGHT -> myIsReversed ? ConflictSide.OURS : ConflictSide.THEIRS;
+        default -> null;
+      };
     }
 
-    @NotNull
-    public String getWindowTitle() {
+    public @NotNull String getWindowTitle() {
       return myWindowTitle;
     }
 
-    @NotNull
-    public List<String> getContentTitles() {
+    public @NotNull List<String> getContentTitles() {
       return myContentTitles;
     }
 
-    @NotNull
-    public DiffEditorTitleCustomizerList getTitleCustomizerList() {
+    public @NotNull DiffEditorTitleCustomizerList getTitleCustomizerList() {
       return myTitleCustomizerList;
     }
 

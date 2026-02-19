@@ -95,14 +95,6 @@ public abstract class ModuleLevelBuilder extends Builder {
     throws ProjectBuildException, IOException;
 
   /**
-   * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderExtension#shouldHonorFileEncodingForCompilation(File)} instead
-   */
-  @Deprecated
-  public boolean shouldHonorFileEncodingForCompilation(File file) {
-    return false;
-  }
-
-  /**
    * Returns list of extensions (without dot) of files which can be compiled by the builder.
    */
   public abstract @NotNull List<String> getCompilableFileExtensions();

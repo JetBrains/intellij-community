@@ -1,0 +1,677 @@
+Bundle2 refers to a data format that is used for both on-disk storage
+and over-the-wire transfer of repository data and state.
+
+The data format allows the capture of multiple components of
+repository data. Contrast with the initial bundle format, which
+only captured *changegroup* data (and couldn't store bookmarks,
+phases, etc).
+
+Bundle2 is used for:
+
+* Transferring data from a repository (e.g. as part of an ``hg clone``
+  or ``hg pull`` operation).
+* Transferring data to a repository (e.g. as part of an ``hg push``
+  operation).
+* Storing data on disk (e.g. the result of an ``hg bundle``
+  operation).
+* Transferring the results of a repository operation (e.g. the
+  reply to an ``hg push`` operation).
+
+At its highest level, a bundle2 payload is a stream that begins
+with some metadata and consists of a series of *parts*, with each
+part describing repository data or state or the result of an
+operation. New bundle2 parts are introduced over time when there is
+a need to capture a new form of data. A *capabilities* mechanism
+exists to allow peers to understand which bundle2 parts the other
+understands.
+
+Stream Format
+=============
+
+A bundle2 payload consists of a magic string (``HG20``) followed by
+stream level parameters, followed by any number of payload *parts*.
+
+It may help to think of the stream level parameters as *headers* and the
+payload parts as the *body*.
+
+Stream Level Parameters
+-----------------------
+
+Following the magic string is data that defines parameters applicable to the
+entire payload.
+
+Stream level parameters begin with a 32-bit unsigned big-endian integer.
+The value of this integer defines the number of bytes of stream level
+parameters that follow.
+
+The *N* bytes of raw data contains a space separated list of parameters.
+Each parameter consists of a required name and an optional value.
+
+Parameters have the form ``<name>`` or ``<name>=<value>``.
+
+Both the parameter name and value are URL quoted.
+
+Names MUST start with a letter. If the first letter is lower case, the
+parameter is advisory and can safely be ignored. If the first letter
+is upper case, the parameter is mandatory and the handler MUST stop if
+it is unable to process it.
+
+Stream level parameters apply to the entire bundle2 payload. Lower-level
+options should go into a bundle2 part instead.
+
+The following stream level parameters are defined:
+
+Compression
+   Compression format of payload data. ``GZ`` denotes zlib. ``BZ``
+   denotes bzip2. ``ZS`` denotes zstandard.
+
+   When defined, all bytes after the stream level parameters are
+   compressed using the compression format defined by this parameter.
+
+   If this parameter isn't present, data is raw/uncompressed.
+
+   This parameter MUST be mandatory because attempting to consume
+   streams without knowing how to decode the underlying bytes will
+   result in errors.
+
+Payload Part
+------------
+
+Following the stream level parameters are 0 or more payload parts. Each
+payload part consists of a header and a body.
+
+The payload part header consists of a 32-bit unsigned big-endian integer
+defining the number of bytes in the header that follow. The special
+value ``0`` indicates the end of the bundle2 stream.
+
+The binary format of the part header is as follows:
+
+* 8-bit unsigned size of the part name
+* N-bytes alphanumeric part name
+* 32-bit unsigned big-endian part ID
+* N bytes part parameter data
+
+The *part name* identifies the type of the part. A part name with an
+UPPERCASE letter is mandatory. Otherwise, the part is advisory. A
+consumer should abort if it encounters a mandatory part it doesn't know
+how to process. See the sections below for each defined part type.
+
+The *part ID* is a unique identifier within the bundle used to refer to a
+specific part. It should be unique within the bundle2 payload.
+
+Part parameter data consists of:
+
+* 1 byte number of mandatory parameters
+* 1 byte number of advisory parameters
+* 2 * N bytes of sizes of parameter key and values
+* N * M blobs of values for parameter key and values
+
+Following the 2 bytes of mandatory and advisory parameter counts are
+2-tuples of bytes of the sizes of each parameter. e.g.
+(<key size>, <value size>).
+
+Following that are the raw values, without padding. Mandatory parameters
+come first, followed by advisory parameters.
+
+Each parameter's key MUST be unique within the part.
+
+Following the part parameter data is the part payload. The part payload
+consists of a series of framed chunks. The frame header is a 32-bit
+big-endian integer defining the size of the chunk. The N bytes of raw
+payload data follows.
+
+The part payload consists of 0 or more chunks.
+
+A chunk with size ``0`` denotes the end of the part payload. Therefore,
+there will always be at least 1 32-bit integer following the payload
+part header.
+
+A chunk size of ``-1`` is used to signal an *interrupt*. If such a chunk
+size is seen, the stream processor should process the next bytes as a new
+payload part. After this payload part, processing of the original,
+interrupted part should resume.
+
+Capabilities
+============
+
+Bundle2 is a dynamic format that can evolve over time. For example,
+when a new repository data concept is invented, a new bundle2 part
+is typically invented to hold that data. In addition, parts performing
+similar functionality may come into existence if there is a better
+mechanism for performing certain functionality.
+
+Because the bundle2 format evolves over time, peers need to understand
+what bundle2 features the other can understand. The *capabilities*
+mechanism is how those features are expressed.
+
+Bundle2 capabilities are logically expressed as a dictionary of
+string key-value pairs where the keys are strings and the values
+are lists of strings.
+
+Capabilities are encoded for exchange between peers. The encoded
+capabilities blob consists of a newline (``\n``) delimited list of
+entries. Each entry has the form ``<key>`` or ``<key>=<value>``,
+depending if the capability has a value.
+
+The capability name is URL quoted (``%XX`` encoding of URL unsafe
+characters).
+
+The value, if present, is formed by URL quoting each value in
+the capability list and concatenating the result with a comma (``,``).
+
+For example, the capabilities ``novaluekey`` and ``listvaluekey``
+with values ``value 1`` and ``value 2``. This would be encoded as:
+
+   listvaluekey=value%201,value%202\nnovaluekey
+
+The sections below detail the defined bundle2 capabilities.
+
+HG20
+----
+
+Denotes that the peer supports the bundle2 data format.
+
+bookmarks
+---------
+
+Denotes that the peer supports the ``bookmarks`` part.
+
+Peers should not issue mandatory ``bookmarks`` parts unless this
+capability is present.
+
+changegroup
+-----------
+
+Denotes which versions of the *changegroup* format the peer can
+receive. Values include ``01``, ``02``, and ``03``.
+
+The peer should not generate changegroup data for a version not
+specified by this capability.
+
+checkheads
+----------
+
+Denotes which forms of heads checking the peer supports.
+
+If ``related`` is in the value, then the peer supports the ``check:heads``
+part and the peer is capable of detecting race conditions when applying
+changelog data.
+
+digests
+-------
+
+Denotes which hashing formats the peer supports.
+
+Values are names of hashing function. Values include ``md5``, ``sha1``,
+and ``sha512``.
+
+error
+-----
+
+Denotes which ``error:`` parts the peer supports.
+
+Value is a list of strings of ``error:`` part names. Valid values
+include ``abort``, ``unsupportecontent``, ``pushraced``, and ``pushkey``.
+
+Peers should not issue an ``error:`` part unless the type of that
+part is listed as supported by this capability.
+
+listkeys
+--------
+
+Denotes that the peer supports the ``listkeys`` part.
+
+hgtagsfnodes
+------------
+
+Denotes that the peer supports the ``hgtagsfnodes`` part.
+
+obsmarkers
+----------
+
+Denotes that the peer supports the ``obsmarker`` part and which versions
+of the obsolescence data format it can receive. Values are strings like
+``V<N>``. e.g. ``V1``.
+
+phases
+------
+
+Denotes that the peer supports the ``phases`` part.
+
+pushback
+--------
+
+Denotes that the peer supports sending/receiving bundle2 data in response
+to a bundle2 request.
+
+This capability is typically used by servers that employ server-side
+rewriting of pushed repository data. For example, a server may wish to
+automatically rebase pushed changesets. When this capability is present,
+the server can send a bundle2 response containing the rewritten changeset
+data and the client will apply it.
+
+pushkey
+-------
+
+Denotes that the peer supports the ``puskey`` part.
+
+remote-changegroup
+------------------
+
+Denotes that the peer supports the ``remote-changegroup`` part and
+which protocols it can use to fetch remote changegroup data.
+
+Values are protocol names. e.g. ``http`` and ``https``.
+
+stream
+------
+
+Denotes that the peer supports ``stream*`` parts in order to support
+*stream clone*.
+
+Values are which ``stream*`` parts the peer supports. ``v2`` denotes
+support for the ``stream2`` part.
+
+Bundle2 Part Types
+==================
+
+The sections below detail the various bundle2 part types.
+
+bookmarks
+---------
+
+The ``bookmarks`` part holds bookmarks information.
+
+This part has no parameters.
+
+The payload consists of entries defining bookmarks. Each entry consists of:
+
+* 20 bytes binary changeset node.
+* 2 bytes big endian short defining bookmark name length.
+* N bytes defining bookmark name.
+
+Receivers typically update bookmarks to match the state specified in
+this part.
+
+changegroup
+-----------
+
+The ``changegroup`` part contains *changegroup* data (changelog, manifestlog,
+and filelog revision data).
+
+The following part parameters are defined for this part.
+
+version
+   Changegroup version string. e.g. ``01``, ``02``, and ``03``. This parameter
+   determines how to interpret the changegroup data within the part.
+
+nbchanges
+   The number of changesets in this changegroup. This parameter can be used
+   to aid in the display of progress bars, etc during part application.
+
+treemanifest
+   Whether the changegroup contains tree manifests.
+
+targetphase
+   The target phase of changesets in this part. Value is an integer of
+   the target phase.
+
+The payload of this part is raw changegroup data. See
+:hg:`help internals.changegroups` for the format of changegroup data.
+
+check:bookmarks
+---------------
+
+The ``check:bookmarks`` part is inserted into a bundle as a means for the
+receiver to validate that the sender's known state of bookmarks matches
+the receiver's.
+
+This part has no parameters.
+
+The payload is a binary stream of bookmark data. Each entry in the stream
+consists of:
+
+* 20 bytes binary node that bookmark is associated with
+* 2 bytes unsigned short defining length of bookmark name
+* N bytes containing the bookmark name
+
+If all bits in the node value are ``1``, then this signifies a missing
+bookmark.
+
+When the receiver encounters this part, for each bookmark in the part
+payload, it should validate that the current bookmark state matches
+the specified state. If it doesn't, then the receiver should take
+appropriate action. (In the case of pushes, this mismatch signifies
+a race condition and the receiver should consider rejecting the push.)
+
+check:heads
+-----------
+
+The ``check:heads`` part is a means to validate that the sender's state
+of DAG heads matches the receiver's.
+
+This part has no parameters.
+
+The body of this part is an array of 20 byte binary nodes representing
+changeset heads.
+
+Receivers should compare the set of heads defined in this part to the
+current set of repo heads and take action if there is a mismatch in that
+set.
+
+Note that this part applies to *all* heads in the repo.
+
+check:phases
+------------
+
+The ``check:phases`` part validates that the sender's state of phase
+boundaries matches the receiver's.
+
+This part has no parameters.
+
+The payload consists of an array of 24 byte entries. Each entry is
+a big endian 32-bit integer defining the phase integer and 20 byte
+binary node value.
+
+For each changeset defined in this part, the receiver should validate
+that its current phase matches the phase defined in this part. The
+receiver should take appropriate action if a mismatch occurs.
+
+check:updated-heads
+-------------------
+
+The ``check:updated-heads`` part validates that the sender's state of
+DAG heads updated by this bundle matches the receiver's.
+
+This type is nearly identical to ``check:heads`` except the heads
+in the payload are only a subset of heads in the repository. The
+receiver should validate that all nodes specified by the sender are
+branch heads and take appropriate action if not.
+
+error:abort
+-----------
+
+The ``error:abort`` part conveys a fatal error.
+
+The following part parameters are defined:
+
+message
+   The string content of the error message.
+
+hint
+   Supplemental string giving a hint on how to fix the problem.
+
+error:pushkey
+-------------
+
+The ``error:pushkey`` part conveys an error in the *pushkey* protocol.
+
+The following part parameters are defined:
+
+namespace
+   The pushkey domain that exhibited the error.
+
+key
+   The key whose update failed.
+
+new
+   The value we tried to set the key to.
+
+old
+   The old value of the key (as supplied by the client).
+
+ret
+   The integer result code for the pushkey request.
+
+in-reply-to
+   Part ID that triggered this error.
+
+This part is generated if there was an error applying *pushkey* data.
+Pushkey data includes bookmarks, phases, and obsolescence markers.
+
+error:pushraced
+---------------
+
+The ``error:pushraced`` part conveys that an error occurred and
+the likely cause is losing a race with another pusher.
+
+The following part parameters are defined:
+
+message
+   String error message.
+
+This part is typically emitted when a receiver examining ``check:*``
+parts encountered inconsistency between incoming state and local state.
+The likely cause of that inconsistency is another repository change
+operation (often another client performing an ``hg push``).
+
+error:unsupportedcontent
+------------------------
+
+The ``error:unsupportedcontent`` part conveys that a bundle2 receiver
+encountered a part or content it was not able to handle.
+
+The following part parameters are defined:
+
+parttype
+   The name of the part that triggered this error.
+
+params
+   ``\0`` delimited list of parameters.
+
+hgtagsfnodes
+------------
+
+The ``hgtagsfnodes`` type defines file nodes for the ``.hgtags`` file
+for various changesets.
+
+This part has no parameters.
+
+The payload is an array of pairs of 20 byte binary nodes. The first node
+is a changeset node. The second node is the ``.hgtags`` file node.
+
+Resolving tags requires resolving the ``.hgtags`` file node for changesets.
+On large repositories, this can be expensive. Repositories cache the
+mapping of changeset to ``.hgtags`` file node on disk as a performance
+optimization. This part allows that cached data to be transferred alongside
+changeset data.
+
+Receivers should update their ``.hgtags`` cache file node mappings with
+the incoming data.
+
+listkeys
+--------
+
+The ``listkeys`` part holds content for a *pushkey* namespace.
+
+The following part parameters are defined:
+
+namespace
+   The pushkey domain this data belongs to.
+
+The part payload contains a newline (``\n``) delimited list of
+tab (``\t``) delimited key-value pairs defining entries in this pushkey
+namespace.
+
+obsmarkers
+----------
+
+The ``obsmarkers`` part defines obsolescence markers.
+
+This part has no parameters.
+
+The payload consists of obsolescence markers using the on-disk markers
+format. The first byte defines the version format.
+
+The receiver should apply the obsolescence markers defined in this
+part. A ``reply:obsmarkers`` part should be sent to the sender, if possible.
+
+output
+------
+
+The ``output`` part is used to display output on the receiver.
+
+This part has no parameters.
+
+The payload consists of raw data to be printed on the receiver.
+
+phase-heads
+-----------
+
+The ``phase-heads`` part defines phase boundaries.
+
+This part has no parameters.
+
+The payload consists of an array of 24 byte entries. Each entry is
+a big endian 32-bit integer defining the phase integer and 20 byte
+binary node value.
+
+pushkey
+-------
+
+The ``pushkey`` part communicates an intent to perform a ``pushkey``
+request.
+
+The following part parameters are defined:
+
+namespace
+   The pushkey domain to operate on.
+
+key
+   The key within the pushkey namespace that is being changed.
+
+old
+   The old value for the key being changed.
+
+new
+   The new value for the key being changed.
+
+This part has no payload.
+
+The receiver should perform a pushkey operation as described by this
+part's parameters.
+
+If the pushey operation fails, a ``reply:pushkey`` part should be sent
+back to the sender, if possible. The ``in-reply-to`` part parameter
+should reference the source part.
+
+pushvars
+--------
+
+The ``pushvars`` part defines environment variables that should be
+set when processing this bundle2 payload.
+
+The part's advisory parameters define environment variables.
+
+There is no part payload.
+
+When received, part parameters are prefixed with ``USERVAR_`` and the
+resulting variables are defined in the hooks context for the current
+bundle2 application. This part provides a mechanism for senders to
+inject extra state into the hook execution environment on the receiver.
+
+remote-changegroup
+------------------
+
+The ``remote-changegroup`` part defines an external location of a bundle
+to apply. This part can be used by servers to serve pre-generated bundles
+hosted at arbitrary URLs.
+
+The following part parameters are defined:
+
+url
+   The URL of the remote bundle.
+
+size
+   The size in bytes of the remote bundle.
+
+digests
+   A space separated list of the digest types provided in additional
+   part parameters.
+
+digest:<type>
+   The hexadecimal representation of the digest (hash) of the remote bundle.
+
+There is no payload for this part type.
+
+When encountered, clients should attempt to fetch the URL being advertised
+and read and apply it as a bundle.
+
+The ``size`` and ``digest:<type>`` parameters should be used to validate
+that the downloaded bundle matches what was advertised. If a mismatch occurs,
+the client should abort.
+
+reply:changegroup
+-----------------
+
+The ``reply:changegroup`` part conveys the results of application of a
+``changegroup`` part.
+
+The following part parameters are defined:
+
+return
+   Integer return code from changegroup application.
+
+in-reply-to
+   Part ID of part this reply is in response to.
+
+reply:obsmarkers
+----------------
+
+The ``reply:obsmarkers`` part conveys the results of applying an
+``obsmarkers`` part.
+
+The following part parameters are defined:
+
+new
+   The integer number of new markers that were applied.
+
+in-reply-to
+   The part ID that this part is in reply to.
+
+reply:pushkey
+-------------
+
+The ``reply:pushkey`` part conveys the result of a *pushkey* operation.
+
+The following part parameters are defined:
+
+return
+   Integer result code from pushkey operation.
+
+in-reply-to
+   Part ID that triggered this pushkey operation.
+
+This part has no payload.
+
+replycaps
+---------
+
+The ``replycaps`` part notifies the receiver that a reply bundle should
+be created.
+
+This part has no parameters.
+
+The payload consists of a bundle2 capabilities blob.
+
+stream2
+-------
+
+The ``stream2`` part contains *streaming clone* version 2 data.
+
+The following part parameters are defined:
+
+requirements
+   URL quoted repository requirements string. Requirements are delimited by a
+   command (``,``).
+
+filecount
+   The total number of files being transferred in the payload.
+
+bytecount
+   The total size of file content being transferred in the payload.
+
+The payload consists of raw stream clone version 2 data.
+
+The ``filecount`` and ``bytecount`` parameters can be used for progress and
+reporting purposes. The values may not be exact.

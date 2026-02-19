@@ -1,13 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,7 +25,9 @@ import java.util.stream.Collectors;
  * editor viewport. {@link #savePosition()} method should be called before the operation, to save scrolling position, and
  * {@link #restorePosition(boolean)} method - after the operation, to restore the position.
  */
-public class EditorScrollingPositionKeeper implements Disposable {
+public final class EditorScrollingPositionKeeper implements Disposable {
+  private static final Logger LOG = Logger.getInstance(EditorScrollingPositionKeeper.class);
+
   private final Editor myEditor;
   private int myViewportShift;
   private RangeMarker myTopLeftCornerMarker;
@@ -29,21 +37,31 @@ public class EditorScrollingPositionKeeper implements Disposable {
   }
 
   public void savePosition() {
+    if (myEditor instanceof ImaginaryEditor) return;
+
     disposeMarker();
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleAreaOnScrollingFinished();
     int caretY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
     if (visibleArea.height > 0 && (caretY + myEditor.getLineHeight() <= visibleArea.y || caretY >= (visibleArea.y + visibleArea.height))) {
       int topLeftCornerOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(visibleArea.getLocation()));
-      myTopLeftCornerMarker = myEditor.getDocument().createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
+      myTopLeftCornerMarker = myEditor.getUiDocument().createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
       myViewportShift = myEditor.offsetToXY(topLeftCornerOffset).y - visibleArea.y;
     }
     else {
       myTopLeftCornerMarker = null;
       myViewportShift = caretY - visibleArea.y;
     }
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("savePosition:" +
+                              " offset: " + (myTopLeftCornerMarker != null ? myTopLeftCornerMarker.getStartOffset() : "null") +
+                              ", shift: " + myViewportShift));
+    }
   }
 
   public void restorePosition(boolean stopAnimation) {
+    if (myEditor instanceof ImaginaryEditor) return;
+
     int newY;
     if (myTopLeftCornerMarker == null) {
       newY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
@@ -52,6 +70,14 @@ public class EditorScrollingPositionKeeper implements Disposable {
       if (!myTopLeftCornerMarker.isValid()) return;
       newY = myEditor.offsetToXY(myTopLeftCornerMarker.getStartOffset()).y;
     }
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("restorePosition:" +
+                              " offset: " + (myTopLeftCornerMarker != null ? myTopLeftCornerMarker.getStartOffset() : "null") +
+                              ", shift: " + myViewportShift +
+                              ", new_y: " + newY));
+    }
+
     ScrollingModel scrollingModel = myEditor.getScrollingModel();
     Rectangle targetArea = scrollingModel.getVisibleAreaOnScrollingFinished();
     // when animated scrolling is in progress, we'll not stop it immediately
@@ -68,14 +94,16 @@ public class EditorScrollingPositionKeeper implements Disposable {
   }
 
   private void disposeMarker() {
-    if (myTopLeftCornerMarker != null) myTopLeftCornerMarker.dispose();
+    if (myTopLeftCornerMarker != null) {
+      myTopLeftCornerMarker.dispose();
+    }
   }
 
   /**
    * Performs given operation, restoring editor scrolling position afterwards.
    */
   public static void perform(@Nullable Editor editor, boolean stopAnimation, @NotNull Runnable operation) {
-    if (editor == null) {
+    if (editor == null || editor instanceof ImaginaryEditor) {
       operation.run();
       return;
     }
@@ -108,7 +136,7 @@ public class EditorScrollingPositionKeeper implements Disposable {
   /**
    * Same as {@link EditorScrollingPositionKeeper}, but tracking all editors for a given document.
    */
-  public static class ForDocument implements Disposable {
+  public static final class ForDocument implements Disposable {
     private final List<EditorScrollingPositionKeeper> myKeepers;
 
     public ForDocument(@Nullable Document document) {

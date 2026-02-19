@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.openapi.module.Module;
@@ -7,60 +7,71 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class LightEditProjectFileIndex implements ProjectFileIndex {
-  @Nullable
+final class LightEditProjectFileIndex implements ProjectFileIndex {
   @Override
-  public Module getModuleForFile(@NotNull VirtualFile file) {
+  public boolean isInProject(@NotNull VirtualFile file) {
+    return isInContent(file);
+  }
+
+  @Override
+  public boolean isInProjectOrExcluded(@NotNull VirtualFile file) {
+    return isInContent(file);
+  }
+
+  @Override
+  public @Nullable Module getModuleForFile(@NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
   @Override
-  public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+  public @Nullable Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
+  public @NotNull Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public VirtualFile getClassRootForFile(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getClassRootForFile(@NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getSourceRootForFile(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getSourceRootForFile(@NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getContentRootForFile(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getContentRootForFile(@NotNull VirtualFile file) {
     return null;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getContentRootForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+  public @Nullable VirtualFile getContentRootForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getPackageNameByDirectory(@NotNull VirtualFile dir) {
+  public @Nullable String getPackageNameByDirectory(@NotNull VirtualFile dir) {
     return null;
   }
 
@@ -90,8 +101,13 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
   }
 
   @Override
-  public boolean isIgnored(@NotNull VirtualFile file) {
-    return false;
+  public @NotNull Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir) {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public @NotNull @Unmodifiable Collection<@NotNull SdkEntity> findContainingSdks(@NotNull VirtualFile fileOrDir) {
+    return Collections.emptyList();
   }
 
   @Override
@@ -128,11 +144,6 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    return LightEditDirectoryIndex.getFileInfo().isInProject(fileOrDir);
-  }
-
-  @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -149,5 +160,20 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     return false;
+  }
+
+  @Override
+  public @Nullable JpsModuleSourceRootType<?> getContainingSourceRootType(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @Override
+  public boolean isInGeneratedSources(@NotNull VirtualFile file) {
+    return false;
+  }
+
+  @Override
+  public @Nullable String getUnloadedModuleNameForFile(@NotNull VirtualFile fileOrDir) {
+    return null;
   }
 }

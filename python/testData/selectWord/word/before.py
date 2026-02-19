@@ -1,5 +1,5 @@
 import os
 
 def f(arg):
-    print a<caret>rg
-    print "a"
+    print(a<caret>rg)
+    print("a")

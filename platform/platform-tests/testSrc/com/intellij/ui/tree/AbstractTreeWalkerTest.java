@@ -154,7 +154,7 @@ public class AbstractTreeWalkerTest {
   }
 
   private static TreeVisitor createFinder(TreeNode node) {
-    return new TreeVisitor.ByComponent<TreeNode, Object>(node, o -> o) {
+    return new TreeVisitor.ByComponent<>(node, o -> o) {
       @Override
       protected boolean contains(@NotNull Object pathComponent, @NotNull TreeNode thisComponent) {
         while (pathComponent != thisComponent && thisComponent != null) thisComponent = thisComponent.getParent();
@@ -410,14 +410,13 @@ public class AbstractTreeWalkerTest {
   private static void test(TreePath parent, TreeNode node, int count, boolean error, Walker walker, Object... expected) {
     walker.start(parent, node);
     switch (walker.promise().getState()) {
-      case PENDING:
-        throw new IllegalStateException("not processed");
-      case SUCCEEDED:
-        if (!error) break;
-        throw new IllegalStateException("not rejected");
-      case REJECTED:
-        if (error) break;
-        throw new IllegalStateException("not fulfilled");
+      case PENDING -> throw new IllegalStateException("not processed");
+      case SUCCEEDED -> {
+        if (error) throw new IllegalStateException("not rejected");
+      }
+      case REJECTED -> {
+        if (!error) throw new IllegalStateException("not fulfilled");
+      }
     }
     TreeVisitor wrapper = getField(AbstractTreeWalker.class, walker, TreeVisitor.class, "visitor");
     assertEquals(Integer.valueOf(count), getField(Wrapper.class, wrapper, int.class, "count"));

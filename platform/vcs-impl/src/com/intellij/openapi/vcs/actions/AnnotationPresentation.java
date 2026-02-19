@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.Disposable;
@@ -21,7 +7,12 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.AnnotationSource;
+import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineNumberListener;
+import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
+import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -31,12 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 class AnnotationPresentation implements TextAnnotationPresentation {
-  @NotNull private final FileAnnotation myFileAnnotation;
-  @NotNull private final UpToDateLineNumberProvider myUpToDateLineNumberProvider;
-  @Nullable private final AnnotationSourceSwitcher mySwitcher;
+  private final @NotNull FileAnnotation myFileAnnotation;
+  private final @NotNull UpToDateLineNumberProvider myUpToDateLineNumberProvider;
+  private final @Nullable AnnotationSourceSwitcher mySwitcher;
   private final ArrayList<AnAction> myActions = new ArrayList<>();
 
-  @NotNull private final Disposable myDisposable;
+  private final @NotNull Disposable myDisposable;
   private boolean myDisposed = false;
 
   AnnotationPresentation(@NotNull FileAnnotation fileAnnotation,
@@ -54,21 +45,31 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     return myFileAnnotation;
   }
 
+
   @Override
   public int getAnnotationLine(int editorLine) {
-    return myUpToDateLineNumberProvider.getLineNumber(editorLine);
+    return getAnnotationLine(editorLine, false);
+  }
+
+  @Override
+  public int getAnnotationLine(int editorLine, boolean approximate) {
+    return myUpToDateLineNumberProvider.getLineNumber(editorLine, approximate);
   }
 
   @Override
   public EditorFontType getFontType(final int line) {
+    return isLastCommit(line) ? EditorFontType.BOLD : EditorFontType.PLAIN;
+  }
+
+  private boolean isLastCommit(int line) {
     VcsRevisionNumber revision = myFileAnnotation.originalRevision(line);
     VcsRevisionNumber currentRevision = myFileAnnotation.getCurrentRevision();
-    return currentRevision != null && currentRevision.equals(revision) ? EditorFontType.BOLD : EditorFontType.PLAIN;
+    return currentRevision != null && currentRevision.equals(revision);
   }
 
   @Override
   public ColorKey getColor(final int line) {
-    if (mySwitcher == null) return AnnotationSource.LOCAL.getColor();
+    if (mySwitcher == null) return AnnotationSource.LOCAL.getColor(isLastCommit(line));
     return mySwitcher.getAnnotationSource(line).getColor();
   }
 
@@ -86,8 +87,7 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     return myActions;
   }
 
-  @NotNull
-  public List<AnAction> getActions() {
+  public @NotNull List<AnAction> getActions() {
     return myActions;
   }
 

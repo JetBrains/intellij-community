@@ -1,0 +1,86 @@
+override fun hashCode(): kotlin.Int {
+#if (!$superHasHashCode && $fields.size() == 1)
+    #set($field = $fields.get(0))
+    return #addFieldHashCode($field)##
+    #if (!$field.notNull) ?:0##
+    #end
+#elseif ($fields.size() > 0)
+    #set($resultName = $helper.getUniqueLocalVarName("result", $fields, $settings))
+var $resultName ##
+    #set($resultAssigned = false)
+    #set($resultDeclarationCompleted = false)
+    #if ($superHasHashCode)
+    = #addSuperHashCode()
+        #set($resultAssigned = true)
+        #set($resultDeclarationCompleted = true)
+    #end
+    #foreach($field in $fields)
+        #if ($resultDeclarationCompleted)
+            $resultName ##
+        #end
+    = ##
+        #if ($resultAssigned)
+        31 * $resultName + ##
+            #if(!$field.notNull)(##
+            #end
+        #end
+        #addFieldHashCode($field)##
+        #if (!$field.notNull) ?: 0##
+            #if ($resultAssigned))##
+            #end
+        #end
+
+        #set($resultAssigned = true)
+        #set($resultDeclarationCompleted = true)
+    #end
+return $resultName
+#elseif($superHasHashCode)
+return super.hashCode()
+#else
+return #addClassLiteral()##
+.hashCode()
+#end
+}
+##
+#macro (addClassLiteral)
+    #if ($isCommon || $isNative || $isWasm)
+    this::class##
+    #elseif ($isJs)
+    this::class.js##
+    #else
+    javaClass##
+    #end
+#end
+##
+#macro(adjustHashCodeToArrays $field $dot)
+    #if ($field.array)
+        #if ($field.nestedArray)
+        $field.name##
+        $dot##
+        contentDeepHashCode()##
+        #else
+        $field.name##
+        $dot##
+        contentHashCode()##
+        #end
+    #elseif ($field.byte || $field.short || $field.int)
+        $field.name##
+    #else $field.name##
+    $dot##
+    hashCode()##
+    #end
+#end
+##
+#macro(addSuperHashCode)
+    #if ($superHasHashCode)
+    super.hashCode()##
+    #else
+    0##
+    #end
+#end
+##
+#macro(addFieldHashCode $field)
+    #if ($field.notNull)#adjustHashCodeToArrays($field, ".")
+    #else #adjustHashCodeToArrays($field, "?.")
+    #end
+#end

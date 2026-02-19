@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -11,38 +11,47 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyTupleExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to replace statement that has no effect with function call
  */
-public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
+public class StatementEffectFunctionCallQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.statement.effect");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement expression = descriptor.getPsiElement();
-    if (expression != null && expression.isWritable() && expression instanceof PyReferenceExpression) {
-      final String expressionText = expression.getText();
-      if (PyNames.PRINT.equals(expressionText))
-        replacePrint(expression);
-      else if (PyNames.EXEC.equals(expressionText))
-        replaceExec(expression);
-      else
-        expression.replace(PyElementGenerator.getInstance(project).createCallExpression(LanguageLevel.forElement(expression),
-                                                                                        expressionText));
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyReferenceExpression) {
+      final String expressionText = element.getText();
+      if (PyNames.PRINT.equals(expressionText)) {
+        replacePrint(element);
+      }
+      else if (PyNames.EXEC.equals(expressionText)) {
+        replaceExec(element);
+      }
+      else {
+        element.replace(PyElementGenerator.getInstance(project).createCallExpression(LanguageLevel.forElement(element),
+                                                                                     expressionText));
+      }
     }
   }
 
-  private static void replaceExec(@NotNull final PsiElement expression) {
+  private static void replaceExec(final @NotNull PsiElement expression) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(expression.getProject());
     final String expressionText = expression.getText();
     final StringBuilder stringBuilder = new StringBuilder(expressionText + " (");
@@ -92,7 +101,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
                                                        stringBuilder.toString()));
   }
 
-  private static String getComment(@Nullable final PsiElement next) {
+  private static String getComment(final @Nullable PsiElement next) {
     String commentText = null;
     if (next != null) {
       final PsiElement lastChild = next.getLastChild();
@@ -103,15 +112,16 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
     return commentText;
   }
 
-  private static void addInArguments(@NotNull final StringBuilder stringBuilder, @NotNull final PyBinaryExpression binaryExpression) {
+  private static void addInArguments(final @NotNull StringBuilder stringBuilder, final @NotNull PyBinaryExpression binaryExpression) {
     stringBuilder.append(binaryExpression.getLeftExpression().getText());
     stringBuilder.append(", ");
     final PyExpression rightExpression = binaryExpression.getRightExpression();
-    if (rightExpression != null)
+    if (rightExpression != null) {
       stringBuilder.append(rightExpression.getText());
+    }
   }
 
-  private static void replacePrint(@NotNull final PsiElement expression) {
+  private static void replacePrint(final @NotNull PsiElement expression) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(expression.getProject());
     final String expressionText = expression.getText();
     final StringBuilder stringBuilder = new StringBuilder(expressionText + " (");
@@ -132,7 +142,7 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
                                                        stringBuilder.toString()));
   }
 
-  private static PsiElement getNextElement(@NotNull final PsiElement expression) {
+  private static PsiElement getNextElement(final @NotNull PsiElement expression) {
     final PsiElement whiteSpace = expression.getContainingFile().findElementAt(expression.getTextOffset() + expression.getTextLength());
     PsiElement next = null;
     if (whiteSpace instanceof PsiWhiteSpace) {
@@ -144,8 +154,9 @@ public class StatementEffectFunctionCallQuickFix implements LocalQuickFix {
         }
       }
     }
-    else
+    else {
       next = whiteSpace;
+    }
 
     RemoveUnnecessaryBackslashQuickFix.removeBackSlash(next);
     if (whiteSpace != null) whiteSpace.delete();

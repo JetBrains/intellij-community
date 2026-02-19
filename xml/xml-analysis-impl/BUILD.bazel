@@ -1,0 +1,73 @@
+### auto-generated section `build intellij.xml.analysis.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "analysis-impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis-impl",
+  module_name = "intellij.xml.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis-impl_resources"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/analysis-impl",
+    "//platform/core-impl",
+    "//xml/xml-analysis-api:analysis",
+    "//platform/util:util-ui",
+    "//xml/xml-parser:parser",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-impl",
+    "//platform/util/nanoxml",
+    "//platform/indexing-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/polySymbols/backend",
+    "//libraries/xerces",
+    "//platform/polySymbols",
+    "//platform/lang-api:lang",
+  ],
+  runtime_deps = ["//platform/backend"]
+)
+
+jvm_library(
+  name = "analysis-impl_test_lib",
+  module_name = "intellij.xml.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":analysis-impl",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//xml/xml-psi-api:psi_test_lib",
+    "//xml/xml-psi-impl:psi-impl_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//xml/xml-analysis-api:analysis_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//xml/xml-parser:parser_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/editor-ui-ex:editor-ex_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/util/nanoxml:nanoxml_test_lib",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/indexing-api:indexing_test_lib",
+    "//platform/backend:backend_test_lib",
+    "//platform/polySymbols/backend:backend_test_lib",
+    "//libraries/xerces:xerces_test_lib",
+    "//platform/polySymbols:polySymbols_test_lib",
+    "//platform/lang-api:lang_test_lib",
+  ]
+)
+### auto-generated section `build intellij.xml.analysis.impl` end

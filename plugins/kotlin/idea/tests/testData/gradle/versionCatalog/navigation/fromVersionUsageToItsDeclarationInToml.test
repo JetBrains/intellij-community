@@ -1,0 +1,7 @@
+// FILE: build.gradle.kts
+val myVersion = libs.versions.test.l<caret>ibrary.version
+
+// FILE: gradle/libs.versions.toml
+# EXPECTED
+[versions]
+test_library-version = "1.0.5"

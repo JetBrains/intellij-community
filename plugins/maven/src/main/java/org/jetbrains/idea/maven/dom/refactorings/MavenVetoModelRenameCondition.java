@@ -21,7 +21,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 
-public class MavenVetoModelRenameCondition implements Condition<PsiElement> {
+public final class MavenVetoModelRenameCondition implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement target) {
     if (target instanceof MavenPsiElementWrapper) return true;

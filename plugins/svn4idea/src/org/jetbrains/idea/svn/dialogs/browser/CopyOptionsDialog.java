@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browser;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -31,10 +29,15 @@ import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.tree.TreeNode;
-import java.awt.*;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -71,8 +74,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     myURLLabel.setText(myURL.toDecodedString());
 
     TreeNode[] path = node.getSelfPath();
-    TreeNode[] subPath = new TreeNode[path.length - 1];
-    System.arraycopy(path, 1, subPath, 0, path.length - 1);
+    TreeNode[] subPath = Arrays.copyOfRange(path, 1, path.length);
 
     myBrowser.setRepositoryURL(root.getURL(), false, new OpeningExpander.Factory(
       subPath, node.getParent() instanceof RepositoryTreeNode ? (RepositoryTreeNode)node.getParent() : null));
@@ -99,10 +101,9 @@ public class CopyOptionsDialog extends DialogWrapper {
     update();
   }
 
-  @NotNull
-  public static ComboBox<String> configureRecentMessagesComponent(@NotNull Project project,
-                                                                  @NotNull ComboBox<String> comboBox,
-                                                                  @NotNull Consumer<? super String> messageConsumer) {
+  public static @NotNull ComboBox<String> configureRecentMessagesComponent(@NotNull Project project,
+                                                                           @NotNull ComboBox<String> comboBox,
+                                                                           @NotNull Consumer<? super String> messageConsumer) {
     List<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
     Collections.reverse(messages);
     CollectionComboBoxModel<String> model = new CollectionComboBoxModel<>(messages);
@@ -114,8 +115,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     return comboBox;
   }
 
-  @NlsSafe
-  private static String getPresentableCommitMessage(@NotNull String commitMessage) {
+  private static @NlsSafe String getPresentableCommitMessage(@NotNull String commitMessage) {
     return commitMessage.replace('\r', '|').replace('\n', '|');
   }
 
@@ -133,14 +133,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     });
     group.add(new RepositoryBrowserDialog.DeleteAction(myBrowser));
     group.add(new RepositoryBrowserDialog.RefreshAction(myBrowser));
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("", group);
-    JPopupMenu component = popupMenu.getComponent();
-    myBrowser.getRepositoryTree().addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(Component comp, int x, int y) {
-        component.show(comp, x, y);
-      }
-    });
+    PopupHandler.installPopupMenu(myBrowser, group, "SvnOptionsBrowserPopup");
 
     Splitter splitter = new Splitter(true, 0.7f);
     splitter.setFirstComponent(createBrowserPartWrapper());
@@ -161,16 +154,14 @@ public class CopyOptionsDialog extends DialogWrapper {
     );
   }
 
-  @NotNull
-  private JPanel createCommitMessageWrapper() {
+  private @NotNull JPanel createCommitMessageWrapper() {
     myCommitMessage = new CommitMessage(myProject, false, false, true);
     Disposer.register(getDisposable(), myCommitMessage);
 
     return simplePanel(myCommitMessage).addToTop(new JBLabel(message("label.commit.message")));
   }
 
-  @NotNull
-  private JPanel createBrowserPartWrapper() {
+  private @NotNull JPanel createBrowserPartWrapper() {
     JPanel wrapper = new JPanel(new GridBagLayout());
     GridBag gridBag =
       new GridBag().setDefaultAnchor(GridBagConstraints.NORTHWEST).setDefaultFill(GridBagConstraints.NONE).setDefaultInsets(insets(1))
@@ -208,8 +199,7 @@ public class CopyOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "svn4idea.copy.options";
   }
 
@@ -225,19 +215,16 @@ public class CopyOptionsDialog extends DialogWrapper {
     return myNameField.getText();
   }
 
-  @Nullable
-  public Url getTargetURL() {
+  public @Nullable Url getTargetURL() {
     return myTargetUrl;
   }
 
-  @Nullable
-  public RepositoryTreeNode getTargetParentNode() {
+  public @Nullable RepositoryTreeNode getTargetParentNode() {
     return myBrowser.getSelectedNode();
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myMainPanel;
   }
 

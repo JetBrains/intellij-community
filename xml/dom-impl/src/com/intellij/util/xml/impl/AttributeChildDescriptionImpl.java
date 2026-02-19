@@ -1,10 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,15 +17,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author peter
- */
 @Presentation(typeName = "Attribute")
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription<Void> {
   private final JavaMethod myGetterMethod;
 
-  protected AttributeChildDescriptionImpl(final XmlName attributeName, @NotNull final JavaMethod getter) {
+  protected AttributeChildDescriptionImpl(final XmlName attributeName, final @NotNull JavaMethod getter) {
     super(attributeName, getter.getGenericReturnType());
     myGetterMethod = getter;
   }
@@ -32,9 +34,8 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   @Override
-  @NotNull
-  public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), true);
+  public @NotNull DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ClassUtil.getRawType(getType()), true);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 
@@ -50,21 +51,18 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
   }
 
   @Override
-  @Nullable
-  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+  public @Nullable <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     final JavaMethod method = getGetterMethod();
     return method == null ? super.getAnnotation(annotationClass) : method.getAnnotation(annotationClass);
   }
 
   @Override
-  @NotNull
-  public List<? extends DomElement> getValues(@NotNull DomElement parent) {
+  public @NotNull List<? extends DomElement> getValues(@NotNull DomElement parent) {
     return Collections.singletonList(getDomAttributeValue(parent));
   }
 
   @Override
-  @NotNull
-  public String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
+  public @NotNull String getCommonPresentableName(@NotNull DomNameStrategy strategy) {
     throw new UnsupportedOperationException("Method getCommonPresentableName is not yet implemented in " + getClass().getName());
   }
 
@@ -81,6 +79,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     return (GenericAttributeValue)handler.getAttributeChild(this).getProxy();
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -88,11 +87,10 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
 
     final AttributeChildDescriptionImpl that = (AttributeChildDescriptionImpl)o;
 
-    if (myGetterMethod != null ? !myGetterMethod.equals(that.myGetterMethod) : that.myGetterMethod != null) return false;
-
-    return true;
+    return Objects.equals(myGetterMethod, that.myGetterMethod);
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 29 * result + (myGetterMethod != null ? myGetterMethod.hashCode() : 0);

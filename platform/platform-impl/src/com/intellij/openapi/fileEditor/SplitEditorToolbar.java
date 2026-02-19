@@ -1,23 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
-public class SplitEditorToolbar extends EditorHeaderComponent {
+public final class SplitEditorToolbar extends EditorHeaderComponent {
 
   private final ActionToolbar myRightToolbar;
+  private final boolean myLeftToolbarEmpty;
 
   public SplitEditorToolbar(@Nullable ActionToolbar leftToolbar, @NotNull ActionToolbar rightToolbar) {
     super();
     setLayout(new GridBagLayout());
     myRightToolbar = rightToolbar;
+    if (leftToolbar == null) {
+      myLeftToolbarEmpty = true;
+    } else if (leftToolbar.getActionGroup() instanceof DefaultActionGroup defaultActionGroup) {
+      myLeftToolbarEmpty = defaultActionGroup.getChildrenCount() == 0 && leftToolbar.getActions().isEmpty();
+    } else {
+      myLeftToolbarEmpty = leftToolbar.getActions().isEmpty();
+    }
 
     if (leftToolbar != null) {
       add(leftToolbar.getComponent());
@@ -25,12 +36,17 @@ public class SplitEditorToolbar extends EditorHeaderComponent {
 
     final JPanel centerPanel = new JPanel(new BorderLayout());
     add(centerPanel, new GridBagConstraints(2, 0, 1, 1, 1.0, 1.0,
-                                            GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
+                                            GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0));
 
     add(myRightToolbar.getComponent());
+  }
 
-    if (leftToolbar != null) leftToolbar.updateActionsImmediately();
-    rightToolbar.updateActionsImmediately();
+  public ActionToolbar getRightToolbar() {
+    return myRightToolbar;
+  }
+
+  public boolean isLeftToolbarEmpty() {
+    return myLeftToolbarEmpty;
   }
 
   public void refresh() {

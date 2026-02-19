@@ -1,13 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiCaseLabelElementList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.PsiSwitchLabelStatementBase;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.light.LightExpressionList;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,12 +35,20 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
 
   @Override
   public PsiExpressionList getCaseValues() {
-    return (PsiExpressionList)findPsiChildByType(JavaElementType.EXPRESSION_LIST);
+    PsiCaseLabelElementList elementList = getCaseLabelElementList();
+    if (elementList == null) return null;
+    PsiExpression[] expressions = PsiTreeUtil.getChildrenOfType(elementList, PsiExpression.class);
+    expressions = expressions != null ? expressions : PsiExpression.EMPTY_ARRAY;
+    return new LightExpressionList(getManager(), getLanguage(), expressions, elementList, elementList.getTextRange());
   }
 
-  @Nullable
   @Override
-  public PsiSwitchBlock getEnclosingSwitchBlock() {
+  public @Nullable PsiExpression getGuardExpression() {
+    return PsiTreeUtil.getChildOfType(this, PsiExpression.class);
+  }
+
+  @Override
+  public @Nullable PsiSwitchBlock getEnclosingSwitchBlock() {
     PsiElement codeBlock = getParent();
     if (codeBlock != null) {
       PsiElement switchBlock = codeBlock.getParent();
@@ -44,7 +64,7 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (lastParent instanceof PsiExpressionList) {
+    if (lastParent instanceof PsiCaseLabelElementList) {
       PsiSwitchBlock switchStatement = getEnclosingSwitchBlock();
       if (switchStatement != null) {
         PsiExpression expression = switchStatement.getExpression();
@@ -53,13 +73,32 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
           if (type instanceof PsiClassType) {
             PsiClass aClass = ((PsiClassType)type).resolve();
             if (aClass != null) {
-              aClass.processDeclarations(new FilterScopeProcessor(ElementClassFilter.ENUM_CONST, processor), state, this, place);
+              if (!aClass.processDeclarations(new FilterScopeProcessor(ElementClassFilter.ENUM_CONST, processor), state, this, place)) {
+                return false;
+              }
             }
           }
         }
       }
     }
 
+    return true;
+  }
+
+  @Override
+  public @Nullable PsiCaseLabelElementList getCaseLabelElementList() {
+    return PsiTreeUtil.getChildOfType(this, PsiCaseLabelElementList.class);
+  }
+
+  protected boolean processPatternVariables(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
+    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
+    if (patternsInCaseLabel == null) return true;
+    if (!patternsInCaseLabel.processDeclarations(processor, state, null, place)) return false;
+
+    PsiExpression guardExpression = getGuardExpression();
+    if (guardExpression != null) {
+      return guardExpression.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+    }
     return true;
   }
 }

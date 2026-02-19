@@ -6,9 +6,10 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
 
@@ -16,10 +17,9 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
 
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     setIcon(null);
-    if (value instanceof RepositoryTreeNode) {
-      RepositoryTreeNode node = (RepositoryTreeNode) value;
+    if (value instanceof RepositoryTreeNode node) {
       if (node.getSVNDirEntry() == null) {
         append(node.getURL().toDecodedString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(PlatformIcons.FOLDER_ICON);
@@ -41,8 +41,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
                 : PlatformIcons.FOLDER_ICON);
       }
     }
-    else if (value instanceof SimpleTextNode) {
-      SimpleTextNode node = (SimpleTextNode)value;
+    else if (value instanceof SimpleTextNode node) {
 
       append(node.getText(), node.isError() ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }

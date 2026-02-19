@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -14,19 +14,19 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
 
 /**
  * This renderer is used both as PropertyRenderer and as cell renderer in the ComponentEditor
  * combo box.
- * @author yole
  */
 public class ComponentRenderer extends ColoredListCellRenderer implements PropertyRenderer<String> {
   @Override
   public JComponent getComponent(final RadRootContainer rootContainer, String value, boolean selected, boolean hasFocus) {
     clear();
     setBackground(selected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground());
-    if (value != null && value.length() > 0) {
+    if (value != null && !value.isEmpty()) {
       RadComponent target = (RadComponent)FormEditingUtil.findComponent(rootContainer, value);
       if (target != null) {
         renderComponent(target, selected);
@@ -39,7 +39,7 @@ public class ComponentRenderer extends ColoredListCellRenderer implements Proper
     return this;
   }
 
-  private void renderComponent(@Nullable final RadComponent target, boolean selected) {
+  private void renderComponent(final @Nullable RadComponent target, boolean selected) {
     clear();
     final SimpleTextAttributes baseAttributes =
       selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;

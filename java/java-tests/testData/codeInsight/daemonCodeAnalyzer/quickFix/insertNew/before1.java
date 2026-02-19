@@ -1,4 +1,4 @@
-// "Insert new" "true"
+// "Insert new" "true-preview"
 class a {
  void f() {
      <caret>RuntimeException//c1

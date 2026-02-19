@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.actions;
 
@@ -17,16 +17,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-import java.util.Properties;
+import java.util.Map;
 
 public final class GroovyTemplatesFactory {
 
-  @NonNls
-  static final String NAME_TEMPLATE_PROPERTY = "NAME";
+  static final @NonNls String NAME_TEMPLATE_PROPERTY = "NAME";
   static final String LOW_CASE_NAME_TEMPLATE_PROPERTY = "lowCaseName";
 
-  public static PsiFile createFromTemplate(@NotNull final PsiDirectory directory,
-                                           @NotNull final String name,
+  public static PsiFile createFromTemplate(final @NotNull PsiDirectory directory,
+                                           final @NotNull String name,
                                            @NotNull String fileName,
                                            @NotNull String templateName,
                                            boolean allowReformatting,
@@ -35,12 +34,12 @@ public final class GroovyTemplatesFactory {
 
     Project project = directory.getProject();
 
-    Properties properties = new Properties(FileTemplateManager.getInstance(project).getDefaultProperties());
+    Map<String, Object> properties = FileTemplateManager.getInstance(project).getDefaultContextMap();
     JavaTemplateUtil.setPackageNameAttribute(properties, directory);
-    properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
-    properties.setProperty(LOW_CASE_NAME_TEMPLATE_PROPERTY, StringUtil.decapitalize(name));
+    properties.put(NAME_TEMPLATE_PROPERTY, name);
+    properties.put(LOW_CASE_NAME_TEMPLATE_PROPERTY, StringUtil.decapitalize(name));
     for (int i = 0; i < parameters.length; i += 2) {
-      properties.setProperty(parameters[i], parameters[i + 1]);
+      properties.put(parameters[i], parameters[i + 1]);
     }
     String text;
     try {

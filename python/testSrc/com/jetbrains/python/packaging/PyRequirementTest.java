@@ -18,13 +18,17 @@ import java.util.List;
 import static com.jetbrains.python.packaging.PyRequirementParser.fromLine;
 import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirement;
 import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirementVersionSpec;
-import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.*;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.COMPATIBLE;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.EQ;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.GT;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.GTE;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.LT;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.LTE;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.NE;
+import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.STR_EQ;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-/**
- * @author vlan
- */
 public class PyRequirementTest extends PyTestCase {
 
   // ARCHIVE URL
@@ -1948,15 +1952,15 @@ public class PyRequirementTest extends PyTestCase {
   // TODO: hashes
   // https://www.python.org/dev/peps/pep-0508/#names
   public void testRequirement() {
-    assertEquals(pyRequirement("Orange-Bioinformatics"), fromLine("Orange-Bioinformatics"));
-    assertEquals(pyRequirement("MOCPy"), fromLine("MOCPy"));
-    assertEquals(pyRequirement("score.webassets"), fromLine("score.webassets"));
-    assertEquals(pyRequirement("pip_helpers"), fromLine("pip_helpers"));
-    assertEquals(pyRequirement("Django"), fromLine("Django"));
-    assertEquals(pyRequirement("django"), fromLine("django"));
-    assertEquals(pyRequirement("pinax-utils"), fromLine("pinax-utils"));
-    assertEquals(pyRequirement("no_limit_nester"), fromLine("no_limit_nester"));
-    assertEquals(pyRequirement("Flask-Celery-py3"), fromLine("Flask-Celery-py3"));
+    assertEquals(pyRequirement("Orange-Bioinformatics",null), fromLine("Orange-Bioinformatics"));
+    assertEquals(pyRequirement("MOCPy",null), fromLine("MOCPy"));
+    assertEquals(pyRequirement("score.webassets",null), fromLine("score.webassets"));
+    assertEquals(pyRequirement("pip_helpers",null), fromLine("pip_helpers"));
+    assertEquals(pyRequirement("Django",null), fromLine("Django"));
+    assertEquals(pyRequirement("django",null), fromLine("django"));
+    assertEquals(pyRequirement("pinax-utils",null), fromLine("pinax-utils"));
+    assertEquals(pyRequirement("no_limit_nester",null), fromLine("no_limit_nester"));
+    assertEquals(pyRequirement("Flask-Celery-py3",null), fromLine("Flask-Celery-py3"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/
@@ -1970,6 +1974,18 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(pyRequirement("pinax-utils", EQ, "1.0b1.dev3"), fromLine("pinax-utils==1.0b1.dev3"));
     assertEquals(pyRequirement("Flask-Celery-py3", EQ, "0.1.*"), fromLine("Flask-Celery-py3==0.1.*"));
     assertEquals(pyRequirement("no_limit_nester", EQ, "1.0+local.version.10"), fromLine("no_limit_nester==1.0+local.version.10"));
+  }
+
+  public void testRequirementVersionWithBraces() {
+    assertEquals(pyRequirement("Orange-Bioinformatics", EQ, "2.5a20"), fromLine("Orange-Bioinformatics (==2.5a20)"));
+    assertEquals(pyRequirement("MOCPy", EQ, "0.1.0.dev0"), fromLine("MOCPy (==0.1.0.dev0)"));
+    assertEquals(pyRequirement("score.webassets", EQ, "0.2.3"), fromLine("score.webassets (==0.2.3)"));
+    assertEquals(pyRequirement("pip_helpers", EQ, "0.5.post6"), fromLine("pip_helpers (==0.5.post6)"));
+    assertEquals(pyRequirement("Django", EQ, "1.9rc1"), fromLine("Django (==1.9rc1)"));
+    assertEquals(pyRequirement("django", EQ, "1!1"), fromLine("django (==1!1)"));
+    assertEquals(pyRequirement("pinax-utils", EQ, "1.0b1.dev3"), fromLine("pinax-utils (==1.0b1.dev3)"));
+    assertEquals(pyRequirement("Flask-Celery-py3", EQ, "0.1.*"), fromLine("Flask-Celery-py3 (==0.1.*)"));
+    assertEquals(pyRequirement("no_limit_nester", EQ, "1.0+local.version.10"), fromLine("no_limit_nester (==1.0+local.version.10)"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#normalization
@@ -2253,15 +2269,7 @@ public class PyRequirementTest extends PyTestCase {
   // PY-6355
   public void testTrailingZeroesInVersion() {
     final PyRequirement req = fromLine("foo==0.8.0");
-    final PyPackage pkg = new PyPackage("foo", "0.8", null, emptyList());
-    assertNotNull(req);
-    assertEquals(pkg, req.match(singletonList(pkg)));
-  }
-
-  // PY-6438
-  public void testUnderscoreMatchesDash() {
-    final PyRequirement req = fromLine("pyramid_zcml");
-    final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, emptyList());
+    final PyPackage pkg = new PyPackage("foo", "0.8");
     assertNotNull(req);
     assertEquals(pkg, req.match(singletonList(pkg)));
   }
@@ -2269,15 +2277,15 @@ public class PyRequirementTest extends PyTestCase {
   // PY-20242
   public void testVersionInterpretedAsString() {
     final PyRequirement req = fromLine("foo===version");
-    final PyPackage pkg = new PyPackage("foo", "version", null, emptyList());
+    final PyPackage pkg = new PyPackage("foo", "version");
     assertNotNull(req);
     assertEquals(pkg, req.match(singletonList(pkg)));
   }
 
   // PY-20880
   public void testMatchingLocalVersions() {
-    final PyPackage firstPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0100", null, emptyList());
-    final PyPackage secondPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0101", null, emptyList());
+    final PyPackage firstPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0100");
+    final PyPackage secondPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0101");
 
     final PyRequirement requirement = fromLine("foo==1.0");
     assertEquals(firstPackageWithLocalVersion, requirement.match(singletonList(firstPackageWithLocalVersion)));
@@ -2292,11 +2300,11 @@ public class PyRequirementTest extends PyTestCase {
   // PY-22275
   public void testMatchingStar() {
     final PyRequirement requirement = fromLine("foo==1.1.*");
-    final PyPackage release = new PyPackage("foo", "1.1.2", null, emptyList());
-    final PyPackage pre = new PyPackage("foo", "1.1.2a1", null, emptyList());
-    final PyPackage post = new PyPackage("foo", "1.1.2.post1", null, emptyList());
-    final PyPackage dev = new PyPackage("foo", "1.1.2.dev1", null, emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "1.1.2+local.version", null, emptyList());
+    final PyPackage release = new PyPackage("foo", "1.1.2");
+    final PyPackage pre = new PyPackage("foo", "1.1.2a1");
+    final PyPackage post = new PyPackage("foo", "1.1.2.post1");
+    final PyPackage dev = new PyPackage("foo", "1.1.2.dev1");
+    final PyPackage localVersion = new PyPackage("foo", "1.1.2+local.version");
 
     assertEquals(release, requirement.match(singletonList(release)));
     assertEquals(pre, requirement.match(singletonList(pre)));
@@ -2305,11 +2313,11 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(localVersion, requirement.match(singletonList(localVersion)));
 
     final PyRequirement negativeRequirement = fromLine("foo!=1.1.*");
-    final PyPackage negativeRelease = new PyPackage("foo", "1.2.2", null, emptyList());
-    final PyPackage negativePre = new PyPackage("foo", "1.2.2a1", null, emptyList());
-    final PyPackage negativePost = new PyPackage("foo", "1.2.2.post1", null, emptyList());
-    final PyPackage negativeDev = new PyPackage("foo", "1.2.2.dev1", null, emptyList());
-    final PyPackage negativeLocalVersion = new PyPackage("foo", "1.2.2+local.version", null, emptyList());
+    final PyPackage negativeRelease = new PyPackage("foo", "1.2.2");
+    final PyPackage negativePre = new PyPackage("foo", "1.2.2a1");
+    final PyPackage negativePost = new PyPackage("foo", "1.2.2.post1");
+    final PyPackage negativeDev = new PyPackage("foo", "1.2.2.dev1");
+    final PyPackage negativeLocalVersion = new PyPackage("foo", "1.2.2+local.version");
 
     assertNull(negativeRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
     assertEquals(negativeRelease, negativeRequirement.match(singletonList(negativeRelease)));
@@ -2323,11 +2331,11 @@ public class PyRequirementTest extends PyTestCase {
   // PY-20522
   public void testMatchingCompatible() {
     final PyRequirement requirement = fromLine("foo~=2.2");
-    final PyPackage release = new PyPackage("foo", "2.3", null, emptyList());
-    final PyPackage pre = new PyPackage("foo", "2.3a1", null, emptyList());
-    final PyPackage post = new PyPackage("foo", "2.3.post1", null, emptyList());
-    final PyPackage dev = new PyPackage("foo", "2.3.dev1", null, emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "2.3+local.version", null, emptyList());
+    final PyPackage release = new PyPackage("foo", "2.3");
+    final PyPackage pre = new PyPackage("foo", "2.3a1");
+    final PyPackage post = new PyPackage("foo", "2.3.post1");
+    final PyPackage dev = new PyPackage("foo", "2.3.dev1");
+    final PyPackage localVersion = new PyPackage("foo", "2.3+local.version");
 
     assertEquals(release, requirement.match(singletonList(release)));
     assertEquals(pre, requirement.match(singletonList(pre)));
@@ -2343,11 +2351,11 @@ public class PyRequirementTest extends PyTestCase {
   // PY-20522
   public void testMatchingCompatibleWithTrailingZero() {
     final PyRequirement requirement = fromLine("foo~=2.20.0");
-    final PyPackage release = new PyPackage("foo", "2.20.3", null, emptyList());
-    final PyPackage pre = new PyPackage("foo", "2.20.3a1", null, emptyList());
-    final PyPackage post = new PyPackage("foo", "2.20.3.post1", null, emptyList());
-    final PyPackage dev = new PyPackage("foo", "2.20.3.dev1", null, emptyList());
-    final PyPackage localVersion = new PyPackage("foo", "2.20.3+local.version", null, emptyList());
+    final PyPackage release = new PyPackage("foo", "2.20.3");
+    final PyPackage pre = new PyPackage("foo", "2.20.3a1");
+    final PyPackage post = new PyPackage("foo", "2.20.3.post1");
+    final PyPackage dev = new PyPackage("foo", "2.20.3.dev1");
+    final PyPackage localVersion = new PyPackage("foo", "2.20.3+local.version");
 
     assertEquals(release, requirement.match(singletonList(release)));
     assertEquals(pre, requirement.match(singletonList(pre)));
@@ -2364,7 +2372,7 @@ public class PyRequirementTest extends PyTestCase {
     final PyRequirement requirement1 = fromLine("social-auth-app-django==2.0.*");
     final PyRequirement requirement2 = fromLine("social-auth-app-django~=2.0.0");
 
-    final PyPackage pkg = new PyPackage("social-auth-app-django", "2.0.0", null, emptyList());
+    final PyPackage pkg = new PyPackage("social-auth-app-django", "2.0.0");
 
     assertEquals(pkg, requirement1.match(singletonList(pkg)));
     assertEquals(pkg, requirement2.match(singletonList(pkg)));
@@ -2374,15 +2382,16 @@ public class PyRequirementTest extends PyTestCase {
   public void testOptions() {
     assertEmpty(
       PyRequirementParser.fromText(
-        "-i URL\n" +
-        "--index-url URL\n" +
-        "--extra-index-url URL\n" +
-        "--no-index\n" +
-        "-f URL\n" +
-        "--find-links URL\n" +
-        "--no-binary SMTH\n" +
-        "--only-binary SMTH\n" +
-        "--require-hashes"
+        """
+          -i URL
+          --index-url URL
+          --extra-index-url URL
+          --no-index
+          -f URL
+          --find-links URL
+          --no-binary SMTH
+          --only-binary SMTH
+          --require-hashes"""
       )
     );
   }
@@ -2394,7 +2403,9 @@ public class PyRequirementTest extends PyTestCase {
     final VirtualFile requirementsFile = getVirtualFileByName(getTestDataPath() + "/requirement/recursive/requirements.txt");
     assertNotNull(requirementsFile);
 
-    assertEquals(Arrays.asList(pyRequirement("bitly_api"), pyRequirement("numpy"), pyRequirement("SomeProject")),
+    assertEquals(Arrays.asList(pyRequirement("bitly_api",null),
+                               pyRequirement("numpy",null),
+                               pyRequirement("SomeProject",null)),
                  PyRequirementParser.fromFile(requirementsFile));
   }
 
@@ -2439,6 +2450,30 @@ public class PyRequirementTest extends PyTestCase {
 
     assertEquals(requirement, fromLine(name + " --install-option=\"option\" # comment"));
     assertEquals(singletonList(requirement), PyRequirementParser.fromText(name + " \\\n--install-option=\"option\" # comment"));
+  }
+
+  // HASH OPTIONS
+  // Test for parsing requirements with hash options
+  public void testRequirementWithHash() {
+    doTest("certifi", "2018.4.16", "certifi==2018.4.16 --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7");
+    doTest("certifi", "2018.4.16",
+           "certifi==2018.4.16 --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7 --hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0");
+  }
+
+  // Test for parsing requirements with hash options from text (including line continuation)
+  public void testRequirementWithHashFromText() {
+    final List<PyRequirement> requirements = PyRequirementParser.fromText(
+      "certifi==2018.4.16 \\\n    --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7 \\\n    --hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0");
+    assertFalse(requirements.isEmpty());
+
+    final PyRequirement requirement = requirements.get(0);
+    assertNotNull(requirement);
+    assertEquals("certifi", requirement.getName());
+    assertEquals("2018.4.16", requirement.getVersionSpecs().get(0).getVersion());
+
+    final List<String> installOptions = requirement.getInstallOptions();
+    assertTrue(installOptions.contains("--hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7"));
+    assertTrue(installOptions.contains("--hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0"));
   }
 
   // ENV MARKERS

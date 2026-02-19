@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.win
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -9,14 +9,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
-import java.nio.file.Path
 
 class WinFileTypeAssociator : com.intellij.openapi.fileTypes.impl.associate.SystemFileTypeAssociator {
-
   /**
    * Associates given file types with IDE using
    * [ftype](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/ftype) and
@@ -32,8 +29,8 @@ class WinFileTypeAssociator : com.intellij.openapi.fileTypes.impl.associate.Syst
    */
   @Throws(OSFileAssociationException::class)
   override fun associateFileTypes(fileTypes: List<FileType>) {
-    val extensions: List<Extension> = fileTypes.map { FileTypeManager.getInstance().getAssociations(it) }.flatten()
-      .filterIsInstance(ExtensionFileNameMatcher::class.java)
+    val extensions: List<Extension> = fileTypes.map { OSAssociateFileTypesUtil.getMatchers(it) }.flatten()
+      .filterIsInstance<ExtensionFileNameMatcher>()
       .map { Extension(it.extension) }
     runCmdCommandWithSudo(createCmdScriptText(extensions)) {
       ApplicationBundle.message("light.edit.associate.fileTypes.error.message", ApplicationNamesInfo.getInstance().fullProductName)
@@ -46,15 +43,11 @@ class WinFileTypeAssociator : com.intellij.openapi.fileTypes.impl.associate.Syst
     return allCommands.joinToString(" && ") { "($it)" }
   }
 
-  /**
-   */
   @Throws(OSFileAssociationException::class)
   private fun createAssignCommandLineToFiletypeCommand(): String {
-    val scriptName = ApplicationNamesInfo.getInstance().scriptName
-    val suffix = if (SystemInfo.is64Bit) "64" else ""
-    val scriptPath: Path = PathManager.findBinFile("$scriptName$suffix.exe") ?: throw OSFileAssociationException(
-      ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()))
-    return "ftype " + getUniqueFileType() + "=" + StringUtil.wrapWithDoubleQuote(scriptPath.toString()) + " \"%1\" %*"
+    val launcherPath = PathManager.findBinFile("${ApplicationNamesInfo.getInstance().scriptName}64.exe")
+                       ?: throw OSFileAssociationException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()))
+    return "ftype " + getUniqueFileType() + "=" + StringUtil.wrapWithDoubleQuote(launcherPath.toString()) + " \"%1\" %*"
   }
 
   private fun runCmdCommandWithSudo(cmdCommand: String, errorMessageProvider: () -> String) {
@@ -63,26 +56,23 @@ class WinFileTypeAssociator : com.intellij.openapi.fileTypes.impl.associate.Syst
       val sudoCommandLine = ExecUtil.sudoCommand(commandLine, "")
       val processOutput = ExecUtil.execAndGetOutput(sudoCommandLine, 30000)
       if (processOutput.exitCode != 0 || processOutput.isCancelled || processOutput.isTimeout) {
-        throw OSFileAssociationException(errorMessageProvider(), Exception(
-          stringify(sudoCommandLine, processOutput)))
+        throw OSFileAssociationException(errorMessageProvider(), Exception(stringify(sudoCommandLine, processOutput)))
       }
     }
     catch (e: Exception) {
-      throw OSFileAssociationException(errorMessageProvider(), Exception(
-        stringify(commandLine, null), e))
+      throw OSFileAssociationException(errorMessageProvider(), Exception(stringify(commandLine, null), e))
     }
   }
 
   private fun stringify(commandLine: GeneralCommandLine, processOutput: ProcessOutput?) : String {
-    var result = listOf("command line: " + commandLine.commandLineString,
-                        "working directory: " + commandLine.workDirectory)
+    var result = listOf("command line: ${commandLine.commandLineString}", "working directory: ${commandLine.workDirectory}")
     if (processOutput != null) {
       result = result + listOf(
-        "exit code: " + processOutput.exitCode,
-        "timeout: " + processOutput.isTimeout,
-        "cancelled: " + processOutput.isCancelled,
-        "stdout: " + processOutput.stdout,
-        "stderr: " + processOutput.stderr
+        "exit code: ${processOutput.exitCode}",
+        "timeout: ${processOutput.isTimeout}",
+        "cancelled: ${processOutput.isCancelled}",
+        "stdout: ${processOutput.stdout}",
+        "stderr: ${processOutput.stderr}"
       )
     }
     return result.joinToString("\n")

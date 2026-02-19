@@ -18,10 +18,12 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface NontrivialBraceMatcher extends BraceMatcher {
   @NotNull
   List<IElementType> getOppositeBraceTokenTypes(@NotNull IElementType type);

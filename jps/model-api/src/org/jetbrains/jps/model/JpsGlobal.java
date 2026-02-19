@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -23,6 +24,7 @@ import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
 /**
  * Represents the application-level settings (JDKs and global libraries) required for an external build.
@@ -30,13 +32,16 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
  * @see JpsModel#getGlobal()
  */
 public interface JpsGlobal extends JpsCompositeElement, JpsReferenceableElement<JpsGlobal> {
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addLibrary(@NotNull LibraryType libraryType, final @NotNull String name);
 
+  @ApiStatus.Internal
   <P extends JpsElement, SdkType extends JpsSdkType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsTypedLibrary<JpsSdk<P>> addSdk(@NotNull String name, @Nullable String homePath, @Nullable String versionString, @NotNull SdkType type);
 
+  @ApiStatus.Internal
   <P extends JpsElement>
   JpsTypedLibrary<JpsSdk<P>> addSdk(@NotNull String name, @Nullable String homePath, @Nullable String versionString,
                                     @NotNull JpsSdkType<P> type, @NotNull P properties);
@@ -46,4 +51,10 @@ public interface JpsGlobal extends JpsCompositeElement, JpsReferenceableElement<
 
   @NotNull
   JpsFileTypesConfiguration getFileTypesConfiguration();
+
+  @NotNull
+  JpsPathMapper getPathMapper();
+
+  @ApiStatus.Internal
+  void setPathMapper(@NotNull JpsPathMapper pathMapper);
 }

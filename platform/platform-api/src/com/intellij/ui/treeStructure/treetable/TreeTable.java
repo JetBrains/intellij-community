@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure.treetable;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -9,20 +8,29 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.JTree;
+import javax.swing.ListSelectionModel;
+import javax.swing.LookAndFeel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.UIResource;
 import javax.swing.tree.DefaultTreeSelectionModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.EventObject;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 /**
  * This example shows how to create a simple JTreeTable component,
@@ -35,7 +43,6 @@ import java.util.*;
  * @author Scott Violet
  */
 public class TreeTable extends JBTable {
-  private static final Logger LOG = Logger.getInstance(TreeTable.class);
   /** A subclass of JTree. */
   private TreeTableTree myTree;
   private TreeTableModel myTableModel;
@@ -256,7 +263,7 @@ public class TreeTable extends JBTable {
           if (min != -1 && max != -1) {
             for (int counter = min; counter <= max; counter++) {
               if (listSelectionModel.isSelectedIndex(counter)) {
-                selectedRows.add(new Integer(counter));
+                selectedRows.add(Integer.valueOf(counter));
               }
             }
           }
@@ -264,8 +271,7 @@ public class TreeTable extends JBTable {
           super.resetRowSelection();
 
           listSelectionModel.clearSelection();
-          for (final Object selectedRow : selectedRows) {
-            Integer row = (Integer)selectedRow;
+          for (final Integer row : selectedRows) {
             listSelectionModel.addSelectionInterval(row.intValue(), row.intValue());
           }
         }
@@ -326,7 +332,7 @@ public class TreeTable extends JBTable {
 
     /**
      * Class responsible for calling updateSelectedPathsFromSelectedRows
-     * when the selection of the list changse.
+     * when the selection of the list change.
      */
     class ListSelectionHandler implements ListSelectionListener {
       @Override
@@ -339,8 +345,7 @@ public class TreeTable extends JBTable {
   @Override
   public boolean editCellAt(int row, int column, EventObject e) {
     boolean editResult = super.editCellAt(row, column, e);
-    if (e instanceof MouseEvent && isTreeColumn(column)){
-      MouseEvent me = (MouseEvent)e;
+    if (e instanceof MouseEvent me && isTreeColumn(column)){
       int y = me.getY();
 
       if (getRowHeight() != myTree.getRowHeight()) {
@@ -361,7 +366,7 @@ public class TreeTable extends JBTable {
       // Some LAFs, for example, Aqua under MAC OS X
       // expand tree node by MOUSE_RELEASED event. Unfortunately,
       // it's not possible to find easy way to wedge in table's
-      // event sequense. Therefore we send "synthetic" release event.
+      // event sequence. Therefore we send "synthetic" release event.
       if (newEvent.getID()==MouseEvent.MOUSE_PRESSED) {
         MouseEvent newME2 = new MouseEvent(
           myTree,

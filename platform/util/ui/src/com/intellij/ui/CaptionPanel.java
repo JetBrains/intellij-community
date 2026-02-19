@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -7,16 +7,25 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 
 public class CaptionPanel extends JPanel {
-
   public static final Color CNT_ACTIVE_COLOR = new JBColor(Gray._202, Gray._55);
-  public static final Color CNT_ACTIVE_BORDER_COLOR = new JBColor(
-    () -> StartupUiUtil.isUnderDarcula() ? JBColor.border() : CNT_ACTIVE_COLOR);
+  public static final Color CNT_ACTIVE_BORDER_COLOR = JBColor.lazy(() -> {
+    return StartupUiUtil.isUnderDarcula() ? JBColor.border() : CNT_ACTIVE_COLOR;
+  });
 
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;

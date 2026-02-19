@@ -11,14 +11,19 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, NUMPY_NUMERIC_TYPES
+    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, NUMPY_NUMERIC_TYPES, \
+    GET_FRAME_RETURN_GROUP
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, is_string, pandas_to_str, \
-    should_evaluate_full_value, should_evaluate_shape
+from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
+from _pydevd_bundle.pydevd_utils import is_string, should_evaluate_full_value, \
+    should_evaluate_shape, has_attribute_safe
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
-    get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
+    get_column_formatter_by_type, get_formatted_row_elements, IAtPolarsAccessor, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
+from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
+from _pydevd_bundle.pydevd_frame_type_handler import get_vars_handler, DO_NOT_PROCESS_VARS, THRIFT_COMMUNICATION_VARS_HANDLER
+from _pydevd_bundle.pydevd_repr_utils import get_value_repr
 
 try:
     import types
@@ -26,11 +31,6 @@ try:
     frame_type = types.FrameType
 except:
     frame_type = None
-
-
-class ExceptionOnEvaluate:
-    def __init__(self, result):
-        self.result = result
 
 
 _IS_JYTHON = sys.platform.startswith("java")
@@ -188,14 +188,17 @@ class TypeResolveHandler(object):
 
             return self._base_get_type(o, type_name, type_name)
 
-    def str_from_providers(self, o, type_object, type_name):
+    def str_from_providers(self, o, type_object, type_name, do_trim=True):
         provider = self._type_to_str_provider_cache.get(type_object)
 
         if provider is self.NO_PROVIDER:
             return None
 
         if provider is not None:
-            return provider.get_str(o)
+            try:
+                return provider.get_str(o, do_trim)
+            except TypeError:
+                return provider.get_str(o)
 
         if not self._initialized:
             self._initialize()
@@ -203,7 +206,10 @@ class TypeResolveHandler(object):
         for provider in self._str_providers:
             if provider.can_provide(type_object, type_name):
                 self._type_to_str_provider_cache[type_object] = provider
-                return provider.get_str(o)
+                try:
+                    return provider.get_str(o, do_trim)
+                except TypeError:
+                    return provider.get_str(o)
 
         self._type_to_str_provider_cache[type_object] = self.NO_PROVIDER
         return None
@@ -225,50 +231,55 @@ get_type = _TYPE_RESOLVE_HANDLER.get_type
 
 _str_from_providers = _TYPE_RESOLVE_HANDLER.str_from_providers
 
-
-def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
-    """Returns frame variables as the list of `DebugValue` structures
-    """
-    values = []
-
+def get_sorted_keys(frame_f_locals):
     keys = dict_keys(frame_f_locals)
     if hasattr(keys, 'sort'):
         keys.sort()  # Python 3.0 does not have it
     else:
         keys = sorted(keys)  # Jython 2.1 does not have it
+    return keys
 
-    return_values = []
+
+def frame_vars_to_struct(frame_f_locals, group_type, hidden_ns=None, user_type_renderers={}):
+    """Returns frame variables as the list of `DebugValue` structures
+    """
+    keys = get_sorted_keys(frame_f_locals)
+
+    type_handler = get_vars_handler(var_to_struct,
+                                    handler_type=THRIFT_COMMUNICATION_VARS_HANDLER,
+                                    group_type=group_type)
 
     for k in keys:
         try:
             v = frame_f_locals[k]
-            eval_full_val = should_evaluate_full_value(v)
+            eval_full_val = should_evaluate_full_value(v, group_type)
 
-            if k == RETURN_VALUES_DICT:
-                for name, val in dict_iter_items(v):
-                    value = var_to_struct(val, name)
-                    value.isRetVal = True
-                    return_values.append(value)
-            else:
-                if hidden_ns is not None and k in hidden_ns:
-                    value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val)
-                    value.isIPythonHidden = True
-                    values.append(value)
-                else:
-                    value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val)
-                    values.append(value)
+            type_handler.handle(k, v, hidden_ns, eval_full_val, user_type_renderers=user_type_renderers)
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
 
     # Show return values as the first entry.
-    return return_values + values
+    return type_handler.get_list()
 
 
-def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True):
+def _get_default_var_string_representation(v, _type, typeName, format, do_trim=True):
+    str_from_provider = _str_from_providers(v, _type, typeName, do_trim)
+    if str_from_provider is not None:
+        return str_from_provider
+
+    return get_value_repr(v, do_trim, format)
+
+
+def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True, user_type_renderers=None):
     """ single variable or dictionary to Thrift struct representation """
 
     debug_value = DebugValue()
+
+    if name in DO_NOT_PROCESS_VARS:
+        debug_value.name = name
+        debug_value.value = val
+        return debug_value
 
     try:
         # This should be faster than isinstance (but we have to protect against not having a '__class__' attribute).
@@ -282,45 +293,31 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
         v = val
 
     _type, typeName, resolver = get_type(v)
+
+    # type qualifier to struct
     type_qualifier = getattr(_type, "__module__", "")
-    if not evaluate_full_value:
-        value = DEFAULT_VALUES_DICT[LOAD_VALUES_POLICY]
-    else:
-        try:
-            str_from_provider = _str_from_providers(v, _type, typeName)
-            if str_from_provider is not None:
-                value = str_from_provider
-            elif hasattr(v, '__class__'):
-                if v.__class__ == frame_type:
-                    value = pydevd_resolver.frameResolver.get_frame_name(v)
-
-                elif v.__class__ in (list, tuple):
-                    if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
-                        value = '%s' % take_first_n_coll_elements(
-                            v, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
-                        value = value.rstrip(')]}') + '...'
-                    else:
-                        value = '%s' % str(v)
-                else:
-                    value = format % v
-            else:
-                value = str(v)
-        except:
-            try:
-                value = repr(v)
-            except:
-                value = 'Unable to get repr for %s' % v.__class__
-
-    debug_value.name = name
-    debug_value.type = typeName
-
     if type_qualifier:
         debug_value.qualifier = type_qualifier
 
-    # cannot be too big... communication may not handle it.
-    if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and do_trim:
-        value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
-        value += '...'
+    # type renderer to struct
+    type_renderer = None
+    if user_type_renderers is not None:
+        type_renderer = try_get_type_renderer_for_var(v, user_type_renderers)
+    if type_renderer is not None:
+        debug_value.typeRendererId = type_renderer.to_type
+
+    # name and type to struct
+    debug_value.name = name
+    debug_value.type = typeName
+
+    # value to struct
+    value = None
+    if not evaluate_full_value:
+        value = DEFAULT_VALUES_DICT[LOAD_VALUES_POLICY]
+    elif type_renderer is not None:
+        value = type_renderer.evaluate_var_string_repr(v)
+    if value is None:
+        value = _get_default_var_string_representation(v, _type, typeName, format, do_trim)
 
     # fix to work with unicode values
     try:
@@ -333,19 +330,27 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     except TypeError:  # in java, unicode is a function
         pass
 
-    if is_pandas_container(type_qualifier, typeName, v):
-        value = pandas_to_str(v, typeName, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     debug_value.value = value
 
+    # shape to struct
     try:
         if should_evaluate_shape():
-            if is_numeric_container(type_qualifier, typeName, v):
-                debug_value.shape = str(v.shape)
-            elif hasattr(v, '__len__') and not is_string(v):
+            if has_attribute_safe(v, 'shape') and not callable(v.shape):
+                debug_value.shape = str(tuple(v.shape))
+            elif has_attribute_safe(v, '__len__') and not is_string(v):
                 debug_value.shape = str(len(v))
     except:
         pass
 
+    # data type info to xml (for arrays and tensors)
+    debug_value.arrayElementType = ''
+    try:
+        if has_attribute_safe(v, 'shape') and has_attribute_safe(v, 'dtype'):
+            debug_value.arrayElementType = str(v.dtype)
+    except:
+        pass
+
+    # additional info to struct
     if is_exception_on_eval:
         debug_value.isErrorOnEval = True
     else:
@@ -377,6 +382,10 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
+
+    if rows == 0 and cols == 0:
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, lambda r: (get_value(r, c) for c in range(cols)), format)
+        return array_chunk
 
     # there is no obvious rule for slicing (at least 5 choices)
     if len(array) == 1 and (rows > 1 or cols > 1):
@@ -412,6 +421,34 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
     return array_chunk
 
 
+def tf_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        return array_to_thrift_struct(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_thrift_struct(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def torch_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        if tensor.requires_grad:
+            tensor = tensor.detach()
+        return array_to_thrift_struct(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_thrift_struct(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def tf_sparse_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        import tensorflow as tf
+        return tf_to_thrift_struct(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    except ImportError:
+        pass
+
+
+def dataset_to_thrift_struct(dataset, name, roffset, coffset, rows, cols, format):
+    return dataframe_to_thrift_struct(dataset.to_pandas(), name, roffset, coffset, rows, cols, format)
+
+
 def array_to_meta_thrift_struct(array, name, format):
     type = array.dtype.kind
     slice = name
@@ -436,25 +473,19 @@ def array_to_meta_thrift_struct(array, name, format):
     reslice = ""
     if l > 2:
         raise ExceedingArrayDimensionsException
+    elif l == 0:
+        rows = 0
+        cols = 0
     elif l == 1:
         # special case with 1D arrays arr[i, :] - row, but arr[:, i] - column with equal shape and ndim
         # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
         # explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
         # we use kind of a hack - get information about memory from C_CONTIGUOUS
-        is_row = array.flags['C_CONTIGUOUS']
-
-        if is_row:
-            rows = 1
-            cols = len(array)
-            if cols < len(array):
-                reslice = '[0:%s]' % (cols)
-            array = array[0:cols]
-        else:
-            cols = 1
-            rows = len(array)
-            if rows < len(array):
-                reslice = '[0:%s]' % (rows)
-            array = array[0:rows]
+        cols = 1
+        rows = len(array)
+        if rows < len(array):
+            reslice = '[0:%s]' % (rows)
+        array = array[0:rows]
     elif l == 2:
         rows = array.shape[-2]
         cols = array.shape[-1]
@@ -493,7 +524,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
     """
     original_df = df
-    dim = len(df.axes)
+    dim = len(df.axes) if hasattr(df, 'axes') else -1
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
     array_chunk = GetArrayResponse()
@@ -510,8 +541,8 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
                 kind = df.dtype.kind
             except AttributeError:
                 try:
-                    kind = df.dtypes[0].kind
-                except (IndexError, KeyError):
+                    kind = df.dtypes.iloc[0].kind
+                except (IndexError, KeyError, AttributeError):
                     kind = "O"
             format = array_default_format(kind)
         else:
@@ -526,7 +557,8 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
         r = min(num_rows, DATAFRAME_HEADER_LOAD_MAX_SIZE)
         c = min(num_cols, DATAFRAME_HEADER_LOAD_MAX_SIZE)
         array_chunk.headers = header_data_to_thrift_struct(r, c, [""] * num_cols, [(0, 0)] * num_cols, lambda x: DEFAULT_DF_FORMAT, original_df, dim)
-        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, format)
+
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, '%' + format)
         return array_chunk
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
@@ -544,25 +576,41 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
             else:
                 bounds = (0, 0)
             col_bounds[col] = bounds
+    elif dim == -1:
+        dtype = '0'
+        dtypes[0] = dtype
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
         col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
 
-    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
+    if dim > 1:
+        df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
+    elif dim == -1:
+        df = df[roffset: roffset + rows]
+    else:
+        df = df.iloc[roffset: roffset + rows]
+
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
 
     def col_to_format(c):
         return get_column_formatter_by_type(format, dtypes[c])
 
-    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+    if dim == -1:
+        iat = IAtPolarsAccessor(df)
+    elif dim == 1 or len(df.columns.unique()) == len(df.columns):
+        iat = df.iat
+    else:
+        iat = df.iloc
 
     def formatted_row_elements(row):
         return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
 
     array_chunk.headers = header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format)
+    # we already have here formatted_row_elements, so we pass here %s as a default format
+    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format='%s')
     return array_chunk
 
 
@@ -598,7 +646,7 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
     for row in range(rows):
         row_header = RowHeader()
         row_header.index = row
-        row_header.label = get_label(df.axes[0].values[row])
+        row_header.label = get_label(df.axes[0].values[row] if dim != -1 else str(row))
         row_headers.append(row_header)
     array_headers.colHeaders = col_headers
     array_headers.rowHeaders = row_headers
@@ -607,8 +655,14 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
 
 TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
     "ndarray": array_to_thrift_struct,
+    "recarray": array_to_thrift_struct,
+    "EagerTensor": tf_to_thrift_struct,
+    "ResourceVariable": tf_to_thrift_struct,
+    "SparseTensor": tf_sparse_to_thrift_struct,
+    "Tensor": torch_to_thrift_struct,
     "DataFrame": dataframe_to_thrift_struct,
     "Series": dataframe_to_thrift_struct,
+    "Dataset": dataset_to_thrift_struct,
     "GeoDataFrame": dataframe_to_thrift_struct,
     "GeoSeries": dataframe_to_thrift_struct
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.psi;
 
@@ -28,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Locale;
@@ -47,6 +34,7 @@ public interface PropertiesFile {
    * @return All properties found in this file.
    */
   @NotNull
+  @Unmodifiable
   List<IProperty> getProperties();
 
   /**
@@ -62,6 +50,7 @@ public interface PropertiesFile {
    * @return All properties found in this file with the name specified.
    */
   @NotNull
+  @Unmodifiable
   List<IProperty> findPropertiesByKey(@NotNull @NonNls String key);
 
   @NotNull
@@ -79,15 +68,15 @@ public interface PropertiesFile {
    * @deprecated use {@link #addProperty(String, String)} instead
    * @see #addProperty(String, String)
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException;
 
   /**
-   * Adds property to the the file after the specified property.
-   * If anchor is null, property added to the beginning of the file.
+   * Adds property to the file after the specified property.
+   * If anchor is null, property is added to the beginning of the file.
    *
-   * In the most cases one can consider to use {@link PropertiesFile#addPropertyAfter(String, String, IProperty)} instead of this method
+   * In most cases one can consider to use {@link PropertiesFile#addPropertyAfter(String, String, IProperty)} instead of this method.
    *
    * @param property to add. Typically you create the property via {@link PropertiesElementFactory}.
    * @param anchor property after which to add the new property
@@ -98,7 +87,7 @@ public interface PropertiesFile {
   PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException;
 
   /**
-   * Adds property to the the file after the specified property.
+   * Adds property to the file after the specified property.
    * If anchor is null, property added to the beginning of the file.
    *
    * @param key of a property to add.
@@ -109,8 +98,7 @@ public interface PropertiesFile {
   @NotNull
   IProperty addPropertyAfter(@NotNull String key, @NotNull String value, IProperty anchor) throws IncorrectOperationException;
 
-  @NotNull
-  default IProperty addProperty(@NotNull String key, @NotNull String value) {
+  default @NotNull IProperty addProperty(@NotNull String key, @NotNull String value) {
     return addProperty(key, value, PropertyKeyValueFormat.PRESENTABLE);
   }
 

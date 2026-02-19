@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,22 +12,18 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SonatypeSourceSearcher extends SourceSearcher {
   private static final Logger LOG = Logger.getInstance(SonatypeSourceSearcher.class);
 
-  @Nullable
   @Override
-  public String findSourceJar(@NotNull final ProgressIndicator indicator,
-                              @NotNull String artifactId,
-                              @NotNull String version,
-                              @NotNull VirtualFile classesJar)
+  public @Nullable String findSourceJar(final @NotNull ProgressIndicator indicator,
+                                        @NotNull String artifactId,
+                                        @NotNull String version,
+                                        @NotNull VirtualFile classesJar)
     throws SourceSearchException {
     try {
       indicator.setIndeterminate(true);
-      indicator.setText(IdeBundle.message("progress.message.connecting.to", "https://oss.sonatype.org"));
+      indicator.setText(IdeCoreBundle.message("progress.message.connecting.to", "https://oss.sonatype.org"));
 
       indicator.checkCanceled();
 

@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.impl.cache.impl.id.IdDataConsumer;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
@@ -12,61 +12,55 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.FileContent;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class BaseFilterLexerUtil {
-  private static final Key<ScanContent> scanContentKey = Key.create("id.todo.scan.content");
-  private static final ScanContent EMPTY = new ScanContent(Collections.emptyMap(), Collections.emptyMap());
 
-  public static ScanContent scanContent(FileContent content, IdAndToDoScannerBasedOnFilterLexer indexer) {
-    IndexPattern[] patterns = IndexPatternUtil.getIndexPatterns();
-    if (patterns.length <= 0) return EMPTY;
-
-    ScanContent data = content.getUserData(scanContentKey);
-    if (data != null) {
-      content.putUserData(scanContentKey, null);
-      return data;
-    }
-
-    final boolean needTodo = TodoIndexers.needsTodoIndex(content.getFile()) || content.getFile() instanceof LightVirtualFile;
-    final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
-
-    final IdDataConsumer consumer = needIdIndex ? new IdDataConsumer() : null;
-    final OccurrenceConsumer todoOccurrenceConsumer = new OccurrenceConsumer(consumer, needTodo);
-    final Lexer filterLexer = indexer.createLexer(todoOccurrenceConsumer);
-    filterLexer.start(content.getContentAsText());
-
-    while (filterLexer.getTokenType() != null) filterLexer.advance();
-
-    Map<TodoIndexEntry,Integer> todoMap = null;
-    if (needTodo) {
-      for (IndexPattern indexPattern : patterns) {
-          final int count = todoOccurrenceConsumer.getOccurrenceCount(indexPattern);
-          if (count > 0) {
-            if (todoMap == null) todoMap = new THashMap<>();
-            todoMap.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
-          }
-        }
-    }
-
-    data = new ScanContent(
-      consumer != null? consumer.getResult():Collections.emptyMap(),
-      todoMap != null ? todoMap: Collections.emptyMap()
-    );
-    if (needIdIndex && needTodo) content.putUserData(scanContentKey, data);
-    return data;
+  private BaseFilterLexerUtil() {
   }
 
-  public static class ScanContent {
-    public final Map<IdIndexEntry, Integer> idMap;
-    public final Map<TodoIndexEntry,Integer> todoMap;
+  public static @NotNull Map<IdIndexEntry, Integer> calcIdEntries(@NotNull FileContent content,
+                                                                  @NotNull IdAndToDoScannerBasedOnFilterLexer indexer) {
+    boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexingIdIndexer;
+    if (!needIdIndex) return Collections.emptyMap();
+    IdDataConsumer consumer = new IdDataConsumer();
+    scanContentWithCheckCanceled(content, indexer.createLexer(new OccurrenceConsumer(consumer, false)));
+    return consumer.getResult();
+  }
 
-    public ScanContent(Map<IdIndexEntry, Integer> _idMap, Map<TodoIndexEntry, Integer> _todoMap) {
-      idMap = _idMap;
-      todoMap = _todoMap;
+  public static @NotNull Map<TodoIndexEntry, Integer> calcTodoEntries(@NotNull FileContent content,
+                                                                      @NotNull IdAndToDoScannerBasedOnFilterLexer indexer) {
+    boolean needTodo = TodoIndexers.needsTodoIndex(content) || content.getFile() instanceof LightVirtualFile;
+    IndexPattern[] todoPatterns = needTodo ? IndexPatternUtil.getIndexPatterns() : IndexPattern.EMPTY_ARRAY;
+    if (todoPatterns.length == 0) return Collections.emptyMap();
+
+    OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
+    scanContentWithCheckCanceled(content, indexer.createLexer(occurrenceConsumer));
+
+    Map<TodoIndexEntry, Integer> todoMap = null;
+    for (IndexPattern indexPattern : todoPatterns) {
+      int count = occurrenceConsumer.getOccurrenceCount(indexPattern);
+      if (count <= 0) continue;
+      if (todoMap == null) todoMap = new HashMap<>();
+      todoMap.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
+    }
+    return todoMap != null ? todoMap : Collections.emptyMap();
+  }
+
+  @ApiStatus.Internal
+  public static void scanContentWithCheckCanceled(@NotNull FileContent content, @NotNull Lexer filterLexer) {
+    filterLexer.start(content.getContentAsText());
+    int tokenIdx = 0;
+    while (filterLexer.getTokenType() != null) {
+      if (tokenIdx++ % 128 == 0) {
+        ProgressManager.checkCanceled();
+      }
+      filterLexer.advance();
     }
   }
 }

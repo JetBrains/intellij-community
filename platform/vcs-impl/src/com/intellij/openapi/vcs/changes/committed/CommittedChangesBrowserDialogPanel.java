@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -14,23 +12,40 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.*;
+import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class CommittedChangesBrowserDialogPanel extends JPanel {
   private final Project myProject;
   // left view
@@ -110,8 +125,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     gb.gridwidth = 2;
 
     myLeftPanel.add(listContainer, gb);
-    if (tableModel instanceof CommittedChangesNavigation) {
-      final CommittedChangesNavigation navigation = (CommittedChangesNavigation) tableModel;
+    if (tableModel instanceof CommittedChangesNavigation navigation) {
 
       final JButton backButton = new JButton(VcsBundle.message("changes.button.older"));
       final JButton forwardButton = new JButton(VcsBundle.message("changes.button.newer"));
@@ -178,10 +192,6 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     tableModel.fireTableStructureChanged();
   }
 
-  public void setItems(List<CommittedChangeList> items) {
-    myTableModel.setItems(items);
-  }
-
   private void updateBySelectionChange() {
     final int idx = myChangeListsView.getSelectionModel().getLeadSelectionIndex();
     final List<CommittedChangeList> items = myTableModel.getItems();
@@ -194,8 +204,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     }
   }
 
-  @Nls
-  private String formatText(final CommittedChangeList list) {
+  private @Nls String formatText(final CommittedChangeList list) {
     return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, list.getComment());
   }
 
@@ -204,7 +213,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
   }
 
   public void setTableContextMenu(final ActionGroup group) {
-    PopupHandler.installPopupHandler(myChangeListsView, group, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myChangeListsView, group, "CommittedChangesTablePopup");
   }
 
   public void startLoading() {

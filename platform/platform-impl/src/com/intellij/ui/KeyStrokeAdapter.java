@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -76,6 +78,9 @@ public class KeyStrokeAdapter implements KeyListener {
       boolean released = id == KeyEvent.KEY_RELEASED;
       if (released || id == KeyEvent.KEY_PRESSED) {
         int code = event.getKeyCode();
+        if (code == KeyEvent.VK_UNDEFINED) {
+          code = event.getExtendedKeyCode();
+        }
         return getKeyStroke(code, event.getModifiers(), released);
       }
     }
@@ -170,22 +175,18 @@ public class KeyStrokeAdapter implements KeyListener {
           }
           return getKeyStroke(code, modifiers, released);
         }
-        if (tokenLowerCase.equals("typed")) {
-          typed = true;
-        }
-        else if (tokenLowerCase.equals("pressed")) {
-          pressed = true;
-        }
-        else if (tokenLowerCase.equals("released")) {
-          released = true;
-        }
-        else {
-          Integer mask = LazyModifiers.mapNameToMask.get(tokenLowerCase);
-          if (mask == null) {
-            LOG.error("unexpected key stroke modifier: " + token);
-            return null;
+        switch (tokenLowerCase) {
+          case "typed" -> typed = true;
+          case "pressed" -> pressed = true;
+          case "released" -> released = true;
+          default -> {
+            Integer mask = LazyModifiers.mapNameToMask.get(tokenLowerCase);
+            if (mask == null) {
+              LOG.error("unexpected key stroke modifier: " + token);
+              return null;
+            }
+            modifiers |= mask;
           }
-          modifiers |= mask;
         }
       }
       LOG.error("key stroke declaration is not completed");
@@ -272,7 +273,7 @@ public class KeyStrokeAdapter implements KeyListener {
 
   private static final class LazyVirtualKeys {
     private static final Map<String, Integer> myNameToCode = new HashMap<>();
-    private static final Int2ObjectOpenHashMap<String> myCodeToName = new Int2ObjectOpenHashMap<>();
+    private static final Int2ObjectMap<String> myCodeToName = new Int2ObjectOpenHashMap<>();
 
     static {
       try {

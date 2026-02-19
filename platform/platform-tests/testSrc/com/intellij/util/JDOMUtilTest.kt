@@ -1,19 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.JDOMUtil.MergeAttribute
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.Element
 import org.jdom.IllegalDataException
+import org.jdom.JDOMException
 import org.jdom.Text
 import org.junit.Test
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.test.assertEquals
 
 internal class JDOMUtilTest {
   @Test
@@ -31,6 +36,11 @@ internal class JDOMUtilTest {
     Element("test").text = legalized
 
     assertThat(legalized).isEqualTo("0xFFFFstart0xFFFFend0xFFFF")
+  }
+
+  @Test
+  fun `lt in attribute value`() {
+    assertThat(JDOMUtil.write(Element("test").setAttribute("hello", "dog < cat"))).isEqualTo("""<test hello="dog &lt; cat" />""")
   }
 
   @Test
@@ -118,9 +128,9 @@ internal class JDOMUtilTest {
 
   @Test
   fun testBillionLaughs() {
-    assertThatThrownBy {
-      JDOMUtil.loadDocument(File(PlatformTestUtil.getPlatformTestDataPath() + File.separator + "tools" + File.separator + "BillionLaughs.xml"))
-    }.hasMessageContaining("""The entity "lol9" was referenced, but not declared.""")
+    val loaded = JDOMUtil.load(
+      Path.of(PlatformTestUtil.getPlatformTestDataPath() + File.separator + "tools" + File.separator + "BillionLaughs.xml"))
+    assertThat(JDOMUtil.write(loaded)).isEqualTo("<lolz />")
   }
 
   private fun checkIfBad(str: String) {
@@ -311,7 +321,34 @@ internal class JDOMUtilTest {
     }
   }
 
+  @Test
+  fun mergeWithAttributes() {
+    val res = JDOMUtil.load(("<hello><data attr='1'><HiThere></HiThere></data></hello>").toByteArray())
+    val res2 = JDOMUtil.load(("<hello><data attr='1' additional='2'><HiThere></HiThere></data></hello>").toByteArray())
+    JDOMUtil.deepMergeWithAttributes(res, res2, listOf(MergeAttribute("data", "attr")))
+    assertEquals("""|<hello>
+                    |  <data attr="1" additional="2">
+                    |    <HiThere />
+                    |  </data>
+                    |</hello>""".trimMargin(), JDOMUtil.write(res))
+  }
+
+  @Test(expected = JDOMException::class)
+  fun `handling of UncheckedStreamException for unsupported symbol`() {
+    val testRoot = File(PathManagerEx.getCommunityHomePath(), "platform/platform-tests/testData/vfs/encoding/DegreeSignWin1251.xml")
+    JDOMUtil.load(testRoot)
+  }
+
+  @Test(expected = JDOMException::class)
+  fun `handling of IllegalNameException for unsupported symbol`() {
+    JDOMUtil.load("<settings xmlns=\"\n" +
+                  "http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                  "      xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
+                  "    <localRepository/>\n" +
+                  "</settings>")
+  }
+
   private fun assertElementText(actual: Element, expected: String) {
-    assertThat(JDOMUtil.createOutputter("").outputString(actual)).isEqualTo(expected)
+    assertThat(JDOMUtil.writeElement(actual)).isEqualTo(expected)
   }
 }

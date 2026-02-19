@@ -11,7 +11,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.AbstractIdeaSpecificSettings;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
+import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependenciesList;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -23,7 +29,7 @@ import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import java.io.File;
 import java.util.Map;
 
-class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String, JpsSdkType<?>> {
+final class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String, JpsSdkType<?>> {
   private final JpsMacroExpander myExpander;
 
   JpsIdeaSpecificSettings(JpsMacroExpander expander) {
@@ -119,8 +125,8 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
 
   @Override
   public void readContentEntry(Element root, String contentUrl, JpsModule model) {
-    for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
-      final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+    for (Element o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
+      final String url = o.getAttributeValue(IdeaXml.URL_ATTR);
       JpsModuleSourceRoot folderToBeTest = null;
       for (JpsModuleSourceRoot folder : model.getSourceRoots()) {
         if (Comparing.strEqual(folder.getUrl(), url)) {
@@ -134,15 +140,14 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
       model.addSourceRoot(url, JavaSourceRootType.TEST_SOURCE);
     }
 
-    for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
-      final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+    for (Element o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
+      final String excludeUrl = o.getAttributeValue(IdeaXml.URL_ATTR);
       if (FileUtil.isAncestor(new File(contentUrl), new File(excludeUrl), false)) {
         model.getExcludeRootsList().addUrl(excludeUrl);
       }
     }
 
-    for (Object o : root.getChildren(IdeaXml.PACKAGE_PREFIX_TAG)) {
-      Element ppElement = (Element)o;
+    for (Element ppElement : root.getChildren(IdeaXml.PACKAGE_PREFIX_TAG)) {
       final String prefix = ppElement.getAttributeValue(IdeaXml.PACKAGE_PREFIX_VALUE_ATTR);
       final String url = ppElement.getAttributeValue(IdeaXml.URL_ATTR);
       for (JpsModuleSourceRoot sourceRoot : model.getSourceRoots()) {

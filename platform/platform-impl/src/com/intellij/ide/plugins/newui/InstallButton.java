@@ -1,18 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
 
 /**
  * @author Alexander Lobas
  */
-public class InstallButton extends ColorButton {
+@ApiStatus.Internal
+public class InstallButton extends ColorButton implements PluginInstallButton {
   private static final Color GreenColor = new JBColor(0x5D9B47, 0x2B7B50);
 
   private static final Color FillForegroundColor = JBColor.namedColor("Plugins.Button.installFillForeground", WhiteForeground);
@@ -27,7 +32,34 @@ public class InstallButton extends ColorButton {
 
   private static final Color BorderColor = JBColor.namedColor("Plugins.Button.installBorderColor", GreenColor);
 
+  private final boolean myIsUpgradeRequired;
+
   public InstallButton(boolean fill) {
+    this(fill, false);
+  }
+
+  public InstallButton(boolean fill, boolean isUpgradeRequired) {
+    myIsUpgradeRequired = isUpgradeRequired;
+
+    setButtonColors(fill);
+  }
+
+  public InstallButton(@NlsContexts.Button String text, boolean fill) {
+    this(fill, false);
+    setText(text);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+
+    if (getParent() != null) {
+      setEnabled(isEnabled(), getText());
+    }
+  }
+
+  @Override
+  public void setButtonColors(boolean fill) {
     if (fill) {
       setTextColor(FillForegroundColor);
       setBgColor(FillBackgroundColor);
@@ -47,14 +79,11 @@ public class InstallButton extends ColorButton {
 
   protected void setTextAndSize() {
     setText(IdeBundle.message("action.AnActionButton.text.install"));
+    setEnabled(!myIsUpgradeRequired);
     setWidth72(this);
   }
 
   @Override
-  public void setEnabled(boolean b) {
-    super.setEnabled(b);
-  }
-
   public void setEnabled(boolean enabled, @Nullable @Nls String statusText) {
     super.setEnabled(enabled);
     if (enabled) {
@@ -64,5 +93,10 @@ public class InstallButton extends ColorButton {
       setText(statusText);
       setWidth(this, 80);
     }
+  }
+
+  @Override
+  public @NotNull JComponent getComponent() {
+    return this;
   }
 }

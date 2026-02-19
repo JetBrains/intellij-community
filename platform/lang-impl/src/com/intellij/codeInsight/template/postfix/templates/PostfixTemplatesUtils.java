@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
@@ -9,13 +10,20 @@ import com.intellij.codeInsight.template.postfix.templates.editable.EditablePost
 import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplateWithMultipleExpressions;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
+import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.LazyKt;
@@ -38,10 +46,9 @@ public final class PostfixTemplatesUtils {
   }
 
   /**
-   * Returns all templates registered in the provider, including the edited templates and builtin templates in their current state
+   * @return all templates registered in the given provider, including the edited templates and builtin templates in their current state.
    */
-  @NotNull
-  public static Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
+  public static @NotNull Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
     Set<PostfixTemplate> result = new HashSet<>(provider.getTemplates());
     for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
       if (template instanceof PostfixChangedBuiltinTemplate) {
@@ -52,12 +59,35 @@ public final class PostfixTemplatesUtils {
     return result;
   }
 
-  @Nullable
-  public static TextRange surround(@NotNull Surrounder surrounder,
+  /**
+   * Surrounds a given expression with the provided surrounder. 
+   * May execute asynchronously and return null (in this case, the selection/caret will be updated automatically).
+   * @return range to select/position the caret
+   */
+  public static @Nullable TextRange surround(@NotNull Surrounder surrounder,
                                    @NotNull Editor editor,
                                    @NotNull PsiElement expr) {
     Project project = expr.getProject();
     PsiElement[] elements = {expr};
+    if (surrounder instanceof ModCommandSurrounder modCommandSurrounder) {
+      ActionContext context = ActionContext.from(editor, expr.getContainingFile());
+      ReadAction.nonBlocking(
+          () -> modCommandSurrounder.isApplicable(elements) ? modCommandSurrounder.surroundElements(context, elements) : null)
+        .expireWhen(() -> project.isDisposed() || editor.isDisposed())
+        .finishOnUiThread(ModalityState.nonModal(), command -> {
+          if (command == null) {
+            showErrorHint(project, editor);
+          }
+          else {
+            CommandProcessor.getInstance().executeCommand(
+              project, () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor),
+              CodeInsightBundle.message("command.expand.postfix.template"),
+              PostfixLiveTemplate.POSTFIX_TEMPLATE_ID);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+      return null;
+    }
     if (surrounder.isApplicable(elements)) {
       return surrounder.surroundElements(project, editor, elements);
     }
@@ -72,8 +102,10 @@ public final class PostfixTemplatesUtils {
                                         CodeInsightBundle.message("error.hint.can.t.expand.postfix.template"), "");
   }
 
-  @NotNull
-  public static String generateTemplateId(@NotNull String templateKey, @NotNull PostfixTemplateProvider provider) {
+  /**
+   * Generates a unique in the scope of a given provider template ID.
+   */
+  public static @NotNull String generateTemplateId(@NotNull String templateKey, @NotNull PostfixTemplateProvider provider) {
     Set<String> usedIds = new HashSet<>();
     for (PostfixTemplate builtinTemplate : provider.getTemplates()) {
       usedIds.add(builtinTemplate.getId());
@@ -84,9 +116,15 @@ public final class PostfixTemplatesUtils {
     return UniqueNameGenerator.generateUniqueName(templateKey + "@userDefined", usedIds);
   }
 
+  /**
+   * Stores a given editable template in the given parent DOM element.
+   * The given template must be an instance of {@link EditablePostfixTemplate}.
+   * If the given template is {@link EditablePostfixTemplateWithMultipleExpressions},
+   * then all data like usage of the topmost expression flag and expression conditions are stored.
+   */
   public static void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
     if (template instanceof EditablePostfixTemplateWithMultipleExpressions) {
-      parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((EditablePostfixTemplateWithMultipleExpressions)template).isUseTopmostExpression()));
+      parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((EditablePostfixTemplateWithMultipleExpressions<?>)template).isUseTopmostExpression()));
       Element conditionsTag = new Element(CONDITIONS_TAG);
 
       //noinspection unchecked
@@ -107,9 +145,8 @@ public final class PostfixTemplatesUtils {
     parentElement.addContent(templateTag);
   }
 
-  @NotNull
-  public static <T extends PostfixTemplateExpressionCondition> Set<T> readExternalConditions(@NotNull Element template,
-                                                                                             @NotNull Function<? super Element, ? extends T> conditionFactory) {
+  public static @NotNull <T extends PostfixTemplateExpressionCondition> Set<T> readExternalConditions(@NotNull Element template,
+                                                                                                      @NotNull Function<? super Element, ? extends T> conditionFactory) {
     Element conditionsElement = template.getChild(CONDITIONS_TAG);
     if (conditionsElement != null) {
       Set<T> conditions = new LinkedHashSet<>();
@@ -126,12 +163,12 @@ public final class PostfixTemplatesUtils {
     return Collections.emptySet();
   }
 
-  @Nullable
-  public static TemplateImpl readExternalLiveTemplate(@NotNull Element template, @NotNull PostfixTemplateProvider provider) {
+  public static @Nullable TemplateImpl readExternalLiveTemplate(@NotNull Element template, @NotNull PostfixTemplateProvider provider) {
     Element templateChild = template.getChild(TemplateSettings.TEMPLATE);
     if (templateChild == null) return null;
 
-    return TemplateSettings.readTemplateFromElement("", templateChild, provider.getClass().getClassLoader());
+    return TemplateSettings.readTemplateFromElement("", templateChild, provider.getClass().getClassLoader(),
+                                                    LiveTemplateContextService.getInstance());
   }
 
   public static boolean readExternalTopmostAttribute(@NotNull Element template) {

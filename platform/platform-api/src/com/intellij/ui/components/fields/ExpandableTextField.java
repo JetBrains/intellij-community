@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.fields;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -10,13 +10,19 @@ import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTextArea;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Insets;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -44,24 +50,16 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     Function<? super String, String> onShow = text -> StringUtil.join(parser.fun(text), "\n");
     Function<? super String, String> onHide = text -> joiner.fun(asList(StringUtil.splitByLines(text)));
     support = new ExpandableSupport<JTextComponent>(this, onShow, onHide) {
-      @NotNull
       @Override
-      protected Content prepare(@NotNull JTextComponent field, @NotNull Function<? super String, @Nls String> onShow) {
+      protected @NotNull Content prepare(@NotNull JTextComponent field, @NotNull Function<? super String, @Nls String> onShow) {
         Font font = field.getFont();
         FontMetrics metrics = font == null ? null : field.getFontMetrics(font);
         int height = metrics == null ? 16 : metrics.getHeight();
         Dimension size = new Dimension(height * 32, height * 16);
 
-        JTextArea area = new JTextArea(onShow.fun(field.getText()));
-        area.putClientProperty(Expandable.class, this);
-        area.setEditable(field.isEditable());
-        area.setBackground(field.getBackground());
-        area.setForeground(field.getForeground());
-        area.setFont(font);
-        area.setWrapStyleWord(true);
-        area.setLineWrap(true);
+        JTextArea area = createTextArea(onShow.fun(field.getText()), field.isEditable(), field.getBackground(), field.getForeground(), font);
+
         copyCaretPosition(field, area);
-        UIUtil.addUndoRedoActions(area);
 
         JLabel label = createLabel(createCollapseExtension());
         label.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
@@ -87,9 +85,8 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
                                ? createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right)
                                : createEmptyBorder());
         return new Content() {
-          @NotNull
           @Override
-          public JComponent getContentComponent() {
+          public @NotNull JComponent getContentComponent() {
             return pane;
           }
 
@@ -112,12 +109,27 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     setExtensions(createExtensions());
   }
 
+  protected @NotNull JTextArea createTextArea(@Nls @NotNull String text, boolean editable, Color background, Color foreground, Font font) {
+    JTextArea area = new JTextArea(text);
+
+    area.putClientProperty(Expandable.class, this);
+    area.setEditable(editable);
+    area.setBackground(background);
+    area.setForeground(foreground);
+    area.setFont(font);
+    area.setWrapStyleWord(true);
+    area.setLineWrap(true);
+
+    SwingUndoUtil.addUndoRedoActions(area);
+
+    return area;
+  }
+
   public void setMonospaced(boolean monospaced) {
     putClientProperty("monospaced", monospaced);
   }
 
-  @NotNull
-  protected List<ExtendableTextComponent.Extension> createExtensions() {
+  protected @NotNull List<ExtendableTextComponent.Extension> createExtensions() {
     return singletonList(support.createExpandExtension());
   }
 

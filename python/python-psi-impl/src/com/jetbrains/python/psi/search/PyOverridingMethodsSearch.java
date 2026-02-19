@@ -16,13 +16,11 @@
 package com.jetbrains.python.psi.search;
 
 import com.intellij.psi.search.searches.ExtensibleQueryFactory;
-import com.intellij.util.Query;
 import com.intellij.util.EmptyQuery;
+import com.intellij.util.Query;
 import com.jetbrains.python.psi.PyFunction;
 
-/**
- * @author yole
- */
+
 public final class PyOverridingMethodsSearch extends ExtensibleQueryFactory<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
   public static final PyOverridingMethodsSearch INSTANCE = new PyOverridingMethodsSearch();
 

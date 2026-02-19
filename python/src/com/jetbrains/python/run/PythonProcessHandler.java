@@ -1,23 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
-public class PythonProcessHandler extends KillableColoredProcessHandler {
-  public static final boolean SOFT_KILL_ON_WIN = Registry.is("kill.windows.processes.softly", false);
+public class PythonProcessHandler extends KillableProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
+
+  private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
   public PythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(commandLine, SOFT_KILL_ON_WIN);
-  }
-
-  public PythonProcessHandler(@NotNull GeneralCommandLine commandLine, boolean softKillOnWin) throws ExecutionException {
-    super(commandLine, softKillOnWin);
+    super(commandLine);
   }
 
   public PythonProcessHandler(Process process, @NotNull String commandLine, @NotNull Charset charset) {
@@ -27,5 +25,19 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
   @Override
   protected boolean shouldDestroyProcessRecursively() {
     return true;
+  }
+
+  @Override
+  public final void notifyTextAvailable(final @NotNull String text, final @NotNull Key outputType) {
+    if (hasPty()) {
+      super.notifyTextAvailable(text, outputType);
+    } else {
+      myAnsiEscapeDecoder.escapeText(text, outputType, this);
+    }
+  }
+
+  @Override
+  public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
+    super.notifyTextAvailable(text, attributes);
   }
 }

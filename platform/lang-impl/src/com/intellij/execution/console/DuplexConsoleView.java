@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionBundle;
@@ -12,7 +12,14 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
@@ -21,36 +28,34 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.CardLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
-public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel implements ConsoleView,
-                                                                                                       ObservableConsoleView,
-                                                                                                       DataProvider {
-  private final static String PRIMARY_CONSOLE_PANEL = "PRIMARY_CONSOLE_PANEL";
-  private final static String SECONDARY_CONSOLE_PANEL = "SECONDARY_CONSOLE_PANEL";
+public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel
+  implements ConsoleView, ObservableConsoleView, UiCompatibleDataProvider {
 
-  @NotNull
-  private final S myPrimaryConsoleView;
-  @NotNull
-  private final T mySecondaryConsoleView;
-  @Nullable
-  private final String myStateStorageKey;
+  private static final String PRIMARY_CONSOLE_PANEL = "PRIMARY_CONSOLE_PANEL";
+  private static final String SECONDARY_CONSOLE_PANEL = "SECONDARY_CONSOLE_PANEL";
+
+  private final @NotNull S myPrimaryConsoleView;
+  private final @NotNull T mySecondaryConsoleView;
+  private final @Nullable String myStateStorageKey;
 
   private boolean myPrimary;
-  @Nullable
-  private ProcessHandler myProcessHandler;
-  @NotNull
-  private final SwitchDuplexConsoleViewAction mySwitchConsoleAction;
+  private @Nullable ProcessHandler myProcessHandler;
+  private final @NotNull SwitchDuplexConsoleViewAction mySwitchConsoleAction;
   private boolean myDisableSwitchConsoleActionOnProcessEnd = true;
+  private final Collection<DuplexConsoleListener> myListeners = new CopyOnWriteArraySet<>();
 
   public DuplexConsoleView(@NotNull S primaryConsoleView, @NotNull T secondaryConsoleView) {
     this(primaryConsoleView, secondaryConsoleView, null);
@@ -105,19 +110,26 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getSubConsoleView(primary).getComponent(), true));
 
     myPrimary = primary;
+
+    for (DuplexConsoleListener listener : myListeners) {
+      listener.consoleEnabled(primary);
+    }
+  }
+
+  public void addSwitchListener(@NotNull DuplexConsoleListener listener, @NotNull Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, () -> myListeners.remove(listener));
   }
 
   public boolean isPrimaryConsoleEnabled() {
     return myPrimary;
   }
 
-  @NotNull
-  public S getPrimaryConsoleView() {
+  public @NotNull S getPrimaryConsoleView() {
     return myPrimaryConsoleView;
   }
 
-  @NotNull
-  public T getSecondaryConsoleView() {
+  public @NotNull T getSecondaryConsoleView() {
     return mySecondaryConsoleView;
   }
 
@@ -219,9 +231,8 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     myPrimaryConsoleView.allowHeavyFilters();
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
@@ -245,20 +256,13 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    final ConsoleView consoleView = getSubConsoleView(isPrimaryConsoleEnabled());
-    if (consoleView instanceof DataProvider) {
-      return ((DataProvider)consoleView).getData(dataId);
-    }
-    else {
-      return null;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    ConsoleView consoleView = getSubConsoleView(isPrimaryConsoleEnabled());
+    DataSink.uiDataSnapshot(sink, consoleView);
   }
 
-  @NotNull
-  public Presentation getSwitchConsoleActionPresentation() {
+  public @NotNull Presentation getSwitchConsoleActionPresentation() {
     return mySwitchConsoleAction.getTemplatePresentation();
   }
 
@@ -266,8 +270,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     myDisableSwitchConsoleActionOnProcessEnd = disableSwitchConsoleActionOnProcessEnd;
   }
 
-  @NotNull
-  private List<AnAction> mergeConsoleActions(@NotNull List<? extends AnAction> actions1, @NotNull Collection<? extends AnAction> actions2) {
+  private @Unmodifiable @NotNull List<AnAction> mergeConsoleActions(@NotNull List<? extends AnAction> actions1, @NotNull Collection<? extends AnAction> actions2) {
     return ContainerUtil.map(actions1, action1 -> {
       final AnAction action2 = ContainerUtil.find(actions2, action -> action1.getClass() == action.getClass()
                                                                       && StringUtil.equals(action1.getTemplatePresentation().getText(),
@@ -275,10 +278,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
       if (action2 instanceof ToggleUseSoftWrapsToolbarAction) {
         return new MergedWrapTextAction(((ToggleUseSoftWrapsToolbarAction)action1), (ToggleUseSoftWrapsToolbarAction)action2);
       }
-      else if (action2 instanceof ScrollToTheEndToolbarAction) {
-        return new MergedToggleAction(((ToggleAction)action1), (ToggleAction)action2);
-      }
-      else if (action2 instanceof ClearConsoleAction) {
+      else if (action2 instanceof ClearConsoleAction || action2 instanceof ScrollToTheEndToolbarAction) {
         return new MergedAction(action1, action2);
       }
       else {
@@ -300,19 +300,19 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
-  private class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
+  private final class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
 
     SwitchDuplexConsoleViewAction() {
       super(ExecutionBundle.messagePointer("run.configuration.show.command.line.action.name"), AllIcons.Debugger.Console);
     }
 
     @Override
-    public boolean isSelected(@NotNull final AnActionEvent event) {
+    public boolean isSelected(final @NotNull AnActionEvent event) {
       return !isPrimaryConsoleEnabled();
     }
 
     @Override
-    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+    public void setSelected(final @NotNull AnActionEvent event, final boolean flag) {
       enableConsole(!flag);
       setStoredState(!flag);
       ApplicationManager.getApplication().invokeLater(() -> update(event));
@@ -334,13 +334,16 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
         presentation.setEnabled(false);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private static class MergedToggleAction extends ToggleAction implements DumbAware {
-    @NotNull
-    private final ToggleAction myAction1;
-    @NotNull
-    private final ToggleAction myAction2;
+    private final @NotNull ToggleAction myAction1;
+    private final @NotNull ToggleAction myAction2;
 
     private MergedToggleAction(@NotNull ToggleAction action1, @NotNull ToggleAction action2) {
       myAction1 = action1;
@@ -358,13 +361,16 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
       myAction1.setSelected(e, state);
       myAction2.setSelected(e, state);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private static final class MergedAction extends AnAction implements DumbAware {
-    @NotNull
-    private final AnAction myAction1;
-    @NotNull
-    private final AnAction myAction2;
+    private final @NotNull AnAction myAction1;
+    private final @NotNull AnAction myAction2;
 
     private MergedAction(@NotNull AnAction action1, @NotNull AnAction action2) {
       myAction1 = action1;

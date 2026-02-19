@@ -2,22 +2,37 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.lang.java.parser.JavaParserUtil.emptyElement;
+import static com.intellij.lang.java.parser.JavaParserUtil.error;
+import static com.intellij.lang.java.parser.JavaParserUtil.expectOrError;
+import static com.intellij.lang.java.parser.JavaParserUtil.getLanguageLevel;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DIAMOND_TYPE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXTENDS_BOUND_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IMPORT_STATIC_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.JAVA_CODE_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_PARAMETER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER_LIST;
 import static com.intellij.util.BitUtil.isSet;
 import static com.intellij.util.BitUtil.set;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ * See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class ReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
   public static final int ELLIPSIS = 0x02;
@@ -27,59 +42,15 @@ public class ReferenceParser {
   public static final int CONJUNCTIONS = 0x20;
   public static final int INCOMPLETE_ANNO = 0x40;
   public static final int VAR_TYPE = 0x80;
-
-  public static class TypeInfo {
-    public boolean isPrimitive;
-    public boolean isParameterized;
-    public boolean isArray;
-    public boolean isVarArg;
-    public boolean hasErrors;
-    public PsiBuilder.Marker marker;
-  }
-
   private static final TokenSet WILDCARD_KEYWORD_SET = TokenSet.create(JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
-
   private final JavaParser myParser;
 
-  public ReferenceParser(@NotNull JavaParser javaParser) {
-    myParser = javaParser;
-  }
-
-  @Nullable
-  public PsiBuilder.Marker parseType(PsiBuilder builder, int flags) {
+  public @Nullable PsiBuilder.Marker parseType(PsiBuilder builder, int flags) {
     TypeInfo typeInfo = parseTypeInfo(builder, flags);
     return typeInfo != null ? typeInfo.marker : null;
   }
 
-  @Nullable
-  public TypeInfo parseTypeInfo(PsiBuilder builder, int flags) {
-    TypeInfo typeInfo = parseTypeInfo(builder, flags, false);
-
-    if (typeInfo != null) {
-      assert !isSet(flags, DISJUNCTIONS) || !isSet(flags,CONJUNCTIONS) : "don't set both flags simultaneously";
-      IElementType operator = isSet(flags, DISJUNCTIONS) ? JavaTokenType.OR : isSet(flags, CONJUNCTIONS) ? JavaTokenType.AND : null;
-
-      if (operator != null && builder.getTokenType() == operator) {
-        typeInfo.marker = typeInfo.marker.precede();
-
-        while (builder.getTokenType() == operator) {
-          builder.advanceLexer();
-          IElementType tokenType = builder.getTokenType();
-          if (tokenType != JavaTokenType.IDENTIFIER && tokenType != JavaTokenType.AT) {
-            error(builder, JavaPsiBundle.message("expected.identifier"));
-          }
-          parseTypeInfo(builder, flags, false);
-        }
-
-        typeInfo.marker.done(JavaElementType.TYPE);
-      }
-    }
-
-    return typeInfo;
-  }
-
-  @Nullable
-  private TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
+  private @Nullable TypeInfo parseTypeInfo(PsiBuilder builder, int flags, boolean badWildcard) {
     if (builder.getTokenType() == null) return null;
 
     TypeInfo typeInfo = new TypeInfo();
@@ -92,8 +63,8 @@ public class ReferenceParser {
         isSet(flags, VAR_TYPE) &&
         builder.lookAhead(1) != JavaTokenType.DOT &&
         builder.lookAhead(1) != JavaTokenType.COLON &&
-        PsiKeyword.VAR.equals(builder.getTokenText()) &&
-        getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_10)) {
+        JavaKeywords.VAR.equals(builder.getTokenText()) &&
+        JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
       builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
     }
     else if (tokenType == JavaTokenType.VAR_KEYWORD && !isSet(flags, VAR_TYPE)) {
@@ -103,13 +74,8 @@ public class ReferenceParser {
     if (expect(builder, ElementType.PRIMITIVE_TYPE_BIT_SET)) {
       typeInfo.isPrimitive = true;
     }
-    else if ((isSet(flags, WILDCARD) || badWildcard) && (tokenType == JavaTokenType.QUEST || isKeywordAny(builder))) {
-      if (tokenType == JavaTokenType.QUEST) {
-        builder.advanceLexer();
-      }
-      else {
-        dummy(builder);
-      }
+    else if ((isSet(flags, WILDCARD) || badWildcard) && (tokenType == JavaTokenType.QUEST)) {
+      builder.advanceLexer();
       completeWildcardType(builder, isSet(flags, WILDCARD), type);
       typeInfo.marker = type;
       return typeInfo;
@@ -119,19 +85,19 @@ public class ReferenceParser {
     }
     else if (tokenType == JavaTokenType.VAR_KEYWORD) {
       builder.advanceLexer();
-      type.done(JavaElementType.TYPE);
+      type.done(TYPE);
       typeInfo.marker = type;
       return typeInfo;
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
       if (anno == null) {
-        emptyElement(builder, JavaElementType.DIAMOND_TYPE);
+        emptyElement(builder, DIAMOND_TYPE);
       }
       else {
         error(builder, JavaPsiBundle.message("expected.identifier"));
         typeInfo.hasErrors = true;
       }
-      type.done(JavaElementType.TYPE);
+      type.done(TYPE);
       typeInfo.marker = type;
       return typeInfo;
     }
@@ -146,7 +112,7 @@ public class ReferenceParser {
       return null;
     }
 
-    type.done(JavaElementType.TYPE);
+    type.done(TYPE);
     while (true) {
       myParser.getDeclarationParser().parseAnnotations(builder);
 
@@ -170,7 +136,7 @@ public class ReferenceParser {
 
     if (typeInfo.isVarArg || typeInfo.isArray) {
       type = type.precede();
-      type.done(JavaElementType.TYPE);
+      type.done(TYPE);
     }
 
     typeInfo.marker = type;
@@ -185,15 +151,18 @@ public class ReferenceParser {
     }
 
     if (wildcard) {
-      type.done(JavaElementType.TYPE);
+      type.done(TYPE);
     }
     else {
       type.error(JavaPsiBundle.message("error.message.wildcard.not.expected"));
     }
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isNew, boolean diamonds) {
+  public @Nullable PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder,
+                                                            boolean eatLastDot,
+                                                            boolean parameterList,
+                                                            boolean isNew,
+                                                            boolean diamonds) {
     return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, isNew, diamonds, new TypeInfo());
   }
 
@@ -203,9 +172,14 @@ public class ReferenceParser {
     return !typeInfo.hasErrors;
   }
 
-  @Nullable
-  private PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
-                                                   boolean isStaticImport, boolean isNew, boolean diamonds, TypeInfo typeInfo) {
+  private @Nullable PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder,
+                                                             boolean eatLastDot,
+                                                             boolean parameterList,
+                                                             boolean isImport,
+                                                             boolean isStaticImport,
+                                                             boolean isNew,
+                                                             boolean diamonds,
+                                                             TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);
@@ -223,11 +197,11 @@ public class ReferenceParser {
       typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
     }
     else if (!isStaticImport) {
-      emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
+      emptyElement(builder, REFERENCE_PARAMETER_LIST);
     }
 
     while (builder.getTokenType() == JavaTokenType.DOT) {
-      refElement.done(JavaElementType.JAVA_CODE_REFERENCE);
+      refElement.done(JAVA_CODE_REFERENCE);
 
       if (isNew && !diamonds && typeInfo.isParameterized) {
         return refElement;
@@ -266,18 +240,23 @@ public class ReferenceParser {
         typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
       }
       else {
-        emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
+        emptyElement(builder, REFERENCE_PARAMETER_LIST);
       }
     }
 
-    refElement.done(isStaticImport ? JavaElementType.IMPORT_STATIC_REFERENCE : JavaElementType.JAVA_CODE_REFERENCE);
+    if (isStaticImport) {
+      refElement.done(IMPORT_STATIC_REFERENCE);
+    }
+    else {
+      refElement.done(JAVA_CODE_REFERENCE);
+    }
     return refElement;
   }
 
   public boolean parseReferenceParameterList(PsiBuilder builder, boolean wildcard, boolean diamonds) {
     PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
-      list.done(JavaElementType.REFERENCE_PARAMETER_LIST);
+      list.done(REFERENCE_PARAMETER_LIST);
       return false;
     }
 
@@ -304,15 +283,14 @@ public class ReferenceParser {
       flags = set(flags, DIAMONDS, false);
     }
 
-    list.done(JavaElementType.REFERENCE_PARAMETER_LIST);
+    list.done(REFERENCE_PARAMETER_LIST);
     return isOk;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
-     PsiBuilder.Marker list = builder.mark();
+  public @NotNull PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
+    PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
-      list.done(JavaElementType.TYPE_PARAMETER_LIST);
+      list.done(TYPE_PARAMETER_LIST);
       return list;
     }
 
@@ -342,19 +320,14 @@ public class ReferenceParser {
       }
     }
 
-    list.done(JavaElementType.TYPE_PARAMETER_LIST);
+    list.done(TYPE_PARAMETER_LIST);
     return list;
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseTypeParameter(PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseTypeParameter(PsiBuilder builder) {
     PsiBuilder.Marker param = builder.mark();
 
     myParser.getDeclarationParser().parseAnnotations(builder);
-
-    if (isKeywordAny(builder)) {
-      dummy(builder);
-    }
 
     boolean wild = expect(builder, JavaTokenType.QUEST);
     if (!wild && !expect(builder, JavaTokenType.IDENTIFIER)) {
@@ -362,10 +335,10 @@ public class ReferenceParser {
       return null;
     }
 
-    parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_BOUND_LIST, JavaTokenType.AND);
+    parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, EXTENDS_BOUND_LIST, JavaTokenType.AND);
 
     if (!wild) {
-      param.done(JavaElementType.TYPE_PARAMETER);
+      param.done(TYPE_PARAMETER);
     }
     else {
       param.error(JavaPsiBundle.message("error.message.wildcard.not.expected"));
@@ -398,13 +371,55 @@ public class ReferenceParser {
     return endsWithError;
   }
 
-  private static boolean isKeywordAny(PsiBuilder builder) {
-    return getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X) && "any".equals(builder.getTokenText());
+  //for backward compatibility
+  @Nullable
+  public ReferenceParser.TypeInfo parseTypeInfo(PsiBuilder builder, int flags) {
+    ReferenceParser.TypeInfo typeInfo1 = parseTypeInfo(builder, flags, false);
+
+    if (typeInfo1 != null) {
+      assert !isSet(flags, DISJUNCTIONS) || !isSet(flags, CONJUNCTIONS) : "don't set both flags simultaneously";
+      IElementType operator = isSet(flags, DISJUNCTIONS) ? JavaTokenType.OR : isSet(flags, CONJUNCTIONS) ? JavaTokenType.AND : null;
+
+      if (operator != null && builder.getTokenType() == operator) {
+        typeInfo1.marker = typeInfo1.marker.precede();
+
+        while (builder.getTokenType() == operator) {
+          builder.advanceLexer();
+          IElementType tokenType = builder.getTokenType();
+          if (tokenType != JavaTokenType.IDENTIFIER && tokenType != JavaTokenType.AT) {
+            error(builder, JavaPsiBundle.message("expected.identifier"));
+          }
+          parseTypeInfo(builder, flags, false);
+        }
+
+        typeInfo1.marker.done(TYPE);
+      }
+    }
+
+    TypeInfo typeInfo = typeInfo1;
+    if (typeInfo == null) {
+      return null;
+    }
+    TypeInfo info = new TypeInfo();
+    info.isPrimitive = typeInfo.isPrimitive;
+    info.isParameterized = typeInfo.isParameterized;
+    info.isArray = typeInfo.isArray;
+    info.isVarArg = typeInfo.isVarArg;
+    info.hasErrors = typeInfo.hasErrors;
+    info.marker = typeInfo.marker;
+    return info;
   }
 
-  private static void dummy(PsiBuilder builder) {
-    PsiBuilder.Marker mark = builder.mark();
-    builder.advanceLexer();
-    mark.done(JavaElementType.DUMMY_ELEMENT);
+  public ReferenceParser(@NotNull JavaParser javaParser) {
+    this.myParser = javaParser;
+  }
+
+  public static class TypeInfo {
+    public boolean isPrimitive;
+    public boolean isParameterized;
+    public boolean isArray;
+    public boolean isVarArg;
+    public boolean hasErrors;
+    public PsiBuilder.Marker marker;
   }
 }

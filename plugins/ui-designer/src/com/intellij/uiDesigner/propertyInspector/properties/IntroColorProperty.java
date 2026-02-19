@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.XmlWriter;
@@ -13,23 +13,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.lang.reflect.Method;
 
-/**
- * @author yole
- */
+
 public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
   private ColorRenderer myColorRenderer = null;
   private ColorEditor myColorEditor = null;
-  @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroColorProperty_";
+  private static final @NonNls String CLIENT_PROPERTY_KEY_PREFIX = "IntroColorProperty_";
 
   public IntroColorProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
   }
 
   @Override
-  @NotNull public PropertyRenderer<ColorDescriptor> getRenderer() {
+  public @NotNull PropertyRenderer<ColorDescriptor> getRenderer() {
     if (myColorRenderer == null) {
       myColorRenderer = new ColorRenderer();
     }
@@ -37,7 +35,7 @@ public class IntroColorProperty extends IntrospectedProperty<ColorDescriptor> {
   }
 
   @Override
-  @Nullable public PropertyEditor<ColorDescriptor> getEditor() {
+  public @Nullable PropertyEditor<ColorDescriptor> getEditor() {
     if (myColorEditor == null) {
       myColorEditor = new ColorEditor(getName());
     }

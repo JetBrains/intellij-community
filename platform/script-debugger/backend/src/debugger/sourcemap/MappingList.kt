@@ -2,8 +2,9 @@
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.editor.Document
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface Mappings {
   fun get(line: Int, column: Int): MappingEntry?
 
@@ -25,18 +26,16 @@ interface Mappings {
   fun getColumn(mapping: MappingEntry): Int
 }
 
+@ApiStatus.Internal
 abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
   val size: Int
     get() = mappings.size
 
   private val comparator: Comparator<MappingEntry> = Comparator.comparing(::getLine).thenComparing(::getColumn)
 
-  private val mappings: List<MappingEntry>
-
-  init {
-    // optimization: generated mappings already sorted
-    this.mappings = if (this is GeneratedMappingList) mappings else mappings.sortedWith(comparator).toList()
-  }
+  // optimization: generated mappings already sorted
+  private val mappings: List<MappingEntry> =
+    if (this is GeneratedMappingList) mappings else mappings.sortedWith(comparator).toList()
 
   override fun indexOf(line: Int, column: Int): Int {
     var middle = mappings.binarySearch(comparison = {
@@ -108,7 +107,7 @@ abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
   }
 
   fun getEndOffset(mapping: MappingEntry, lineStartOffset: Int, document: Document): Int {
-    val nextMapping = getNextOnTheSameLine(Collections.binarySearch(mappings, mapping, comparator))
+    val nextMapping = getNextOnTheSameLine(mappings.binarySearch(mapping, comparator))
     return if (nextMapping == null) document.getLineEndOffset(getLine(mapping)) else lineStartOffset + getColumn(nextMapping)
   }
 
@@ -116,24 +115,8 @@ abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
 
   // entries will be iterated in this list order
   fun getMappingsInLine(line: Int): Iterable<MappingEntry> {
-    var low = 0
-    var high = mappings.size - 1
-    var middle: Int = -1
-
-    loop@ while (low <= high) {
-      middle = (low + high).ushr(1)
-      val mapping = mappings[middle]
-      val mappingLine = getLine(mapping)
-      when {
-        line == mappingLine -> {
-          break@loop
-        }
-        line > mappingLine -> low = middle + 1
-        else -> high = middle - 1
-      }
-    }
-
-    if (middle == -1) {
+    val middle = mappings.binarySearchBy(line) { getLine(it) }
+    if (middle < 0) {
       return emptyList()
     }
 
@@ -156,6 +139,23 @@ abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
   }
 }
 
+internal class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+
+  override fun getLine(mapping: MappingEntry) = mapping.sourceLine
+
+  override fun getColumn(mapping: MappingEntry) = mapping.sourceColumn
+}
+
+internal class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+
+  override fun getLine(mapping: MappingEntry) = mapping.generatedLine
+
+  override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn
+
+  override fun getNext(mapping: MappingEntry): MappingEntry? = mapping.nextGenerated
+}
+
+@ApiStatus.Internal
 interface MappingsProcessorInLine {
 
   fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean

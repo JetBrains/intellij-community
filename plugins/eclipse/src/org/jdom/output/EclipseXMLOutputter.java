@@ -58,10 +58,22 @@ package org.jdom.output;
 
 import com.intellij.configurationStore.BaseXmlOutputter;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.CDATA;
+import org.jdom.DocType;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.EntityRef;
+import org.jdom.Namespace;
+import org.jdom.Text;
 
-import javax.xml.transform.Result;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -115,7 +127,7 @@ import java.util.List;
  * @version $Revision: 1.112 $, $Date: 2004/09/01 06:08:18 $
  */
 @SuppressWarnings("ALL")
-public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
+public final class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
 
   private static final String CVS_ID =
     "@(#) $RCSfile: XMLOutputter.java,v $ $Revision: 1.112 $ $Date: 2004/09/01 06:08:18 $ $Name: jdom_1_0 $";
@@ -266,29 +278,6 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
   }
 
   /**
-   * Print out a <code>{@link Comment}</code>.
-   *
-   * @param comment <code>Comment</code> to output.
-   * @param out     <code>OutputStream</code> to use.
-   */
-  public void output(Comment comment, OutputStream out) throws IOException {
-    Writer writer = makeWriter(out);
-    output(comment, writer);  // output() flushes
-  }
-
-  /**
-   * Print out a <code>{@link ProcessingInstruction}</code>.
-   *
-   * @param pi  <code>ProcessingInstruction</code> to output.
-   * @param out <code>OutputStream</code> to use.
-   */
-  public void output(ProcessingInstruction pi, OutputStream out)
-    throws IOException {
-    Writer writer = makeWriter(out);
-    output(pi, writer);  // output() flushes
-  }
-
-  /**
    * Print out a <code>{@link EntityRef}</code>.
    *
    * @param entity <code>EntityRef</code> to output.
@@ -358,12 +347,6 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
       if (obj instanceof Element) {
         printElement(out, doc.getRootElement(), 0,
                      createNamespaceStack());
-      }
-      else if (obj instanceof Comment) {
-        printComment(out, (Comment)obj);
-      }
-      else if (obj instanceof ProcessingInstruction) {
-        printProcessingInstruction(out, (ProcessingInstruction)obj);
       }
       else if (obj instanceof DocType) {
         printDocType(out, doc.getDocType());
@@ -463,35 +446,6 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
    */
   public void output(Text text, Writer out) throws IOException {
     printText(out, text);
-    out.flush();
-  }
-
-  /**
-   * Print out a <code>{@link Comment}</code>.
-   *
-   * @param comment <code>Comment</code> to output.
-   * @param out     <code>Writer</code> to use.
-   */
-  public void output(Comment comment, Writer out) throws IOException {
-    printComment(out, comment);
-    out.flush();
-  }
-
-  /**
-   * Print out a <code>{@link ProcessingInstruction}</code>.
-   *
-   * @param pi  <code>ProcessingInstruction</code> to output.
-   * @param out <code>Writer</code> to use.
-   */
-  public void output(ProcessingInstruction pi, Writer out)
-    throws IOException {
-    boolean currentEscapingPolicy = false;//currentFormat.ignoreTrAXEscapingPIs;
-
-    // Output PI verbatim, disregarding TrAX escaping PIs.
-    currentFormat.setIgnoreTrAXEscapingPIs(true);
-    printProcessingInstruction(out, pi);
-    currentFormat.setIgnoreTrAXEscapingPIs(currentEscapingPolicy);
-
     out.flush();
   }
 
@@ -610,41 +564,6 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
     return out.toString();
   }
 
-
-  /**
-   * Return a string representing a comment. Warning: a String is
-   * Unicode, which may not match the outputter's specified
-   * encoding.
-   *
-   * @param comment <code>Comment</code> to format.
-   */
-  public String outputString(Comment comment) {
-    StringWriter out = new StringWriter();
-    try {
-      output(comment, out);  // output() flushes
-    }
-    catch (IOException e) {
-    }
-    return out.toString();
-  }
-
-  /**
-   * Return a string representing a PI. Warning: a String is
-   * Unicode, which may not match the outputter's specified
-   * encoding.
-   *
-   * @param pi <code>ProcessingInstruction</code> to format.
-   */
-  public String outputString(ProcessingInstruction pi) {
-    StringWriter out = new StringWriter();
-    try {
-      output(pi, out);  // output() flushes
-    }
-    catch (IOException e) {
-    }
-    return out.toString();
-  }
-
   /**
    * Return a string representing an entity. Warning: a String is
    * Unicode, which may not match the outputter's specified
@@ -686,45 +605,6 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
     // Helps the output look better and is semantically
     // inconsequential
     out.write(getLineSeparator());
-  }
-
-  /**
-   * This will handle printing of comments.
-   *
-   * @param comment <code>Comment</code> to write.
-   * @param out     <code>Writer</code> to use.
-   */
-  protected void printComment(Writer out, Comment comment)
-    throws IOException {
-    out.write("<!--");
-    out.write(comment.getText());
-    out.write("-->");
-  }
-
-  /**
-   * This will handle printing of processing instructions.
-   *
-   * @param pi  <code>ProcessingInstruction</code> to write.
-   * @param out <code>Writer</code> to use.
-   */
-  protected void printProcessingInstruction(Writer out, ProcessingInstruction pi
-  ) throws IOException {
-    String target = pi.getTarget();
-    boolean piProcessed = false;
-
-    //if (currentFormat.ignoreTrAXEscapingPIs == false) {
-    if (target.equals(Result.PI_DISABLE_OUTPUT_ESCAPING)) {
-      escapeOutput = false;
-      piProcessed = true;
-    }
-    else if (target.equals(Result.PI_ENABLE_OUTPUT_ESCAPING)) {
-      escapeOutput = true;
-      piProcessed = true;
-    }
-    //}
-    if (!piProcessed) {
-      writeProcessingInstruction(out, pi, target);
-    }
   }
 
   /**
@@ -944,19 +824,8 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
 
       indent(out, level);
 
-      if (next instanceof Comment) {
-        printComment(out, (Comment)next);
-      }
-      else if (next instanceof Element) {
+      if (next instanceof Element) {
         printElement(out, (Element)next, level, namespaces);
-      }
-      else if (next instanceof ProcessingInstruction) {
-        printProcessingInstruction(out, (ProcessingInstruction)next);
-      }
-      else {
-        // XXX if we get here then we have a illegal content, for
-        //     now we'll just ignore it (probably should throw
-        //     a exception)
       }
 
       index++;
@@ -1273,9 +1142,7 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
 
   // Determine if a string ends with a XML whitespace.
   private boolean endsWithWhite(String str) {
-    if ((str != null) &&
-        (str.length() > 0) &&
-        isWhitespace(str.charAt(str.length() - 1))) {
+    if ((str != null) && (str.length() > 0) && isWhitespace(str.charAt(str.length() - 1))) {
       return true;
     }
     return false;
@@ -1300,7 +1167,7 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
    * @param str <code>String</code> input to escape.
    * @return <code>String</code> with escaped content.
    */
-  public String escapeAttributeEntities(String str) {
+  private static String escapeAttributeEntities(String str) {
     StringBuffer buffer;
     char ch;
     String entity;
@@ -1475,8 +1342,9 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
    */
   public String toString() {
     StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < userFormat.lineSeparator.length(); i++) {
-      char ch = userFormat.lineSeparator.charAt(i);
+    String lineSeparator = userFormat.getLineSeparator();
+    for (int i = 0; i < lineSeparator.length(); i++) {
+      char ch = lineSeparator.charAt(i);
       switch (ch) {
         case '\r':
           buffer.append("\\r");
@@ -1495,7 +1363,6 @@ public class EclipseXMLOutputter extends BaseXmlOutputter implements Cloneable {
 
     return (
       "XMLOutputter[omitDeclaration = " + false + ", " +
-      "encoding = " + CharsetToolkit.UTF8 + ", " +
       "omitEncoding = " + false + ", " +
       "indent = '" + "\t" + "'" + ", " +
       "expandEmptyElements = " + userFormat.expandEmptyElements + ", " +

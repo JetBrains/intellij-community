@@ -1,15 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public final class ChangeToAppendUtil {
-  @Nullable
-  public static PsiExpression buildAppendExpression(PsiExpression appendable, PsiExpression concatenation) {
+  public static @Nullable PsiExpression buildAppendExpression(PsiExpression appendable, PsiExpression concatenation) {
     if (concatenation == null) return null;
     final PsiType type = appendable.getType();
     if (type == null) return null;
@@ -21,42 +27,41 @@ public final class ChangeToAppendUtil {
     return factory.createExpressionFromText(result.toString(), appendable);
   }
 
-  @Nullable
-  public static StringBuilder buildAppendExpression(@Nullable PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out) {
+  public static @Nullable StringBuilder buildAppendExpression(@Nullable PsiExpression concatenation, boolean useStringValueOf, @NonNls StringBuilder out) {
     if (concatenation == null) return null;
     final PsiType type = concatenation.getType();
-    if (concatenation instanceof PsiPolyadicExpression && type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)concatenation;
+    if (concatenation instanceof PsiPolyadicExpression polyadicExpression && type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       final PsiExpression[] operands = polyadicExpression.getOperands();
       boolean isConstant = true;
+      boolean isPrimitiveOrBoxed = true;
       boolean isString = false;
       final StringBuilder builder = new StringBuilder();
       for (PsiExpression operand : operands) {
-        if (isConstant && PsiUtil.isConstantExpression(operand)) {
-          if (builder.length() != 0) {
+        final PsiType operandType = operand.getType();
+        isConstant &= PsiUtil.isConstantExpression(operand);
+        isPrimitiveOrBoxed &= PsiPrimitiveType.getOptionallyUnboxedType(operandType) != null;
+        if (isConstant || !isString && isPrimitiveOrBoxed) {
+          if (!builder.isEmpty()) {
             builder.append('+');
           }
-          final PsiType operandType = operand.getType();
           if (operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             isString = true;
           }
           builder.append(CommentTracker.textWithSurroundingComments(operand));
         }
         else if (!operand.textMatches("\"\"")) {
-          isConstant = false;
-          if (builder.length() != 0) {
+          if (!builder.isEmpty()) {
             append(builder, useStringValueOf && !isString, out);
             builder.setLength(0);
           }
           buildAppendExpression(operand, useStringValueOf, out);
         }
       }
-      if (builder.length() != 0) {
+      if (!builder.isEmpty()) {
         append(builder, false, out);
       }
     }
-    else if (concatenation instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)concatenation;
+    else if (concatenation instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression expression = parenthesizedExpression.getExpression();
       if (expression != null) {
         return buildAppendExpression(expression, useStringValueOf, out);

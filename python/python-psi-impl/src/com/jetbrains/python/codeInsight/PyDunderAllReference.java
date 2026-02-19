@@ -4,11 +4,19 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPolyVariantReferenceBase;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.LightNamedElement;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -20,9 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLiteralExpression> {
   public PyDunderAllReference(@NotNull PyStringLiteralExpression element) {
     super(element);
@@ -89,8 +95,7 @@ public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLi
     return ArrayUtil.toObjectArray(result);
   }
 
-  @NotNull
-  private static LookupElement toLookupElement(@NotNull String name, @NotNull PsiElement element, boolean withIcon) {
+  private static @NotNull LookupElement toLookupElement(@NotNull String name, @NotNull PsiElement element, boolean withIcon) {
     final LookupElementBuilder builder = LookupElementBuilder.createWithSmartPointer(name, element);
     return withIcon ? builder.withIcon(element.getIcon(0)) : builder;
   }

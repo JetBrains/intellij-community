@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class ConvertIndentsUtil {
   private static final IndentBuilder tabIndentBuilder = new IndentBuilder() {
     @Override
@@ -19,6 +21,8 @@ public final class ConvertIndentsUtil {
     }
   };
 
+  private ConvertIndentsUtil() {}
+
   public static int convertIndentsToTabs(Document document, int tabSize, TextRange textRange) {
     return processIndents(document, tabSize, textRange, tabIndentBuilder);
   }
@@ -29,7 +33,7 @@ public final class ConvertIndentsUtil {
 
   private static int processIndents(Document document, int tabSize, TextRange textRange, IndentBuilder indentBuilder) {
     int[] changedLines = {0};
-    DocumentUtil.executeInBulk(document, true, () -> {
+    DocumentUtil.executeInBulk(document, () -> {
       int startLine = document.getLineNumber(textRange.getStartOffset());
       int endLine = document.getLineNumber(textRange.getEndOffset());
       for (int line = startLine; line <= endLine; line++) {

@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Iconable;
@@ -22,10 +22,9 @@ import com.intellij.util.ui.FilePathSplittingPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JList;
+import java.awt.Color;
 import java.io.File;
-import java.util.Objects;
 
 public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSystemItem> {
   private final int myMaxWidth;
@@ -52,8 +51,7 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     return "(" + path + ")";
   }
 
-  @Nullable
-  public static String getRelativePath(final VirtualFile virtualFile, final Project project) {
+  public static @Nullable String getRelativePath(final VirtualFile virtualFile, final Project project) {
     if (project == null) {
       return virtualFile.getPresentableUrl();
     }
@@ -75,17 +73,19 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     return url;
   }
 
-  @Nullable
-  public static VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+  public static @Nullable VirtualFile getAnyRoot(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     VirtualFile root = index.getContentRootForFile(virtualFile);
     if (root == null) root = index.getClassRootForFile(virtualFile);
     if (root == null) root = index.getSourceRootForFile(virtualFile);
+    if (root == null || !root.isDirectory()) {
+      root = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile);
+    }
+
     return root;
   }
 
-  @NotNull
-  static String getRelativePathFromRoot(@NotNull VirtualFile file, @NotNull VirtualFile root) {
+  static @NotNull String getRelativePathFromRoot(@NotNull VirtualFile file, @NotNull VirtualFile root) {
     return root.getName() + File.separatorChar + VfsUtilCore.getRelativePath(file, root, File.separatorChar);
   }
 
@@ -103,16 +103,16 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
                                                              JList list,
                                                              Object value,
                                                              TextAttributes attributes) {
-    if (!(value instanceof NavigationItem)) return false;
-
-    NavigationItem item = (NavigationItem)value;
+    if (!(value instanceof NavigationItem item)) return false;
 
     SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
     Color color = list.getForeground();
     if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
-    ItemPresentation presentation = Objects.requireNonNull(item.getPresentation());
+    ItemPresentation presentation = item.getPresentation();
+    if (presentation == null) return false;
+
     renderer.append(presentation.getPresentableText() + " ", nameAttributes);
     renderer.setIcon(presentation.getIcon(true));
 
@@ -121,16 +121,6 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
       renderer.append(locationString, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
     }
     return true;
-  }
-
-  @Override
-  protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-    final DefaultListCellRenderer rightRenderer = super.getRightCellRenderer(value);
-    if (rightRenderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
-      // that renderer will display file path, but we're showing it ourselves - no need to show twice
-      return null;
-    }
-    return rightRenderer;
   }
 
   @Override

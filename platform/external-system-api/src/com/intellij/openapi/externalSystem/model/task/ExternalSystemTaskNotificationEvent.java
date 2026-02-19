@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.task;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,8 +7,6 @@ import java.io.Serializable;
 
 /**
  * Encapsulates information about processing state change of the {@link #getId() target task}.
- * 
- * @author Denis Zhdanov
  */
 public class ExternalSystemTaskNotificationEvent implements Serializable {
 
@@ -21,13 +20,11 @@ public class ExternalSystemTaskNotificationEvent implements Serializable {
     myDescription = description;
   }
 
-  @NotNull
-  public ExternalSystemTaskId getId() {
+  public @NotNull ExternalSystemTaskId getId() {
     return myId;
   }
 
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return myDescription;
   }
 

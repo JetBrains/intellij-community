@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.openapi.util.registry.Registry
@@ -13,7 +13,11 @@ import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
 import org.jetbrains.plugins.groovy.lang.resolve.getName
-import org.jetbrains.plugins.groovy.lang.resolve.impl.*
+import org.jetbrains.plugins.groovy.lang.resolve.impl.ApplicabilitiesResult
+import org.jetbrains.plugins.groovy.lang.resolve.impl.chooseOverloads
+import org.jetbrains.plugins.groovy.lang.resolve.impl.correctStaticScope
+import org.jetbrains.plugins.groovy.lang.resolve.impl.filterApplicable
+import org.jetbrains.plugins.groovy.lang.resolve.impl.filterBySignature
 import org.jetbrains.plugins.groovy.lang.resolve.log
 import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
@@ -25,7 +29,7 @@ abstract class BaseMethodProcessor(private val name: String) : ProcessorWithHint
 
   protected val myCandidates = SmartList<GroovyMethodResult>()
   private var myApplicable: ApplicabilitiesResult<GroovyMethodResult>? = null
-  val acceptMore: Boolean get() = myApplicable?.first.isNullOrEmpty()
+  val acceptMore: Boolean get() = myApplicable?.first?.size != 1
 
   final override fun execute(element: PsiElement, state: ResolveState): Boolean {
     if (!acceptMore) {

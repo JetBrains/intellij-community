@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -7,13 +7,13 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.RefactoringBundle
-import kotlin.test.assertNotEquals
+import org.junit.Assert.assertNotEquals
 
 abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
   protected abstract val fileType: LanguageFileType
 
-  protected var ignoreErrorsBefore = false
-  protected var ignoreErrorsAfter = false
+  protected var ignoreErrorsBefore: Boolean = false
+  protected var ignoreErrorsAfter: Boolean = false
 
   override fun setUp() {
     ignoreErrorsBefore = false
@@ -25,16 +25,13 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     initialText: String,
     expectedTextAfter: String,
     usagesName: String,
-    vararg editingActions: () -> Unit,
-    wrapIntoCommandAndWriteAction: Boolean = true,
-    expectedPresentation: String? = null
+    expectedPresentation: String? = null,
+    editingActions: () -> Unit,
   ) {
     doTest(
       initialText,
       RefactoringBundle.message("suggested.refactoring.change.signature.intention.text", usagesName),
       expectedTextAfter,
-      *editingActions,
-      wrapIntoCommandAndWriteActionAndCommitAll = wrapIntoCommandAndWriteAction,
       checkPresentation = {
         if (expectedPresentation != null) {
           val state = SuggestedRefactoringProviderImpl.getInstance(project).state!!
@@ -46,7 +43,8 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
           val model = refactoringSupport.ui.buildSignatureChangePresentation(data.oldSignature, data.newSignature)
           assertEquals(expectedPresentation, model.dump().trim())
         }
-      }
+      },
+      editingActions
     )
   }
 
@@ -55,33 +53,35 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     textAfterRefactoring: String,
     oldName: String,
     newName: String,
-    vararg editingActions: () -> Unit,
-    wrapIntoCommandAndWriteAction: Boolean = true
+    editingActions: () -> Unit,
   ) {
     doTest(
       initialText,
-      RefactoringBundle.message("suggested.refactoring.rename.intention.text", oldName, newName),
+      RefactoringBundle.message("suggested.refactoring.rename.intention.text", oldName),
       textAfterRefactoring,
-      *editingActions,
-      wrapIntoCommandAndWriteActionAndCommitAll = wrapIntoCommandAndWriteAction
+      {},
+      editingActions
     )
   }
 
-  private fun doTest(
+  protected fun doTest(
     initialText: String,
     actionName: String,
     textAfterRefactoring: String,
-    vararg editingActions: () -> Unit,
-    wrapIntoCommandAndWriteActionAndCommitAll: Boolean = true,
-    checkPresentation: () -> Unit = {}
+    checkPresentation: () -> Unit,
+    editingActions: () -> Unit
   ) {
     myFixture.configureByText(fileType, initialText)
 
     if (!ignoreErrorsBefore) {
       myFixture.testHighlighting(false, false, false, myFixture.file.virtualFile)
+    } else {
+      // Invoking highlighting has side effects (in our particular case, we are interested in initializing
+      // `SuggestedRefactoringChangeListener`). That's why we have to invoke highlighting even when `ignoreErrorsBefore` is `true`
+      myFixture.doHighlighting()
     }
 
-    executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
+    executeEditingActions(editingActions)
 
     val intention = suggestedRefactoringIntention()
     assertNotNull("No refactoring available", intention)

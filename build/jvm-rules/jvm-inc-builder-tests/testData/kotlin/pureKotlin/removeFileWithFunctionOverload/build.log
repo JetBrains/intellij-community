@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  foo/Foo2Kt.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_removeFileWithFunctionOverload-a.kotlin_module
+  use/UseKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/removeFileWithFunctionOverload/a/use.kt
+End of files
+------------------------------------------
+Exit code: OK

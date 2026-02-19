@@ -6,7 +6,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -49,7 +53,7 @@ public final class PsiErrorElementUtil {
     return false;
   }
 
-  private static boolean shouldHighlightErrorElement(@NotNull PsiErrorElement error, @NotNull List<HighlightErrorFilter> filters) {
+  private static boolean shouldHighlightErrorElement(@NotNull PsiErrorElement error, @NotNull List<? extends HighlightErrorFilter> filters) {
     for (HighlightErrorFilter filter : filters) {
       if (!filter.shouldHighlightErrorElement(error)) {
         return false;

@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.kotlin.gradle.tooling` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "kotlin-gradle-tooling_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-gradle-tooling",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":kotlin-gradle-tooling_resources"],
+  runtime_deps = [
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-gradle-tooling_test_lib",
+  module_name = "intellij.kotlin.gradle.tooling",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  runtime_deps = [
+    ":kotlin-gradle-tooling",
+    "//plugins/kotlin/base/frontend-agnostic:frontend-agnostic_test_lib",
+    "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.gradle.tooling` end

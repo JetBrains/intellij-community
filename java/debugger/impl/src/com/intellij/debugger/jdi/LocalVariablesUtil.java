@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.SourcePosition;
@@ -8,15 +8,36 @@ import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.jdi.SlotLocalVariable;
 import com.jetbrains.jdi.StackFrameImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.InternalException;
+import com.sun.jdi.Location;
+import com.sun.jdi.StackFrame;
+import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.Value;
+import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
@@ -26,9 +47,19 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-/**
+/*
  * From JDI sources:
  *
       validateStackFrame();
@@ -272,11 +303,10 @@ public final class LocalVariablesUtil {
     throw new NoSuchMethodException(aClass.getName() + "." + methodName);
   }
 
-  @NotNull
-  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(VirtualMachineProxyImpl vm,
-                                                                            Location location,
-                                                                            MultiMap<Integer, String> namesMap) {
-    if (!vm.canGetBytecodes()) {
+  private static @NotNull List<DecompiledLocalVariable> collectVariablesFromBytecode(VirtualMachineProxyImpl vm,
+                                                                                     Location location,
+                                                                                     MultiMap<Integer, String> namesMap) {
+    if (!vm.canGetBytecodes() || !vm.canGetConstantPool()) {
       return Collections.emptyList();
     }
     try {
@@ -334,8 +364,7 @@ public final class LocalVariablesUtil {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
+  private static @NotNull MultiMap<Integer, String> calcNames(final @NotNull StackFrameContext context, final int firstLocalsSlot) {
     SourcePosition position = ContextUtil.getSourcePosition(context);
     if (position != null) {
       return ReadAction.compute(() -> {
@@ -396,7 +425,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       if (!myReached) {
         appendName(variable);
@@ -404,7 +433,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -429,7 +458,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitCodeBlock(PsiCodeBlock block) {
+    public void visitCodeBlock(@NotNull PsiCodeBlock block) {
       if (shouldVisit(block)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -442,7 +471,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -455,7 +484,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -478,7 +507,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitCatchSection(PsiCatchSection section) {
+    public void visitCatchSection(@NotNull PsiCatchSection section) {
       if (shouldVisit(section)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -492,7 +521,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitResourceList(PsiResourceList resourceList) {
+    public void visitResourceList(@NotNull PsiResourceList resourceList) {
       if (shouldVisit(resourceList)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
@@ -505,7 +534,7 @@ public final class LocalVariablesUtil {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // skip local and anonymous classes
     }
   }
@@ -515,7 +544,7 @@ public final class LocalVariablesUtil {
   }
 
   private static int getTypeSlotSize(PsiType varType) {
-    if (PsiType.DOUBLE.equals(varType) || PsiType.LONG.equals(varType)) {
+    if (PsiTypes.doubleType().equals(varType) || PsiTypes.longType().equals(varType)) {
       return 2;
     }
     return 1;
@@ -530,7 +559,7 @@ public final class LocalVariablesUtil {
   }
 
   private static int getTypeSlotSize(String name) {
-    if (PsiKeyword.DOUBLE.equals(name) || PsiKeyword.LONG.equals(name)) {
+    if (JavaKeywords.DOUBLE.equals(name) || JavaKeywords.LONG.equals(name)) {
       return 2;
     }
     return 1;

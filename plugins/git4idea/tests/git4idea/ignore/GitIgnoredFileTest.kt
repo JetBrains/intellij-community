@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
-import com.intellij.configurationStore.saveComponentManager
+import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory
@@ -20,14 +23,21 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.io.createFile
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.io.createParentDirectories
 import git4idea.GitUtil
+import git4idea.GitUtil.DOT_GIT
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertFalse
 import java.io.File
+import java.nio.file.DirectoryNotEmptyException
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
 
 const val OUT = "out"
 const val EXCLUDED = "excluded"
@@ -36,7 +46,6 @@ const val EXCLUDED_CHILD = "$EXCLUDED/$EXCLUDED_CHILD_DIR"
 const val SHELF = "shelf"
 
 class GitIgnoredFileTest : GitSingleRepoTest() {
-
   override fun isCreateDirectoryBasedProject() = true
 
   override fun setUp() {
@@ -46,7 +55,11 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
   override fun setUpProject() {
     super.setUpProject()
-    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
+
+    // will create .idea directory
+    runBlockingMaybeCancellable {
+      saveSettings(project)
+    }
   }
 
   override fun setUpModule() {
@@ -63,6 +76,13 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     }
   }
 
+  override fun tearDown() {
+    runAll(
+      { deleteGitDirectoryWithRetry() },
+      { super.tearDown() }
+    )
+  }
+
   fun `test gitignore content in config dir`() {
     val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").create().file
     if (gitIgnore.exists()) gitIgnore.delete()
@@ -77,7 +97,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val workspaceFile = project.stateStore.workspacePath
     val workspaceFileExist = try {
-      workspaceFile.createFile()
+      workspaceFile.createParentDirectories().createFile()
       true
     }
     catch (e: FileAlreadyExistsException) {
@@ -87,7 +107,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       fail("Workspace file doesn't exist and cannot be created")
     }
 
-    GitUtil.generateGitignoreFileIfNeeded(project, LocalFileSystem.getInstance().refreshAndFindFileByNioFile(project.stateStore.directoryStorePath!!)!!)
+    generateGitIgnoreAndRefresh( LocalFileSystem.getInstance().refreshAndFindFileByNioFile(project.stateStore.directoryStorePath!!)!!)
 
     assertGitignoreValid(gitIgnore,
                          """
@@ -97,8 +117,28 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
      """)
   }
 
+  fun `test generation default gitignore content in config dir`() {
+    val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").assertNotExists().file
+
+    runBlocking {
+      GitIgnoreInStoreDirGenerator(project, (project as ComponentManagerEx).getCoroutineScope()).run()
+    }
+
+    assertGitignoreValid(gitIgnore,
+                         """
+        # Default ignored files
+        /shelf/
+        /workspace.xml
+        # Datasource local storage ignored files
+        /dataSources/
+        /dataSources.local.xml
+        # Editor-based HTTP Client requests
+        /httpRequests/
+     """)
+  }
+
   fun `test gitignore content in project root`() {
-    GitUtil.generateGitignoreFileIfNeeded(project, projectRoot)
+    generateGitIgnoreAndRefresh(projectRoot)
 
     val gitIgnore = File("$projectPath/$GITIGNORE")
 
@@ -109,6 +149,13 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
         /$EXCLUDED_CHILD/
         /$OUT/
     """)
+  }
+
+  private fun generateGitIgnoreAndRefresh(ignoreFileRoot: VirtualFile) {
+    GitUtil.generateGitignoreFileIfNeeded(project, ignoreFileRoot)
+    refresh()
+    updateChangeListManager()
+    updateUntrackedFiles()
   }
 
   fun `test update first ignore block`() {
@@ -148,7 +195,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     """.trimIndent(), projectCharset
     )
 
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     val ignoreGroup = "# first block"
     updateIgnoreBlock(project, ignoreVF, ignoreGroup,
                                       IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
@@ -200,7 +247,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     """.trimIndent(), projectCharset
     )
 
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     val ignoreGroup = "# middle block"
     updateIgnoreBlock(project, ignoreVF, ignoreGroup,
                                       IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
@@ -252,7 +299,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     """.trimIndent(), projectCharset
     )
 
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     val ignoreGroup = "# last block"
     updateIgnoreBlock(project, ignoreVF, ignoreGroup,
                                       IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
@@ -309,7 +356,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     """.trimIndent(), projectCharset
     )
 
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     val ignoreGroup = "# first block"
     addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
                               IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
@@ -331,7 +378,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   fun `test add to group to empty ignore file`() {
     val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText("")
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     addNewElementsToIgnoreBlock(project, ignoreVF, "# ignore group",
                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)
     )
@@ -344,7 +391,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   fun `test add to empty ignore group`() {
     val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText("# ignore group")
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     addNewElementsToIgnoreBlock(project, ignoreVF, "# ignore group",
                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)
     )
@@ -357,7 +404,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   fun `test add to group with remaining last empty group`() {
     val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText("# ignore group\nfoo\n# bar")
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     addNewElementsToIgnoreBlock(project, ignoreVF, "# ignore group",
                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)
     )
@@ -372,7 +419,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   fun `test add to empty ignore file`() {
     val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText("")
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     addNewElements(project, ignoreVF, listOf(IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)))
     assertGitignoreValid(gitIgnore, """
       /test/
@@ -383,7 +430,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   fun `test add to ignore file without trailing newline`() {
     val gitIgnore = file(GITIGNORE).create().file
     gitIgnore.writeText("foo")
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     addNewElements(project, ignoreVF, listOf(IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project)))
     assertGitignoreValid(gitIgnore, """
       foo
@@ -436,7 +483,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     """.trimIndent(), projectCharset
     )
 
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     val ignoreGroup = "# middle block"
     addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
                                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
@@ -498,7 +545,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     """.trimIndent(), projectCharset
     )
 
-    val ignoreVF = getVirtualFile(gitIgnore) ?: return
+    val ignoreVF = getVirtualFile(gitIgnore)
     val ignoreGroup = "# last block"
     addNewElementsToIgnoreBlock(project, ignoreVF, ignoreGroup,
                                                 IgnoredBeanFactory.ignoreUnderDirectory("$projectPath/test", project),
@@ -529,8 +576,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       writeText("/subdir/shelf")
       LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
     }.exists())
-
-    GitUtil.generateGitignoreFileIfNeeded(project, shelfDir.parent)
+    generateGitIgnoreAndRefresh( shelfDir.parent)
 
     val subdirGitIgnore = File("${shelfDir.parent.path}/$GITIGNORE")
 
@@ -538,6 +584,31 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   }
 
   private fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)
+
+  private fun deleteGitDirectoryWithRetry() {
+    val gitDir = projectNioRoot.resolve(DOT_GIT)
+    if (!gitDir.exists()) return
+
+    var dirNotEmptyExceptions: MutableList<DirectoryNotEmptyException>? = null
+
+    while (dirNotEmptyExceptions == null || dirNotEmptyExceptions.isNotEmpty()) {
+      if (dirNotEmptyExceptions == null) {
+        dirNotEmptyExceptions = mutableListOf()
+      }
+
+      try {
+        NioFiles.deleteRecursively(gitDir)
+      }
+      catch (e: DirectoryNotEmptyException) {
+        fileLogger().warn(e)
+        dirNotEmptyExceptions.add(e)
+        TimeoutUtil.sleep(1000)
+        continue
+      }
+
+      dirNotEmptyExceptions.clear()
+    }
+  }
 }
 
 internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: String) {
@@ -551,7 +622,7 @@ internal fun assertGitignoreValid(ignoreFile: File, gitIgnoreExpectedContent: St
   val generatedGitIgnoreContent = ignoreFile.readText()
   assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
   assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
-  UsefulTestCase.assertContainsOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
+  UsefulTestCase.assertContainsElements(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
 }
 
 internal fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)

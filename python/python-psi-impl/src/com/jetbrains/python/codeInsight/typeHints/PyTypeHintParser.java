@@ -10,44 +10,34 @@ import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class PyTypeHintParser extends PyParser {
 
   @Override
-  @NotNull
-  protected ParsingContext createParsingContext(@NotNull SyntaxTreeBuilder builder,
-                                                @NotNull LanguageLevel languageLevel,
-                                                @Nullable StatementParsing.FUTURE futureFlag) {
-    return new ParsingContext(builder, languageLevel, futureFlag) {
+  protected @NotNull ParsingContext createParsingContext(@NotNull SyntaxTreeBuilder builder, @NotNull LanguageLevel languageLevel) {
+    return new ParsingContext(builder, languageLevel) {
 
-      @NotNull
-      private final StatementParsing myStatementParsing = new StatementParsing(this, futureFlag) {
+      private final @NotNull StatementParsing myStatementParsing = new StatementParsing(this) {
         @Override
-        @NotNull
-        protected IElementType getReferenceType() {
+        protected @NotNull IElementType getReferenceType() {
           return PyDocstringTokenTypes.DOC_REFERENCE;
         }
       };
 
-      @NotNull
-      private final ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
+      private final @NotNull ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
         @Override
-        @NotNull
-        protected IElementType getReferenceType() {
+        protected @NotNull IElementType getReferenceType() {
           return PyDocstringTokenTypes.DOC_REFERENCE;
         }
       };
 
       @Override
-      @NotNull
-      public StatementParsing getStatementParser() {
+      public @NotNull StatementParsing getStatementParser() {
         return myStatementParsing;
       }
 
       @Override
-      @NotNull
-      public ExpressionParsing getExpressionParser() {
+      public @NotNull ExpressionParsing getExpressionParser() {
         return myExpressionParsing;
       }
     };

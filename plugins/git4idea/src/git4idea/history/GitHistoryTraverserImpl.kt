@@ -1,14 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
-import com.intellij.vcs.log.*
+import com.intellij.util.EventDispatcher
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
+import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.data.index.IndexedDetails.Companion.createMetadata
@@ -24,24 +31,38 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitCommit
 import git4idea.GitUtil
-import git4idea.GitVcs
 import git4idea.history.GitHistoryTraverser.Traverse
 import git4idea.history.GitHistoryTraverser.TraverseCommitInfo
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.EventListener
 
-internal class GitHistoryTraverserImpl(private val project: Project, private val logData: VcsLogData) : GitHistoryTraverser {
-  override fun toHash(id: TraverseCommitId) = logData.getCommitId(id)!!.hash
+internal class GitHistoryTraverserImpl(
+  private val project: Project,
+  private val logData: VcsLogData,
+  parentDisposable: Disposable,
+) : GitHistoryTraverser, Disposable {
+  private val requestedRootsIndexingListeners = EventDispatcher.create(RequestedRootsIndexingListener::class.java)
+
+  private val indexListener = VcsLogIndex.IndexingFinishedListener {
+    requestedRootsIndexingListeners.multicaster.indexingFinished(it)
+  }
+
+  init {
+    logData.index.addListener(indexListener)
+    Disposer.register(parentDisposable, this)
+  }
+
+  override fun toHash(id: VcsLogCommitStorageIndex) = logData.getCommitId(id)!!.hash
 
   private fun startSearch(
     start: Hash,
     root: VirtualFile,
-    walker: (startId: TraverseCommitId, graph: LiteLinearGraph, visited: BitSetFlags, handler: (id: TraverseCommitId) -> Boolean) -> Unit,
+    walker: (startId: VcsLogCommitStorageIndex, graph: LiteLinearGraph, visited: BitSetFlags, handler: (id: VcsLogCommitStorageIndex) -> Boolean) -> Unit,
     commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
-    val dataPack = logData.dataPack
+    val dataPack = logData.graphData
     val hashIndex = logData.getCommitIndex(start, root)
 
-    val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
+    val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<VcsLogCommitStorageIndex>
 
     val hashNodeId = permanentGraph.permanentCommitsInfo.getNodeId(hashIndex).takeIf { it != -1 }
                      ?: throw IllegalArgumentException("Hash '${start.asString()}' doesn't exist in repository: $root")
@@ -50,6 +71,9 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     val traverse = TraverseImpl(this)
     walker(hashNodeId, graph, visited) {
       ProgressManager.checkCanceled()
+      if (Disposer.isDisposed(this)) {
+        throw ProcessCanceledException()
+      }
       val commitId = permanentGraph.permanentCommitsInfo.getCommitId(it)
       val parents = graph.getNodes(it, LiteLinearGraph.NodeFilter.DOWN)
       traverse.commitHandler(TraverseCommitInfo(commitId, parents))
@@ -64,7 +88,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
     fun findBranchHash(branchName: String) =
-      VcsLogUtil.findBranch(logData.dataPack.refsModel, root, branchName)?.commitHash
+      VcsLogUtil.findBranch(logData.graphData.refsModel, root, branchName)?.commitHash
       ?: throw IllegalArgumentException("Branch '$branchName' doesn't exist in the repository: $root")
 
     val hash = when (start) {
@@ -85,41 +109,26 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     )
   }
 
-  override fun withIndex(
+  override fun addIndexingListener(
     roots: Collection<VirtualFile>,
     disposable: Disposable,
-    block: GitHistoryTraverser.(Collection<GitHistoryTraverser.IndexedRoot>) -> Unit
+    listener: GitHistoryTraverser.IndexingListener
   ) {
-    val index = logData.index
-    val blockExecuted = AtomicBoolean(false)
+    val indexingListener = RequestedRootsIndexingListenerImpl(roots, this, listener)
+    requestedRootsIndexingListeners.addListener(indexingListener, disposable)
 
-    fun runBlockIfIndexed(listener: VcsLogIndex.IndexingFinishedListener) {
-      val dataGetter = index.dataGetter ?: return
-      if (roots.all { index.isIndexed(it) } && blockExecuted.compareAndSet(false, true)) {
-        index.removeListener(listener)
-        block(roots.map { root -> IndexedRootImpl(this@GitHistoryTraverserImpl, project, root, dataGetter) })
-      }
-    }
-
-    val listener = object : VcsLogIndex.IndexingFinishedListener {
-      override fun indexingFinished(indexedRoot: VirtualFile) {
-        runBlockIfIndexed(this)
-      }
-    }
-
-    index.addListener(listener)
-    Disposer.register(disposable, Disposable { index.removeListener(listener) })
-    runBlockIfIndexed(listener)
+    val indexedRoot = roots.firstOrNull { logData.index.isIndexed(it) } ?: return
+    indexingListener.indexingFinished(indexedRoot)
   }
 
-  override fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata> =
+  override fun loadMetadata(ids: List<VcsLogCommitStorageIndex>): List<VcsCommitMetadata> =
     ids.groupBy { getRoot(it) }.map { (root, commits) ->
-      GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root, commits.map { toHash(it).asString() })
+      GitLogUtil.collectMetadata(project, root, commits.map { toHash(it).asString() })
     }.flatten()
 
 
   override fun loadFullDetails(
-    ids: List<TraverseCommitId>,
+    ids: List<VcsLogCommitStorageIndex>,
     requirements: GitCommitRequirements,
     fullDetailsHandler: (GitCommit) -> Unit
   ) {
@@ -132,7 +141,11 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
 
   override fun getCurrentUser(root: VirtualFile): VcsUser? = logData.currentUser[root]
 
-  private fun getRoot(id: TraverseCommitId): VirtualFile = logData.getCommitId(id)!!.root
+  override fun dispose() {
+    logData.index.removeListener(indexListener)
+  }
+
+  private fun getRoot(id: VcsLogCommitStorageIndex): VirtualFile = logData.getCommitId(id)!!.root
 
   private class IndexedRootImpl(
     private val traverser: GitHistoryTraverser,
@@ -140,7 +153,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     override val root: VirtualFile,
     private val dataGetter: IndexDataGetter
   ) : GitHistoryTraverser.IndexedRoot {
-    override fun filterCommits(filter: GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter): Collection<TraverseCommitId> {
+    override fun filterCommits(filter: GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter): Collection<VcsLogCommitStorageIndex> {
       val logFilter = when (filter) {
         is GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.Author -> VcsLogFilterObject.fromUser(filter.author)
         is GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.File -> VcsLogFilterObject.fromPaths(setOf(filter.file))
@@ -148,28 +161,47 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
       return dataGetter.filter(listOf(logFilter))
     }
 
-    override fun loadTimedCommit(id: TraverseCommitId): TimedVcsCommit {
+    override fun loadTimedCommit(id: VcsLogCommitStorageIndex): TimedVcsCommit {
       val parents = dataGetter.getParents(id)!!
       val timestamp = dataGetter.getCommitTime(id)!!
       val hash = traverser.toHash(id)
       return TimedVcsCommitImpl(hash, parents, timestamp)
     }
 
-    override fun loadMetadata(id: TraverseCommitId): VcsCommitMetadata {
+    override fun loadMetadata(id: VcsLogCommitStorageIndex): VcsCommitMetadata {
       val storage = dataGetter.logStorage
       val factory = project.service<VcsLogObjectsFactory>()
       return createMetadata(id, dataGetter, storage, factory)!!
     }
   }
 
+  private class RequestedRootsIndexingListenerImpl(
+    private val requestedRoots: Collection<VirtualFile>,
+    private val traverser: GitHistoryTraverserImpl,
+    private val listener: GitHistoryTraverser.IndexingListener
+  ) : RequestedRootsIndexingListener {
+    override fun indexingFinished(root: VirtualFile) {
+      val index = traverser.logData.index
+      val dataGetter = index.dataGetter ?: return
+      val indexedRoots = requestedRoots.filter { index.isIndexed(it) }.map {
+        IndexedRootImpl(traverser, traverser.project, it, dataGetter)
+      }
+      if (indexedRoots.isNotEmpty()) {
+        listener.indexedRootsUpdated(indexedRoots)
+      }
+    }
+  }
+
+  private interface RequestedRootsIndexingListener : VcsLogIndex.IndexingFinishedListener, EventListener
+
   private class TraverseImpl(private val traverser: GitHistoryTraverser) : Traverse {
     val requests = mutableListOf<Request>()
 
-    override fun loadMetadataLater(id: TraverseCommitId, onLoad: (VcsCommitMetadata) -> Unit) {
+    override fun loadMetadataLater(id: VcsLogCommitStorageIndex, onLoad: (VcsCommitMetadata) -> Unit) {
       requests.add(Request.LoadMetadata(id, onLoad))
     }
 
-    override fun loadFullDetailsLater(id: TraverseCommitId, requirements: GitCommitRequirements, onLoad: (GitCommit) -> Unit) {
+    override fun loadFullDetailsLater(id: VcsLogCommitStorageIndex, requirements: GitCommitRequirements, onLoad: (GitCommit) -> Unit) {
       requests.add(Request.LoadFullDetails(id, requirements, onLoad))
     }
 
@@ -206,9 +238,9 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
       }
     }
 
-    sealed class Request(val id: TraverseCommitId) {
-      class LoadMetadata(id: TraverseCommitId, val onLoad: (VcsCommitMetadata) -> Unit) : Request(id)
-      class LoadFullDetails(id: TraverseCommitId, val requirements: GitCommitRequirements, val onLoad: (GitCommit) -> Unit) : Request(id)
+    sealed class Request(val id: VcsLogCommitStorageIndex) {
+      class LoadMetadata(id: VcsLogCommitStorageIndex, val onLoad: (VcsCommitMetadata) -> Unit) : Request(id)
+      class LoadFullDetails(id: VcsLogCommitStorageIndex, val requirements: GitCommitRequirements, val onLoad: (GitCommit) -> Unit) : Request(id)
     }
   }
 }

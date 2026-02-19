@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
+
+fun foo() {
+    val x = 4
+    val y = $$"$$x"
+}
+
+/* Can't enable K2 features in K1 mode by flag and can't ignore K1 via IGNORE_K1 because: "Looks like the test passes" is then reported */
+// DISABLE_ERRORS

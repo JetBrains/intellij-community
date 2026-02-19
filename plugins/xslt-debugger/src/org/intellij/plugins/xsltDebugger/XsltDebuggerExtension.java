@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.xsltDebugger;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
@@ -25,7 +24,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -40,7 +39,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.net.NetUtils;
-import gnu.trove.THashMap;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.lang.xpath.xslt.run.XsltRunConfiguration;
@@ -51,7 +49,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +62,7 @@ import java.util.jar.Manifest;
  * Extension for XPathView that hooks into the execution of XSLT-scripts. Manages the creation of the XSLT-Debugger UI
  * and ensures the debugged process is started with the required JVM properties.
  */
-public class XsltDebuggerExtension extends XsltRunnerExtension {
+public final class XsltDebuggerExtension extends XsltRunnerExtension {
   private static final Logger LOG = Logger.getInstance(XsltDebuggerExtension.class.getName());
 
   public static final Key<XsltChecker.LanguageLevel> VERSION = Key.create("VERSION");
@@ -73,11 +70,9 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   private static final Key<Manifest> MANIFEST = Key.create("MANIFEST");
   private static final Key<String> ACCESS_TOKEN = Key.create("access token");
 
-  @NonNls
-  private static final String SAXON_6_JAR = "saxon.jar";
+  private static final @NonNls String SAXON_6_JAR = "saxon.jar";
 
-  @NonNls
-  private static final String SAXON_9_JAR = "saxon9he.jar";
+  private static final @NonNls String SAXON_9_JAR = "saxon9he.jar";
 
   @Override
   protected boolean supports(XsltRunConfiguration config, boolean debugger) {
@@ -114,7 +109,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     final Sdk jdk = configuration.getEffectiveJDK();
     assert jdk != null;
     final JavaVersion version = JavaVersion.tryParse(jdk.getVersionString());
-    if (version == null || version.feature < 5 || version.feature > 8) {  // todo: get rid of PortableRemoteObject usages in debugger
+    if (version == null || version.feature < 5) {
       throw new CantRunException(XsltDebuggerBundle.message("dialog.message.xslt.debugger.requires.java.to.run"));
     }
 
@@ -150,9 +145,6 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       addPathToClasspath(parameters, outProductionDir.resolve("intellij.xslt.debugger.impl.rt"));
       addPathToClasspath(parameters, getPluginEngineDirInSources().resolve("lib/rmi-stubs.jar"));
     }
-
-    File trove4j = new File(PathUtil.getJarPathForClass(THashMap.class));
-    parameters.getClassPath().addTail(trove4j.getAbsolutePath());
 
     String type = parameters.getVMParametersList().getPropertyValue("xslt.transformer.type"); //NON-NLS
     if ("saxon".equalsIgnoreCase(type)) {
@@ -210,8 +202,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     parameters.getClassPath().addTail(absolutePath.toString());
   }
 
-  @Nullable
-  private static Boolean isValidXalanPresent(SimpleJavaParameters parameters) {
+  private static @Nullable Boolean isValidXalanPresent(SimpleJavaParameters parameters) {
     final List<VirtualFile> files = parameters.getClassPath().getVirtualFiles();
     for (VirtualFile file : files) {
       if (file.getName().matches(".*xalan.*\\.jar")) {
@@ -260,19 +251,19 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
   private static void addXalan(SimpleJavaParameters parameters, Path xsltDebuggerClassesRoot) {
     if (!Files.isDirectory(xsltDebuggerClassesRoot)) {
       Path rtDir = xsltDebuggerClassesRoot.getParent().resolve("rt");
-      addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.2.jar"));
-      addPathToClasspath(parameters, rtDir.resolve("serializer-2.7.2.jar"));
+      addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.3.jar"));
+      addPathToClasspath(parameters, rtDir.resolve("serializer-2.7.3.jar"));
     }
     else {
       //running from sources
       Path xalanInM2 = Paths.get(SystemProperties.getUserHome(), ".m2", "repository", "xalan");
-      addPathToClasspath(parameters, xalanInM2.resolve("xalan/2.7.2/xalan-2.7.2.jar"));
-      addPathToClasspath(parameters, xalanInM2.resolve("serializer/2.7.2/serializer-2.7.2.jar"));
+      addPathToClasspath(parameters, xalanInM2.resolve("xalan/2.7.3/xalan-2.7.3.jar"));
+      addPathToClasspath(parameters, xalanInM2.resolve("serializer/2.7.3/serializer-2.7.3.jar"));
     }
   }
 
   private static Path findSaxonJar(Path xsltDebuggerClassesRoot, String jarFile) {
-    Path transformerFile = xsltDebuggerClassesRoot.getParent().resolve("lib/rt").resolve(jarFile);
+    Path transformerFile = xsltDebuggerClassesRoot.getParent().resolve("rt").resolve(jarFile);
     if (!Files.exists(transformerFile)) {
       //running from sources
       Path libDir = getPluginEngineDirInSources().resolve("impl/lib");
@@ -282,9 +273,8 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     return transformerFile;
   }
 
-  @NotNull
-  private static Path getPluginEngineDirInSources() {
-    Path path = Paths.get(PathManager.getCommunityHomePath(), "plugins", "xslt-debugger", "engine");
+  private static @NotNull Path getPluginEngineDirInSources() {
+    Path path = PluginPathManager.getPluginHome("xslt-debugger").toPath().resolve("engine");
     assert Files.isDirectory(path) : path.toString();
     return path;
   }

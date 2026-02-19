@@ -1,9 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFunctionalExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -18,11 +36,10 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public final class GuavaConversionUtil {
-  private final static Logger LOG = Logger.getInstance(GuavaConversionUtil.class);
+final class GuavaConversionUtil {
+  private static final Logger LOG = Logger.getInstance(GuavaConversionUtil.class);
 
-  @Nullable
-  public static PsiType getFunctionReturnType(PsiExpression functionExpression) {
+  public static @Nullable PsiType getFunctionReturnType(PsiExpression functionExpression) {
     if (functionExpression instanceof PsiFunctionalExpression) {
       return LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)functionExpression);
     }
@@ -48,8 +65,7 @@ public final class GuavaConversionUtil {
     }
   }
 
-  @NotNull
-  public static PsiType addTypeParameters(@NotNull String baseClassQualifiedName, @Nullable PsiType type, @NotNull PsiElement context) {
+  public static @NotNull PsiType addTypeParameters(@NotNull String baseClassQualifiedName, @Nullable PsiType type, @NotNull PsiElement context) {
     String parameterText = "";
     if (type != null) {
       final String canonicalText = type.getCanonicalText(false);
@@ -124,10 +140,13 @@ public final class GuavaConversionUtil {
       }
     }
     else if (expression instanceof PsiMethodCallExpression || expression instanceof PsiReferenceExpression) {
-      final GuavaLambda lambda = GuavaLambda.findFor(evaluator.evaluateType(expression));
-      if (lambda != null) {
-        expression = addMethodReference(expression, lambda);
-        return adjustLambdaContainingExpression(expression, insertTypeCase, targetType, evaluator);
+      final PsiType type = expression.getType();
+      if (targetType != null && type != null && !targetType.isAssignableFrom(type)) {
+        final GuavaLambda lambda = GuavaLambda.findFor(evaluator.evaluateType(expression));
+        if (lambda != null) {
+          expression = addMethodReference(expression, lambda);
+          return adjustLambdaContainingExpression(expression, insertTypeCase, targetType, evaluator);
+        }
       }
     }
     return expression;
@@ -181,7 +200,8 @@ public final class GuavaConversionUtil {
   }
 
   private static PsiExpression addMethodReference(@NotNull PsiExpression expression, @NotNull GuavaLambda lambda) {
-    return (PsiExpression)expression.replace(JavaPsiFacade.getElementFactory(expression.getProject())
-                                                     .createExpressionFromText(expression.getText() + "::" + lambda.getSamName(), expression));
+    final PsiExpression methodReference = JavaPsiFacade.getElementFactory(expression.getProject())
+      .createExpressionFromText(expression.getText() + "::" + lambda.getSamName(), expression);
+    return (PsiExpression)expression.replace(methodReference);
   }
 }

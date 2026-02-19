@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -20,45 +21,52 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
  */
 public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
-  @NotNull
-  private final TokenSet myTemplateExpressionEdgeTokens;
-  @NotNull
-  private final Class myTemplateFileViewProviderClass;
+  private final @NotNull NotNullLazyValue<TokenSet> myTemplateExpressionEdgeTokens;
+  private final @NotNull Class<?> myTemplateFileViewProviderClass;
 
-  private final Set<Language> knownLanguageSet;
+  private final Set<String> knownLanguageIdSet = new HashSet<>();
 
   private static final Key<FileViewProvider> TOP_LEVEL_VIEW_PROVIDER = Key.create("TOP_LEVEL_VIEW_PROVIDER");
 
   // this redundant ctr is here because ExtensionComponentAdapter.getComponentInstance() is not aware of varargs
   protected TemplateLanguageErrorFilter(
-    @NotNull final TokenSet templateExpressionEdgeTokens,
-    @NotNull final Class templateFileViewProviderClass)
+    @NotNull TokenSet templateExpressionEdgeTokens,
+    @NotNull Class<?> templateFileViewProviderClass)
   {
     this(templateExpressionEdgeTokens, templateFileViewProviderClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  protected TemplateLanguageErrorFilter(@NotNull final TokenSet templateExpressionEdgeTokens,
-                                        @NotNull final Class templateFileViewProviderClass,
-                                        final String @NotNull ... knownSubLanguageNames) {
-    myTemplateExpressionEdgeTokens = TokenSet.create(templateExpressionEdgeTokens.getTypes());
+  protected TemplateLanguageErrorFilter(
+    @NotNull NotNullLazyValue<TokenSet> templateExpressionEdgeTokens,
+    @NotNull Class<?> templateFileViewProviderClass)
+  {
+    this(templateExpressionEdgeTokens, templateFileViewProviderClass, ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  protected TemplateLanguageErrorFilter(@NotNull TokenSet templateExpressionEdgeTokens,
+                                        @NotNull Class<?> templateFileViewProviderClass,
+                                        String @NotNull ... knownSubLanguageNames) {
+    this(NotNullLazyValue.createConstantValue(TokenSet.create(templateExpressionEdgeTokens.getTypes())),
+         templateFileViewProviderClass, knownSubLanguageNames);
+  }
+
+  protected TemplateLanguageErrorFilter(@NotNull NotNullLazyValue<TokenSet> templateExpressionEdgeTokensHolder,
+                                        @NotNull Class<?> templateFileViewProviderClass,
+                                        String @NotNull ... knownSubLanguageNames) {
+    myTemplateExpressionEdgeTokens = templateExpressionEdgeTokensHolder;
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
 
-    List<String> knownSubLanguageList = new ArrayList<>(Arrays.asList(knownSubLanguageNames));
-    knownSubLanguageList.add("JavaScript");
-    knownSubLanguageList.add("CSS");
-    knownLanguageSet = new HashSet<>();
-    for (String name : knownSubLanguageList) {
-      final Language language = Language.findLanguageByID(name);
-      if (language != null) {
-        knownLanguageSet.add(language);
-      }
-    }
+    Collections.addAll(knownLanguageIdSet, knownSubLanguageNames);
+    knownLanguageIdSet.add("JavaScript");
+    knownLanguageIdSet.add("CSS");
   }
 
   @Override
@@ -101,9 +109,9 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     return previousErrors.isNotEmpty();
   }
 
-  protected final boolean isNearTemplateExpressions(@NotNull PsiFile file, int start, int end) {
-    FileViewProvider viewProvider = file.getViewProvider();
-    if (isTemplateViewProvider(viewProvider) && file.getLanguage() != viewProvider.getBaseLanguage()) {
+  protected final boolean isNearTemplateExpressions(@NotNull PsiFile psiFile, int start, int end) {
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    if (isTemplateViewProvider(viewProvider) && psiFile.getLanguage() != viewProvider.getBaseLanguage()) {
       CharSequence fileText = viewProvider.getContents();
       PsiElement beforeWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftBackward(fileText, start - 1, " \t\n"));
       PsiElement afterWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftForward(fileText, end, " \t\n"));
@@ -112,11 +120,11 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
       }
     }
 
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-    PsiElement host = injectedLanguageManager.getInjectionHost(file);
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+    PsiElement host = injectedLanguageManager.getInjectionHost(psiFile);
     if (host != null) {
-      start = injectedLanguageManager.injectedToHost(file, start);
-      end = injectedLanguageManager.injectedToHost(file, end);
+      start = injectedLanguageManager.injectedToHost(psiFile, start);
+      end = injectedLanguageManager.injectedToHost(psiFile, end);
       if (start <= end) {
         return isNearTemplateExpressions(host.getContainingFile(), start, end);
       }
@@ -136,21 +144,21 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     return false;
   }
 
-  @Nullable
-  private static PsiElement findBaseLanguageElement(FileViewProvider viewProvider, int offset) {
+  private static @Nullable PsiElement findBaseLanguageElement(FileViewProvider viewProvider, int offset) {
     return viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
   }
 
   private boolean isTemplateEdge(PsiElement e) {
-    return myTemplateExpressionEdgeTokens.contains(PsiUtilCore.getElementType(e));
+    return myTemplateExpressionEdgeTokens.get().contains(PsiUtilCore.getElementType(e));
   }
 
   /**
    * @return whether errors in PSI with the given language should be considered for suppression
    */
-  protected boolean isKnownSubLanguage(@NotNull final Language language) {
-    for (Language knownLanguage : knownLanguageSet) {
-      if (language.is(knownLanguage) || knownLanguage.getDialects().contains(language)) {
+  protected boolean isKnownSubLanguage(final @NotNull Language language) {
+    for (String knownLanguageId : knownLanguageIdSet) {
+      Language knownLanguage = Language.findLanguageByID(knownLanguageId);
+      if (knownLanguage != null && (language.is(knownLanguage) || knownLanguage.getDialects().contains(language))) {
         return true;
       }
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.CommonBundle;
@@ -31,20 +17,28 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.TestModuleOutputElementType;
 import com.intellij.util.CommonProcessors;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class JarFromModulesTemplate extends ArtifactTemplate {
+public final class JarFromModulesTemplate extends ArtifactTemplate {
   private static final Logger LOG = Logger.getInstance(JarFromModulesTemplate.class);
 
   private final PackagingElementResolvingContext myContext;
@@ -64,11 +58,10 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
                             dialog.isExtractLibrariesToJar(), dialog.isIncludeTests());
   }
 
-  @Nullable
-  public NewArtifactConfiguration doCreateArtifact(final Module[] modules, final String mainClassName,
-                                                   final String directoryForManifest,
-                                                   final boolean extractLibrariesToJar,
-                                                   final boolean includeTests) {
+  public @Nullable NewArtifactConfiguration doCreateArtifact(final Module[] modules, final String mainClassName,
+                                                             final String directoryForManifest,
+                                                             final boolean extractLibrariesToJar,
+                                                             final boolean includeTests) {
     VirtualFile manifestFile = null;
     final Project project = myContext.getProject();
     if (mainClassName != null && !mainClassName.isEmpty() || !extractLibrariesToJar) {
@@ -99,7 +92,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
 
     OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(project).orderEntries(Arrays.asList(modules));
 
-    final Set<Library> libraries = new THashSet<>();
+    final Set<Library> libraries = new HashSet<>();
     if (!includeTests) {
       orderEnumerator = orderEnumerator.productionOnly();
     }

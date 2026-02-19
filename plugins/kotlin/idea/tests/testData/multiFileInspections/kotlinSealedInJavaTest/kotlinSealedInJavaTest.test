@@ -1,0 +1,4 @@
+{
+    "inspectionClass": "org.jetbrains.kotlin.idea.inspections.KotlinSealedInheritorsInJavaInspection",
+    "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinSealedInheritorsInJavaInspection"
+}

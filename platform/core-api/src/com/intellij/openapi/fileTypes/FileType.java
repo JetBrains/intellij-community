@@ -1,36 +1,41 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * <p>Describes a filetype.</p>
  *
  * <p>Must be registered via {@code com.intellij.fileType} extension point.
- * If file type depends on given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
+ * If file type depends on a given file, {@link com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile}
  * can be used for non-static mapping.</p>
  *
  * <p>Use {@link LanguageFileType} for files having {@link com.intellij.lang.Language} support.</p>
  *
+ * Each file type must be a singleton, which generally implies its constructor must be private
+ * and the only instance is stored in the static final field.
  * @see com.intellij.openapi.fileTypes.FileTypes
  * @see INativeFileType
  */
-public interface FileType extends Scheme {
+public interface FileType {
   FileType[] EMPTY_ARRAY = new FileType[0];
 
   /**
    * Returns the name of the file type. The name must be unique among all file types registered in the system.
    */
-  @Override
   @NonNls @NotNull String getName();
+
+  default @NotNull @Nls String getDisplayName() {
+    return getName(); //NON-NLS
+  }
 
   /**
    * Returns the user-readable description of the file type.
@@ -57,7 +62,9 @@ public interface FileType extends Scheme {
    * Returns {@code true} if the specified file type is read-only. Read-only file types are not shown in the "File Types" settings dialog,
    * and users cannot change the extensions associated with the file type.
    */
-  boolean isReadOnly();
+  default boolean isReadOnly() {
+    return false;
+  }
 
   /**
    * Returns the character set for the specified file.
@@ -66,5 +73,15 @@ public interface FileType extends Scheme {
    * @param content File content.
    * @return The character set name, in the format supported by {@link java.nio.charset.Charset} class.
    */
-  @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content);
+  default @NonNls @Nullable String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+    // TODO see MetadataJsonFileType (it's actually text but tries indexing itself as binary)
+    return null;
+  }
+
+  /**
+   * @return true if the charset is hard-coded, false if file type does not restrict encoding
+   */
+  default boolean isCharsetHardcoded() {
+    return false;
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.find.impl.FindInProjectExtension;
@@ -10,7 +10,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.PredefinedSearchScopeProvider;
+import com.intellij.psi.search.ProjectScopeImpl;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +51,7 @@ public final class Scopes {
     else if (scope instanceof ModuleWithDependenciesScope) {
       return ((ModuleWithDependenciesScope)scope).getModule().getName();
     }
-    else if (scope instanceof GlobalSearchScopesCore.DirectoryScope) {
-      final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)scope;
+    else if (scope instanceof GlobalSearchScopesCore.DirectoryScope directoryScope) {
       final String url = directoryScope.getDirectory().getPresentableUrl();
       return directoryScope.isWithSubdirectories() ? "*" + url : url;
     }
@@ -58,37 +61,29 @@ public final class Scopes {
   }
 
   public static SearchScope createScope(@NotNull Project project, @NotNull String descriptor, @NotNull Type scopeType) {
-    if (scopeType == Type.PROJECT) {
-      return GlobalSearchScope.projectScope(project);
-    }
-    else if (scopeType == Type.MODULE) {
-      final Module module = ModuleManager.getInstance(project).findModuleByName(descriptor);
-      if (module != null) {
-        return GlobalSearchScope.moduleScope(module);
+    return switch (scopeType) {
+      case PROJECT -> GlobalSearchScope.projectScope(project);
+      case MODULE -> {
+        final Module module = ModuleManager.getInstance(project).findModuleByName(descriptor);
+        yield (module == null) ? null : GlobalSearchScope.moduleScope(module);
       }
-    }
-    else if (scopeType == Type.DIRECTORY) {
-      final boolean recursive = StringUtil.startsWithChar(descriptor, '*');
-      if (recursive) {
-        descriptor = descriptor.substring(1);
+      case DIRECTORY -> {
+        final boolean recursive = StringUtil.startsWithChar(descriptor, '*');
+        if (recursive) {
+          descriptor = descriptor.substring(1);
+        }
+        final String path = FileUtil.toSystemIndependentName(descriptor.substring(1));
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+        yield (virtualFile == null) ? null : new GlobalSearchScopesCore.DirectoryScope(project, virtualFile, recursive);
       }
-      final String path = FileUtil.toSystemIndependentName(descriptor.substring(1));
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-      if (virtualFile == null) return null;
-      return new GlobalSearchScopesCore.DirectoryScope(project, virtualFile, recursive);
-    }
-    else if (scopeType == Type.NAMED) {
-      return findScopeByName(project, descriptor);
-    }
-    assert false;
-    return null;
+      case NAMED -> findScopeByName(project, descriptor);
+    };
   }
 
-  @Nullable
-  public static SearchScope findScopeByName(@NotNull Project project, @NotNull String scopeName) {
+  public static @Nullable SearchScope findScopeByName(@NotNull Project project, @NotNull String scopeName) {
     // can't use ScopeChooserUtils.findScopeByName() because it returns intersection scopes that can't be presented the user
     // and doesn't return all predefined scopes
-    final List<SearchScope> predefinedScopes =
+    final List<? extends SearchScope> predefinedScopes =
       PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(project, null, true, false, true, true, true);
     for (SearchScope predefinedScope : predefinedScopes) {
       if (predefinedScope.getDisplayName().equals(scopeName)) {

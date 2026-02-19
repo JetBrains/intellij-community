@@ -5,7 +5,19 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.ByteType;
+import com.sun.jdi.ByteValue;
+import com.sun.jdi.CharType;
+import com.sun.jdi.CharValue;
+import com.sun.jdi.IntegerType;
+import com.sun.jdi.IntegerValue;
+import com.sun.jdi.LongType;
+import com.sun.jdi.LongValue;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ShortType;
+import com.sun.jdi.ShortValue;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +46,7 @@ public class HexRenderer extends NodeRendererImpl {
 
   @Override
   public HexRenderer clone() {
-    return (HexRenderer) super.clone();
+    return (HexRenderer)super.clone();
   }
 
   @Override
@@ -90,7 +102,7 @@ public class HexRenderer extends NodeRendererImpl {
   //returns whether this renderer is apllicable to this type or it's supertypes
   @Override
   public boolean isApplicable(Type t) {
-    if(t == null) {
+    if (t == null) {
       return false;
     }
     return t instanceof CharType ||

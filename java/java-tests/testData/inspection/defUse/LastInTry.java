@@ -13,7 +13,7 @@ class C {
   public void test(UUID id) {
     Entity entity = repo.load(id);
     try {
-      <warning descr="The value repo.save(entity) assigned to 'entity' is never used">entity</warning> = repo.save(entity);
+      <warning descr="The value 'repo.save(entity)' assigned to 'entity' is never used">entity</warning> = repo.save(entity);
     } catch (RuntimeException e) {
       System.out.println("failed to save entity: " + entity);
     }

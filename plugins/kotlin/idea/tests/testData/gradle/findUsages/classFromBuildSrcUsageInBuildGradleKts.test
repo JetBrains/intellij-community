@@ -1,0 +1,16 @@
+// FILE: buildSrc/src/main/kotlin/MyTask.kt
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "module1/build.gradle.kts MyTask"
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.TaskAction
+
+open class My<caret>Task : DefaultTask() {
+    @TaskAction
+    fun calculateSum() {
+        val num1 = 5
+        val num2 = 7
+        println(num1 + num2)
+    }
+}
+
+// FILE: module1/build.gradle.kts
+tasks.register<MyTask>("myTask")

@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
-import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.actions.GotoFrameSourceAction;
-import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
@@ -14,31 +13,36 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
-public class ThreadsPanel extends DebuggerTreePanel{
-  @NonNls private static final String HELP_ID = "debugging.debugThreads";
-  private final Alarm myUpdateLabelsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+public final class ThreadsPanel extends DebuggerTreePanel {
+  private static final @NonNls String POPUP_ACTION_NAME = "Debugger.ThreadsPanelPopup";
+  private static final @NonNls String HELP_ID = "debugging.debugThreads";
+  private final SingleEdtTaskScheduler updateLabelsAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private static final int LABELS_UPDATE_DELAY_MS = 200;
 
   public ThreadsPanel(Project project, final DebuggerStateManager stateManager) {
     super(project, stateManager);
 
-    final Disposable disposable = DebuggerAction.installEditAction(getThreadsTree(), DebuggerActions.EDIT_FRAME_SOURCE);
+    final Disposable disposable = DebuggerAction.installEditAction(getThreadsTree(), "Debugger.EditFrameSource");
     registerDisposable(disposable);
 
     getThreadsTree().addKeyListener(new KeyAdapter() {
@@ -49,7 +53,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
         }
       }
     });
-    add(ScrollPaneFactory.createScrollPane(getThreadsTree()), BorderLayout.CENTER);
+    add(ScrollPaneFactory.createScrollPane(getThreadsTree(), true), BorderLayout.CENTER);
     stateManager.addListener(new DebuggerContextListener() {
       @Override
       public void changeEvent(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
@@ -57,7 +61,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
           startLabelsUpdate();
         }
         else if (DebuggerSession.Event.PAUSE == event || DebuggerSession.Event.DETACHED == event || DebuggerSession.Event.DISPOSE == event) {
-          myUpdateLabelsAlarm.cancelAllRequests();
+          updateLabelsAlarm.cancel();
         }
         if (DebuggerSession.Event.DETACHED == event || DebuggerSession.Event.DISPOSE == event) {
           stateManager.removeListener(this);
@@ -68,11 +72,11 @@ public class ThreadsPanel extends DebuggerTreePanel{
   }
 
   private void startLabelsUpdate() {
-    if (myUpdateLabelsAlarm.isDisposed()) {
+    if (updateLabelsAlarm.isDisposed()) {
       return;
     }
-    myUpdateLabelsAlarm.cancelAllRequests();
-    myUpdateLabelsAlarm.addRequest(new Runnable() {
+
+    updateLabelsAlarm.cancelAndRequest(LABELS_UPDATE_DELAY_MS, new Runnable() {
       @Override
       public void run() {
         boolean updateScheduled = false;
@@ -81,9 +85,9 @@ public class ThreadsPanel extends DebuggerTreePanel{
             final ThreadsDebuggerTree tree = getThreadsTree();
             final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl)tree.getModel().getRoot();
             if (root != null) {
-              final DebugProcessImpl process = getContext().getDebugProcess();
-              if (process != null) {
-                process.getManagerThread().invoke(new DebuggerCommandImpl() {
+              DebuggerManagerThreadImpl managerThread = getContext().getManagerThread();
+              if (managerThread != null) {
+                managerThread.schedule(new DebuggerCommandImpl() {
                   @Override
                   protected void action() {
                     try {
@@ -93,6 +97,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
                       reschedule();
                     }
                   }
+
                   @Override
                   protected void commandCancelled() {
                     reschedule();
@@ -112,17 +117,16 @@ public class ThreadsPanel extends DebuggerTreePanel{
 
       private void reschedule() {
         final DebuggerSession session = getContext().getDebuggerSession();
-        if (session != null && session.isAttached() && !session.isPaused() && !myUpdateLabelsAlarm.isDisposed()) {
-          myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
+        if (session != null && session.isAttached() && !session.isPaused() && !updateLabelsAlarm.isDisposed()) {
+          ApplicationManager.getApplication().invokeLater(() -> updateLabelsAlarm.request(LABELS_UPDATE_DELAY_MS, this), ModalityState.any());
         }
       }
-      
-    }, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
+    });
   }
 
   @Override
   public void dispose() {
-    Disposer.dispose(myUpdateLabelsAlarm);
+    updateLabelsAlarm.dispose();
     super.dispose();
   }
 
@@ -142,7 +146,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
     catch (NoSuchElementException ignored) { // children have changed - just skip
     }
   }
-  
+
   @Override
   protected DebuggerTree createTreeView() {
     return new ThreadsDebuggerTree(getProject());
@@ -150,18 +154,17 @@ public class ThreadsPanel extends DebuggerTreePanel{
 
   @Override
   protected ActionPopupMenu createPopupMenu() {
-    DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction(DebuggerActions.THREADS_PANEL_POPUP);
-    return ActionManager.getInstance().createActionPopupMenu(DebuggerActions.THREADS_PANEL_POPUP, group);
+    DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction(POPUP_ACTION_NAME);
+    return ActionManager.getInstance().createActionPopupMenu(POPUP_ACTION_NAME, group);
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return HELP_ID;
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
   }
+
   public ThreadsDebuggerTree getThreadsTree() {
-    return (ThreadsDebuggerTree) getTree();
+    return (ThreadsDebuggerTree)getTree();
   }
 }

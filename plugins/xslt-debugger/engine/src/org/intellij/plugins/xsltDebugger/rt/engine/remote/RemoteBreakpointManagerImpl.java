@@ -17,12 +17,12 @@ package org.intellij.plugins.xsltDebugger.rt.engine.remote;
 
 import org.intellij.plugins.xsltDebugger.rt.engine.BreakpointManager;
 
-import javax.rmi.PortableRemoteObject;
 import java.io.File;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 
-public final class RemoteBreakpointManagerImpl extends PortableRemoteObject implements RemoteBreakpointManager {
+public final class RemoteBreakpointManagerImpl extends UnicastRemoteObject implements RemoteBreakpointManager {
   private final BreakpointManager myManager;
 
   public RemoteBreakpointManagerImpl(BreakpointManager manager) throws RemoteException {

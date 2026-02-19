@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.lang.Language;
@@ -7,10 +7,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 public interface EditorColors {
   ColorKey CARET_ROW_COLOR = ColorKey.createColorKey("CARET_ROW_COLOR");
@@ -19,6 +21,7 @@ public interface EditorColors {
   ColorKey LINE_NUMBERS_COLOR = ColorKey.createColorKey("LINE_NUMBERS_COLOR");
   ColorKey LINE_NUMBER_ON_CARET_ROW_COLOR = ColorKey.createColorKey("LINE_NUMBER_ON_CARET_ROW_COLOR");
   ColorKey ANNOTATIONS_COLOR = ColorKey.createColorKey("ANNOTATIONS_COLOR");
+  ColorKey ANNOTATIONS_LAST_COMMIT_COLOR = ColorKey.createColorKeyWithFallback("ANNOTATIONS_LAST_COMMIT_COLOR", ANNOTATIONS_COLOR);
   ColorKey READONLY_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_BACKGROUND");
   ColorKey READONLY_FRAGMENT_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_FRAGMENT_BACKGROUND");
   ColorKey WHITESPACES_COLOR = ColorKey.createColorKey("WHITESPACES");
@@ -27,11 +30,16 @@ public interface EditorColors {
   ColorKey STRING_CONTENT_INDENT_GUIDE_COLOR = ColorKey.createColorKey("STRING_CONTENT_INDENT_GUIDE");
   ColorKey SOFT_WRAP_SIGN_COLOR = ColorKey.createColorKey("SOFT_WRAP_SIGN_COLOR");
   ColorKey SELECTED_INDENT_GUIDE_COLOR = ColorKey.createColorKey("SELECTED_INDENT_GUIDE");
+  ColorKey MATCHED_BRACES_INDENT_GUIDE_COLOR = ColorKey.createColorKey("MATCHED_BRACES_INDENT_GUIDE_COLOR");
   ColorKey SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("SELECTION_BACKGROUND");
+  @ApiStatus.Experimental
+  ColorKey INACTIVE_SELECTION_BACKGROUND_COLOR = ColorKey.createColorKey("INACTIVE_SELECTION_BACKGROUND");
   ColorKey SELECTION_FOREGROUND_COLOR = ColorKey.createColorKey("SELECTION_FOREGROUND");
+  /**
+   * @deprecated use {@code ScrollBarPainter.THUMB_OPAQUE_BACKGROUND} instead
+   */
+  @Deprecated(forRemoval = true)
   ColorKey SCROLLBAR_THUMB_COLOR = ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.thumbColor" : "ScrollBar.thumbColor");
-  ColorKey SCROLLBAR_THUMB_WHILE_SCROLLING_COLOR =
-    ColorKey.createColorKey(SystemInfo.isMac ? "ScrollBar.Mac.hoverThumbColor" : "ScrollBar.hoverThumbColor");
 
   TextAttributesKey TAB_SELECTED = TextAttributesKey.createTextAttributesKey("TAB_SELECTED");
   TextAttributesKey TAB_SELECTED_INACTIVE = TextAttributesKey.createTextAttributesKey("TAB_SELECTED_INACTIVE");
@@ -59,15 +67,13 @@ public interface EditorColors {
 
   ColorKey GUTTER_BACKGROUND = ColorKey.createColorKey("GUTTER_BACKGROUND", new JBColor(0xf0f0f0, 0x313335));
   /**
-   * @deprecated use {@link #GUTTER_BACKGROUND}
+   * This key is used in New UI only (instead of GUTTER_BACKGROUND) and it is null by default.
    */
-  @Deprecated ColorKey LEFT_GUTTER_BACKGROUND = GUTTER_BACKGROUND;
+  ColorKey EDITOR_GUTTER_BACKGROUND = ColorKey.createColorKey("EDITOR_GUTTER_BACKGROUND");
   ColorKey NOTIFICATION_BACKGROUND = ColorKey.createColorKey("NOTIFICATION_BACKGROUND");
 
   ColorKey TEARLINE_COLOR = ColorKey.createColorKey("TEARLINE_COLOR");
   ColorKey SELECTED_TEARLINE_COLOR = ColorKey.createColorKey("SELECTED_TEARLINE_COLOR");
-  ColorKey SEPARATOR_ABOVE_COLOR = ColorKey.createColorKey("SEPARATOR_ABOVE_COLOR");
-  ColorKey SEPARATOR_BELOW_COLOR = ColorKey.createColorKey("SEPARATOR_BELOW_COLOR");
 
   ColorKey ADDED_LINES_COLOR = ColorKey.createColorKey("ADDED_LINES_COLOR");
   ColorKey MODIFIED_LINES_COLOR = ColorKey.createColorKey("MODIFIED_LINES_COLOR");
@@ -77,6 +83,8 @@ public interface EditorColors {
   ColorKey IGNORED_ADDED_LINES_BORDER_COLOR = ColorKey.createColorKey("IGNORED_ADDED_LINES_BORDER_COLOR");
   ColorKey IGNORED_MODIFIED_LINES_BORDER_COLOR = ColorKey.createColorKey("IGNORED_MODIFIED_LINES_BORDER_COLOR");
   ColorKey IGNORED_DELETED_LINES_BORDER_COLOR = ColorKey.createColorKey("IGNORED_DELETED_LINES_BORDER_COLOR");
+  ColorKey CHANGED_LINES_POPUP = ColorKey.createColorKey("CHANGED_LINES_POPUP");
+  ColorKey DIFF_BLOCK_AREA_HIGHLIGHT_MARKER = ColorKey.createColorKeyWithFallback("DIFF_BLOCK_AREA_HIGHLIGHT_MARKER", DELETED_LINES_COLOR);
 
   TextAttributesKey INJECTED_LANGUAGE_FRAGMENT = TextAttributesKey.createTextAttributesKey("INJECTED_LANGUAGE_FRAGMENT");
 
@@ -84,15 +92,22 @@ public interface EditorColors {
   TextAttributesKey BREADCRUMBS_HOVERED  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_HOVERED");
   TextAttributesKey BREADCRUMBS_CURRENT  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_CURRENT");
   TextAttributesKey BREADCRUMBS_INACTIVE = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_INACTIVE");
+  ColorKey BREADCRUMBS_BORDER_COLOR = ColorKey.createColorKeyWithFallback("BREADCRUMBS_BORDER_COLOR", INDENT_GUIDE_COLOR);
 
   TextAttributesKey CODE_LENS_BORDER_COLOR = TextAttributesKey.createTextAttributesKey("CODE_LENS_BORDER_COLOR");
 
   ColorKey VISUAL_INDENT_GUIDE_COLOR = ColorKey.createColorKey("VISUAL_INDENT_GUIDE");
 
-  ColorKey DOCUMENTATION_COLOR = ColorKey.createColorKey("DOCUMENTATION_COLOR", new JBColor(new Color(0xf7f7f7), new Color(0x46484a)));
+  ColorKey DOCUMENTATION_COLOR = ColorKey.createColorKey("DOCUMENTATION_COLOR");
 
-  @NotNull
-  static TextAttributesKey createInjectedLanguageFragmentKey(@Nullable Language language) {
+  ColorKey PREVIEW_BACKGROUND = ColorKey.createColorKey("PREVIEW_BACKGROUND");
+  ColorKey PREVIEW_BORDER_COLOR = ColorKey.createColorKeyWithFallback("PREVIEW_BORDER_COLOR", INDENT_GUIDE_COLOR);
+
+  ColorKey STICKY_LINES_BACKGROUND = ColorKey.createColorKey("STICKY_LINES_BACKGROUND");
+  ColorKey STICKY_LINES_HOVERED_COLOR = ColorKey.createColorKeyWithFallback("STICKY_LINES_HOVERED_COLOR", CARET_ROW_COLOR);
+  ColorKey STICKY_LINES_BORDER_COLOR = ColorKey.createColorKeyWithFallback("STICKY_LINES_BORDER_COLOR", RIGHT_MARGIN_COLOR);
+
+  static @NotNull TextAttributesKey createInjectedLanguageFragmentKey(@Nullable Language language) {
     Stack<Language> languages = new Stack<>();
     while (language != null && language != Language.ANY) {
       languages.push(language);
@@ -107,5 +122,11 @@ public interface EditorColors {
         currentKey);
     }
     return currentKey;
+  }
+
+  final class GlobalScheme {
+    public static @Nullable Color getColor(@NotNull ColorKey key) {
+      return EditorColorsManager.getInstance().getGlobalScheme().getColor(key);
+    }
   }
 }

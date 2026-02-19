@@ -1,31 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.codeInsight.highlighting
 
+import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerImpl
-import com.intellij.injected.editor.EditorWindow
+import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.api.UsageAccess
+import com.intellij.find.usages.api.UsageOptions
+import com.intellij.find.usages.impl.AllSearchOptions
+import com.intellij.find.usages.impl.buildQuery
+import com.intellij.find.usages.impl.symbolSearchTarget
+import com.intellij.find.usages.impl.usageAccess
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
-import com.intellij.model.psi.PsiSymbolDeclaration
-import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.targetSymbols
-import com.intellij.model.search.SearchService
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.annotations.ApiStatus
 
-internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): Boolean {
+fun highlightUsages(project: Project, editor: Editor, file: PsiFile): Boolean {
   val allTargets = targetSymbols(file, editor.caretModel.offset)
   if (allTargets.isEmpty()) {
     return false
@@ -38,11 +45,12 @@ internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): B
 }
 
 private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFile, symbol: Symbol, clearHighlights: Boolean) {
-  val fileToUse = InjectedLanguageManager.getInstance(project).getTopLevelFile((file as? PsiCompiledFile)?.decompiledPsiFile ?: file)
-  val editorToUse = (editor as? EditorWindow)?.delegate ?: editor
-  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = getUsageRanges(fileToUse, symbol)
+  val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = ActionUtil.underModalProgress(
+    project, FindBundle.message("progress.title.finding.usages")
+  ) { getUsageRanges(file, symbol) } ?: return
   HighlightUsagesHandler.highlightUsages(
-    project, editorToUse,
+    project, hostEditor,
     readRanges + readDeclarationRanges,
     writeRanges + writeDeclarationRanges,
     clearHighlights
@@ -50,49 +58,74 @@ private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFil
   HighlightUsagesHandler.setStatusText(project, null, readRanges.size + writeRanges.size, clearHighlights)
 }
 
-internal fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges {
+@ApiStatus.Internal
+fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
+  val psiTarget: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
+  val hostFile = InjectedLanguageManager.getInstance(file.project).getTopLevelFile(file) ?: file
+  if (psiTarget != null) {
+    return getPsiUsageRanges(hostFile, psiTarget)
+  }
+  else {
+    return getSymbolUsageRanges(hostFile, symbol)
+  }
+}
+
+private fun getPsiUsageRanges(hostFile: PsiFile, psiTarget: PsiElement): UsageRanges {
   val readRanges = ArrayList<TextRange>()
   val writeRanges = ArrayList<TextRange>()
   val readDeclarationRanges = ArrayList<TextRange>()
   val writeDeclarationRanges = ArrayList<TextRange>()
 
-  val searchScope: SearchScope = LocalSearchScope(file)
-  val project: Project = file.project
-  val psiTarget: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
-  val detector: ReadWriteAccessDetector? = if (psiTarget != null) ReadWriteAccessDetector.findDetector(psiTarget) else null
-  val refs: Collection<PsiSymbolReference> = getReferences(project, searchScope, symbol, psiTarget)
-  for (ref: PsiSymbolReference in refs) {
-    val write: Boolean = detector != null &&
-                         ref is PsiReference &&
-                         detector.getReferenceAccess(psiTarget!!, ref) != ReadWriteAccessDetector.Access.Read
+  val project = hostFile.project
+  val searchScope: SearchScope = LocalSearchScope(hostFile)
+  val detector: ReadWriteAccessDetector? = ReadWriteAccessDetector.findDetector(psiTarget)
+  val oldHandler: FindUsagesHandler? = (FindManager.getInstance(project) as FindManagerImpl)
+    .findUsagesManager
+    .getFindUsagesHandler(psiTarget, true)
+  val refs = oldHandler?.findReferencesToHighlight(psiTarget, searchScope)
+             ?: ReferencesSearch.search(psiTarget, searchScope).findAll()
+  for (ref: PsiReference in refs) {
+    val write: Boolean = detector != null && detector.getReferenceAccess(psiTarget, ref) != ReadWriteAccessDetector.Access.Read
     HighlightUsagesHandler.collectHighlightRanges(ref, if (write) writeRanges else readRanges)
   }
-  val declarations: Collection<PsiSymbolDeclaration> = SearchService.getInstance()
-    .searchPsiSymbolDeclarations(project, symbol, searchScope)
-    .findAll()
-  val declarationWrite: Boolean = (psiTarget != null) && (detector != null) && detector.isDeclarationWriteAccess(psiTarget)
-  for (declaration: PsiSymbolDeclaration in declarations) {
-    HighlightUsagesHandler.collectHighlightRanges(
-      declaration.declaringElement, declaration.declarationRange, if (declarationWrite) writeDeclarationRanges else readDeclarationRanges
-    )
+
+  val declRange = HighlightUsagesHandler.getNameIdentifierRange(hostFile, psiTarget)
+  if (declRange != null) {
+    val write = detector != null && detector.isDeclarationWriteAccess(psiTarget)
+    if (write) {
+      writeDeclarationRanges.add(declRange)
+    }
+    else {
+      readDeclarationRanges.add(declRange)
+    }
   }
 
   return UsageRanges(readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges)
 }
 
-private fun getReferences(project: Project,
-                          searchScope: SearchScope,
-                          symbol: Symbol,
-                          psiTarget: PsiElement?): Collection<PsiSymbolReference> {
-  if (psiTarget != null) {
-    val oldHandler: FindUsagesHandler? = (FindManager.getInstance(project) as FindManagerImpl)
-      .findUsagesManager
-      .getFindUsagesHandler(psiTarget, true)
-    if (oldHandler != null) {
-      return oldHandler.findReferencesToHighlight(psiTarget, searchScope)
+private fun getSymbolUsageRanges(hostFile: PsiFile, symbol: Symbol): UsageRanges? {
+  val project: Project = hostFile.project
+  val searchTarget = symbolSearchTarget(project, symbol) ?: return null
+  val searchScope = LocalSearchScope(hostFile)
+  val usages: Collection<Usage> = buildQuery(project, searchTarget, AllSearchOptions(
+    options = UsageOptions.createOptions(searchScope),
+    textSearch = true,
+  )).findAll()
+  val readRanges = ArrayList<TextRange>()
+  val readDeclarationRanges = ArrayList<TextRange>()
+  val writeRanges = ArrayList<TextRange>()
+  val writeDeclarationRanges = ArrayList<TextRange>()
+  for (usage in usages) {
+    if (usage !is PsiUsage) {
+      continue
     }
+    val collector: ArrayList<TextRange> = when (Pair(usageAccess(usage) ?: UsageAccess.Read, usage.declaration)) {
+      Pair(UsageAccess.Read, true) -> readDeclarationRanges
+      Pair(UsageAccess.Write, true), Pair(UsageAccess.ReadWrite, true) -> writeDeclarationRanges
+      Pair(UsageAccess.Write, false), Pair(UsageAccess.ReadWrite, false) -> writeRanges
+      else -> readRanges
+    }
+    HighlightUsagesHandler.collectHighlightRanges(usage.file, usage.range, collector)
   }
-  return SearchService.getInstance()
-    .searchPsiSymbolReferences(project, symbol, searchScope)
-    .findAll()
+  return UsageRanges(readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges)
 }

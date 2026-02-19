@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.codeInsight.unwrap.UnwrapDescriptorBase;
 import com.intellij.codeInsight.unwrap.Unwrapper;
 
-public class GroovyUnwrapDescriptor extends UnwrapDescriptorBase {
+public final class GroovyUnwrapDescriptor extends UnwrapDescriptorBase {
   @Override
   public Unwrapper[] createUnwrappers() {
     return new Unwrapper[]{

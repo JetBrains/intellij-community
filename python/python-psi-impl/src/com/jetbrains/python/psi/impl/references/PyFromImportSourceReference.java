@@ -29,21 +29,18 @@ import java.util.List;
 /**
  * Reference to the import source in a 'from ... import' statement:<br/>
  * <code>from <u>foo</u> import name</code>
-
- * @author yole
  */
 public class PyFromImportSourceReference extends PyImportReference {
   private final PyFromImportStatement myStatement;
-  
+
   public PyFromImportSourceReference(PyReferenceExpressionImpl element, PyResolveContext context) {
     super(element, context);
     myStatement = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
     assert myStatement != null;
   }
 
-  @NotNull
   @Override
-  protected List<RatedResolveResult> resolveInner() {
+  protected @NotNull List<RatedResolveResult> resolveInner() {
     List<PsiElement> targets = ResolveImportUtil.resolveFromImportStatementSource(myStatement, myElement.asQualifiedName());
     return ResolveImportUtil.rateResults(targets);
   }

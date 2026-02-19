@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public enum KeyState {
   STATE_INIT,
   STATE_WAIT_FOR_SECOND_KEYSTROKE,

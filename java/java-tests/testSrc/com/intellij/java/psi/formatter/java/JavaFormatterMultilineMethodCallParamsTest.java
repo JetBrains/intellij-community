@@ -20,138 +20,156 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
 
   public void testChainedMethodInsideCall() {
     doMethodTest(
-      "call(new StringBuilder()\n" +
-      ".append(\"aaa\")\n" +
-      ".append(\"bbbb\"));",
-      "call(new StringBuilder()\n" +
-      "        .append(\"aaa\")\n" +
-      "        .append(\"bbbb\"));"
+      """
+        call(new StringBuilder()
+        .append("aaa")
+        .append("bbbb"));""",
+      """
+        call(new StringBuilder()
+                .append("aaa")
+                .append("bbbb"));"""
     );
   }
 
   public void testChainedMethodInsideCall_WithRParenOnNewLine() {
     doMethodTest(
-      "call(new StringBuilder()\n" +
-      ".append(\"aaa\")\n" +
-      ".append(\"bbbb\")\n" +
-      ");",
-      "call(new StringBuilder()\n" +
-      "        .append(\"aaa\")\n" +
-      "        .append(\"bbbb\")\n" +
-      ");"
+      """
+        call(new StringBuilder()
+        .append("aaa")
+        .append("bbbb")
+        );""",
+      """
+        call(new StringBuilder()
+                .append("aaa")
+                .append("bbbb")
+        );"""
     );
   }
   
   public void testLambdas() {
     doTextTest(
-      "public class Main {\n" +
-      "    public static void main(String... args) throws Exception {\n" +
-      "        RatpackServer.start(server -> server\n" +
-      "                        .handlers(chain -> chain\n" +
-      "                                        .get(ctx -> ctx.render(\"Hello World!\"))\n" +
-      "                                        .get(\":name\", ctx -> ctx.render(\"Hello \" + ctx.getPathTokens().get(\"name\") + \"!\"))\n" +
-      "                        )\n" +
-      "        );\n" +
-      "    }\n" +
-      "}",
-      "public class Main {\n" +
-      "    public static void main(String... args) throws Exception {\n" +
-      "        RatpackServer.start(server -> server\n" +
-      "                .handlers(chain -> chain\n" +
-      "                        .get(ctx -> ctx.render(\"Hello World!\"))\n" +
-      "                        .get(\":name\", ctx -> ctx.render(\"Hello \" + ctx.getPathTokens().get(\"name\") + \"!\"))\n" +
-      "                )\n" +
-      "        );\n" +
-      "    }\n" +
-      "}"
+      """
+        public class Main {
+            public static void main(String... args) throws Exception {
+                RatpackServer.start(server -> server
+                                .handlers(chain -> chain
+                                                .get(ctx -> ctx.render("Hello World!"))
+                                                .get(":name", ctx -> ctx.render("Hello " + ctx.getPathTokens().get("name") + "!"))
+                                )
+                );
+            }
+        }""",
+      """
+        public class Main {
+            public static void main(String... args) throws Exception {
+                RatpackServer.start(server -> server
+                        .handlers(chain -> chain
+                                .get(ctx -> ctx.render("Hello World!"))
+                                .get(":name", ctx -> ctx.render("Hello " + ctx.getPathTokens().get("name") + "!"))
+                        )
+                );
+            }
+        }"""
     );
   }
 
   public void testChainedMethodInsideCall_Shifted() {
     doMethodTest(
-      "call(new StringBuilder()\n" +
-      ".append(\"aaa\")\n" +
-      ".append(\"bbbb\"),\n" +
-      "\"aaaa\");",
-      "call(new StringBuilder()\n" +
-      "                .append(\"aaa\")\n" +
-      "                .append(\"bbbb\"),\n" +
-      "        \"aaaa\");"
+      """
+        call(new StringBuilder()
+        .append("aaa")
+        .append("bbbb"),
+        "aaaa");""",
+      """
+        call(new StringBuilder()
+                        .append("aaa")
+                        .append("bbbb"),
+                "aaaa");"""
     );
   }
 
   public void testChainedMethodInsideCall_Shifted_WithRParentOnNewLine() {
     doMethodTest(
-      "call(new StringBuilder()\n" +
-      ".append(\"aaa\")\n" +
-      ".append(\"bbbb\"),\n" +
-      "\"aaaa\"\n" +
-      ");",
-      "call(new StringBuilder()\n" +
-      "                .append(\"aaa\")\n" +
-      "                .append(\"bbbb\"),\n" +
-      "        \"aaaa\"\n" +
-      ");"
+      """
+        call(new StringBuilder()
+        .append("aaa")
+        .append("bbbb"),
+        "aaaa"
+        );""",
+      """
+        call(new StringBuilder()
+                        .append("aaa")
+                        .append("bbbb"),
+                "aaaa"
+        );"""
     );
   }
 
   public void testAnonClassAsParameter() {
     doMethodTest(
-      "call(new Runnable() {\n" +
-      "@Override\n" +
-      "public void run() {\n" +
-      "}\n" +
-      "});",
-      "call(new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "    }\n" +
-      "});"
+      """
+        call(new Runnable() {
+        @Override
+        public void run() {
+        }
+        });""",
+      """
+        call(new Runnable() {
+            @Override
+            public void run() {
+            }
+        });"""
     );
   }
 
   public void testAnonClassWithRParent_OnNextLine() {
     doMethodTest(
-      "foo(new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "    }\n" +
-      "}\n" +
-      ");\n",
-      "foo(new Runnable() {\n" +
-      "        @Override\n" +
-      "        public void run() {\n" +
-      "        }\n" +
-      "    }\n" +
-      ");\n"
+      """
+        foo(new Runnable() {
+            @Override
+            public void run() {
+            }
+        }
+        );
+        """,
+      """
+        foo(new Runnable() {
+                @Override
+                public void run() {
+                }
+            }
+        );
+        """
     );
   }
   
   public void testMethodBracketsAlignment() {
     getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
     doTextTest(
-      "public class Foo {\n"                                                +
-      "  private IntPredicate example1() {\n"                               +
-      "    return Boo.combine(Boo.p1(),\n"                                  +
-      "                       Boo.p2());\n"                                 +
-      "  }\n"                                                               +
-      "  \n"                                                                +
-      "  private boolean example2() {\n"                                    +
-      "    return IntStream.range(0, 4).allMatch(Boo.combine(Boo.p1(),\n"   +
-      "                                                      Boo.p2()));\n" +
-      "  }\n"                                                               +
-      "}", 
-      "public class Foo {\n"                                                  +
-      "    private IntPredicate example1() {\n"                               +
-      "        return Boo.combine(Boo.p1(),\n"                                +
-      "                Boo.p2());\n"                                          +
-      "    }\n"                                                               +
-      "\n"                                                                  +
-      "    private boolean example2() {\n"                                    +
-      "        return IntStream.range(0, 4).allMatch(Boo.combine(Boo.p1(),\n" +
-      "                Boo.p2()));\n" +
-      "    }\n"                                                               +
-      "}"
+      """
+        public class Foo {
+          private IntPredicate example1() {
+            return Boo.combine(Boo.p1(),
+                               Boo.p2());
+          }
+         \s
+          private boolean example2() {
+            return IntStream.range(0, 4).allMatch(Boo.combine(Boo.p1(),
+                                                              Boo.p2()));
+          }
+        }""",
+      """
+        public class Foo {
+            private IntPredicate example1() {
+                return Boo.combine(Boo.p1(),
+                        Boo.p2());
+            }
+
+            private boolean example2() {
+                return IntStream.range(0, 4).allMatch(Boo.combine(Boo.p1(),
+                        Boo.p2()));
+            }
+        }"""
     );
   }
   

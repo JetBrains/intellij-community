@@ -3,7 +3,12 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.ast
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferStringAttribute
@@ -30,9 +35,9 @@ enum class Visibility {
 fun extractVisibility(element : PsiModifierListOwner) : Visibility {
   val modifierList = element.modifierList as? GrModifierList ?: return Visibility.PUBLIC
   return when {
-    hasModifierProperty(modifierList, "public") -> Visibility.PUBLIC
-    hasModifierProperty(modifierList, "private") -> Visibility.PRIVATE
-    hasModifierProperty(modifierList, "protected") -> Visibility.PROTECTED
+    hasModifierProperty(modifierList, "public", false) -> Visibility.PUBLIC
+    hasModifierProperty(modifierList, "private", false) -> Visibility.PRIVATE
+    hasModifierProperty(modifierList, "protected", false) -> Visibility.PROTECTED
     else -> Visibility.PACKAGE_PRIVATE
   }
 }

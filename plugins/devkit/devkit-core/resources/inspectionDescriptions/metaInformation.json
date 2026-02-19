@@ -1,0 +1,268 @@
+{
+  "inspections": [
+    {
+      "id": "MigrateToOptControl",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StatisticsCollectorNotRegistered",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PresentationAnnotation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IntentionDescriptionNotFoundInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MissingActionUpdateThread",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ComponentNotRegistered",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseDPIAwareInsets",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ProductModulesXmlDom",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PluginXmlPluginLogo",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ActionIsNotPreviewFriendly",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LightServiceMigrationCode",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "InspectionUsingGrayColors",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UastHintedVisitorAdapterHints",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UseJBColor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PotentialDeadlockInServiceInitialization",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ActionPresentationInstantiatedInCtor",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PluginXmlRegistrationCheck",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UsePlatformProcessAwaitExit",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PsiElementConcatenation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnsafeReturnStatementVisitor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PluginXmlValidity",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "InspectionDescriptionNotFoundInspection",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "LeakableMapKey",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnsafeVfsRecursion",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseDPIAwareBorders",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExtensionRegisteredAsServiceOrComponent",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseVirtualFileEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MismatchedLightServiceLevelAndCtor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MissingRecentApi",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SimplifiableServiceRetrieving",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PluginXmlExtensionRegistration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UsePrimitiveTypes",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SerializableCtor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnresolvedPluginConfigReference",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CancellationCheckInLoops",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StaticInitializationInExtensions",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PluginXmlDynamicPlugin",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ComponentRegistrationProblems",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LightServiceMustBeFinal",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LightServiceMigrationXML",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "MissingAccessibleContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UsePluginIdEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectParentDisposable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TokenSetInParserDefinition",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PostfixTemplateDescriptionNotFound",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "FileEqualsUsage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectCancellationExceptionHandling",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UElementAsPsi",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ListenerImplementationMustNotBeDisposable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExtensionClassShouldBeFinalAndNonPublic",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JComponentDataProvider",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ApplicationServiceAsStaticFinalFieldOrProperty",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "QuickFixGetFamilyNameViolation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UndesirableClassUsage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CallingMethodShouldBeRequiresBlockingContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonDefaultConstructor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnknownIdInMetaInformation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ThreadingConcurrency",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnspecifiedActionsPlace",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectServiceRetrieving",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StatefulEp",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PathAnnotationInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "KeymapXmlDom",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CanBeDumbAware",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "checkedExceptions",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseIntelliJVirtualThreads",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

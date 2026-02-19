@@ -2,8 +2,7 @@
 package git4idea.diff
 
 import com.intellij.diff.DiffContentFactory
-import com.intellij.diff.DiffRequestFactoryImpl
-import com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR
+import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
@@ -14,7 +13,9 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.*
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getBaseVersion
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getRevisionTitle
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.getYourVersion
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
 import com.intellij.util.ThreeState
 import git4idea.i18n.GitBundle
@@ -51,7 +52,7 @@ class GitSubmoduleDiffRequestProvider : ChangeDiffRequestProvider {
     val factory = DiffContentFactory.getInstance()
     val beforeContent = beforeRevision?.content?.let { factory.create(it) } ?: factory.createEmpty()
     val afterContent = afterRevision?.content?.let { factory.create(it) } ?: factory.createEmpty()
-    val title = DiffRequestFactoryImpl.getTitle(beforeRevision?.file, afterRevision?.file, DIFF_TITLE_RENAME_SEPARATOR)
+    val title = DiffRequestFactory.getInstance().getTitleForModification(beforeRevision?.file, afterRevision?.file)
     return SimpleDiffRequest(GitBundle.message("label.diff.content.title.submodule.suffix", title),
                              beforeContent,
                              afterContent,

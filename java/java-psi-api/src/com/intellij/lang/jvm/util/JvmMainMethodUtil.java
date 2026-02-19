@@ -1,9 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.util;
 
-import com.intellij.lang.jvm.*;
-import com.intellij.lang.jvm.types.*;
-import org.jetbrains.annotations.Contract;
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.JvmMethod;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.lang.jvm.types.JvmArrayType;
+import com.intellij.lang.jvm.types.JvmPrimitiveType;
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
+import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.lang.jvm.types.JvmType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +23,11 @@ import static com.intellij.util.containers.ContainerUtil.find;
 import static java.util.Objects.requireNonNull;
 
 // TODO support com.intellij.codeInsight.runner.JavaMainMethodProvider
+
+/**
+ * @deprecated These methods are not supported for new features, please use original methods for languages
+ */
+@Deprecated
 public final class JvmMainMethodUtil {
 
   private static final String MAIN = "main";
@@ -27,31 +42,42 @@ public final class JvmMainMethodUtil {
 
   public static boolean hasMainMethodInHierarchy(@NotNull JvmClass clazz) {
     if (!canBeMainClass(clazz)) return false;
-    return findMainMethodInHierarchy(clazz) != null;
+    //just to partially support instance methods for Java, these methods are abandoned,
+    //please use original methods
+    if (clazz instanceof PsiClass && PsiMethodUtil.hasMainMethod((PsiClass)clazz)) return true;
+
+    JvmMethod methodInHierarchy = JvmHierarchyUtil.traverseSupers(clazz, superClazz -> {
+      if (superClazz.getClassKind() == JvmClassKind.INTERFACE) {
+        return null;
+      }
+      return findMainMethodInClass(superClazz);
+    });
+    return methodInHierarchy != null;
   }
 
   private static boolean canBeMainClass(@NotNull JvmClass clazz) {
-    if (clazz.getName() == null) return false; // anonymous classes
+    if (clazz.getQualifiedName() == null) return false; // anonymous and local classes
     final JvmClassKind kind = clazz.getClassKind();
     if (kind == JvmClassKind.ANNOTATION) return false;
     return clazz.getContainingClass() == null || clazz.hasModifier(JvmModifier.STATIC);
   }
 
-  @Nullable
-  private static JvmMethod findMainMethodInHierarchy(@NotNull JvmClass clazz) {
-    return JvmHierarchyUtil.traverseSupers(clazz, JvmMainMethodUtil::findMainMethodInClass);
-  }
-
-  @Nullable
-  private static JvmMethod findMainMethodInClass(@NotNull JvmClass clazz) {
+  private static @Nullable JvmMethod findMainMethodInClass(@NotNull JvmClass clazz) {
     JvmMethod[] candidates = clazz.findMethodsByName(MAIN);
     return find(candidates, JvmMainMethodUtil::hasMainMethodSignature);
   }
 
   /**
-   * @return {@code true} if the method matches {@code public static void xxx(String[] args) {}}, otherwise {@code false}
+   * @return {@code true} if the method matches {@code public static void xxx(String[] args) {}}, otherwise {@code false}.
+   * It also supports java instance methods.
+   * @see JvmMainMethodUtil
    */
   private static boolean hasMainMethodSignature(@NotNull JvmMethod method) {
+    //just to partially support instance methods for Java, these methods are abandoned
+    //please use original methods
+    if (method instanceof PsiMethod &&
+        PsiMethodUtil.isMainMethod((PsiMethod)method)) return true;
+
     if (method.isConstructor()) return false;
     if (!method.hasModifier(JvmModifier.PUBLIC)) return false;
     if (!method.hasModifier(JvmModifier.STATIC)) return false;

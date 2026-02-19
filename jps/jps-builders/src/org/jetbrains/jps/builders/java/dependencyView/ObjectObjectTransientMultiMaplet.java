@@ -1,22 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectObjectProcedure;
+import com.intellij.util.PairProcessor;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.function.Supplier;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
+final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
+  private final Object2ObjectOpenCustomHashMap<K, Collection<V>> myMap;
+  private final Supplier<? extends Collection<V>> myCollectionFactory;
 
-  private final THashMap<K, Collection<V>> myMap;
-  private final BuilderCollectionFactory<V> myCollectionFactory;
-
-  public ObjectObjectTransientMultiMaplet(TObjectHashingStrategy<K> hashingStrategy, BuilderCollectionFactory<V> collectionFactory) {
-    myMap = new THashMap<>(hashingStrategy);
+  ObjectObjectTransientMultiMaplet(Hash.Strategy<K> hashingStrategy, Supplier<? extends Collection<V>> collectionFactory) {
+    myMap = new Object2ObjectOpenCustomHashMap<>(hashingStrategy);
     myCollectionFactory = collectionFactory;
   }
 
@@ -32,12 +31,9 @@ public class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends O
 
   @Override
   public void putAll(ObjectObjectMultiMaplet<K, V> m) {
-    m.forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(K key, Collection<V> value) {
-        put(key, value);
-        return true;
-      }
+    m.forEachEntry((key, value) -> {
+      put(key, value);
+      return true;
     });
   }
 
@@ -66,7 +62,7 @@ public class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends O
   public void put(final K key, final V value) {
     final Collection<V> collection = myMap.get(key);
     if (collection == null) {
-      final Collection<V> x = myCollectionFactory.create();
+      final Collection<V> x = myCollectionFactory.get();
       x.add(value);
       myMap.put(key, x);
     }
@@ -90,12 +86,8 @@ public class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends O
   @Override
   public void removeAll(K key, Collection<V> values) {
     final Collection<V> collection = myMap.get(key);
-    if (collection != null) {
-      if (collection.removeAll(values)) {
-        if (collection.isEmpty()) {
-          myMap.remove(key);
-        }
-      }
+    if (collection != null && collection.removeAll(values) && collection.isEmpty()) {
+      myMap.remove(key);
     }
   }
 
@@ -106,18 +98,17 @@ public class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends O
 
   @Override
   public void replaceAll(ObjectObjectMultiMaplet<K, V> m) {
-    m.forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(K key, Collection<V> value) {
-        replace(key, value);
-        return true;
-      }
+    m.forEachEntry((key, value) -> {
+      replace(key, value);
+      return true;
     });
   }
 
   @Override
-  public void forEachEntry(TObjectObjectProcedure<K, Collection<V>> procedure) {
-    myMap.forEachEntry(procedure);
+  public void forEachEntry(@NotNull PairProcessor<? super K, ? super Collection<V>> procedure) {
+    for (Map.Entry<K, Collection<V>> entry : myMap.entrySet()) {
+      if (!procedure.process(entry.getKey(), entry.getValue())) break;
+    }
   }
 
   @Override

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ConvertToStatic")
 
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic
 
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.light.LightElement
 import org.jetbrains.plugins.groovy.intentions.style.AddReturnTypeFix
@@ -16,14 +17,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 
 private const val MAX_FIX_ITERATIONS = 5
 
 fun applyErrorFixes(element: GroovyPsiElement) {
+  if (!element.isPhysical) {
+    return
+  }
   repeat(MAX_FIX_ITERATIONS) {
     val checker = TypeChecker()
     element.accept(TypeCheckVisitor(checker))
+    PsiDocumentManager.getInstance(element.project).doPostponedOperationsAndUnblockDocument(element.containingFile.viewProvider.document)
     if (checker.applyFixes() == 0) {
       return
     }
@@ -53,7 +58,7 @@ fun collectReferencedEmptyDeclarations(scope: GroovyPsiElement, recursive: Boole
 
 private class TypeCheckVisitor(val checker: TypeChecker) : GroovyRecursiveElementVisitor() {
   override fun visitElement(element: GroovyPsiElement) {
-    if (PsiUtil.isCompileStatic(element)) {
+    if (isCompileStatic(element)) {
       element.accept(checker)
     }
     super.visitElement(element)
@@ -71,8 +76,7 @@ private class EmptyDeclarationTypeCollector(private val recursive: Boolean) : Gr
   private fun checkReference(referenceExpression: GroovyReference) {
     val resolveResult = referenceExpression.advancedResolve()
     if (!resolveResult.isValidResult) return
-    val element = resolveResult.element
-    when (element) {
+    when (val element = resolveResult.element) {
       is GrAccessorMethod -> {
         checkField(element.property)
       }

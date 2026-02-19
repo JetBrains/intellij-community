@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.Language;
@@ -7,25 +7,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.PatchedWeakReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Contains utility methods for working with {@link WhiteSpaceFormattingStrategy}.
- *
- * @author Denis Zhdanov
  */
 public final class WhiteSpaceFormattingStrategyFactory {
+  public static final WhiteSpaceFormattingStrategy DEFAULT_STRATEGY =
+    new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n');
 
-  private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Collections.singletonList(
-    new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n')
-  );
-
-  private static final AtomicReference<PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>> myCachedStrategies
+  private static final AtomicReference<WeakReference<Collection<WhiteSpaceFormattingStrategy>>> myCachedStrategies
     = new AtomicReference<>();
 
   private WhiteSpaceFormattingStrategyFactory() {
@@ -35,7 +33,7 @@ public final class WhiteSpaceFormattingStrategyFactory {
    * @return    default language-agnostic white space strategy
    */
   public static WhiteSpaceFormattingStrategy getStrategy() {
-    return new CompositeWhiteSpaceFormattingStrategy(SHARED_STRATEGIES);
+    return DEFAULT_STRATEGY;
   }
 
   /**
@@ -43,36 +41,35 @@ public final class WhiteSpaceFormattingStrategyFactory {
    *
    * @param language    target language
    * @return            white space strategy to use for the given language
-   * @throws IllegalStateException      if white space strategies configuration is invalid
    */
-  @NotNull
-  public static WhiteSpaceFormattingStrategy getStrategy(@NotNull Language language) throws IllegalStateException {
-    CompositeWhiteSpaceFormattingStrategy result = new CompositeWhiteSpaceFormattingStrategy(SHARED_STRATEGIES);
+  public static @NotNull WhiteSpaceFormattingStrategy getStrategy(@NotNull Language language) {
     WhiteSpaceFormattingStrategy strategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE.forLanguage(language);
     if (strategy != null) {
-      result.addStrategy(strategy);
+      if (strategy.replaceDefaultStrategy()) {
+        return strategy;
+      }
+      else {
+        return new CompositeWhiteSpaceFormattingStrategy(List.of(DEFAULT_STRATEGY, strategy));
+      }
     }
-    return result;
+    else {
+      return getStrategy();
+    }
   }
 
   /**
    * @return    collection of all registered white space strategies
    */
-  @NotNull
-  public static Collection<WhiteSpaceFormattingStrategy> getAllStrategies() {
+  public static @NotNull Collection<WhiteSpaceFormattingStrategy> getAllStrategies() {
     final WeakReference<Collection<WhiteSpaceFormattingStrategy>> reference = myCachedStrategies.get();
     final Collection<WhiteSpaceFormattingStrategy> strategies = SoftReference.dereference(reference);
     if (strategies != null) {
       return strategies;
     }
     final Collection<Language> languages = Language.getRegisteredLanguages();
-    if (languages == null) {
-      final List<WhiteSpaceFormattingStrategy> result = Collections.emptyList();
-      myCachedStrategies.set(new PatchedWeakReference<>(result));
-      return result;
-    }
 
-    Set<WhiteSpaceFormattingStrategy> result = new HashSet<>(SHARED_STRATEGIES);
+    Set<WhiteSpaceFormattingStrategy> result = new HashSet<>();
+    result.add(DEFAULT_STRATEGY);
     final LanguageWhiteSpaceFormattingStrategy languageStrategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE;
     for (Language language : languages) {
       final WhiteSpaceFormattingStrategy strategy = languageStrategy.forLanguage(language);
@@ -80,7 +77,7 @@ public final class WhiteSpaceFormattingStrategyFactory {
         result.add(strategy);
       }
     }
-    myCachedStrategies.set(new PatchedWeakReference<>(result));
+    myCachedStrategies.set(new WeakReference<>(result));
     return result;
   }
 
@@ -89,9 +86,8 @@ public final class WhiteSpaceFormattingStrategyFactory {
    *
    * @param editor      editor that manages target document
    * @return            white space strategy for the document managed by the given editor
-   * @throws IllegalStateException    if white space strategies configuration is invalid
    */
-  public static WhiteSpaceFormattingStrategy getStrategy(@NotNull Editor editor) throws IllegalStateException {
+  public static WhiteSpaceFormattingStrategy getStrategy(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project != null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

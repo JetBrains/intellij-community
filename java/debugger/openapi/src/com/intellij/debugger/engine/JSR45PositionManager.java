@@ -1,12 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,10 +14,15 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ClassNotPreparedException;
+import com.sun.jdi.Location;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,23 +37,33 @@ import java.util.regex.Pattern;
  */
 public abstract class JSR45PositionManager<Scope> implements PositionManager {
   private static final Logger LOG = Logger.getInstance(JSR45PositionManager.class);
-  protected final DebugProcess      myDebugProcess;
+  protected final DebugProcess myDebugProcess;
   protected final Scope myScope;
   private final String myStratumId;
   protected final SourcesFinder<Scope> mySourcesFinder;
   protected final String GENERATED_CLASS_PATTERN;
-  protected Matcher myGeneratedClassPatternMatcher;
+  protected final Matcher myGeneratedClassPatternMatcher;
   private final Set<LanguageFileType> myFileTypes;
 
+  public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final SourcesFinder<Scope> sourcesFinder) {
+    this(debugProcess, scope, stratumId, null, sourcesFinder);
+  }
+
+  /**
+   * @deprecated use JSR45PositionManager(DebugProcess, Scope, String, SourcesFinder) and override {@link #isAcceptedFileType(FileType)}
+   * to check the file types.
+   */
+  @Deprecated
   public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final LanguageFileType[] acceptedFileTypes,
                               final SourcesFinder<Scope> sourcesFinder) {
     myDebugProcess = debugProcess;
     myScope = scope;
     myStratumId = stratumId;
-    myFileTypes = ContainerUtil.immutableSet(acceptedFileTypes);
+    myFileTypes = acceptedFileTypes == null ? null : 
+                  Collections.unmodifiableSet(ContainerUtil.newHashSet(acceptedFileTypes)); // removes possible duplicates
     mySourcesFinder = sourcesFinder;
     String generatedClassPattern = getGeneratedClassesPackage();
-    if(generatedClassPattern.length() == 0) {
+    if (generatedClassPattern.isEmpty()) {
       generatedClassPattern = getGeneratedClassesNamePattern();
     }
     else {
@@ -59,8 +73,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     myGeneratedClassPatternMatcher = Pattern.compile(generatedClassPattern.replaceAll("\\*", ".*")).matcher("");
   }
 
-  @NonNls
-  protected abstract String getGeneratedClassesPackage();
+  protected abstract @NonNls String getGeneratedClassesPackage();
 
   protected String getGeneratedClassesNamePattern() {
     return "*";
@@ -77,7 +90,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     try {
       String sourcePath = getRelativeSourcePathByLocation(location);
       PsiFile file = mySourcesFinder.findSourceFile(sourcePath, myDebugProcess.getProject(), myScope);
-      if(file != null) {
+      if (file != null) {
         int lineNumber = getLineNumber(location);
         sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
       }
@@ -87,7 +100,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     catch (Throwable e) {
       LOG.info(e);
     }
-    if(sourcePosition == null) {
+    if (sourcePosition == null) {
       throw NoDataException.INSTANCE;
     }
     return sourcePosition;
@@ -102,11 +115,10 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   @Override
-  @NotNull
-  public List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException {
+  public @NotNull List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException {
     checkSourcePositionFileType(classPosition);
 
-    final List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().allClasses();
+    final List<ReferenceType> referenceTypes = VirtualMachineProxy.getCurrent().allClasses();
 
     final List<ReferenceType> result = new ArrayList<>();
 
@@ -114,7 +126,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
       myGeneratedClassPatternMatcher.reset(referenceType.name());
       if (myGeneratedClassPatternMatcher.matches()) {
         final List<Location> locations = locationsOfClassAt(referenceType, classPosition);
-        if (locations != null && locations.size() > 0) {
+        if (locations != null && !locations.isEmpty()) {
           result.add(referenceType);
         }
       }
@@ -123,25 +135,37 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     return result;
   }
 
-  @NotNull
+  /**
+   * @deprecated use {@link #isAcceptedFileType(FileType)} instead
+   */
+  @Deprecated
   @Override
-  public Set<LanguageFileType> getAcceptedFileTypes() {
+  public @NotNull Set<LanguageFileType> getAcceptedFileTypes() {
+    if (myFileTypes == null) {
+      throw new IllegalStateException("Either pass file types to constructor or override getAcceptedFileTypes() method");
+    }
     return myFileTypes;
+  }
+
+  @Override
+  public boolean isAcceptedFileType(@NotNull FileType fileType) {
+    if (myFileTypes == null) {
+      throw new IllegalStateException("Either pass file types to constructor or override isAcceptedFileType(FileType) method");
+    }
+    return myFileTypes.contains(fileType);
   }
 
   private void checkSourcePositionFileType(final SourcePosition classPosition) throws NoDataException {
     final FileType fileType = classPosition.getFile().getFileType();
-    if(!myFileTypes.contains(fileType)) {
+    if (!isAcceptedFileType(fileType)) {
       throw NoDataException.INSTANCE;
     }
   }
 
   @Override
-  @NotNull
-  public List<Location> locationsOfLine(@NotNull final ReferenceType type, @NotNull final SourcePosition position) throws NoDataException {
+  public @NotNull List<Location> locationsOfLine(final @NotNull ReferenceType type, final @NotNull SourcePosition position) throws NoDataException {
     List<Location> locations = locationsOfClassAt(type, position);
     return locations != null ? locations : Collections.emptyList();
-
   }
 
   private List<Location> locationsOfClassAt(final ReferenceType type, final SourcePosition position) throws NoDataException {
@@ -178,7 +202,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     });
   }
 
-  protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
+  protected @Unmodifiable List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
     return ContainerUtil.map(type.sourcePaths(myStratumId), this::getRelativePath);
   }
 
@@ -188,7 +212,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
+  public ClassPrepareRequest createPrepareRequest(final @NotNull ClassPrepareRequestor requestor, final @NotNull SourcePosition position)
     throws NoDataException {
     checkSourcePositionFileType(position);
 
@@ -201,9 +225,9 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   }
 
   protected void onClassPrepare(final DebugProcess debuggerProcess, final ReferenceType referenceType,
-                              final SourcePosition position, final ClassPrepareRequestor requestor) {
+                                final SourcePosition position, final ClassPrepareRequestor requestor) {
     try {
-      if(locationsOfClassAt(referenceType, position) != null) {
+      if (locationsOfClassAt(referenceType, position) != null) {
         requestor.processClassPrepare(debuggerProcess, referenceType);
       }
     }
@@ -228,5 +252,4 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
 
     return sourcePath;
   }
-
 }

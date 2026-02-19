@@ -1,6 +1,6 @@
 # coding=utf-8
 import sys
-from unittest import TestResult, TextTestRunner
+from unittest import TextTestResult, TextTestRunner
 import datetime
 import re
 
@@ -15,12 +15,11 @@ _real_stderr = sys.stderr
 _ERROR_HOLDERS_FQN = ("unittest.suite._ErrorHolder", "unittest2.suite._ErrorHolder")
 
 
-class TeamcityTestResult(TestResult):
+class TeamcityTestResult(TextTestResult):
     separator2 = "\n"
 
-    # noinspection PyUnusedLocal
-    def __init__(self, stream=_real_stdout, descriptions=None, verbosity=None):
-        super(TeamcityTestResult, self).__init__()
+    def __init__(self, stream=_real_stdout, descriptions=None, verbosity=0):
+        super(TeamcityTestResult, self).__init__(stream, descriptions, verbosity)
 
         # Some code may ask for self.failfast, see unittest2.case.TestCase.subTest
         self.failfast = getattr(self, "failfast", False)
@@ -195,7 +194,8 @@ class TeamcityTestResult(TestResult):
 
         diff_failed = None
         try:
-            error = err[1]
+            from .jb_local_exc_store import get_exception
+            error = get_exception()
             if isinstance(error, EqualsAssertionError):
                 diff_failed = error
         except Exception:
@@ -207,8 +207,7 @@ class TeamcityTestResult(TestResult):
             try:
                 details = err.getTraceback()
             except AttributeError:
-                frames_to_skip_from_tail = 2 if diff_failed else 0
-                details = convert_error_to_string(err, frames_to_skip_from_tail)
+                details = convert_error_to_string(err, ["diff_tools", "case.py"])
 
         subtest_failures = self.get_subtest_failure(test_id)
         if subtest_failures:
@@ -276,6 +275,10 @@ class TeamcityTestResult(TestResult):
             subtest_failures = self.get_subtest_failure(test_id)
             if subtest_failures:
                 self.report_fail(test, "One or more subtests failed", "")
+
+        if sys.exc_info()[0] is not None:
+            # test was interrupted (e.g., SIGINT)
+            self.messages.testStopped(test_id, flowId=test_id)
 
         try:
             time_diff = datetime.datetime.now() - self.test_started_datetime_map[test_id]

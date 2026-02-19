@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -12,27 +12,26 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.buildout.BuildoutFacet;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
-import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,16 +43,15 @@ import static com.intellij.openapi.util.NlsContexts.ProgressText;
  * Does all the heavy lifting calling skeleton generator, managing blacklists, etc.
  * One-time, non-reusable instances.
  * <br/>
- * User: dcheryasov
  */
 public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);
 
   private static int ourGeneratingCount = 0;
 
-  @Nullable private final Project myProject;
-  @Nullable private final ProgressIndicator myIndicator;
-  @NotNull private final Sdk mySdk;
+  private final @Nullable Project myProject;
+  private final @Nullable ProgressIndicator myIndicator;
+  private final @NotNull Sdk mySdk;
   private String mySkeletonsPath;
   private List<String> myExtraSyspath;
   private int myGeneratorVersion = -1;
@@ -68,7 +66,6 @@ public class PySkeletonRefresher {
   }
 
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
-                                           @Nullable Component ownerComponent,
                                            @Nullable String skeletonsPath,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
@@ -79,16 +76,14 @@ public class PySkeletonRefresher {
     }
     else {
       LOG.info("Refreshing skeletons for " + homePath);
-      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
+      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator, null);
 
       changeGeneratingSkeletons(1);
       try {
         final List<String> errors = refresher.regenerateSkeletons();
         if (!errors.isEmpty()) {
-          LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
-          for (String moduleName : errors) {
-            LOG.warn(moduleName);
-          }
+          var failedSkeletons = StringUtil.join(errors, ", ");
+          LOG.warn(String.format("%s: %s", PyBundle.message("sdk.some.skeletons.failed"), failedSkeletons));
         }
       }
       catch (ExecutionException e) {
@@ -108,7 +103,6 @@ public class PySkeletonRefresher {
    * @param indicator     to report progress of long operations
    */
   public PySkeletonRefresher(@Nullable Project project,
-                             @Nullable Component ownerComponent,
                              @NotNull Sdk sdk,
                              @Nullable String skeletonsPath,
                              @Nullable ProgressIndicator indicator,
@@ -118,21 +112,10 @@ public class PySkeletonRefresher {
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
-    if (PythonSdkUtil.isRemote(sdk)) {
-      try {
-        mySkeletonsGenerator = createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
-      }
-      catch (ExecutionException e) {
-        throw new InvalidSdkException(e.getMessage(), e.getCause());
-      }
-    }
-    else {
-      mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath(), mySdk, folder);
-    }
+    mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject);
   }
 
-  @NotNull
-  public List<String> regenerateSkeletons() throws InvalidSdkException, ExecutionException {
+  public @NotNull List<String> regenerateSkeletons() throws InvalidSdkException, ExecutionException {
     final String skeletonsPath = getSkeletonsPath();
     final File skeletonsDir = new File(skeletonsPath);
     //noinspection ResultOfMethodCallIgnored
@@ -145,7 +128,7 @@ public class PySkeletonRefresher {
     final PyPregeneratedSkeletons preGeneratedSkeletons =
       PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
 
-    final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
+    final String builtinsFileName = PySkeletonUtil.getBuiltinsFileName(mySdk);
     final File builtinsFile = new File(skeletonsPath, builtinsFileName);
 
     final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
@@ -174,14 +157,14 @@ public class PySkeletonRefresher {
     cleanUpSkeletons(skeletonsDir);
 
     if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
-      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(this), myProject.getDisposed());
     }
 
     return failedModules;
   }
 
   private static int readGeneratorVersion() {
-    File versionFile = PythonHelpersLocator.getHelperFile("generator3/version.txt");
+    File versionFile = PythonHelpersLocator.findPathInHelpers("generator3/version.txt").toFile();
     try (Reader reader = new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8)) {
       return PySkeletonHeader.fromVersionString(StreamUtil.readText(reader).trim());
     }
@@ -206,27 +189,19 @@ public class PySkeletonRefresher {
     }
   }
 
-  private static List<String> calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
+  private static List<String> calculateExtraSysPath(final @NotNull Sdk sdk, final @Nullable String skeletonsPath) {
     final File skeletons = skeletonsPath != null ? new File(skeletonsPath) : null;
-
-    final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-    final File userSkeletons = userSkeletonsDir != null ? new File(userSkeletonsDir.getPath()) : null;
 
     final VirtualFile remoteSourcesDir = PythonSdkUtil.findAnyRemoteLibrary(sdk);
     final File remoteSources = remoteSourcesDir != null ? new File(remoteSourcesDir.getPath()) : null;
 
-    final List<VirtualFile> paths = new ArrayList<>();
-
-    paths.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
-    paths.addAll(BuildoutFacet.getExtraPathForAllOpenModules());
-
-    return ContainerUtil.mapNotNull(paths, file -> {
+    return ContainerUtil.mapNotNull(sdk.getRootProvider().getFiles(OrderRootType.CLASSES), file -> {
       if (file.isInLocalFileSystem()) {
         // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
         final File canonicalFile = new File(file.getPath());
         if (canonicalFile.exists() &&
             !FileUtil.filesEqual(canonicalFile, skeletons) &&
-            !FileUtil.filesEqual(canonicalFile, userSkeletons) &&
+            !PyTypeShed.INSTANCE.isInside(file) &&
             !FileUtil.filesEqual(canonicalFile, remoteSources)) {
           return file.getPath();
         }
@@ -240,8 +215,7 @@ public class PySkeletonRefresher {
    *
    * @return path name of skeleton dir for the SDK, guaranteed to be already created.
    */
-  @NotNull
-  public String getSkeletonsPath() throws InvalidSdkException {
+  public @NotNull String getSkeletonsPath() throws InvalidSdkException {
     if (mySkeletonsPath == null) {
       mySkeletonsPath = Objects.requireNonNull(PythonSdkUtil.getSkeletonsPath(mySdk));
       final File skeletonsDir = new File(mySkeletonsPath);
@@ -252,8 +226,7 @@ public class PySkeletonRefresher {
     return mySkeletonsPath;
   }
 
-  @NotNull
-  private List<PySkeletonGenerator.GenerationResult> updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
+  private @NotNull List<PySkeletonGenerator.GenerationResult> updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
     final long startTime = System.currentTimeMillis();
     final List<PySkeletonGenerator.GenerationResult> result = mySkeletonsGenerator
       .commandBuilder()
@@ -297,7 +270,7 @@ public class PySkeletonRefresher {
         if (PyNames.INIT_DOT_PY.equals(itemName) && item.length() == 0) continue; // these are versionless
         if (PySkeletonGenerator.BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
         if (PySkeletonGenerator.STATE_MARKER_FILE.equals(itemName)) continue;
-        if (PythonSdkType.getBuiltinsFileName(mySdk).equals(itemName)) {
+        if (PySkeletonUtil.getBuiltinsFileName(mySdk).equals(itemName)) {
           continue;
         }
         final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(item);
@@ -336,18 +309,7 @@ public class PySkeletonRefresher {
     return myGeneratorVersion;
   }
 
-  @NotNull
-  public static PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project,
-                                                                  Component ownerComponent,
-                                                                  @NotNull Sdk sdk,
-                                                                  String skeletonsPath) throws ExecutionException {
-    PyRemoteSdkAdditionalDataBase sdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
-    return PyRemoteSkeletonGeneratorFactory.getInstance(sdkAdditionalData)
-      .createRemoteSkeletonGenerator(project, ownerComponent, sdk, skeletonsPath);
-  }
-
-  @NotNull
-  public PySkeletonGenerator getGenerator() {
+  public @NotNull PySkeletonGenerator getGenerator() {
     return mySkeletonsGenerator;
   }
 }

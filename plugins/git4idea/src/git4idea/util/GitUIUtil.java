@@ -1,13 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleListCellRenderer;
 import git4idea.GitBranch;
@@ -18,50 +14,24 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.util.ui.UIUtil.BR;
 
 /**
  * Utilities for git plugin user interface
  */
 public final class GitUIUtil {
-  /**
-   * Text containing in the label when there is no current branch
-   * @deprecated Use {@link #getNoCurrentBranch()} instead
-   */
-  @Deprecated
-  public static final String NO_CURRENT_BRANCH = "<no active branch>";
 
   /**
    * A private constructor for utility class
    */
   private GitUIUtil() {
-  }
-
-  /**
-   * @deprecated use {@link VcsNotifier} instead
-   */
-  @SuppressWarnings("HardCodedStringLiteral")
-  @Deprecated
-  public static void notifyError(Project project,
-                                 @Nls @NotNull String title,
-                                 @Nls @Nullable String description,
-                                 boolean important,
-                                 @Nullable Exception error) {
-    if (important) {
-      VcsNotifier.getInstance(project)
-        .notifyError(null, title, StringUtil.notNullize(description), Collections.singleton(error));
-    }
-    else {
-      VcsNotifier.getInstance(project)
-        .notifyImportantWarning(null, title, StringUtil.notNullize(description), Collections.singleton(error));
-    }
   }
 
   /**
@@ -85,11 +55,11 @@ public final class GitUIUtil {
    * @param currentBranchLabel current branch label (might be null)
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
-  public static void setupRootChooser(@NotNull final Project project,
-                                      @NotNull final List<? extends VirtualFile> roots,
-                                      @Nullable final VirtualFile defaultRoot,
-                                      @NotNull final JComboBox gitRootChooser,
-                                      @Nullable final JLabel currentBranchLabel) {
+  public static void setupRootChooser(final @NotNull Project project,
+                                      final @NotNull List<? extends VirtualFile> roots,
+                                      final @Nullable VirtualFile defaultRoot,
+                                      final @NotNull JComboBox gitRootChooser,
+                                      final @Nullable JLabel currentBranchLabel) {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
@@ -125,7 +95,7 @@ public final class GitUIUtil {
    * @param ex        the exception
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final VcsException ex, @Nls @NotNull final String operation) {
+  public static void showOperationError(final Project project, final VcsException ex, final @Nls @NotNull String operation) {
     showOperationError(project, operation, ex.getMessage());
   }
 
@@ -138,7 +108,7 @@ public final class GitUIUtil {
    */
   public static void showOperationErrors(final Project project,
                                          final Collection<? extends VcsException> exs,
-                                         @Nls @NotNull final String operation) {
+                                         final @Nls @NotNull String operation) {
     if (exs.size() == 1) {
       showOperationError(project, operation, exs.iterator().next().getMessage());
     }
@@ -159,7 +129,7 @@ public final class GitUIUtil {
    * @param message   the error description
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final String operation, @Nls final String message) {
+  public static void showOperationError(final Project project, final String operation, final @Nls String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
   }
 
@@ -182,7 +152,7 @@ public final class GitUIUtil {
        * @param changed the changed control
        * @param impliedState the implied state
        */
-      private void check(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
+      private static void check(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
         if (checked.isSelected() == checkedState) {
           changed.setSelected(impliedState);
           changed.setEnabled(false);
@@ -218,8 +188,7 @@ public final class GitUIUtil {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
 
-  @Nls
-  public static String getNoCurrentBranch() {
+  public static @Nls String getNoCurrentBranch() {
     return GitBundle.message("common.no.active.branch");
   }
 }

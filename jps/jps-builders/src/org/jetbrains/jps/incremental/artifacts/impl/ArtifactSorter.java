@@ -1,32 +1,31 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.graph.*;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.DFSTBuilder;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class ArtifactSorter {
+public final class ArtifactSorter {
   private final JpsModel myModel;
   private Map<JpsArtifact, JpsArtifact> myArtifactToSelfIncludingName;
   private List<JpsArtifact> mySortedArtifacts;
@@ -98,8 +97,7 @@ public class ArtifactSorter {
     return result;
   }
 
-  @NotNull
-  public static Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<? extends JpsArtifact> artifacts) {
+  public static @NotNull Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<? extends JpsArtifact> artifacts) {
     Set<JpsArtifact> result = new HashSet<>();
     for (JpsArtifact artifact : artifacts) {
       collectIncludedArtifacts(artifact, new HashSet<>(), result, true);
@@ -138,22 +136,20 @@ public class ArtifactSorter {
     });
   }
 
-  private static class ArtifactsGraph implements InboundSemiGraph<JpsArtifact> {
+  private static final class ArtifactsGraph implements InboundSemiGraph<JpsArtifact> {
     private final Set<JpsArtifact> myArtifactNodes;
 
     ArtifactsGraph(final JpsModel model) {
       myArtifactNodes = new LinkedHashSet<>(JpsBuilderArtifactService.getInstance().getArtifacts(model, true));
     }
 
-    @NotNull
     @Override
-    public Collection<JpsArtifact> getNodes() {
+    public @NotNull Collection<JpsArtifact> getNodes() {
       return myArtifactNodes;
     }
 
-    @NotNull
     @Override
-    public Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
+    public @NotNull Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
       final Set<JpsArtifact> included = new LinkedHashSet<>();
       processIncludedArtifacts(artifact, includedArtifact -> {
         if (myArtifactNodes.contains(includedArtifact)) {

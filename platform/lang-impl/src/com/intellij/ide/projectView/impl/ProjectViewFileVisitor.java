@@ -20,12 +20,23 @@ class ProjectViewFileVisitor extends AbstractTreeNodeVisitor<VirtualFile> {
     LOG.debug("create visitor for file: " + file);
   }
 
+  boolean matches(@NotNull AbstractTreeNode<?> node, @NotNull NodeVisitorMatcher<? extends VirtualFile> matcher) {
+    return matches(node, matcher.getValue());
+  }
+
+  boolean contains(@NotNull AbstractTreeNode<?> node, @NotNull NodeVisitorMatcher<? extends VirtualFile> matcher) {
+    return contains(node, matcher.getValue());
+  }
+
   @Override
   protected boolean contains(@NotNull AbstractTreeNode node, @NotNull VirtualFile file) {
     return node instanceof ProjectViewNode && contains((ProjectViewNode)node, file) || super.contains(node, file);
   }
 
   private static boolean contains(@NotNull ProjectViewNode node, @NotNull VirtualFile file) {
+    if (!file.isValid()) {
+      return false;
+    }
     return node.contains(file);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -15,7 +15,11 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
@@ -36,12 +40,11 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   private final PsiElement myElement;
   private final int myOffset;
   private final boolean mySoft;
-  @NonNls
-  private static final String ANCHOR_ELEMENT_NAME = "a";
-  @NonNls private static final String MAP_ELEMENT_NAME = "map";
+  private static final @NonNls String ANCHOR_ELEMENT_NAME = "a";
+  private static final @NonNls String MAP_ELEMENT_NAME = "map";
   private static final Key<CachedValue<Map<String, XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
 
-  AnchorReferenceImpl(final String anchor, @Nullable final FileReference psiReference, @NotNull final PsiElement element, final int offset,
+  AnchorReferenceImpl(final String anchor, final @Nullable FileReference psiReference, final @NotNull PsiElement element, final int offset,
                       final boolean soft) {
 
     myAnchor = anchor;
@@ -51,15 +54,13 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
     mySoft = soft;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return new TextRange(myOffset, myOffset + myAnchor.length());
   }
 
@@ -108,8 +109,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
     return true;
   }
 
-  @Nullable
-  private Map<String, XmlTag> getIdMap() {
+  private @Nullable Map<String, XmlTag> getIdMap() {
     final XmlFile file = getFile();
 
     if (file != null) {
@@ -124,8 +124,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
     return null;
   }
 
-  @Nullable
-  private static String getAnchorValue(final XmlTag xmlTag) {
+  private static @Nullable String getAnchorValue(final XmlTag xmlTag) {
     final String attributeValue = xmlTag.getAttributeValue("id");
 
     if (attributeValue != null) {
@@ -150,8 +149,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myAnchor;
   }
 
@@ -165,8 +163,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   }
 
   @Override
-  @Nullable
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+  public @Nullable PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
 
@@ -188,8 +185,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
     return elements;
   }
 
-  @Nullable
-  private XmlFile getFile() {
+  private @Nullable XmlFile getFile() {
     if (myFileReference != null) {
       final PsiElement psiElement = myFileReference.resolve();
       return psiElement instanceof XmlFile ? (XmlFile)psiElement : null;
@@ -211,8 +207,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     final XmlFile xmlFile = getFile();
     return xmlFile == null ?
            XmlBundle.message("xml.inspections.cannot.resolve.anchor", myAnchor) :
@@ -237,7 +232,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
         processXmlElements(
           rootTag, new PsiElementProcessor<>() {
             @Override
-            public boolean execute(@NotNull final XmlTag element) {
+            public boolean execute(final @NotNull XmlTag element) {
               final String anchorValue = getAnchorValue(element);
 
               if (anchorValue != null) {

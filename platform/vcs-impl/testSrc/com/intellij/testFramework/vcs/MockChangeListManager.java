@@ -1,21 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListData;
+import com.intellij.openapi.vcs.changes.ChangeListListener;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.IgnoredFileBean;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MockChangeListManager extends ChangeListManagerEx {
 
@@ -37,30 +48,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void scheduleUpdate() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void scheduleUpdate(boolean updateUnversionedFiles) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 String title,
                                 ModalityState state) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
-                                @NotNull InvokeAfterUpdateMode mode,
-                                String title,
-                                Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
-                                ModalityState state) {
-    afterUpdate.run();
   }
 
   @Override
@@ -70,19 +62,13 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public int getChangeListsNumber() {
-    return getChangeListsCopy().size();
-  }
-
-  @NotNull
-  @Override
-  public List<LocalChangeList> getChangeListsCopy() {
-    return new ArrayList<>(myChangeLists.values());
+    return getChangeLists().size();
   }
 
   @NotNull
   @Override
   public List<LocalChangeList> getChangeLists() {
-    return getChangeListsCopy();
+    return new ArrayList<>(myChangeLists.values());
   }
 
   @NotNull
@@ -184,12 +170,22 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public boolean isUnversioned(VirtualFile file) {
+  public boolean isUnversioned(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public @NotNull List<FilePath> getUnversionedFilesPaths() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isResolvedConflict(@NotNull FilePath file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull List<FilePath> getResolvedConflictPaths() {
     throw new UnsupportedOperationException();
   }
 
@@ -222,12 +218,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
       }
     }
     return changes;
-  }
-
-  @Nullable
-  @Override
-  public AbstractVcs getVcsFor(@NotNull Change change) {
-    return null;
   }
 
   @NotNull
@@ -273,22 +263,12 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void addFilesToIgnore(IgnoredFileBean @NotNull ... ignoredFiles) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
     throw new UnsupportedOperationException();
   }
 
@@ -342,6 +322,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public @NotNull Promise<?> promiseWaitForUpdate() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String isFreezed() {
     throw new UnsupportedOperationException();
   }
@@ -358,7 +343,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
+  public @NotNull LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
     MockChangeList changeList = new MockChangeList(name);
     myChangeLists.put(name, changeList);
     return changeList;
@@ -394,6 +379,10 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
+  }
+
+  @Override
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<? extends @NotNull Change> changes) {
   }
 
   @Override

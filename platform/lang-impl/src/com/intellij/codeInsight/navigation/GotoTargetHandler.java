@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -7,15 +6,21 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.model.Pointer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -26,28 +31,50 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.platform.backend.presentation.TargetPresentation;
+import com.intellij.platform.ide.navigation.NavigationOptions;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.components.JBList;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JScrollPane;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.intellij.platform.ide.navigation.NavigationServiceKt.navigateBlocking;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(GotoTargetHandler.class);
-  private final PsiElementListCellRenderer myDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
-  private final DefaultListCellRenderer myActionElementRenderer = new ActionCellRenderer();
+  private static final PsiElementListCellRenderer<?> ourDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
 
   @Override
   public boolean startInWriteAction() {
@@ -55,40 +82,48 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(getFeatureUsedKey());
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    String featureId = getFeatureUsedKey();
+    if (featureId != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(featureId);
+    }
 
     try {
-      GotoData gotoData = getSourceAndTargetElements(editor, file);
+      GotoData gotoData = getSourceAndTargetElements(editor, psiFile);
+      Consumer<JBPopup> showPopupProcedure = popup -> {
+        if (!editor.isDisposed()) {
+          popup.showInBestPositionFor(editor);
+        }
+      };
       if (gotoData != null) {
-        show(project, editor, file, gotoData);
+        show(project, editor, psiFile, gotoData, showPopupProcedure);
       }
       else {
-        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data));
+        chooseFromAmbiguousSources(editor, psiFile, data -> show(project, editor, psiFile, data, showPopupProcedure));
       }
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"));
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
+        DumbModeBlockedFunctionality.GotoTarget);
     }
   }
 
   protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<? super GotoData> successCallback) { }
 
-  @NonNls
-  protected abstract String getFeatureUsedKey();
+  protected abstract @NonNls @Nullable String getFeatureUsedKey();
 
   protected boolean useEditorFont() {
     return true;
   }
 
-  @Nullable
-  protected abstract GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
+  protected abstract @Nullable GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
 
-  private void show(@NotNull Project project,
-                    @NotNull Editor editor,
-                    @NotNull PsiFile file,
-                    @NotNull GotoData gotoData) {
+  protected void show(@NotNull Project project,
+                      @NotNull Editor editor,
+                      @NotNull PsiFile file,
+                      @NotNull GotoData gotoData,
+                      @NotNull Consumer<? super JBPopup> showPopup) {
     if (gotoData.isCanceled) return;
 
     PsiElement[] targets = gotoData.targets;
@@ -99,72 +134,59 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
+    showNotEmpty(project, gotoData, showPopup);
+  }
+
+  void showNotEmpty(@NotNull Project project, @NotNull GotoData gotoData, @NotNull Consumer<? super JBPopup> showPopup) {
+    PsiElement[] targets = gotoData.targets;
+    List<AdditionalAction> additionalActions = gotoData.additionalActions;
+
     boolean finished = gotoData.listUpdaterTask == null || gotoData.listUpdaterTask.isFinished();
     if (targets.length == 1 && additionalActions.isEmpty() && finished) {
       navigateToElement(targets[0]);
       return;
     }
 
-    for (PsiElement eachTarget : targets) {
-      gotoData.renderers.put(eachTarget, createRenderer(gotoData, eachTarget));
-    }
-
     final String name = ((NavigationItem)gotoData.source).getName();
     final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
 
+    gotoData.initPresentations();
+    List<ItemWithPresentation> allElements = new ArrayList<>(targets.length + additionalActions.size());
+    allElements.addAll(gotoData.getItems());
     if (shouldSortTargets()) {
-      Arrays.sort(targets, createComparator(gotoData));
+      allElements.sort(createComparator(gotoData));
     }
+    allElements.addAll(ContainerUtil.map(additionalActions, action -> new ItemWithPresentation(action,
+                                                                                               TargetPresentation.builder(action.getText())
+                                                                                                 .icon(action.getIcon()).presentation())));
 
-    List<Object> allElements = new ArrayList<>(targets.length + additionalActions.size());
-    Collections.addAll(allElements, targets);
-    allElements.addAll(additionalActions);
-
-    final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(allElements);
+    final IPopupChooserBuilder<ItemWithPresentation> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(allElements);
     final Ref<UsageView> usageView = new Ref<>();
-    builder.setNamerForFiltering(o -> {
-      if (o instanceof AdditionalAction) {
-        return ((AdditionalAction)o).getText();
+    builder.setNamerForFiltering(item -> {
+      if (item.getItem() instanceof AdditionalAction) {
+        return ((AdditionalAction)item.getItem()).getText();
       }
-      return getRenderer(o, gotoData).getElementText((PsiElement)o);
+      return item.getPresentation().getPresentableText();
     }).setTitle(title);
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == null) return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (value instanceof AdditionalAction) {
-          return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        }
-        PsiElementListCellRenderer renderer = getRenderer(value, gotoData);
-        return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
-    }).
+    var renderer = new GotoTargetRendererNew(o -> ((ItemWithPresentation)o).getPresentation());
+    builder.setRenderer(renderer).
       setItemsChosenCallback(selectedElements -> {
-        for (Object element : selectedElements) {
-          if (element instanceof AdditionalAction) {
-            ((AdditionalAction)element).execute();
+        for (ItemWithPresentation element : selectedElements) {
+          if (element.getItem() instanceof AdditionalAction) {
+            ((AdditionalAction)element.getItem()).execute();
           }
           else {
-            Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
-            try {
-              if (nav != null && nav.canNavigate()) {
-                navigateToElement(nav);
-              }
-            }
-            catch (IndexNotReadyException e) {
-              DumbService.getInstance(project).showDumbModeNotification(
-                CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"));
-            }
+            navigate(project, element, navigatable -> navigateToElement(project, navigatable));
           }
         }
       }).
       withHintUpdateSupply().
       setMovable(true).
       setCancelCallback(() -> {
-        final BackgroundUpdaterTask task = gotoData.listUpdaterTask;
+        final BackgroundUpdaterTaskBase<ItemWithPresentation> task = gotoData.listUpdaterTask;
         if (task != null) {
           task.cancelTask();
         }
@@ -180,47 +202,95 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setAdText(getAdText(gotoData.source, targets.length));
     final JBPopup popup = builder.createPopup();
 
-    JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder)builder).getScrollPane() : null;
+    JScrollPane pane;
+    if (builder instanceof PopupChooserBuilder<?> popupChooserBuilder) {
+      ClientProperty.put(popupChooserBuilder.getChooserComponent(), JBList.IMMUTABLE_MODEL_AND_RENDERER, true);
+      pane = popupChooserBuilder.getScrollPane();
+    } else {
+      pane = null;
+    }
+
     if (pane != null) {
-      pane.setBorder(null);
+      if (!ExperimentalUI.isNewUI()) {
+        pane.setBorder(null);
+      }
       pane.setViewportBorder(null);
     }
 
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> {
-        if (!editor.isDisposed()) {
-          popup.showInBestPositionFor(editor);
-        }
-      }, 300);
+      alarm.addRequest(() -> showPopup.accept(popup), IdeProductMode.isBackend() ? 300 : 17);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     else {
-      popup.showInBestPositionFor(editor);
+      showPopup.accept(popup);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      popup.closeOk(null);
     }
   }
 
-  @NotNull
-  protected PsiElementListCellRenderer getRenderer(Object value, @NotNull GotoData gotoData) {
-    PsiElementListCellRenderer renderer = gotoData.getRenderer(value);
-    return renderer != null ? renderer : myDefaultTargetElementRenderer;
+  public static void navigate(@NotNull Project project, ItemWithPresentation element, Consumer<Navigatable> navigator) {
+    Navigatable nav;
+    if (element.getItem() instanceof Navigatable) {
+      nav = (Navigatable)element.getItem();
+    }
+    else {
+      nav = ActionUtil.underModalProgress(project, IdeBundle.message("progress.title.preparing.navigation"),
+                                          () -> {
+                                            PsiElement psiElement = ((SmartPsiElementPointer<?>)element.getItem()).getElement();
+                                            return psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
+                                          });
+    }
+    try {
+      if (nav != null && nav.canNavigate()) {
+        navigator.accept(nav);
+      }
+    }
+    catch (IndexNotReadyException e) {
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"),
+        DumbModeBlockedFunctionality.GotoTarget);
+    }
   }
 
-  @NotNull
-  protected Comparator<PsiElement> createComparator(@NotNull GotoData gotoData) {
-    return new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement o1, PsiElement o2) {
-        return getComparingObject(o1).compareTo(getComparingObject(o2));
-      }
-
-      private Comparable getComparingObject(PsiElement o1) {
-        return getRenderer(o1, gotoData).getComparingObject(o1);
-      }
-    };
+  protected @NotNull Comparator<ItemWithPresentation> createComparator(@NotNull GotoData gotoData) {
+    return Comparator.comparing(gotoData::getComparingObject);
   }
 
+  public static List<ItemWithPresentation> computePresentationInBackground(
+    @NotNull Project project,
+    PsiElement @NotNull [] targets,
+    boolean hasDifferentNames
+  ) {
+    SmartPointerManager manager = SmartPointerManager.getInstance(project);
+    return ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"),
+                                         () -> ContainerUtil.map(targets, element -> new ItemWithPresentation(
+                                           manager.createSmartPsiElementPointer(element),
+                                           computePresentation(element, hasDifferentNames))));
+  }
+
+  public static @NotNull TargetPresentation computePresentation(@NotNull PsiElement element, boolean hasDifferentNames) {
+    TargetPresentation presentation = GotoTargetPresentationProvider.getTargetPresentationFromProviders(element, hasDifferentNames);
+    if (presentation != null) return presentation;
+    TargetPresentation renderer = getTargetPresentationFromRenderers(element, hasDifferentNames);
+    if (renderer != null) return renderer;
+    return ourDefaultTargetElementRenderer.computePresentation(element);
+  }
+
+  private static @Nullable TargetPresentation getTargetPresentationFromRenderers(@NotNull PsiElement element, boolean hasDifferentNames) {
+    GotoData dummyData = new GotoData(element, PsiElement.EMPTY_ARRAY, Collections.emptyList());
+    dummyData.hasDifferentNames = hasDifferentNames;
+    PsiElementListCellRenderer<?> renderer = createRenderer(dummyData, element);
+    return renderer == null ? null : renderer.computePresentation(element);
+  }
+
+  /**
+   * @deprecated use {@link #computePresentation}
+   */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("rawtypes")
   public static PsiElementListCellRenderer createRenderer(@NotNull GotoData gotoData, @NotNull PsiElement eachTarget) {
     for (GotoTargetRendererProvider eachProvider : GotoTargetRendererProvider.EP_NAME.getExtensionList()) {
       PsiElementListCellRenderer renderer = eachProvider.getRenderer(eachTarget, gotoData);
@@ -231,15 +301,25 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   protected boolean navigateToElement(PsiElement target) {
     Navigatable descriptor = target instanceof Navigatable ? (Navigatable)target : EditSourceUtil.getDescriptor(target);
-    if (descriptor != null && descriptor.canNavigate()) {
-      navigateToElement(descriptor);
-      return true;
+    if (descriptor == null) return false;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-339117, EA-842843")) {
+      if (!descriptor.canNavigate()) return false;
     }
-    return false;
+    navigateToElement(target.getProject(), descriptor);
+    return true;
   }
 
+  @ApiStatus.Obsolete
   protected void navigateToElement(@NotNull Navigatable descriptor) {
-    descriptor.navigate(true);
+    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    Project project = frame != null ? frame.getProject() : null;
+    navigateToElement(project, descriptor);
+  }
+
+  @ApiStatus.Internal
+  protected void navigateToElement(@Nullable Project project, @NotNull Navigatable descriptor) {
+    if (project == null) return;
+    navigateBlocking(project, descriptor, NavigationOptions.requestFocus(), null);
   }
 
   protected boolean shouldSortTargets() {
@@ -248,30 +328,25 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
 
   /**
-   * @deprecated, use getChooserTitle(PsiElement, String, int, boolean) instead
+   * @deprecated use getChooserTitle(PsiElement, String, int, boolean) instead
    */
-  @Deprecated
-  @NotNull
-  protected @NlsContexts.PopupTitle String getChooserTitle(PsiElement sourceElement, String name, int length) {
+  @Deprecated(forRemoval = true)
+  protected @NotNull @NlsContexts.PopupTitle String getChooserTitle(PsiElement sourceElement, String name, int length) {
     LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");
     return "";
   }
 
-  @NotNull
-  protected @NlsContexts.PopupTitle String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
+  protected @NotNull @NlsContexts.PopupTitle String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
     return getChooserTitle(sourceElement, name, length);
   }
 
-  @NotNull
-  protected @NlsContexts.TabTitle String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
+  protected @NotNull @NlsContexts.TabTitle String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return getChooserTitle(sourceElement, name, length, true);
   }
 
-  @NotNull
-  protected abstract @NlsContexts.HintText String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  protected abstract @NotNull @NlsContexts.HintText String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
 
-  @Nullable
-  protected @NlsContexts.PopupAdvertisement String getAdText(PsiElement source, int length) {
+  protected @Nullable @NlsContexts.PopupAdvertisement String getAdText(PsiElement source, int length) {
     return null;
   }
 
@@ -283,16 +358,17 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     void execute();
   }
 
-  public static class GotoData {
-    @NotNull public final PsiElement source;
+  public static final class GotoData {
+    public final @NotNull PsiElement source;
     public PsiElement[] targets;
     public final List<AdditionalAction> additionalActions;
     public boolean isCanceled;
 
     private boolean hasDifferentNames;
-    public BackgroundUpdaterTask listUpdaterTask;
-    protected final Set<String> myNames;
-    public Map<Object, PsiElementListCellRenderer> renderers = new HashMap<>();
+    @ApiStatus.Internal
+    public BackgroundUpdaterTaskBase<ItemWithPresentation> listUpdaterTask;
+    private final Set<String> myNames;
+    private List<ItemWithPresentation> myItems;
 
     public GotoData(@NotNull PsiElement source, PsiElement @NotNull [] targets, @NotNull List<AdditionalAction> additionalActions) {
       this.source = source;
@@ -314,24 +390,57 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return hasDifferentNames;
     }
 
-    public boolean addTarget(final PsiElement element) {
-      if (ArrayUtil.find(targets, element) > -1) return false;
-      targets = ArrayUtil.append(targets, element);
-      renderers.put(element, createRenderer(this, element));
+    public ItemWithPresentation addTarget(final PsiElement element) {
+      if (ArrayUtil.find(targets, element) > -1) return null;
+
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
         final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
+        if (hasDifferentNames) {
+          for (ItemWithPresentation item : myItems) {
+            if (item.getItem() instanceof Pointer<?>) {
+              ReadAction.run(() -> {
+                Object o = ((Pointer<?>)item.getItem()).dereference();
+                if (o instanceof PsiElement) {
+                  item.setPresentation(computePresentation((PsiElement)o, hasDifferentNames));
+                }
+              });
+            }
+          }
+        }
       }
-      return true;
+
+      targets = ArrayUtil.append(targets, element);
+      return initPresentation(element, hasDifferentNames);
     }
 
-    public PsiElementListCellRenderer getRenderer(Object value) {
-      return renderers.get(value);
+    private static ItemWithPresentation initPresentation(PsiElement target, boolean hasDifferentNames) {
+      Pointer<PsiElement> pointer = ReadAction.compute(() -> SmartPointerManager.createPointer(target));
+      TargetPresentation presentation = ReadAction.compute(() -> computePresentation(target, hasDifferentNames));
+      return new ItemWithPresentation(pointer, presentation);
+    }
+
+    public @NotNull String getComparingObject(ItemWithPresentation value) {
+      TargetPresentation presentation = value.getPresentation();
+      return Stream.of(
+        presentation.getPresentableText(),
+        presentation.getContainerText(),
+        presentation.getLocationText()
+      ).filter(Objects::nonNull).collect(Collectors.joining(" "));
+    }
+
+    @VisibleForTesting
+    public void initPresentations() {
+      myItems = computePresentationInBackground(source.getProject(), targets, hasDifferentNames);
+    }
+
+    public List<ItemWithPresentation> getItems() {
+      return myItems;
     }
   }
 
-  private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
+  private static final class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
     @Override
     public String getElementText(final PsiElement element) {
       if (element instanceof PsiNamedElement) {
@@ -357,24 +466,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
 
       return null;
-    }
-
-    @Override
-    protected int getIconFlags() {
-      return 0;
-    }
-  }
-
-  private static class ActionCellRenderer extends DefaultListCellRenderer {
-    @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value != null) {
-        AdditionalAction action = (AdditionalAction)value;
-        setText(action.getText());
-        setIcon(action.getIcon());
-      }
-      return result;
     }
   }
 }

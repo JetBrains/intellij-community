@@ -1,0 +1,29 @@
+# Error: is not present in stub
+# =============================
+# internal API stuff we dropped because it wasn't necessary
+gevent.libev.corecext.loop.async
+
+# these shouldn't be in __all__ they end up there, due to how gevent imports
+# the globals from the stdlib ssl module
+gevent.subprocess.Popen.pipe_cloexec
+
+# Error: is inconsistent
+# ======================
+# these are inconsistent due to the ParamSpec hack for positional only callables
+gevent.libev.corecext.loop.run_callback
+gevent.libev.corecext.loop.run_callback_threadsafe
+gevent.libev.watcher.watcher.feed
+
+# undocumented argument for internal use only
+gevent.libev.watcher.watcher.__init__
+
+
+# we have punted on socket, the gevent version of these functions sometimes use
+# named parameters, while the base implementation only allows positional arguments
+# we're fine with holding the geven implemenation to the same restrictions
+# additionally there's some functions with additional optional arguments, that
+# we are fine with ignoring for now as well
+gevent.socket.SocketType.recvmsg_into
+gevent.socket.SocketType.sendmsg
+gevent.socket.socket.recvmsg_into
+gevent.socket.socket.sendmsg

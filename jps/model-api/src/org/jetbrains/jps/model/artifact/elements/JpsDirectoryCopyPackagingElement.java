@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.model.artifact.elements;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Represents 'Copy of directory contents' node in the output layout tree. When the artifact is being built all files from the specified directory
  * will be copied or packed to the corresponding place under the artifact output directory.
@@ -22,5 +24,6 @@ package org.jetbrains.jps.model.artifact.elements;
 public interface JpsDirectoryCopyPackagingElement extends JpsPackagingElement {
   String getDirectoryPath();
 
+  @ApiStatus.Internal
   void setDirectoryPath(String path);
 }

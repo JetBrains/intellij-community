@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
@@ -15,27 +15,41 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
-import com.intellij.util.xml.impl.*;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.Referencing;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Resolve;
+import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.WrappingConverter;
+import com.intellij.util.xml.XmlDomBundle;
+import com.intellij.util.xml.impl.ConvertContextFactory;
+import com.intellij.util.xml.impl.DomApplicationComponent;
+import com.intellij.util.xml.impl.DomManagerImpl;
+import com.intellij.util.xml.impl.GenericDomValueReference;
+import com.intellij.util.xml.impl.GenericValueReferenceProvider;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   public static final DomHighlightingHelperImpl INSTANCE = new DomHighlightingHelperImpl();
   private final GenericValueReferenceProvider myProvider = new GenericValueReferenceProvider();
   private final DomApplicationComponent myDomApplicationComponent = DomApplicationComponent.getInstance();
 
   @Override
-  public void runAnnotators(DomElement element, DomElementAnnotationHolder holder, Class<? extends DomElement> rootClass) {
+  public void runAnnotators(DomElement element, DomElementAnnotationHolder holder, @NotNull Class<? extends DomElement> rootClass) {
     final DomElementsAnnotator annotator = myDomApplicationComponent.getAnnotator(rootClass);
     if (annotator != null) {
       annotator.annotate(element, holder);
@@ -43,8 +57,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   @Override
-  @NotNull
-  public List<DomElementProblemDescriptor> checkRequired(final DomElement element, final DomElementAnnotationHolder holder) {
+  public @Unmodifiable @NotNull List<DomElementProblemDescriptor> checkRequired(final DomElement element, final DomElementAnnotationHolder holder) {
     final Required required = element.getAnnotation(Required.class);
     if (required != null) {
       final XmlElement xmlElement = element.getXmlElement();
@@ -75,8 +88,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
       final DomGenericInfo info = element.getGenericInfo();
       for (final AbstractDomChildrenDescription description : info.getChildrenDescriptions()) {
-        if (description instanceof DomCollectionChildDescription && description.getValues(element).isEmpty()) {
-          final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
+        if (description instanceof DomCollectionChildDescription childDescription && description.getValues(element).isEmpty()) {
           final Required annotation = description.getAnnotation(Required.class);
           if (annotation != null && annotation.value()) {
             list.add(holder.createProblem(element, childDescription, XmlDomBundle.message("dom.inspections.child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));
@@ -89,8 +101,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   @Override
-  @NotNull
-  public List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, final DomElementAnnotationHolder holder) {
+  public @NotNull List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, final DomElementAnnotationHolder holder) {
     if (StringUtil.isEmpty(element.getStringValue())) {
       final Required required = element.getAnnotation(Required.class);
       if (required != null && !required.nonEmpty()) return Collections.emptyList();
@@ -138,12 +149,11 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
   private static boolean isDomResolveOK(GenericDomValue element, GenericDomValueReference domReference, Converter converter) {
     return !hasBadResolve(domReference) ||
-           converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
+           converter instanceof ResolvingConverter && ((ResolvingConverter<?>)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
   }
 
   @Override
-  @NotNull
-  public List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, final DomElementAnnotationHolder holder) {
+  public @NotNull List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, final DomElementAnnotationHolder holder) {
     final String elementName = ElementPresentationManager.getElementName(element);
     if (StringUtil.isNotEmpty(elementName)) {
       final DomElement domElement = DomUtil.findDuplicateNamedValue(element, elementName);
@@ -178,9 +188,8 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
   }
 
-  @Nullable
-  private static DomElementProblemDescriptor checkRequiredGenericValue(final GenericDomValue child, final Required required,
-                                                                       final DomElementAnnotationHolder annotator) {
+  private static @Nullable DomElementProblemDescriptor checkRequiredGenericValue(final GenericDomValue child, final Required required,
+                                                                                 final DomElementAnnotationHolder annotator) {
     final String stringValue = child.getStringValue();
     if (stringValue == null) return null;
 
@@ -206,11 +215,11 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   private static boolean isEmpty(final GenericDomValue child, final String stringValue) {
-    if (stringValue.trim().length() != 0) {
+    if (!stringValue.trim().isEmpty()) {
       return false;
     }
     if (child instanceof GenericAttributeValue) {
-      final XmlAttributeValue value = ((GenericAttributeValue)child).getXmlAttributeValue();
+      final XmlAttributeValue value = ((GenericAttributeValue<?>)child).getXmlAttributeValue();
       if (value != null && value.getTextRange().isEmpty()) {
         return false;
       }
@@ -229,19 +238,17 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return XmlDomBundle.message("dom.quickfix.insert.required.tag.text", tagName);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return XmlDomBundle.message("dom.quickfix.insert.required.tag.family");
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
       XmlTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class, false);
       if (tag != null) {
         doFix(tag);

@@ -23,7 +23,8 @@ import com.intellij.ui.components.JBTabbedPane;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JTabbedPane;
 import java.util.Map;
 
 public class AdvancedOptionsDialog extends DialogWrapper {
@@ -48,8 +49,7 @@ public class AdvancedOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JComponent root;
     if (myInputOptions != null && myOutputOptions != null) {
       root = new JBTabbedPane();

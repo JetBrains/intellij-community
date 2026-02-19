@@ -1,9 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.InheritedJdkOrderEntry;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
@@ -12,7 +21,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 @ApiStatus.Internal
 public abstract class RootModelBase implements ModuleRootModel {
@@ -99,15 +112,13 @@ public abstract class RootModelBase implements ModuleRootModel {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType) {
+  public @NotNull List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType) {
     return getSourceRoots(Collections.singleton(rootType));
   }
 
-  @NotNull
   @Override
-  public List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+  public @NotNull List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final List<SourceFolder> sourceFolders = contentEntry.getSourceFolders(rootTypes);
@@ -149,9 +160,8 @@ public abstract class RootModelBase implements ModuleRootModel {
     return false;
   }
 
-  @NotNull
   @Override
-  public OrderEnumerator orderEntries() {
+  public @NotNull OrderEnumerator orderEntries() {
     return new ModuleOrderEnumerator(this, null);
   }
 
@@ -199,10 +209,9 @@ public abstract class RootModelBase implements ModuleRootModel {
     return result == null ? Module.EMPTY_ARRAY : result.toArray(Module.EMPTY_ARRAY);
   }
 
-  private static class CollectDependentModules extends RootPolicy<List<String>> {
-    @NotNull
+  public static class CollectDependentModules extends RootPolicy<List<String>> {
     @Override
-    public List<String> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, @NotNull List<String> arrayList) {
+    public @NotNull List<String> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, @NotNull List<String> arrayList) {
       arrayList.add(moduleOrderEntry.getModuleName());
       return arrayList;
     }

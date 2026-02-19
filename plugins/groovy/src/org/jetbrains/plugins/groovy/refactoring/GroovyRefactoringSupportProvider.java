@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring;
 
@@ -30,10 +30,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceField
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
 
-/**
- * @author ilyas
- */
-public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider {
+public final class GroovyRefactoringSupportProvider extends RefactoringSupportProvider {
 
   public static final GroovyRefactoringSupportProvider INSTANCE = new GroovyRefactoringSupportProvider();
 
@@ -48,14 +45,12 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
    * @return handler for introducing local variables in Groovy
    */
   @Override
-  @Nullable
-  public RefactoringActionHandler getIntroduceVariableHandler() {
+  public @Nullable RefactoringActionHandler getIntroduceVariableHandler() {
     return new GrIntroduceVariableHandler();
   }
 
   @Override
-  @Nullable
-  public RefactoringActionHandler getExtractMethodHandler() {
+  public @Nullable RefactoringActionHandler getExtractMethodHandler() {
     return new GroovyExtractMethodHandler();
   }
 
@@ -97,7 +92,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
 
     //don't try to inplace rename aliased imported references
     if (parent instanceof GrReferenceElement) {
-      GroovyResolveResult result = ((GrReferenceElement)parent).advancedResolve();
+      GroovyResolveResult result = ((GrReferenceElement<?>)parent).advancedResolve();
       PsiElement fileResolveContext = result.getCurrentFileResolveContext();
       if (fileResolveContext instanceof GrImportStatement && ((GrImportStatement)fileResolveContext).isAliasedImport()) {
         return false;
@@ -121,9 +116,8 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
     return new GrIntroduceConstantHandler();
   }
 
-  @Nullable
   @Override
-  public RefactoringActionHandler getPullUpHandler() {
+  public @Nullable RefactoringActionHandler getPullUpHandler() {
     return new JavaPullUpHandler();
   }
 }

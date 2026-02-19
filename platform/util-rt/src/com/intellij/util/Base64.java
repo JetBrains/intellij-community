@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 /**
- * DEPRECATED, please use {@link java.util.Base64} instead
+ * @deprecated Use {@link java.util.Base64} instead
  */
+@Deprecated
 public final class Base64 {
   private Base64() { }
 
@@ -49,7 +50,7 @@ public final class Base64 {
   }
 
   public static byte[] decode(String s) {
-    if (s.length() == 0) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    if (s.isEmpty()) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
 
     int i = 0;
     for (int j = s.length() - 1; j > 0 && s.charAt(j) == '='; j--) {

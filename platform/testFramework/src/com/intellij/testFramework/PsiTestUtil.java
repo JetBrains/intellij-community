@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -11,10 +11,22 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ContentEntryImpl;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -25,100 +37,102 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubInconsistencyReporter;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.junit.Assert;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class PsiTestUtil {
-  @NotNull
-  public static VirtualFile createTestProjectStructure(@NotNull Project project,
-                                                       @NotNull Module module,
-                                                       String rootPath,
-                                                       @NotNull Collection<Path> filesToDelete) {
-    return createTestProjectStructure(project, module, rootPath, filesToDelete, true);
-  }
-
-  @NotNull
-  public static VirtualFile createTestProjectStructure(@NotNull Project project, @NotNull Module module, @NotNull Collection<Path> filesToDelete) {
-    return createTestProjectStructure(project, module, null, filesToDelete, true);
-  }
-
-  @NotNull
-  public static VirtualFile createTestProjectStructure(@NotNull Project project,
-                                                       @Nullable Module module,
-                                                       String rootPath,
-                                                       @NotNull Collection<Path> filesToDelete,
-                                                       boolean addProjectRoots) {
-    VirtualFile vDir = createTestProjectStructure("unitTest", module, rootPath, filesToDelete, addProjectRoots);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    return vDir;
-  }
-
-  public static @NotNull VirtualFile createTestProjectStructure(@NotNull String tempName,
+  public static @NotNull VirtualFile createTestProjectStructure(@NotNull Project project,
                                                                 @Nullable Module module,
                                                                 String rootPath,
-                                                                @NotNull Collection<Path> filesToDelete,
+                                                                @NotNull Collection<? super Path> filesToDelete,
                                                                 boolean addProjectRoots) {
-    Path dir = HeavyTestHelper.createTempDirectoryForTempDirTestFixture(null, tempName);
+    Path dir = HeavyTestHelper.createTempDirectoryForTempDirTestFixture(null, "unitTest");
     filesToDelete.add(dir);
-    return HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
+    VirtualFile vDir = HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return vDir;
   }
 
   public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       model.clear();
+      if (jdk != null && ApplicationManager.getApplication().isUnitTestMode()) {
+        WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk, module.getProject()));
+      }
       model.setSdk(jdk);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
-  @NotNull
-  public static SourceFolder addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir) {
+  public static @NotNull SourceFolder addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir) {
     return addSourceContentToRoots(module, vDir, false);
   }
 
-  @NotNull
-  public static SourceFolder addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testSource) {
+  public static @NotNull SourceFolder addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testSource) {
     Ref<SourceFolder> result = Ref.create();
     ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testSource)));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     return result.get();
   }
 
-  @NotNull
-  public static SourceFolder addSourceRoot(@NotNull Module module, @NotNull VirtualFile vDir) {
+  public static @NotNull SourceFolder addResourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir, boolean testResource) {
+    Ref<SourceFolder> result = Ref.create();
+    ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testResource? JavaResourceRootType.TEST_RESOURCE: JavaResourceRootType.RESOURCE)));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
+    return result.get();
+  }
+
+  public static @NotNull SourceFolder addSourceRoot(@NotNull Module module, @NotNull VirtualFile vDir) {
     return addSourceRoot(module, vDir, false);
   }
 
-  @NotNull
-  public static SourceFolder addSourceRoot(@NotNull Module module, @NotNull VirtualFile vDir, boolean isTestSource) {
+  public static @NotNull SourceFolder addSourceRoot(@NotNull Module module, @NotNull VirtualFile vDir, boolean isTestSource) {
     return addSourceRoot(module, vDir, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
   }
 
-  @NotNull
-  public static <P extends JpsElement> SourceFolder addSourceRoot(@NotNull Module module, @NotNull VirtualFile vDir, @NotNull JpsModuleSourceRootType<P> rootType) {
+  public static @NotNull <P extends JpsElement> SourceFolder addSourceRoot(@NotNull Module module, @NotNull VirtualFile vDir, @NotNull JpsModuleSourceRootType<P> rootType) {
     return addSourceRoot(module, vDir, rootType, rootType.createDefaultProperties());
   }
 
-  @NotNull
-  public static <P extends JpsElement> SourceFolder addSourceRoot(@NotNull Module module,
-                                                                  @NotNull VirtualFile vDir,
-                                                                  @NotNull JpsModuleSourceRootType<P> rootType,
-                                                                  @NotNull P properties) {
+  public static @NotNull <P extends JpsElement> SourceFolder addSourceRoot(@NotNull Module module,
+                                                                           @NotNull VirtualFile vDir,
+                                                                           @NotNull JpsModuleSourceRootType<P> rootType,
+                                                                           @NotNull P properties) {
     Ref<SourceFolder> result = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry entry = findContentEntry(model, vDir);
@@ -127,11 +141,11 @@ public final class PsiTestUtil {
       }
       result.set(entry.addSourceFolder(vDir, rootType, properties));
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     return result.get();
   }
 
-  @Nullable
-  private static ContentEntry findContentEntry(@NotNull ModuleRootModel rootModel, @NotNull VirtualFile file) {
+  private static @Nullable ContentEntry findContentEntry(@NotNull ModuleRootModel rootModel, @NotNull VirtualFile file) {
     return ContainerUtil.find(rootModel.getContentEntries(), object -> {
       VirtualFile entryRoot = object.getFile();
       return entryRoot != null && VfsUtilCore.isAncestor(entryRoot, file, false);
@@ -140,12 +154,10 @@ public final class PsiTestUtil {
 
   public static ContentEntry addContentRoot(@NotNull Module module, @NotNull VirtualFile vDir) {
     ModuleRootModificationUtil.updateModel(module, model -> model.addContentEntry(vDir));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
 
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
-        if (entry instanceof ContentEntryImpl) {
-          Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
-        }
         return entry;
       }
     }
@@ -157,16 +169,15 @@ public final class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> ApplicationManager.getApplication().runReadAction(() -> {
       findContentEntryWithAssertion(model, dir).addExcludeFolder(dir);
     }));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
-  @NotNull
-  private static ContentEntry findContentEntryWithAssertion(@NotNull ModifiableRootModel model, @NotNull VirtualFile dir) {
+  private static @NotNull ContentEntry findContentEntryWithAssertion(@NotNull ModifiableRootModel model, @NotNull VirtualFile dir) {
     return assertEntryFound(model, dir, findContentEntry(model, dir));
   }
 
-  @NotNull
-  private static ContentEntry assertEntryFound(@NotNull ModifiableRootModel model,
-                                               @NotNull VirtualFile dir, ContentEntry entry) {
+  private static @NotNull ContentEntry assertEntryFound(@NotNull ModifiableRootModel model,
+                                                        @NotNull VirtualFile dir, ContentEntry entry) {
     if (entry == null) {
       throw new RuntimeException(dir + " is not under content roots: " + Arrays.toString(model.getContentRoots()));
     }
@@ -178,6 +189,7 @@ public final class PsiTestUtil {
       ContentEntry entry = ContainerUtil.find(model.getContentEntries(), object -> contentRoot.equals(object.getFile()));
       model.removeContentEntry(assertEntryFound(model, contentRoot, entry));
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void removeSourceRoot(@NotNull Module module, @NotNull VirtualFile root) {
@@ -190,6 +202,7 @@ public final class PsiTestUtil {
         }
       }
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void removeExcludedRoot(@NotNull Module module, @NotNull VirtualFile root) {
@@ -197,6 +210,7 @@ public final class PsiTestUtil {
       ContentEntry entry = findContentEntryWithAssertion(model, root);
       entry.removeExcludeFolder(root.getUrl());
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void checkErrorElements(@NotNull PsiElement element) {
@@ -218,7 +232,7 @@ public final class PsiTestUtil {
   }
 
   public static void checkFileStructure(@NotNull PsiFile file) {
-    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, false));
+    compareFromAllRoots(file, f -> DebugUtil.psiTreeToString(f, true));
   }
 
   private static void compareFromAllRoots(@NotNull PsiFile file, @NotNull Function<? super PsiFile, String> fun) {
@@ -246,8 +260,7 @@ public final class PsiTestUtil {
     }
   }
 
-  @NotNull
-  private static PsiFile createDummyCopy(@NotNull PsiFile file) {
+  private static @NotNull PsiFile createDummyCopy(@NotNull PsiFile file) {
     LightVirtualFile copy = new LightVirtualFile(file.getName(), file.getText());
     copy.setOriginalFile(file.getViewProvider().getVirtualFile());
     PsiFile dummyCopy = Objects.requireNonNull(file.getManager().findFile(copy));
@@ -275,8 +288,7 @@ public final class PsiTestUtil {
    * @param name a name for the library
    * @return new {@link LibraryBuilder}.
    */
-  @NotNull
-  public static LibraryBuilder newLibrary(String name) {
+  public static @NotNull LibraryBuilder newLibrary(String name) {
     return new LibraryBuilder(name);
   }
 
@@ -302,6 +314,7 @@ public final class PsiTestUtil {
    */
   public static void addLibrary(@NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     ModuleRootModificationUtil.updateModel(module, model -> addLibrary(model, libName, libPath, jarArr));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   /**
@@ -310,21 +323,26 @@ public final class PsiTestUtil {
   public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     Ref<Library> ref = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(model, libName, libPath, jarArr)));
-    Disposer.register(parent, () -> {
-      Library library = ref.get();
-      ModuleRootModificationUtil.updateModel(module, model -> {
-        LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
-        if (entry != null) {
-          model.removeOrderEntry(entry);
-        }
-      });
-      WriteCommandAction.runWriteCommandAction(null, ()-> {
-        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
-        LibraryTable.ModifiableModel model = table.getModifiableModel();
-        model.removeLibrary(library);
-        model.commit();
-      });
+    Disposer.register(parent, () -> removeLibrary(module, ref.get()));
+
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
+  }
+
+  public static void removeLibrary(@NotNull Module module, @NotNull Library library) {
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
+      if (entry != null) {
+        model.removeOrderEntry(entry);
+      }
     });
+    WriteCommandAction.runWriteCommandAction(null, ()-> {
+      LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+      LibraryTable.ModifiableModel model = table.getModifiableModel();
+      model.removeLibrary(library);
+      model.commit();
+    });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   /**
@@ -337,8 +355,7 @@ public final class PsiTestUtil {
     addProjectLibrary(module, libName, roots, Collections.emptyList());
   }
 
-  @NotNull
-  private static List<VirtualFile> getLibraryRoots(@NotNull List<String> classesRootPaths) {
+  private static @NotNull @Unmodifiable List<VirtualFile> getLibraryRoots(@NotNull List<String> classesRootPaths) {
     return ContainerUtil.map(classesRootPaths, path -> VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(path))));
   }
 
@@ -362,23 +379,24 @@ public final class PsiTestUtil {
   /**
    * Add a project-level library and make the given module depend on it.
    */
-  @NotNull
-  public static Library addProjectLibrary(@NotNull Module module, String libName, @NotNull List<? extends VirtualFile> classesRoots, @NotNull List<? extends VirtualFile> sourceRoots) {
+  public static @NotNull Library addProjectLibrary(@NotNull Module module, String libName, @NotNull List<? extends VirtualFile> classesRoots, @NotNull List<? extends VirtualFile> sourceRoots) {
     Ref<Library> result = Ref.create();
     ModuleRootModificationUtil.updateModel(
       module, model -> result.set(addProjectLibrary(model, libName, classesRoots, sourceRoots, Collections.emptyList(), Collections.emptyList())));
+
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
+
     return result.get();
   }
 
-  @NotNull
-  private static Library addProjectLibrary(@NotNull ModifiableRootModel model,
-                                           String libName,
-                                           @NotNull List<? extends VirtualFile> classesRoots,
-                                           @NotNull List<? extends VirtualFile> sourceRoots,
-                                           @NotNull List<? extends VirtualFile> javaDocs,
-                                           @NotNull List<? extends VirtualFile> externalAnnotationsRoots) {
+  private static @NotNull Library addProjectLibrary(@NotNull ModifiableRootModel model,
+                                                    String libName,
+                                                    @NotNull List<? extends VirtualFile> classesRoots,
+                                                    @NotNull List<? extends VirtualFile> sourceRoots,
+                                                    @NotNull List<? extends VirtualFile> javaDocs,
+                                                    @NotNull List<? extends VirtualFile> externalAnnotationsRoots) {
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
-    return WriteAction.computeAndWait(() -> {
+    Library lib = WriteAction.computeAndWait(() -> {
       Library library = libraryTable.createLibrary(libName);
       Library.ModifiableModel libraryModel = library.getModifiableModel();
       try {
@@ -410,6 +428,10 @@ public final class PsiTestUtil {
       model.rearrangeOrderEntries(orderEntries);
       return library;
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(model.getProject());
+
+    return lib;
   }
 
   /**
@@ -418,10 +440,8 @@ public final class PsiTestUtil {
    * @param libName the name of the created library
    * @param libPath the path of a directory
    * @param jarArr the names of jars or subdirectories inside {@code libPath} that will become class roots
-   * @return
    */
-  @NotNull
-  public static Library addLibrary(@NotNull ModifiableRootModel model,
+  public static @NotNull Library addLibrary(@NotNull ModifiableRootModel model,
                                    String libName,
                                    @NotNull String libPath,
                                    String @NotNull ... jarArr) {
@@ -463,7 +483,6 @@ public final class PsiTestUtil {
    * @param libDir the path of a directory
    * @param classRoots the names of jars or subdirectories relative to {@code libDir} that will become class roots
    * @param sourceRoots the names of jars or subdirectories relative to {@code libDir} that will become source roots
-   * @return
    */
   public static void addLibrary(@NotNull Module module,
                                 String libName,
@@ -481,11 +500,11 @@ public final class PsiTestUtil {
       sourceUrls.add(parentUrl + sourceRoot);
     }
     ModuleRootModificationUtil.addModuleLibrary(module, libName, classesUrls, sourceUrls);
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
-  @NotNull
-  public static Module addModule(@NotNull Project project, @NotNull ModuleType type, @NotNull String name, @NotNull VirtualFile root) {
-    return WriteCommandAction.writeCommandAction(project).compute(() -> {
+  public static @NotNull Module addModule(@NotNull Project project, @NotNull ModuleType type, @NotNull String name, @NotNull VirtualFile root) {
+    Module module = WriteCommandAction.writeCommandAction(project).compute(() -> {
       String moduleName;
       ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
       try {
@@ -511,6 +530,8 @@ public final class PsiTestUtil {
       }
       return dep;
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return module;
   }
 
   public static void setCompilerOutputPath(@NotNull Module module, @NotNull String url, boolean forTests) {
@@ -524,56 +545,61 @@ public final class PsiTestUtil {
         extension.setCompilerOutputPath(url);
       }
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void setExcludeCompileOutput(@NotNull Module module, boolean exclude) {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(exclude));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   public static void setJavadocUrls(@NotNull Module module, String @NotNull ... urls) {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls));
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
-  @NotNull
-  @Contract(pure=true)
-  public static Sdk addJdkAnnotations(@NotNull Sdk sdk) {
+  @Contract(pure = true)
+  public static @NotNull Sdk addJdkAnnotations(@NotNull Sdk sdk) {
     String path = FileUtil.toSystemIndependentName(PlatformTestUtil.getCommunityPath()) + "/java/jdkAnnotations";
     VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
     return addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), root);
   }
 
-  @NotNull
-  @Contract(pure=true)
-  public static Sdk addRootsToJdk(@NotNull Sdk sdk,
-                                  @NotNull OrderRootType rootType,
-                                  VirtualFile @NotNull ... roots) {
-    return modifyJdkRoots(sdk, sdkModificator -> {
+  @Contract(pure = true)
+  public static @NotNull Sdk addRootsToJdk(@NotNull Sdk sdk,
+                                           @NotNull OrderRootType rootType,
+                                           VirtualFile @NotNull ... roots) {
+    Sdk res = modifyJdkRoots(sdk, sdkModificator -> {
       for (VirtualFile root : roots) {
         sdkModificator.setName(sdkModificator.getName() + "+" + root.getPath());
         sdkModificator.addRoot(root, rootType);
       }
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    return res;
   }
 
-  @NotNull
-  @Contract(pure=true)
-  public static Sdk modifyJdkRoots(@NotNull Sdk sdk, Consumer<? super SdkModificator> modifier) {
+  @Contract(pure = true)
+  public static @NotNull Sdk modifyJdkRoots(@NotNull Sdk sdk, Consumer<? super SdkModificator> modifier) {
     Sdk clone;
     try {
-      clone = (Sdk)sdk.clone();
+      clone = sdk.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
     modifier.accept(sdkModificator);
-    sdkModificator.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
     return clone;
   }
 
   public static void checkStubsMatchText(@NotNull PsiFile file) {
     try {
-      StubTextInconsistencyException.checkStubTextConsistency(file);
+      StubTextInconsistencyException.checkStubTextConsistency(file, StubInconsistencyReporter.SourceOfCheck.ForTests);
     }
     catch (StubTextInconsistencyException e) {
       compareStubTexts(e);
@@ -611,8 +637,7 @@ public final class PsiTestUtil {
      * @param root root to add
      * @return this builder
      */
-    @NotNull
-    public LibraryBuilder classesRoot(@NotNull VirtualFile root) {
+    public @NotNull LibraryBuilder classesRoot(@NotNull VirtualFile root) {
       myClassesRoots.add(root);
       return this;
     }
@@ -622,8 +647,7 @@ public final class PsiTestUtil {
      * @param rootPath root to add
      * @return this builder
      */
-    @NotNull
-    public LibraryBuilder classesRoot(@NotNull String rootPath) {
+    public @NotNull LibraryBuilder classesRoot(@NotNull String rootPath) {
       myClassesRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
       return this;
     }
@@ -633,8 +657,7 @@ public final class PsiTestUtil {
      * @param root root to add
      * @return this builder
      */
-    @NotNull
-    public LibraryBuilder sourceRoot(@NotNull VirtualFile root) {
+    public @NotNull LibraryBuilder sourceRoot(@NotNull VirtualFile root) {
       mySourceRoots.add(root);
       return this;
     }
@@ -644,8 +667,7 @@ public final class PsiTestUtil {
      * @param rootPath root to add
      * @return this builder
      */
-    @NotNull
-    public LibraryBuilder sourceRoot(@NotNull String rootPath) {
+    public @NotNull LibraryBuilder sourceRoot(@NotNull String rootPath) {
       mySourceRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
       return this;
     }
@@ -655,8 +677,7 @@ public final class PsiTestUtil {
      * @param root root to add
      * @return this builder
      */
-    @NotNull
-    public LibraryBuilder javaDocRoot(@NotNull VirtualFile root) {
+    public @NotNull LibraryBuilder javaDocRoot(@NotNull VirtualFile root) {
       myJavaDocRoots.add(root);
       return this;
     }
@@ -666,8 +687,7 @@ public final class PsiTestUtil {
      * @param rootPath root to add
      * @return this builder
      */
-    @NotNull
-    public LibraryBuilder javaDocRoot(@NotNull String rootPath) {
+    public @NotNull LibraryBuilder javaDocRoot(@NotNull String rootPath) {
       myJavaDocRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
       return this;
     }
@@ -677,8 +697,7 @@ public final class PsiTestUtil {
      * @param rootPath root to add
      * @return this builder
      */
-    @NotNull
-    public LibraryBuilder externalAnnotationsRoot(@NotNull String rootPath) {
+    public @NotNull LibraryBuilder externalAnnotationsRoot(@NotNull String rootPath) {
       myExternalAnnotationsRoots.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(rootPath))));
       return this;
     }
@@ -690,8 +709,7 @@ public final class PsiTestUtil {
      * @param model a model to register the library in.
      * @return a library
      */
-    @NotNull
-    public Library addTo(@NotNull ModifiableRootModel model) {
+    public @NotNull Library addTo(@NotNull ModifiableRootModel model) {
       return addProjectLibrary(model, myName, myClassesRoots, mySourceRoots, myJavaDocRoots, myExternalAnnotationsRoots);
     }
 
@@ -703,8 +721,7 @@ public final class PsiTestUtil {
      * @param module a module to register the library in.
      * @return a library
      */
-    @NotNull
-    public Library addTo(@NotNull Module module) {
+    public @NotNull Library addTo(@NotNull Module module) {
       Ref<Library> result = Ref.create();
       ModuleRootModificationUtil.updateModel(module, model -> result.set(addTo(model)));
       return result.get();

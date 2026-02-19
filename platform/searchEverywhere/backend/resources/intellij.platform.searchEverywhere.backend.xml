@@ -1,0 +1,24 @@
+<idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere.backend">
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.rpc.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.searchEverywhere.backend.impl.SeRemoteApiProvider"/>
+
+    <uiDataRule implementation="com.intellij.platform.searchEverywhere.backend.impl.SeUiDataRule"/>
+
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.files.SeFilesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.nonIndexableFiles.SeNonIndexableFilesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.recentFiles.SeRecentFilesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.classes.SeClassesProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.symbols.SeSymbolsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.text.SeTextItemsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.topHit.SeBackendTopHitItemsProviderFactory"/>
+    <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.runConfigurations.SeRunConfigurationsProviderFactory"/>
+
+    <searchEverywhere.legacyItemPresentationProvider implementation="com.intellij.platform.searchEverywhere.backend.providers.CalculatorItemPresentationProvider"/>
+  </extensions>
+</idea-plugin>

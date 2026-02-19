@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.project.Project;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -17,8 +18,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +43,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
   private final List<? extends T> myItems;
   private final @NlsContexts.Label String myNotInMessage;
 
-  public ListChooseByNameModel(@NotNull final Project project,
+  public ListChooseByNameModel(final @NotNull Project project,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String prompt,
                                @NotNull @NlsContexts.Label String notInMessage,
                                @NotNull List<? extends T> items) {
@@ -65,22 +73,19 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
-  @NotNull
   @Override
-  public String getNotInMessage() {
+  public @NotNull String getNotInMessage() {
     return myNotInMessage;
   }
 
-  @NotNull
   @Override
-  public String getNotFoundMessage() {
+  public @NotNull String getNotFoundMessage() {
     return myNotInMessage;
   }
 
   // from ruby plugin
-  @NotNull
   @Override
-  public ListCellRenderer getListCellRenderer() {
+  public @NotNull ListCellRenderer getListCellRenderer() {
     return new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(final JList list,
@@ -94,10 +99,10 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground();
         panel.setBackground(bg);
 
-        if (value instanceof ChooseByNameItem) {
-          final ChooseByNameItem item = (ChooseByNameItem) value;
+        if (value instanceof ChooseByNameItem item) {
 
-          final Color fg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
+          final Color fg;
+          fg = isSelected ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
 
           final JLabel actionLabel = new JLabel(item.getName(), null, LEFT);
           actionLabel.setBackground(bg);
@@ -127,7 +132,8 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         }
         else {
           // E.g. "..." item
-          final JLabel actionLabel = new JLabel(value.toString(), null, LEFT);
+          @NlsSafe String text = value.toString();
+          final JLabel actionLabel = new JLabel(text, null, LEFT);
           actionLabel.setBackground(bg);
           actionLabel.setForeground(UIUtil.getListForeground());
           actionLabel.setFont(actionLabel.getFont().deriveFont(Font.PLAIN));
@@ -140,12 +146,12 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
   }
 
   @Override
-  public String getElementName(@NotNull final Object element) {
+  public String getElementName(final @NotNull Object element) {
     if (!(element instanceof ChooseByNameItem)) return null;
     return ((ChooseByNameItem)element).getName();
   }
 
-  public boolean matches(@NotNull final String name, @NotNull final String pattern) {
+  public boolean matches(final @NotNull String name, final @NotNull String pattern) {
     final Pattern compiledPattern = getTaskPattern(pattern);
     if (compiledPattern == null) {
       return false;
@@ -154,8 +160,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
     return new Perl5Matcher().matches(name, compiledPattern);
   }
 
-  @Nullable
-  private Pattern getTaskPattern(String pattern) {
+  private @Nullable Pattern getTaskPattern(String pattern) {
     if (!Comparing.strEqual(pattern, myPattern)) {
       myCompiledPattern = null;
       myPattern = pattern;

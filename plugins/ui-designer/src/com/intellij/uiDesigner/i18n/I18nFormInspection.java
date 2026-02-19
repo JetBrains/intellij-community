@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,7 +10,13 @@ import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.uiDesigner.GuiFormFileType;
@@ -31,17 +37,14 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class I18nFormInspection extends StringDescriptorInspection {
+
+public final class I18nFormInspection extends StringDescriptorInspection {
   public I18nFormInspection() {
     super("I18nForm");
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "HardCodedStringLiteral";
   }
 
@@ -97,13 +100,13 @@ public class I18nFormInspection extends StringDescriptorInspection {
     }
   }
 
-  private static LocalQuickFix @Nullable [] createBatchFixes() {
+  private static @NotNull LocalQuickFix @Nullable [] createBatchFixes() {
     return new LocalQuickFix[]{new I18nizeFormBatchFix()};
   }
 
   interface FixesProvider extends EditorQuickFixProvider, LocalQuickFixProvider {
     @Override
-    default LocalQuickFix @Nullable [] getQuickFixes() {
+    default @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       return createBatchFixes();
     }
   }

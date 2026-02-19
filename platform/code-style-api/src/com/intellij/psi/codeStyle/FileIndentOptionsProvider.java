@@ -1,23 +1,15 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,16 +21,33 @@ import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
  */
 public abstract class FileIndentOptionsProvider {
 
-  public final static ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
+  public static final ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
 
   /**
-   * Retrieves indent options for PSI file.
+   * @deprecated Use {@link #getIndentOptions(Project, CodeStyleSettings, VirtualFile)}
+   */
+  @Deprecated
+  public @Nullable IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
+    return null;
+  }
+
+  /**
+   * Retrieves indent options for a virtual file within a given project.
+   * @param project The current project.
    * @param settings Code style settings for which indent options are calculated.
    * @param file The file to retrieve options for.
-   * @return Indent options or {@code null} if the provider can't retrieve them.
+   * @return Indent options or {@code null} if the provider is not applicable.
    */
-  @Nullable
-  public abstract IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file);
+  public @Nullable IndentOptions getIndentOptions(@NotNull Project project, @NotNull CodeStyleSettings settings, @NotNull VirtualFile file) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile != null) {
+        return getIndentOptions(settings, psiFile);
+      }
+    }
+    return null;
+  }
 
   /**
    * Tells if the provider can be used when a complete file is reformatted.
@@ -48,12 +57,27 @@ public abstract class FileIndentOptionsProvider {
     return true;
   }
 
-  protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
-    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
+  protected static void notifyIndentOptionsChanged(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
   }
 
-  @Nullable
-  public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
+  protected static void notifyIndentOptionsChanged(@NotNull Project project) {
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
+  }
+
+  public @Nullable CodeStyleStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
+    return null;
+  }
+
+  public final boolean isAllowed(boolean isFullReformat) {
+    return !isFullReformat || useOnFullReformat();
+  }
+
+  /**
+   * @return The activation action for project based on the context.
+   * {@code null} means that activation is not available in the file context.
+   */
+  public @Nullable AnAction getActivatingAction(@Nullable CodeStyleStatusBarUIContributor activeUiContributor, @NotNull PsiFile file) {
     return null;
   }
 }

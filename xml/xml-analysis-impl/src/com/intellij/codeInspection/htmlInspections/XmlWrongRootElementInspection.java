@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -28,38 +13,36 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author spleaner
- */
-public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
+public final class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "XmlWrongRootElement";
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
   @Override
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkTag(final @NotNull XmlTag tag, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag.getParent() instanceof XmlTag)) {
       final PsiFile psiFile = tag.getContainingFile();
-      if (!(psiFile instanceof XmlFile)) {
+      if (!(psiFile instanceof XmlFile xmlFile)) {
         return;
       }
-
-      XmlFile xmlFile = (XmlFile) psiFile;
 
       final XmlDocument document = xmlFile.getDocument();
       if (document == null) {
@@ -124,13 +107,12 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return XmlAnalysisBundle.message("xml.quickfix.change.root.element.to", myText);
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
       final XmlTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class);
       myTag.setName(myText);
     }

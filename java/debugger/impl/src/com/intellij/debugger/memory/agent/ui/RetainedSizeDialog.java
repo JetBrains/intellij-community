@@ -1,23 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValue;
@@ -25,34 +19,35 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
-import icons.PlatformDebuggerImplIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.TreeNode;
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectReference;
 
-public class RetainedSizeDialog extends DialogWrapper {
+public final class RetainedSizeDialog extends MemoryAgentDialog {
   private static final Icon HELD_OBJECTS_MARK_ICON = AllIcons.Nodes.Locked;
   public static final Color HELD_OBJECTS_BACKGROUND_COLOR;
+
   static {
     Color background = UIUtil.getTreeSelectionBackground(true);
     HELD_OBJECTS_BACKGROUND_COLOR = new JBColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 30),
                                                 new Color(background.getRed(), background.getGreen(), background.getBlue(), 30));
   }
-  private final boolean myRebuildOnSessionEvents;
+
   private final Set<ObjectReference> myHeldObjects;
-  private final HighlightableTree myTree;
-  private final BorderLayoutPanel myPanel;
   private final NodeHighlighter myHighlighter;
   private final String myRootName;
   private final JBLabel myRetainedSizeLabel;
@@ -65,54 +60,34 @@ public class RetainedSizeDialog extends DialogWrapper {
                             XValueMarkers<?, ?> markers,
                             @Nullable XDebugSession session,
                             boolean rebuildOnSessionEvents) {
-    super(project, false);
-    myRebuildOnSessionEvents = rebuildOnSessionEvents;
-    setTitle(JavaDebuggerBundle.message("action.calculate.retained.size.title", name));
-    setModal(false);
+    super(
+      project, name, value, session,
+      new HighlightableTree(project, editorsProvider, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, markers),
+      rebuildOnSessionEvents
+    );
 
-    myTree = new HighlightableTree(project, editorsProvider, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, markers);
-    configureTree(value, name);
+    setTitle(JavaDebuggerBundle.message("action.calculate.retained.size.title", name));
+
     myHighlighter = new NodeHighlighter();
     myTree.addTreeListener(myHighlighter);
 
     myHeldObjects = new HashSet<>();
     myRootName = name;
 
-    JBPanel topPanel = new JBPanel<>();
-    topPanel.setLayout(new VerticalFlowLayout());
     myRetainedSizeLabel = new JBLabel(JavaDebuggerBundle.message("action.calculate.retained.size.waiting.message"));
-    topPanel.add(myRetainedSizeLabel);
-    topPanel.add(
-      new JBLabel(
-        JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName),
-        AllIcons.General.Information,
-        SwingConstants.LEFT
-      )
-    );
-    myPanel = JBUI.Panels.simplePanel()
-      .addToCenter(ScrollPaneFactory.createScrollPane(myTree))
-      .addToTop(topPanel);
 
-    if (session != null) {
-      session.addSessionListener(new XDebugSessionListener() {
-        @Override
-        public void sessionPaused() {
-          if (myRebuildOnSessionEvents) {
-            myTree.invokeLater(() -> myTree.rebuildAndRestore(XDebuggerTreeState.saveState(myTree)));
-          }
-        }
-
-        @Override
-        public void sessionResumed() {
-          close(DialogWrapper.OK_EXIT_CODE);
-        }
-      }, myDisposable);
-    }
-
-    init();
+    myTopPanel.add(myRetainedSizeLabel);
   }
 
-  public void setHeldObjectsAndRetainedSize(@NotNull Collection<? extends ObjectReference> heldObjects, long retainedSize) {
+  public void setCalculationTimeoutMessage() {
+    myRetainedSizeLabel.setText(JavaDebuggerBundle.message("debugger.memory.agent.timeout.error"));
+  }
+
+  public void setAgentCouldntBeLoadedMessage() {
+    myRetainedSizeLabel.setText(JavaDebuggerBundle.message("debugger.memory.agent.loading.error"));
+  }
+
+  public void setHeldObjectsAndSizes(@NotNull Collection<? extends ObjectReference> heldObjects, long shallowSize, long retainedSize) {
     myHeldObjects.clear();
     myHeldObjects.addAll(heldObjects);
     highlightLoadedChildren();
@@ -120,41 +95,16 @@ public class RetainedSizeDialog extends DialogWrapper {
       JavaDebuggerBundle.message(
         "action.calculate.retained.size.text",
         myRootName,
-        StringUtil.formatFileSize(retainedSize)
+        StringUtil.formatFileSize(retainedSize),
+        StringUtil.formatFileSize(shallowSize)
       )
     );
     myTree.repaint();
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
-    return myPanel;
-  }
-
-  @Override
-  @Nullable
-  protected JComponent createSouthPanel() {
-    return null;
-  }
-
-  @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "#javadebugger.RetainedSizeDialog";
-  }
-
-  private void configureTree(@NotNull XValue value, @NotNull String name) {
-    final XValueNodeImpl root = new XValueNodeImpl(myTree, null, name, value);
-    myTree.setRoot(root, true);
-    myTree.setSelectionRow(0);
-    myTree.expandNodesOnLoad(node -> node == root);
-  }
-
-  @Nullable
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myTree;
   }
 
   private void highlightLoadedChildren() {
@@ -164,15 +114,25 @@ public class RetainedSizeDialog extends DialogWrapper {
     while (!nodes.empty()) {
       XValueNodeImpl node = nodes.pop();
       for (TreeNode child : node.getLoadedChildren()) {
-        if (child instanceof XValueNodeImpl) {
-          XValueNodeImpl childImpl = (XValueNodeImpl)child;
-          if (myHeldObjects.contains(getObjectReference(childImpl))) {
-            myHighlighter.highlightNode(childImpl);
-            nodes.push(childImpl);
-          }
+        if (child instanceof XValueNodeImpl childImpl && myHeldObjects.contains(getObjectReference(childImpl))) {
+          myHighlighter.highlightNode(childImpl);
+          nodes.push(childImpl);
         }
       }
     }
+  }
+
+  @Override
+  public ProgressIndicator createProgressIndicator() {
+    return new MemoryAgentActionProgressIndicator() {
+      @Override
+      public void stop() {
+        super.stop();
+        myInfoLabel.setVisible(true);
+        myInfoLabel.setText(JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName));
+        myInfoLabel.setIcon(AllIcons.General.Information);
+      }
+    };
   }
 
   private class NodeHighlighter implements XDebuggerTreeListener {
@@ -186,14 +146,11 @@ public class RetainedSizeDialog extends DialogWrapper {
 
     @Override
     public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
-      if (!mySkipNotification && node instanceof XValueNodeImpl) {
-        XValueNodeImpl nodeImpl = (XValueNodeImpl)node;
-        if (myHeldObjects.contains(getObjectReference(nodeImpl))) {
-          XValuePresentation presentation = nodeImpl.getValuePresentation();
-          Icon icon = nodeImpl.getIcon();
-          if (presentation != null && icon != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
-            highlightNode(nodeImpl);
-          }
+      if (!mySkipNotification && node instanceof XValueNodeImpl nodeImpl &&
+          nodeImpl != nodeImpl.getTree().getRoot() && myHeldObjects.contains(getObjectReference(nodeImpl))) {
+        XValuePresentation presentation = nodeImpl.getValuePresentation();
+        if (presentation != null && nodeImpl.getIcon() != AllIcons.Debugger.PinToTop.UnpinnedItem) {
+          highlightNode(nodeImpl);
         }
       }
       mySkipNotification = false;
@@ -202,14 +159,14 @@ public class RetainedSizeDialog extends DialogWrapper {
     public void highlightNode(@NotNull XValueNodeImpl node) {
       XValuePresentation presentation = node.getValuePresentation();
       Icon icon = node.getIcon();
-      if (presentation != null && icon != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
+      if (presentation != null && icon != AllIcons.Debugger.PinToTop.UnpinnedItem) {
         mySkipNotification = true;
         node.applyPresentation(
-          myCachedIcons.computeIfAbsent(icon, nodeIcon -> new LayeredIcon(nodeIcon, HELD_OBJECTS_MARK_ICON)),
+          myCachedIcons.computeIfAbsent(icon, nodeIcon -> LayeredIcon.layeredIcon(new Icon[]{nodeIcon, HELD_OBJECTS_MARK_ICON})),
           presentation,
           !node.isLeaf()
         );
-        myTree.addColoredPath(node.getPath(), HELD_OBJECTS_BACKGROUND_COLOR);
+        ((HighlightableTree)myTree).addColoredPath(node.getPath(), HELD_OBJECTS_BACKGROUND_COLOR);
       }
     }
   }

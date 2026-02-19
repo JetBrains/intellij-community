@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,17 +7,20 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
 
-public class FormatCommentsProcessor implements PreFormatProcessor {
-  @NotNull
+public final class FormatCommentsProcessor implements PreFormatProcessor {
   @Override
-  public TextRange process(@NotNull final ASTNode element, @NotNull final TextRange range) {
+  public @NotNull TextRange process(final @NotNull ASTNode element, final @NotNull TextRange range) {
     PsiElement e = SourceTreeToPsiMap.treeElementToPsi(element);
     assert e != null && e.isValid();
     final PsiFile file = e.getContainingFile();
@@ -34,8 +37,7 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
   /**
    * Formats PsiDocComments of current ASTNode element and all his children PsiDocComments
    */
-  @NotNull
-  private static TextRange formatCommentsInner(@NotNull Project project, @NotNull ASTNode element, @NotNull final TextRange markedRange) {
+  private static @NotNull TextRange formatCommentsInner(@NotNull Project project, @NotNull ASTNode element, final @NotNull TextRange markedRange) {
     TextRange resultTextRange = markedRange;
     final PsiElement elementPsi = element.getPsi();
     assert elementPsi.isValid();

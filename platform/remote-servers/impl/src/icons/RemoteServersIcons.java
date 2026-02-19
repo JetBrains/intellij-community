@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
-import com.intellij.ui.IconManager;
+import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -10,12 +10,9 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
+// Deprecated: use AllIcons.RemoteServers.* instead
+@Deprecated
 public final class RemoteServersIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, RemoteServersIcons.class, cacheKey);
-  }
-
-  /** 16x16 */ public static final @NotNull Icon ResumeScaled = load("/icons/resumeScaled.svg", 4181349516062133707L);
-  /** 13x13 */ public static final @NotNull Icon ServersToolWindow = load("/icons/serversToolWindow.svg", 7988096186800477667L);
-  /** 16x16 */ public static final @NotNull Icon SuspendScaled = load("/icons/suspendScaled.svg", 4887316364542562905L);
+  /** 16x16 */ public static final @NotNull Icon ResumeScaled = AllIcons.RemoteServers.ResumeScaled;
+  /** 16x16 */ public static final @NotNull Icon SuspendScaled = AllIcons.RemoteServers.SuspendScaled;
 }

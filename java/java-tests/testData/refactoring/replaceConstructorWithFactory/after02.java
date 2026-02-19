@@ -2,12 +2,12 @@ class A {
     A(int i) {
     }
 
-    public static A newA(int i) {
+    public static A createA(int i) {
         return new A(i);
     }
 
     A method() {
-        return newA(10);
+        return createA(10);
     }
 }
 
@@ -18,5 +18,5 @@ class B extends A {
 }
 
 class Usage {
-    A a = A.newA(2);
+    A a = A.createA(2);
 }

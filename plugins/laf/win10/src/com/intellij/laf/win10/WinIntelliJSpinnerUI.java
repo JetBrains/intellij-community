@@ -8,10 +8,25 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 
-import javax.swing.*;
+import javax.swing.ButtonModel;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JSpinner;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -19,7 +34,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
+public final class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
   static final String HOVER_PROPERTY = "JSpinner.hover";
 
   static final int BUTTON_WIDTH = 20;
@@ -270,7 +285,9 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     int iconWidth = JBUIScale.scale(BUTTON_WIDTH) + i.right;
     int iconHeight = JBUIScale.scale(SPINNER_HEIGHT) + i.top + i.bottom;
 
-    Dimension minSize = new Dimension(i.left + DarculaSpinnerUI.MINIMUM_WIDTH.get() + i.right, iconHeight);
+    Dimension themeMinimumSize = JBUI.CurrentTheme.Spinner.minimumSize();
+    Dimension minSize = new Dimension(i.left + themeMinimumSize.width + i.right,
+                                      Math.max(i.top + themeMinimumSize.height + i.bottom, iconHeight));
     size = DarculaUIUtil.maximize(size, minSize);
 
     Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();

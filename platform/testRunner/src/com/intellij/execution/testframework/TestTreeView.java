@@ -1,15 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.PopupHandler;
@@ -27,14 +40,12 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
 
-public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
+public abstract class TestTreeView extends Tree implements UiCompatibleDataProvider, CopyProvider {
   public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
 
   private TestFrameworkRunningModel myModel;
@@ -51,8 +62,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     return myModel;
   }
 
-  @Nullable
-  public AbstractTestProxy getSelectedTest() {
+  public @Nullable AbstractTestProxy getSelectedTest() {
     TreePath[] paths = getSelectionPaths();
     if (paths != null && paths.length > 1) return null;
     final TreePath selectionPath = getSelectionPath();
@@ -78,71 +88,59 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath[] paths = getSelectionPaths();
+    TreePath selectionPath = getSelectionPath();
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+    if (selectionPath == null) return;
+
+    sink.set(MODEL_DATA_KEY, myModel);
+
+    AbstractTestProxy[] testProxies = Arrays.stream(Objects.requireNonNull(paths))
+      .map(path -> getSelectedTest(path))
+      .filter(Objects::nonNull)
+      .toArray(AbstractTestProxy[]::new);
+    sink.set(AbstractTestProxy.DATA_KEYS, testProxies);
+
+    AbstractTestProxy testProxy = getSelectedTest(selectionPath);
+    if (testProxy == null) return;
+
+    sink.set(AbstractTestProxy.DATA_KEY, testProxy);
+    if (testProxy instanceof Navigatable o) {
+      sink.set(CommonDataKeys.NAVIGATABLE, o);
+    }
+    RunProfile configuration = myModel.getProperties().getConfiguration();
+    if (configuration instanceof RunConfiguration o) {
+      sink.set(RunConfiguration.DATA_KEY, o);
     }
 
-    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      TreePath[] paths = getSelectionPaths();
-      if (paths != null && paths.length > 1) {
-        final List<PsiElement> els = new ArrayList<>(paths.length);
-        for (TreePath path : paths) {
-          if (isPathSelected(path.getParentPath())) continue;
-          AbstractTestProxy test = getSelectedTest(path);
-          if (test != null) {
-            final PsiElement psiElement = (PsiElement)TestsUIUtil.getData(test, CommonDataKeys.PSI_ELEMENT.getName(), myModel);
-            if (psiElement != null) {
-              els.add(psiElement);
-            }
-          }
-        }
-        return els.isEmpty() ? null : els.toArray(PsiElement.EMPTY_ARRAY);
-      }
-    }
-
-    if (Location.DATA_KEYS.is(dataId)) {
-      TreePath[] paths = getSelectionPaths();
-      if (paths != null && paths.length > 1) {
-        final List<Location<?>> locations = new ArrayList<>(paths.length);
-        for (TreePath path : paths) {
-          if (isPathSelected(path.getParentPath())) continue;
-          AbstractTestProxy test = getSelectedTest(path);
-          if (test != null) {
-            final Location<?> location = (Location<?>)TestsUIUtil.getData(test, Location.DATA_KEY.getName(), myModel);
-            if (location != null) {
-              locations.add(location);
-            }
-          }
-        }
-        return locations.isEmpty() ? null : locations.toArray(new Location[0]);
-      }
-    }
-
-    if (AbstractTestProxy.DATA_KEYS.is(dataId)) {
-      TreePath[] paths = getSelectionPaths();
-      if (paths != null) {
-        return Arrays.stream(paths)
-          .map(path -> getSelectedTest(path))
-          .filter(Objects::nonNull)
-          .toArray(AbstractTestProxy[]::new);
-      }
-    }
-
-    if (MODEL_DATA_KEY.is(dataId)) {
-      return myModel;
-    }
-
-    final TreePath selectionPath = getSelectionPath();
-    if (selectionPath == null) return null;
-    final AbstractTestProxy testProxy = getSelectedTest(selectionPath);
-    if (testProxy == null) return null;
-    try {
-      return TestsUIUtil.getData(testProxy, dataId, myModel);
-    }
-    catch (IndexNotReadyException ignore) {
-      return null;
-    }
+    Project project = myModel.getProperties().getProject();
+    TestFrameworkRunningModel model = myModel;
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+      Location<?> location = testProxy.getLocation(project, model.getProperties().getScope());
+      PsiElement psiElement = location != null ? location.getPsiElement() : null;
+      return psiElement == null || !psiElement.isValid() ? null : psiElement;
+    });
+    sink.lazy(Location.DATA_KEY, () -> {
+      return testProxy.getLocation(project, model.getProperties().getScope());
+    });
+    sink.lazy(Location.DATA_KEYS, () -> {
+      return Arrays.stream(testProxies)
+        .map(p -> p.getLocation(project, model.getProperties().getScope()))
+        .filter(Objects::nonNull)
+        .toArray(Location[]::new);
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+      return Arrays.stream(testProxies)
+        .map(p -> p.getLocation(project, model.getProperties().getScope()))
+        .filter(Objects::nonNull).map(l -> l.getPsiElement())
+        .toArray(PsiElement[]::new);
+    });
   }
 
   @Override
@@ -173,24 +171,25 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   protected void installHandlers() {
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
-    new TreeSpeedSearch(this, path -> {
+    boolean canExpand = Registry.is("tests.view.node.expanding.search");
+    TreeSpeedSearch.installOn(this, canExpand, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
       return getPresentableName(testProxy);
     });
     TreeUtil.installActions(this);
-    PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
+    PopupHandler.installPopupMenu(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     HintUpdateSupply.installHintUpdateSupply(this, obj -> {
-      if (obj instanceof DefaultMutableTreeNode) {
-        Object userObject = ((DefaultMutableTreeNode)obj).getUserObject();
-        if (userObject instanceof NodeDescriptor) {
-          Object element = ((NodeDescriptor)userObject).getElement();
-          if (element instanceof AbstractTestProxy) {
-            return (PsiElement)TestsUIUtil.getData((AbstractTestProxy)element, CommonDataKeys.PSI_ELEMENT.getName(), myModel);
-          }
-        }
+      Object userObject = TreeUtil.getUserObject(obj);
+      Object element = userObject instanceof NodeDescriptor<?> o ? o.getElement() : null;
+      if (!(element instanceof AbstractTestProxy testProxy)) {
+        return null;
       }
-      return null;
+      TestFrameworkRunningModel model = myModel;
+      Project project = model.getProperties().getProject();
+      Location<?> location = testProxy.getLocation(project, model.getProperties().getScope());
+      PsiElement psiElement = location != null ? location.getPsiElement() : null;
+      return psiElement == null || !psiElement.isValid() ? null : psiElement;
     });
   }
 

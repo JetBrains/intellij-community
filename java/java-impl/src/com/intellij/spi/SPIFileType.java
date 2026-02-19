@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spi;
 
 import com.intellij.icons.AllIcons;
@@ -12,9 +12,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
   public static final SPIFileType INSTANCE = new SPIFileType();
@@ -36,33 +35,28 @@ public final class SPIFileType extends LanguageFileType implements FileTypeIdent
     return false;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "SPI";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
-    return JavaBundle.message("spi.file.type.description");
+  public @NotNull String getDescription() {
+    return JavaBundle.message("filetype.spi.description");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "";
   }
 
-  @Nullable
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;
   }
 
-  @Nullable
   @Override
-  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
 }

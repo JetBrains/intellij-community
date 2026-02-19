@@ -1,15 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
@@ -29,13 +37,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -106,21 +113,25 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    PsiType type = TypeInferenceHelper.inTopContext(() -> GroovyPsiManager.getInstance(getProject()).getType(this, field -> {
-      if (getDeclaredType() == null && getInitializerGroovy() == null) {
-        final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
-        if (type1 != null) {
-          return type1;
-        }
-      }
-      return null;
-    }));
-
+    PsiType type = TypeInferenceHelper.inTopContext(() -> getEnhancedType());
     if (type != null) {
       return type;
     }
-
     return TypeInferenceHelper.inTopContext(() -> super.getTypeGroovy());
+  }
+
+  private @Nullable PsiType getEnhancedType() {
+    return CachedValuesManager.getProjectPsiDependentCache(this, GrFieldImpl::doGetEnhancedType);
+  }
+
+  private static @Nullable PsiType doGetEnhancedType(@NotNull GrFieldImpl field) {
+    if (field.getDeclaredType() == null && field.getInitializerGroovy() == null) {
+      final PsiType type1 = GrVariableEnhancer.getEnhancedType(field);
+      if (type1 != null) {
+        return type1;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -150,9 +161,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return PsiUtil.isProperty(this);
   }
 
-  @Nullable
   @Override
-  public GrAccessorMethod getSetter() {
+  public @Nullable GrAccessorMethod getSetter() {
     return GrClassImplUtil.findSetter(this);
   }
 
@@ -162,8 +172,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     if (isProperty()) {
       return ResolveScopeManager.getElementUseScope(this); //maximal scope
     }
@@ -184,9 +193,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return originalField != null ? originalField : this;
   }
 
-  @Nullable
   @Override
-  protected Icon getElementIcon(@IconFlags int flags) {
+  protected @Nullable Icon getElementIcon(@IconFlags int flags) {
     boolean isAbstract = hasModifierProperty(PsiModifier.ABSTRACT);
     Icon fieldIcon = isProperty()
                      ? isAbstract ? JetgroovyIcons.Groovy.AbstractProperty : JetgroovyIcons.Groovy.Property
@@ -195,8 +203,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @Override
-  @NotNull
-  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
       String[] namedParameters = stub.getNamedParameters();

@@ -48,7 +48,7 @@ class StringSubstring {
 
   public void processPrefix(String text) {
     String currentPrefix = text.isEmpty() ? "^" : text.substring(0, 1);
-    if (<warning descr="Condition '!currentPrefix.isEmpty()' is always 'true'">!<warning descr="Result of 'currentPrefix.isEmpty()' is always 'false'">currentPrefix.isEmpty()</warning></warning> && Character.isDigit(currentPrefix.charAt(0))) {
+    if (<warning descr="Condition '!currentPrefix.isEmpty()' is always 'true'">!currentPrefix.isEmpty()</warning> && Character.isDigit(currentPrefix.charAt(0))) {
       currentPrefix = "";
     }
     System.out.println(currentPrefix);
@@ -87,5 +87,16 @@ class StringSubstring {
     if (s1.substring(pos, pos+4).equals(s2)) {
       if (<warning descr="Condition 's2.length() != 4' is always 'false'">s2.length() != 4</warning>) {}
     }
+  }
+
+  void testSubstringVarRef(String s, int from, int length) {
+    String s1 = s.substring(0, length);
+    if (<warning descr="Condition 's1.length() == length' is always 'true'">s1.length() == length</warning>) {}
+    String s2 = s.substring(from, from + length);
+    if (<warning descr="Condition 's2.length() == length' is always 'true'">s2.length() == length</warning>) {}
+  }
+
+  public static boolean testSubstringEquals(String s1, String s2, int idx) {
+    return s1.substring(0, idx).equals(s2.substring(0, idx));
   }
 }

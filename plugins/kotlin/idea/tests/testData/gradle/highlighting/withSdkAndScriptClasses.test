@@ -1,0 +1,97 @@
+// FILE: build.gradle.kts
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(":module1"))
+}
+
+enum class JvmTestFramework {
+    JUnit,
+    JUnit5,
+    TestNG;
+
+    fun lowercase() = name.lowercase()
+}
+val jvmTestFrameworks = JvmTestFramework.values().toList()
+
+tasks.register("generateModuleInfo") {
+    doLast {
+        val modules = rootProject.subprojects
+        File("")
+            .writer() // jdk
+            .buffered() // kotlin stdlib ext function
+        jvmTestFrameworks.forEach { framework ->
+            println(framework)
+        }
+    }
+}
+
+
+// FILE: settings.gradle.kts
+include("module1")
+
+// FILE: build.gradle.kts.highlighting
+// IGNORE_K1
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>plugins<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>`kotlin-dsl`<!>
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>repositories<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>mavenCentral<!>()
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>dependencies<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>implementation<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>project<!>(":module1"))
+}
+
+// FILE: build.gradle.kts.highlighting.k2
+<!HIGHLIGHTING("severity='DSL_TYPE_SEVERITY'")!>plugins<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>`kotlin-dsl`<!>
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>repositories<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>mavenCentral<!>()
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>dependencies<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>implementation<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>project<!>(":module1"))
+}
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>enum<!> class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>JvmTestFramework<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>JUnit<!>,
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>JUnit5<!>,
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>TestNG<!>;
+
+    fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>lowercase<!>() = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>name<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>lowercase<!>()
+}
+val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>jvmTestFrameworks<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>JvmTestFramework<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>values<!>().<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>toList<!>()
+
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>tasks<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>register<!>("generateModuleInfo") {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>doLast<!> {
+        val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>modules<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>rootProject<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>subprojects<!>
+        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>File<!>("")
+            .<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>writer<!>() // jdk
+            .<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>buffered<!>() // kotlin stdlib ext function
+        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>jvmTestFrameworks<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>forEach<!> { <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>framework<!> ->
+            <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>println<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>framework<!>)
+        }
+    }
+}
+
+// FILE: settings.gradle.kts
+include("module1")
+
+// FILE: module1/build.gradle.kts
+plugins {
+    java
+}
+
+repositories {
+    mavenCentral()
+}

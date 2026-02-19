@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_serializedSubClassAndChangedInterfaces-a.kotlin_module
+  test/B.class
+  test/I1.class
+  test/I2.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/serializedSubClassAndChangedInterfaces/a/b.kt
+  kotlin/pureKotlin/serializedSubClassAndChangedInterfaces/a/interfaces.kt
+End of files
+------------------------------------------
+Exit code: OK

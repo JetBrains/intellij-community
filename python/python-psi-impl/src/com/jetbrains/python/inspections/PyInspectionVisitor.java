@@ -15,9 +15,15 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -26,25 +32,35 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dcheryasov
- */
 public abstract class PyInspectionVisitor extends PyElementVisitor {
-  @Nullable private final ProblemsHolder myHolder;
-  @NotNull private final LocalInspectionToolSession mySession;
+  private final @Nullable ProblemsHolder myHolder;
   protected final TypeEvalContext myTypeEvalContext;
 
   public static final Key<TypeEvalContext> INSPECTION_TYPE_EVAL_CONTEXT = Key.create("PyInspectionTypeEvalContext");
 
-  public PyInspectionVisitor(@Nullable ProblemsHolder holder,
-                             @NotNull LocalInspectionToolSession session) {
+
+  /**
+   * @deprecated use {@link PyInspectionVisitor#PyInspectionVisitor(ProblemsHolder, TypeEvalContext)} instead
+   */
+  @Deprecated
+  public PyInspectionVisitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
     myHolder = holder;
-    mySession = session;
+    myTypeEvalContext = PyInspectionVisitor.getContext(session);
+    PluginException.reportDeprecatedUsage("this constructor", "");
+  }
+
+  public PyInspectionVisitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+    myHolder = holder;
+    myTypeEvalContext = context;
+  }
+
+  public static @NotNull TypeEvalContext getContext(@NotNull LocalInspectionToolSession session) {
     TypeEvalContext context;
     synchronized (INSPECTION_TYPE_EVAL_CONTEXT) {
       context = session.getUserData(INSPECTION_TYPE_EVAL_CONTEXT);
@@ -57,26 +73,20 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
         session.putUserData(INSPECTION_TYPE_EVAL_CONTEXT, context);
       }
     }
-    myTypeEvalContext = context;
+    return context;
   }
 
   protected PyResolveContext getResolveContext() {
-    return PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+    return PyResolveContext.defaultContext(myTypeEvalContext);
   }
 
-  @Nullable
-  protected ProblemsHolder getHolder() {
+  protected @Nullable ProblemsHolder getHolder() {
     return myHolder;
-  }
-
-  @NotNull
-  public LocalInspectionToolSession getSession() {
-    return mySession;
   }
 
   protected final void registerProblem(@Nullable PsiElement element,
                                        @NotNull @InspectionMessage String message) {
-    if (element == null || element.getTextLength() == 0) {
+    if (!canRegisterProblem(element)) {
       return;
     }
     if (myHolder != null) {
@@ -87,7 +97,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   protected final void registerProblem(@Nullable PsiElement element,
                                        @NotNull @InspectionMessage String message,
                                        LocalQuickFix @NotNull ... quickFixes) {
-    if (element == null || element.getTextLength() == 0) {
+    if (!canRegisterProblem(element)) {
       return;
     }
     if (myHolder != null) {
@@ -98,12 +108,25 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
   protected final void registerProblem(@Nullable PsiElement element,
                                        @NotNull @InspectionMessage String message,
                                        @NotNull ProblemHighlightType type) {
-    if (element == null || element.getTextLength() == 0) {
+    if (!canRegisterProblem(element)) {
       return;
     }
     if (myHolder != null) {
-      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, (LocalQuickFix)null, type, myHolder.isOnTheFly()));
+      myHolder.registerProblem(
+        myHolder.getManager().createProblemDescriptor(element, message, (LocalQuickFix)null, type, myHolder.isOnTheFly()));
     }
+  }
+
+  private static boolean canRegisterProblem(@Nullable PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+
+    if (element.getTextLength() > 0) {
+      return true;
+    }
+
+    return element instanceof PyFile;
   }
 
   /**
@@ -116,7 +139,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     @NotNull @InspectionMessage String descriptionTemplate,
     @NotNull ProblemHighlightType highlightType,
     @Nullable HintAction hintAction,
-    LocalQuickFix @NotNull... fixes) {
+    @NotNull LocalQuickFix @NotNull ... fixes) {
     registerProblem(psiElement, descriptionTemplate, highlightType, hintAction, null, fixes);
   }
 
@@ -131,7 +154,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
     @NotNull ProblemHighlightType highlightType,
     @Nullable HintAction hintAction,
     @Nullable TextRange rangeInElement,
-    LocalQuickFix @NotNull... fixes) {
+    @NotNull LocalQuickFix @NotNull ... fixes) {
     if (myHolder != null && !(psiElement instanceof PsiErrorElement)) {
       myHolder.registerProblem(new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false,
                                                          rangeInElement, hintAction, myHolder.isOnTheFly()));

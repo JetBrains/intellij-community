@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -11,8 +11,8 @@ import java.util.Objects;
 
 @Tag("build-property")
 public final class BuildFileProperty implements JDOMExternalizable, Cloneable {
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String VALUE = "value";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String VALUE = "value";
   private String myPropertyName;
   private String myPropertyValue;
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -8,15 +9,15 @@ import com.intellij.java.JavaBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author peter
- */
-public class ImportStaticLookupActionProvider implements LookupActionProvider {
+final class ImportStaticLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(final LookupElement element, Lookup lookup, Consumer<LookupElementAction> consumer) {
+  public void fillActions(@NotNull LookupElement element,
+                          @NotNull Lookup lookup,
+                          @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
     final StaticallyImportable item = element.as(StaticallyImportable.CLASS_CONDITION_KEY);
     if (item == null || !item.canBeImported()) {
       return;

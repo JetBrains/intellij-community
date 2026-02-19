@@ -1,29 +1,25 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
  */
-public class JavaAnchorProvider extends SmartPointerAnchorProvider {
+public final class JavaAnchorProvider extends SmartPointerAnchorProvider {
   @Override
   public PsiElement getAnchor(@NotNull PsiElement element) {
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE) || !element.isPhysical()) {
@@ -43,9 +39,8 @@ public class JavaAnchorProvider extends SmartPointerAnchorProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiElement restoreElement(@NotNull PsiElement anchor) {
+  public @Nullable PsiElement restoreElement(@NotNull PsiElement anchor) {
     if (anchor instanceof PsiIdentifier) {
       PsiElement parent = anchor.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement) { // anonymous class, type

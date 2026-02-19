@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.resources;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -11,30 +11,34 @@ import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.ResourcesTarget;
+import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
-  private static final Logger LOG = Logger.getInstance(ResourcesBuilder.class);
-
   private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<>());
 
   public ResourcesBuilder() {
     super(ResourcesTargetType.ALL_TYPES);
   }
 
-  @NotNull
-  private static @Nls String getBuilderName() {
+  private static @NotNull @Nls String getBuilderName() {
     return JpsBuildBundle.message("builder.name.resource.compiler");
   }
 
@@ -46,7 +50,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   public void build(@NotNull ResourcesTarget target,
                     @NotNull DirtyFilesHolder<ResourceRootDescriptor, ResourcesTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
-                    @NotNull CompileContext context) throws ProjectBuildException, IOException {
+                    @NotNull CompileContext context) throws ProjectBuildException {
     if (!isResourceProcessingEnabled(target.getModule())) {
       return;
     }
@@ -63,17 +67,8 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
         if (isSkipped.booleanValue()) {
           return true;
         }
-        try {
-          copyResource(context, srcRoot, f, outputConsumer);
-          return !context.getCancelStatus().isCanceled();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          context.processMessage(
-            new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(f.getPath()))
-          );
-          return false;
-        }
+        copyResource(context, srcRoot, f, outputConsumer);
+        return !context.getCancelStatus().isCanceled();
       });
 
       context.checkCanceled();
@@ -99,37 +94,43 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     return true;
   }
 
-  private static void copyResource(CompileContext context, ResourceRootDescriptor rd, File file, BuildOutputConsumer outputConsumer) throws IOException {
-    final File outputRoot = rd.getTarget().getOutputDir();
+  private static void copyResource(CompileContext context, ResourceRootDescriptor rd, File file, BuildOutputConsumer outputConsumer) {
+    File outputRoot = rd.getTarget().getOutputDir();
     if (outputRoot == null) {
       return;
     }
-    final String sourceRootPath = FileUtil.toSystemIndependentName(rd.getRootFile().getAbsolutePath());
-    final String relativePath = FileUtil.getRelativePath(sourceRootPath, FileUtil.toSystemIndependentName(file.getPath()), '/');
-    final String prefix = rd.getPackagePrefix();
 
-    final StringBuilder targetPath = new StringBuilder();
-    targetPath.append(FileUtil.toSystemIndependentName(outputRoot.getPath()));
-    if (prefix.length() > 0) {
+    String sourceRootPath = FileUtilRt.toCanonicalPath(rd.getRootFile().getAbsolutePath(), File.separatorChar, true);
+    String relativePath = FileUtilRt.getRelativePath(sourceRootPath, FileUtilRt.toCanonicalPath(file.getPath(), File.separatorChar, true), '/');
+    if (".".equals(relativePath)) {
+      relativePath = file.getName();
+    }
+    String prefix = rd.getPackagePrefix();
+
+    StringBuilder targetPath = new StringBuilder();
+    targetPath.append(FileUtil.toCanonicalPath(outputRoot.getPath()));
+    if (!prefix.isEmpty()) {
       targetPath.append('/').append(prefix.replace('.', '/'));
     }
     targetPath.append('/').append(relativePath);
 
-    context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.copying.resources.0",
-                                                                      rd.getTarget().getModule().getName())));
+    context.processMessage(
+      new ProgressMessage(JpsBuildBundle.message("progress.message.copying.resources.0", rd.getTarget().getModule().getName()))
+    );
     try {
-      final File targetFile = new File(targetPath.toString());
+      File targetFile = new File(targetPath.toString());
       FSOperations.copy(file, targetFile);
-      outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
+      outputConsumer.registerOutputFile(targetFile, List.of(file.getPath()));
     }
     catch (Exception e) {
-      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
+      context.processMessage(
+        new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e))
+      );
     }
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return getBuilderName();
   }
 }

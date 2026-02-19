@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.platform.pluginManager.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "shared_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "shared",
+  module_name = "intellij.platform.pluginManager.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":shared_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc",
+    "//platform/platform-impl:ide-impl",
+    "//libraries/kotlinx/serialization/core",
+    "//platform/util",
+    "//platform/pluginSystem/parser/impl",
+    "//platform/core-impl",
+    "//platform/project/shared:project",
+    "//platform/platform-impl/update-checker",
+  ]
+)
+
+jvm_library(
+  name = "shared_test_lib",
+  module_name = "intellij.platform.pluginManager.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":shared",
+    "//platform/core-api:core_test_lib",
+    "//platform/kernel/shared:kernel_test_lib",
+    "//platform/platform-impl/rpc:rpc_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/pluginSystem/parser/impl:impl_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/project/shared:project_test_lib",
+    "//platform/platform-impl/update-checker:update-checker_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.pluginManager.shared` end

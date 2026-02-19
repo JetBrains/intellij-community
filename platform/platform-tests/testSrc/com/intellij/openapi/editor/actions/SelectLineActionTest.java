@@ -20,13 +20,15 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class SelectLineActionTest extends LightPlatformCodeInsightTestCase {
   public void test() {
-    prepare("first line\n" +
-            "second<caret> line\n" +
-            "third line");
+    prepare("""
+              first line
+              second<caret> line
+              third line""");
     selectLine();
-    checkResultByText("first line\n" +
-                      "<caret><selection>second line\n" +
-                      "</selection>third line"
+    checkResultByText("""
+                        first line
+                        <selection>second line
+                        </selection><caret>third line"""
     );
   }
 
@@ -36,9 +38,44 @@ public class SelectLineActionTest extends LightPlatformCodeInsightTestCase {
             "third line");
     assertTrue("Failed to activate soft wrapping", EditorTestUtil.configureSoftWraps(getEditor(), 6));
     selectLine();
-    checkResultByText("first line\n" +
-                      "<caret><selection>second line\n" +
-                      "</selection>third line"
+    checkResultByText("""
+                        first line
+                        <selection>second line
+                        </selection><caret>third line"""
+    );
+  }
+
+  public void testWithExistingSelection() {
+    prepare("""
+              first line
+              secon<caret><selection>d line
+              third li</selection>ne
+              fourth line
+              fifth line""");
+
+    selectLine();
+    checkResultByText("""
+                        first line
+                        <selection>second line
+                        third line
+                        </selection><caret>fourth line
+                        fifth line"""
+    );
+    selectLine();
+    checkResultByText("""
+                        first line
+                        <selection>second line
+                        third line
+                        fourth line
+                        </selection><caret>fifth line"""
+    );
+    selectLine();
+    checkResultByText("""
+                        first line
+                        <selection>second line
+                        third line
+                        fourth line
+                        fifth line</selection><caret>"""
     );
   }
 

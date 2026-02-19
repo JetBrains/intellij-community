@@ -1,32 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SortedList;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
-import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
+import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolver;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
-public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
+final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
   private static final NotNullFunction<PsiFile, Collection<? extends PsiElement>> CONVERTER =
     psiFile -> ContainerUtil.createMaybeSingletonList(psiFile);
 
@@ -35,10 +32,10 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
 
   private final Option myDescriptionOption = new Option("devkit.description",
                                                         DevKitBundle.message("gutter.related.option.description"),
-                                                        DevkitIcons.Gutter.DescriptionFile);
+                                                        DevkitCoreIcons.Gutter.DescriptionFile);
   private final Option myBeforeAfterOption = new Option("devkit.beforeAfter",
                                                         DevKitBundle.message("gutter.related.option.before.after.templates"),
-                                                        DevkitIcons.Gutter.Diff);
+                                                        DevkitCoreIcons.Gutter.Diff);
 
   @Override
   public Option @NotNull [] getOptions() {
@@ -63,40 +60,26 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
     Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module == null) return;
 
-    for (DescriptionType type : DescriptionType.values()) {
-      if (!InheritanceUtil.isInheritor(psiClass, type.getClassName())) {
+    for (DescriptionType type : DescriptionType.getEntries()) {
+      if (!type.matches(psiClass)) {
         continue;
       }
 
-      String descriptionDirName = DescriptionCheckerUtil.getDescriptionDirName(psiClass);
-      if (StringUtil.isEmptyOrSpaces(descriptionDirName)) {
-        return;
-      }
-
-      if (type == DescriptionType.INSPECTION) {
-        if (!descriptionEnabled) return;
-        final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
-        if (info.hasDescriptionFile()) {
-          addDescriptionFileGutterIcon(highlightingElement, info.getDescriptionFile(), result);
-        }
-        return;
-      }
-
-      for (PsiDirectory descriptionDir : DescriptionCheckerUtil.getDescriptionsDirs(module, type)) {
-        PsiDirectory dir = descriptionDir.findSubdirectory(descriptionDirName);
-        if (dir == null) continue;
-        final PsiFile descriptionFile = dir.findFile("description.html");
+      DescriptionTypeResolver descriptionTypeResolver = type.createDescriptionTypeResolver(module, psiClass);
+      if (descriptionEnabled) {
+        PsiFile descriptionFile = descriptionTypeResolver.resolveDescriptionFile();
         if (descriptionFile != null) {
-          if (descriptionEnabled) {
-            addDescriptionFileGutterIcon(highlightingElement, descriptionFile, result);
-          }
-
-          if (beforeAfterEnabled) {
-            addBeforeAfterTemplateFilesGutterIcon(highlightingElement, dir, result);
-          }
-          return;
+          addDescriptionFileGutterIcon(highlightingElement, descriptionFile, result);
         }
       }
+
+      if (beforeAfterEnabled && type.hasBeforeAfterTemplateFiles()) {
+        List<PsiFile> files = descriptionTypeResolver.resolveBeforeAfterTemplateFiles();
+        if (!files.isEmpty()) {
+          addBeforeAfterTemplateFilesGutterIcon(highlightingElement, files, result);
+        }
+      }
+
       return;
     }
   }
@@ -105,7 +88,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
                                                    PsiFile descriptionFile,
                                                    Collection<? super RelatedItemLineMarkerInfo<?>> result) {
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(DevkitIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevkitCoreIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTarget(descriptionFile)
       .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.description.tooltip"))
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
@@ -114,23 +97,11 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
   }
 
   private static void addBeforeAfterTemplateFilesGutterIcon(PsiElement highlightingElement,
-                                                            PsiDirectory descriptionDirectory,
+                                                            List<PsiFile> templateFiles,
                                                             Collection<? super RelatedItemLineMarkerInfo<?>> result) {
-    final List<PsiFile> templateFiles = new SortedList<>(Comparator.comparing(PsiFileSystemItem::getName));
-    for (PsiFile file : descriptionDirectory.getFiles()) {
-      final String fileName = file.getName();
-      if (fileName.endsWith(".template")) {
-        if (fileName.startsWith("after.") ||
-            fileName.startsWith("before.")) {
-          templateFiles.add(file);
-        }
-      }
-    }
-    if (templateFiles.isEmpty()) return;
-
     //noinspection DialogTitleCapitalization
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(DevkitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
+      .create(DevkitCoreIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(templateFiles)
       .setPopupTitle(DevKitBundle.message("gutter.related.navigation.popup.template.title"))
       .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.template.tooltip"))

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -24,10 +10,12 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -47,14 +35,13 @@ import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_PACKAGE_I
 /**
  * @author Bas Leijdekkers
  */
-public class CreatePackageInfoAction extends CreateFromTemplateActionBase {
+public class CreatePackageInfoAction extends CreateFromTemplateActionBase implements DumbAware {
   public CreatePackageInfoAction() {
     super(JavaBundle.messagePointer("action.create.new.package-info.title"), JavaBundle.messagePointer("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
   }
 
-  @Nullable
   @Override
-  protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
+  protected @Nullable PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     final PsiDirectory[] directories = view.getDirectories();
     for (PsiDirectory directory : directories) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
@@ -115,9 +102,13 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase {
     return false;
   }
 
-  @Nullable
   @Override
-  public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public @Nullable AttributesDefaults getAttributesDefaults(DataContext dataContext) {
     return new AttributesDefaults(INTERNAL_PACKAGE_INFO_TEMPLATE_NAME).withFixedName(true);
   }
 

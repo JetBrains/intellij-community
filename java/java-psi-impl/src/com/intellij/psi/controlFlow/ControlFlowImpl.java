@@ -1,14 +1,19 @@
 
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.Stack;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 class ControlFlowImpl extends AbstractControlFlow {
   private static final Logger LOG = Logger.getInstance(ControlFlowImpl.class);
@@ -51,8 +56,7 @@ class ControlFlowImpl extends AbstractControlFlow {
   }
 
   @Override
-  @NotNull
-  public List<Instruction> getInstructions() {
+  public @NotNull List<Instruction> getInstructions() {
     return myInstructions;
   }
   @Override
@@ -86,7 +90,7 @@ class ControlFlowImpl extends AbstractControlFlow {
     private final boolean myConstantConditionOccurred;
 
     private ImmutableControlFlow(@NotNull Instruction @NotNull [] instructions, 
-                                 @NotNull Object2LongOpenHashMap<PsiElement> myElementToOffsetMap,
+                                 @NotNull Object2LongMap<PsiElement> myElementToOffsetMap,
                                  @NotNull PsiElement @NotNull [] elementsForInstructions, boolean occurred) {
       super(myElementToOffsetMap);
       myInstructions = Arrays.asList(instructions);

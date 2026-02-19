@@ -2,10 +2,9 @@
 
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.openapi.project.Project;
-
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 
@@ -13,24 +12,23 @@ public final class PackageTreeExpansionMonitor {
   private PackageTreeExpansionMonitor() {
   }
 
-  public static TreeExpansionMonitor<PackageDependenciesNode> install(final JTree tree, final Project project) {
-    return new TreeExpansionMonitor<PackageDependenciesNode>(tree) {
+  public static TreeExpansionMonitor<PackageDependenciesNode> install(final JTree tree) {
+    return new TreeExpansionMonitor<>(tree) {
       @Override
       protected TreePath findPathByNode(final PackageDependenciesNode node) {
-         if (node.getPsiElement() == null){
-           return new TreePath(node.getPath());
-         }
-          Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
-          while (enumeration.hasMoreElements()) {
-            final Object nextElement = enumeration.nextElement();
-            if (nextElement instanceof PackageDependenciesNode) { //do not include root
-              PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
-              if (child.equals(node)) {
-                return new TreePath(child.getPath());
-              }
+        if (node.getPsiElement() == null) {
+          return new TreePath(node.getPath());
+        }
+        Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
+        while (enumeration.hasMoreElements()) {
+          final TreeNode nextElement = enumeration.nextElement();
+          if (nextElement instanceof PackageDependenciesNode child) { //do not include root
+            if (child.equals(node)) {
+              return new TreePath(child.getPath());
             }
           }
-          return null;
+        }
+        return null;
       }
     };
   }

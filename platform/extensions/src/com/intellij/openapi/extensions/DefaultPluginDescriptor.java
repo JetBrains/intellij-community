@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,20 +10,24 @@ import java.util.Date;
 public final class DefaultPluginDescriptor implements PluginDescriptor {
   private final @NotNull PluginId myPluginId;
   private final ClassLoader myPluginClassLoader;
+  private final String myVendor;
 
   public DefaultPluginDescriptor(@NotNull String pluginId) {
-    myPluginId = PluginId.getId(pluginId);
-    myPluginClassLoader = null;
+    this(PluginId.getId(pluginId), null);
   }
 
   public DefaultPluginDescriptor(@NotNull PluginId pluginId) {
-    myPluginId = pluginId;
-    myPluginClassLoader = null;
+    this(pluginId, null);
   }
 
   public DefaultPluginDescriptor(@NotNull PluginId pluginId, @Nullable ClassLoader pluginClassLoader) {
+    this(pluginId, pluginClassLoader, null);
+  }
+
+  public DefaultPluginDescriptor(@NotNull PluginId pluginId, @Nullable ClassLoader pluginClassLoader, @Nullable String vendor) {
     myPluginId = pluginId;
     myPluginClassLoader = pluginClassLoader;
+    myVendor = vendor;
   }
 
   @Override
@@ -47,12 +51,12 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
   }
 
   @Override
-  public String getChangeNotes() {
+  public @Nullable String getChangeNotes() {
     return null;
   }
 
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return null;
   }
 
@@ -77,61 +81,62 @@ public final class DefaultPluginDescriptor implements PluginDescriptor {
   }
 
   @Override
-  public PluginId @NotNull [] getOptionalDependentPluginIds() {
-    return PluginId.EMPTY_ARRAY;
+  public @Nullable String getVendor() {
+    return myVendor;
   }
 
   @Override
-  public String getVendor() {
+  public @Nullable String getVersion() {
     return null;
   }
 
   @Override
-  public String getVersion() {
+  public @Nullable String getResourceBundleBaseName() {
     return null;
   }
 
   @Override
-  public String getResourceBundleBaseName() {
+  public @Nullable String getCategory() {
     return null;
   }
 
   @Override
-  public String getCategory() {
+  public @Nullable String getVendorEmail() {
     return null;
   }
 
   @Override
-  public String getVendorEmail() {
+  public @Nullable String getVendorUrl() {
     return null;
   }
 
   @Override
-  public String getVendorUrl() {
+  public @Nullable String getUrl() {
     return null;
   }
 
   @Override
-  public String getUrl() {
+  public @Nullable String getSinceBuild() {
     return null;
   }
 
   @Override
-  public String getSinceBuild() {
+  public @Nullable String getUntilBuild() {
     return null;
   }
 
-  @Override
-  public String getUntilBuild() {
-    return null;
-  }
-
+  @Deprecated
   @Override
   public boolean isEnabled() {
     return false;
   }
 
+  @Deprecated
   @Override
-  public void setEnabled(boolean enabled) {
+  public void setEnabled(boolean enabled) { }
+
+  @Override
+  public String toString() {
+    return "Default plugin descriptor for " + myPluginId;
   }
 }

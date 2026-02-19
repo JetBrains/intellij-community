@@ -59,10 +59,22 @@ public interface JspVersion {
     }
   };
 
+  JspVersion JSP_3_0 = new JspVersion() {
+
+    @Override
+    public String getNumber() {
+      return "3.0";
+    }
+
+    @Override
+    public boolean betterThan(JspVersion other) {
+      return getNumber().compareTo(other.getNumber()) > 0;
+    }
+  };
+
   JspVersion MAX_VERSION = JSP_2_3;
 
   String getNumber();
 
   boolean betterThan(JspVersion other);
-
 }

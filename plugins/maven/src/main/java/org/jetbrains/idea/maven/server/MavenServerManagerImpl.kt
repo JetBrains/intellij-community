@@ -1,0 +1,489 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.server
+
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.getPluginDistDirByClass
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ObjectUtils
+import com.intellij.util.io.Compressor
+import com.intellij.util.net.NetUtils
+import org.apache.commons.lang3.SystemUtils
+import org.jetbrains.annotations.SystemIndependent
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.MavenDisposable
+import org.jetbrains.idea.maven.indices.MavenIndices
+import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager.Companion.getInstance
+import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.server.DummyMavenServerConnector.Companion.isDummy
+import org.jetbrains.idea.maven.server.MavenServerManager.MavenServerConnectorFactory
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.MavenUtil.isCompatibleWith
+import org.jetbrains.idea.maven.utils.MavenUtil.isRunningFromSources
+import java.io.File
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.rmi.RemoteException
+import java.util.*
+import java.util.concurrent.Callable
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Consumer
+import java.util.function.Predicate
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+
+internal class MavenServerManagerImpl : MavenServerManager {
+  private val myMultimoduleDirToConnectorMap: MutableMap<String, MavenServerConnector> = HashMap()
+  private val isShutdown = AtomicBoolean(false)
+
+  //TODO: should be replaced by map, where key is the indexing directory. (local/wsl)
+  private var myIndexingConnector: MavenIndexingConnectorImpl? = null
+  private var myIndexerWrapper: MavenIndexerWrapper? = null
+
+  private var eventListenerJar: Path? = null
+
+  init {
+    val connection = ApplicationManager.getApplication().messageBus.connect(this)
+    connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appWillBeClosed(isRestart: Boolean) {
+        isShutdown.set(true)
+        closeAllConnectorsEventually()
+      }
+    })
+
+    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        if (MavenUtil.INTELLIJ_PLUGIN_ID == pluginDescriptor.pluginId.idString) {
+          isShutdown.set(true)
+          closeAllConnectorsEventually()
+        }
+      }
+    })
+
+    connection.subscribe(TrustedProjectsListener.TOPIC, object : TrustedProjectsListener {
+      override fun onProjectTrusted(project: Project) {
+        val manager = MavenProjectsManager.getInstance(project)
+        if (manager.isMavenizedProject) {
+          MavenUtil.shutdownMavenConnectors(project, Predicate { it.isDummy() })
+        }
+      }
+
+      override fun onProjectUntrusted(project: Project) {
+        val manager = MavenProjectsManager.getInstance(project)
+        if (manager.isMavenizedProject) {
+          MavenUtil.shutdownMavenConnectors(project) { it.isDummy() }
+        }
+      }
+
+      override fun onProjectTrustedFromNotification(project: Project) {
+        val manager = MavenProjectsManager.getInstance(project)
+        if (manager.isMavenizedProject) {
+          MavenLog.LOG.info("onProjectTrustedFromNotification forceUpdateAllProjectsOrFindAllAvailablePomFiles")
+          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+        }
+      }
+    })
+  }
+
+  override fun getAllConnectors(): Collection<MavenServerConnector> {
+    val set = Collections.newSetFromMap(IdentityHashMap<MavenServerConnector, Boolean>())
+    synchronized(myMultimoduleDirToConnectorMap) {
+      set.addAll(myMultimoduleDirToConnectorMap.values)
+      if (myIndexingConnector != null) {
+        set.add(myIndexingConnector!!)
+      }
+    }
+    return set
+  }
+
+  override fun shutdownMavenConnectors(project: Project, condition: Predicate<MavenServerConnector>) {
+    val connectorsToShutDown: MutableList<MavenServerConnector> = ArrayList()
+    synchronized(myMultimoduleDirToConnectorMap) {
+      getAllConnectors().forEach(
+        Consumer { it: MavenServerConnector ->
+          if (project == it.project && condition.test(it)) {
+            val removedConnector = removeConnector(it)
+            if (null != removedConnector) {
+              connectorsToShutDown.add(removedConnector)
+            }
+          }
+        })
+    }
+    MavenProjectsManager.getInstance(project).embeddersManager.reset()
+    stopConnectors(project, connectorsToShutDown)
+  }
+
+  private fun stopConnectors(project: Project, connectors: List<MavenServerConnector>) {
+    connectors.forEach(Consumer { it: MavenServerConnector -> it.stop(false) })
+  }
+
+  private fun doGetConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
+    val multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirectory)
+
+    var connector = doGetOrCreateConnector(project, multimoduleDirectory, jdk)
+    if (connector.isNew()) {
+      connector.connect()
+    }
+    else {
+      if (!connector.isCompatibleWith(project, jdk, multimoduleDirectory)) {
+        MavenLog.LOG.info("[connector] $connector is incompatible, restarting")
+        shutdownConnector(connector, false)
+        connector = this.doGetOrCreateConnector(project, multimoduleDirectory, jdk)
+        connector.connect()
+      }
+    }
+    if (MavenLog.LOG.isTraceEnabled) {
+      MavenLog.LOG.trace("[connector] get $connector")
+    }
+    return connector
+  }
+
+  @Deprecated("use suspend", ReplaceWith("getConnector"))
+  override fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector {
+    return runBlockingMaybeCancellable {
+      getConnector(project, workingDirectory)
+    }
+  }
+
+  override suspend fun getConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
+    var connector = doGetConnector(project, workingDirectory, jdk)
+    if (!connector.ping()) {
+      shutdownConnector(connector, true)
+      connector = doGetConnector(project, workingDirectory, jdk)
+    }
+    return connector
+  }
+
+  private fun doGetOrCreateConnector(
+    project: Project,
+    multimoduleDirectory: String,
+    jdk: Sdk,
+  ): MavenServerConnector {
+    if (isShutdown.get()) {
+      throw IllegalStateException("We are closed, sorry. No connectors anymore")
+    }
+
+    synchronized(myMultimoduleDirToConnectorMap) {
+      val cachedConnector = myMultimoduleDirToConnectorMap[multimoduleDirectory]
+      if (cachedConnector != null) return cachedConnector
+
+      val compatibleConnector = myMultimoduleDirToConnectorMap.values.firstOrNull {
+        it.isCompatibleWith(project, jdk, multimoduleDirectory)
+      }
+
+      if (compatibleConnector != null) {
+        MavenLog.LOG.debug("[connector] use existing connector for $compatibleConnector")
+        compatibleConnector.addMultimoduleDir(multimoduleDirectory)
+      }
+
+      val connector = compatibleConnector ?: registerNewConnector(project, jdk, multimoduleDirectory)
+
+      myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector)
+
+      return connector
+    }
+  }
+
+  private fun registerNewConnector(
+    project: Project,
+    jdk: Sdk,
+    multimoduleDirectory: String,
+  ): MavenServerConnector {
+    val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory)
+    val vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory)
+    val debugPort = freeDebugPort
+    val connector: MavenServerConnector
+    if (TrustedProjects.isProjectTrusted(project) || project.isDefault) {
+      val connectorFactory = ApplicationManager.getApplication().getService(
+        MavenServerConnectorFactory::class.java)
+      connector = connectorFactory.create(project, jdk, vmOptions, debugPort, distribution, multimoduleDirectory)
+      MavenLog.LOG.debug("[connector] new maven connector $connector")
+    }
+    else {
+      MavenLog.LOG.warn("Project $project not trusted enough. Will not start maven for it")
+      connector = DummyMavenServerConnector(project, jdk, vmOptions, distribution, multimoduleDirectory)
+    }
+    registerDisposable(project, connector)
+    return connector
+  }
+
+  private fun registerDisposable(project: Project, connector: MavenServerConnector) {
+    Disposer.register(MavenDisposable.getInstance(project)) {
+      ApplicationManager.getApplication().executeOnPooledThread(
+        Callable { shutdownConnector(connector, false) })
+    }
+  }
+
+  override fun dispose() {
+    shutdownNow()
+  }
+
+  override fun shutdownConnector(connector: MavenServerConnector, wait: Boolean): Boolean {
+    val connectorToStop = removeConnector(connector)
+    if (connectorToStop == null) return false
+    connectorToStop.stop(wait)
+    return true
+  }
+
+  private fun removeConnector(connector: MavenServerConnector): MavenServerConnector? {
+    synchronized(myMultimoduleDirToConnectorMap) {
+      if (myIndexingConnector === connector) {
+        myIndexingConnector = null
+        myIndexerWrapper = null
+        return connector
+      }
+      if (!myMultimoduleDirToConnectorMap.containsValue(connector)) {
+        return null
+      }
+      myMultimoduleDirToConnectorMap.entries.removeIf { e: Map.Entry<String, MavenServerConnector> -> e.value === connector }
+    }
+    return connector
+  }
+
+  /**
+   * use MavenUtil.restartMavenConnectors
+   */
+  @TestOnly
+  override fun closeAllConnectorsAndWait() {
+    shutdownNow()
+  }
+
+  private fun closeAllConnectorsEventually() {
+    ApplicationManager.getApplication().executeOnPooledThread {
+      shutdownNow()
+    }
+  }
+
+  private fun shutdownNow() {
+    var values: Collection<MavenServerConnector>
+    synchronized(myMultimoduleDirToConnectorMap) {
+      values = ArrayList(myMultimoduleDirToConnectorMap.values)
+    }
+
+    val indexingConnector = myIndexingConnector
+    if (null != indexingConnector) {
+      shutdownConnector(indexingConnector, true)
+    }
+    values.forEach(Consumer { c: MavenServerConnector -> shutdownConnector(c, true) })
+  }
+
+
+  override fun getMavenEventListener(): File {
+    return getMavenEventListenerPath().toFile()
+  }
+
+  override fun getMavenEventListenerPath(): Path {
+    val alreadyCalculatedEventListenerJar = eventListenerJar
+    if (alreadyCalculatedEventListenerJar != null) {
+      return alreadyCalculatedEventListenerJar
+    }
+
+    if (isRunningFromSources()) {
+      val sourceBuildOutput = MavenUtil.locateModuleOutput("intellij.maven.server.eventListener")
+      if (sourceBuildOutput == null) {
+        error(
+          """
+         Cannot locate module output for intellij.maven.server.eventListener
+          """.trimIndent()
+        )
+      }
+      if (!sourceBuildOutput.exists()) {
+        error(
+          """
+          Event listener does not exist at $alreadyCalculatedEventListenerJar
+          
+          Please run rebuild for maven modules:
+          community/plugins/maven/maven-event-listener
+          """.trimIndent()
+        )
+      }
+      else if (sourceBuildOutput.isDirectory()) {
+        val tempFile = Files.createTempFile("idea", "-event-listener.jar")
+        tempFile.toFile().deleteOnExit()
+
+        MavenLog.LOG.warn("compressing maven event listener from $sourceBuildOutput")
+        Compressor.Zip(tempFile).use { zip -> zip.addDirectory(sourceBuildOutput) }
+
+        eventListenerJar = tempFile
+        return tempFile
+      }
+      else {
+        eventListenerJar = sourceBuildOutput
+        return sourceBuildOutput
+      }
+    }
+    else {
+      val pluginDir = getPluginDistDirByClass(MavenServerManager::class.java)
+
+      val jarFromDistribution = if (pluginDir == null) {
+        MavenLog.LOG.warn("Cannot find path of maven plugin")
+        // Clients of this API (including one external) expect that there will some path
+        // even in case of failure
+        Path.of("path-of-maven-plugin-was-not-found")
+      }
+      else {
+        pluginDir.resolve("lib").resolve("intellij.maven.rt").resolve("maven-event-listener.jar")
+      }
+
+      if (!jarFromDistribution.exists()) {
+        MavenLog.LOG.warn("Event listener does not exist at " + jarFromDistribution +
+                          ". It should be built as part of plugin layout process and bundled along with maven plugin jars")
+      }
+
+      eventListenerJar = jarFromDistribution
+      return jarFromDistribution
+    }
+  }
+
+  override fun createIndexer(): MavenIndexerWrapper {
+    return createDedicatedIndexer()!!
+  }
+
+  private fun createDedicatedIndexer(): MavenIndexerWrapper? {
+    if (myIndexerWrapper != null) return myIndexerWrapper
+    synchronized(myMultimoduleDirToConnectorMap) {
+      if (myIndexerWrapper != null) return myIndexerWrapper
+      val workingDir = SystemUtils.getUserHome().absolutePath
+      myIndexerWrapper =
+        object : MavenIndexerWrapper() {
+          override fun createMavenIndices(project: Project): MavenIndices {
+            val indices = MavenIndices(this, getInstance().getIndicesDir().toFile(), project)
+            Disposer.register(MavenDisposable.getInstance(project), indices)
+            return indices
+          }
+
+          @Throws(RemoteException::class)
+          override fun createBlocking(): MavenServerIndexer {
+            val indexingConnector = indexingConnector
+            return indexingConnector!!.createIndexer()
+          }
+
+          @Throws(RemoteException::class)
+          override suspend fun create(): MavenServerIndexer {
+            val indexingConnector = indexingConnector
+            return indexingConnector!!.createIndexer()
+          }
+
+          @Synchronized
+          override fun handleRemoteError(e: RemoteException) {
+            super.handleRemoteError(e)
+            if (waitIfNotIdeaShutdown()) {
+              val indexingConnector = myIndexingConnector
+              if (indexingConnector != null && !indexingConnector.checkConnected()) {
+                shutdownConnector(indexingConnector, true)
+              }
+            }
+          }
+
+          private val indexingConnector: MavenServerConnector?
+            get() {
+              if (myIndexingConnector != null) return myIndexingConnector
+              val jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
+              synchronized(myMultimoduleDirToConnectorMap) {
+                if (myIndexingConnector != null) return myIndexingConnector
+                myIndexingConnector = MavenIndexingConnectorImpl(jdk,
+                                                                 "",
+                                                                 freeDebugPort,
+                                                                 MavenDistributionsCache.resolveEmbeddedMavenHome(),
+                                                                 workingDir)
+              }
+              myIndexingConnector!!.connect()
+              return myIndexingConnector
+            }
+
+          private fun waitIfNotIdeaShutdown(): Boolean {
+            try {
+              Thread.sleep(100)
+              return true
+            }
+            catch (ex: InterruptedException) {
+              Thread.currentThread().interrupt()
+            }
+            return false
+          }
+        }
+    }
+    return myIndexerWrapper
+  }
+
+  private fun createLegacyIndexer(project: Project): MavenIndexerWrapper {
+    var path = project.basePath
+    if (path == null) {
+      path = File(".").path
+    }
+    val finalPath = path
+    return object : MavenIndexerWrapper() {
+      override fun createMavenIndices(project: Project): MavenIndices {
+        val indices = MavenIndices(this, getInstance().getIndicesDir().toFile(), project)
+        Disposer.register(MavenDisposable.getInstance(project), indices)
+        return indices
+      }
+
+      @Throws(RemoteException::class)
+      override fun createBlocking(): MavenServerIndexer {
+        var connector: MavenServerConnector?
+        synchronized(myMultimoduleDirToConnectorMap) {
+          connector = myMultimoduleDirToConnectorMap.values.find { c: MavenServerConnector ->
+            c.multimoduleDirectories.find { mDir: String? ->
+              FileUtil.isAncestor(finalPath!!, mDir!!, false)
+            } != null
+          }
+        }
+        if (connector != null) {
+          return connector!!.createIndexer()
+        }
+        val workingDirectory = ObjectUtils.chooseNotNull<@SystemIndependent String?>(project.basePath,
+                                                                                     SystemUtils.getUserHome().absolutePath)
+        return getConnectorBlocking(project, workingDirectory!!).createIndexer()
+      }
+
+      @Throws(RemoteException::class)
+      override suspend fun create(): MavenServerIndexer {
+        var connector: MavenServerConnector?
+        synchronized(myMultimoduleDirToConnectorMap) {
+          connector = myMultimoduleDirToConnectorMap.values.find { c: MavenServerConnector ->
+            c.multimoduleDirectories.find { mDir: String? ->
+              FileUtil.isAncestor(finalPath!!, mDir!!, false)
+            } != null
+          }
+        }
+        if (connector != null) {
+          return connector!!.createIndexer()
+        }
+        val workingDirectory = ObjectUtils.chooseNotNull<@SystemIndependent String?>(project.basePath,
+                                                                                     SystemUtils.getUserHome().absolutePath)
+        return getConnector(project, workingDirectory!!).createIndexer()
+      }
+    }
+  }
+
+  companion object {
+    private val freeDebugPort: Int?
+      get() {
+        val strVal = Registry.get("maven.server.debug").asString()
+        val explicitPort = strVal.toIntOrNull()
+        if (explicitPort != null) return explicitPort
+        if (strVal.toBoolean()) {
+          try {
+            return NetUtils.findAvailableSocketPort()
+          }
+          catch (e: IOException) {
+            MavenLog.LOG.warn(e)
+          }
+        }
+        return null
+      }
+  }
+}

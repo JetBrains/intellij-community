@@ -1,0 +1,10 @@
+<idea-plugin>
+  <id>com.intellij.example</id>
+
+  <application-components>
+    <component>
+      <implementation-class>ComponentNoHighlighting</implementation-class>
+    </component>
+  </application-components>
+
+</idea-plugin>

@@ -18,5 +18,5 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 import com.intellij.codeInsight.generation.ConstructorBodyGenerator;
 
 
-public class GrConstructorBodyGenerator implements ConstructorBodyGenerator {
+public final class GrConstructorBodyGenerator implements ConstructorBodyGenerator {
 }

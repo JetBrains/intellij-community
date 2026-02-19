@@ -1,38 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ThrowableRunnable;
 
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
 public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
   private VirtualFile myTestProjectRoot;
+  private String testDataRoot;
   private FormSourceCodeGenerator myGenerator;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    String root = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/sourceCodeGenerator/" + getTestName(true);
+    testDataRoot = PluginPathManager.getPluginHomePath("ui-designer") + "/testData/sourceCodeGenerator/" + getTestName(true);
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    myTestProjectRoot = createTestProjectStructure(root);
-    myGenerator = new FormSourceCodeGenerator(getProject());
+    myTestProjectRoot = createTestProjectStructure(testDataRoot);
+    myGenerator = new FormSourceCodeGenerator(getProject(), false);
   }
 
   @Override protected void tearDown() throws Exception {
@@ -41,64 +40,31 @@ public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
     super.tearDown();
   }
 
-  public void testSimple() throws IOException {
-    doTest();
+  public void testSimple() { doTest(); }
+  public void testCustomCreateComponent() { doTest(); }
+  public void testCustomComponentReferencedInConstructor() { doTest(); }
+  public void testMethodCallInConstructor() { doTest(); }
+  public void testMultipleConstructors() { doTest(); }
+  public void testConstructorsCallingThis() { doTest(); }
+  public void testSuperCall() { doTest(); }
+  public void testDuplicateSetupCall() { doTest(); }
+  public void testSetupCallWithComments() { doTest(); }
+  public void testInitializerWithComments() { doTest(); }
+  public void testTitledBorder() { doTest(); }
+  public void testBorderNullTitle() { doTest(); }
+  public void testTitleFromBundle() { doTest(); }
+  public void testNoI18nTextProperty() { doTest(); }
+  public void testNoI18nBorderTitle() { doTest(); }
+  public void testNoI18nMixed() { doTest(); }
+  public void testButtonGroup() { doTest(); }
+  public void testButtonGroupNoMembers() { doTest(); }
+
+  public void testTitledBorderInternal() {
+    PlatformTestUtil.withSystemProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY, "true", () -> doTest());
   }
 
-  public void testCustomCreateComponent() throws IOException {
-    doTest();
-  }
-
-  public void testCustomComponentReferencedInConstructor() throws IOException {
-    doTest();
-  }
-
-  public void testMethodCallInConstructor() throws IOException {
-    doTest();
-  }
-
-  public void testMultipleConstructors() throws IOException {
-    doTest();
-  }
-
-  public void testConstructorsCallingThis() throws IOException {
-    doTest();
-  }
-
-  public void testSuperCall() throws IOException {
-    doTest();
-  }
-
-  public void testDuplicateSetupCall() throws IOException {
-    doTest();
-  }
-
-  public void testSetupCallWithComments() throws IOException {
-    doTest();
-  }
-
-  public void testInitializerWithComments() throws IOException {
-    doTest();
-  }
-
-  public void testTitledBorder() throws IOException {
-    doTest();
-  }
-
-  public void testBorderNullTitle() throws IOException {
-    doTest();
-  }
-
-  public void testTitledBorderInternal() throws IOException {
-    inInternalMode(() -> doTest());
-  }
-
-  public void testTitleFromBundle() throws IOException {
-    doTest();
-  }
-
-  private void doTest() throws IOException {
-    final VirtualFile form = myTestProjectRoot.findChild("Test.form");
+  private void doTest() {
+    VirtualFile form = myTestProjectRoot.findChild("Test.form");
     assertNotNull(form);
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       try {
@@ -109,23 +75,20 @@ public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
       }
     }, "", null);
 
-    final PsiClass bindingTestClass = myJavaFacade.findClass("BindingTest", ProjectScope.getAllScope(myProject));
-    assertNotNull(bindingTestClass);
-    final VirtualFile testAfter = myTestProjectRoot.findChild("BindingTest.java.after");
-    assertNotNull(testAfter);
-    String expectedText = StringUtil.convertLineSeparators(VfsUtil.loadText(testAfter));
-    final PsiFile psiFile = bindingTestClass.getContainingFile();
-    assertNotNull(psiFile);
-    final String text = StringUtil.convertLineSeparators(psiFile.getText());
-    assertEquals(expectedText, text);
-  }
-
-  private static void inInternalMode(ThrowableRunnable<IOException> runnable) throws IOException {
-    System.getProperties().setProperty("idea.is.internal", "true");
-    try {
-      runnable.run();
-    } finally {
-      System.getProperties().setProperty("idea.is.internal", "false");
+    if (!myGenerator.getErrors().isEmpty()) {
+      fail(myGenerator.getErrors().stream().map(x -> x.getErrorMessage()).collect(Collectors.joining("\n")));
     }
+
+    PsiClass bindingTestClass = myJavaFacade.findClass("BindingTest", ProjectScope.getAllScope(myProject));
+    PsiFile psiFile = bindingTestClass.getContainingFile();
+
+    PsiTestUtil.checkFileStructure(psiFile);
+
+    String text = StringUtil.convertLineSeparators(psiFile.getText());
+
+    Path expectedFile = Path.of(testDataRoot, "BindingTest.java.after");
+    assertTrue("Expected file is supposed to be on disk: " + expectedFile, Files.isRegularFile(expectedFile));
+
+    assertSameLinesWithFile(expectedFile.toString(), text);
   }
 }

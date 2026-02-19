@@ -1,21 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListenerImpl;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
+import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.ScopeInfo;
+import com.intellij.openapi.vcs.update.VcsUpdateProcess;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.RunAll;
@@ -28,6 +40,7 @@ import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
@@ -44,22 +57,32 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeoutException;
 
-import static com.intellij.openapi.actionSystem.impl.SimpleDataContext.getProjectContext;
 import static com.intellij.openapi.application.PluginPathManager.getPluginHomePath;
-import static com.intellij.openapi.util.io.FileUtil.*;
+import static com.intellij.openapi.util.io.FileUtil.copyDir;
+import static com.intellij.openapi.util.io.FileUtil.delete;
+import static com.intellij.openapi.util.io.FileUtil.deleteRecursively;
+import static com.intellij.openapi.util.io.FileUtil.ensureExists;
+import static com.intellij.openapi.util.io.FileUtil.getTempDirectory;
+import static com.intellij.openapi.util.io.FileUtil.resetCanonicalTempPathCache;
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.RunAll.runAll;
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
+import static com.intellij.testFramework.UsefulTestCase.assertEquals;
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
+import static com.intellij.testFramework.UsefulTestCase.assertNotNull;
+import static com.intellij.testFramework.UsefulTestCase.assertTrue;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
@@ -105,9 +128,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   @BeforeClass
-  public static void assumeNotMacUnderTeamCity() {
-    String message = "Mac svn binaries are not added yet";
-    assumeFalse(message, IS_UNDER_TEAMCITY && SystemInfo.isMac);
+  public static void assumeSupportedTeamCityAgentArch() {
+    if (IS_UNDER_TEAMCITY) {
+      assumeTrue(SystemInfo.OS_NAME + '/' + CpuArch.CURRENT + " is not supported", !SystemInfo.isMac && CpuArch.isIntel64());
+    }
   }
 
   @Before
@@ -139,6 +163,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     vcs = SvnVcs.getInstance(myProject);
     myGate = new MockChangeListManagerGate(changeListManager);
 
+    VfsUtil.markDirtyAndRefresh(false, true, true, myRepoRoot);
     refreshSvnMappingsSynchronously();
     refreshChanges();
   }
@@ -156,10 +181,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     return svnExecutable.getParentFile();
   }
 
-  protected void refreshSvnMappingsSynchronously() {
-    CountDownLatch done = new CountDownLatch(1);
-    vcs.getSvnFileUrlMappingImpl().scheduleRefresh(() -> done.countDown());
-    runAll(() -> done.await());
+  protected void refreshSvnMappingsSynchronously() throws TimeoutException {
+    vcs.getSvnFileUrlMappingImpl().scheduleRefresh();
+    vcs.getSvnFileUrlMappingImpl().waitForRefresh();
   }
 
   protected void refreshChanges() {
@@ -192,12 +216,18 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   @After
   public void after() throws Exception {
-    new RunAll(
-      () -> changeListManager.waitEverythingDoneInTestMode(),
+    RunAll.runAll(
+      this::tearDownChangeListManager,
       () -> runInEdtAndWait(this::tearDownProject),
       this::tearDownTempDirectoryFixture,
       () -> resetCanonicalTempPathCache(ORIGINAL_TEMP_DIRECTORY)
-    ).run();
+    );
+  }
+
+  private void tearDownChangeListManager() {
+    if (changeListManager != null) {
+      changeListManager.waitEverythingDoneInTestMode();
+    }
   }
 
   private void tearDownTempDirectoryFixture() throws Exception {
@@ -233,11 +263,36 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     return builder.getChanges();
   }
 
+  protected void undoFileMove() {
+    undo("VcsTestUtil MoveFile");
+  }
+
+  protected void undoFileRename() {
+    undo("VcsTestUtil RenameFile");
+  }
+
   protected void undo() {
+    undo(null);
+  }
+
+  /**
+   * @param expectedCommandName Typically - command name from {@link VcsTestUtil}, be wary of ellipsis
+   */
+  private void undo(@Nullable String expectedCommandName) {
     runInEdtAndWait(() -> {
       final TestDialog oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK);
       try {
-        UndoManager.getInstance(myProject).undo(null);
+        UndoManager undoManager = UndoManager.getInstance(myProject);
+
+        assertTrue("undo is not available", undoManager.isUndoAvailable(null));
+
+        if (expectedCommandName != null) {
+          String undoText = undoManager.getUndoActionNameAndDescription(null).first;
+          assumeTrue("Unexpected VFS command on undo stack, suspecting IDEA-182560. Test aborted. Undo on stack: " + undoText,
+                     undoText != null && undoText.contains(expectedCommandName));
+        }
+
+        undoManager.undo(null);
       }
       finally {
         TestDialogManager.setTestDialog(oldTestDialog);
@@ -323,7 +378,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     String branchUrl = myRepoUrl + "/branches/b1";
 
     withDisabledChangeListManager(() -> {
-      assertTrue(delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
+      runWithRetries(() -> {
+        deleteRecursively(new File(myWorkingCopyDir.getPath() + File.separator + ".svn").toPath());
+      });
       refreshVfs();
 
       runInAndVerifyIgnoreOutput("co", mainUrl, myWorkingCopyDir.getPath());
@@ -405,11 +462,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   protected void imitUpdate() {
     vcsManager.getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(false);
-    final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
-    action.getTemplatePresentation().setText("1");
-    action
-      .actionPerformed(new AnActionEvent(null, getProjectContext(myProject), "test", new Presentation(), ActionManager.getInstance(), 0));
+    var actionInfo = ActionInfo.UPDATE;
+    var scopeInfo = ScopeInfo.PROJECT;
+    var context = SimpleDataContext.getProjectContext(myProject);
 
+    var roots = VcsUpdateProcess.getRoots(myProject, actionInfo, scopeInfo, context, true);
+    var updateSpec = VcsUpdateProcess.createUpdateSpec(myProject, roots, actionInfo);
+    VcsUpdateProcess.runUpdateBlocking(myProject, roots, updateSpec, actionInfo, "1");
     waitChangesAndAnnotations();
   }
 

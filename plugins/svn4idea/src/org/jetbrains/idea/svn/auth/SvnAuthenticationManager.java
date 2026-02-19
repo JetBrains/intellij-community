@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.project.Project;
@@ -19,10 +19,13 @@ import java.nio.file.Path;
 import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
-import static org.jetbrains.idea.svn.config.SvnIniFile.*;
+import static org.jetbrains.idea.svn.config.SvnIniFile.CONFIG_FILE_NAME;
+import static org.jetbrains.idea.svn.config.SvnIniFile.SERVERS_FILE_NAME;
+import static org.jetbrains.idea.svn.config.SvnIniFile.getPropertyIdea;
+import static org.jetbrains.idea.svn.config.SvnIniFile.getValue;
+import static org.jetbrains.idea.svn.config.SvnIniFile.isTurned;
 
-public class SvnAuthenticationManager {
-
+public final class SvnAuthenticationManager {
   // TODO Looks reasonable to introduce some AuthType/AuthKind class
   public static final @NonNls String PASSWORD = "svn.simple";
   public static final @NonNls String SSL = "svn.ssl.client-passphrase";
@@ -33,29 +36,23 @@ public class SvnAuthenticationManager {
 
   private final @NotNull Project myProject;
   private final @NotNull Path myConfigDirectory;
-  private final NotNullLazyValue<Couple<SvnIniFile>> myConfigFile = new NotNullLazyValue<Couple<SvnIniFile>>() {
-    @NotNull
-    @Override
-    protected Couple<SvnIniFile> compute() {
-      SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(CONFIG_FILE_NAME));
-      SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME));
-      return Couple.of(systemConfig, userConfig);
-    }
-  };
-  private final NotNullLazyValue<Couple<SvnIniFile>> myServersFile = new NotNullLazyValue<Couple<SvnIniFile>>() {
-    @NotNull
-    @Override
-    protected Couple<SvnIniFile> compute() {
-      SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(SERVERS_FILE_NAME));
-      SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME));
-      return Couple.of(systemConfig, userConfig);
-    }
-  };
+  private final NotNullLazyValue<Couple<SvnIniFile>> myConfigFile;
+  private final NotNullLazyValue<Couple<SvnIniFile>> myServersFile;
   private AuthenticationProvider myProvider;
 
   public SvnAuthenticationManager(@NotNull Project project, @NotNull Path configDirectory) {
     myProject = project;
     myConfigDirectory = configDirectory;
+    myConfigFile = NotNullLazyValue.lazy(() -> {
+        SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(CONFIG_FILE_NAME));
+        SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME));
+        return Couple.of(systemConfig, userConfig);
+      });
+    myServersFile = NotNullLazyValue.lazy(() -> {
+        SvnIniFile userConfig = new SvnIniFile(myConfigDirectory.resolve(SERVERS_FILE_NAME));
+        SvnIniFile systemConfig = new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME));
+        return Couple.of(systemConfig, userConfig);
+      });
   }
 
   public AuthenticationData requestFromCache(String kind, String realm) {
@@ -74,8 +71,7 @@ public class SvnAuthenticationManager {
     return myProvider;
   }
 
-  @NotNull
-  public HostOptions getHostOptions(@NotNull Url url) {
+  public @NotNull HostOptions getHostOptions(@NotNull Url url) {
     return new HostOptions(url);
   }
 
@@ -85,8 +81,8 @@ public class SvnAuthenticationManager {
     SvnConfiguration.getInstance(myProject).acknowledge(kind, realm, proxy);
   }
 
-  private final static int DEFAULT_READ_TIMEOUT = 30 * 1000;
-  private final static int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;
+  private static final int DEFAULT_READ_TIMEOUT = 30 * 1000;
+  private static final int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;
 
   public int getReadTimeout(@NotNull Url url) {
     String protocol = url.getProtocol();
@@ -123,7 +119,7 @@ public class SvnAuthenticationManager {
   }
 
   public final class HostOptions {
-    @NotNull private final Url myUrl;
+    private final @NotNull Url myUrl;
 
     private HostOptions(@NotNull Url url) {
       myUrl = url;
@@ -143,8 +139,7 @@ public class SvnAuthenticationManager {
       return storageEnabled;
     }
 
-    @Nullable
-    public String getSSLClientCertFile() {
+    public @Nullable String getSSLClientCertFile() {
       return getPropertyIdea(myUrl.getHost(), myServersFile.getValue(), "ssl-client-cert-file");
     }
   }

@@ -1,53 +1,41 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author yole
- */
+
 public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
   public static final Key<Boolean> CLASS_NAME_REFERENCE_FRAGMENT = Key.create("CLASS_NAME_REFERENCE_FRAGMENT");
   private final Project myProject;
   private PsiClass mySelectedClass;
-  @NlsContexts.DialogTitle private String myChooserTitle;
+  private @NlsContexts.DialogTitle String myChooserTitle;
 
-  public ClassNameReferenceEditor(@NotNull final Project project, @Nullable final PsiClass selectedClass) {
+  public ClassNameReferenceEditor(final @NotNull Project project, final @Nullable PsiClass selectedClass) {
     this(project, selectedClass, null);
   }
 
-  public ClassNameReferenceEditor(@NotNull final Project project, @Nullable final PsiClass selectedClass,
-                                  @Nullable final GlobalSearchScope resolveScope) {
+  public ClassNameReferenceEditor(final @NotNull Project project, final @Nullable PsiClass selectedClass,
+                                  final @Nullable GlobalSearchScope resolveScope) {
     super(null, project, s -> {
       PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
       final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
@@ -68,21 +56,16 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
     return myChooserTitle;
   }
 
-  public void setChooserTitle(@NlsContexts.DialogTitle final String chooserTitle) {
+  public void setChooserTitle(final @NlsContexts.DialogTitle String chooserTitle) {
     myChooserTitle = chooserTitle;
   }
 
   private class ChooseClassAction implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(myChooserTitle,
-                                                                                                                   GlobalSearchScope.projectScope(myProject),
-                                                                                                                   new ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
-        }
-      }, null);
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(
+        myChooserTitle, GlobalSearchScope.projectScope(myProject),
+        aClass -> aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC), null);
       if (mySelectedClass != null) {
         chooser.selectDirectory(mySelectedClass.getContainingFile().getContainingDirectory());
       }

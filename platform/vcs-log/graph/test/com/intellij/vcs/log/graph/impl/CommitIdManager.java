@@ -16,15 +16,15 @@
 
 package com.intellij.vcs.log.graph.impl;
 
-import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Function;
 
 public abstract class CommitIdManager<CommitId> {
-  public static final CommitIdManager<String> STRING_COMMIT_ID_MANAGER = new CommitIdManager<String>() {
+  public static final CommitIdManager<String> STRING_COMMIT_ID_MANAGER = new CommitIdManager<>() {
     @NotNull
     @Override
     public List<GraphCommit<String>> parseCommitList(@NotNull String in) {
@@ -44,7 +44,7 @@ public abstract class CommitIdManager<CommitId> {
     }
   };
 
-  public static final CommitIdManager<Integer> INTEGER_COMMIT_ID_MANAGER = new CommitIdManager<Integer>() {
+  public static final CommitIdManager<Integer> INTEGER_COMMIT_ID_MANAGER = new CommitIdManager<>() {
     @NotNull
     @Override
     public List<GraphCommit<Integer>> parseCommitList(@NotNull String in) {

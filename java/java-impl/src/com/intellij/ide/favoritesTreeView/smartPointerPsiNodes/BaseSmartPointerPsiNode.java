@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView.smartPointerPsiNodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -16,15 +16,21 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 
-abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> implements PsiElementNavigationItem {
+@ApiStatus.Internal
+public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> implements PsiElementNavigationItem {
   private static final Logger LOG = Logger.getInstance(BasePsiNode.class);
 
   BaseSmartPointerPsiNode(@NotNull Project project, @NotNull Type value, @NotNull ViewSettings viewSettings) {
@@ -32,16 +38,14 @@ abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> ext
   }
 
   @Override
-  @NotNull
-  public final Collection<AbstractTreeNode<?>> getChildren() {
+  public final @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     PsiElement value = getPsiElement();
     if (value == null) return new ArrayList<>();
     LOG.assertTrue(value.isValid());
     return getChildrenImpl();
   }
 
-  @NotNull
-  protected abstract Collection<AbstractTreeNode<?>> getChildrenImpl();
+  protected abstract @NotNull Collection<AbstractTreeNode<?>> getChildrenImpl();
 
   private boolean isMarkReadOnly() {
     final Object parentValue = getParentValue();

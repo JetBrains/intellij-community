@@ -1,43 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JPanel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  public static final String CALLEE_TYPE = "Callees of {0}";
-  public static final String CALLER_TYPE = "Callers of {0}";
-
-  private static final String CALL_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.CallHierarchyBrowserBase";
-
   public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {
     super(project, method);
   }
 
   @Override
-  @Nullable
-  protected JPanel createLegendPanel() {
+  protected @Nullable JPanel createLegendPanel() {
     return null;
-  }
-
-  @Override
-  @NotNull
-  protected String getBrowserDataKey() {
-    return CALL_HIERARCHY_BROWSER_DATA_KEY;
   }
 
   @Override
@@ -53,46 +45,50 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  @NotNull
-  protected String getActionPlace() {
+  protected @NotNull String getActionPlace() {
     return ActionPlaces.CALL_HIERARCHY_VIEW_TOOLBAR;
   }
 
   @Override
-  @NotNull
-  protected String getPrevOccurenceActionNameImpl() {
+  protected @NotNull String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.prev.occurence.name");
   }
 
   @Override
-  @NotNull
-  protected String getNextOccurenceActionNameImpl() {
+  protected @NotNull String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.next.occurence.name");
   }
 
   @Override
-  protected Map<String, Supplier<String>> getPresentableNameMap() {
+  protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(CALLER_TYPE, CallHierarchyBrowserBase::getCallerType);
-    map.put(CALLEE_TYPE, CallHierarchyBrowserBase::getCalleeType);
+    map.put(getCallerType(), CallHierarchyBrowserBase::getCallerType);
+    map.put(getCalleeType(), CallHierarchyBrowserBase::getCalleeType);
     return map;
   }
 
   private final class ChangeViewTypeActionBase extends ToggleAction {
-    private final String myTypeName;
+    private final @Nls String myTypeName;
 
-    private ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(@NlsActions.ActionText String shortDescription, @NlsActions.ActionDescription String longDescription, Icon icon, @Nls String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
 
     @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
-      return myTypeName.equals(getCurrentViewType());
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
+      String currentType = event.getUpdateSession().compute(
+        this, "getCurrentViewType", ActionUpdateThread.EDT, () -> getCurrentViewType());
+      return myTypeName.equals(currentType);
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       if (flag) {
         // invokeLater is called to update state of button before long tree building operation
         ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
@@ -100,7 +96,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       setEnabled(isValidBase());
     }
@@ -108,17 +104,17 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
+      super(LanguageCallHierarchy.INSTANCE);
     }
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getCalleeType() {
+  public static @NotNull @Nls String getCalleeType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callees.of");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getCallerType() {
+  public static @NotNull @Nls String getCallerType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callers.of");
   }
 }

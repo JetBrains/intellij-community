@@ -1,6 +1,6 @@
 package com.intellij.refactoring;
 
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -60,7 +60,7 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
   }
 
   private void doTestReverseMigration() {
-    doTestFieldType("i", PsiType.INT);
+    doTestFieldType("i", PsiTypes.intType());
   }
 
 
@@ -73,11 +73,11 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
   }
 
   public void testReverseConditions() {
-    doTestFieldType("b", PsiType.BOOLEAN);
+    doTestFieldType("b", PsiTypes.booleanType());
   }
 
   public void testReverseByte() {
-    doTestFieldType("b", PsiType.BYTE);
+    doTestFieldType("b", PsiTypes.byteType());
   }
 
    public void testReverseString() {
@@ -92,7 +92,7 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
 
   public void testReverseIntArray() {
     doTestFieldType("a",
-                    PsiType.INT.createArrayType());
+                    PsiTypes.intType().createArrayType());
   }
 
   public void testChainedInitialization() {

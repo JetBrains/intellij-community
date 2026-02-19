@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.project.Project;
@@ -25,9 +24,13 @@ import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.util.JavaXmlDocumentKt;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashMap;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
 import org.jetbrains.annotations.NonNls;
@@ -41,50 +44,62 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
-public class RepositoryAttachDialog extends DialogWrapper {
-  @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
-  @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
-  @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
-  @NonNls private static final String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
-  @NonNls private static final String PROPERTY_ATTACH_ANNOTATIONS = "Repository.Attach.Annotations";
-  @NotNull private final Mode myMode;
+public final class RepositoryAttachDialog extends DialogWrapper {
+  private static final @NonNls String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
+  private static final @NonNls String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
+  private static final @NonNls String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
+  private static final @NonNls String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
+  private static final @NonNls String PROPERTY_ATTACH_ANNOTATIONS = "Repository.Attach.Annotations";
+  private final @NotNull Mode myMode;
 
-  public enum Mode { SEARCH, DOWNLOAD }
+  public enum Mode {SEARCH, DOWNLOAD}
+
   private final Project myProject;
 
-  private JBLabel myInfoLabel;
-  private JCheckBox myJavaDocCheckBox;
-  private JCheckBox mySourcesCheckBox;
-  private AsyncProcessIcon myProgressIcon;
-  private ComboboxWithBrowseButton myComboComponent;
-  private JPanel myPanel;
-  private TextFieldWithBrowseButton myDirectoryField;
-  private JBCheckBox myDownloadToCheckBox;
-  private JBLabel myCaptionLabel;
-  private JPanel myDownloadOptionsPanel;
-  private JBCheckBox myIncludeTransitiveDepsCheckBox;
-  private JPanel mySearchOptionsPanel;
-  private JBCheckBox myIncludeTransitiveDependenciesForSearchCheckBox;
-  private JBCheckBox myAnnotationsCheckBox;
+  private final JBLabel myInfoLabel;
+  private final JCheckBox myJavaDocCheckBox;
+  private final JCheckBox mySourcesCheckBox;
+  private final AsyncProcessIcon myProgressIcon;
+  private final ComboboxWithBrowseButton myComboComponent;
+  private final JPanel myPanel;
+  private final TextFieldWithBrowseButton myDirectoryField;
+  private final JBCheckBox myDownloadToCheckBox;
+  private final JBLabel myCaptionLabel;
+  private final JPanel myDownloadOptionsPanel;
+  private final JBCheckBox myIncludeTransitiveDepsCheckBox;
+  private final JPanel mySearchOptionsPanel;
+  private final JBCheckBox myIncludeTransitiveDependenciesForSearchCheckBox;
+  private final JBCheckBox myAnnotationsCheckBox;
 
   private final JComboBox myCombobox;
 
-  private final Map<String, RepositoryArtifactDescription> myCoordinates = new THashMap<>();
+  private final Map<String, RepositoryArtifactDescription> myCoordinates = new HashMap<>();
   private final List<String> myShownItems = new ArrayList<>();
   private final @NlsSafe String myDefaultDownloadFolder;
 
@@ -94,6 +109,114 @@ public class RepositoryAttachDialog extends DialogWrapper {
   public RepositoryAttachDialog(@NotNull Project project, final @Nullable String initialFilter, @NotNull Mode mode) {
     super(project, true);
     myMode = mode;
+    {
+      myProgressIcon = new AsyncProcessIcon("Progress");
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
+      final Spacer spacer1 = new Spacer();
+      myPanel.add(spacer1, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(2, 3, new Insets(0, 0, 15, 0), -1, -1));
+      myPanel.add(panel1, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                              0, false));
+      myComboComponent = new ComboboxWithBrowseButton();
+      panel1.add(myComboComponent, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                       null, null, 0, false));
+      panel1.add(myProgressIcon,
+                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myInfoLabel = new JBLabel();
+      myInfoLabel.setComponentStyle(UIUtil.ComponentStyle.MINI);
+      myInfoLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
+      this.$$$loadLabelText$$$(myInfoLabel, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.info"));
+      panel1.add(myInfoLabel,
+                 new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myCaptionLabel = new JBLabel();
+      myCaptionLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+      myCaptionLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
+      this.$$$loadLabelText$$$(myCaptionLabel, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "label.description"));
+      panel1.add(myCaptionLabel, new GridConstraints(1, 0, 1, 3, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                     null, null, 0, false));
+      myDownloadOptionsPanel = new JPanel();
+      myDownloadOptionsPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(myDownloadOptionsPanel, new GridConstraints(1, 0, 2, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              null, null, null, 0, false));
+      myDirectoryField = new TextFieldWithBrowseButton();
+      myDirectoryField.setText("");
+      myDownloadOptionsPanel.add(myDirectoryField,
+                                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                     null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(1, 5, new Insets(0, 0, 0, 0), -1, -1));
+      myDownloadOptionsPanel.add(panel2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             null, null, null, 0, false));
+      mySourcesCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(mySourcesCheckBox, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "checkbox.sources"));
+      panel2.add(mySourcesCheckBox, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myJavaDocCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(myJavaDocCheckBox, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "checkbox.javadocs"));
+      panel2.add(myJavaDocCheckBox, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                        GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      panel2.add(spacer2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      myIncludeTransitiveDepsCheckBox = new JBCheckBox();
+      myIncludeTransitiveDepsCheckBox.setSelected(true);
+      this.$$$loadButtonText$$$(myIncludeTransitiveDepsCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "checkbox.transitive.dependencies"));
+      panel2.add(myIncludeTransitiveDepsCheckBox,
+                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAnnotationsCheckBox = new JBCheckBox();
+      this.$$$loadButtonText$$$(myAnnotationsCheckBox, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "checkbox.annotations"));
+      panel2.add(myAnnotationsCheckBox, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myDownloadToCheckBox = new JBCheckBox();
+      this.$$$loadButtonText$$$(myDownloadToCheckBox, this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "checkbox.download.to"));
+      myDownloadOptionsPanel.add(myDownloadToCheckBox,
+                                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                                                     GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                     0, false));
+      mySearchOptionsPanel = new JPanel();
+      mySearchOptionsPanel.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(mySearchOptionsPanel, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            null, null, null, 0, false));
+      final Spacer spacer3 = new Spacer();
+      mySearchOptionsPanel.add(spacer3, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                            GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      myIncludeTransitiveDependenciesForSearchCheckBox = new JBCheckBox();
+      myIncludeTransitiveDependenciesForSearchCheckBox.setSelected(true);
+      this.$$$loadButtonText$$$(myIncludeTransitiveDependenciesForSearchCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/JavaUiBundle", "checkbox.include.transitive.dependencies"));
+      mySearchOptionsPanel.add(myIncludeTransitiveDependenciesForSearchCheckBox,
+                               new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+                                                   GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                                   false));
+    }
     setTitle(mode == Mode.DOWNLOAD ? JavaUiBundle.message("dialog.title.download.library.from.maven.repository")
                                    : JavaUiBundle.message("dialog.title.search.library.in.maven.repositories"));
     myProject = project;
@@ -165,18 +288,90 @@ public class RepositoryAttachDialog extends DialogWrapper {
     mySourcesCheckBox.setSelected(storage.isTrueValue(PROPERTY_ATTACH_SOURCES));
     mySourcesCheckBox.setSelected(storage.isTrueValue(PROPERTY_ATTACH_ANNOTATIONS));
 
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.title"))
+      .withDescription(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.description"));
     descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
-    myDirectoryField.addBrowseFolderListener(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
-                                             JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
-                                             descriptor);
+    myDirectoryField.addBrowseFolderListener(null, descriptor);
     updateInfoLabel();
     myDownloadOptionsPanel.setVisible(mode == Mode.DOWNLOAD);
     mySearchOptionsPanel.setVisible(mode == Mode.SEARCH);
     init();
   }
 
-  private @NlsSafe String getDownloadPath(@NotNull final PropertiesComponent storage) {
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
+
+  private @NlsSafe String getDownloadPath(final @NotNull PropertiesComponent storage) {
     final String value = storage.getValue(PROPERTY_DOWNLOAD_TO_PATH);
     if (Strings.isNotEmpty(value)) return value;
     return myDefaultDownloadFolder;
@@ -186,21 +381,15 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (e.getType() == DocumentEvent.EventType.INSERT) {
       String text = textField.getText();
       if (isMvnDependency(text)) {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setValidating(false);
+        DocumentBuilder builder = JavaXmlDocumentKt.createDocumentBuilder();
         try {
-          DocumentBuilder builder = factory.newDocumentBuilder();
-          try {
-            Document document = builder.parse(new InputSource(new StringReader(text)));
-            String mavenCoordinates = extractMavenCoordinates(document);
-            if (mavenCoordinates != null) {
-              textField.setText(mavenCoordinates);
-            }
-          }
-          catch (SAXException | IOException ignored) {
+          Document document = builder.parse(new InputSource(new StringReader(text)));
+          String mavenCoordinates = extractMavenCoordinates(document);
+          if (mavenCoordinates != null) {
+            textField.setText(mavenCoordinates);
           }
         }
-        catch (ParserConfigurationException ignored) {
+        catch (SAXException | IOException ignored) {
         }
       }
     }
@@ -219,12 +408,13 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   public boolean getIncludeTransitiveDependencies() {
-    return myMode == Mode.DOWNLOAD ? myIncludeTransitiveDepsCheckBox.isSelected() : myIncludeTransitiveDependenciesForSearchCheckBox.isSelected();
+    return myMode == Mode.DOWNLOAD
+           ? myIncludeTransitiveDepsCheckBox.isSelected()
+           : myIncludeTransitiveDependenciesForSearchCheckBox.isSelected();
   }
 
-  @Nullable
-  public String getDirectoryPath() {
-    return myDownloadToCheckBox.isSelected()? myDirectoryField.getText() : null;
+  public @Nullable String getDirectoryPath() {
+    return myDownloadToCheckBox.isSelected() ? myDirectoryField.getText() : null;
   }
 
   @Override
@@ -243,7 +433,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myShownItems.clear();
 
     myInUpdate = true;
-    final boolean itemSelected = myCoordinates.containsKey(myFilterString) && Comparing.strEqual((String)myCombobox.getSelectedItem(), myFilterString, false);
+    final boolean itemSelected =
+      myCoordinates.containsKey(myFilterString) && Comparing.strEqual((String)myCombobox.getSelectedItem(), myFilterString, false);
     final boolean filtered;
     if (itemSelected) {
       myShownItems.addAll(myCoordinates.keySet());
@@ -278,7 +469,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
       myShownItems.add(it.coord);
     }
 
-    ((CollectionComboBoxModel)myCombobox.getModel()).update();
+    ((CollectionComboBoxModel<?>)myCombobox.getModel()).update();
     myInUpdate = false;
     field.setText(myFilterString);
     field.setCaretPosition(caret);
@@ -351,12 +542,14 @@ public class RepositoryAttachDialog extends DialogWrapper {
   @Override
   protected ValidationInfo doValidate() {
     if (!isValidCoordinateSelected()) {
-      return new ValidationInfo(JavaUiBundle.message("error.message.please.enter.valid.coordinate.discover.it.or.select.one.from.the.list"), myCombobox);
+      return new ValidationInfo(JavaUiBundle.message("error.message.please.enter.valid.coordinate.discover.it.or.select.one.from.the.list"),
+                                myCombobox);
     }
     else if (myDownloadToCheckBox.isSelected()) {
       final File dir = new File(myDirectoryField.getText());
       if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
-        return new ValidationInfo(JavaUiBundle.message("error.message.please.enter.valid.library.files.path"), myDirectoryField.getTextField());
+        return new ValidationInfo(JavaUiBundle.message("error.message.please.enter.valid.library.files.path"),
+                                  myDirectoryField.getTextField());
       }
     }
     return super.doValidate();
@@ -403,8 +596,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return parts.size() == 4 ? parts.get(0) + ":" + parts.get(1) + ":" + parts.get(3) : text;
   }
 
-  @NotNull
-  private String getPackaging() {
+  private @NotNull String getPackaging() {
     List<String> parts = StringUtil.split(getFullCoordinateText(), ":");
     return parts.size() == 4 ? parts.get(2) : JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING;
   }
@@ -413,14 +605,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText().trim();
   }
 
-  @NotNull
-  public JpsMavenRepositoryLibraryDescriptor getSelectedLibraryDescriptor() {
+  public @NotNull JpsMavenRepositoryLibraryDescriptor getSelectedLibraryDescriptor() {
     return new JpsMavenRepositoryLibraryDescriptor(getCoordinateText(), getPackaging(),
                                                    getIncludeTransitiveDependencies(), Collections.emptyList());
-  }
-
-  private void createUIComponents() {
-    myProgressIcon = new AsyncProcessIcon("Progress");
   }
 
   private static boolean isMvnDependency(String text) {
@@ -431,8 +618,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return false;
   }
 
-  @Nullable
-  private static String extractMavenCoordinates(Document document) {
+  private static @Nullable String extractMavenCoordinates(Document document) {
     String groupId = getGroupId(document);
     String artifactId = getArtifactId(document);
     if (groupId.isEmpty() && artifactId.isEmpty()) {

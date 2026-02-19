@@ -6,22 +6,12 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TestStatusListener {
-  public static final ExtensionPointName<TestStatusListener> EP_NAME = ExtensionPointName.create("com.intellij.testStatusListener");
+  private static final ExtensionPointName<TestStatusListener> EP_NAME = ExtensionPointName.create("com.intellij.testStatusListener");
 
   public abstract void testSuiteFinished(@Nullable AbstractTestProxy root);
 
   public void testSuiteFinished(@Nullable AbstractTestProxy root, Project project) {
     testSuiteFinished(root);
-  }
-
-  /**
-   * @deprecated use {@link #notifySuiteFinished(AbstractTestProxy, Project)}
-   */
-  @Deprecated
-  public static void notifySuiteFinished(AbstractTestProxy root) {
-    for (TestStatusListener statusListener : EP_NAME.getExtensionList()) {
-      statusListener.testSuiteFinished(root);
-    }
   }
 
   public static void notifySuiteFinished(@Nullable AbstractTestProxy root, Project project) {

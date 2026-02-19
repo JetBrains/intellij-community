@@ -1,12 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -15,13 +9,16 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.PagePool;
-import com.intellij.util.io.RecordDataOutput;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
@@ -29,29 +26,24 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
-public abstract class AbstractStorage implements Disposable, Forceable {
-  protected static final Logger LOG = Logger.getInstance(Storage.class);
+@Internal
+public abstract class AbstractStorage implements IStorage {
+  public static final StorageLockContext SHARED = new StorageLockContext(true, true);
+  public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 8 * 1024);
 
-  @NonNls public static final String INDEX_EXTENSION = ".storageRecordIndex";
-  @NonNls public static final String DATA_EXTENSION = ".storageData";
+  protected static final Logger LOG = Logger.getInstance(AbstractStorage.class);
 
-  private static final int MAX_PAGES_TO_FLUSH_AT_A_TIME = 50;
+  public static final @NonNls String INDEX_EXTENSION = ".storageRecordIndex";
+  public static final @NonNls String DATA_EXTENSION = ".storageData";
 
-  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
-  @Deprecated
-  protected final Object myLock = new Object();
-  private final ReadWriteLock myScalableLock = new ReentrantReadWriteLock();
-  private final boolean myUseScalableLock;
+  private final Path storagePath;
 
   protected AbstractRecordsTable myRecordsTable;
   protected DataTable myDataTable;
-  protected PagePool myPool;
+  protected StorageLockContext myContext;
   private final CapacityAllocationPolicy myCapacityAllocationPolicy;
 
   public static boolean deleteFiles(String storageFilePath) {
@@ -84,39 +76,29 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return deletedRecordsFile && deletedDataFile;
   }
 
-  /**
-   * @deprecated please use scalable lock
-   */
-  @Deprecated
   protected AbstractStorage(@NotNull Path storageFilePath) throws IOException {
-    this(storageFilePath, PagePool.SHARED, false);
+    this(storageFilePath, SHARED);
   }
 
-  protected AbstractStorage(@NotNull Path storageFilePath, boolean useScalableLock) throws IOException {
-    this(storageFilePath, PagePool.SHARED, useScalableLock);
-  }
-
-  protected AbstractStorage(@NotNull Path storageFilePath, PagePool pool, boolean useScalableLock) throws IOException {
-    this(storageFilePath, pool, CapacityAllocationPolicy.DEFAULT, useScalableLock);
+  protected AbstractStorage(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
+    this(storageFilePath, context, CapacityAllocationPolicy.DEFAULT);
   }
 
   protected AbstractStorage(@NotNull Path storageFilePath,
-                            CapacityAllocationPolicy capacityAllocationPolicy,
-                            boolean useScalableLock) throws IOException {
-    this(storageFilePath, PagePool.SHARED, capacityAllocationPolicy, useScalableLock);
+                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this(storageFilePath, SHARED, capacityAllocationPolicy);
   }
 
   protected AbstractStorage(@NotNull Path storageFilePath,
-                            PagePool pool,
-                            CapacityAllocationPolicy capacityAllocationPolicy,
-                            boolean useScalableLock) throws IOException {
+                            @NotNull StorageLockContext context,
+                            @Nullable CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this.storagePath = storageFilePath;
     myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
                                                                   : CapacityAllocationPolicy.DEFAULT;
-    tryInit(storageFilePath, pool, 0);
-    myUseScalableLock = useScalableLock;
+    tryInit(storageFilePath, context, 0);
   }
 
-  private void tryInit(@NotNull Path storageFilePath, PagePool pool, int retryCount) throws IOException {
+  private void tryInit(@NotNull Path storageFilePath, StorageLockContext context, int retryCount) throws IOException {
     Path parentDir = storageFilePath.getParent();
     Path recordsFile = parentDir.resolve(storageFilePath.getFileName() + INDEX_EXTENSION);
     Path dataFile = parentDir.resolve(storageFilePath.getFileName() + DATA_EXTENSION);
@@ -143,13 +125,13 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     AbstractRecordsTable recordsTable = null;
     DataTable dataTable;
     try {
-      recordsTable = createRecordsTable(pool, recordsFile);
-      dataTable = new DataTable(dataFile, pool);
+      recordsTable = createRecordsTable(context, recordsFile);
+      dataTable = new DataTable(dataFile, context);
     }
     catch (IOException e) {
       LOG.info(e.getMessage());
       if (recordsTable != null) {
-        Disposer.dispose(recordsTable);
+        IOUtil.closeSafe(LOG, recordsTable);
       }
 
       boolean deleted = deleteFiles(storageFilePath);
@@ -160,20 +142,21 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         throw new IOException("Can't create storage at: " + storageFilePath);
       }
 
-      tryInit(storageFilePath, pool, retryCount+1);
+      tryInit(storageFilePath, context, retryCount + 1);
       return;
     }
 
     myRecordsTable = recordsTable;
     myDataTable = dataTable;
-    myPool = pool;
+    myContext = context;
 
     if (myDataTable.isCompactNecessary()) {
       compact(storageFilePath);
     }
   }
 
-  protected abstract AbstractRecordsTable createRecordsTable(PagePool pool, @NotNull Path recordsFile) throws IOException;
+  protected abstract AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context, @NotNull Path recordsFile)
+    throws IOException;
 
   private void compact(@NotNull Path path) {
     withWriteLock(() -> {
@@ -184,13 +167,13 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         Path parentDir = path.getParent();
         Path newDataFile = parentDir.resolve(path.getFileName() + ".storageData.backup");
         Files.createDirectories(parentDir);
-        createOrTruncateFile(path);
+        createOrTruncateFile(newDataFile);
 
         Path oldDataFile = parentDir.resolve(path.getFileName() + DATA_EXTENSION);
-        DataTable newDataTable = new DataTable(newDataFile, myPool);
+        DataTable newDataTable = new DataTable(newDataFile, myContext);
 
         RecordIdIterator recordIterator = myRecordsTable.createRecordIdIterator();
-        while(recordIterator.hasNextId()) {
+        while (recordIterator.hasNextId()) {
           final int recordId = recordIterator.nextId();
           final long addr = myRecordsTable.getAddress(recordId);
           final int size = myRecordsTable.getSize(recordId);
@@ -208,15 +191,14 @@ public abstract class AbstractStorage implements Disposable, Forceable {
           }
         }
 
-        Disposer.dispose(myDataTable);
-        Disposer.dispose(newDataTable);
+        myDataTable.close();
+        newDataTable.close();
 
-        Files.delete(oldDataFile);
-        Files.move(newDataFile, oldDataFile);
-        myDataTable = new DataTable(oldDataFile, myPool);
+        Files.move(newDataFile, oldDataFile, StandardCopyOption.REPLACE_EXISTING);
+        myDataTable = new DataTable(oldDataFile, myContext);
       }
       catch (IOException e) {
-        LOG.info("Compact failed: " + e.getMessage());
+        LOG.info("Compact failed", e);
       }
 
       long timedelta = System.currentTimeMillis() - start;
@@ -224,66 +206,71 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     });
   }
 
-  private void createOrTruncateFile(@NotNull Path path) throws IOException {
-    Files.newByteChannel(path, EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE))
-      .close();
+  private static void createOrTruncateFile(@NotNull Path path) throws IOException {
+    Files.newByteChannel(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE).close();
   }
 
-  public int getVersion() {
+  @Override
+  public int getVersion() throws IOException {
     return withReadLock(() -> {
       return myRecordsTable.getVersion();
     });
   }
 
-  public void setVersion(int expectedVersion) {
+  @Override
+  public void setVersion(int expectedVersion) throws IOException {
     withWriteLock(() -> {
       myRecordsTable.setVersion(expectedVersion);
     });
   }
 
   @Override
-  public void force() {
+  public void force() throws IOException {
     withWriteLock(() -> {
       myDataTable.force();
       myRecordsTable.force();
     });
   }
 
-  public boolean flushSome() {
-    return withWriteLock(() -> {
-      boolean okRecords = myRecordsTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
-      boolean okData = myDataTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
-
-      return okRecords && okData;
-    });
+  @Override
+  public boolean isDirty() {
+    return myDataTable.isDirty() || myRecordsTable.isDirty();
   }
 
   @Override
-  public boolean isDirty() {
-    return withReadLock(() -> myDataTable.isDirty() || myRecordsTable.isDirty());
-  }
-
   @TestOnly
   public int getLiveRecordsCount() throws IOException {
     return withReadLock(() -> myRecordsTable.getLiveRecordsCount());
   }
 
+  @Override
   @TestOnly
   public RecordIdIterator createRecordIdIterator() throws IOException {
-    return myRecordsTable.createRecordIdIterator();
+    myContext.lockWrite();
+    try {
+      return myRecordsTable.createRecordIdIterator();
+    }
+    finally {
+      myContext.unlockWrite();
+    }
   }
 
+  @Override
   public StorageDataOutput writeStream(final int record) {
     return writeStream(record, false);
   }
+
+  @Override
   public StorageDataOutput writeStream(final int record, boolean fixedSize) {
     return new StorageDataOutput(this, record, fixedSize);
   }
 
+  @Override
   public AppenderStream appendStream(int record) {
     return new AppenderStream(record);
   }
 
+  @Override
   public DataInputStream readStream(int record) throws IOException {
     final byte[] bytes = readBytes(record);
     return new DataInputStream(new UnsyncByteArrayInputStream(bytes));
@@ -293,7 +280,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     return withReadLock(() -> {
       final int length = myRecordsTable.getSize(record);
       if (length == 0 || AbstractRecordsTable.isSizeOfRemovedRecord(length)) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
-      assert length > 0:length;
+      assert length > 0 : length;
 
       final long address = myRecordsTable.getAddress(record);
       byte[] result = new byte[length];
@@ -302,6 +289,11 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     });
   }
 
+  @TestOnly
+  public byte[] readBytesTestAccessor(int record) throws IOException {
+    return readBytes(record);
+  } 
+  
   protected void appendBytes(int record, ByteArraySequence bytes) throws IOException {
     final int delta = bytes.getLength();
     if (delta == 0) return;
@@ -313,7 +305,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
         if (oldSize > 0) {
           final byte[] newbytes = new byte[newSize];
           System.arraycopy(readBytes(record), 0, newbytes, 0, oldSize);
-          System.arraycopy(bytes.getBytes(), bytes.getOffset(), newbytes, oldSize, delta);
+          System.arraycopy(bytes.getInternalBuffer(), bytes.getOffset(), newbytes, oldSize, delta);
           writeBytes(record, new ByteArraySequence(newbytes), false);
         }
         else {
@@ -322,13 +314,14 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       }
       else {
         long address = myRecordsTable.getAddress(record) + oldSize;
-        myDataTable.writeBytes(address, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+        myDataTable.writeBytes(address, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
         myRecordsTable.setSize(record, newSize);
       }
     });
   }
 
-  public void writeBytes(int record, ByteArraySequence bytes, boolean fixedSize) throws IOException {
+  @Override
+  public void writeBytes(int record, @NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException {
     withWriteLock(() -> {
       final int requiredLength = bytes.getLength();
       final int currentCapacity = myRecordsTable.getCapacity(record);
@@ -345,14 +338,14 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       else {
         myDataTable.reclaimSpace(currentCapacity);
 
-        int newCapacity = fixedSize ? requiredLength:myCapacityAllocationPolicy.calculateCapacity(requiredLength);
+        int newCapacity = fixedSize ? requiredLength : myCapacityAllocationPolicy.calculateCapacity(requiredLength);
         if (newCapacity < requiredLength) newCapacity = requiredLength;
         address = myDataTable.allocateSpace(newCapacity);
         myRecordsTable.setAddress(record, address);
         myRecordsTable.setCapacity(record, newCapacity);
       }
 
-      myDataTable.writeBytes(address, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+      myDataTable.writeBytes(address, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
       myRecordsTable.setSize(record, requiredLength);
     });
   }
@@ -365,22 +358,36 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   @Override
   public void dispose() {
     withWriteLock(() -> {
-      Disposer.dispose(myRecordsTable);
-      Disposer.dispose(myDataTable);
+      IOUtil.closeSafe(LOG, myRecordsTable);
+      IOUtil.closeSafe(LOG, myDataTable);
     });
   }
 
-  public void checkSanity(final int record) {
+  @Override
+  public void closeAndClean() throws IOException {
+    Disposer.dispose(this);
+    deleteFiles(storagePath);
+  }
+
+
+  @Override
+  public void checkSanity(final int record) throws IOException {
     withReadLock(() -> {
       final int size = myRecordsTable.getSize(record);
-      assert size >= 0;
+      final int capacity = myRecordsTable.getCapacity(record);
       final long address = myRecordsTable.getAddress(record);
-      assert address >= 0;
-      assert address + size < myDataTable.getFileSize();
+      final long dataFileSize = myDataTable.getFileSize();
+      assert size >= 0 : "[#" + record + "]: size(=" + size + ") must not be negative";
+      assert capacity >= 0 : "[#" + record + "]: capacity(=" + capacity + ") -- must NOT be negative";
+      assert address >= 0 : "[#" + record + "]: address(=" + address + ") must not be negative";
+      assert size <= capacity : "[#" + record + "]: size(=" + size + ") > capacity(=" + capacity + ")";
+      assert address + capacity <= dataFileSize
+        : "[#" + record + "]: address(=" + address + ")+capacity(=" + size + ") is beyond EOF(=" + dataFileSize + ")";
     });
   }
 
-  public void replaceBytes(int record, int offset, ByteArraySequence bytes) {
+  @Override
+  public void replaceBytes(int record, int offset, @NotNull ByteArraySequence bytes) throws IOException {
     withWriteLock(() -> {
       final int changedBytesLength = bytes.getLength();
 
@@ -392,11 +399,11 @@ public abstract class AbstractStorage implements Disposable, Forceable {
 
       final long address = myRecordsTable.getAddress(record);
 
-      myDataTable.writeBytes(address + offset, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+      myDataTable.writeBytes(address + offset, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
     });
   }
 
-  public static final class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
+  public static final class StorageDataOutput extends DataOutputStream implements IStorageDataOutput {
     private final AbstractStorage myStorage;
     private final int myRecordId;
     private final boolean myFixedSize;
@@ -423,9 +430,14 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     public int getRecordId() {
       return myRecordId;
     }
+
+    @Override
+    public @NotNull ByteArraySequence asByteArraySequence() {
+      return getByteStream().asByteArraySequence();
+    }
   }
 
-  public final class AppenderStream extends DataOutputStream {
+  public final class AppenderStream extends DataOutputStream implements IAppenderStream {
     private final int myRecordId;
 
     private AppenderStream(int recordId) {
@@ -439,49 +451,30 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
       appendBytes(myRecordId, _out.toByteArraySequence());
     }
+
+    private BufferExposingByteArrayOutputStream getByteStream() {
+      return ((BufferExposingByteArrayOutputStream)out);
+    }
+
+    @Override
+    public @NotNull ByteArraySequence asByteArraySequence() {
+      return getByteStream().asByteArraySequence();
+    }
   }
 
   protected <T, E extends Throwable> T withReadLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    if (myUseScalableLock) {
-      return ConcurrencyUtil.withLock(myScalableLock.readLock(), runnable);
-    }
-    else {
-      synchronized (myLock) {
-        return runnable.compute();
-      }
-    }
+    return ConcurrencyUtil.withLock(myContext.readLock(), runnable);
   }
 
   protected <E extends Throwable> void withReadLock(@NotNull ThrowableRunnable<E> runnable) throws E {
-    if (myUseScalableLock) {
-      ConcurrencyUtil.withLock(myScalableLock.readLock(), runnable);
-    }
-    else {
-      synchronized (myLock) {
-        runnable.run();
-      }
-    }
+    ConcurrencyUtil.withLock(myContext.readLock(), runnable);
   }
 
-  protected  <T, E extends Throwable> T withWriteLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    if (myUseScalableLock) {
-      return ConcurrencyUtil.withLock(myScalableLock.writeLock(), runnable);
-    }
-    else {
-      synchronized (myLock) {
-        return runnable.compute();
-      }
-    }
+  protected <T, E extends Throwable> T withWriteLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
+    return ConcurrencyUtil.withLock(myContext.writeLock(), runnable);
   }
 
   protected <E extends Throwable> void withWriteLock(@NotNull ThrowableRunnable<E> runnable) throws E {
-    if (myUseScalableLock) {
-      ConcurrencyUtil.withLock(myScalableLock.writeLock(), runnable);
-    }
-    else {
-      synchronized (myLock) {
-        runnable.run();
-      }
-    }
+    ConcurrencyUtil.withLock(myContext.writeLock(), runnable);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,16 +13,21 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vcs.changes.VcsFreezingProcess;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
@@ -31,32 +36,28 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
-import static org.jetbrains.idea.svn.SvnBundle.message;
-
-public class SvnCheckinEnvironment implements CheckinEnvironment {
-
+public final class SvnCheckinEnvironment implements CheckinEnvironment {
   private static final Logger LOG = Logger.getInstance(SvnCheckinEnvironment.class);
-  @NotNull private final SvnVcs mySvnVcs;
+  private final @NotNull SvnVcs mySvnVcs;
 
   public SvnCheckinEnvironment(@NotNull SvnVcs svnVcs) {
     mySvnVcs = svnVcs;
   }
 
-  @NotNull
   @Override
-  public RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
-    return new KeepLocksComponent();
+  public @NotNull RefreshableOnComponent createCommitOptions(@NotNull CheckinProjectPanel commitPanel, @NotNull CommitContext commitContext) {
+    return new KeepLocksComponent(mySvnVcs);
   }
 
   @Override
-  @Nullable
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return null;
   }
 
@@ -66,14 +67,19 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                         @NotNull Set<? super String> feedback) {
     MultiMap<Pair<Url, WorkingCopyFormat>, FilePath> map = SvnUtil.splitIntoRepositoriesMap(mySvnVcs, committables, Convertor.self());
 
-    for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
-      try {
-        doCommitOneRepo(entry.getValue(), comment, exception, feedback, entry.getKey().getSecond());
+    try {
+      ApplicationManager.getApplication().invokeAndWait(() -> VcsFreezingProcess.saveAndBlock(mySvnVcs.getProject()));
+      for (Map.Entry<Pair<Url, WorkingCopyFormat>, Collection<FilePath>> entry : map.entrySet()) {
+        try {
+          doCommitOneRepo(entry.getValue(), comment, exception, feedback, entry.getKey().getSecond());
+        }
+        catch (VcsException e) {
+          LOG.info(e);
+          exception.add(e);
+        }
       }
-      catch (VcsException e) {
-        LOG.info(e);
-        exception.add(e);
-      }
+    } finally {
+      ApplicationManager.getApplication().invokeAndWait(() -> VcsFreezingProcess.unblock(mySvnVcs.getProject()));
     }
   }
 
@@ -92,27 +98,24 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     final StringBuilder committedRevisions = new StringBuilder();
     for (CommitInfo result : results) {
       if (result != CommitInfo.EMPTY && result.getRevisionNumber() > 0) {
-        if (committedRevisions.length() > 0) {
+        if (!committedRevisions.isEmpty()) {
           committedRevisions.append(", ");
         }
         committedRevisions.append(result.getRevisionNumber());
       }
     }
-    if (committedRevisions.length() > 0) {
-      feedback.add(SvnVcs.VCS_DISPLAY_NAME + ": " + message("status.text.committed.revision", committedRevisions));
+    if (!committedRevisions.isEmpty()) {
+      feedback.add(SvnVcs.VCS_DISPLAY_NAME + ": " + SvnBundle.message("status.text.committed.revision", committedRevisions));
     }
   }
 
-  @NotNull
-  private Collection<FilePath> getCommitables(@NotNull List<? extends Change> changes) {
-    THashSet<FilePath> result = new THashSet<>(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
-
-    ChangesUtil.getPaths(changes.stream()).forEach(path -> {
+  private @NotNull Collection<FilePath> getCommitables(@NotNull List<? extends Change> changes) {
+    Set<FilePath> result = CollectionFactory.createCustomHashingStrategySet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+    ChangesUtil.getPaths(changes).forEach(path -> {
       if (result.add(path)) {
         addParents(result, path);
       }
     });
-
     return result;
   }
 
@@ -130,8 +133,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return status != null && status.is(StatusType.STATUS_ADDED, StatusType.STATUS_REPLACED);
   }
 
-  @Nullable
-  private Status getStatus(@NotNull FilePath file) {
+  private @Nullable Status getStatus(@NotNull FilePath file) {
     Status result = null;
 
     try {
@@ -146,15 +148,14 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @Override
   public String getCheckinOperationName() {
-    return message("checkin.operation.name");
+    return SvnBundle.message("checkin.operation.name");
   }
 
-  @NotNull
   @Override
-  public List<VcsException> commit(@NotNull List<? extends Change> changes,
-                                   @NotNull String commitMessage,
-                                   @NotNull CommitContext commitContext,
-                                   @NotNull Set<? super String> feedback) {
+  public @NotNull List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                            @NotNull String commitMessage,
+                                            @NotNull CommitContext commitContext,
+                                            @NotNull Set<? super String> feedback) {
     final List<VcsException> exception = new ArrayList<>();
     final Collection<FilePath> committables = getCommitables(changes);
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -165,7 +166,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> doCommit(committables, commitMessage, exception, feedback),
-        message("progress.title.commit"), false, mySvnVcs.getProject()
+        SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject()
       );
     }
     else {
@@ -212,7 +213,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         File file = event.getFile();
 
         if (indicator != null && file != null) {
-          indicator.setText(message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
+          indicator.setText(SvnBundle.message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
         }
       }
     };
@@ -236,54 +237,5 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   @Override
   public boolean isRefreshAfterCommitNeeded() {
     return true;
-  }
-
-  private class KeepLocksComponent implements RefreshableOnComponent {
-
-    @NotNull private final JCheckBox myKeepLocksBox;
-    private boolean myIsKeepLocks;
-    @NotNull private final JPanel myPanel;
-    @NotNull private final JCheckBox myAutoUpdate;
-
-    KeepLocksComponent() {
-      myPanel = new JPanel(new BorderLayout());
-      myKeepLocksBox = new JCheckBox(message("checkbox.checkin.keep.files.locked"));
-      myKeepLocksBox.setSelected(myIsKeepLocks);
-      myAutoUpdate = new JCheckBox(message("checkbox.checkin.auto.update.after.commit"));
-
-      myPanel.add(myAutoUpdate, BorderLayout.NORTH);
-      myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    public boolean isKeepLocks() {
-      return myKeepLocksBox.isSelected();
-    }
-
-    public boolean isAutoUpdate() {
-      return myAutoUpdate.isSelected();
-    }
-
-    @Override
-    public void refresh() {
-    }
-
-    @Override
-    public void saveState() {
-      final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
-      configuration.setKeepLocks(isKeepLocks());
-      configuration.setAutoUpdateAfterCommit(isAutoUpdate());
-    }
-
-    @Override
-    public void restoreState() {
-      final SvnConfiguration configuration = mySvnVcs.getSvnConfiguration();
-      myIsKeepLocks = configuration.isKeepLocks();
-      myAutoUpdate.setSelected(configuration.isAutoUpdateAfterCommit());
-    }
   }
 }

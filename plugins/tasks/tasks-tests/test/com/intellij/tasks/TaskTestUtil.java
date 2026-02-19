@@ -1,10 +1,12 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Date;
 import java.util.List;
 
@@ -13,7 +15,7 @@ import static junit.framework.Assert.assertTrue;
 /**
  * @author Mikhail Golubev
  */
-public class TaskTestUtil {
+public final class TaskTestUtil {
   public static void  assertTasksEqual(@NotNull Task t1, @NotNull Task t2) {
     assertTrue(TaskUtil.tasksEqual(t1, t2));
   }
@@ -136,7 +138,7 @@ public class TaskTestUtil {
     @NotNull
     @Override
     public Icon getIcon() {
-      return myIcon == null? myRepository.getIcon() : myIcon;
+      return myIcon != null ? myIcon : myRepository != null ? myRepository.getIcon() : EmptyIcon.ICON_16;
     }
 
     @NotNull

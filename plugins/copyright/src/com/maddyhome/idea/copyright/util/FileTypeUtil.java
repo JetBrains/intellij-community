@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.util;
 
@@ -7,33 +7,32 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.xml.util.JspFileTypeUtil;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Set;
 
 public class FileTypeUtil implements Disposable {
 
   public static synchronized FileTypeUtil getInstance() {
-    return ServiceManager.getService(FileTypeUtil.class);
+    return ApplicationManager.getApplication().getService(FileTypeUtil.class);
   }
 
   public FileTypeUtil() {
-    createMappings();
   }
 
   public static String buildComment(FileType type, String template, LanguageOptions options) {
@@ -60,7 +59,7 @@ public class FileTypeUtil implements Disposable {
     boolean allowSeparator = getInstance().allowSeparators(type);
     String filler = options.getFiller();
     if (!allowSeparator) {
-      if (options.getFiller() == LanguageOptions.DEFAULT_FILLER) {
+      if (Strings.areSameInstance(options.getFiller(), LanguageOptions.DEFAULT_FILLER)) {
         filler = "~";
       }
     }
@@ -79,7 +78,7 @@ public class FileTypeUtil implements Disposable {
     StringBuilder pre = new StringBuilder(5);
     StringBuilder leader = new StringBuilder(5);
     StringBuilder post = new StringBuilder(5);
-    if (filler == LanguageOptions.DEFAULT_FILLER) {
+    if (Strings.areSameInstance(filler, LanguageOptions.DEFAULT_FILLER)) {
       filler = open.substring(open.length() - 1);
     }
     int offset = 0;
@@ -117,9 +116,7 @@ public class FileTypeUtil implements Disposable {
       }
 
       preview.append(open);
-      for (int i = open.length() + 1; i <= options.getLenBefore() - diff - post.length(); i++) {
-        preview.append(filler);
-      }
+      preview.repeat(filler, Math.max(0, options.getLenBefore() - diff - post.length() - open.length()));
 
       preview.append(post);
 
@@ -139,7 +136,7 @@ public class FileTypeUtil implements Disposable {
         line = StringUtil.trimEnd(line, close);
         preview.append(leader).append(pre);
         int len = 0;
-        if (pre.length() > 0 && !line.isEmpty()) {
+        if (!pre.isEmpty() && !line.isEmpty()) {
           preview.append(' ');
           len++;
         }
@@ -150,7 +147,7 @@ public class FileTypeUtil implements Disposable {
             preview.append(' ');
           }
           if (isBlock || allowLine) {
-            preview.append(post.substring(0, options.getLenBefore() - diff - len));
+            preview.append(post, 0, options.getLenBefore() - diff - len);
           }
         }
 
@@ -168,9 +165,7 @@ public class FileTypeUtil implements Disposable {
     preview.append(leader);
     if (options.isSeparateAfter()) {
       preview.append(pre);
-      for (int i = leader.length() + pre.length(); i < options.getLenAfter() - close.length(); i++) {
-        preview.append(filler);
-      }
+      preview.repeat(filler, Math.max(0, options.getLenAfter() - close.length() - leader.length() - pre.length()));
       preview.append(close);
       preview.append('\n');
     }
@@ -183,7 +178,8 @@ public class FileTypeUtil implements Disposable {
       }
     }
 
-    return preview.substring(0, preview.length() - 1);
+    return !preview.isEmpty() ? preview.substring(0, preview.length() - 1)
+                              : preview.toString();
   }
 
   public static boolean isSupportedFile(@NotNull VirtualFile file) {
@@ -216,7 +212,7 @@ public class FileTypeUtil implements Disposable {
   }
 
   public boolean allowSeparators(FileType fileType) {
-    return !noSeparators.contains(fileType);
+    return !(fileType == XmlFileType.INSTANCE || fileType == HtmlFileType.INSTANCE || JspFileTypeUtil.isJspOrJspX(fileType));
   }
 
   private static Commenter getCommenter(FileType fileType) {
@@ -226,13 +222,6 @@ public class FileTypeUtil implements Disposable {
 
 
     return null;
-  }
-
-  private void createMappings() {
-    noSeparators.add(XmlFileType.INSTANCE);
-    noSeparators.add(HtmlFileType.INSTANCE);
-    noSeparators.add(StdFileTypes.JSP);
-    noSeparators.add(StdFileTypes.JSPX);
   }
 
   private static boolean isSupportedType(FileType type) {
@@ -256,7 +245,6 @@ public class FileTypeUtil implements Disposable {
     }
   }
 
-  private final Set<FileType> noSeparators = new HashSet<>();
   @Override
   public void dispose() { }
 }

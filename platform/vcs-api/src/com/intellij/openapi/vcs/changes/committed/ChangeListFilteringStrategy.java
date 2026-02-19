@@ -2,10 +2,11 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import java.util.List;
 
@@ -28,4 +29,8 @@ public interface ChangeListFilteringStrategy {
 
   @NotNull
   List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists);
+
+  @Override
+  @Nls
+  String toString();
 }

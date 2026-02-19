@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl.httpclient;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -9,7 +9,13 @@ import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.net.IdeHttpClientHelpers;
 import com.intellij.util.net.ssl.CertificateManager;
-import org.apache.http.*;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -59,11 +65,10 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
     super(other);
   }
 
-  @NotNull
-  protected HttpClient getHttpClient() {
+  protected @NotNull HttpClient getHttpClient() {
     HttpClientBuilder builder = HttpClients.custom()
       .setDefaultRequestConfig(createRequestConfig())
-      .setSslcontext(CertificateManager.getInstance().getSslContext())
+      .setSSLContext(CertificateManager.getInstance().getSslContext())
       .setDefaultCredentialsProvider(createCredentialsProvider())
       .addInterceptorFirst(PREEMPTIVE_BASIC_AUTH)
       .addInterceptorLast(createRequestInterceptor());
@@ -76,13 +81,11 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
    *
    * @return specific request interceptor or null by default
    */
-  @Nullable
-  protected HttpRequestInterceptor createRequestInterceptor() {
+  protected @Nullable HttpRequestInterceptor createRequestInterceptor() {
     return null;
   }
 
-  @NotNull
-  private CredentialsProvider createCredentialsProvider() {
+  private @NotNull CredentialsProvider createCredentialsProvider() {
     CredentialsProvider provider = new BasicCredentialsProvider();
     // Basic authentication
     if (isUseHttpAuthentication()) {
@@ -96,8 +99,7 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
     return provider;
   }
 
-  @NotNull
-  protected RequestConfig createRequestConfig() {
+  protected @NotNull RequestConfig createRequestConfig() {
     TaskSettings tasksSettings = TaskSettings.getInstance();
     RequestConfig.Builder builder = RequestConfig.custom()
       .setConnectTimeout(3000)
@@ -115,8 +117,7 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
    *
    * @return server's REST API path prefix
    */
-  @NotNull
-  public String getRestApiPathPrefix() {
+  public @NotNull String getRestApiPathPrefix() {
     return "";
   }
 
@@ -129,11 +130,10 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
    *
    * @return described URL
    */
-  @NotNull
-  public String getRestApiUrl(Object @NotNull ... parts) {
+  public @NotNull String getRestApiUrl(Object @NotNull ... parts) {
     StringBuilder builder = new StringBuilder(getUrl());
     builder.append(getRestApiPathPrefix());
-    if (builder.charAt(builder.length() - 1) == '/') {
+    if (!builder.isEmpty() && builder.charAt(builder.length() - 1) == '/') {
       builder.deleteCharAt(builder.length() - 1);
     }
     for (Object part : parts) {

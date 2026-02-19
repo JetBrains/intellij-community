@@ -1,13 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.util;
 
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -20,13 +54,12 @@ import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public final class PsiScopesUtil {
   private static final Logger LOG = Logger.getInstance(PsiScopesUtil.class);
@@ -34,16 +67,14 @@ public final class PsiScopesUtil {
   private PsiScopesUtil() {
   }
 
-  public static boolean treeWalkUp(@NotNull PsiScopeProcessor processor,
-                                   @NotNull PsiElement entrance,
-                                   @Nullable PsiElement maxScope) {
+  public static boolean treeWalkUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement entrance, @Nullable PsiElement maxScope) {
     return treeWalkUp(processor, entrance, maxScope, ResolveState.initial());
   }
 
-  public static boolean treeWalkUp(@NotNull final PsiScopeProcessor processor,
-                                   @NotNull final PsiElement entrance,
-                                   @Nullable final PsiElement maxScope,
-                                   @NotNull final ResolveState state) {
+  public static boolean treeWalkUp(@NotNull PsiScopeProcessor processor,
+                                   @NotNull PsiElement entrance,
+                                   @Nullable PsiElement maxScope,
+                                   @NotNull ResolveState state) {
     if (!entrance.isValid()) {
       LOG.error(new PsiInvalidElementAccessException(entrance));
     }
@@ -213,7 +244,7 @@ public final class PsiScopesUtil {
   public static void setupAndRunProcessor(@NotNull MethodsProcessor processor,
                                           @NotNull PsiCallExpression call,
                                           boolean dummyImplicitConstructor)
-  throws MethodProcessorSetupFailedException {
+    throws MethodProcessorSetupFailedException {
     if (call instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)call;
       final PsiJavaCodeReferenceElement ref = methodCall.getMethodExpression();
@@ -238,7 +269,7 @@ public final class PsiScopesUtil {
             aClass.processDeclarations(processor, ResolveState.initial(), null, call);
 
             if (dummyImplicitConstructor) {
-              processDummyConstructor(processor, aClass);
+              processDefaultConstructor(processor, aClass);
             }
           }
           else if (keyword.getTokenType() == JavaTokenType.SUPER_KEYWORD) {
@@ -247,7 +278,8 @@ public final class PsiScopesUtil {
               throw new MethodProcessorSetupFailedException("Can't resolve class for super expression");
             }
 
-            final PsiClass superClass = aClass.getSuperClass();
+            JvmReferenceType type = aClass.getSuperClassType();
+            final PsiClass superClass = type == null ? null : ObjectUtils.tryCast(type.resolve(), PsiClass.class);
             if (superClass != null) {
               PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
               PsiClass runSuper = superClass;
@@ -276,7 +308,7 @@ public final class PsiScopesUtil {
                 if (!processor.execute(constructor, state)) return;
               }
 
-              if (dummyImplicitConstructor) processDummyConstructor(processor, superClass);
+              if (dummyImplicitConstructor) processDefaultConstructor(processor, superClass);
             }
           }
           else {
@@ -367,7 +399,7 @@ public final class PsiScopesUtil {
       aClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, result.getSubstitutor()), null, call);
 
       if (dummyImplicitConstructor) {
-        processDummyConstructor(processor, aClass);
+        processDefaultConstructor(processor, aClass);
       }
     }
   }
@@ -422,8 +454,8 @@ public final class PsiScopesUtil {
     return false;
   }
 
-  private static boolean processQualifierType(@NotNull final PsiType type,
-                                              final MethodsProcessor processor,
+  private static boolean processQualifierType(@NotNull PsiType type,
+                                              MethodsProcessor processor,
                                               PsiManager manager,
                                               PsiMethodCallExpression call) throws MethodProcessorSetupFailedException {
     PsiUtil.ensureValidType(type);
@@ -476,23 +508,11 @@ public final class PsiScopesUtil {
     return resolve.processDeclarations(processor, state, methodCall, methodCall);
   }
 
-  private static void processDummyConstructor(MethodsProcessor processor, PsiClass aClass) {
-    if (aClass instanceof PsiAnonymousClass) return;
-    try {
-      PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length != 0) {
-        return;
-      }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
-      final PsiMethod dummyConstructor = factory.createConstructor();
-      PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
-      if (nameIdentifier != null) {
-        Objects.requireNonNull(dummyConstructor.getNameIdentifier()).replace(nameIdentifier);
-      }
-      processor.forceAddResult(dummyConstructor);
+  private static void processDefaultConstructor(MethodsProcessor processor, PsiClass aClass) {
+    if (aClass.getConstructors().length != 0) {
+      return;
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    PsiMethod defaultConstructor = LightDefaultConstructor.create(aClass);
+    if (defaultConstructor != null) processor.forceAddResult(defaultConstructor);
   }
 }

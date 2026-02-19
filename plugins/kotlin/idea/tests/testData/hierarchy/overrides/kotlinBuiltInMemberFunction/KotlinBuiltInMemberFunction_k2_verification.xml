@@ -1,0 +1,10 @@
+<node text="List  (kotlin.collections)" base="true">
+  <node text="EmptyList  (kotlin.collections)"/>
+  <node text="AbstractList  (kotlin.collections)">
+    <node text="SubList in AbstractList  (kotlin.collections)"/>
+    <node text="ReversedListReadOnly  (kotlin.collections)"/>
+    <node text="RingBuffer  (kotlin.collections)"/>
+    <node text="EnumEntriesList  (kotlin.enums)"/>
+    <node text="MovingSubList  (kotlin.collections)"/>
+  </node>
+</node>

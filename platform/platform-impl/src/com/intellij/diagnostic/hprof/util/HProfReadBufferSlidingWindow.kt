@@ -16,12 +16,12 @@
 package com.intellij.diagnostic.hprof.util
 
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
-import com.intellij.util.io.ByteBufferUtil
+import com.intellij.util.lang.ByteBufferCleaner
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import kotlin.math.min
 
-
-class HProfReadBufferSlidingWindow(private val channel: FileChannel, parser: HProfEventBasedParser) :
+internal class HProfReadBufferSlidingWindow(private val channel: FileChannel, parser: HProfEventBasedParser) :
   AbstractHProfNavigatorReadBuffer(parser) {
   private val bufferSize = 10_000_000L
   private val size = channel.size()
@@ -30,11 +30,11 @@ class HProfReadBufferSlidingWindow(private val channel: FileChannel, parser: HPr
   private var bufferOffset = 0L
 
   init {
-    buffer = channel.map(FileChannel.MapMode.READ_ONLY, bufferOffset, Math.min(bufferSize, size))
+    buffer = channel.map(FileChannel.MapMode.READ_ONLY, bufferOffset, min(bufferSize, size))
   }
 
   override fun close() {
-    ByteBufferUtil.cleanBuffer(buffer)
+    ByteBufferCleaner.unmapBuffer(buffer)
   }
 
   override fun position(newPosition: Long) {
@@ -49,11 +49,11 @@ class HProfReadBufferSlidingWindow(private val channel: FileChannel, parser: HPr
   private fun remapBuffer(newPosition: Long) {
     val oldBuffer = buffer
 
-    buffer = channel.map(FileChannel.MapMode.READ_ONLY, newPosition, Math.min(bufferSize, size - newPosition))
+    buffer = channel.map(FileChannel.MapMode.READ_ONLY, newPosition, min(bufferSize, size - newPosition))
     bufferOffset = newPosition
 
     // Force clean up previous buffer
-    ByteBufferUtil.cleanBuffer(oldBuffer)
+    ByteBufferCleaner.unmapBuffer(oldBuffer)
   }
 
   override fun isEof(): Boolean {
@@ -73,7 +73,7 @@ class HProfReadBufferSlidingWindow(private val channel: FileChannel, parser: HPr
       var offset = 0
       while (remaining > 0) {
         remapBuffer(position())
-        val bytesToFetch = Math.min(remaining, bufferSize.toInt())
+        val bytesToFetch = min(remaining, bufferSize.toInt())
         buffer.get(bytes, offset, bytesToFetch)
         remaining -= bytesToFetch
         offset += bytesToFetch

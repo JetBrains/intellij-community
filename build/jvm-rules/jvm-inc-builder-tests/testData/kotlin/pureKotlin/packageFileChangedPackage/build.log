@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_packageFileChangedPackage-a.kotlin_module
+  test/BKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/packageFileChangedPackage/a/b.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -13,7 +13,9 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 import static hg4idea.test.HgExecutor.hgMergeWith;
 

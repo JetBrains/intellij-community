@@ -11,15 +11,12 @@ import com.intellij.xml.breadcrumbs.DefaultCrumbsPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresentationProvider {
   private static boolean isMyContext(@NotNull PsiElement deepestElement) {
-    final PsiFile file = deepestElement.getContainingFile();
-    if (file == null || !XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) {
+    final PsiFile psiFile = deepestElement.getContainingFile();
+    if (psiFile == null || !XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(psiFile)) {
       return false;
     }
     return true;

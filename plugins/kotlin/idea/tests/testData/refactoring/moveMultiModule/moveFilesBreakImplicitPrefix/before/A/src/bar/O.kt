@@ -1,0 +1,3 @@
+package bar
+
+object O

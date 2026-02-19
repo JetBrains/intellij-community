@@ -1,4 +1,4 @@
-// "Replace call with method body" "true"
+// "Replace call with method body" "true-preview"
 
 class Test {
   void test() {

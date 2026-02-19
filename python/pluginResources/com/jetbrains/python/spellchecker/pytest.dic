@@ -1,0 +1,4 @@
+addopts
+capsys
+conftest
+pytestmark

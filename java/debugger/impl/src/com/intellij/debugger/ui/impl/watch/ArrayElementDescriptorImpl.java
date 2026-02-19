@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -21,10 +21,17 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor{
+public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor {
   private final int myIndex;
   private final ArrayReference myArray;
   private Ref<Value> myPresetValue;
@@ -113,9 +120,8 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
               return arrType.classLoader();
             }
 
-            @NotNull
             @Override
-            public Type getLType() throws ClassNotLoadedException {
+            public @NotNull Type getLType() throws ClassNotLoadedException {
               return arrType.componentType();
             }
           });

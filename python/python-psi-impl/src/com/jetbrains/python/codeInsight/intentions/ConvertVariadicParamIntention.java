@@ -28,12 +28,33 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * User: catherine
@@ -50,27 +71,25 @@ import java.util.*;
  *   doSomething(foo)
  *
  */
-public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
+public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.convert.variadic.param");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.variadic.param");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
 
-    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    final PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
     if (function != null) {
@@ -101,8 +120,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  private static PyParameter getKeywordContainer(@NotNull PyParameterList parameterList) {
+  private static @Nullable PyParameter getKeywordContainer(@NotNull PyParameterList parameterList) {
     return StreamEx
       .of(parameterList.getParameters())
       .select(PyNamedParameter.class)
@@ -120,8 +138,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     }
   }
 
-  @NotNull
-  private static Usages findKeywordContainerUsages(@NotNull PyFunction function, boolean skipReferencesToContainer) {
+  private static @NotNull Usages findKeywordContainerUsages(@NotNull PyFunction function, boolean skipReferencesToContainer) {
     final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
     if (keywordContainer == null) return new Usages(false, new LinkedHashMap<>(), MultiMap.empty(), MultiMap.empty());
 
@@ -167,8 +184,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     return new Usages(!allReferences.isEmpty(), names, calls, subscriptions);
   }
 
-  @Nullable
-  private static String getIndexValueToReplace(@NotNull PySubscriptionExpression subscription) {
+  private static @Nullable String getIndexValueToReplace(@NotNull PySubscriptionExpression subscription) {
     return Optional
       .ofNullable(subscription.getIndexExpression())
       .map(indexExpression -> PyUtil.as(indexExpression, PyStringLiteralExpression.class))
@@ -177,8 +193,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       .orElse(null);
   }
 
-  @Nullable
-  private static String getIndexValueToReplace(@NotNull PyCallExpression call) {
+  private static @Nullable String getIndexValueToReplace(@NotNull PyCallExpression call) {
     return Optional
       .of(call.getArguments())
       .map(ArrayUtil::getFirstElement)
@@ -226,8 +241,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   private static boolean isKeywordContainerCall(@Nullable PsiElement element, @NotNull PyParameter keywordContainer) {
     if (element instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)element).getCallee();
-      if (callee instanceof PyQualifiedExpression) {
-        final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
+      if (callee instanceof PyQualifiedExpression qualifiedCallee) {
         final PyExpression qualifier = qualifiedCallee.getQualifier();
 
         if (qualifier instanceof PyReferenceExpression) {
@@ -249,8 +263,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     parameterList.addBefore((PsiElement)elementGenerator.createComma(), placeToInsertParameter);
   }
 
-  @NotNull
-  private static DefaultValue getDefaultKeyValue(@NotNull PyCallExpression call) {
+  private static @NotNull DefaultValue getDefaultKeyValue(@NotNull PyCallExpression call) {
     final PyExpression[] arguments = call.getArguments();
     if (arguments.length > 1) {
       final PyExpression argument = PyUtil.peelArgument(arguments[1]);
@@ -266,8 +279,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     return DefaultValue.noDefault();
   }
 
-  @Nullable
-  private static PyElement findCompatiblePlaceToInsertParameter(@NotNull PyParameterList parameterList, boolean hasDefaultValue) {
+  private static @Nullable PyElement findCompatiblePlaceToInsertParameter(@NotNull PyParameterList parameterList, boolean hasDefaultValue) {
     if (hasDefaultValue) return getKeywordContainer(parameterList);
 
     final List<PyParameter> parameters = Arrays.asList(parameterList.getParameters());
@@ -286,14 +298,11 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
     private final boolean hasMoreReferences;
 
-    @NotNull
-    private final LinkedHashMap<String, DefaultValue> names;
+    private final @NotNull LinkedHashMap<String, DefaultValue> names;
 
-    @NotNull
-    private final MultiMap<String, PyCallExpression> calls;
+    private final @NotNull MultiMap<String, PyCallExpression> calls;
 
-    @NotNull
-    private final MultiMap<String, PySubscriptionExpression> subscriptions;
+    private final @NotNull MultiMap<String, PySubscriptionExpression> subscriptions;
 
     private Usages(boolean hasMoreReferences,
                    @NotNull LinkedHashMap<String, DefaultValue> names,
@@ -310,16 +319,13 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
     private final boolean unableToHasDefaultValue;
 
-    @Nullable
-    private final String defaultValue;
+    private final @Nullable String defaultValue;
 
-    @NotNull
-    private static DefaultValue noDefault() {
+    private static @NotNull DefaultValue noDefault() {
       return new DefaultValue(false, null);
     }
 
-    @NotNull
-    private static DefaultValue defaultValue(@NotNull String defaultValue) {
+    private static @NotNull DefaultValue defaultValue(@NotNull String defaultValue) {
       return new DefaultValue(false, defaultValue);
     }
 
@@ -328,8 +334,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       this.defaultValue = defaultValue;
     }
 
-    @NotNull
-    private static DefaultValue merge(@NotNull DefaultValue self, @NotNull DefaultValue other) {
+    private static @NotNull DefaultValue merge(@NotNull DefaultValue self, @NotNull DefaultValue other) {
       if (self.unableToHasDefaultValue) return self;
       if (other.unableToHasDefaultValue) return other;
 

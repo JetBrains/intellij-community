@@ -1,0 +1,8 @@
+<fold text='{ 4 keys }'>{
+  "id": 3,
+  "value": 3,
+  "another object": <fold text='{ 1 key }'>{
+  "name": "name"
+}</fold>,
+  "order": 10
+}</fold>

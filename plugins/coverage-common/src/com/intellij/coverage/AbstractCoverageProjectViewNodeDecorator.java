@@ -10,32 +10,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractCoverageProjectViewNodeDecorator implements ProjectViewNodeDecorator {
-  private Project myProject;
-
-  @Deprecated
-  public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @Nullable CoverageDataManager coverageDataManager) {
-  }
-
-  public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
-    myProject = project;
+  protected AbstractCoverageProjectViewNodeDecorator() {
   }
 
   /**
-   * @deprecated Use {@link #getCoverageDataManager(Project)}
-   * @return
+   * @deprecated use {@link #AbstractCoverageProjectViewNodeDecorator()} instead
    */
-  @Nullable
   @Deprecated
-  protected final CoverageDataManager getCoverageDataManager() {
-    return getCoverageDataManager(myProject);
+  public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @NotNull Project project) {
   }
 
+  /**
+   * @deprecated Use {@link CoverageDataManager#getInstance(Project)} directly.
+   */
   @SuppressWarnings("MethodMayBeStatic")
-  @Nullable
-  protected final CoverageDataManager getCoverageDataManager(@NotNull Project project) {
+  @Deprecated
+  protected final @Nullable CoverageDataManager getCoverageDataManager(@NotNull Project project) {
     return CoverageDataManager.getInstance(project);
   }
 
+  @SuppressWarnings("unused")
   protected static void appendCoverageInfo(ColoredTreeCellRenderer cellRenderer, @Nls String coverageInfo) {
     if (coverageInfo != null) {
       cellRenderer.append(" (" + coverageInfo + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);

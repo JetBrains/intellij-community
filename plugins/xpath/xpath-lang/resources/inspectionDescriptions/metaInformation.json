@@ -1,0 +1,40 @@
+{
+  "inspections": [
+    {
+      "id": "RedundantTypeConversion",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckNodeTest",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HardwiredNamespacePrefix",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ImplicitTypeConversion",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IndexZeroUsage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XsltTemplateInvocation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XsltVariableShadowing",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XsltUnusedDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "XsltDeclarations",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

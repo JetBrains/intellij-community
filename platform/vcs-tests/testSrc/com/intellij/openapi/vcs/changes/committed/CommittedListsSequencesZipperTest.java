@@ -9,7 +9,13 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertTrue;
 
@@ -57,6 +63,7 @@ public class CommittedListsSequencesZipperTest {
     check(valuesWithCount, list(1, 7, 11, 111), list(1, 7, 11, 111), list(1, 7, 11, 111));
   }
 
+  @SafeVarargs
   private static void check(long[] @NotNull [] expected, List<CommittedChangeList> @NotNull ... lists) {
     CommittedListsSequencesZipper zipper = new CommittedListsSequencesZipper(ConvertorZipper.ourInstance);
     int id = 0;

@@ -1,3 +1,0 @@
-public interface X {
-  <spot>void foo();</spot>
-}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -9,17 +9,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public abstract class GotoLineNumberDialog extends DialogWrapper {
   private final Pattern myPattern = PatternUtil.compileSafe("\\s*(\\d+)?\\s*(?:[,:]?\\s*(\\d+)?)?\\s*", null);
 
@@ -41,12 +48,11 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
     return null;
   }
 
-  private String getText() {
+  protected String getText() {
     return myField.getText();
   }
 
-  @Nullable
-  protected final Coordinates getCoordinates() {
+  protected @Nullable Coordinates getCoordinates() {
     Matcher m = myPattern.matcher(getText());
     if (!m.matches()) return null;
 
@@ -60,12 +66,11 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
   protected abstract int getOffset();
   protected abstract int getMaxOffset();
   protected abstract int coordinatesToOffset(@NotNull Coordinates coordinates);
-  @NotNull
-  protected abstract Coordinates offsetToCoordinates(int offset);
+  protected abstract @NotNull Coordinates offsetToCoordinates(int offset);
 
   @Override
   protected JComponent createNorthPanel() {
-    class MyTextField extends JTextField {
+    final class MyTextField extends JTextField {
       MyTextField() {
         super("");
         addFocusListener(new FocusAdapter() {
@@ -154,13 +159,6 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
     return panel;
   }
 
-  protected static class Coordinates {
-    public final int row;
-    public final int column;
-
-    public Coordinates(int row, int column) {
-      this.row = row;
-      this.column = column;
-    }
+  record Coordinates(int row, int column) {
   }
 }

@@ -7,6 +7,6 @@ interface B {}
     }
 
     void bar (boolean a, A a1, B b1){
-        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'T'">T t = a ? a1 : b1;</error>
+        T t = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'T'">a ? a1 : b1;</error>
     }
 }

@@ -1,0 +1,18 @@
+<html>
+<body>
+Reports chained null-checks that can be replaced with safe-calls.
+<p><b>Example:</b></p>
+<pre><code>
+  fun test(my: My?) {
+      if (my != null && my.foo() != null) {}
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(my: My?) {
+      if (my?.foo() != null) {}
+  }
+</code></pre>
+
+</body>
+</html>

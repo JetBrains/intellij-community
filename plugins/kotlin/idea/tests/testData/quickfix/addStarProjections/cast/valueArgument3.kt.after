@@ -1,0 +1,8 @@
+// "Change type arguments to <*>" "true"
+fun test(a: Any) {
+    foo(a as List<*>)
+}
+
+fun foo(list: List<*>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

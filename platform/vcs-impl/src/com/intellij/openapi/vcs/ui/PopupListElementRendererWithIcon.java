@@ -7,12 +7,25 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.list.IconListPopupRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 
+@ApiStatus.Internal
 public class PopupListElementRendererWithIcon extends PopupListElementRenderer<Object> implements IconListPopupRenderer {
   protected IconComponent myIconLabel;
 
@@ -35,9 +48,18 @@ public class PopupListElementRendererWithIcon extends PopupListElementRenderer<O
   @Override
   protected void customizeComponent(JList<?> list, Object value, boolean isSelected) {
     super.customizeComponent(list, value, isSelected);
-    myTextLabel.setIcon(null);
-    myTextLabel.setDisabledIcon(null);
-    myIconLabel.setIcon(isSelected ? myDescriptor.getSelectedIconFor(value) : myDescriptor.getIconFor(value));
+    myIconLabel.setIcon(isSelected ? IconUtil.wrapToSelectionAwareIcon(myDescriptor.getSelectedIconFor(value)) : myDescriptor.getIconFor(value));
+  }
+
+  @Override
+  protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+    myIconLabel.setIcon(icon);
+    myIconLabel.setDisabledIcon(disabledIcon);
+  }
+
+  @Override
+  protected @Nullable JComponent createIconBar() {
+    return myIconLabel;
   }
 
   @Override
@@ -55,5 +77,13 @@ public class PopupListElementRendererWithIcon extends PopupListElementRenderer<O
   }
 
   public static class IconComponent extends JLabel {
+
+    public IconComponent(Border border) {
+      setBorder(border);
+    }
+
+    public IconComponent() {
+      this(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+    }
   }
 }

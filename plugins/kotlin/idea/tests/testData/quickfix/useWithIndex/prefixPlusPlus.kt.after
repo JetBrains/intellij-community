@@ -1,0 +1,10 @@
+// "Use withIndex() instead of manual index increment" "true"
+
+fun foo(list: List<String>) {
+    for ((i, s) in list.withIndex()) {
+        println(i)
+        val x = s.length * i
+        if (x > 1000) break
+    }
+}
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UseWithIndexInspection$createQuickFix$1

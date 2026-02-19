@@ -1,40 +1,54 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
-import com.intellij.psi.*;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyDunderAllReference;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyReferenceOwner;
+import com.jetbrains.python.psi.PyStarImportElement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.impl.PyImportStatementNavigator.getImportStatementByElement;
 
@@ -49,7 +63,7 @@ public class PyMoveSymbolProcessor {
   private final List<PsiFile> myFilesWithStarUsages = new ArrayList<>();
   private final Set<ScopeOwner> myScopeOwnersWithGlobal = new HashSet<>();
 
-  public PyMoveSymbolProcessor(@NotNull final PsiNamedElement element,
+  public PyMoveSymbolProcessor(final @NotNull PsiNamedElement element,
                                @NotNull PyFile destination,
                                @NotNull Collection<UsageInfo> usages,
                                @NotNull List<? extends SmartPsiElementPointer<PsiNamedElement>> otherElements) {
@@ -59,8 +73,7 @@ public class PyMoveSymbolProcessor {
     myUsages = ContainerUtil.sorted(usages, (u1, u2) -> PsiUtilCore.compareElementsByPosition(u1.getElement(), u2.getElement()));
   }
 
-  @NotNull
-  public final PyMoveSymbolResult moveElement() {
+  public final @NotNull PyMoveSymbolResult moveElement() {
     final PsiElement oldElementBody = PyMoveModuleMembersHelper.expandNamedElementBody(myMovedElement);
     if (oldElementBody != null) {
       PyClassRefactoringUtil.rememberNamedReferences(oldElementBody);
@@ -73,8 +86,16 @@ public class PyMoveSymbolProcessor {
           updateSingleUsage(usageElement, newElement);
         }
       }
-      final PsiElement[] unwrappedElements = ContainerUtil.mapNotNull(myAllMovedElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
+      final PsiElement[] unwrappedElements =
+        ContainerUtil.mapNotNull(myAllMovedElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
       PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, unwrappedElements);
+      final PyTrailingBlankLinesPostFormatProcessor postFormatProcessor = new PyTrailingBlankLinesPostFormatProcessor();
+      if (PsiTreeUtil.nextVisibleLeaf(newElementBody) == null) {
+        PyUtil.updateDocumentUnblockedAndCommitted(myDestinationFile, document -> {
+          PsiDocumentManager.getInstance(newElementBody.getProject()).commitDocument(document);
+          postFormatProcessor.processElement(newElementBody, CodeStyle.getSettings(myDestinationFile));
+        });
+      }
       deleteElement();
     }
     return new PyMoveSymbolResult(myFilesWithStarUsages);
@@ -86,19 +107,18 @@ public class PyMoveSymbolProcessor {
     elementBody.delete();
   }
 
-  @NotNull
-  private PsiElement addElementToFile(@NotNull PsiElement element) {
+  private @NotNull PsiElement addElementToFile(@NotNull PsiElement element) {
     final PsiElement anchor = PyMoveRefactoringUtil.findLowestPossibleTopLevelInsertionPosition(myUsages, myDestinationFile);
     return myDestinationFile.addBefore(element, anchor);
   }
 
   private void updateSingleUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement newElement) {
-    final PsiFile usageFile = usage.getContainingFile();
+    PsiFile psiFile = usage.getContainingFile();
+    final PsiFile usageFile = psiFile;
     if (belongsToSomeMovedElement(usage)) {
       return;
     }
-    if (usage instanceof PyQualifiedExpression) {
-      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)usage;
+    if (usage instanceof PyQualifiedExpression qualifiedExpr) {
       if (myMovedElement instanceof PyClass && PyNames.INIT.equals(qualifiedExpr.getName())) {
         return;
       }
@@ -136,7 +156,33 @@ public class PyMoveSymbolProcessor {
     else if (usage instanceof PyStringLiteralExpression) {
       for (PsiReference ref : usage.getReferences()) {
         if (ref instanceof PyDunderAllReference) {
-          usage.delete();
+          PsiFile newFile = newElement.getContainingFile();
+          if (myMovedElement.getContainingFile().getName().equals(PyNames.INIT_DOT_PY)) {
+            // Update import statement in `__init__.py` if symbol is moved from there to another module
+            VirtualFile targetFile = newFile.getVirtualFile();
+            VirtualFile currentFile = psiFile.getVirtualFile();
+            if (targetFile != null && currentFile != null) {
+              VirtualFile currentDir = currentFile.getParent();
+              if (currentDir != null && !VfsUtilCore.isAncestor(currentDir, targetFile, true)) {
+                usage.delete();
+              }
+              PyPsiRefactoringUtil.insertImport(usage, newElement);
+            }
+          }
+          else if (ref.getElement().getContainingFile().getName().equals(PyNames.INIT_DOT_PY)) {
+            // Remove old import statement in `__init__.py` if symbol is moved from some ancestor module to another one
+            VirtualFile targetFile = newFile.getVirtualFile();
+            VirtualFile currentFile = psiFile.getVirtualFile();
+            if (targetFile != null && currentFile != null) {
+              VirtualFile currentDir = currentFile.getParent();
+              if (currentDir != null && !VfsUtilCore.isAncestor(currentDir, targetFile, true)) {
+                usage.delete();
+              }
+            }
+          }
+          else {
+            usage.delete();
+          }
         }
         else {
           if (ref.isReferenceTo(myMovedElement)) {
@@ -147,7 +193,7 @@ public class PyMoveSymbolProcessor {
     }
   }
 
-  private boolean belongsToSomeMovedElement(@NotNull final PsiElement element) {
+  private boolean belongsToSomeMovedElement(final @NotNull PsiElement element) {
     return StreamEx.of(myAllMovedElements).
       map(SmartPsiElementPointer::getElement)
       .nonNull()
@@ -191,9 +237,17 @@ public class PyMoveSymbolProcessor {
     final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
     if (srcFile != expression.getContainingFile()) {
       final QualifiedName qualifier = QualifiedNameFinder.findCanonicalImportPath(srcFile, expression);
-      PyPsiRefactoringUtil.insertImport(expression, srcFile, null, false);
-      final String newQualifiedReference = qualifier + "." + expression.getReferencedName();
-      expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
+      if (PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
+        PyPsiRefactoringUtil.insertImport(expression, srcFile, null, true);
+        final String moduleName = qualifier.getLastComponent();
+        final String newQualifiedReference = moduleName + "." + expression.getReferencedName();
+        expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
+      }
+      else {
+        PyPsiRefactoringUtil.insertImport(expression, srcFile, null, false);
+        final String newQualifiedReference = qualifier + "." + expression.getReferencedName();
+        expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
+      }
     }
     else {
       expression.replace(generator.createExpressionFromText(languageLevel, expression.getReferencedName()));
@@ -204,13 +258,14 @@ public class PyMoveSymbolProcessor {
     // Don't use PyUtil#multiResolveTopPriority here since it filters out low priority ImportedResolveResults
     final List<PsiElement> resolvedElements = new ArrayList<>();
     if (usage instanceof PyReferenceOwner) {
-      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.implicitContext());
+      final var context = TypeEvalContext.codeInsightFallback(usage.getProject());
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.implicitContext(context));
       for (ResolveResult result : reference.multiResolve(false)) {
         resolvedElements.add(result.getElement());
       }
     }
     else {
-      final PsiReference ref = usage.getReference();  
+      final PsiReference ref = usage.getReference();
       if (ref != null) {
         resolvedElements.add(ref.resolve());
       }

@@ -1,9 +1,29 @@
-<idea-plugin>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Test skipping processing directive and comments before root tag: -->
+<!-- Comment with angle bracket <test> -->
+<!-- Regular comment -->
+<idea-plugin package="idea.plugin.package" implementation-detail="true">
   <id>com.intellij.myPlugin</id>
   <name>pluginName</name>
 
   <depends config-file="anotherPlugin.xml" optional="true">anotherPlugin</depends>
   <module value="myModule"/>
+
+  <content>
+    <module name="module.name"/>
+    <module name="optional.module" loading="optional"/>
+    <module name="required.module" loading="required"/>
+    <module name="ondemand.module" loading="on-demand"/>
+    <module name="required.in.frontend" required-if-available="intellij.platform.frontend"/>
+  </content>
+
+  <dependencies>
+    <module name="dependencies.module" namespace="custom"/>
+    <plugin id="dependencies.plugin.id"/>
+  </dependencies>
+
+  <resource-bundle>MyResourceBundle</resource-bundle>
 
   <idea-version since-build="sinceBuildValue" until-build="untilBuildValue"/>
 
@@ -20,7 +40,7 @@
   </extensions>
   <extensions defaultExtensionNs="defaultExtensionNs" xmlns="extensionXmlNs"/>
 
-  <actions>
+  <actions resource-bundle="ActionsResourceBundle">
     <action id="actionId" text="actionText" description="descriptionText" class="actionClass" popup="false"/>
     <group id="groupId" class="groupClass" description="groupDescriptionText" text="groupText" popup="true">
       <action id="groupAction" text="groupActionText" description="groupActionDescriptionText" class="actionClass"/>

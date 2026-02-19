@@ -1,19 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.ide.diff.*;
+import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DiffType;
+import com.intellij.ide.diff.DirDiffElement;
+import com.intellij.ide.diff.DirDiffOperation;
+import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-import static com.intellij.ide.diff.DirDiffOperation.*;
+import static com.intellij.ide.diff.DirDiffOperation.COPY_FROM;
+import static com.intellij.ide.diff.DirDiffOperation.COPY_TO;
+import static com.intellij.ide.diff.DirDiffOperation.DELETE;
+import static com.intellij.ide.diff.DirDiffOperation.EQUAL;
+import static com.intellij.ide.diff.DirDiffOperation.MERGE;
+import static com.intellij.ide.diff.DirDiffOperation.NONE;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class DirDiffElementImpl implements DirDiffElement {
   private final DTree myParent;
   private DiffType myType;
@@ -135,18 +146,15 @@ public final class DirDiffElementImpl implements DirDiffElement {
     return myName;
   }
 
-  @Nullable
-  public String getSourceName() {
+  public @Nullable String getSourceName() {
     return mySource == null ? null : mySource.getName();
   }
 
-  @Nullable
-  public String getSourcePresentableName() {
+  public @Nullable String getSourcePresentableName() {
     return mySource == null ? null : mySource.getPresentableName();
   }
 
-  @Nullable
-  public String getSourceSize() {
+  public @Nullable String getSourceSize() {
     return mySourceLength < 0 ? null : String.valueOf(mySourceLength);
   }
 
@@ -159,18 +167,15 @@ public final class DirDiffElementImpl implements DirDiffElement {
     //return NONE;
   }
 
-  @Nullable
-  public String getTargetName() {
+  public @Nullable String getTargetName() {
     return myTarget == null ? null : myTarget.getName();
   }
 
-  @Nullable
-  public String getTargetPresentableName() {
+  public @Nullable String getTargetPresentableName() {
     return myTarget == null ? null : myTarget.getPresentableName();
   }
 
-  @Nullable
-  public String getTargetSize() {
+  public @Nullable String getTargetSize() {
     return myTargetLength < 0 ? null : String.valueOf(myTargetLength);
   }
 

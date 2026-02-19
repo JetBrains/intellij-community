@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -7,11 +7,13 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -20,16 +22,15 @@ import java.util.Collection;
  * Implementations of this class must be registered as extensions for
  * {@code com.intellij.favoriteNodeProvider} extension point.
  *
- * @author yole
+ * @deprecated Use Bookmarks API instead.
  */
+@Deprecated(forRemoval = true)
 public abstract class FavoriteNodeProvider {
   public static final ExtensionPointName<FavoriteNodeProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoriteNodeProvider");
 
-  @Nullable
-  public abstract Collection<AbstractTreeNode<?>> getFavoriteNodes(DataContext context, @NotNull ViewSettings viewSettings);
+  public abstract @Nullable @Unmodifiable Collection<AbstractTreeNode<?>> getFavoriteNodes(DataContext context, @NotNull ViewSettings viewSettings);
 
-  @Nullable
-  public AbstractTreeNode<?> createNode(final Project project, final Object element, @NotNull ViewSettings viewSettings) {
+  public @Nullable AbstractTreeNode<?> createNode(final Project project, final Object element, @NotNull ViewSettings viewSettings) {
     return null;
   }
 
@@ -57,8 +58,7 @@ public abstract class FavoriteNodeProvider {
    * @param element the element for which the location is requested.
    * @return the location text, or -1 if {@code element} is not an element supported by this provider.
    */
-  @Nullable
-  public abstract String getElementLocation(final Object element);
+  public abstract @Nullable @NlsSafe String getElementLocation(final Object element);
 
   /**
    * Checks if the specified element is invalid and needs to be removed from the tree.
@@ -73,24 +73,21 @@ public abstract class FavoriteNodeProvider {
    *
    * @return the string identifier.
    */
-  @NotNull @NonNls
-  public abstract String getFavoriteTypeId();
+  public abstract @NotNull @NonNls String getFavoriteTypeId();
 
   /**
    * Returns the persistable URL for the specified element.
    *
    * @return the URL, or null if the element is not supported by this provider.
    */
-  @Nullable @NonNls
-  public abstract String getElementUrl(final Object element);
+  public abstract @Nullable @NonNls String getElementUrl(final Object element);
 
   /**
    * Returns the name of the module containing the specified element.
    *
    * @return the name of the module, or null if the element is not supported by this provider or the module name is unknown.
    */
-  @Nullable
-  public abstract String getElementModuleName(final Object element);
+  public abstract @Nullable String getElementModuleName(final Object element);
 
   /**
    * Returns the path of node objects to be added to the favorites tree for the specified persisted URL and module name.
@@ -103,8 +100,7 @@ public abstract class FavoriteNodeProvider {
    */
   public abstract Object @Nullable [] createPathFromUrl(final Project project, final String url, final String moduleName);
 
-  @Nullable
-  public PsiElement getPsiElement(final Object element) {
+  public @Nullable PsiElement getPsiElement(final Object element) {
     if (element instanceof PsiElement) {
       return (PsiElement)element;
     }

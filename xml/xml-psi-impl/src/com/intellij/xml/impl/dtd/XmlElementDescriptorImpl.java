@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -14,7 +14,18 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttlistDecl;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementContentGroup;
+import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlMarkupDecl;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -47,9 +58,9 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   public XmlElementDescriptorImpl() {
   }
 
-  private static final UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object> myAttlistDeclCache = new UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object>() {
+  private static final UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object> myAttlistDeclCache = new UserDataCache<>() {
     @Override
-    protected final CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
+    protected CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
       return CachedValuesManager.getManager(owner.getProject()).createCachedValue(() -> {
         XmlAttlistDecl[] decls = doCollectAttlistDeclarations(owner);
         return new CachedValueProvider.Result<>(decls, (Object[])ArrayUtil.append(decls, owner, XmlElement.class));
@@ -88,8 +99,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     return getNsDescriptorFrom(myElementDecl);
   }
 
-  @Nullable
-  private static XmlNSDescriptor getNsDescriptorFrom(final PsiElement elementDecl) {
+  private static @Nullable XmlNSDescriptor getNsDescriptorFrom(final PsiElement elementDecl) {
     final XmlFile file = XmlUtil.getContainingFile(elementDecl);
     if (file == null) {
       return null;
@@ -111,8 +121,7 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
     XmlUtil.processXmlElements(contentSpecElement, new PsiElementProcessor(){
       @Override
       public boolean execute(@NotNull PsiElement child){
-        if (child instanceof XmlToken) {
-          final XmlToken token = (XmlToken)child;
+        if (child instanceof XmlToken token) {
 
           if (token.getTokenType() == XmlTokenType.XML_NAME) {
             final String text = child.getText();

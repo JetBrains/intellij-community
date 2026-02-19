@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator
 
@@ -9,13 +9,19 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.annotator.intentions.AddParenthesisToLambdaParameterAction
+import org.jetbrains.plugins.groovy.GroovyBundle.message
+import org.jetbrains.plugins.groovy.annotator.intentions.AddParenthesesToLambdaParameterIntention
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEF
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -29,6 +35,17 @@ class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVis
 
   override fun visitModifierList(modifierList: GrModifierList) {
     checkDefaultModifier(modifierList)
+  }
+
+  override fun visitArrayInitializer(arrayInitializer: GrArrayInitializer) {
+    arrayInitializer.expressions.forEach {
+      if (it is GrClosableBlock) {
+        holder
+          .newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("closures.are.not.allowed.in.array.initializer"))
+          .range(it)
+          .create()
+      }
+    }
   }
 
   private fun checkDefaultModifier(modifierList: GrModifierList) {
@@ -51,17 +68,24 @@ class GroovyAnnotator30(private val holder: AnnotationHolder) : GroovyElementVis
     super.visitLambdaExpression(expression)
   }
 
+  override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
+    super.visitVariableDeclaration(variableDeclaration)
+    checkTupleVariableIsNotAllowed(variableDeclaration,
+                                   holder,
+                                   message("tuple.declaration.should.end.with.def.or.var.modifier"),
+                                   setOf(KW_DEF, KW_VAR))
+  }
+
   private fun checkSingleArgumentLambda(lambda: GrLambdaExpression) {
     val parameterList = lambda.parameterList
     if (parameterList.lParen != null) return
-    val parent = lambda.parent
-    when (parent) {
+    when (val parent = lambda.parent) {
       is GrAssignmentExpression, is GrVariable, is GrParenthesizedExpression -> return
       is GrArgumentList -> if (parent.parent is GrMethodCallExpression) return
     }
 
     holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("illegal.single.argument.lambda")).range(parameterList)
-      .withFix(AddParenthesisToLambdaParameterAction(lambda))
+      .withFix(AddParenthesesToLambdaParameterIntention(lambda))
       .create()
   }
 }

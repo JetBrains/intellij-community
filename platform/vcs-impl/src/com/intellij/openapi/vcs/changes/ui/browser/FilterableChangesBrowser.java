@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui.browser;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -10,17 +10,21 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class FilterableChangesBrowser extends ChangesBrowserBase implements Disposable {
   private final ChangesFilterer myChangesFilterer;
   private ProgressBarLoadingDecorator myLoadingDecorator;
@@ -35,10 +39,7 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
   }
 
   private void updateTreeOnFilterChange() {
-    boolean oldKeepTreeState = myViewer.isKeepTreeState();
-    myViewer.setKeepTreeState(true);
-    myViewer.rebuildTree();
-    myViewer.setKeepTreeState(oldKeepTreeState);
+    myViewer.rebuildTree(ChangesTree.ALWAYS_KEEP);
     myViewer.expandDefaults();
 
     float progress = myChangesFilterer.getProgress();
@@ -54,7 +55,7 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
     onActiveChangesFilterChanges();
   }
 
-  protected void onActiveChangesFilterChanges() {}
+  protected void onActiveChangesFilterChanges() { }
 
   @Override
   public void dispose() {
@@ -80,20 +81,17 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (ChangesFilterer.DATA_KEY.is(dataId)) {
-      return myChangesFilterer;
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(ChangesFilterer.DATA_KEY, myChangesFilterer);
   }
 
   @Override
   protected @NotNull JComponent createCenterPanel() {
     JComponent centerPanel = super.createCenterPanel();
     myLoadingDecorator = new ProgressBarLoadingDecorator(JBUI.Panels.simplePanel(centerPanel), this,
-                                                         ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+                                                         (int)ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
     return myLoadingDecorator.getComponent();
   }
 

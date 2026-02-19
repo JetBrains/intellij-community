@@ -1,0 +1,20 @@
+- name: dist.all/lib/intellij.libraries.compose.foundation.desktop.jar
+  modules:
+  - name: intellij.libraries.compose.foundation.desktop
+    libraries:
+      compose-foundation-desktop:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1/foundation-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1/animation-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1/animation-core-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1/ui-geometry-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1/foundation-layout-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1/ui-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2/lifecycle-viewmodel-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-savedstate-desktop/2/lifecycle-viewmodel-savedstate-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/navigationevent/navigationevent-desktop/1/navigationevent-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1/ui-backhandler-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1/ui-graphics-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1/ui-unit-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1/ui-text-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1/ui-util-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0/atomicfu-jvm-0.jar

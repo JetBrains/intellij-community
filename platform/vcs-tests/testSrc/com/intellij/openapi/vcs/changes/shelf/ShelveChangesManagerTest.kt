@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf
 
 import com.intellij.openapi.project.Project
@@ -8,19 +8,35 @@ import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor.ShelfPat
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.project.stateStore
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.createDirectories
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
+import org.junit.After
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.nio.file.Paths
 
+@RunsInEdt
 class ShelveChangesManagerTest {
   companion object {
     @ClassRule
     @JvmField
     val appRule = ApplicationRule()
+
+    @ClassRule
+    @JvmField
+    val edtRule = EdtRule()
   }
+
   private lateinit var shelvedChangesManager: ShelveChangesManager
 
   private lateinit var project: Project
@@ -134,8 +150,8 @@ class ShelveChangesManagerTest {
   fun `create patch from shelved changes`() {
     val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
     shelvedChangeList.loadChangesIfNeeded(project)
-    val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first()).path,
-                               ShelvedWrapper(shelvedChangeList.binaryFiles!!.first()).path)
+    val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first(), shelvedChangeList).path,
+                               ShelvedWrapper(shelvedChangeList.binaryFiles!!.first(), shelvedChangeList).path)
     val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, selectedPaths)
     val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
     TestCase.assertTrue(patches.size == selectedPaths.size)
@@ -149,7 +165,7 @@ class ShelveChangesManagerTest {
     shelvedChangesManager.isRemoveFilesFromShelf = removeFilesFromShelf
     val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
     shelvedChangeList.loadChangesIfNeeded(project)
-    val originalDate = shelvedChangeList.DATE
+    val originalDate = shelvedChangeList.date
     val changes = if (changeCount == 0) null else shelvedChangeList.changes!!.subList(0, changeCount)
     val binaries = if (changeCount == 0) null else shelvedChangeList.binaryFiles.subList(0, binariesNum)
 
@@ -162,7 +178,7 @@ class ShelveChangesManagerTest {
     assertThat(shelvedChangesManager.shelvedChangeLists.size).isEqualTo(expectedListNum)
     assertThat(recycledShelvedChangeLists.size).isEqualTo(expectedRecycledNum)
     if (recycledShelvedChangeLists.isNotEmpty()) {
-      assertThat(originalDate.before(recycledShelvedChangeLists[0].DATE)).isTrue()
+      assertThat(originalDate.before(recycledShelvedChangeLists[0].date)).isTrue()
     }
   }
 
@@ -172,7 +188,7 @@ class ShelveChangesManagerTest {
                            expectedListNum: Int,
                            expectedDeletedNum: Int,
                            undoDeletion: Boolean = false) {
-    val originalDate = shelvedChangeList.DATE
+    val originalDate = shelvedChangeList.date
     shelvedChangeList.loadChangesIfNeeded(project)
     val changes = if (changesNum == 0) emptyList<ShelvedChange>() else shelvedChangeList.changes!!.subList(0, changesNum)
     val binaries = if (changesNum == 0) emptyList<ShelvedBinaryFile>() else shelvedChangeList.binaryFiles.subList(0, binariesNum)
@@ -187,7 +203,7 @@ class ShelveChangesManagerTest {
     TestCase.assertEquals(expectedListNum, shelvedChangesManager.shelvedChangeLists.size)
     TestCase.assertEquals(expectedDeletedNum, deletedLists.size)
     if (deletedLists.isNotEmpty() && deleteShelvesWithDates.isNotEmpty())
-      assertThat(originalDate.before(deletedLists[0].DATE)).isTrue()
+      assertThat(originalDate.before(deletedLists[0].date)).isTrue()
 
     if (undoDeletion) {
       for ((l, d) in deleteShelvesWithDates) {

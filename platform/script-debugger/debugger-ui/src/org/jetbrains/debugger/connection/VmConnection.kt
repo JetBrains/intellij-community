@@ -8,15 +8,21 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
-import com.intellij.util.io.socketConnection.SocketConnectionListener
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.*
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.createError
+import org.jetbrains.concurrency.isPending
+import org.jetbrains.concurrency.nullPromise
 import org.jetbrains.debugger.DebugEventListener
 import org.jetbrains.debugger.Vm
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
 
+/**
+ * The connection is closed and disposed by the debug process, so it shouldn't be closed manually.
+ */
 abstract class VmConnection<T : Vm> : Disposable {
   open val browser: WebBrowser? = null
 
@@ -62,11 +68,6 @@ abstract class VmConnection<T : Vm> : Disposable {
     connectionDispatcher.add(listener)
   }
 
-  // backward compatibility, go debugger
-  fun addListener(listener: SocketConnectionListener) {
-    stateChanged { listener.statusChanged(it.status) }
-  }
-
   protected val debugEventListener: DebugEventListener
     get() = dispatcher.multicaster
 
@@ -83,8 +84,12 @@ abstract class VmConnection<T : Vm> : Disposable {
       opened.setError("closed")
     }
     setState(status, message)
-    Disposer.dispose(this, false)
+    if (shouldDisposeOnClose()) {
+      Disposer.dispose(this, false)
+    }
   }
+
+  open fun shouldDisposeOnClose(): Boolean = true
 
   override fun dispose() {
     vm = null

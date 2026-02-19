@@ -14,11 +14,17 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
 public interface ObjectIntMap<K> {
   int get(@NotNull K key);
+
+  /**
+   * @return value mapped to the {@param key} or the {@param defaultValue} if the mapping is absent
+   */
+  int getOrDefault(@NotNull K key, int defaultValue);
 
   int put(@NotNull K key, int value);
 
@@ -47,5 +53,6 @@ public interface ObjectIntMap<K> {
   }
 
   @NotNull
+  @Unmodifiable
   Iterable<Entry<K>> entries();
 }

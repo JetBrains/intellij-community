@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -14,18 +14,23 @@ import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadSplitPane;
+import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.Scrollable;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class SurroundAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance(SurroundAction.class);
 
@@ -121,7 +126,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
             newContainer = panel;
           }
           else {
-            if (selection.size() > 0) {
+            if (!selection.isEmpty()) {
               selection.get(0).setCustomLayoutConstraints(LwSplitPane.POSITION_LEFT);
             }
             if (selection.size() > 1) {
@@ -162,7 +167,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
   }
 
   @Override
-  protected void update(@NotNull final GuiEditor editor, final ArrayList<? extends RadComponent> input, final AnActionEvent e) {
+  protected void update(final @NotNull GuiEditor editor, final ArrayList<? extends RadComponent> input, final AnActionEvent e) {
     List<RadComponent> selection = FormEditingUtil.remapToActionTargets(input);
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
     Palette palette = Palette.getInstance(editor.getProject());

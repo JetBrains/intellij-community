@@ -1,0 +1,26 @@
+<html>
+<body>
+Reports text blocks that are indented using both space and tab characters.
+This can produce unexpected results because spaces and tabs are treated equally by javac's text block processing.
+<p>In the following example, spaces and tabs are visualized as <code>·</code> and <code>␉</code> respectively,
+and a tab is equal to 2 spaces in the editor.</p>
+<p><b>Example:</b></p>
+<pre><code>
+String colors = """
+····red
+␉ ␉ green
+····blue""";
+</code></pre>
+
+<p>When printing such a string, the result will be:</p>
+<pre><code>
+··red
+green
+··blue
+</code></pre>
+<p>After the compiler removes an equal number of whitespace characters from the beginning of each line,
+some lines remain with leading spaces.</p>
+<!-- tooltip end -->
+<p><small>New in 2021.1</small></p>
+</body>
+</html>

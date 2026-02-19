@@ -1,4 +1,4 @@
-// "Transform body to single exit-point form" "true"
+// "Transform body to single exit-point form" "true-preview"
 class Test {
     native String get(String s);
 

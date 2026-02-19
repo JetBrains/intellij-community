@@ -16,17 +16,19 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public class JTableWrapper<T, C extends Column<T>> {
 
   private static final int COLUMN_HEADER_MARGIN_WIDTH = 2;
@@ -37,7 +39,7 @@ public class JTableWrapper<T, C extends Column<T>> {
 
   private final JBTable myTable;
 
-  private List<T> myInputRows;
+  private List<? extends T> myInputRows;
 
   public JTableWrapper(JBTable table, C[] columns) {
     myTable = table;
@@ -105,7 +107,7 @@ public class JTableWrapper<T, C extends Column<T>> {
     return myTableModel;
   }
 
-  private void setInput(Iterable<Collection<Object>> input) {
+  private void setInput(Iterable<? extends Collection<Object>> input) {
     getTableModel().setRowCount(0);
     for (Collection<Object> row : input) {
       getTableModel().addRow(row.toArray());
@@ -113,7 +115,7 @@ public class JTableWrapper<T, C extends Column<T>> {
     packColumns();
   }
 
-  public void setInputRows(List<T> rows) {
+  public void setInputRows(List<? extends T> rows) {
     myInputRows = rows;
     ArrayList<Collection<Object>> input = new ArrayList<>();
     for (T row : rows) {

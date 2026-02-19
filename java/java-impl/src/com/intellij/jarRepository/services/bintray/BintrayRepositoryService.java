@@ -1,42 +1,48 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services.bintray;
 
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.jarRepository.services.MavenRepositoryService;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
+import static com.intellij.openapi.util.text.StringUtil.split;
+import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.trimStart;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 
 /**
- * @author ibessonov
+ * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@ApiStatus.Internal
+@SuppressWarnings("DeprecatedIsStillUsed") // allow to use it in 2021.1
+@Deprecated(forRemoval = true)
 public class BintrayRepositoryService extends MavenRepositoryService {
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return "Bintray";
   }
 
-  @NotNull
   @Override
-  public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+  public @Unmodifiable @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
     BintrayModel.Repository info = parseInfo(url);
     if (info != null) {
       BintrayEndpoint bintrayEndpoint = new BintrayEndpoint();
       if (info.repo != null) {
         RemoteRepositoryDescription repository = bintrayEndpoint.getRepository(info.subject, info.repo);
-        return repository == null ? emptyList() : singletonList(repository);
+        return ContainerUtil.createMaybeSingletonList(repository);
       } else {
         return bintrayEndpoint.getRepositories(info.subject);
       }
@@ -44,9 +50,8 @@ public class BintrayRepositoryService extends MavenRepositoryService {
     return emptyList();
   }
 
-  @NotNull
   @Override
-  public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  public @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
       throws IOException {
     if (template.getPackaging() == null || template.getPackaging().equals("jar")) {
       BintrayModel.Repository info = parseInfo(url);
@@ -69,8 +74,7 @@ public class BintrayRepositoryService extends MavenRepositoryService {
     return emptyList();
   }
 
-  @Nullable
-  public static BintrayModel.Repository parseInfo(String url) {
+  public static @Nullable BintrayModel.Repository parseInfo(String url) {
     try {
       URL theUrl = new URL(url);
 

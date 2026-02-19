@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.ui.UtilUiBundle;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -9,13 +11,15 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.accessibility.AccessibleState;
 import javax.accessibility.AccessibleStateSet;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
 
-/**
- * @author spleaner
- */
 public class ThreeStateCheckBox extends JCheckBox {
   public static final String THREE_STATE_CHECKBOX_STATE = "ThreeStateCheckbox.state";
 
@@ -66,26 +70,16 @@ public class ThreeStateCheckBox extends JCheckBox {
     setState(initial);
   }
 
-  @NotNull
-  protected State nextState() {
+  protected @NotNull State nextState() {
     return nextState(myState, myThirdStateEnabled);
   }
 
-  @NotNull
-  public static State nextState(@NotNull State state, boolean thirdStateEnabled) {
-    switch (state) {
-      case SELECTED:
-        return State.NOT_SELECTED;
-      case NOT_SELECTED:
-        if (thirdStateEnabled) {
-          return State.DONT_CARE;
-        }
-        else {
-          return State.SELECTED;
-        }
-      default:
-        return State.SELECTED;
-    }
+  public static @NotNull State nextState(@NotNull State state, boolean thirdStateEnabled) {
+    return switch (state) {
+      case SELECTED -> State.NOT_SELECTED;
+      case NOT_SELECTED -> thirdStateEnabled ? State.DONT_CARE : State.SELECTED;
+      case DONT_CARE -> State.SELECTED;
+    };
   }
 
   public boolean isThirdStateEnabled() {
@@ -131,7 +125,7 @@ public class ThreeStateCheckBox extends JCheckBox {
         icon = UIManager.getIcon("CheckBox.icon");
       }
       if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-        icon = JBUI.scale(EmptyIcon.create(20, 18));
+        icon = JBUIScale.scaleIcon(EmptyIcon.create(20, 18));
       }
       if (icon != null) {
         final Insets i = getInsets();
@@ -173,7 +167,7 @@ public class ThreeStateCheckBox extends JCheckBox {
    * Emulate accessibility behavior of tri-state checkboxes, as tri-state checkboxes
    * are not part of the JAB specification.
    */
-  protected class AccessibleThreeStateCheckBox extends AccessibleJCheckBox {
+  protected final class AccessibleThreeStateCheckBox extends AccessibleJCheckBox {
     @Override
     public AccessibleRole getAccessibleRole() {
       if (myThirdStateEnabled) {
@@ -206,17 +200,13 @@ public class ThreeStateCheckBox extends JCheckBox {
       return super.getAccessibleName();
     }
 
-    private String addStateDescription(String name) {
-      switch(getState()) {
-        case SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "checked");
-        case NOT_SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "not checked");
-        case DONT_CARE:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "partially checked");
-        default:
-          return name;
-      }
+    private @Nls String addStateDescription(@Nls String name) {
+      String key = switch (getState()) {
+        case SELECTED -> "accessible.checkbox.name.checked";
+        case NOT_SELECTED -> "accessible.checkbox.name.not.checked";
+        case DONT_CARE -> "accessible.checkbox.name.partially.checked";
+      };
+      return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message(key));
     }
   }
 }

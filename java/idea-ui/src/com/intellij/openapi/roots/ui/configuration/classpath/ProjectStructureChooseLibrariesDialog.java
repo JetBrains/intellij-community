@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -19,22 +19,28 @@ import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JButton;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTablesDialog {
   private final ClasspathPanel myClasspathPanel;
   private final StructureConfigurableContext myContext;
-  private final Predicate<Library> myAcceptedLibraries;
+  private final Predicate<? super Library> myAcceptedLibraries;
   private final List<Library> myCreatedModuleLibraries = new ArrayList<>();
   private JButton myCreateLibraryButton;
 
   public ProjectStructureChooseLibrariesDialog(ClasspathPanel classpathPanel,
                                                StructureConfigurableContext context,
-                                               Predicate<Library> acceptedLibraries) {
+                                               Predicate<? super Library> acceptedLibraries) {
     super(classpathPanel.getComponent(), JavaUiBundle.message("project.structure.dialog.title.choose.libraries"), classpathPanel.getProject(), true);
     myClasspathPanel = classpathPanel;
     myContext = context;
@@ -81,22 +87,16 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
     return model.getLibraries();
   }
 
-  @Nullable
-  private LibrariesModifiableModel getLibrariesModifiableModel(LibraryTable table) {
+  private @Nullable LibrariesModifiableModel getLibrariesModifiableModel(LibraryTable table) {
     return table != null ? myContext.myLevel2Providers.get(table.getTableLevel()) : null;
   }
 
   @Override
   protected boolean acceptsElement(Object element) {
-    if (element instanceof Library) {
-      final Library library = (Library)element;
-      return myAcceptedLibraries.test(library);
-    }
-    return true;
+    return !(element instanceof Library library) || myAcceptedLibraries.test(library);
   }
 
-  @NotNull
-  private String getLibraryName(@NotNull Library library) {
+  private @NotNull String getLibraryName(@NotNull Library library) {
     final LibrariesModifiableModel model = getLibrariesModifiableModel(library.getTable());
     if (model != null) {
       if (model.hasLibraryEditor(library)) {

@@ -1,16 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParameter;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-/**
- * @author vlan
- */
 public interface PyCallableParameter {
 
   /**
@@ -18,6 +18,7 @@ public interface PyCallableParameter {
    * Returns null if the parameter is tuple or star, or name is unknown.
    */
   @Nullable
+  @Nls
   String getName();
 
   /**
@@ -33,6 +34,10 @@ public interface PyCallableParameter {
   @Nullable
   PyParameter getParameter();
 
+  default @Nullable PsiElement getDeclarationElement() {
+    return getParameter();
+  }
+
   @Nullable
   PyExpression getDefaultValue();
 
@@ -47,13 +52,18 @@ public interface PyCallableParameter {
 
   boolean isSelf();
 
+  @ApiStatus.Experimental
+  boolean isPositionOnlySeparator();
+
+  @ApiStatus.Experimental
+  boolean isKeywordOnlySeparator();
+
   /**
    * @param includeDefaultValue if true, include the default value after an "=".
    * @return canonical representation of parameter.
    * Includes asterisks for *param and **param.
    */
-  @NotNull
-  default String getPresentableText(boolean includeDefaultValue) {
+  default @NotNull String getPresentableText(boolean includeDefaultValue) {
     return getPresentableText(includeDefaultValue, null);
   }
 

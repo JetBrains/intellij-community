@@ -1,34 +1,39 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.Currency;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
  * @author Alexander Lobas
  */
-public class PluginPriceService {
+@ApiStatus.Internal
+public final class PluginPriceService {
   private static final Logger LOG = Logger.getInstance(PluginPriceService.class);
 
   private static final DecimalFormat FORMAT = new DecimalFormat("###.#");
@@ -37,21 +42,19 @@ public class PluginPriceService {
   private static boolean myPrepared;
   private static boolean myPreparing;
 
-  public static void getPrice(@NotNull IdeaPluginDescriptor descriptor,
+  public static void getPrice(@Nullable String productCode,
                               @NotNull Consumer<? super String> callback,
                               @NotNull Consumer<? super String> asyncCallback) {
     checkAccess();
 
-    String code = descriptor.getProductCode();
-
     if (myPrepared) {
-      Object value = myPriceTable.get(code);
+      Object value = myPriceTable.get(productCode);
       if (value instanceof String) {
         callback.consume((String)value);
       }
     }
     else {
-      myPriceTable.put(code, asyncCallback);
+      myPriceTable.put(productCode, asyncCallback);
 
       if (!myPreparing) {
         myPreparing = true;
@@ -105,11 +108,8 @@ public class PluginPriceService {
     });
   }
 
-  @Nullable
-  private static Object getPluginPricesJsonObject() throws IOException {
-    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
-    Url url = Urls.newFromEncoded(instance.getPluginManagerUrl() + "/geo/files/prices");
-
+  private static @Nullable Object getPluginPricesJsonObject() throws IOException {
+    Url url = Urls.newFromEncoded(MarketplaceUrls.getPluginManagerUrl() + "/geo/files/prices");
     return HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
       URLConnection connection = request.getConnection();
 
@@ -123,8 +123,7 @@ public class PluginPriceService {
     });
   }
 
-  @NotNull
-  private static Map<String, String> parsePrices(@NotNull Map<String, Object> jsonObject) {
+  private static @NotNull Map<String, String> parsePrices(@NotNull Map<String, Object> jsonObject) {
     Map<String, String> result = new HashMap<>();
     Object plugins = jsonObject.get("plugins");
 
@@ -147,8 +146,7 @@ public class PluginPriceService {
     return result;
   }
 
-  @NotNull
-  private static String parseCurrency(@NotNull Map<String, Object> jsonObject) {
+  private static @NotNull String parseCurrency(@NotNull Map<String, Object> jsonObject) {
     Object iso = jsonObject.get("iso");
     if (iso instanceof String) {
       Currency currency = Currency.getInstance((String)iso);
@@ -159,8 +157,7 @@ public class PluginPriceService {
     return "";
   }
 
-  @Nullable
-  private static Double parsePrice(@NotNull Map<String, Object> plugin) {
+  private static @Nullable Double parsePrice(@NotNull Map<String, Object> plugin) {
     double[] personal = parsePrice(plugin, "personal");
     double[] commercial = parsePrice(plugin, "commercial");
 
@@ -185,12 +182,11 @@ public class PluginPriceService {
     return null;
   }
 
-  @Nullable
-  private static double[] parsePrice(@NotNull Map<String, Object> jsonObject, @NotNull String key) {
+  private static @Nullable double[] parsePrice(@NotNull Map<String, Object> jsonObject, @NotNull String key) {
     Object value = jsonObject.get(key);
 
     if (value instanceof Map) {
-      Object subscription = ((Map)value).get("subscription");
+      Object subscription = ((Map<?, ?>)value).get("subscription");
       if (subscription instanceof Map) {
         return new double[]{parsePriceValue((Map)subscription, "monthly"), parsePriceValue((Map)subscription, "annual")};
       }
@@ -215,6 +211,6 @@ public class PluginPriceService {
   }
 
   private static void checkAccess() {
-    assert SwingUtilities.isEventDispatchThread();
+    assert EDT.isCurrentThreadEdt();
   }
 }

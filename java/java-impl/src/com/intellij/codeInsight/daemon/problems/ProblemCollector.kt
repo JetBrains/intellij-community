@@ -2,17 +2,29 @@
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.pom.Navigatable
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiJavaReference
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 
 internal class ProblemCollector {
 
   companion object {
 
+    /**
+     * Collect broken usages based on current and previous state of an element.
+     * Broken usages are searched in a union scope of previous member state and current member state.
+     * In order to determine if usage is broken or not we run highlighter (see ProblemSearcher for details)
+     */
     @JvmName("collect")
     @JvmStatic
+    @RequiresReadLock
     internal fun collect(prevMember: ScopedMember?, curMember: PsiMember): Set<Problem>? {
       val containingFile = curMember.containingFile
 
@@ -61,9 +73,7 @@ internal class ProblemCollector {
                               containingFile: PsiFile,
                               scope: GlobalSearchScope): Set<Problem>? {
       val usageExtractor: (PsiFile, Int) -> PsiElement? = { file, index -> extractUsage(file, index, memberType) }
-      val collector = MemberUsageCollector(memberName, containingFile, usageExtractor)
-      PsiSearchHelper.getInstance(containingFile.project).processAllFilesWithWord(memberName, scope, collector, true)
-      val usages = collector.collectedUsages ?: return null
+      val usages = MemberUsageCollector.collect(memberName, containingFile, scope, usageExtractor) ?: return null
       return usages.flatMapTo(mutableSetOf()) { ProblemSearcher.getProblems(it, containingFile, memberType) }
     }
 

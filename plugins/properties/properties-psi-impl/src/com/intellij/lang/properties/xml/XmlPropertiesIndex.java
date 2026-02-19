@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -8,7 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
@@ -17,53 +22,52 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.StdXMLReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author Dmitry Avdeev
- */
+@ApiStatus.Internal
 public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesIndex.Key, String>
   implements DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
              KeyDescriptor<XmlPropertiesIndex.Key> {
 
-  public final static Key MARKER_KEY = new Key();
+  public static final Key MARKER_KEY = new Key();
   public static final ID<Key,String> NAME = ID.create("xmlProperties");
 
   private static final String HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD = "http://java.sun.com/dtd/properties.dtd";
 
-  @NotNull
   @Override
-  public ID<Key, String> getName() {
+  public @NotNull ID<Key, String> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<Key, String, FileContent> getIndexer() {
+  public @NotNull DataIndexer<Key, String, FileContent> getIndexer() {
     return this;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<Key> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<Key> getKeyDescriptor() {
     return this;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<String> getValueExternalizer() {
+  public @NotNull DataExternalizer<String> getValueExternalizer() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
@@ -82,9 +86,8 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     return 2;
   }
 
-  @NotNull
   @Override
-  public Map<Key, String> map(@NotNull FileContent inputData) {
+  public @NotNull Map<Key, String> map(@NotNull FileContent inputData) {
     CharSequence text = inputData.getContentAsText();
     if (CharArrayUtil.indexOf(text, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) == -1) {
       return Collections.emptyMap();
@@ -98,7 +101,8 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     return map;
   }
 
-  static boolean isPropertiesFile(XmlFile file) {
+  @VisibleForTesting
+  public static boolean isPropertiesFile(XmlFile file) {
     Project project = file.getProject();
     if (!file.isValid()) return false;
     VirtualFile virtualFile = file.getVirtualFile();
@@ -114,8 +118,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     return parse(bytes, true).accepted;
   }
 
-  @NotNull
-  private static MyIXMLBuilderAdapter parse(CharSequence text, boolean stopIfAccepted) {
+  private static @NotNull MyIXMLBuilderAdapter parse(CharSequence text, boolean stopIfAccepted) {
     StdXMLReader reader = new StdXMLReader(CharArrayUtil.readerFromCharSequence(text)) {
       @Override
       public Reader openStream(String publicID, String systemID) throws IOException {
@@ -167,6 +170,14 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     }
 
     @Override
+    public String toString() {
+      return "Key{" +
+             "isMarker=" + isMarker +
+             ", key='" + key + '\'' +
+             '}';
+    }
+
+    @Override
     public int hashCode() {
       return isMarker ? 0 : key.hashCode();
     }
@@ -185,8 +196,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     }
   }
 
-  private static class MyIXMLBuilderAdapter implements NanoXmlBuilder {
-
+  private static final class MyIXMLBuilderAdapter implements NanoXmlBuilder {
     boolean accepted;
     boolean insideEntry;
     String key;

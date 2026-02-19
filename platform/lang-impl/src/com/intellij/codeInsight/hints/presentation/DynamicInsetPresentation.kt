@@ -2,13 +2,16 @@
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.util.ui.withTranslated
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.event.MouseEvent
 
-internal class DynamicInsetPresentation(
+@ApiStatus.Internal
+class DynamicInsetPresentation(
   presentation: InlayPresentation,
-  private val valueProvider: InsetValueProvider
+  val valueProvider: InsetValueProvider
 ) : StaticDelegatePresentation(presentation) {
   private var isPresentationUnderCursor = false
 

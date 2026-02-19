@@ -1,4 +1,4 @@
-// "Cast parameter to 'long'" "true"
+// "Convert argument to 'long'" "true-preview"
 class a {
  void test(Long l) {}
  

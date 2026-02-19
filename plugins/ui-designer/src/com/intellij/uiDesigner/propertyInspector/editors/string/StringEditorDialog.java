@@ -1,15 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -30,35 +31,55 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.binding.FormReferenceProvider;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
-import java.util.*;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.Set;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class StringEditorDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance(StringEditorDialog.class);
 
-  @NonNls private static final String CARD_STRING = "string";
-  @NonNls private static final String CARD_BUNDLE = "bundle";
+  private static final @NonNls String CARD_STRING = "string";
+  private static final @NonNls String CARD_BUNDLE = "bundle";
 
   private final GuiEditor myEditor;
   /** Descriptor to be edited */
@@ -101,16 +122,18 @@ public final class StringEditorDialog extends DialogWrapper{
   @Override protected void doOKAction() {
     if (myForm.myRbResourceBundle.isSelected()) {
       final StringDescriptor descriptor = getDescriptor();
-      if (descriptor != null && descriptor.getKey().length() > 0) {
+      if (descriptor != null && !descriptor.getKey().isEmpty()) {
         final String value = myForm.myTfRbValue.getText();
         final PropertiesFile propFile = getPropertiesFile(descriptor);
-        if (propFile != null && propFile.findPropertyByKey(descriptor.getKey()) == null) {
-          saveCreatedProperty(propFile, descriptor.getKey(), value, myEditor.getPsiFile());
-        }
-        else {
-          final String newKeyName = saveModifiedPropertyValue(myEditor.getModule(), descriptor, myLocale, value, myEditor.getPsiFile());
-          if (newKeyName != null) {
-            myForm.myTfKey.setText(newKeyName);
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-687662")) {
+          if (propFile != null && propFile.findPropertyByKey(descriptor.getKey()) == null) {
+            saveCreatedProperty(propFile, descriptor.getKey(), value, myEditor.getPsiFile());
+          }
+          else {
+            final String newKeyName = saveModifiedPropertyValue(myEditor.getModule(), descriptor, myLocale, value, myEditor.getPsiFile());
+            if (newKeyName != null) {
+              myForm.myTfKey.setText(newKeyName);
+            }
           }
         }
       }
@@ -123,9 +146,8 @@ public final class StringEditorDialog extends DialogWrapper{
     return manager.findPropertiesFile(myEditor.getModule(), descriptor.getDottedBundleName(), myLocale);
   }
 
-  @Nullable
-  public static String saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
-                                                 final Locale locale, final String editedValue, final PsiFile formFile) {
+  public static @Nullable String saveModifiedPropertyValue(final Module module, final StringDescriptor descriptor,
+                                                           final Locale locale, final String editedValue, final PsiFile formFile) {
     final PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
     final PropertiesFile propFile = manager.findPropertiesFile(module, descriptor.getDottedBundleName(), locale);
     if (propFile != null) {
@@ -209,7 +231,7 @@ public final class StringEditorDialog extends DialogWrapper{
     InputValidator validator = new InputValidator() {
       @Override
       public boolean checkInput(String inputString) {
-        return inputString.length() > 0 && propFile.findPropertyByKey(inputString) == null;
+        return !inputString.isEmpty() && propFile.findPropertyByKey(inputString) == null;
       }
 
       @Override
@@ -253,7 +275,7 @@ public final class StringEditorDialog extends DialogWrapper{
   StringDescriptor getDescriptor(){
     if(myForm.myRbString.isSelected()){ // plain value
       final String value = myForm.myTfValue.getText();
-      if(myValue == null && value.length() == 0){
+      if(myValue == null && value.isEmpty()){
         return null;
       }
       else{
@@ -292,25 +314,126 @@ public final class StringEditorDialog extends DialogWrapper{
     return myForm.myPanel;
   }
 
-  private final class MyForm{
-    private JRadioButton myRbString;
-    private JRadioButton myRbResourceBundle;
-    private JPanel myCardHolder;
-    private JPanel myPanel;
-    private JTextArea myTfValue;
-    private JCheckBox myNoI18nCheckbox;
-    private TextFieldWithBrowseButton myTfBundleName;
-    private TextFieldWithBrowseButton myTfKey;
-    private JTextField myTfRbValue;
-    private JLabel myLblKey;
-    private JLabel myLblBundleName;
+  private final class MyForm {
+    private final JRadioButton myRbString;
+    private final JRadioButton myRbResourceBundle;
+    private final JPanel myCardHolder;
+    private final JPanel myPanel;
+    private final JTextArea myTfValue;
+    private final JCheckBox myNoI18nCheckbox;
+    private final TextFieldWithBrowseButton myTfBundleName;
+    private final TextFieldWithBrowseButton myTfKey;
+    private final JTextField myTfRbValue;
+    private final JLabel myLblKey;
+    private final JLabel myLblBundleName;
 
     MyForm() {
+      {
+        // GUI initializer generated by IntelliJ IDEA GUI Designer
+        // >>> IMPORTANT!! <<<
+        // DO NOT EDIT OR ADD ANY CODE HERE!
+        myPanel = new JPanel();
+        myPanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        myRbString = new JRadioButton();
+        myRbString.setMargin(new Insets(2, 0, 2, 2));
+        this.$$$loadButtonText$$$(myRbString, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "radio.string"));
+        myPanel.add(myRbString, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myRbResourceBundle = new JRadioButton();
+        myRbResourceBundle.setMargin(new Insets(2, 0, 2, 2));
+        this.$$$loadButtonText$$$(myRbResourceBundle,
+                                  this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "radio.resource.bundle"));
+        myPanel.add(myRbResourceBundle, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myCardHolder = new JPanel();
+        myCardHolder.setLayout(new CardLayout(0, 0));
+        myPanel.add(myCardHolder, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                      null,
+                                                      null, 0, false));
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        myCardHolder.add(panel1, "string");
+        final JLabel label1 = new JLabel();
+        this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "editbox.value.2"));
+        panel1.add(label1,
+                   new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myNoI18nCheckbox = new JCheckBox();
+        myNoI18nCheckbox.setSelected(false);
+        this.$$$loadButtonText$$$(myNoI18nCheckbox,
+                                  this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "uidesigner.string.no.i18n"));
+        panel1.add(myNoI18nCheckbox, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                         GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JBScrollPane jBScrollPane1 = new JBScrollPane();
+        panel1.add(jBScrollPane1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null,
+                                                      null, null, 0, false));
+        myTfValue = new JTextArea();
+        myTfValue.setLineWrap(true);
+        myTfValue.setWrapStyleWord(true);
+        jBScrollPane1.setViewportView(myTfValue);
+        final JPanel panel2 = new JPanel();
+        panel2.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+        myCardHolder.add(panel2, "bundle");
+        final JPanel panel3 = new JPanel();
+        panel3.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel2.add(panel3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                               null,
+                                               0, false));
+        myLblKey = new JLabel();
+        this.$$$loadLabelText$$$(myLblKey, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "editbox.key"));
+        panel3.add(myLblKey,
+                   new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label2 = new JLabel();
+        this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "editbox.value"));
+        panel3.add(label2,
+                   new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myLblBundleName = new JLabel();
+        this.$$$loadLabelText$$$(myLblBundleName, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "editbox.bundle.name"));
+        panel3.add(myLblBundleName,
+                   new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                       GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        myTfRbValue = new JTextField();
+        myTfRbValue.setColumns(30);
+        panel3.add(myTfRbValue, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                    GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                    null,
+                                                    0, false));
+        myTfKey = new TextFieldWithBrowseButton();
+        myTfKey.setEditable(false);
+        myTfKey.setEnabled(true);
+        panel3.add(myTfKey, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                new Dimension(150, -1), null, 0, false));
+        myTfBundleName = new TextFieldWithBrowseButton();
+        myTfBundleName.setEditable(false);
+        panel3.add(myTfBundleName, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                       new Dimension(150, -1), null, 0, false));
+        final Spacer spacer1 = new Spacer();
+        panel2.add(spacer1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        label2.setLabelFor(myTfRbValue);
+        ButtonGroup buttonGroup;
+        buttonGroup = new ButtonGroup();
+        buttonGroup.add(myRbString);
+        buttonGroup.add(myRbResourceBundle);
+      }
       myRbString.addActionListener(
         new ActionListener() {
           @Override
           public void actionPerformed(final ActionEvent e) {
-            CardLayout cardLayout = (CardLayout) myCardHolder.getLayout();
+            CardLayout cardLayout = (CardLayout)myCardHolder.getLayout();
             cardLayout.show(myCardHolder, CARD_STRING);
           }
         }
@@ -323,11 +446,11 @@ public final class StringEditorDialog extends DialogWrapper{
             if (!myDefaultBundleInitialized) {
               myDefaultBundleInitialized = true;
               Set<String> bundleNames = FormEditingUtil.collectUsedBundleNames(myEditor.getRootContainer());
-              if (bundleNames.size() > 0) {
+              if (!bundleNames.isEmpty()) {
                 myTfBundleName.setText(ArrayUtilRt.toStringArray(bundleNames)[0]);
               }
             }
-            CardLayout cardLayout = (CardLayout) myCardHolder.getLayout();
+            CardLayout cardLayout = (CardLayout)myCardHolder.getLayout();
             cardLayout.show(myCardHolder, CARD_BUNDLE);
           }
         }
@@ -335,6 +458,78 @@ public final class StringEditorDialog extends DialogWrapper{
 
       setupResourceBundleCard();
     }
+
+    private static Method $$$cachedGetBundleMethod$$$ = null;
+
+    /** @noinspection ALL */
+    private String $$$getMessageFromBundle$$$(String path, String key) {
+      ResourceBundle bundle;
+      try {
+        Class<?> thisClass = this.getClass();
+        if ($$$cachedGetBundleMethod$$$ == null) {
+          Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+          $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+        }
+        bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+      }
+      catch (Exception e) {
+        bundle = ResourceBundle.getBundle(path);
+      }
+      return bundle.getString(key);
+    }
+
+    /** @noinspection ALL */
+    private void $$$loadLabelText$$$(JLabel component, String text) {
+      StringBuffer result = new StringBuffer();
+      boolean haveMnemonic = false;
+      char mnemonic = '\0';
+      int mnemonicIndex = -1;
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '&') {
+          i++;
+          if (i == text.length()) break;
+          if (!haveMnemonic && text.charAt(i) != '&') {
+            haveMnemonic = true;
+            mnemonic = text.charAt(i);
+            mnemonicIndex = result.length();
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      component.setText(result.toString());
+      if (haveMnemonic) {
+        component.setDisplayedMnemonic(mnemonic);
+        component.setDisplayedMnemonicIndex(mnemonicIndex);
+      }
+    }
+
+    /** @noinspection ALL */
+    private void $$$loadButtonText$$$(AbstractButton component, String text) {
+      StringBuffer result = new StringBuffer();
+      boolean haveMnemonic = false;
+      char mnemonic = '\0';
+      int mnemonicIndex = -1;
+      for (int i = 0; i < text.length(); i++) {
+        if (text.charAt(i) == '&') {
+          i++;
+          if (i == text.length()) break;
+          if (!haveMnemonic && text.charAt(i) != '&') {
+            haveMnemonic = true;
+            mnemonic = text.charAt(i);
+            mnemonicIndex = result.length();
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      component.setText(result.toString());
+      if (haveMnemonic) {
+        component.setMnemonic(mnemonic);
+        component.setDisplayedMnemonicIndex(mnemonicIndex);
+      }
+    }
+
+    /** @noinspection ALL */
+    public JComponent $$$getRootComponent$$$() { return myPanel; }
 
     private void setupResourceBundleCard() {
       // Enable keyboard pressing
@@ -358,14 +553,15 @@ public final class StringEditorDialog extends DialogWrapper{
             PropertiesFile file = PropertiesUtilBase.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
             PsiFile initialPropertiesFile = file == null ? null : file.getContainingFile();
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
-            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
-                                                                                                         PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
-              @Override
-              public boolean accept(PsiFile file) {
-                final VirtualFile virtualFile = file.getVirtualFile();
-                return virtualFile != null && moduleScope.contains(virtualFile);
-              }
-            });
+            TreeFileChooser fileChooser = TreeFileChooserFactory.getInstance(project)
+              .createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
+                                 PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
+                  @Override
+                  public boolean accept(PsiFile file) {
+                    final VirtualFile virtualFile = file.getVirtualFile();
+                    return virtualFile != null && moduleScope.contains(virtualFile);
+                  }
+                });
             fileChooser.showDialog();
             PsiFile selectedFile = fileChooser.getSelectedFile();
             PropertiesFile propertiesFile = selectedFile instanceof PropertiesFile ? (PropertiesFile)selectedFile : null;
@@ -399,7 +595,7 @@ public final class StringEditorDialog extends DialogWrapper{
           public void actionPerformed(final ActionEvent e) {
             // 1. Check that bundle exist. Otherwise we cannot show key chooser
             final String bundleName = myTfBundleName.getText();
-            if (bundleName.length() == 0) {
+            if (bundleName.isEmpty()) {
               Messages.showErrorDialog(
                 UIDesignerBundle.message("error.specify.bundle.name"),
                 CommonBundle.getErrorTitle()
@@ -440,12 +636,12 @@ public final class StringEditorDialog extends DialogWrapper{
       );
     }
 
-    public void showStringDescriptor(@Nullable final StringDescriptor descriptor) {
+    public void showStringDescriptor(final @Nullable StringDescriptor descriptor) {
       myTfValue.setText(StringDescriptorManager.getInstance(myEditor.getModule()).resolve(descriptor, myLocale));
       myNoI18nCheckbox.setSelected(descriptor != null && descriptor.isNoI18n());
     }
 
-    public void showResourceBundleDescriptor(@NotNull final StringDescriptor descriptor) {
+    public void showResourceBundleDescriptor(final @NotNull StringDescriptor descriptor) {
       final String key = descriptor.getKey();
       LOG.assertTrue(key != null);
       myTfBundleName.setText(descriptor.getBundleName());

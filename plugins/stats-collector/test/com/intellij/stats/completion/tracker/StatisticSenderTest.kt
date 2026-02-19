@@ -9,8 +9,8 @@ import com.intellij.stats.completion.storage.FilePathProvider
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
 import org.assertj.core.api.Assertions.assertThat
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.io.File
 
 class StatisticsSenderTest: LightPlatformTestCase() {
@@ -37,13 +37,16 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
 
     override fun tearDown() {
-        try {
-            firstFile.delete()
-            secondFile.delete()
-        }
-        finally {
-            super.tearDown()
-        }
+      try {
+        firstFile.delete()
+        secondFile.delete()
+      }
+      catch (e: Throwable) {
+        addSuppressedException(e)
+      }
+      finally {
+        super.tearDown()
+      }
     }
 
     fun `test removed if every file send response was ok`() {
@@ -64,10 +67,10 @@ class StatisticsSenderTest: LightPlatformTestCase() {
     }
 
 
-    fun `test removed first if only first is sent`() {
+    fun `test removed first if only first is sent and second failed with 404`() {
         val requestService = mock(RequestService::class.java).apply {
             `when`(postZipped(testUrl, firstFile)).thenReturn(okResponse())
-            `when`(postZipped(testUrl, secondFile)).thenReturn(failResponse())
+            `when`(postZipped(testUrl, secondFile)).thenReturn(failResponse(404))
         }
 
         val app = ApplicationManager.getApplication()
@@ -81,10 +84,10 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         assertThat(secondFile.exists()).isEqualTo(true)
     }
 
-    fun `test none is removed if all send failed`() {
+    fun `test second is sent and removed even if first failed`() {
         val requestService = mock(RequestService::class.java).apply {
-            `when`(postZipped(testUrl, firstFile)).thenReturn(failResponse())
-            `when`(postZipped(testUrl, secondFile)).thenThrow(IllegalStateException("Should not be invoked"))
+            `when`(postZipped(testUrl, firstFile)).thenReturn(failResponse(404))
+            `when`(postZipped(testUrl, secondFile)).thenReturn(okResponse())
         }
 
         val app = ApplicationManager.getApplication()
@@ -95,11 +98,26 @@ class StatisticsSenderTest: LightPlatformTestCase() {
         sender.sendStatsData(testUrl)
 
         assertThat(firstFile.exists()).isEqualTo(true)
-        assertThat(secondFile.exists()).isEqualTo(true)
+        assertThat(secondFile.exists()).isEqualTo(false)
     }
+
+  fun `test file is removed if failed with not 404`() {
+    val requestService = mock(RequestService::class.java).apply {
+      `when`(postZipped(testUrl, firstFile)).thenReturn(failResponse(400))
+    }
+
+    val app = ApplicationManager.getApplication()
+    app.replaceService(FilePathProvider::class.java, filePathProvider, testRootDisposable)
+    app.replaceService(RequestService::class.java, requestService, testRootDisposable)
+
+    val sender = StatisticSenderImpl()
+    sender.sendStatsData(testUrl)
+
+    assertThat(firstFile.exists()).isEqualTo(false)
+  }
 
 }
 
 
-fun okResponse(message: String = "") = ResponseData(200, message)
-fun failResponse(message: String = "") = ResponseData(404, message)
+fun okResponse() = ResponseData(200, "")
+fun failResponse(code: Int) = ResponseData(code, "")

@@ -3,7 +3,6 @@ package com.intellij.configurationScript.schemaGenerators
 import com.intellij.configurationScript.LOG
 import com.intellij.configurationScript.SchemaGenerator
 import com.intellij.configurationStore.ComponentSerializationUtil
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -19,13 +18,13 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
 
   private val objectSchemaGenerator = OptionClassJsonSchemaGenerator("classDefinitions")
 
-  override val definitionNodeKey: CharSequence?
+  override val definitionNodeKey: CharSequence
     get() = objectSchemaGenerator.definitionNodeKey
 
   // schema is generated without project - we cannot rely on created component adapter for services
   override fun generate(rootBuilder: JsonObjectBuilder) {
-    for (plugin in PluginManagerCore.getLoadedPlugins()) {
-      for (serviceDescriptor in (plugin as IdeaPluginDescriptorImpl).project.services) {
+    for (plugin in PluginManagerCore.getPluginSet().getEnabledModules()) {
+      for (serviceDescriptor in plugin.projectContainerDescriptor.services) {
         processServiceDescriptor(serviceDescriptor, plugin)
       }
     }

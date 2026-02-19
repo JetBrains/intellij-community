@@ -32,10 +32,18 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
@@ -51,17 +59,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyValidationMessageConsumer,RngSchemaValidator.MyValidationMessageConsumer> {
+public final class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyValidationMessageConsumer,RngSchemaValidator.MyValidationMessageConsumer> {
   private static final Logger LOG = Logger.getInstance(RngSchemaValidator.class.getName());
 
-  @Nullable
   @Override
-  public MyValidationMessageConsumer collectInformation(@NotNull final PsiFile file) {
-    final FileType type = file.getFileType();
+  public @Nullable MyValidationMessageConsumer collectInformation(final @NotNull PsiFile psiFile) {
+    final FileType type = psiFile.getFileType();
     if (type != XmlFileType.INSTANCE && type != RncFileType.getInstance()) {
       return null;
     }
-    final XmlFile xmlfile = (XmlFile)file;
+    final XmlFile xmlfile = (XmlFile)psiFile;
     final XmlDocument document = xmlfile.getDocument();
     if (document == null) {
       return null;
@@ -79,33 +86,32 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
         return null;
       }
     }
-    final Document doc = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final Document doc = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
 
     final MyValidationMessageConsumer consumer = new MyValidationMessageConsumer();
     ErrorHandler eh = new DefaultHandler() {
       @Override
       public void warning(SAXParseException e) {
-        handleError(e, file, doc, consumer.warning());
+        handleError(e, psiFile, doc, consumer.warning());
       }
 
       @Override
       public void error(SAXParseException e) {
-        handleError(e, file, doc, consumer.error());
+        handleError(e, psiFile, doc, consumer.error());
       }
     };
 
-    RngParser.parsePattern(file, eh, true);
+    RngParser.parsePattern(psiFile, eh, true);
     return consumer;
   }
 
-  @Nullable
   @Override
-  public MyValidationMessageConsumer doAnnotate(MyValidationMessageConsumer collectedInfo) {
+  public @Nullable MyValidationMessageConsumer doAnnotate(MyValidationMessageConsumer collectedInfo) {
     return collectedInfo;
   }
 
   @Override
-  public void apply(@NotNull PsiFile file,
+  public void apply(@NotNull PsiFile psiFile,
                     MyValidationMessageConsumer annotationResult,
                     @NotNull AnnotationHolder holder) {
     annotationResult.apply(holder);
@@ -246,8 +252,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
   }
 
   private static class ErrorMessageConsumer extends MessageConsumerImpl {
-    @NonNls
-    private static final String MISSING_START_ELEMENT = "missing \"start\" element";
+    private static final @NonNls String MISSING_START_ELEMENT = "missing \"start\" element";
     private static final String UNDEFINED_PATTERN = "reference to undefined pattern ";
 
     ErrorMessageConsumer(AnnotationHolder holder) {
@@ -287,7 +292,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
     }
   }
 
-  private static class MyErrorFinder extends PsiRecursiveElementVisitor {
+  private static final class MyErrorFinder extends PsiRecursiveElementVisitor {
     private static final MyErrorFinder INSTANCE = new MyErrorFinder();
 
     private static final class HasError extends RuntimeException {

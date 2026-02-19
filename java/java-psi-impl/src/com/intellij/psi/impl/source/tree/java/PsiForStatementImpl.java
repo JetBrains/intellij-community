@@ -17,7 +17,15 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -70,9 +78,6 @@ public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForS
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.FOR_KEYWORD:
         return findChildByType(FOR_KEYWORD);
 
@@ -115,6 +120,9 @@ public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForS
             return child;
           }
         }
+        return null;
+
+      default:
         return null;
     }
   }

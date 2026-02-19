@@ -17,8 +17,13 @@ package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
@@ -28,61 +33,63 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 /**
  * Warns about shadowing built-in names.
  *
- * @author vlan
  */
-public class PyShadowingBuiltinsInspection extends PyInspection {
+public final class PyShadowingBuiltinsInspection extends PyInspection {
 
   // Persistent settings
   public List<String> ignoredNames = new ArrayList<>();
 
-  @NotNull
-  protected LocalQuickFix[] createQuickFixes(String name, PsiElement problemElement) {
+  private static @NotNull LocalQuickFix @NotNull [] createQuickFixes(String name, PsiElement problemElement) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement);
     if (qf != null) {
       fixes.add(qf);
     }
     fixes.add(new PyIgnoreBuiltinQuickFix(name));
-    return fixes.toArray(new LocalQuickFix[fixes.size()]);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return PythonUiService.getInstance().createListEditForm(PyPsiBundle.message("INSP.shadowing.builtins.column.name.ignore.built.ins"), ignoredNames);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("ignoredNames", PyPsiBundle.message("INSP.shadowing.builtins.ignore.built.ins.label")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoredNames);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session), ignoredNames);
   }
 
   private static final class PyIgnoreBuiltinQuickFix implements LocalQuickFix, LowPriorityAction {
-    @NotNull private final @NlsSafe String myName;
+    private final @NotNull @NlsSafe String myName;
 
     private PyIgnoreBuiltinQuickFix(@NotNull String name) {
       myName = name;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return PyPsiBundle.message("QFIX.ignore.shadowed.built.in.name", myName);
     }
 
@@ -91,9 +98,8 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
       return false;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PyPsiBundle.message("QFIX.NAME.ignore.shadowed.built.in.name");
     }
 
@@ -114,11 +120,11 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     }
   }
 
-  private class Visitor extends PyInspectionVisitor {
+  private static class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredNames;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, @NotNull Collection<String> ignoredNames) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context, @NotNull Collection<String> ignoredNames) {
+      super(holder, context);
       myIgnoredNames = ImmutableSet.copyOf(ignoredNames);
     }
 
@@ -150,7 +156,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
         return;
       }
       final String name = element.getName();
-      if (name != null && !myIgnoredNames.contains(name)) {
+      if (name != null && PyUtil.getInitialUnderscores(name) != 1 && !myIgnoredNames.contains(name)) {
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
         final PsiElement builtin = builtinCache.getByName(name);
         if (builtin != null && !PyUtil.inSameFile(builtin, element)) {

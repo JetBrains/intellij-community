@@ -1,0 +1,12 @@
+// WITH_COROUTINES
+// PROBLEM: 'suspendCoroutine' lacks cancellation guarantees; prefer 'kotlinx.coroutines.suspendCancellableCoroutine' for proper cancellation support
+// FIX: Replace with more cancellation-friendly 'suspendCancellableCoroutine'
+package test
+
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.suspendCoroutine
+
+suspend fun foo(action: (Continuation<String>) -> Unit): String {
+    return suspendCancellableCoroutine(action)
+}

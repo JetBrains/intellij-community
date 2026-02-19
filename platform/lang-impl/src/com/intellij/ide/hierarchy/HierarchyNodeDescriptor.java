@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.SmartElementDescriptor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -13,17 +14,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.awt.Color;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
-  @NotNull
-  protected CompositeAppearance myHighlightedText;
+  public static final HierarchyNodeDescriptor[] EMPTY_ARRAY = new HierarchyNodeDescriptor[0];
+  protected @NotNull CompositeAppearance myHighlightedText;
   private Object[] myCachedChildren;
   protected final boolean myIsBase;
+  private Color myBackgroundColor;
 
   protected HierarchyNodeDescriptor(@NotNull Project project,
                                     @Nullable NodeDescriptor parentDescriptor,
@@ -40,8 +42,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return this;
   }
 
-  @Nullable
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     PsiElement element = getPsiElement();
     return element != null ? element.getContainingFile() : null;
   }
@@ -54,8 +55,19 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return myCachedChildren;
   }
 
-  public final void setCachedChildren(final Object[] cachedChildren) {
+  public final void setCachedChildren(Object[] cachedChildren) {
     myCachedChildren = cachedChildren;
+  }
+
+  public final @Nullable Color getBackgroundColorCached() {
+    return myBackgroundColor;
+  }
+
+  @Override
+  public boolean update() {
+    boolean changed = super.update();
+    myBackgroundColor = ProjectViewTree.getColorForElement(getContainingFile());
+    return changed;
   }
 
   @Override
@@ -68,17 +80,16 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return true;
   }
 
-  @NotNull
-  public final CompositeAppearance getHighlightedText() {
+  public final @NotNull CompositeAppearance getHighlightedText() {
     return myHighlightedText;
   }
 
   protected static TextAttributes getInvalidPrefixAttributes() {
-    return UsageTreeColorsScheme.getInstance().getScheme().getAttributes(UsageTreeColors.INVALID_PREFIX);
+    return UsageTreeColors.INVALID_ATTRIBUTES.toTextAttributes();
   }
 
   protected static TextAttributes getUsageCountPrefixAttributes() {
-    return UsageTreeColorsScheme.getInstance().getScheme().getAttributes(UsageTreeColors.NUMBER_OF_USAGES);
+    return UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes();
   }
 
   protected static TextAttributes getPackageNameAttributes() {
@@ -108,8 +119,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     }
   }
 
-  @NotNull
-  protected Icon getBaseMarkerIcon(@Nullable Icon sourceIcon) {
+  protected @NotNull Icon getBaseMarkerIcon(@Nullable Icon sourceIcon) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(sourceIcon, 0);
     icon.setIcon(AllIcons.General.Modified, 1, -AllIcons.General.Modified.getIconWidth(), 0);

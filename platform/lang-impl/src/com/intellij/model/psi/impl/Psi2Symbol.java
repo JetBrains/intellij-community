@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.Pointer;
@@ -8,6 +8,15 @@ import com.intellij.psi.SmartPointerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This symbol intentionally does not have {@link #equals} or {@link #hashCode}
+ * implementation, since nobody is supposed to use its equivalence in any meaningful way.
+ * <p>
+ * See {@link com.intellij.model.psi.PsiSymbolService#extractElementFromSymbol}
+ * if you want to check if two such symbols point to the same PSI.
+ *
+ * @see com.intellij.model.psi.PsiSymbolService
+ */
 final class Psi2Symbol implements Symbol {
 
   private final @NotNull PsiElement myElement;
@@ -27,9 +36,8 @@ final class Psi2Symbol implements Symbol {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public Pointer<Psi2Symbol> createPointer() {
+  public @NotNull Pointer<Psi2Symbol> createPointer() {
     return myPointer;
   }
 
@@ -41,9 +49,8 @@ final class Psi2Symbol implements Symbol {
       myPointer = SmartPointerManager.createPointer(element);
     }
 
-    @Nullable
     @Override
-    public Psi2Symbol dereference() {
+    public @Nullable Psi2Symbol dereference() {
       PsiElement element = myPointer.dereference();
       if (element == null) {
         return null;

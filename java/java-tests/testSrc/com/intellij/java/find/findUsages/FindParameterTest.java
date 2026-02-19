@@ -15,14 +15,16 @@
  */
 package com.intellij.java.find.findUsages;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.LightIdeaTestCase;
 
-/**
- * @author dsl
- */
 public class FindParameterTest extends LightIdeaTestCase {
   public void testMethod() {
     String text =

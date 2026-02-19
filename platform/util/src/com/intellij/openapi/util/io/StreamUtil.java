@@ -1,29 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.CharArrayWriter;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public final class StreamUtil {
   private StreamUtil() { }
 
   /**
-   * Copy stream. Use NetUtils.copyStreamContent(ProgressIndicator, ...) if you want use ProgressIndicator.
+   * Buffers up to this size avoid native memory allocation in stream implementations.
+   */
+  public static final int BUFFER_SIZE = 8192;
+
+  /**
+   * Use {@link com.intellij.util.net.NetUtils#copyStreamContent NetUtils.copyStreamContent()} if you want a progress indicator.
    *
    * @param inputStream source stream
    * @param outputStream destination stream
    * @return bytes copied
    */
   public static int copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
-    byte[] buffer = new byte[8 * 1024];
-    int read, total = 0;
+    byte[] buffer = new byte[BUFFER_SIZE];
+    int read;
+    int total = 0;
     while ((read = inputStream.read(buffer)) > 0) {
       outputStream.write(buffer, 0, read);
       total += read;
@@ -31,27 +43,39 @@ public final class StreamUtil {
     return total;
   }
 
+  @ReviseWhenPortedToJDK(value = "9", description = "InputStream#readAllBytes")
   public static byte @NotNull [] readBytes(@NotNull InputStream inputStream) throws IOException {
     UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
     copy(inputStream, outputStream);
     return outputStream.toByteArray();
   }
 
+  @ReviseWhenPortedToJDK(value = "11", description = "InputStream#readNBytes")
+  public static byte @NotNull [] readBytes(@NotNull InputStream inputStream, int len) throws IOException {
+    byte[] buffer = new byte[len];
+    int p = 0;
+    while (p < len) {
+      p += inputStream.read(buffer, p, len - p);
+    }
+    return buffer;
+  }
+
   public static @NotNull String readText(@NotNull Reader reader) throws IOException {
-    char[] chars = readChars(reader);
-    return StringFactory.createShared(chars);
+    return readChars(reader).toString();
   }
 
   public static @NotNull String convertSeparators(@NotNull String s) {
-    return StringFactory.createShared(convertSeparators(s.toCharArray()));
+    char[] source = s.toCharArray();
+    char[] converted = convertSeparators(source);
+    return converted == source ? s : new String(converted);
   }
 
   public static char @NotNull [] readTextAndConvertSeparators(@NotNull Reader reader) throws IOException {
-    char[] chars = readChars(reader);
-    return convertSeparators(chars);
+    CharArrayWriter chars = readChars(reader);
+    return convertSeparators(chars.toCharArray());
   }
 
-  private static char[] convertSeparators(char [] buffer) {
+  private static char[] convertSeparators(char[] buffer) {
     int dst = 0;
     char prev = ' ';
     for (char c : buffer) {
@@ -72,17 +96,15 @@ public final class StreamUtil {
     }
 
     if (dst == buffer.length) return buffer;
-    char[] result = new char[dst];
-    System.arraycopy(buffer, 0, result, 0, result.length);
-    return result;
+    return Arrays.copyOf(buffer, dst);
   }
 
-  private static char[] readChars(Reader reader) throws IOException {
+  private static CharArrayWriter readChars(Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
     char[] buffer = new char[2048];
     int read;
     while ((read = reader.read(buffer)) > 0) writer.write(buffer, 0, read);
-    return writer.toCharArray();
+    return writer;
   }
 
   //<editor-fold desc="Deprecated stuff.">
@@ -132,6 +154,7 @@ public final class StreamUtil {
 
   /** @deprecated outdated pattern; use try-with-resources instead */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void closeStream(@Nullable Closeable stream) {
     if (stream != null) {
       try {

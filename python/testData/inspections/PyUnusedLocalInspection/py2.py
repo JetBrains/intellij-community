@@ -116,7 +116,6 @@ def foo(<weak_warning descr="Parameter 'a' value is not used">a = 123</weak_warn
 
 def loopie():
     for x in range(5): pass
-    for y in xrange(10): pass
 
 def locals_inside():
     now = datetime.datetime.now() # pass

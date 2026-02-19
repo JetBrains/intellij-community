@@ -4,13 +4,13 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiNamedElement;
 
-public class CoverageViewDescriptor extends NodeDescriptor {
-  private final Object myClassOrPackage;
+class CoverageViewDescriptor extends NodeDescriptor {
+  private final Object myElement;
 
-  public CoverageViewDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Object classOrPackage) {
+  CoverageViewDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Object element) {
     super(project, parentDescriptor);
-    myClassOrPackage = classOrPackage;
-    myName = classOrPackage instanceof PsiNamedElement ? ((PsiNamedElement)classOrPackage).getName() : classOrPackage.toString();
+    myElement = element;
+    myName = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : element.toString();
   }
 
   @Override
@@ -20,6 +20,6 @@ public class CoverageViewDescriptor extends NodeDescriptor {
 
   @Override
   public Object getElement() {
-    return myClassOrPackage;
+    return myElement;
   }
 }

@@ -7,7 +7,9 @@ import com.intellij.codeInsight.hints.presentation.PresentationListener
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Point
@@ -36,7 +38,7 @@ internal class ClickCheckingPresentation(
   val presentation: InlayPresentation,
   var expectedClick: Pair<Int, Int>?
 ): InlayPresentation by presentation {
-  var wasClicked = false
+  var wasClicked: Boolean = false
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
     val expectedClickVal = expectedClick
@@ -56,7 +58,7 @@ internal class ClickCheckingPresentation(
 }
 
 internal class ChangeCountingListener : PresentationListener {
-  var contentChangesCount = 0
+  var contentChangesCount: Int = 0
   val contentChanged: Boolean
     get() = contentChangesCount != 0
 

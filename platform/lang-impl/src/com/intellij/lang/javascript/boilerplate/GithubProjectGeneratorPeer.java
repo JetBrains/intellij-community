@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.BundleBase;
@@ -6,118 +6,148 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ui.ReloadableComboBoxPanel;
 import com.intellij.util.ui.ReloadablePanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Insets;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Set;
 
-/**
- * @author Sergey Simonchik
- */
-public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
+public final class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
 
-  public static String getGithubZipballUrl(String ghUserName,String ghRepoName, String branch) {
+  public static String getGithubZipballUrl(String ghUserName, String ghRepoName, String branch) {
     return String.format("https://github.com/%s/%s/zipball/%s", ghUserName, ghRepoName, branch);
   }
 
-  private void createUIComponents() {
-    myReloadableComboBoxPanel = new ReloadableComboBoxPanel<GithubTagInfo>() {
-
-      @Override
-      protected void doUpdateValues(@NotNull Set<GithubTagInfo> tags) {
-        if (!shouldUpdate(tags)) {
-          return;
-        }
-
-        List<GithubTagInfo> sortedTags = createSortedTagList(tags);
-        GithubTagInfo selectedItem = getSelectedValue();
-        if (selectedItem == null && sortedTags.size() > 0) {
-          selectedItem = sortedTags.get(0);
-        }
-        myComboBox.removeAllItems();
-        myComboBox.addItem(myMasterTag);
-        for (GithubTagInfo tag : sortedTags) {
-          myComboBox.addItem(tag);
-        }
-        if (selectedItem != null) {
-          // restore previously selected item
-          for (int i = 0; i < myComboBox.getItemCount(); i++) {
-            GithubTagInfo item = GithubTagInfo.tryCast(myComboBox.getItemAt(i));
-            if (item != null && item.getName().equals(selectedItem.getName())) {
-              myComboBox.setSelectedIndex(i);
-              break;
-            }
-          }
-        }
-        myComboBox.updateUI();
-        fireStateChanged();
-      }
-
-      private boolean shouldUpdate(Set<GithubTagInfo> newTags) {
-        if (myComboBox.getItemCount() == 0) {
-          return true;
-        }
-        int count = myComboBox.getItemCount();
-        Set<GithubTagInfo> oldTags = new HashSet<GithubTagInfo>();
-        for (int i = 1; i < count; i++) {
-          GithubTagInfo item = ObjectUtils.tryCast(myComboBox.getItemAt(i), GithubTagInfo.class);
-          if (item != null) {
-            oldTags.add(item);
-          }
-        }
-        return !oldTags.equals(newTags);
-      }
-
-      @NotNull
-      @Override
-      protected JComboBox<GithubTagInfo> createValuesComboBox() {
-        JComboBox<GithubTagInfo> box = super.createValuesComboBox();
-        box.setRenderer(SimpleListCellRenderer.create((label, tag, index) -> {
-          final String text;
-          if (tag == null) {
-            text = isBackgroundJobRunning() ? CommonBundle.getLoadingTreeNodeText() : LangBundle.message("label.unavailable");
-          }
-          else {
-            text = tag.getName();
-          }
-          label.setText(text);
-        }));
-
-        return box;
-      }
-    };
-
-    myVersionPanel = myReloadableComboBoxPanel.getMainPanel();
-  }
-
   private final List<WebProjectGenerator.SettingsStateListener> myListeners = new ArrayList<>();
-  private final GithubTagInfo myMasterTag;
+  private final GithubTagInfo myDefaultBranchTag;
   private final GithubTagListProvider myTagListProvider;
-  private JComponent myComponent;
-  private JPanel myVersionPanel;
+  private final JComponent myComponent;
+  private final JPanel myVersionPanel;
   private ReloadablePanel<GithubTagInfo> myReloadableComboBoxPanel;
 
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
+    {
+      myReloadableComboBoxPanel = new ReloadableComboBoxPanel<>() {
+
+        @Override
+        protected void doUpdateValues(@NotNull Set<GithubTagInfo> tags) {
+          if (!shouldUpdate(tags)) {
+            return;
+          }
+
+          List<GithubTagInfo> sortedTags = createSortedTagList(tags);
+          GithubTagInfo selectedItem = getSelectedValue();
+          if (selectedItem == null && !sortedTags.isEmpty()) {
+            selectedItem = sortedTags.get(0);
+          }
+          myComboBox.removeAllItems();
+          if (myDefaultBranchTag != null) {
+            myComboBox.addItem(myDefaultBranchTag);
+          }
+          for (GithubTagInfo tag : sortedTags) {
+            myComboBox.addItem(tag);
+          }
+          if (selectedItem != null) {
+            // restore previously selected item
+            for (int i = 0; i < myComboBox.getItemCount(); i++) {
+              GithubTagInfo item = GithubTagInfo.tryCast(myComboBox.getItemAt(i));
+              if (item != null && item.getName().equals(selectedItem.getName())) {
+                myComboBox.setSelectedIndex(i);
+                break;
+              }
+            }
+          }
+          myComboBox.updateUI();
+          fireStateChanged();
+        }
+
+        private boolean shouldUpdate(Set<GithubTagInfo> newTags) {
+          if (myComboBox.getItemCount() == 0) {
+            return true;
+          }
+          int count = myComboBox.getItemCount();
+          Set<GithubTagInfo> oldTags = new HashSet<>();
+          for (int i = 1; i < count; i++) {
+            GithubTagInfo item = myComboBox.getItemAt(i);
+            if (item != null) {
+              oldTags.add(item);
+            }
+          }
+          return !oldTags.equals(newTags);
+        }
+
+        @Override
+        protected @NotNull JComboBox<GithubTagInfo> createValuesComboBox() {
+          JComboBox<GithubTagInfo> box = super.createValuesComboBox();
+          box.setRenderer(SimpleListCellRenderer.create((label, tag, index) -> {
+            final String text;
+            if (tag == null) {
+              text = isBackgroundJobRunning() ? CommonBundle.getLoadingTreeNodeText() : LangBundle.message("label.unavailable");
+            }
+            else {
+              text = tag.getName();
+            }
+            label.setText(text);
+          }));
+
+          return box;
+        }
+      };
+
+      myVersionPanel = myReloadableComboBoxPanel.getMainPanel();
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myComponent = new JPanel();
+      myComponent.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      final Spacer spacer1 = new Spacer();
+      myComponent.add(spacer1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                                   GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myComponent.add(myVersionPanel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                          null, null, 0, false));
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/LangBundle", "label.github.project.version"));
+      myComponent.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                  GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
+                                                  false));
+    }
     String ghUserName = generator.getGithubUserName();
     String ghRepoName = generator.getGithubRepositoryName();
-    myMasterTag = new GithubTagInfo(
-      "master",
-      getGithubZipballUrl(ghUserName, ghRepoName, "master")
-    );
+    String defaultBranchName = generator.getDefaultBranchName();
+    myDefaultBranchTag = defaultBranchName != null ? new GithubTagInfo(
+      defaultBranchName,
+      getGithubZipballUrl(ghUserName, ghRepoName, defaultBranchName)
+    ) : null;
 
     myTagListProvider = new GithubTagListProvider(ghUserName, ghRepoName);
 
-    myReloadableComboBoxPanel.setDataProvider(new ReloadableComboBoxPanel.DataProvider<GithubTagInfo>() {
+    myReloadableComboBoxPanel.setDataProvider(new ReloadableComboBoxPanel.DataProvider<>() {
       @Override
       public Set<GithubTagInfo> getCachedValues() {
         return myTagListProvider.getCachedTags();
@@ -132,16 +162,62 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myReloadableComboBoxPanel.reloadValuesInBackground();
   }
 
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myComponent; }
+
   void onTagsUpdated(@NotNull Set<GithubTagInfo> tags) {
     myReloadableComboBoxPanel.onUpdateValues(tags);
   }
 
-  void onTagsUpdateError(@NotNull final @NlsContexts.DialogMessage String errorMessage) {
+  void onTagsUpdateError(final @NotNull @NlsContexts.DialogMessage String errorMessage) {
     myReloadableComboBoxPanel.onValuesUpdateError(errorMessage);
   }
 
-  @NotNull
-  private static List<GithubTagInfo> createSortedTagList(@NotNull Collection<? extends GithubTagInfo> tags) {
+  private static @NotNull List<GithubTagInfo> createSortedTagList(@NotNull Collection<? extends GithubTagInfo> tags) {
     List<GithubTagInfo> sortedTags = new ArrayList<>(tags);
     sortedTags.sort((tag1, tag2) -> {
       GithubTagInfo.Version v1 = tag1.getVersion();
@@ -158,21 +234,20 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   }
 
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent(@NotNull TextFieldWithBrowseButton myLocationField, @NotNull Runnable checkValid) {
     return myComponent;
   }
 
   @Override
   public void buildUI(@NotNull SettingsStep settingsStep) {
-    settingsStep.addSettingsField(BundleBase.replaceMnemonicAmpersand(IdeBundle.message("github.project.generator.version")), myVersionPanel);
+    settingsStep.addSettingsField(BundleBase.replaceMnemonicAmpersand(IdeBundle.message("github.project.generator.version")),
+                                  myVersionPanel);
     settingsStep.addSettingsComponent(myReloadableComboBoxPanel.getErrorComponent());
   }
 
-  @NotNull
   @Override
-  public GithubTagInfo getSettings() {
+  public @NotNull GithubTagInfo getSettings() {
     GithubTagInfo tag = myReloadableComboBoxPanel.getSelectedValue();
     if (tag == null) {
       throw new RuntimeException("[internal error] No versions available.");
@@ -181,8 +256,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   }
 
   @Override
-  @Nullable
-  public ValidationInfo validate() {
+  public @Nullable ValidationInfo validate() {
     GithubTagInfo tag = myReloadableComboBoxPanel.getSelectedValue();
     if (tag != null) {
       return null;

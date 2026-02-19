@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.java.decompiler.engine` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "engine_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "engine",
+  module_name = "intellij.java.decompiler.engine",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":engine_resources"],
+  deps = ["@lib//:jetbrains-annotations"]
+)
+
+jvm_library(
+  name = "engine_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":engine"],
+  deps = [
+    "@lib//:junit4",
+    "@lib//:assert_j",
+    "@lib//:jetbrains-annotations",
+    "@lib//:hamcrest",
+  ]
+)
+### auto-generated section `build intellij.java.decompiler.engine` end
+
+### auto-generated section `test intellij.java.decompiler.engine` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "engine_test",
+  runtime_deps = [":engine_test_lib"]
+)
+### auto-generated section `test intellij.java.decompiler.engine` end

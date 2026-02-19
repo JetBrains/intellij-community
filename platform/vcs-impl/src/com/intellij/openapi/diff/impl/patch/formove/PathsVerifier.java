@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.CommonBundle;
@@ -8,29 +8,42 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchFactory;
+import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+@ApiStatus.Internal
 public final class PathsVerifier {
   // in
   private final Project myProject;
@@ -43,7 +56,7 @@ public final class PathsVerifier {
   // out
   private final List<PatchAndFile> myTextPatches = new ArrayList<>();
   private final List<PatchAndFile> myBinaryPatches = new ArrayList<>();
-  @NotNull private final List<VirtualFile> myWritableFiles = new ArrayList<>();
+  private final @NotNull List<VirtualFile> myWritableFiles = new ArrayList<>();
   private final ProjectLevelVcsManager myVcsManager;
   private final List<FilePatch> mySkipped = new ArrayList<>();
   private DelayedPrecheckContext myDelayedPrecheckContext;
@@ -126,7 +139,7 @@ public final class PathsVerifier {
     return mySkipped;
   }
 
-  final @NotNull List<FilePatch> execute() {
+  @NotNull List<FilePatch> execute() {
     List<String> failedMessages = new ArrayList<>();
     List<FilePatch> failedPatches = new ArrayList<>();
     for (FilePatch patch : myPatches) {
@@ -169,8 +182,7 @@ public final class PathsVerifier {
     return myDeletedPaths;
   }
 
-  @NotNull
-  public Collection<FilePatch> filterBadFileTypePatches() {
+  public @NotNull Collection<FilePatch> filterBadFileTypePatches() {
     List<PatchAndFile> failedTextPatches =
       ContainerUtil.findAll(myTextPatches, textPatch -> !isFileTypeOk(textPatch.getFile()));
     myTextPatches.removeAll(failedTextPatches);
@@ -184,11 +196,19 @@ public final class PathsVerifier {
     }
     FileType fileType = file.getFileType();
     if (fileType == FileTypes.UNKNOWN) {
-      fileType = FileTypeChooser.associateFileType(file.getName());
-      if (fileType == null) {
-        PatchApplier
-          .showError(myProject, VcsBundle.message("patch.apply.file.type.undefined.error", file.getPresentableName()));
-        return false;
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ApplicationManager.getApplication().runWriteAction(
+          () -> FileTypeManagerEx.getInstanceEx().associate(FileTypes.PLAIN_TEXT, new ExactFileNameMatcher(file.getName()))
+        );
+        return true;
+      }
+      else {
+        fileType = FileTypeChooser.associateFileType(file.getName());
+        if (fileType == null) {
+          PatchApplier
+            .showError(myProject, VcsBundle.message("patch.apply.file.type.undefined.error", file.getPresentableName()));
+          return false;
+        }
       }
     }
     if (fileType.isBinary()) {
@@ -234,6 +254,7 @@ public final class PathsVerifier {
       addPatch(myPatch, beforeFile);
       FilePath filePath = VcsUtil.getFilePath(beforeFile.getParent(), beforeFile.getName(), beforeFile.isDirectory());
       if (myPatch.isDeletedFile() || myPatch.getAfterName() == null) {
+        // See VcsFileListenerContextHelper javadoc
         myDeletedPaths.add(filePath);
       }
       myBeforePaths.add(filePath);
@@ -286,6 +307,7 @@ public final class PathsVerifier {
         setErrorMessage(fileNotFoundMessage(myAfterName));
         return false;
       }
+      // See VcsFileListenerContextHelper javadoc
       myAddedPaths.add(VcsUtil.getFilePath(file));
       if (!checkExistsAndValid(file, myAfterName)) {
         return false;
@@ -500,8 +522,7 @@ public final class PathsVerifier {
     return myBinaryPatches;
   }
 
-  @NotNull
-  public List<VirtualFile> getWritableFiles() {
+  public @NotNull List<VirtualFile> getWritableFiles() {
     return myWritableFiles;
   }
 
@@ -518,7 +539,7 @@ public final class PathsVerifier {
     private final VirtualFile myCurrent;
     private final String myNewName;
 
-    private MovedFileData(@NotNull final VirtualFile newParent, @NotNull final VirtualFile current, @NotNull final String newName) {
+    private MovedFileData(final @NotNull VirtualFile newParent, final @NotNull VirtualFile current, final @NotNull String newName) {
       myNewParent = newParent;
       myCurrent = current;
       myNewName = newName;
@@ -603,9 +624,10 @@ public final class PathsVerifier {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           final String title = VcsBundle.message("patch.apply.overwrite.existing.title");
           List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
+          @SuppressWarnings("UnresolvedPropertyKey")
           Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
             files, title, VcsBundle.message("patch.apply.overwrite.existing.files.prompt"), title,
-            VcsBundle.getString("patch.apply.overwrite.existing.file.prompt"),
+            VcsBundle.message("patch.apply.overwrite.existing.file.prompt"),
             VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
             CommonBundle.message("button.overwrite"), IdeBundle.message("button.cancel"));
           if (selected != null) {

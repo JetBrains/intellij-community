@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.VisualPaddingsProvider;
@@ -14,12 +14,23 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.getOutline;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintCellEditorBorder;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
 
 /**
  * @author Konstantin Bulenkov
@@ -84,9 +95,9 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
         g2.setColor(c.getBackground());
         g2.fill(outer);
 
-        Object op = editorTextField.getClientProperty("JComponent.outline");
+        Outline op = getOutline(editorTextField);
         if (editorTextField.isEnabled() && op != null) {
-          paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, Outline.valueOf(op.toString()));
+          paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, op);
         }
         else if (editorTextField.isEnabled() && editorTextField.isVisible()) {
           if (hasFocus) {
@@ -122,9 +133,8 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
     return ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, c) != null;
   }
 
-  @Nullable
   @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
+  public @Nullable Insets getVisualPaddings(@NotNull Component component) {
     return JBUI.insets(3);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.vcs.log.VcsLogFilter;
@@ -12,8 +12,11 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * @see VcsLogFilterObject#collection(VcsLogFilter...)
+ */
 class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
-  @NotNull private final Map<FilterKey, VcsLogFilter> myFilters = new TreeMap<>(Comparator.comparing(key -> key.getName()));
+  private final @NotNull Map<FilterKey, VcsLogFilter> myFilters = new TreeMap<>(Comparator.comparing(key -> key.getName()));
 
   VcsLogFilterCollectionImpl(@NotNull Collection<? extends VcsLogFilter> filters) {
     for (VcsLogFilter filter : filters) {
@@ -21,21 +24,30 @@ class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
     }
   }
 
-  @Nullable
   @Override
-  public <T extends VcsLogFilter> T get(@NotNull FilterKey<T> key) {
+  public @Nullable <T extends VcsLogFilter> T get(@NotNull FilterKey<T> key) {
     return (T)myFilters.get(key);
   }
 
-  @NotNull
   @Override
-  public Collection<VcsLogFilter> getFilters() {
+  public @NotNull Collection<VcsLogFilter> getFilters() {
     return myFilters.values();
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "filters: (" + myFilters + ")";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof VcsLogFilterCollectionImpl that)) return false;
+    return myFilters.equals(that.myFilters);
+  }
+
+  @Override
+  public int hashCode() {
+    return myFilters.hashCode();
   }
 }

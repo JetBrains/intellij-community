@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 
-import javax.swing.*;
+import javax.swing.Action;
 
 public class CheckoutDialog extends RepositoryBrowserDialog {
   private final CheckoutProvider.Listener myListener;
@@ -22,9 +22,7 @@ public class CheckoutDialog extends RepositoryBrowserDialog {
     setTitle(SvnBundle.message("checkout.dialog.title"));
     setOKButtonText(SvnBundle.message("checkout.dialog.button"));
     getRepositoryBrowser().addChangeListener(e -> {
-      if (getOKAction() != null) {
-        getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
-      }
+      getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
   }

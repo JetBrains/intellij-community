@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.rename;
 
@@ -7,8 +7,8 @@ import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -28,23 +28,32 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * @author dsl
- */
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
-  private Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
+  private Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests =
+    ContainerUtil::getFirstItem;
 
   public static RenameHandlerRegistry getInstance() {
-    return ServiceManager.getService(RenameHandlerRegistry.class);
+    return ApplicationManager.getApplication().getService(RenameHandlerRegistry.class);
   }
 
   protected RenameHandlerRegistry() {
@@ -59,14 +68,13 @@ public class RenameHandlerRegistry {
     return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext);
   }
 
-  @Nullable
-  public RenameHandler getRenameHandler(@NotNull DataContext dataContext) {
+  public @Nullable RenameHandler getRenameHandler(@NotNull DataContext dataContext) {
     List<? extends RenameHandler> availableHandlers = getRenameHandlers(dataContext);
     if (availableHandlers.isEmpty()) {
       return null;
     }
     else if (availableHandlers.size() == 1) {
-      return availableHandlers.get(0);
+      return availableHandlers.getFirst();
     }
     else if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myRenameHandlerSelectorInTests.apply(availableHandlers);
@@ -88,7 +96,9 @@ public class RenameHandlerRegistry {
    * Must not show dialogs.
    */
   public @NotNull List<? extends @NotNull RenameHandler> getRenameHandlers(@NotNull DataContext dataContext) {
-    return ProhibitAWTEvents.prohibitEventsInside("getRenameHandlers", () -> doGetRenameHandlers(dataContext));
+    try (AccessToken ignore = ProhibitAWTEvents.start("getRenameHandlers")) {
+      return doGetRenameHandlers(dataContext);
+    }
   }
 
   private @NotNull List<? extends @NotNull RenameHandler> doGetRenameHandlers(@NotNull DataContext dataContext) {
@@ -115,7 +125,8 @@ public class RenameHandlerRegistry {
   }
 
   @TestOnly
-  public void setRenameHandlerSelectorInTests(Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> selector, Disposable parentDisposable) {
+  public void setRenameHandlerSelectorInTests(Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> selector,
+                                              Disposable parentDisposable) {
     myRenameHandlerSelectorInTests = selector;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -138,7 +149,7 @@ public class RenameHandlerRegistry {
     private String mySelection;
     private final JRadioButton[] myRButtons;
 
-    protected HandlersChooser(Project project, @NlsContexts.RadioButton String [] renamers) {
+    protected HandlersChooser(Project project, @NlsContexts.RadioButton String[] renamers) {
       super(project);
       myRenamers = renamers;
       myRButtons = new JRadioButton[myRenamers.length];
@@ -173,7 +184,7 @@ public class RenameHandlerRegistry {
         bg.add(rb);
         radioPanel.add(rb);
       }
-      new RadioUpDownListener(myRButtons);
+      RadioUpDownListener.installOn(myRButtons);
       return radioPanel;
     }
 

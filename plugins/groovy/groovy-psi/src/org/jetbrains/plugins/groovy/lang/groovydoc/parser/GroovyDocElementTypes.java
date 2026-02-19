@@ -1,7 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiBuilderFactory;
+import com.intellij.lang.PsiParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
@@ -12,9 +16,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 
-/**
- * @author ilyas
- */
 public interface GroovyDocElementTypes {
 
   /**
@@ -22,8 +23,7 @@ public interface GroovyDocElementTypes {
    */
   ILazyParseableElementType GROOVY_DOC_COMMENT = new ILazyParseableElementType("GrDocComment") {
     @Override
-    @NotNull
-    public Language getLanguage() {
+    public @NotNull Language getLanguage() {
       return GroovyLanguage.INSTANCE;
     }
 

@@ -1,0 +1,49 @@
+### auto-generated section `build intellij.groovy.ant` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "ant_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ant",
+  module_name = "intellij.groovy.ant",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ant_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/groovy",
+    "//plugins/ant",
+    "//platform/util",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/ide-core-impl",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/analysis-api:analysis",
+    "//xml/dom-openapi:dom",
+  ]
+)
+
+jvm_library(
+  name = "ant_test_lib",
+  module_name = "intellij.groovy.ant",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":ant",
+    "//platform/core-api:core_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//plugins/groovy:groovy_test_lib",
+    "//plugins/ant:ant_test_lib",
+    "//platform/util:util_test_lib",
+    "//java/java-psi-impl:psi-impl_test_lib",
+    "//platform/ide-core-impl:ide-core-impl_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//xml/dom-openapi:dom_test_lib",
+  ]
+)
+### auto-generated section `build intellij.groovy.ant` end

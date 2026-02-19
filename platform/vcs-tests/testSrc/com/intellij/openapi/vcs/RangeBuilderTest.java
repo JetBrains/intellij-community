@@ -103,7 +103,7 @@ public class RangeBuilderTest extends TestCase {
     Document document = new DocumentImpl("1\n\n");
     int lineStartOffset = document.getLineStartOffset(document.getLineCount() - 1);
     assertEquals(3, lineStartOffset);
-    document.getLineNumber(2);
+    assertEquals(1, document.getLineNumber(2));
   }
 
   private static void doTest(String[] upToDate, String[] current,

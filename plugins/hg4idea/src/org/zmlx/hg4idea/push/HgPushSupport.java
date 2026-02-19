@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.OutgoingCommitsProvider;
+import com.intellij.dvcs.push.PushSettings;
+import com.intellij.dvcs.push.PushSupport;
+import com.intellij.dvcs.push.PushTargetPanel;
+import com.intellij.dvcs.push.Pusher;
+import com.intellij.dvcs.push.VcsPushOptionsPanel;
 import com.intellij.dvcs.repo.RepositoryManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
@@ -18,72 +22,65 @@ import java.util.Objects;
 
 public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTarget> {
 
-  @NotNull private final Project myProject;
-  @NotNull private final HgVcs myVcs;
-  @NotNull private final HgProjectSettings mySettings;
-  @NotNull private final PushSettings myCommonPushSettings;
+  private final @NotNull Project myProject;
+  private final @NotNull HgVcs myVcs;
+  private final @NotNull HgProjectSettings mySettings;
+  private final @NotNull PushSettings myCommonPushSettings;
 
   public HgPushSupport(@NotNull Project project) {
     myProject = project;
     myVcs = Objects.requireNonNull(HgVcs.getInstance(myProject));
     mySettings = myVcs.getProjectSettings();
-    myCommonPushSettings = ServiceManager.getService(project, PushSettings.class);
+    myCommonPushSettings = project.getService(PushSettings.class);
   }
 
-  @NotNull
   @Override
-  public AbstractVcs getVcs() {
+  public @NotNull AbstractVcs getVcs() {
     return myVcs;
   }
 
-  @NotNull
   @Override
-  public Pusher<HgRepository, HgPushSource, HgTarget> getPusher() {
+  public @NotNull Pusher<HgRepository, HgPushSource, HgTarget> getPusher() {
     return new HgPusher();
   }
 
-  @NotNull
   @Override
-  public OutgoingCommitsProvider<HgRepository, HgPushSource, HgTarget> getOutgoingCommitsProvider() {
+  public @NotNull OutgoingCommitsProvider<HgRepository, HgPushSource, HgTarget> getOutgoingCommitsProvider() {
     return new HgOutgoingCommitsProvider();
   }
 
-  @Nullable
   @Override
-  public HgTarget getDefaultTarget(@NotNull HgRepository repository) {
+  public @Nullable HgTarget getDefaultTarget(@NotNull HgRepository repository) {
     String defaultPushPath = repository.getRepositoryConfig().getDefaultPushPath();
     return defaultPushPath == null ? null : new HgTarget(defaultPushPath, Objects.requireNonNull(repository.getCurrentBranchName()));
   }
 
   @Override
-  @Nullable
-  public HgTarget getDefaultTarget(@NotNull HgRepository repository, @NotNull HgPushSource source) {return getDefaultTarget(repository);}
+  public @Nullable HgTarget getDefaultTarget(@NotNull HgRepository repository, @NotNull HgPushSource source) {
+    return getDefaultTarget(repository);
+  }
 
-  @NotNull
   @Override
   public HgPushSource getSource(@NotNull HgRepository repository) {
     String localBranch = repository.getCurrentBranchName();
-    assert localBranch != null;
+    if (localBranch == null) return null;
     return new HgPushSource(localBranch);
   }
 
-  @NotNull
   @Override
-  public RepositoryManager<HgRepository> getRepositoryManager() {
+  public @NotNull RepositoryManager<HgRepository> getRepositoryManager() {
     return HgUtil.getRepositoryManager(myProject);
   }
 
   @Override
-  @Nullable
-  public VcsPushOptionsPanel createOptionsPanel() {
+  public @Nullable VcsPushOptionsPanel createOptionsPanel() {
     return new HgPushOptionsPanel();
   }
 
-  @NotNull
   @Override
-  public PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository,
-                                                     @NotNull HgPushSource source,
-                                                     @Nullable HgTarget defaultTarget) {
+  public @NotNull PushTargetPanel<HgTarget> createTargetPanel(@NotNull HgRepository repository,
+                                                              @NotNull HgPushSource source,
+                                                              @Nullable HgTarget defaultTarget) {
     return new HgPushTargetPanel(repository, source, defaultTarget);
   }
 

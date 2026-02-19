@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 
 package org.jetbrains.idea.svn;
@@ -16,20 +16,20 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.dialogs.SshSettingsPanel;
+import org.jetbrains.idea.svn.dialogs.SshSettingConfigurableUi;
 
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
 import java.util.function.Supplier;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<SvnConfiguration>, SvnConfiguration> {
-  private static final @NonNls String ID = "vcs.Subversion";
-  private static final @NonNls String HELP_ID = "project.propSubversion";
+  static final @NonNls String ID = "vcs.Subversion";
+  static final @NonNls String HELP_ID = "project.propSubversion";
 
-  @NotNull private final Project myProject;
-  @NotNull private final Supplier<? extends ConfigurableUi<SvnConfiguration>> myUiSupplier;
+  private final @NotNull Project myProject;
+  private final @NotNull Supplier<? extends ConfigurableUi<SvnConfiguration>> myUiSupplier;
 
   public static @NlsContexts.ConfigurableName @NotNull String getGroupDisplayName() {
     return SvnVcs.VCS_DISPLAY_NAME;
@@ -57,40 +57,21 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
     return myUiSupplier.get();
   }
 
-  @NotNull
   @Override
-  protected SvnConfiguration getSettings() {
+  protected @NotNull SvnConfiguration getSettings() {
     return SvnConfiguration.getInstance(myProject);
-  }
-
-  public static class General extends SvnConfigurable {
-    public General(@NotNull Project project) {
-      super(project, ID, getGroupDisplayName(), () -> new GeneralSettingsPanel(project), HELP_ID);
-    }
-  }
-
-  public static class Presentation extends SvnConfigurable {
-    public Presentation(@NotNull Project project) {
-      super(project, "Presentation", message("configurable.name.svn.presentation"), () -> new PresentationSettingsPanel(project));
-    }
-  }
-
-  public static class Network extends SvnConfigurable {
-    public Network(@NotNull Project project) {
-      super(project, "Network", message("configurable.name.svn.network"), () -> new NetworkSettingsPanel(project));
-    }
   }
 
   public static class Ssh extends SvnConfigurable {
     public Ssh(@NotNull Project project) {
-      super(project, "SSH", message("configurable.name.svn.ssh"), () -> new SshSettingsPanel(project));
+      super(project, "SSH", message("configurable.name.svn.ssh"), () -> new SshSettingConfigurableUi(project));
     }
   }
 
   public static void selectConfigurationDirectory(@NotNull String path,
-                                                  @NotNull final Consumer<? super String> dirConsumer,
+                                                  final @NotNull Consumer<? super String> dirConsumer,
                                                   final Project project,
-                                                  @Nullable final Component component) {
+                                                  final @Nullable Component component) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       .withTitle(message("dialog.title.select.configuration.directory"))
       .withDescription(message("dialog.description.select.configuration.directory"))

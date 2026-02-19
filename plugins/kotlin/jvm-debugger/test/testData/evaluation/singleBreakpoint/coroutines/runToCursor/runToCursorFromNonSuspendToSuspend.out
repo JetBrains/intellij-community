@@ -1,0 +1,9 @@
+LineBreakpoint created at runToCursorFromNonSuspendToSuspend.kt:45
+Run Java
+Connected to the target VM
+runToCursorFromNonSuspendToSuspend.kt:45
+runToCursorFromNonSuspendToSuspend.kt:14
+Compile bytecode for i
+Disconnected from the target VM
+
+Process finished with exit code 0

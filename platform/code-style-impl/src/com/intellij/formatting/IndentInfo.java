@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -20,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-public class IndentInfo {
+public final class IndentInfo {
 
   private final int mySpaces;
   private final int myIndentSpaces;
@@ -32,6 +18,17 @@ public class IndentInfo {
 
   public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces) {
     this(lineFeeds, indentSpaces, spaces, false);
+  }
+
+  @Override
+  public String toString() {
+    return "IndentInfo{" +
+           "mySpaces=" + mySpaces +
+           ", myIndentSpaces=" + myIndentSpaces +
+           ", myLineFeeds=" + myLineFeeds +
+           ", myForceSkipTabulationsUsage=" + myForceSkipTabulationsUsage +
+           ", myIndentEmptyLines=" + myIndentEmptyLines +
+           '}';
   }
 
   public IndentInfo(final int lineFeeds,
@@ -57,17 +54,22 @@ public class IndentInfo {
    *
    * @param options              indentation formatting options
    */
-  @NotNull
-  public String generateNewWhiteSpace(@NotNull CommonCodeStyleSettings.IndentOptions options) {
+  public @NotNull String generateNewWhiteSpace(@NotNull CommonCodeStyleSettings.IndentOptions options) {
     StringBuffer buffer = new StringBuffer();
+    boolean hasLineFeeds = myLineFeeds > 0;
+    // If alignment requests "skip tabs", still allow tabs for indentation at the line start.
+    boolean tabsAllowed = !myForceSkipTabulationsUsage || hasLineFeeds;
+    // Alignment may force "skip tabs" for this whitespace. If it starts a new line, keep tabs for indent
+    // but emit alignment as spaces even when SMART_TABS is off (tabs for indent, spaces for alignment).
+    boolean forceSmartTabs = myForceSkipTabulationsUsage && hasLineFeeds;
     for (int i = 0; i < myLineFeeds; i ++) {
       if (options.KEEP_INDENTS_ON_EMPTY_LINES && i > 0) {
         int spaces = myIndentEmptyLines ? myIndentSpaces + options.INDENT_SIZE : myIndentSpaces;
-        generateLineWhitespace(buffer, options, spaces, 0, true);
+        generateLineWhitespace(buffer, options, spaces, mySpaces, true, forceSmartTabs);
       }
       buffer.append('\n');
     }
-    generateLineWhitespace(buffer, options, myIndentSpaces, mySpaces, !myForceSkipTabulationsUsage || myLineFeeds > 0);
+    generateLineWhitespace(buffer, options, myIndentSpaces, mySpaces, tabsAllowed, forceSmartTabs);
     return buffer.toString();
 
   }
@@ -76,9 +78,10 @@ public class IndentInfo {
                                              @NotNull CommonCodeStyleSettings.IndentOptions options,
                                              int indentSpaces,
                                              int alignmentSpaces,
-                                             boolean tabsAllowed) {
+                                             boolean tabsAllowed,
+                                             boolean forceSmartTabs) {
     if (options.USE_TAB_CHARACTER && tabsAllowed) {
-      if (options.SMART_TABS) {
+      if (options.SMART_TABS || forceSmartTabs) {
         int tabCount = indentSpaces / options.TAB_SIZE;
         int leftSpaces = indentSpaces - tabCount * options.TAB_SIZE;
         StringUtil.repeatSymbol(buffer, '\t', tabCount);

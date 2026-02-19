@@ -1,16 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NotNull;
 
-public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
+public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer
+  implements DumbAware {
+
   private final TestNGInClassConfigurationProducerDelegate myDelegate = new TestNGInClassConfigurationProducerDelegate();
 
   @Override
@@ -33,9 +36,8 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   }
 
   private static class TestNGInClassConfigurationProducerDelegate extends AbstractInClassConfigurationProducer<TestNGConfiguration> {
-    @NotNull
     @Override
-    public ConfigurationFactory getConfigurationFactory() {
+    public @NotNull ConfigurationFactory getConfigurationFactory() {
       return TestNGConfigurationType.getInstance();
     }
 

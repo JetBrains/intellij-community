@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="markdownj">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/markdownj-core-0.4.2-SNAPSHOT.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

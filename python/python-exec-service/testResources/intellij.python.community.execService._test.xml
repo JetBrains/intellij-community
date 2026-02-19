@@ -1,0 +1,6 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.testFramework.junit5.eel._test"/>
+    <module name="intellij.python.community.execService"/>
+  </dependencies>
+</idea-plugin>

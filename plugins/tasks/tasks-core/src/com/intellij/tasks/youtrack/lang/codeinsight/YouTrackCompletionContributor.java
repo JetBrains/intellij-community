@@ -1,7 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack.lang.codeinsight;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.Application;
@@ -34,9 +38,9 @@ public class YouTrackCompletionContributor extends CompletionContributor {
   private static final InsertHandler<LookupElement> INSERT_HANDLER = new MyInsertHandler();
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), true));
+      LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), false));
     }
 
     super.fillCompletionVariants(parameters, result);
@@ -56,8 +60,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
       result = result.withPrefixMatcher(extractPrefix(parameters)).caseInsensitive();
       result.addAllElements(ContainerUtil.map(suggestions, (Function<CompletionItem, LookupElement>)item -> LookupElementBuilder.create(item, item.getOption())
         .withTypeText(item.getDescription(), true)
-        .withInsertHandler(INSERT_HANDLER)
-        .withBoldness(item.getStyleClass().equals("keyword"))));
+        .withInsertHandler(INSERT_HANDLER)));
     }
     catch (Exception ignored) {
       //noinspection InstanceofCatchParameter
@@ -71,8 +74,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
   /**
    * Find first word left boundary before cursor and strip leading braces and '#' signs
    */
-  @NotNull
-  private static String extractPrefix(CompletionParameters parameters) {
+  private static @NotNull String extractPrefix(CompletionParameters parameters) {
     String text = parameters.getOriginalFile().getText();
     final int caretOffset = parameters.getOffset();
     if (text.isEmpty() || caretOffset == 0) {
@@ -141,7 +143,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
   }
 
   static boolean hasPrefixAt(String text, int offset, String prefix) {
-    if (text.isEmpty() || offset < 0 || offset >= text.length()) {
+    if (offset < 0 || offset >= text.length()) {
       return false;
     }
     return text.regionMatches(true, offset, prefix, 0, prefix.length());

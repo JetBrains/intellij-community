@@ -9,12 +9,14 @@ print x
 -----
 0(1) element: null
 1(2) WRITE x
-2(3) READ x
-3(4) element: Anonymous class
-4(5) ARGUMENTS element: NEW expression
-5(6) ARGUMENTS element: Method call
-6(7) READ print
-7(8) READ x
-8(9) ARGUMENTS element: Call expression
-9(10) element: Call expression MAYBE_RETURN
-10() element: null
+2(3) READ this
+3(4) READ this
+4(5) READ x
+5(6) element: Anonymous class
+6(7) ARGUMENTS element: NEW expression
+7(8) ARGUMENTS element: Method call
+8(9) READ print
+9(10) READ x
+10(11) ARGUMENTS element: Call expression
+11(12) element: Call expression MAYBE_RETURN
+12() element: null

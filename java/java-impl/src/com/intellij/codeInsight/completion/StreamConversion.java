@@ -1,36 +1,74 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.statistics.StatisticsInfo;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.Consumer;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collector;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
-import static com.intellij.psi.CommonClassNames.*;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAYS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SET;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_STREAM;
 
-/**
- * @author peter
- */
 final class StreamConversion {
 
-  static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
+  static @Unmodifiable List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null) return Collections.emptyList();
 
@@ -63,11 +101,10 @@ final class StreamConversion {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
-                                                               PsiExpression qualifier,
-                                                               String changedQualifier,
-                                                               Consumer<InsertionContext> beforeInsertion) {
+  private static @Unmodifiable @NotNull List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
+                                                                                      PsiExpression qualifier,
+                                                                                      String changedQualifier,
+                                                                                      Consumer<InsertionContext> beforeInsertion) {
     String refText = changedQualifier + ".x";
     PsiExpression expr = PsiElementFactory.getInstance(qualifier.getProject()).createExpressionFromText(refText, qualifier);
     if (!(expr instanceof PsiReferenceExpression)) {
@@ -169,19 +206,11 @@ final class StreamConversion {
 
     PsiType listType = null;
     PsiType setType = null;
-    boolean hasIterable = false;
-    boolean hasString = false;
     for (ExpectedTypeInfo info : expectedTypes) {
       PsiType type = info.getDefaultType();
-      if (type.equalsToText(JAVA_LANG_STRING)) {
-        hasString = true;
-        continue;
-      }
-
       PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(type);
       PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(type, true);
       if (expectedClass == null || expectedComponent == null || !TypeConversionUtil.isAssignable(expectedComponent, component)) continue;
-      hasIterable = true;
 
       if (InheritanceUtil.isInheritorOrSelf(list, expectedClass, true)) {
         listType = type;
@@ -191,34 +220,33 @@ final class StreamConversion {
       }
     }
 
-    if (expectedTypes.isEmpty()) {
+    if (listType == null) {
       listType = factory.createType(list, component);
+    }
+
+    if (setType == null) {
       setType = factory.createType(set, component);
     }
 
     List<Pair<String, PsiType>> result = new ArrayList<>();
-    if (listType != null) {
+    if (PsiUtil.getLanguageLevel(qualifier).isLessThan(LanguageLevel.JDK_16)) {
       result.add(Pair.create("toList", listType));
-      result.add(Pair.create("toUnmodifiableList", listType));
     }
-    if (setType != null) {
-      result.add(Pair.create("toSet", setType));
-      result.add(Pair.create("toUnmodifiableSet", setType));
-    }
-    if (expectedTypes.isEmpty() || hasIterable) {
-      result.add(Pair.create("toCollection", factory.createType(collection, component)));
-    }
-    if ((expectedTypes.isEmpty() || hasString) && joiningApplicable) {
+    result.add(Pair.create("toUnmodifiableList", listType));
+    result.add(Pair.create("toSet", setType));
+    result.add(Pair.create("toUnmodifiableSet", setType));
+    result.add(Pair.create("toCollection", factory.createType(collection, component)));
+    if (joiningApplicable) {
       result.add(Pair.create("joining", factory.createType(string)));
     }
     return result;
   }
 
-  private static class CollectLookupElement extends LookupElement implements TypedLookupItem {
+  private static class CollectLookupElement extends LookupElement implements TypedLookupItem, JavaCompletionStatistician.CustomStatisticsInfoProvider {
     private final String myLookupString;
     private final String myTypeText;
     private final String myMethodName;
-    @NotNull private final PsiType myExpectedType;
+    private final @NotNull PsiType myExpectedType;
     private final boolean myHasImport;
 
     CollectLookupElement(String methodName, @NotNull PsiType expectedType, @NotNull PsiElement context) {
@@ -228,7 +256,7 @@ final class StreamConversion {
 
       PsiMethodCallExpression call = (PsiMethodCallExpression)
         JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(methodName + "()", context);
-      myHasImport = ContainerUtil.or(call.getMethodExpression().multiResolve(true), result -> {
+      myHasImport = ContainerUtil.or(call.multiResolve(true), result -> {
         PsiElement element = result.getElement();
         return element instanceof PsiMember &&
                (JAVA_UTIL_STREAM_COLLECTORS + "." + myMethodName).equals(PsiUtil.getMemberQualifiedName((PsiMember)element));
@@ -237,22 +265,21 @@ final class StreamConversion {
       myLookupString = "collect(" + (myHasImport ? "" : "Collectors.") + myMethodName + "())";
     }
 
-    @NotNull
     @Override
-    public String getLookupString() {
+    public @NotNull String getLookupString() {
       return myLookupString;
     }
 
     @Override
-    public Set<String> getAllLookupStrings() {
+    public @Unmodifiable @NotNull Set<String> getAllLookupStrings() {
       return ContainerUtil.newHashSet(myLookupString, myMethodName);
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setTypeText(myTypeText);
-      presentation.setIcon(PlatformIcons.METHOD_ICON);
+      presentation.setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Method));
     }
 
     @Override
@@ -265,9 +292,8 @@ final class StreamConversion {
       if (call == null) return;
 
       PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length != 1 || !(args[0] instanceof PsiMethodCallExpression)) return;
+      if (args.length != 1 || !(args[0] instanceof PsiMethodCallExpression innerCall)) return;
 
-      PsiMethodCallExpression innerCall = (PsiMethodCallExpression)args[0];
       PsiMethod collectorMethod = innerCall.resolveMethod();
       if (collectorMethod != null && (!collectorMethod.getParameterList().isEmpty() || MethodSignatureUtil.hasOverloads(collectorMethod))) {
         context.getEditor().getCaretModel().moveToOffset(innerCall.getArgumentList().getFirstChild().getTextRange().getEndOffset());
@@ -276,14 +302,18 @@ final class StreamConversion {
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(innerCall);
     }
 
-    @NotNull
-    private String getInsertString() {
+    private @NotNull String getInsertString() {
       return "collect(" + (myHasImport ? "" : JAVA_UTIL_STREAM_COLLECTORS + ".") + myMethodName + "())";
     }
 
     @Override
     public PsiType getType() {
       return myExpectedType;
+    }
+
+    @Override
+    public @Nullable StatisticsInfo getStatisticsInfo() {
+      return JavaStatisticsManager.createInfoForNoArgMethod(JAVA_UTIL_STREAM_COLLECTORS, myMethodName);
     }
   }
 
@@ -293,10 +323,11 @@ final class StreamConversion {
     StreamMethodInvocation(LookupElement e, Consumer<? super InsertionContext> beforeInsertion) {
       super(e);
       myBeforeInsertion = beforeInsertion;
+      JavaMethodMergingContributor.disallowMerge(this);
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setItemText("stream()." + presentation.getItemText());
     }

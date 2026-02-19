@@ -1,9 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.util.IncorrectOperationException;
@@ -21,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +40,6 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_ENUM;
 
 /**
  * @author Dmitry.Krasilschikov
- * @date 18.03.2007
  */
 public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrEnumTypeDefinition {
 
@@ -80,10 +90,10 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   @ApiStatus.Internal
-  public List<PsiMethod> getDefEnumMethods() {
+  public List<PsiMethod> getDefEnumMethods(@NotNull TransformationContext context) {
     PsiManagerEx manager = getManager();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    PsiClassType thisType = factory.createType(this);
+    PsiClassType thisType = context.eraseClassType(factory.createType(this, PsiSubstitutor.EMPTY));
     List<PsiMethod> result = Arrays.asList(
       new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "values")
         .setMethodReturnType(new PsiArrayType(thisType))

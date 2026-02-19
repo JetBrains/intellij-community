@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaGeneratedSourcesFilter extends GeneratedSourcesFilter {
+public final class JavaGeneratedSourcesFilter extends GeneratedSourcesFilter {
   @Override
   public boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project) {
     return JavaProjectRootsUtil.isInGeneratedCode(file, project);

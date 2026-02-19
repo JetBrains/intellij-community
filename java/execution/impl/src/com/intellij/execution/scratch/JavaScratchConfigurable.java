@@ -1,9 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
+import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.execution.ui.ShortenCommandLineModeCombo;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -25,12 +29,19 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import static java.awt.GridBagConstraints.*;
+import static java.awt.GridBagConstraints.BOTH;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.NORTHWEST;
+import static java.awt.GridBagConstraints.RELATIVE;
 
 /**
  * @author Eugene Zhuravlev
@@ -49,7 +60,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   private final LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComponent myAnchor;
 
-  public JavaScratchConfigurable(final Project project) {
+  public JavaScratchConfigurable(@NotNull  Project project) {
     myMainClass = new LabeledComponent<>();
     myMainClass.setLabelLocation(BorderLayout.WEST);
     myMainClass.setText(ExecutionBundle.message("main.class"));
@@ -102,7 +113,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myWholePanel.add(myMainClass, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
     myWholePanel.add(myScratchPathField, new GridBagConstraints(RELATIVE, 1, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
     myWholePanel.add(myCommonProgramParameters, new GridBagConstraints(RELATIVE, 2, 1, 1, 1.0, 1.0, NORTHWEST, BOTH, JBInsets.create(12, 0), 0, 0 ));
-    myWholePanel.add(myModule, new GridBagConstraints(RELATIVE, 3, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0 ));
+    myWholePanel.add(myModule, new GridBagConstraints(RELATIVE, 3, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0 ));
     myWholePanel.add(myIncludeProvidedDeps, new GridBagConstraints(RELATIVE, 4, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
     myWholePanel.add(myJrePathEditor, new GridBagConstraints(RELATIVE, 5, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(12), 0, 0 ));
     myWholePanel.add(myShortenClasspathModeCombo, new GridBagConstraints(RELATIVE, 6, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insetsTop(6), 0, 0 ));
@@ -126,8 +137,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     configuration.setScratchFileUrl(vFile != null ? vFile.getUrl() : null);
   }
 
-  @Nullable
-  private VirtualFile getVFileFromEditor() {
+  private @Nullable VirtualFile getVFileFromEditor() {
     final String path = FileUtil.toSystemIndependentName(myScratchPathField.getComponent().getText().trim());
     return !StringUtil.isEmpty(path) ? LocalFileSystem.getInstance().findFileByPath(path) : null;
   }
@@ -148,9 +158,8 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myScratchPathField.getComponent().setText(file != null? FileUtil.toSystemDependentName(file.getPath()): "");
   }
 
-  @NotNull
   @Override
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     return myWholePanel;
   }
 

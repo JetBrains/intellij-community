@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
@@ -18,7 +21,6 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NonNls;
@@ -26,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+import static com.intellij.xml.util.XmlUtil.isNotInjectedOrCustomHtmlFile;
+
 /**
  * @author Maxim Mossienko
  */
 public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
-  @NonNls private static final Set<String> ourTagsWithEmptyEndsNotAllowed =
-    ContainerUtil.set(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe");
+  private static final @NonNls Set<String> ourTagsWithEmptyEndsNotAllowed =
+    Set.of(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe");
 
   @Override
   public boolean isEnabledByDefault() {
@@ -39,10 +43,10 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
-      @Override public void visitXmlTag(final XmlTag tag) {
+      @Override
+      public void visitXmlTag(final @NotNull XmlTag tag) {
         if (XmlExtension.shouldIgnoreSelfClosingTag(tag) || !isTagWithEmptyEndNotAllowed(tag)) {
           return;
         }
@@ -51,14 +55,16 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
           return;
         }
 
-        final LocalQuickFix fix = new MyLocalQuickFix();
-
-        holder.registerProblem(tag,
-                               XmlAnalysisBundle.message("html.inspections.check.empty.script.message"),
-                               tag.getContainingFile().getContext() != null ?
-                               ProblemHighlightType.INFORMATION:
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               fix);
+        ProblemHighlightType type = isNotInjectedOrCustomHtmlFile(tag.getContainingFile())
+                                    ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                    : ProblemHighlightType.INFORMATION;
+        // should not report INFORMATION in batch mode
+        if (isOnTheFly || type != ProblemHighlightType.INFORMATION) {
+          holder.registerProblem(tag,
+                                 XmlAnalysisBundle.message("html.inspections.check.empty.script.message"),
+                                 type,
+                                 new MyLocalQuickFix());
+        }
       }
     };
   }
@@ -72,44 +78,41 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
            (language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE)) ||
 
            (language.isKindOf(HTMLLanguage.INSTANCE) &&
-           !HtmlUtil.isSingleHtmlTag(tag, false) &&
-           tagName.indexOf(':') == -1 &&
-           !XmlExtension.isCollapsible(tag));
+            !HtmlUtil.isSingleHtmlTag(tag, false) &&
+            tagName.indexOf(':') == -1 &&
+            !XmlExtension.isCollapsible(tag));
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "CheckEmptyScriptTag";
   }
 
   public static boolean tagIsWellFormed(XmlTag tag) {
-      boolean ok = false;
-      final PsiElement[] children = tag.getChildren();
-      for (PsiElement child : children) {
-          if (child instanceof XmlToken) {
-              final IElementType tokenType = ((XmlToken) child).getTokenType();
-              if (tokenType.equals(XmlTokenType.XML_EMPTY_ELEMENT_END) &&
-                  "/>".equals(child.getText())) {
-                  ok = true;
-              }
-              else if (tokenType.equals(XmlTokenType.XML_END_TAG_START)) {
-                  ok = true;
-              }
-          }
-          else if (child instanceof OuterLanguageElement) {
-              return false;
-          }
+    boolean ok = false;
+    final PsiElement[] children = tag.getChildren();
+    for (PsiElement child : children) {
+      if (child instanceof XmlToken) {
+        final IElementType tokenType = ((XmlToken)child).getTokenType();
+        if (tokenType.equals(XmlTokenType.XML_EMPTY_ELEMENT_END) &&
+            "/>".equals(child.getText())) {
+          ok = true;
+        }
+        else if (tokenType.equals(XmlTokenType.XML_END_TAG_START)) {
+          ok = true;
+        }
       }
+      else if (child instanceof OuterLanguageElement) {
+        return false;
+      }
+    }
 
-      return ok;
+    return ok;
   }
 
   private static class MyLocalQuickFix implements LocalQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return XmlAnalysisBundle.message("html.inspections.check.empty.script.tag.fix.message");
     }
 

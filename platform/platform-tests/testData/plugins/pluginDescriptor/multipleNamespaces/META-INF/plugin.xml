@@ -1,0 +1,9 @@
+<idea-plugin>
+  <id>main</id>
+  <content namespace="my.namespace.1">
+    <module name="module1"/>
+  </content>
+  <content namespace="my.namespace.2">
+    <module name="module2"/>
+  </content>
+</idea-plugin>

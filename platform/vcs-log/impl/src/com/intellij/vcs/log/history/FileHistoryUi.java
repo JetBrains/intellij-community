@@ -1,166 +1,166 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.notification.NotificationAction;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.navigation.History;
-import com.intellij.util.PairFunction;
-import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.DataPackBase;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommitStyleFactory;
+import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsLogDiffHandler;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogGraphData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
-import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.highlighters.VcsLogCommitsHighlighter;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
-import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
-import org.jetbrains.annotations.NonNls;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 import static com.intellij.ui.JBColor.namedColor;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
-  @NotNull @NonNls private static final String HELP_ID = "reference.versionControl.toolwindow.history";
-  @NotNull private final FilePath myPath;
-  @NotNull private final VirtualFile myRoot;
-  @Nullable private final Hash myRevision;
+  private final @NotNull VirtualFile myRoot;
+  private final @NotNull FilePath myPath;
+  private final @Nullable Hash myRevision;
 
-  @NotNull private final FileHistoryModel myFileHistoryModel;
-  @NotNull private final FileHistoryUiProperties myUiProperties;
-  @NotNull private final FileHistoryFilterUi myFilterUi;
-  @NotNull private final FileHistoryPanel myFileHistoryPanel;
-  @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
-  @NotNull private final History myHistory;
+  private final @NotNull FileHistoryModel myFileHistoryModel;
+  private final @NotNull FileHistoryUiProperties myUiProperties;
+  private final @NotNull FileHistoryFilterUi myFilterUi;
+  private final @NotNull FileHistoryPanel myFileHistoryPanel;
 
+  @ApiStatus.Internal
   public FileHistoryUi(@NotNull VcsLogData logData,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
                        @NotNull FilePath path,
                        @Nullable Hash revision,
-                       @NotNull VirtualFile root) {
-    super(getFileHistoryLogId(path, revision), logData, new FileHistoryColorManager(root, path), refresher);
+                       @NotNull VirtualFile root,
+                       @NotNull String logId,
+                       @NotNull VcsLogFilterCollection initialFilters,
+                       @NotNull VcsLogDiffHandler vcsLogDiffHandler) {
+    super(logId, logData, new FileHistoryColorManager(root, path), refresher);
 
     assert !path.isDirectory();
 
-    myPath = path;
     myRoot = root;
+    myPath = path;
     myRevision = revision;
 
     myUiProperties = uiProperties;
 
-    myFileHistoryModel = new FileHistoryModel(logData, Objects.requireNonNull(logData.getLogProvider(root).getDiffHandler()), root) {
-      @NotNull
+    myFileHistoryModel = new FileHistoryModel(logData, vcsLogDiffHandler, root) {
       @Override
-      protected VisiblePack getVisiblePack() {
+      protected @NotNull VisiblePack getVisiblePack() {
         return myVisiblePack;
       }
     };
 
-    myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !VcsLogUiUtil.isDiffPreviewInEditor(), this);
+    myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties, logData, initialFilters, filters -> {
+      refresher.onFiltersChange(filters);
+    });
+    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, myFilterUi, logData, path, root, myColorManager, this);
 
-    if (VcsLogUiUtil.isDiffPreviewInEditor()) {
-      new FileHistoryEditorDiffPreview(logData.getProject(), myUiProperties, myFileHistoryPanel);
-    }
-
-    getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
+    getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(
+      VcsLogCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
-      getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
-    } else {
+      getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, root));
+    }
+    else {
       getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(CurrentBranchHighlighter.Factory.class).createHighlighter(getLogData(), this));
     }
 
-    myPropertiesChangeListener = new MyPropertiesChangeListener();
-    myUiProperties.addChangeListener(myPropertiesChangeListener);
-
-    myHistory = VcsLogUiUtil.installNavigationHistory(this);
+    myUiProperties.addChangeListener(new MyPropertiesChangeListener(), this);
   }
 
-  @NotNull
-  public static String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
-    return path.getPath() + (revision == null ? "" : revision.asString());
+  public static @NotNull String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
+    return path.getPath() + (revision == null ? "" : ":" + revision.asString());
   }
 
   @Override
   public void setVisiblePack(@NotNull VisiblePack pack) {
     super.setVisiblePack(pack);
 
-    if (pack.canRequestMore()) {
-      requestMore(EmptyRunnable.INSTANCE);
+    myFilterUi.setVisiblePack(pack);
+
+    if (pack.getCanRequestMore()) {
+      requestMore();
     }
-  }
-
-  @Nullable
-  public VcsFileRevision createRevision(@Nullable VcsCommitMetadata commit) {
-    return myFileHistoryModel.createRevision(commit);
-  }
-
-  @Nullable
-  public FilePath getPathInCommit(@NotNull Hash hash) {
-    return myFileHistoryModel.getPathInCommit(hash);
   }
 
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, boolean commitExists,
-                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+                                          @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     if (!commitExists) {
       super.handleCommitNotFound(commitId, false, rowGetter);
       return;
     }
 
-    if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
-      String text = VcsLogBundle.message("file.history.commit.not.found.in.branch",
-                                         getCommitPresentation(commitId), myPath.getName());
-      showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
-        myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false));
-      });
+    boolean hasBranchFilter = getFilterUi().hasBranchFilter();
+    String text = VcsLogBundle.message(hasBranchFilter ? "file.history.commit.not.found.in.branch" : "file.history.commit.not.found",
+                                       getCommitPresentation(commitId), myPath.getName());
+
+    List<NotificationAction> actions = new ArrayList<>();
+    if (hasBranchFilter && getFilterUi().isBranchFilterEnabled()) {
+      actions.add(
+        NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
+          getFilterUi().clearFilters();
+          VcsLogUtil.invokeOnceOnDataChange(this, () -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
+        }));
     }
-    else {
-      String text = VcsLogBundle.message("file.history.commit.not.found",
-                                         getCommitPresentation(commitId), myPath.getName());
-      showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
-        VcsLogContentUtil.runInMainLog(myProject, ui -> {
-          if (commitId instanceof Hash) {
-            ui.getVcsLog().jumpToCommit((Hash)commitId, myRoot);
-          }
-          else if (commitId instanceof String) {
-            ui.getVcsLog().jumpToReference((String)commitId);
-          }
+    actions.add(NotificationAction.createSimple(VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
+      Hash hash = getCommitHash(commitId);
+      if (hash != null) {
+        VcsLogNavigationUtil.jumpToRevisionAsync(myProject, myRoot, (Hash)commitId, null);
+      }
+      else {
+        VcsProjectLog.runInMainLog(myProject, ui -> {
+          ui.jumpTo(commitId, rowGetter, SettableFuture.create(), false, true);
+          return Unit.INSTANCE;
         });
-      });
-    }
+      }
+    }));
+    VcsNotifier.getInstance(myProject).notifyWarning(VcsLogNotificationIdsHolder.COMMIT_NOT_FOUND, "", text,
+                                                     actions.toArray(NotificationAction[]::new));
   }
 
   public boolean matches(@NotNull FilePath targetPath, @Nullable Hash targetRevision) {
     return myPath.equals(targetPath) && Objects.equals(myRevision, targetRevision);
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  public VcsLogFilterUi getFilterUi() {
+  public @NotNull FileHistoryFilterUi getFilterUi() {
     return myFilterUi;
   }
 
@@ -171,44 +171,24 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myFileHistoryPanel.getGraphTable().rootColumnUpdated();
   }
 
-  @NotNull
   @Override
-  public VcsLogGraphTable getTable() {
+  public @NotNull VcsLogGraphTable getTable() {
     return myFileHistoryPanel.getGraphTable();
   }
 
-  @NotNull
   @Override
-  public JComponent getMainComponent() {
+  public @NotNull JComponent getMainComponent() {
     return myFileHistoryPanel;
   }
 
-  @Nullable
-  @Override
-  public String getHelpId() {
-    return HELP_ID;
+  public @NotNull JComponent getToolbar() {
+    return myFileHistoryPanel.getToolbar();
   }
 
-  private void updateFilter() {
-    myRefresher.onFiltersChange(myFilterUi.getFilters());
-  }
-
+  @ApiStatus.Internal
   @Override
-  @NotNull
-  public FileHistoryUiProperties getProperties() {
+  public @NotNull FileHistoryUiProperties getProperties() {
     return myUiProperties;
-  }
-
-  @Nullable
-  @Override
-  public History getNavigationHistory() {
-    return myHistory;
-  }
-
-  @Override
-  public void dispose() {
-    myUiProperties.removeChangeListener(myPropertiesChangeListener);
-    super.dispose();
   }
 
   private class MyPropertiesChangeListener implements VcsLogUiProperties.PropertiesChangeListener {
@@ -217,33 +197,24 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
         myFileHistoryPanel.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
       }
-      else if (FileHistoryUiProperties.SHOW_ALL_BRANCHES.equals(property)) {
-        updateFilter();
-      }
       else if (CommonUiProperties.COLUMN_ID_ORDER.equals(property)) {
         getTable().onColumnOrderSettingChanged();
       }
       else if (property instanceof TableColumnWidthProperty) {
         getTable().forceReLayout(((TableColumnWidthProperty)property).getColumn());
       }
-      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-        getTable().rootColumnUpdated();
-      }
-      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
-        getTable().repaint();
-      }
     }
   }
 
   private static class RevisionHistoryHighlighter implements VcsLogHighlighter {
-    @NotNull private final JBColor myBgColor = namedColor("VersionControl.FileHistory.Commit.selectedBranchBackground",
+    private final @NotNull JBColor myBgColor = namedColor("VersionControl.FileHistory.Commit.selectedBranchBackground",
                                                           new JBColor(new Color(0xfffee4), new Color(0x49493f)));
-    @NotNull private final VcsLogStorage myStorage;
-    @NotNull private final Hash myRevision;
-    @NotNull private final VirtualFile myRoot;
+    private final @NotNull VcsLogStorage myStorage;
+    private final @NotNull Hash myRevision;
+    private final @NotNull VirtualFile myRoot;
 
-    @Nullable private Condition<Integer> myCondition;
-    @NotNull private VcsLogDataPack myVisiblePack = VisiblePack.EMPTY;
+    private Predicate<Integer> myCondition;
+    private @NotNull VcsLogDataPack myVisiblePack = VisiblePack.EMPTY;
 
     RevisionHistoryHighlighter(@NotNull VcsLogStorage storage, @NotNull Hash revision, @NotNull VirtualFile root) {
       myStorage = storage;
@@ -251,35 +222,32 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       myRoot = root;
     }
 
-    @NotNull
     @Override
-    public VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
+    public @NotNull VcsCommitStyle getStyle(int commitId, @NotNull VcsShortCommitDetails commitDetails, int column, boolean isSelected) {
       if (isSelected) return VcsCommitStyle.DEFAULT;
 
       if (myCondition == null) {
         myCondition = getCondition();
       }
 
-      if (myCondition.value(commitId)) {
+      if (myCondition.test(commitId)) {
         return VcsCommitStyleFactory.background(myBgColor);
       }
       return VcsCommitStyle.DEFAULT;
     }
 
-    @NotNull
-    private Condition<Integer> getCondition() {
-      if (!(myVisiblePack instanceof VisiblePack)) return Conditions.alwaysFalse();
-      DataPackBase dataPack = ((VisiblePack)myVisiblePack).getDataPack();
-      if (!(dataPack instanceof DataPack)) return Conditions.alwaysFalse();
+    private @NotNull Predicate<Integer> getCondition() {
+      if (!(myVisiblePack instanceof VisiblePack visiblePack)) return Predicates.alwaysFalse();
+      VcsLogGraphData dataPack = visiblePack.getDataPack();
       Set<Integer> heads = Collections.singleton(myStorage.getCommitIndex(myRevision, myRoot));
-      return ((DataPack)dataPack).getPermanentGraph().getContainedInBranchCondition(heads);
+      return dataPack.getPermanentGraph().getContainedInBranchCondition(heads);
     }
 
     @Override
     public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
       myVisiblePack = dataPack;
       if (myVisiblePack.getFilters().get(VcsLogFilterCollection.REVISION_FILTER) != null) {
-        myCondition = Conditions.alwaysFalse();
+        myCondition = Predicates.alwaysFalse();
       }
       else {
         myCondition = null;

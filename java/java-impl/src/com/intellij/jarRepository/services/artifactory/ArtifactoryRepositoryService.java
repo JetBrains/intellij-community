@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services.artifactory;
 
 import com.google.gson.Gson;
@@ -16,7 +16,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Gregory.Shrago
@@ -27,16 +31,14 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
 
   private final Gson gson = new Gson();
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return "Artifactory";
   }
 
-  @NotNull
   @Override
-  public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ArtifactoryModel.RepositoryType[] repos = gson.fromJson(
         HttpRequests.request(toUrl(url, "repositories"))
@@ -62,16 +64,15 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
     return new RemoteRepositoryDescription(repo.key, ObjectUtils.notNull(repo.description, repo.key), repo.url);
   }
 
-  @NotNull
   @Override
-  public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  public @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException {
-    assert !ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
 
 
       final String className = template.getClassNames();
-      if (className == null || className.length() == 0) {
+      if (className == null || className.isEmpty()) {
         return searchArtifacts(url, template);
       }
       else {
@@ -86,8 +87,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
     }
   }
 
-  @NotNull
-  private List<RepositoryArtifactDescription> searchArchives(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  private @NotNull List<RepositoryArtifactDescription> searchArchives(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException {
     final String packaging = StringUtil.notNullize(template.getPackaging());
     final ArrayList<RepositoryArtifactDescription> artifacts = new ArrayList<>();
@@ -113,8 +113,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
     return artifacts;
   }
 
-  @NotNull
-  private List<RepositoryArtifactDescription> searchArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  private @NotNull List<RepositoryArtifactDescription> searchArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException {
     final String packaging = StringUtil.notNullize(template.getPackaging());
     final ArrayList<RepositoryArtifactDescription> artifacts = new ArrayList<>();

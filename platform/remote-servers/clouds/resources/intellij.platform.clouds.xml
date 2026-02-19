@@ -1,0 +1,44 @@
+<idea-plugin visibility="internal" package="com.intellij.platform.clouds">
+  <dependencies>
+    <plugin id="com.intellij.modules.remoteServers"/>
+    <module name="intellij.platform.execution.dashboard"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <serviceViewContributor implementation="com.intellij.platform.clouds.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
+  </extensions>
+  <actions resource-bundle="messages.CloudsBundle">
+    <group id="RemoteServersViewToolbar">
+      <action id="RemoteServers.ConnectServer" icon="AllIcons.Actions.Execute"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.RemoteServerConnectAction"/>
+      <action id="RemoteServers.DisconnectServer" icon="AllIcons.Actions.Suspend"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.RemoteServerDisconnectAction"/>
+      <action id="RemoteServers.EditServerConfig" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.RemoteServerConfigAction"/>
+      <action id="RemoteServers.ChooseServerDeployment" icon="AllIcons.Nodes.Deploy"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.ChooseDeploymentAction"/>
+      <action id="RemoteServers.ChooseServerDeploymentWithDebug" icon="AllIcons.Actions.StartDebugger"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.ChooseDeploymentWithDebugAction"/>
+      <action id="Servers.Deploy" icon="AllIcons.Nodes.Deploy"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.DeployAction">
+        <add-to-group group-id="RunDashboardContentToolbar" anchor="last"/>
+      </action>
+      <action id="Servers.Undeploy" icon="AllIcons.Nodes.Undeploy"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.UndeployAction">
+        <add-to-group group-id="RunDashboardContentToolbar" anchor="last"/>
+      </action>
+      <action id="Servers.DeployWithDebug" icon="AllIcons.Actions.StartDebugger"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.DeployWithDebugAction"/>
+      <action id="RemoteServers.EditDeploymentConfig" icon="AllIcons.Actions.EditSource"
+              class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.DeploymentConfigAction"/>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+    <group id="RemoteServersViewPopup"/>
+    <group id="RemoteServersViewToolbar.Top">
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+    <group id="RemoteServers.AddCloudConnectionGroup" popup="true"
+           class="com.intellij.platform.clouds.impl.runtime.ui.tree.actions.AddCloudConnectionActionGroup">
+      <add-to-group group-id="ServiceView.AddService"/>
+    </group>
+  </actions>
+</idea-plugin>

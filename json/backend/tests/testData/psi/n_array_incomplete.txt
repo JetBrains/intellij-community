@@ -1,0 +1,7 @@
+JsonFile: n_array_incomplete.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"x"')
+    PsiErrorElement:',' or ']' expected
+      <empty list>

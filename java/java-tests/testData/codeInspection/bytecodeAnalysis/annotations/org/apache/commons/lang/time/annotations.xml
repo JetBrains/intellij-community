@@ -349,6 +349,7 @@
     </item>
     <item name='org.apache.commons.lang.time.DateUtils.DateIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -455,7 +456,6 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.time.DurationFormatUtils.Token void increment()'>
         <annotation name='org.jetbrains.annotations.Contract'>

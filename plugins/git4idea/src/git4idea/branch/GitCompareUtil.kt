@@ -2,30 +2,31 @@
 package git4idea.branch
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.EmptyIntHashSet
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.util.TroveUtil
-import com.intellij.vcs.log.util.VcsLogUtil
-import gnu.trove.TIntHashSet
+import com.intellij.vcs.log.util.IntCollectionUtil
+import git4idea.GitUtil
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.regex.Pattern
 
-fun IndexDataGetter.match(root: VirtualFile,
-                          sourceBranchCommits: TIntHashSet,
-                          targetBranchCommits: TIntHashSet,
-                          reliable: Boolean = true): TIntHashSet {
-  val timeToSourceCommit = TroveUtil.group(sourceBranchCommits) { getAuthorTime(it) }
-  val authorToSourceCommit = TroveUtil.group(sourceBranchCommits) { getAuthor(it) }
+internal fun IndexDataGetter.match(root: VirtualFile,
+                          sourceBranchCommits: IntSet,
+                          targetBranchCommits: IntSet,
+                          reliable: Boolean = true): IntSet {
+  val timeToSourceCommit = IntCollectionUtil.groupByAsIntSet(sourceBranchCommits) { getAuthorTime(it) }
+  val authorToSourceCommit = IntCollectionUtil.groupByAsIntSet(sourceBranchCommits) { getAuthor(it) }
 
-  val result = TIntHashSet()
+  val result = IntOpenHashSet()
   for (targetCommit in targetBranchCommits) {
     val time = getAuthorTime(targetCommit)
     val author = getAuthor(targetCommit)
 
-    val commitsForAuthor = authorToSourceCommit[author] ?: TIntHashSet()
-    val sourceCandidates = TroveUtil.intersect(timeToSourceCommit[time] ?: TIntHashSet(), commitsForAuthor) ?: continue
-    if (!sourceCandidates.isEmpty) {
-      TroveUtil.addAll(result, selectSourceCommits(targetCommit, root, sourceCandidates, commitsForAuthor, reliable))
+    val commitsForAuthor = authorToSourceCommit[author] ?: IntOpenHashSet()
+    val sourceCandidates = IntCollectionUtil.intersect(timeToSourceCommit[time] ?: IntOpenHashSet(), commitsForAuthor) ?: continue
+    if (!sourceCandidates.isEmpty()) {
+      result.addAll(selectSourceCommits(targetCommit, root, sourceCandidates, commitsForAuthor, reliable))
     }
   }
 
@@ -35,21 +36,21 @@ fun IndexDataGetter.match(root: VirtualFile,
 private const val suffixStart = "cherry picked from commit" //NON-NLS
 private val suffixPattern = Pattern.compile("$suffixStart.*\\)")
 
-private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
+private fun IndexDataGetter.selectSourceCommits(targetCommit: VcsLogCommitStorageIndex,
                                                 root: VirtualFile,
-                                                sourceCandidates: TIntHashSet,
-                                                sourceCandidatesExtended: TIntHashSet,
-                                                reliable: Boolean): TIntHashSet {
-  val targetMessage = getFullMessage(targetCommit) ?: return EmptyIntHashSet.INSTANCE
+                                                sourceCandidates: IntSet,
+                                                sourceCandidatesExtended: IntSet,
+                                                reliable: Boolean): IntSet {
+  val targetMessage = getFullMessage(targetCommit) ?: return IntSet.of()
 
-  val result = TIntHashSet()
+  val result = IntOpenHashSet()
   val matcher = suffixPattern.matcher(targetMessage)
   while (matcher.find()) {
     val match = targetMessage.subSequence(matcher.start(), matcher.end())
     val hashesString = match.subSequence(suffixStart.length, match.length - 1) // -1 for the last ")"
     val hashesCandidates = hashesString.split(",", " ", ";")
     for (h in hashesCandidates) {
-      if (VcsLogUtil.HASH_REGEX.matcher(h).matches()) {
+      if (GitUtil.isHashString(h, false)) {
         val hash = HashImpl.build(h)
         val index = logStorage.getCommitIndex(hash, root)
         if (sourceCandidatesExtended.contains(index)) {
@@ -57,14 +58,14 @@ private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
         }
       }
     }
-    if (TroveUtil.intersects(sourceCandidates, result)) return result // target time should match one of sources time
+    if (IntCollectionUtil.intersects(sourceCandidates, result)) return result // target time should match one of sources time
   }
 
   if (!reliable) {
     val inexactMatches = mutableSetOf<Int>()
     val exactMatches = mutableSetOf<Int>()
     for (sourceCandidate in sourceCandidates) {
-      val sourceMessage = getFullMessage(sourceCandidate) ?: return EmptyIntHashSet.INSTANCE
+      val sourceMessage = getFullMessage(sourceCandidate) ?: return IntSet.of()
       if (targetMessage.contains(sourceMessage)) {
         if (targetMessage.length == sourceMessage.length) {
           exactMatches.add(sourceCandidate)
@@ -76,9 +77,9 @@ private fun IndexDataGetter.selectSourceCommits(targetCommit: Int,
     }
     val match = (if (exactMatches.isNotEmpty()) exactMatches else inexactMatches).singleOrNull()
     if (match != null) {
-      return TroveUtil.singleton(match)
+      return IntSet.of(match)
     }
   }
 
-  return EmptyIntHashSet.INSTANCE
+  return IntSet.of()
 }

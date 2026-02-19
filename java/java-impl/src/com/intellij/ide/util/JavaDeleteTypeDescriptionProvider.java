@@ -1,16 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class JavaDeleteTypeDescriptionProvider implements ElementDescriptionProvider {
+
+public final class JavaDeleteTypeDescriptionProvider implements ElementDescriptionProvider {
   @Override
-  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
+  public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
     if (location instanceof DeleteTypeDescriptionLocation && ((DeleteTypeDescriptionLocation) location).isPlural()) {
       if (element instanceof PsiMethod) {
         return JavaBundle.message("prompt.delete.method", 2);

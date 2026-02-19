@@ -1,62 +1,73 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiPackageStatement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler {
   public static PsiClass createClassOrInterface(Project project,
                                                 PsiDirectory directory,
                                                 String content,
                                                 boolean reformat,
                                                 String extension) throws IncorrectOperationException {
+    return createClassOrInterface(project, directory, content, reformat, extension, null);
+  }
+
+  private static PsiClass createClassOrInterface(Project project,
+                                                 PsiDirectory directory,
+                                                 String content,
+                                                 boolean reformat,
+                                                 String extension, @Nullable String optionalClassName) throws IncorrectOperationException {
     if (extension == null) extension = JavaFileType.INSTANCE.getDefaultExtension();
     final String name = "myClass" + "." + extension;
     final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(name, JavaLanguage.INSTANCE, content, false, false);
-    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.JDK_14_PREVIEW);
+    LanguageLevel highest = LanguageLevel.HIGHEST;
+    LanguageLevel implicitClassesMinimumLevel = JavaFeature.IMPLICIT_CLASSES.getStandardLevel();
+    if (highest.isLessThan(implicitClassesMinimumLevel)) {
+      highest = implicitClassesMinimumLevel;
+    }
+    psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, highest);
 
-    if (!(psiFile instanceof PsiJavaFile)){
+    if (!(psiFile instanceof PsiJavaFile psiJavaFile)){
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
-    PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
     final PsiClass[] classes = psiJavaFile.getClasses();
     if (classes.length == 0) {
       throw new IncorrectOperationException("This template did not produce a Java class or an interface\n"+psiFile.getText());
     }
     PsiClass createdClass = classes[0];
-    String className = createdClass.getName();
+    String className;
+    if (optionalClassName != null && createdClass instanceof PsiImplicitClass) {
+      className = optionalClassName;
+    }
+    else {
+      className = createdClass.getName();
+    }
     JavaDirectoryServiceImpl.checkCreateClassOrInterface(directory, className);
 
     final LanguageLevel ll = JavaDirectoryService.getInstance().getLanguageLevel(directory);
@@ -82,9 +93,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     }
     else {
       PsiFile containingFile = addedElement.getContainingFile();
-      throw new IncorrectOperationException("Selected class file name '" +
-                                            containingFile.getName() +  "' mapped to not java file type '"+
-                                            containingFile.getFileType().getDescription() + "'");
+      throw new IncorrectOperationException("The file '" + containingFile +  "' was expected to be of JAVA file type, but got: '"+ containingFile.getFileType() + "'");
     }
   }
 
@@ -92,7 +101,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     if (!template.isTemplateOfType(JavaFileType.INSTANCE)) return;
 
     String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-    if(packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
+    if(packageName == null || packageName.isEmpty() || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
       PsiPackageStatement packageStatement = file.getPackageStatement();
       if (packageStatement != null) {
         packageStatement.delete();
@@ -106,16 +115,19 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     return fileType.equals(JavaFileType.INSTANCE) && !ArrayUtil.contains(template.getName(), JavaTemplateUtil.INTERNAL_FILE_TEMPLATES);
   }
 
-  @NotNull
   @Override
-  public PsiElement createFromTemplate(@NotNull Project project,
-                                       @NotNull PsiDirectory directory,
-                                       String fileName,
-                                       @NotNull FileTemplate template,
-                                       @NotNull String templateText,
-                                       @NotNull Map<String, Object> props) throws IncorrectOperationException {
+  public @NotNull PsiElement createFromTemplate(@NotNull Project project,
+                                                @NotNull PsiDirectory directory,
+                                                String fileName,
+                                                @NotNull FileTemplate template,
+                                                @NotNull String templateText,
+                                                @NotNull Map<String, Object> props) throws IncorrectOperationException {
     String extension = template.getExtension();
-    PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension);
+    String name = null;
+    if (props.get(FileTemplate.ATTRIBUTE_NAME) instanceof String optionalName) {
+      name = optionalName;
+    }
+    PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension, name);
     hackAwayEmptyPackage((PsiJavaFile)result.getContainingFile(), template, props);
     return result;
   }
@@ -133,23 +145,21 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     return false;
   }
 
-  @NotNull
   @Override
-  public String getErrorMessage() {
+  public @NotNull String getErrorMessage() {
     return JavaBundle.message("title.cannot.create.class");
   }
 
   @Override
   public void prepareProperties(@NotNull Map<String, Object> props) {
     String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-    if (packageName == null || packageName.length() == 0) {
+    if (packageName == null || packageName.isEmpty()) {
       props.put(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
     }
   }
 
-  @NotNull
   @Override
-  public String commandName(@NotNull FileTemplate template) {
+  public @NotNull String commandName(@NotNull FileTemplate template) {
     return JavaBundle.message("command.create.class.from.template");
   }
 

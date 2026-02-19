@@ -1,44 +1,68 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupCornerType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.BrowserLink;
+import com.intellij.ui.components.JBFontScaler;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.lang.ref.WeakReference;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.HtmlChunk.html;
 
@@ -71,7 +95,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  *
  * <h2>Timeouts</h2>
  *
- * <p>Single line tooltips autoclose in 10 seconds, multiline in 30 seconds. You can optionally disable autoclosing by
+ * <p>Single line tooltips auto close in 10 seconds, multiline in 30 seconds. You can optionally disable auto closing by
  * setting {@link HelpTooltip#setNeverHideOnTimeout(boolean)} to {@code true}. By default tooltips don't close after a timeout on help buttons
  * (those having a round icon with question mark). Before setting this option to true you should contact designers first.</p>
  *
@@ -82,12 +106,13 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  * </ul></p>
  *
  * <h2>Avoiding multiple popups</h2>
- * <p>Some actions may open a popup menu. Current design is that the action's popup menu should take over the help tooltip.
+ * <p>Some actions may open a popup menu.
+ * The current design is that the action's popup menu should take over the help tooltip.
  * This is partly implemented in {@code AbstractPopup} class to track such cases. But this doesn't always work.
- * If help tooltip shows up over the component's popup menu you should make sure you set the master popup for the help tooltip.
- * This will prevent help tooltip from showing when the popup menu is opened. The best way to do it is to take source component
- * from an {@code InputEvent} and pass the source component along with the popup menu reference to
- * {@link HelpTooltip#setMasterPopup(Component, JBPopup)} static method.
+ * If the help tooltip shows up over the component's popup menu, you should make sure you set the master popup for the help tooltip.
+ * This will prevent help tooltip from showing when the popup menu is opened.
+ * The best way to do it is to take a source component from an {@code InputEvent}
+ * and pass the source component along with the popup menu reference to {@link HelpTooltip#setMasterPopup(Component, JBPopup)} static method.
  *
  * <p>If you're handling {@code DumbAware.actionPerformed(AnActionEvent e)}, it has {@code InputEvent}in {@code AnActionEvent} which you can use to get the source.</p>
  *
@@ -96,14 +121,10 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  * You can create it using one of its static methods and pass title/description/link. This label can also be used in forms.
  * The UI designer will offer to create {@code private void createUIComponents()} method where you can create the label with a static method.</p>
  */
-
 public class HelpTooltip {
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolTip.background", new JBColor(0xf7f7f7, 0x474a4c));
-  private static final Color SHORTCUT_COLOR = JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
-  private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
-  private static final Color BORDER_COLOR = JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
+  private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", JBUI.CurrentTheme.ContextHelp.FOREGROUND);
+  private static final Color LINK_COLOR = JBColor.namedColor("ToolTip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
 
-  private static final JBValue VGAP = new JBValue.UIInteger("HelpTooltip.verticalGap", 4);
   private static final JBValue MAX_WIDTH = new JBValue.UIInteger("HelpTooltip.maxWidth", 250);
   private static final JBValue X_OFFSET = new JBValue.UIInteger("HelpTooltip.xOffset", 0);
   private static final JBValue Y_OFFSET = new JBValue.UIInteger("HelpTooltip.yOffset", 0);
@@ -113,23 +134,25 @@ public class HelpTooltip {
 
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
+  private static final String TOOLTIP_DISABLED_PROPERTY = "JComponent.helpTooltipDisabled";
 
-  private @TooltipTitle String title;
+  private @Nullable Supplier<@NotNull @TooltipTitle String> title;
   private @NlsSafe String shortcut;
   private @Tooltip String description;
-  private LinkLabel<?> link;
+  private @Nullable ActionLink link;
+  private @Nullable JBFontScaler linkOriginalFontScaler;
   private boolean neverHide;
-  private Alignment alignment = Alignment.CURSOR;
+  private @NotNull Alignment alignment = Alignment.CURSOR;
 
   private BooleanSupplier masterPopupOpenCondition;
 
-  protected ComponentPopupBuilder myPopupBuilder;
-  private Dimension myPopupSize;
   private JBPopup myPopup;
-  private final Alarm popupAlarm = new Alarm();
+  // todo use strict when Editor will be fixed (EditorImpl.logicalPositionToOffset requires read action)
+  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler(UiDispatcherKind.RELAX);
   private boolean isOverPopup;
   private boolean isMultiline;
-  private int myDismissDelay;
+  private int myInitialDelay = -1;
+  private int myHideDelay = -1;
   private String myToolTipText;
   private boolean initialShowScheduled;
 
@@ -143,6 +166,12 @@ public class HelpTooltip {
       @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
         Dimension size = owner.getSize();
         return new Point(size.width + JBUIScale.scale(5) - X_OFFSET.get(), JBUIScale.scale(1) + Y_OFFSET.get());
+      }
+    },
+
+    LEFT {
+      @Override public Point getPointFor(Component owner, Dimension popupSize, Point mouseLocation) {
+        return new Point(- popupSize.width - JBUIScale.scale(5) + X_OFFSET.get(), JBUIScale.scale(1) + Y_OFFSET.get());
       }
     },
 
@@ -184,13 +213,19 @@ public class HelpTooltip {
   }
 
   /**
-   * Sets tooltip title. If it's longer than 2 lines (fitting in 250 pixels each) then
-   * the text is automatically stripped to the word boundary and dots are added to the end.
+   * Sets tooltip title.
+   * If it's longer than two lines (fitting in 250 pixels each),
+   * then the text is automatically stripped to the word boundary and dots are added to the end.
    *
    * @param title text for title.
    * @return {@code this}
    */
   public HelpTooltip setTitle(@Nullable @TooltipTitle String title) {
+    this.title = title != null ? () -> title : null;
+    return this;
+  }
+
+  public HelpTooltip setTitle(@Nullable Supplier<@NotNull @TooltipTitle String> title) {
     this.title = title;
     return this;
   }
@@ -206,6 +241,41 @@ public class HelpTooltip {
     return this;
   }
 
+  public HelpTooltip setShortcut(@Nullable Shortcut shortcut) {
+    this.shortcut = shortcut == null ? null : KeymapUtil.getShortcutText(shortcut);
+    return this;
+  }
+
+  /**
+   * Set HelpTooltip initial delay. A tooltip is show after component's mouse entering plus initial delay.
+   * @param delay - non negative value for initial delay
+   * @return {@code this}
+   * @throws IllegalArgumentException if delay is less than zero
+   */
+  public HelpTooltip setInitialDelay(int delay) {
+    if (delay < 0) {
+      throw new IllegalArgumentException("Negative delay is not allowed");
+    }
+
+    myInitialDelay = delay;
+    return this;
+  }
+
+  /**
+   * Set HelpTooltip hide delay. Tooltip is hidden after component's mouse exit plus hide delay.
+   * @param delay - non negative value for hide delay
+   * @return {@code this}
+   * @throws IllegalArgumentException if delay is less than zero
+   */
+  public HelpTooltip setHideDelay(int delay) {
+    if (delay < 0) {
+      throw new IllegalArgumentException("Negative delay is not allowed");
+    }
+
+    myHideDelay = delay;
+    return this;
+  }
+
   /**
    * Sets description text.
    *
@@ -218,22 +288,87 @@ public class HelpTooltip {
   }
 
   /**
-   * Enables link in the tooltip below description and sets action for it.
+   * Enables a link in the tooltip below description and sets action for it.
    *
    * @param linkText text to show in the link.
-   * @param linkAction action to execute when link is clicked.
+   * @param linkAction action to execute when a link is clicked.
    * @return {@code this}
    */
   public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, Runnable linkAction) {
-    link = LinkLabel.create(linkText, () -> {
-      hidePopup(true);
-      linkAction.run();
-    });
+    return setLink(linkText, linkAction, false);
+  }
+
+  /**
+   * Enables a link in the tooltip below description and sets action for it.
+   *
+   * @param linkText text to show in the link.
+   * @param linkAction action to execute when a link is clicked.
+   * @param external whether the link is "external" or not
+   * @return {@code this}
+   */
+  public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, @NotNull Runnable linkAction, boolean external) {
+    link = new MyActionLink(linkText, linkAction, external) {
+      @Override
+      protected void hidePopup() {
+        HelpTooltip.this.hidePopup(true);
+      }
+    };
+    linkOriginalFontScaler = new JBFontScaler(link.getFont());
     return this;
   }
 
   /**
-   * Toggles whether to hide tooltip automatically on timeout. For default behaviour just don't call this method.
+   * Enables a link in the tooltip below description and sets `BrowserUtil.browse` action for it.
+   * It's then painted with a small arrow button.
+   *
+   * @param linkLabel text to show in the link.
+   * @param url URL to browse.
+   * @return {@code this}
+   */
+  public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, @NotNull URL url) {
+    link = new BrowserLink(linkLabel, url.toExternalForm());
+    link.setHorizontalTextPosition(SwingConstants.LEFT);
+    linkOriginalFontScaler = new JBFontScaler(link.getFont());
+    return this;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Supplier<@NotNull String> getTitle() {
+    return title;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable String getDescription() {
+    return description;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ActionLink getLink() {
+    return link;
+  }
+
+  @ApiStatus.Internal
+  public int getHideDelay() {
+    return myHideDelay;
+  }
+
+  @Override
+  public boolean equals(Object that) {
+    if (this == that) return true;
+    if (that == null || getClass() != that.getClass()) return false;
+    HelpTooltip tooltip = (HelpTooltip)that;
+    return neverHide == tooltip.neverHide &&
+           (title == null ? tooltip.title == null
+                          : tooltip.title != null && Objects.equals(title.get(), tooltip.title.get())) &&
+           Objects.equals(shortcut, tooltip.shortcut) &&
+           Objects.equals(description, tooltip.description) &&
+           linksEqual(link, tooltip.link) &&
+           alignment == tooltip.alignment &&
+           Objects.equals(masterPopupOpenCondition, tooltip.masterPopupOpenCondition);
+  }
+
+  /**
+   * Toggles whether to hide tooltip automatically on timeout. For default behavior just don't call this method.
    *
    * @param neverHide {@code true} don't hide, {@code false} otherwise.
    * @return {@code this}
@@ -249,7 +384,7 @@ public class HelpTooltip {
    * @param alignment is relative location
    * @return {@code this}
    */
-  public HelpTooltip setLocation(Alignment alignment) {
+  public HelpTooltip setLocation(@NotNull Alignment alignment) {
     this.alignment = alignment;
     return this;
   }
@@ -260,18 +395,28 @@ public class HelpTooltip {
    * @param component is the owner component for the tooltip.
    */
   public void installOn(@NotNull JComponent component) {
-    getDismissDelay();
+    HelpTooltip installed = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
+
+    if (installed == null) {
+      installImpl(component);
+    }
+    else if (!equals(installed)) {
+      installed.hideAndDispose(component);
+      installImpl(component);
+    }
+  }
+
+  private void installImpl(@NotNull JComponent component) {
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
     createMouseListeners();
-    initPopupBuilder();
 
     component.putClientProperty(TOOLTIP_PROPERTY, this);
     installMouseListeners(component);
   }
 
-  protected final void getDismissDelay() {
-    myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
+  protected boolean shouldForceHiding() {
+    return link == null;
   }
 
   protected final void createMouseListeners() {
@@ -281,11 +426,19 @@ public class HelpTooltip {
           myPopup.cancel();
         }
         initialShowScheduled = true;
-        scheduleShow(e, Registry.intValue("ide.tooltip.initialReshowDelay"));
+        int delay = myInitialDelay;
+        if (delay == -1) {
+          delay = Registry.intValue("ide.tooltip.initialReshowDelay", 500);
+        }
+        scheduleShow(e, delay);
       }
 
       @Override public void mouseExited(MouseEvent e) {
-        scheduleHide(link == null, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+        int delay = myHideDelay;
+        if (delay == -1) {
+          delay = Registry.intValue("ide.tooltip.initialDelay.highlighter", 150);
+        }
+        scheduleHide(shouldForceHiding(), delay);
       }
 
       @Override public void mouseMoved(MouseEvent e) {
@@ -296,50 +449,52 @@ public class HelpTooltip {
     };
   }
 
-  private void initPopupBuilder() {
-    JComponent tipPanel = createTipPanel();
-    tipPanel.addMouseListener(createIsOverTipMouseListener());
-
-    myPopupSize = tipPanel.getPreferredSize();
-    myPopupBuilder = JBPopupFactory.getInstance().
-        createComponentPopupBuilder(tipPanel, null).
-        setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
-        setBorderColor(BORDER_COLOR).setShowShadow(true);
-  }
-
-  protected void initPopupBuilder(@NotNull HelpTooltip instance) {
-    instance.initPopupBuilder();
-    myPopupSize = instance.myPopupSize;
-    myPopupBuilder = instance.myPopupBuilder;
-    initialShowScheduled = false;
+  @ApiStatus.Internal
+  public static ComponentPopupBuilder initPopupBuilder(@NotNull JComponent tipPanel) {
+    return JBPopupFactory.getInstance().
+      createComponentPopupBuilder(tipPanel, null).
+      setShowBorder(UIManager.getBoolean("ToolTip.paintBorder")).
+      setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor()).setShowShadow(true).
+      addUserData(PopupCornerType.RoundedTooltip);
   }
 
   @NotNull
-  private MouseListener createIsOverTipMouseListener() {
-    return new MouseAdapter() {
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        isOverPopup = true;
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
-        if (link == null || !link.getBounds().contains(e.getPoint())) {
-          isOverPopup = false;
-          hidePopup(false);
-        }
-      }
-    };
+  protected MouseListener createIsOverTipMouseListener() {
+    return new OverTipMouseListener();
   }
 
-  @NotNull
-  protected final JPanel createTipPanel() {
+  protected class OverTipMouseListener extends MouseAdapter {
+    protected void doEnter() {
+      isOverPopup = true;
+    }
+
+    protected void doExit() {
+      isOverPopup = false;
+      hidePopup(false);
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      doEnter();
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      if (link == null || !link.getBounds().contains(e.getPoint())) {
+        doExit();
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull JPanel createTipPanel() {
     JPanel tipPanel = new JPanel();
-    tipPanel.setLayout(new VerticalLayout(VGAP.get()));
-    tipPanel.setBackground(BACKGROUND_COLOR);
+    tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
+    tipPanel.setBackground(UIUtil.getToolTipBackground());
 
-    boolean hasTitle = StringUtil.isNotEmpty(title);
-    boolean hasDescription = StringUtil.isNotEmpty(description);
+    String currentTitle = title != null ? title.get() : null;
+    boolean hasTitle = Strings.isNotEmpty(currentTitle);
+    boolean hasDescription = Strings.isNotEmpty(description);
 
     if (hasTitle) {
       tipPanel.add(new Header(hasDescription), VerticalLayout.TOP);
@@ -348,23 +503,29 @@ public class HelpTooltip {
     if (hasDescription) {
       @Nls String[] pa = description.split(PARAGRAPH_SPLITTER);
       isMultiline = pa.length > 1;
-      Arrays.stream(pa).filter(p -> !p.isEmpty()).forEach(p -> tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP));
+      for (String p : pa) {
+        if (!p.isEmpty()) {
+          //noinspection HardCodedStringLiteral
+          tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP);
+        }
+      }
     }
 
-    if (!hasTitle && StringUtil.isNotEmpty(shortcut)) {
+    if (!hasTitle && Strings.isNotEmpty(shortcut)) {
       JLabel shortcutLabel = new JLabel(shortcut);
       shortcutLabel.setFont(deriveDescriptionFont(shortcutLabel.getFont(), false));
-      shortcutLabel.setForeground(SHORTCUT_COLOR);
+      shortcutLabel.setForeground(JBUI.CurrentTheme.Tooltip.shortcutForeground());
 
       tipPanel.add(shortcutLabel, VerticalLayout.TOP);
     }
 
-    if (link != null) {
-      link.setFont(deriveDescriptionFont(link.getFont(), hasTitle));
+    if (link != null && linkOriginalFontScaler != null) {
+      link.setForeground(LINK_COLOR);
+      link.setFont(deriveDescriptionFont(linkOriginalFontScaler.scaledFont(), hasTitle));
       tipPanel.add(link, VerticalLayout.TOP);
     }
 
-    isMultiline = isMultiline || StringUtil.isNotEmpty(description) && (StringUtil.isNotEmpty(title) || link != null);
+    isMultiline = isMultiline || Strings.isNotEmpty(description) && (Strings.isNotEmpty(currentTitle) || link != null);
     tipPanel.setBorder(textBorder(isMultiline));
 
     return tipPanel;
@@ -380,31 +541,37 @@ public class HelpTooltip {
     owner.removeMouseMotionListener(myMouseListener);
   }
 
+  public static @Nullable HelpTooltip getTooltipFor(@NotNull JComponent owner) {
+    return (HelpTooltip)owner.getClientProperty(TOOLTIP_PROPERTY);
+  }
+
   /**
    * Hides and disposes the tooltip possibly installed on the mentioned component. Disposing means
    * unregistering all {@code HelpTooltip} specific listeners installed on the component.
-   * If there is no tooltip installed on the component nothing happens.
+   * If there is no tooltip installed on the component, nothing happens.
    *
    * @param owner a possible {@code HelpTooltip} owner.
    */
   public static void dispose(@NotNull Component owner) {
-    if (owner instanceof JComponent) {
-      JComponent component = (JComponent)owner;
+    if (owner instanceof JComponent component) {
       HelpTooltip instance = (HelpTooltip)component.getClientProperty(TOOLTIP_PROPERTY);
       if (instance != null) {
-        instance.hidePopup(true);
-        instance.uninstallMouseListeners(component);
-
-        component.putClientProperty(TOOLTIP_PROPERTY, null);
-        instance.masterPopupOpenCondition = null;
+        instance.hideAndDispose(component);
       }
     }
+  }
+
+  private void hideAndDispose(@NotNull JComponent owner) {
+    hidePopup(true);
+    uninstallMouseListeners(owner);
+    masterPopupOpenCondition = null;
+    owner.putClientProperty(TOOLTIP_PROPERTY, null);
   }
 
   /**
    * Hides the tooltip possibly installed on the mentioned component without disposing.
    * Listeners are not removed.
-   * If there is no tooltip installed on the component nothing happens.
+   * If there is no tooltip installed on the component, nothing happens.
    *
    * @param owner a possible {@code HelpTooltip} owner.
    */
@@ -419,16 +586,20 @@ public class HelpTooltip {
 
   /**
    * Sets master popup for the current {@code HelpTooltip}. Master popup takes over the help tooltip,
-   * so when the master popup is about to be shown help tooltip hides.
+   * so when the master popup is about to be shown, help tooltip hides.
    *
    * @param owner possible owner
    * @param master master popup
    */
-  public static void setMasterPopup(@NotNull Component owner, JBPopup master) {
+  public static void setMasterPopup(@NotNull Component owner, @Nullable JBPopup master) {
     if (owner instanceof JComponent) {
-      HelpTooltip instance = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
-      if (instance != null && instance.myPopup != master) {
-        instance.masterPopupOpenCondition = () -> master == null || !master.isVisible();
+      HelpTooltip tooltip = (HelpTooltip)((JComponent)owner).getClientProperty(TOOLTIP_PROPERTY);
+      if (tooltip != null && tooltip.myPopup != master) {
+        WeakReference<JBPopup> popupRef = new WeakReference<>(master);
+        tooltip.masterPopupOpenCondition = () -> {
+          JBPopup popup = SoftReference.dereference(popupRef);
+          return popup == null || !popup.isVisible();
+        };
       }
     }
   }
@@ -450,45 +621,93 @@ public class HelpTooltip {
     }
   }
 
+  public static void disableTooltip(Component source) {
+    if (source instanceof JComponent component) {
+      component.putClientProperty(TOOLTIP_DISABLED_PROPERTY, Boolean.TRUE);
+    }
+  }
+
+  public static void enableTooltip(Component source) {
+    if (source instanceof JComponent component) {
+      component.putClientProperty(TOOLTIP_DISABLED_PROPERTY, null);
+    }
+  }
+
+  private static boolean isTooltipDisabled(Component component) {
+    if (component instanceof JComponent jComponent) {
+      Boolean disabled = (Boolean)jComponent.getClientProperty(TOOLTIP_DISABLED_PROPERTY);
+      return disabled == Boolean.TRUE;
+    } else {
+      return false;
+    }
+  }
+
   private void scheduleShow(MouseEvent e, int delay) {
-    popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> {
+    popupAlarm.cancel();
+
+    if (isTooltipDisabled(e.getComponent())) {
+      return;
+    }
+    if (ScreenReader.isActive()) {
+      // disable HelpTooltip in screen reader mode
+      return;
+    }
+
+    popupAlarm.request(delay, () -> {
       initialShowScheduled = false;
-      if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {
-        Component owner = e.getComponent();
-        String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
-        if (myPopup != null && !myPopup.isDisposed()) {
-          if (StringUtil.isEmpty(text) && StringUtil.isEmpty(myToolTipText)) return; // do nothing if a tooltip become empty
-          if (StringUtil.equals(text, myToolTipText)) return; // do nothing if a tooltip is not changed
-          myPopup.cancel(); // cancel previous popup before showing a new one
-        }
-        myToolTipText = text;
-        myPopup = myPopupBuilder.createPopup();
-        myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize, e.getPoint())));
-        if (!neverHide) {
-          scheduleHide(true, myDismissDelay);
-        }
+      if (masterPopupOpenCondition != null && !masterPopupOpenCondition.getAsBoolean()) {
+        return;
       }
-    }, delay);
+
+      Component owner = e.getComponent();
+      String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
+      if (myPopup != null && !myPopup.isDisposed()) {
+        if (Strings.isEmpty(text) && Strings.isEmpty(myToolTipText)) {
+          // do nothing if a tooltip becomes empty
+          return;
+        }
+        if (Objects.equals(text, myToolTipText)) {
+          // do nothing if a tooltip is not changed
+          return;
+        }
+        // cancel the previous popup before showing a new one
+        myPopup.cancel();
+      }
+
+      myToolTipText = text;
+      JComponent tipPanel = createTipPanel();
+      tipPanel.addMouseListener(createIsOverTipMouseListener());
+      ComponentPopupBuilder popupBuilder = initPopupBuilder(tipPanel);
+      myPopup = popupBuilder.createPopup();
+      myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, tipPanel.getPreferredSize(), e.getPoint())));
+      if (!neverHide) {
+        //noinspection SpellCheckingInspection
+        int dismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
+        scheduleHide(true, dismissDelay);
+      }
+    });
   }
 
   private void scheduleHide(boolean force, int delay) {
-    popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> hidePopup(force), delay);
+    popupAlarm.cancelAndRequest(delay, () -> hidePopup(force));
   }
 
   protected void hidePopup(boolean force) {
-    popupAlarm.cancelAllRequests();
-    if (myPopup != null && myPopup.isVisible() && (!isOverPopup || force)) {
-      myPopup.cancel();
+    initialShowScheduled = false;
+    popupAlarm.cancel();
+
+    if (myPopup != null && (!isOverPopup || force)) {
+      if (myPopup.isVisible()) {
+        myPopup.cancel();
+      }
       myPopup = null;
       myToolTipText = null;
     }
   }
 
   private static Border textBorder(boolean multiline) {
-    Insets i = UIManager.getInsets(multiline ? "HelpTooltip.defaultTextBorderInsets" : "HelpTooltip.smallTextBorderInsets");
-    return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty();
+    Insets i = multiline ? JBUI.CurrentTheme.HelpTooltip.defaultTextBorderInsets() : JBUI.CurrentTheme.HelpTooltip.smallTextBorderInsets();
+    return new JBEmptyBorder(i);
   }
 
   private static Font deriveHeaderFont(Font font) {
@@ -503,9 +722,26 @@ public class HelpTooltip {
 
   @Contract(pure = true)
   public static @NotNull String getShortcutAsHtml(@Nullable String shortcut) {
-    return StringUtil.isEmpty(shortcut)
+    return Strings.isEmpty(shortcut)
            ? ""
-           : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(SHORTCUT_COLOR), shortcut);
+           : String.format("&nbsp;&nbsp;<font color=\"%s\">%s</font>", ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.shortcutForeground()),
+                           shortcut);
+  }
+
+  static boolean linksEqual(@Nullable ActionLink o1, @Nullable ActionLink o2) {
+    if (o1 == null || o2 == null) return o1 == o2;
+    if (o1.getClass() != o2.getClass()) return false;
+    if (!Objects.equals(o1.getText(), o2.getText())) return false;
+
+    if (o1 instanceof MyActionLink a1 && o2 instanceof MyActionLink a2) {
+      return a1.external == a2.external &&
+             // do not require equals/hashCode for Runnables
+             a1.linkAction.getClass() == a2.linkAction.getClass();
+    }
+    else if (o1 instanceof BrowserLink b1 && o2 instanceof BrowserLink b2) {
+      return b1.getUrl().equals(b2.getUrl());
+    }
+    return o1 == o2;
   }
 
   private static class BoundWidthLabel extends JLabel {
@@ -544,25 +780,35 @@ public class HelpTooltip {
     }
   }
 
+  @ApiStatus.Internal
+  public boolean fromSameWindowAs(@NotNull Component component) {
+    if (myPopup != null && !myPopup.isDisposed()) {
+      Window popupWindow = SwingUtilities.getWindowAncestor(myPopup.getContent());
+      return component == popupWindow || SwingUtilities.getWindowAncestor(component) == popupWindow;
+    }
+    return false;
+  }
+
   private final class Header extends BoundWidthLabel {
     private Header(boolean obeyWidth) {
       setFont(deriveHeaderFont(getFont()));
       setForeground(UIUtil.getToolTipForeground());
 
-      if (obeyWidth) {
-        View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
+      String currentTitle = Objects.requireNonNullElse(title != null ? title.get() : null, "");
+      if (obeyWidth || currentTitle.length() > MAX_WIDTH.get()) {
+        View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", currentTitle, getShortcutAsHTML()));
         float width = v.getPreferredSpan(View.X_AXIS);
         isMultiline = isMultiline || width > MAX_WIDTH.get();
         HtmlChunk.Element div = width > MAX_WIDTH.get() ? HtmlChunk.div().attr("width", MAX_WIDTH.get()) : HtmlChunk.div();
-        setText(div.children(HtmlChunk.raw(title), HtmlChunk.raw(getShortcutAsHTML()))
+        setText(div.children(HtmlChunk.raw(currentTitle), HtmlChunk.raw(getShortcutAsHTML()))
                   .wrapWith(html())
                   .toString());
         setSizeForWidth(width);
       }
       else {
-        setText(BasicHTML.isHTMLString(title) ?
-                title :
-                HtmlChunk.div().addRaw(title).addRaw(getShortcutAsHTML()).wrapWith(html()).toString());
+        setText(BasicHTML.isHTMLString(currentTitle) ?
+                currentTitle :
+                HtmlChunk.div().addRaw(currentTitle).addRaw(getShortcutAsHTML()).wrapWith(html()).toString());
       }
     }
 
@@ -584,5 +830,26 @@ public class HelpTooltip {
 
       setSizeForWidth(width);
     }
+  }
+
+  private abstract static class MyActionLink extends ActionLink {
+    final Runnable linkAction;
+    final boolean external;
+
+    MyActionLink(@NlsContexts.LinkLabel @NotNull String text, @NotNull Runnable linkAction, boolean external) {
+      this.linkAction = linkAction;
+      this.external = external;
+      setText(text);
+      addActionListener(e -> {
+        hidePopup();
+        linkAction.run();
+      });
+      if (external) {
+        setExternalLinkIcon();
+      }
+    }
+
+    protected abstract void hidePopup();
+
   }
 }

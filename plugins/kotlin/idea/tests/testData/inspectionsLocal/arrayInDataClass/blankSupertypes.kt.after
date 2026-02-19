@@ -1,0 +1,25 @@
+// WITH_STDLIB
+
+interface I1
+interface I2
+interface I3 : I2
+
+open class C
+open class D : C()
+
+data class A(val a: IntArray): D(), I1, I3 {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as A
+
+        if (!a.contentEquals(other.a)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return a.contentHashCode()
+    }
+}

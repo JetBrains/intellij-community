@@ -1,30 +1,42 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import org.jetbrains.annotations.NotNull;
 
-public class PasteAction extends AnAction implements DumbAware, LightEditCompatible {
+import java.util.Collection;
+import java.util.Collections;
+
+import static com.intellij.openapi.vfs.FilePermissionsKt.getProjectFilesWrite;
+
+public class PasteAction extends AnAction implements DumbAware, LightEditCompatible, RequiresPermissions {
   public PasteAction() {
     setEnabledInModalContext(true);
   }
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    DataContext dataContext = event.getDataContext();
+    CopyAction.updateWithProvider(event, event.getData(PlatformDataKeys.PASTE_PROVIDER), false, provider -> {
+      boolean isEditorPopup = event.getPlace().equals(ActionPlaces.EDITOR_POPUP);
+      boolean enabled = provider.isPastePossible(event.getDataContext());
+      event.getPresentation().setEnabled(enabled);
+      event.getPresentation().setVisible(!isEditorPopup || enabled);
+    });
+  }
 
-    PasteProvider provider = PlatformDataKeys.PASTE_PROVIDER.getData(dataContext);
-    presentation.setEnabled(provider != null && provider.isPastePossible(dataContext));
-    if (event.getPlace().equals(ActionPlaces.EDITOR_POPUP) && provider != null) {
-      presentation.setVisible(presentation.isEnabled());
-    }
-    else {
-      presentation.setVisible(true);
-    }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -34,5 +46,10 @@ public class PasteAction extends AnAction implements DumbAware, LightEditCompati
     if (provider != null && provider.isPasteEnabled(dataContext)) {
       provider.performPaste(dataContext);
     }
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return Collections.singletonList(getProjectFilesWrite());
   }
 }

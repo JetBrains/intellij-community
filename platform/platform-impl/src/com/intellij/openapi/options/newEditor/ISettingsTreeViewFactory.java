@@ -2,10 +2,12 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.ConfigurableGroup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface ISettingsTreeViewFactory {
   @NotNull
   SettingsTreeView createTreeView(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups);

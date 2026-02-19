@@ -1,0 +1,11 @@
+{
+    "mainFile": "Main.kt",
+    "usages": [
+        "Doo.kt",
+        "Foo.kt",
+        "JavaImport.java",
+        "JavaRead.java",
+        "Main.kt",
+        "import.kt"
+    ]
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -27,7 +28,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  */
 public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   implements GrParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
@@ -52,21 +53,18 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
     return "Parameter list";
   }
 
-  @Nullable
   @Override
-  public PsiElement getLParen() {
+  public @Nullable PsiElement getLParen() {
     return findChildByType(T_LPAREN);
   }
 
-  @Nullable
   @Override
-  public PsiElement getRParen() {
+  public @Nullable PsiElement getRParen() {
     return findLastChildByType(T_RPAREN);
   }
 
-  @NotNull
   @Override
-  public TextRange getParametersRange() {
+  public @NotNull TextRange getParametersRange() {
     TextRange range = getTextRange();
     PsiElement lParen = getLParen();
     PsiElement rParen = getRParen();
@@ -95,13 +93,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   @Override
   public int getParameterNumber(final GrParameter parameter) {
     GrParameter[] parameters = getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      GrParameter param = parameters[i];
-      if (param == parameter) {
-        return i;
-      }
-    }
-    return -1;
+    return ArrayUtil.indexOf(parameters, parameter);
   }
 
   /*@Override
@@ -150,7 +142,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
 
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     GrParameter[] params = getParameters();
     ASTNode result = super.addInternal(first, last, anchor == null ? findChildByType(before ? T_RPAREN : T_LPAREN) : anchor, before);
     if (first == last && first.getPsi() instanceof GrParameter && params.length > 0) {
@@ -170,9 +162,8 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
     return result;
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getParameters());
   }
 }

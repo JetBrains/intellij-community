@@ -16,7 +16,9 @@
 package com.intellij.diagnostic.hprof.navigator
 
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RootReason
 private constructor(val description: String, val javaFrame: Boolean = false) {
 

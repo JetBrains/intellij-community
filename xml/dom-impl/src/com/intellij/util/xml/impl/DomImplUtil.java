@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,22 +11,41 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.util.xml.DomReflectionUtil;
+import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.HyphenNameStrategy;
+import com.intellij.util.xml.JavaMethod;
+import com.intellij.util.xml.JavaNameStrategy;
+import com.intellij.util.xml.NameStrategy;
+import com.intellij.util.xml.NameStrategyForAttributes;
+import com.intellij.util.xml.Namespace;
+import com.intellij.util.xml.Resolve;
+import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.SubTagList;
+import com.intellij.util.xml.TagValue;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class DomImplUtil {
   private static final Logger LOG = Logger.getInstance(DomImplUtil.class);
 
@@ -76,7 +95,7 @@ public final class DomImplUtil {
   }
 
   public static boolean isGetter(final JavaMethod method) {
-    @NonNls final String name = method.getName();
+    final @NonNls String name = method.getName();
     final boolean isGet = name.startsWith("get");
     final boolean isIs = !isGet && name.startsWith("is");
     if (!isGet && !isIs) {
@@ -98,8 +117,7 @@ public final class DomImplUtil {
     return setter && (hasTagValueAnnotation(method) || "setValue".equals(method.getName()));
   }
 
-  @Nullable
-  public static DomNameStrategy getDomNameStrategy(Class<?> rawType, boolean isAttribute) {
+  public static @Nullable DomNameStrategy getDomNameStrategy(Class<?> rawType, boolean isAttribute) {
     Class<?> aClass = null;
     if (isAttribute) {
       NameStrategyForAttributes annotation = DomReflectionUtil.findAnnotationDFS(rawType, NameStrategyForAttributes.class);
@@ -127,11 +145,11 @@ public final class DomImplUtil {
   }
 
 
-  public static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
-    return findSubTags(tag, name, file, true);
+  public static @Unmodifiable List<XmlTag> findSubTags(final @NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
+    return findSubTags(tag, name, file, false);
   }
 
-  static List<XmlTag> findSubTags(@NotNull final XmlTag tag, final EvaluatedXmlName name, final XmlFile file, boolean processIncludes) {
+  static @Unmodifiable List<XmlTag> findSubTags(final @NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file, boolean processIncludes) {
 
     if (!tag.isValid()) {
       throw new AssertionError("Invalid tag");
@@ -159,7 +177,7 @@ public final class DomImplUtil {
     });
   }
 
-  public static List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {
+  public static @Unmodifiable List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {
     if (tags.length == 0) {
       return Collections.emptyList();
     }
@@ -167,7 +185,7 @@ public final class DomImplUtil {
     return ContainerUtil.findAll(tags, childTag -> isNameSuitable(name, childTag, file));
   }
 
-  public static boolean isNameSuitable(final XmlName name, final XmlTag tag, @NotNull final DomInvocationHandler handler, final XmlFile file) {
+  public static boolean isNameSuitable(final XmlName name, final XmlTag tag, final @NotNull DomInvocationHandler handler, final XmlFile file) {
     return isNameSuitable(handler.createEvaluatedXmlName(name), tag, file);
   }
 
@@ -178,8 +196,7 @@ public final class DomImplUtil {
            evaluatedXmlName.isNamespaceAllowed(tag.getNamespace(), file, !qNameMatch);
   }
 
-  @Nullable
-  public static XmlName createXmlName(@NotNull String name, Type type, @Nullable JavaMethod javaMethod) {
+  public static @Nullable XmlName createXmlName(@NotNull String name, Type type, @Nullable JavaMethod javaMethod) {
     final Class<?> aClass = getErasure(type);
     if (aClass == null) return null;
     String key = getNamespaceKey(aClass);
@@ -194,8 +211,7 @@ public final class DomImplUtil {
     return new XmlName(name, key);
   }
 
-  @Nullable
-  private static Class<?> getErasure(Type type) {
+  private static @Nullable Class<?> getErasure(Type type) {
     if (type instanceof Class) {
       return (Class<?>)type;
     }
@@ -210,8 +226,7 @@ public final class DomImplUtil {
         }
       }
     }
-    if (type instanceof WildcardType) {
-      final WildcardType wildcardType = (WildcardType)type;
+    if (type instanceof WildcardType wildcardType) {
       for (final Type bound : wildcardType.getUpperBounds()) {
         final Class<?> aClass = getErasure(bound);
         if (aClass != null) {
@@ -222,18 +237,16 @@ public final class DomImplUtil {
     return null;
   }
 
-  @Nullable
-  private static String getNamespaceKey(@NotNull Class<?> type) {
+  private static @Nullable String getNamespaceKey(@NotNull Class<?> type) {
     final Namespace namespace = DomReflectionUtil.findAnnotationDFS(type, Namespace.class);
     return namespace != null ? namespace.value() : null;
   }
 
-  @Nullable
-  public static XmlName createXmlName(@NotNull final String name, final JavaMethod method) {
+  public static @Nullable XmlName createXmlName(final @NotNull String name, final JavaMethod method) {
     return createXmlName(name, method.getGenericReturnType(), method);
   }
 
-  public static List<XmlTag> getCustomSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
+  public static @Unmodifiable List<XmlTag> getCustomSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     if (subTags.length == 0) {
       return Collections.emptyList();
     }

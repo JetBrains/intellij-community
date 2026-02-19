@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.events;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,14 +29,16 @@ public class TestFailedEvent extends TreeNodeEvent {
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     this(testFailed, testError, null);
   }
+
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError, @Nullable String expectedFilePath) {
     this(testFailed, testError, expectedFilePath, null);
-  }  
+  }
+
   public TestFailedEvent(@NotNull TestFailed testFailed,
                          boolean testError,
                          @Nullable String expectedFilePath,
                          @Nullable String actualFilePath) {
-    super(testFailed.getTestName(), TreeNodeEvent.getNodeId(testFailed));
+    super(testFailed.getTestName(), getNodeId(testFailed));
     if (testFailed.getFailureMessage() == null) throw new NullPointerException();
     myLocalizedFailureMessage = testFailed.getFailureMessage();
     myStacktrace = testFailed.getStacktrace();
@@ -197,13 +185,11 @@ public class TestFailedEvent extends TreeNodeEvent {
     return null;
   }
 
-  @NotNull
-  public String getLocalizedFailureMessage() {
+  public @NotNull String getLocalizedFailureMessage() {
     return myLocalizedFailureMessage;
   }
 
-  @Nullable
-  public String getStacktrace() {
+  public @Nullable String getStacktrace() {
     return myStacktrace;
   }
 
@@ -211,13 +197,11 @@ public class TestFailedEvent extends TreeNodeEvent {
     return myTestError;
   }
 
-  @Nullable
-  public String getComparisonFailureActualText() {
+  public @Nullable String getComparisonFailureActualText() {
     return myComparisonFailureActualText;
   }
 
-  @Nullable
-  public String getComparisonFailureExpectedText() {
+  public @Nullable String getComparisonFailureExpectedText() {
     return myComparisonFailureExpectedText;
   }
 
@@ -230,16 +214,7 @@ public class TestFailedEvent extends TreeNodeEvent {
     append(buf, "comparisonFailureExpectedText", myComparisonFailureExpectedText);
   }
 
-  /**
-   * @deprecated use {@link #getExpectedFilePath()} instead
-   */
-  @Deprecated
-  public String getFilePath() {
-    return myExpectedFilePath;
-  }
-
-  @Nullable
-  public String getExpectedFilePath() {
+  public @Nullable String getExpectedFilePath() {
     return myExpectedFilePath;
   }
 
@@ -247,8 +222,7 @@ public class TestFailedEvent extends TreeNodeEvent {
     return myPrintExpectedAndActualValues;
   }
 
-  @Nullable
-  public String getActualFilePath() {
+  public @Nullable String getActualFilePath() {
     return myActualFilePath;
   }
   

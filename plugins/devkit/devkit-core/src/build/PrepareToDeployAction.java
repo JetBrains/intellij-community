@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
@@ -28,7 +30,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PathUtil;
@@ -47,7 +54,13 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.jar.Manifest;
 
 public class PrepareToDeployAction extends AnAction {
@@ -56,12 +69,12 @@ public class PrepareToDeployAction extends AnAction {
   private static final @NonNls String TEMP_PREFIX = "temp";
 
   private static class Holder {
-    private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
+    private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Plugin DevKit Deployment");
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module != null && PluginModuleType.isOfType(module)) {
       doPrepare(Collections.singletonList(module), e.getProject());
     }
@@ -91,7 +104,7 @@ public class PrepareToDeployAction extends AnAction {
                            DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName()) :
                            DevKitBundle.message("success.deployment.message.all");
             @NlsSafe String successMessage = StringUtil.join(successMessages, "\n");
-            Holder.NOTIFICATION_GROUP.createNotification(title, successMessage, NotificationType.INFORMATION, null).notify(project);
+            Holder.NOTIFICATION_GROUP.createNotification(title, successMessage, NotificationType.INFORMATION).notify(project);
           }
         }, project.getDisposed());
       }
@@ -152,8 +165,7 @@ public class PrepareToDeployAction extends AnAction {
     }, DevKitBundle.message("prepare.for.deployment.task", pluginName), true, module.getProject());
   }
 
-  @NotNull
-  private static Map<Module, String> collectJpsPluginModules(@NotNull Module module) {
+  private static @NotNull Map<Module, String> collectJpsPluginModules(@NotNull Module module) {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml == null) return Collections.emptyMap();
 
@@ -161,8 +173,7 @@ public class PrepareToDeployAction extends AnAction {
     if (plugin == null) return Collections.emptyMap();
 
     Map<Module, String> jpsPluginToOutputPath = new HashMap<>();
-    List<Extensions> extensions = plugin.getExtensions();
-    for (Extensions extensionGroup : extensions) {
+    for (Extensions extensionGroup : plugin.getExtensions()) {
       XmlTag extensionsTag = extensionGroup.getXmlTag();
       String defaultExtensionNs = extensionsTag.getAttributeValue("defaultExtensionNs");
       for (XmlTag tag : extensionsTag.getSubTags()) {
@@ -315,7 +326,7 @@ public class PrepareToDeployAction extends AnAction {
           VirtualFile outputPath = extension.getCompilerOutputPath();
           if (outputPath != null) {
             // pre-condition: output dirs for all modules are up-to-date
-            jar.addDirectory(new File(outputPath.getPath()));
+            jar.addDirectory(outputPath.toNioPath());
           }
         }
       }
@@ -344,11 +355,17 @@ public class PrepareToDeployAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     boolean enabled = module != null && PluginModuleType.isOfType(module);
     e.getPresentation().setEnabledAndVisible(enabled);
     if (enabled) {
       e.getPresentation().setText(DevKitBundle.messagePointer("prepare.for.deployment", module.getName()));
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
 }

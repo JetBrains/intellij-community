@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.ASTNode;
 import com.jetbrains.python.FunctionParameter;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.ast.PyAstArgumentList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,21 +11,27 @@ import java.util.Collection;
 
 /**
  * Represents an argument list of a function call.
- *
- * @author yole
  */
-public interface PyArgumentList extends PyElement {
+public interface PyArgumentList extends PyAstArgumentList, PyElement {
 
   /**
    * @return all argument list param expressions (keyword argument or nameless)
    */
-  @NotNull
-  Collection<PyExpression> getArgumentExpressions();
+  @Override
+  default @NotNull Collection<PyExpression> getArgumentExpressions() {
+    //noinspection unchecked
+    return (Collection<PyExpression>)PyAstArgumentList.super.getArgumentExpressions();
+  }
 
-  PyExpression @NotNull [] getArguments();
+  @Override
+  default PyExpression @NotNull [] getArguments() {
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
+  }
 
-  @Nullable
-  PyKeywordArgument getKeywordArgument(String name);
+  @Override
+  default @Nullable PyKeywordArgument getKeywordArgument(String name) {
+    return (PyKeywordArgument)PyAstArgumentList.super.getKeywordArgument(name);
+  }
 
   /**
    * Adds argument to the appropriate place:
@@ -57,12 +50,10 @@ public interface PyArgumentList extends PyElement {
   /**
    * @return the call expression to which this argument list belongs; not null in correctly parsed cases.
    */
-  @Nullable
-  PyCallExpression getCallExpression();
-
-
-  @Nullable
-  ASTNode getClosingParen();
+  @Override
+  default @Nullable PyCallExpression getCallExpression() {
+    return (PyCallExpression)PyAstArgumentList.super.getCallExpression();
+  }
 
   /**
    * Searches parameter value and returns it if exists.

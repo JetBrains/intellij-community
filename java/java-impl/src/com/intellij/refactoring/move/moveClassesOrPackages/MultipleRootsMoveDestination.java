@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,8 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Objects;
 
-/**
- *  @author dsl
- */
 public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   private static final Logger LOG = Logger.getInstance(MultipleRootsMoveDestination.class);
 
@@ -43,9 +26,8 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
     super(aPackage);
   }
 
-  @NotNull
   @Override
-  public PackageWrapper getTargetPackage() {
+  public @NotNull PackageWrapper getTargetPackage() {
     return myPackage;
   }
 
@@ -82,8 +64,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   @Override
-  @Nullable
-  public String verify(PsiDirectory source) {
+  public @Nullable String verify(PsiDirectory source) {
     VirtualFile virtualFile = source.getVirtualFile();
     final VirtualFile sourceRootForFile = myFileIndex.getSourceRootForFile(virtualFile);
     if (sourceRootForFile == null) {
@@ -94,8 +75,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   @Override
-  @Nullable
-  public String verify(PsiPackage source) {
+  public @Nullable String verify(PsiPackage source) {
     PsiDirectory[] directories = source.getDirectories();
     for (final PsiDirectory directory : directories) {
       String s = verify(directory);
@@ -105,7 +85,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   }
 
   @Override
-  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+  public void analyzeModuleConflicts(final @NotNull Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
   }
 
@@ -123,11 +103,11 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
   private PsiDirectory findTargetDirectoryForSource(final VirtualFile file) {
     final VirtualFile sourceRoot = myFileIndex.getSourceRootForFile(file);
     LOG.assertTrue(sourceRoot != null);
-    return RefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, sourceRoot);
+    return CommonJavaRefactoringUtil.findPackageDirectoryInSourceRoot(myPackage, sourceRoot);
   }
 
   private PsiDirectory getOrCreateDirectoryForSource(final VirtualFile file)
     throws IncorrectOperationException {
-    return RefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, Objects.requireNonNull(myFileIndex.getSourceRootForFile(file)));
+    return CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(myPackage, Objects.requireNonNull(myFileIndex.getSourceRootForFile(file)));
   }
 }

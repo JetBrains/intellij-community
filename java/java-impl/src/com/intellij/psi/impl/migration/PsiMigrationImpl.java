@@ -19,30 +19,27 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMigration;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.impl.PsiManagerImpl;
-import java.util.HashMap;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author dsl
- */
 public class PsiMigrationImpl implements PsiMigration {
   private static final Logger LOG = Logger.getInstance(PsiMigrationImpl.class);
   private final PsiMigrationManager myMigrationManager;
   private final JavaPsiFacade myFacade;
-  private final PsiManagerImpl myManager;
+  private final PsiManager myManager;
   private final Map<String, MigrationClassImpl> myQNameToClassMap = new HashMap<>();
   private final Map<String, List<PsiClass>>  myPackageToClassesMap = new HashMap<>();
   private final Map<String, MigrationPackageImpl> myQNameToPackageMap = new HashMap<>();
   private final Map<String, List<PsiPackage>>  myPackageToSubpackagesMap = new HashMap<>();
   private boolean myIsValid = true;
 
-  public PsiMigrationImpl(PsiMigrationManager migrationManager, JavaPsiFacade facade, PsiManagerImpl manager) {
+  public PsiMigrationImpl(PsiMigrationManager migrationManager, JavaPsiFacade facade, PsiManager manager) {
     myMigrationManager = migrationManager;
     myFacade = facade;
     myManager = manager;
@@ -146,7 +143,7 @@ public class PsiMigrationImpl implements PsiMigration {
     return lastDotIndex >= 0 ? qualifiedName.substring(0, lastDotIndex) : "";
   }
 
-  PsiManagerImpl getManager() {
+  PsiManager getManager() {
     return myManager;
   }
 

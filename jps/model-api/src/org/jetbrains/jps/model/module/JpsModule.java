@@ -15,9 +15,17 @@
  */
 package org.jetbrains.jps.model.module;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
+import org.jetbrains.jps.model.JpsExcludePattern;
+import org.jetbrains.jps.model.JpsNamedElement;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsReferenceableElement;
+import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -41,22 +49,28 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   <P extends JpsElement>
   Iterable<JpsTypedModuleSourceRoot<P>> getSourceRoots(@NotNull JpsModuleSourceRootType<P> type);
 
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType);
 
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType, @NotNull P properties);
 
+  @ApiStatus.Internal
   void addSourceRoot(@NotNull JpsModuleSourceRoot root);
 
+  @ApiStatus.Internal
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 
   /**
    * Add a {@link JpsExcludePattern pattern} for names of files which should be excluded from this module.
    */
+  @ApiStatus.Internal
   void addExcludePattern(@NotNull String baseDirUrl, @NotNull String pattern);
+  @ApiStatus.Internal
   void removeExcludePattern(@NotNull String baseDirUrl, @NotNull String pattern);
 
   List<JpsExcludePattern> getExcludePatterns();
@@ -67,10 +81,12 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   @NotNull
   JpsModuleReference createReference();
 
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement, Type extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addModuleLibrary(@NotNull String name, @NotNull Type type);
 
+  @ApiStatus.Internal
   void addModuleLibrary(@NotNull JpsLibrary library);
 
   @NotNull
@@ -87,6 +103,7 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   <P extends JpsElement>
   JpsSdk<P> getSdk(@NotNull JpsSdkType<P> type);
 
+  @ApiStatus.Internal
   void delete();
 
   JpsProject getProject();

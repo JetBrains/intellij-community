@@ -1,0 +1,5 @@
+root = true
+
+[*.ft]
+# Corresponds to IDE defaults in user projects
+indent_size = 4

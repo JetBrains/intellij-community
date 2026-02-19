@@ -1,24 +1,46 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-class ActionButton extends IconButton implements ActionListener {
-  private final InplaceButton myButton;
+class ActionButton implements ActionListener {
+  private static final Logger LOG = Logger.getInstance(ActionButton.class);
+
+  private final IconButton myIconButton;
+  private final InplaceButton myInplaceButton;
   private Presentation myPrevPresentation;
   private final AnAction myAction;
   private final String myPlace;
@@ -26,8 +48,19 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean myAutoHide;
   private boolean myToShow;
 
-  ActionButton(TabInfo tabInfo, AnAction action, String place, Consumer<MouseEvent> pass, Consumer<Boolean> hover, TimedDeadzone.Length deadzone) {
-    super(null, action.getTemplatePresentation().getIcon());
+  ActionButton(@NotNull TabInfo tabInfo,
+               @NotNull AnAction action,
+               String place,
+               Consumer<? super MouseEvent> pass,
+               Consumer<? super Boolean> hover,
+               TimedDeadzone.Length deadzone) {
+    if (action.getActionUpdateThread() == ActionUpdateThread.BGT) {
+      String name = action.getClass().getName();
+      LOG.error(PluginException.createByClass(
+        action.getActionUpdateThread() + " action " + StringUtil.getShortName(name) + " (" + name + ") is not allowed. " +
+        "Only EDT actions are allowed.", null, action.getClass()));
+    }
+    myIconButton = new IconButton(null, action.getTemplatePresentation().getIcon());
     myTabInfo = tabInfo;
     myAction = action;
     myPlace = place;
@@ -44,7 +77,7 @@ class ActionButton extends IconButton implements ActionListener {
       }
     };
 
-    myButton = new InplaceButton(this, this, pass, deadzone) {
+    myInplaceButton = new InplaceButton(myIconButton, this, pass, deadzone) {
       @Override
       protected void doRepaintComponent(Component c) {
         repaintComponent(c);
@@ -53,21 +86,25 @@ class ActionButton extends IconButton implements ActionListener {
       @Override
       public void addNotify() {
         super.addNotify();
-        myButton.addMouseListener(myListener);
+        myInplaceButton.addMouseListener(myListener);
       }
 
       @Override
       public void removeNotify() {
         super.removeNotify();
-        myButton.removeMouseListener(myListener);
+        myInplaceButton.removeMouseListener(myListener);
       }
     };
-    myButton.setVisible(false);
-    myButton.setFillBg(false);
+    myInplaceButton.setVisible(false);
+    myInplaceButton.setFillBg(false);
   }
 
   public InplaceButton getComponent() {
-    return myButton;
+    return myInplaceButton;
+  }
+
+  public Presentation getPrevPresentation() {
+    return myPrevPresentation;
   }
 
   protected void repaintComponent(Component c) {
@@ -75,7 +112,7 @@ class ActionButton extends IconButton implements ActionListener {
   }
 
   public void setMouseDeadZone(TimedDeadzone.Length deadZone) {
-    myButton.setMouseDeadzone(deadZone);
+    myInplaceButton.setMouseDeadzone(deadZone);
   }
 
   public boolean update() {
@@ -85,13 +122,13 @@ class ActionButton extends IconButton implements ActionListener {
     Presentation p = event.getPresentation();
     boolean changed = !areEqual(p, myPrevPresentation);
 
-    setIcons(p.getIcon(), p.getDisabledIcon(), p.getHoveredIcon());
+    myIconButton.setIcons(p.getIcon(), p.getDisabledIcon(), p.getHoveredIcon());
 
     if (changed) {
-      myButton.setIcons(this);
+      myInplaceButton.setIcons(myIconButton);
       String tooltipText = KeymapUtil.createTooltipText(p.getText(), myAction);
-      myButton.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
-      myButton.setVisible(p.isEnabled() && p.isVisible());
+      myInplaceButton.setToolTipText(!tooltipText.isEmpty() ? tooltipText : null);
+      myInplaceButton.setVisible(p.isEnabled() && p.isVisible());
     }
 
     myPrevPresentation = p;
@@ -112,9 +149,7 @@ class ActionButton extends IconButton implements ActionListener {
   @Override
   public void actionPerformed(final ActionEvent e) {
     AnActionEvent event = createAnEvent(e);
-    if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
-    }
+    ActionUtil.performAction(myAction, event);
   }
 
   private @NotNull AnActionEvent createAnEvent(final @NotNull ActionEvent e) {
@@ -128,9 +163,12 @@ class ActionButton extends IconButton implements ActionListener {
 
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
-    return new AnActionEvent(inputEvent, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
-                             ActionManager.getInstance(), modifiers);
+    DataContext parent = DataManager.getInstance().getDataContext(myInplaceButton);
+    DataContext dataContext = CustomizedDataContext.withSnapshot(parent, sink -> {
+      sink.set(CommonDataKeys.VIRTUAL_FILE, ObjectUtils.tryCast(myTabInfo.getObject(), VirtualFile.class));
+    });
+    return new AnActionEvent(dataContext, presentation, myPlace != null ? myPlace : ActionPlaces.UNKNOWN,
+                             ActionUiKind.TOOLBAR, inputEvent, modifiers, ActionManager.getInstance());
   }
 
   public void setAutoHide(final boolean autoHide) {
@@ -142,9 +180,9 @@ class ActionButton extends IconButton implements ActionListener {
 
   public void toggleShowActions(boolean show) {
     if (myAutoHide) {
-      myButton.setPainting(show);
+      myInplaceButton.setPainting(show);
     } else {
-      myButton.setPainting(true);
+      myInplaceButton.setPainting(true);
     }
 
     myToShow = show;

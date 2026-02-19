@@ -88,9 +88,6 @@
     <item name='org.apache.velocity.runtime.resource.loader.FileResourceLoader java.io.File getFile(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.velocity.runtime.resource.loader.FileResourceLoader java.io.InputStream findTemplate(java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='org.apache.velocity.runtime.resource.loader.FileResourceLoader java.io.InputStream findTemplate(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -108,9 +105,6 @@
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.JarHolder JarHolder(org.apache.velocity.runtime.RuntimeServices, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.velocity.runtime.resource.loader.JarHolder java.io.InputStream getResource(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.JarHolder java.lang.String getUrlPath()'>
         <annotation name='org.jetbrains.annotations.Contract'>

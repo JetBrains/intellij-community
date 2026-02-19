@@ -1,31 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticReferenceElement;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -56,14 +71,38 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    List<? extends PsiClass> classesToImport = getClassesToImport(true);
+    if (classesToImport.isEmpty()) return IntentionPreviewInfo.EMPTY;
+    PsiClass firstClassToImport = classesToImport.get(0);
+    PsiJavaCodeReferenceElement reference = getReference();
+    if (!reference.isValid()) return IntentionPreviewInfo.EMPTY;
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findSameElementInCopy(reference, psiFile);
+    bindReference(ref, firstClassToImport);
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
+  protected boolean isStillAvailable() {
+    PsiJavaCodeReferenceElement reference = getReference();
+    //check that reference is not reparsed
+    return super.isStillAvailable() && reference.isValid();
+  }
+
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return currentFile;
+  }
+
+  @Override
   protected boolean hasTypeParameters(@NotNull PsiJavaCodeReferenceElement reference) {
-    final PsiReferenceParameterList refParameters = reference.getParameterList();
+    PsiReferenceParameterList refParameters = reference.getParameterList();
     return refParameters != null && refParameters.getTypeParameterElements().length > 0;
   }
 
   @Override
-  protected String getQualifiedName(@NotNull PsiJavaCodeReferenceElement reference) {
-    return reference.getQualifiedName();
+  protected String getQualifiedName(@NotNull PsiJavaCodeReferenceElement referenceElement) {
+    return referenceElement.getQualifiedName();
   }
 
   @Override
@@ -72,7 +111,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected boolean hasUnresolvedImportWhichCanImport(final PsiFile psiFile, final String name) {
+  protected boolean hasUnresolvedImportWhichCanImport(@NotNull PsiFile psiFile, @NotNull String name) {
     if (!(psiFile instanceof PsiJavaFile)) return false;
     PsiImportList importList = ((PsiJavaFile)psiFile).getImportList();
     if (importList == null) return false;
@@ -96,13 +135,13 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected String getRequiredMemberName(@NotNull PsiJavaCodeReferenceElement reference) {
-    PsiElement parent = reference.getParent();
+  protected String getRequiredMemberName(@NotNull PsiJavaCodeReferenceElement referenceElement) {
+    PsiElement parent = referenceElement.getParent();
     if (parent instanceof PsiJavaCodeReferenceElement) {
       return ((PsiJavaCodeReferenceElement)parent).getReferenceName();
     }
 
-    return super.getRequiredMemberName(reference);
+    return super.getRequiredMemberName(referenceElement);
   }
 
   @Override
@@ -120,19 +159,18 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(type);
     PsiTypeParameterList typeParameterList = PsiTreeUtil.getParentOfType(prev, PsiTypeParameterList.class);
     if (typeParameterList != null && typeParameterList.getParent() instanceof PsiErrorElement) {
-      return Arrays.stream(typeParameterList.getTypeParameters()).anyMatch(p -> Objects.equals(element.getReferenceName(), p.getName()));
+      return ContainerUtil.exists(typeParameterList.getTypeParameters(), p -> Objects.equals(element.getReferenceName(), p.getName()));
     }
     return false;
   }
 
-  @NotNull
   @Override
-  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement ref) {
-    if (ref instanceof PsiReferenceExpression) {
+  protected @Unmodifiable @NotNull Collection<PsiClass> filterByContext(@NotNull Collection<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    if (referenceElement instanceof PsiReferenceExpression) {
       return Collections.emptyList();
     }
 
-    PsiElement typeElement = ref.getParent();
+    PsiElement typeElement = referenceElement.getParent();
     if (typeElement instanceof PsiTypeElement) {
       PsiElement var = typeElement.getParent();
       if (var instanceof PsiVariable) {
@@ -149,11 +187,51 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
       }
     }
 
-    return super.filterByContext(candidates, ref);
+    return super.filterByContext(candidates, referenceElement);
   }
 
   @Override
-  protected boolean isAccessible(@NotNull PsiMember member, @NotNull PsiJavaCodeReferenceElement reference) {
-    return PsiUtil.isAccessible(member, reference, null);
+  protected boolean isAccessible(@NotNull PsiMember member, @NotNull PsiJavaCodeReferenceElement referenceElement) {
+    return PsiUtil.isAccessible(member, referenceElement, null);
+  }
+
+  @Override
+  protected boolean isClassDefinitelyPositivelyImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
+    if (containingFile instanceof PsiJavaFile) {
+      PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
+      if (importList == null) return false;
+      boolean result = false;
+      String classQualifiedName = classToImport.getQualifiedName();
+      String packageName = classQualifiedName == null ? "" : StringUtil.getPackageName(classQualifiedName);
+      for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
+        PsiJavaCodeReferenceElement importRef = statement.getImportReference();
+        if (importRef == null) continue;
+        String canonicalText = importRef.getCanonicalText(); // rely on the optimization: no resolve while getting import statement canonical text
+
+        if (statement.isOnDemand()) {
+          if (canonicalText.equals(packageName)) {
+            result = true;
+            break;
+          }
+        }
+        else {
+          if (canonicalText.equals(classQualifiedName)) {
+            result = true;
+            break;
+          }
+        }
+      }
+      return result;
+    }
+    if (containingFile instanceof JavaCodeFragment) {
+      String classQualifiedName = classToImport.getQualifiedName();
+      return classQualifiedName != null && ((JavaCodeFragment)containingFile).importsToString().contains(classQualifiedName);
+    }
+    return false;
+  }
+
+  @Override
+  public String toString() {
+    return "ImportClassFix: "+getReference()+" -> "+getClassesToImport();
   }
 }

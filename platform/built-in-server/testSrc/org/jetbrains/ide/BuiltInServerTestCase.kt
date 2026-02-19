@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.testFramework.DisposeModulesRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.runInEdtAndWait
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
@@ -21,7 +23,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.concurrent.TimeUnit
 
-internal abstract class BuiltInServerTestCase {
+abstract class BuiltInServerTestCase {
   companion object {
     @JvmField
     @ClassRule
@@ -49,10 +51,11 @@ internal abstract class BuiltInServerTestCase {
   protected open val urlPathPrefix = ""
 
   protected fun doTest(urlSuffix: String? = null,
-                       asSignedRequest: Boolean = true, origin: String? = null,
+                       asSignedRequest: Boolean = true,
+                       origin: String? = null,
                        responseStatus: Int = 200,
                        additionalCheck: ((connection: HttpResponse<InputStream>) -> Unit)? = null) {
-    val serviceUrl = "http://localhost:${BuiltInServerManager.getInstance().port}$urlPathPrefix"
+    val serviceUrl = "http://localhost:${BuiltInServerManager.getInstance().port}${urlPathPrefix}"
     var url = serviceUrl
     if (urlSuffix != null) {
       url += urlSuffix
@@ -63,18 +66,27 @@ internal abstract class BuiltInServerTestCase {
 
     val line = manager.annotation?.line ?: -1
     if (line != -1) {
-      url += ":$line"
+      url += ":${line}"
     }
     val column = manager.annotation?.column ?: -1
     if (column != -1) {
-      url += ":$column"
+      url += ":${column}"
     }
 
     val expectedStatus = HttpResponseStatus.valueOf(manager.annotation?.status ?: responseStatus)
     val response = testUrl(url, expectedStatus, asSignedRequest = asSignedRequest, origin = origin)
     response.body().use {
-      check(serviceUrl, expectedStatus)
-      additionalCheck?.invoke(response)
+      try {
+        check(serviceUrl, expectedStatus)
+        additionalCheck?.invoke(response)
+      }
+      finally {
+        projectRule.projectIfOpened?.let {
+          runInEdtAndWait {
+            FileEditorManagerEx.getInstanceEx(it).closeAllFiles()
+          }
+        }
+      }
     }
   }
 

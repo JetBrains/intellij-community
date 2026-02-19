@@ -1,0 +1,4 @@
+{
+    "inspectionClass": "org.jetbrains.kotlin.idea.inspections.KotlinJvmAnnotationInJavaInspection",
+    "withRuntime": "true"
+}

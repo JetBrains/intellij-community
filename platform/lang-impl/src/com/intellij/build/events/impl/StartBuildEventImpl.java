@@ -1,82 +1,71 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events.impl;
 
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.DefaultBuildDescriptor;
-import com.intellij.build.events.BuildEventsNls;
+import com.intellij.build.events.BuildEventsNls.Description;
+import com.intellij.build.events.BuildEventsNls.Hint;
+import com.intellij.build.events.BuildEventsNls.Message;
 import com.intellij.build.events.StartBuildEvent;
-import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
  */
-public class StartBuildEventImpl extends StartEventImpl implements StartBuildEvent {
+@Internal
+public final class StartBuildEventImpl extends StartEventImpl implements StartBuildEvent {
 
   private final @NotNull DefaultBuildDescriptor myBuildDescriptor;
-  private @Nullable BuildViewSettingsProvider myBuildViewSettingsProvider;
+  private @Nullable BuildViewSettingsProvider myBuildViewSettings;
 
-  public StartBuildEventImpl(@NotNull BuildDescriptor descriptor, @NotNull @BuildEventsNls.Message  String message) {
-    super(descriptor.getId(), null, descriptor.getStartTime(), message);
-    myBuildDescriptor =
-      descriptor instanceof DefaultBuildDescriptor ? (DefaultBuildDescriptor)descriptor : new DefaultBuildDescriptor(descriptor);
+  @Internal
+  public StartBuildEventImpl(
+    @Nullable Object parentId,
+    @NotNull @Message String message,
+    @Nullable @Hint String hint,
+    @Nullable @Description String description,
+    @NotNull BuildDescriptor buildDescriptor,
+    @Nullable BuildViewSettingsProvider buildViewSettings
+  ) {
+    super(buildDescriptor.getId(), parentId, buildDescriptor.getStartTime(), message, hint, description);
+    myBuildDescriptor = buildDescriptor instanceof DefaultBuildDescriptor defaultBuildDescriptor
+                        ? defaultBuildDescriptor : new DefaultBuildDescriptor(buildDescriptor);
+    myBuildViewSettings = buildViewSettings;
   }
 
-  @ApiStatus.Experimental
-  @NotNull
+  /**
+   * @deprecated Use {@link StartBuildEvent#builder} event builder instead.
+   */
+  @Deprecated
+  public StartBuildEventImpl(
+    @NotNull BuildDescriptor descriptor,
+    @NotNull @Message String message
+  ) {
+    this(null, message, null, null, descriptor, null);
+  }
+
   @Override
-  public DefaultBuildDescriptor getBuildDescriptor() {
+  public @NotNull DefaultBuildDescriptor getBuildDescriptor() {
     return myBuildDescriptor;
   }
 
-  /**
-   * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
-   */
-  @Deprecated
-  public StartBuildEventImpl withProcessHandler(@Nullable BuildProcessHandler processHandler,
-                                                @Nullable Consumer<? super ConsoleView> attachedConsoleConsumer) {
-    myBuildDescriptor.withProcessHandler(processHandler, attachedConsoleConsumer);
-    return this;
+  @Override
+  public @Nullable BuildViewSettingsProvider getBuildViewSettings() {
+    return myBuildViewSettings;
   }
 
   /**
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
-  @Deprecated
-  public StartBuildEventImpl withRestartAction(@NotNull AnAction anAction) {
-    myBuildDescriptor.withRestartAction(anAction);
-    return this;
-  }
-
-  /**
-   * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public StartBuildEventImpl withRestartActions(AnAction... actions) {
     Arrays.stream(actions).forEach(myBuildDescriptor::withRestartAction);
     return this;
@@ -85,39 +74,28 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   /**
    * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
    */
-  @Deprecated
-  public StartBuildEventImpl withContentDescriptorSupplier(Supplier<? extends RunContentDescriptor> contentDescriptorSupplier) {
-    myBuildDescriptor.withContentDescriptor(contentDescriptorSupplier);
-    return this;
-  }
-
-  /**
-   * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public StartBuildEventImpl withExecutionFilter(@NotNull Filter filter) {
     myBuildDescriptor.withExecutionFilter(filter);
     return this;
   }
 
   /**
-   * @deprecated use {@link DefaultBuildDescriptor#withProcessHandler}
+   * @deprecated Use {@link #getBuildViewSettings()} instead.
    */
   @Deprecated
-  public StartBuildEventImpl withExecutionFilters(Filter... filters) {
-    Arrays.stream(filters).forEach(myBuildDescriptor::withExecutionFilter);
-    return this;
+  @Experimental
+  public @Nullable BuildViewSettingsProvider getBuildViewSettingsProvider() {
+    return myBuildViewSettings;
   }
 
-  @Nullable
-  @ApiStatus.Experimental
-  public BuildViewSettingsProvider getBuildViewSettingsProvider() {
-    return myBuildViewSettingsProvider;
-  }
-
-  @ApiStatus.Experimental
+  /**
+   * @deprecated Use {@link StartBuildEvent#builder} event builder instead.
+   */
+  @Deprecated
+  @Experimental
   public StartBuildEventImpl withBuildViewSettingsProvider(@Nullable BuildViewSettingsProvider viewSettingsProvider) {
-    myBuildViewSettingsProvider = viewSettingsProvider;
+    myBuildViewSettings = viewSettingsProvider;
     return this;
   }
 }

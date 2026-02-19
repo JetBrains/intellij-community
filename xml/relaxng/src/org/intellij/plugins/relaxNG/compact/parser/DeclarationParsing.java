@@ -18,11 +18,24 @@ package org.intellij.plugins.relaxNG.compact.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.parsing.XmlParserBundle;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
-import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.EQ;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.IDENTIFIERS;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.IDENTIFIER_OR_KEYWORD;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_DATATYPES;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_DEFAULT;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_DIV;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_GRAMMAR;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_INCLUDE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_INHERIT;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_NAMESPACE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.KEYWORD_START;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LBRACE;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.LITERAL;
+import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.RBRACE;
 
 public abstract class DeclarationParsing extends AbstractParsing {
 
@@ -77,7 +90,7 @@ public abstract class DeclarationParsing extends AbstractParsing {
     } else if (IDENTIFIERS.contains(t)) {
       parseDefine();
     } else {
-      error(XmlPsiBundle.message("xml.parsing.unexpected.token"));
+      error(XmlParserBundle.message("xml.parsing.unexpected.token"));
       advance();
     }
   }

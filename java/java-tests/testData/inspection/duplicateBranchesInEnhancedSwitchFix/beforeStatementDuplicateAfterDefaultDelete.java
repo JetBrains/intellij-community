@@ -1,4 +1,4 @@
-// "Delete redundant 'switch' branch" "GENERIC_ERROR_OR_WARNING"
+// "Delete redundant 'switch' branch" "INFORMATION"
 class C {
     void foo(int n) {
         switch (n) {

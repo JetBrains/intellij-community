@@ -18,16 +18,18 @@ package com.intellij.util;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Component;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class IJSwingUtilitiesTest extends TestCase {
   private final JPanel myPanel = new JPanel();
-  private final Assertion CHECK = new Assertion();
 
   public void testNoChildren() {
-    CHECK.empty(getChildren());
+    assertThat(getChildren()).isEmpty();
   }
 
   public void testOneLevel() {
@@ -35,7 +37,7 @@ public class IJSwingUtilitiesTest extends TestCase {
     myPanel.add(label1);
     MockComponent label2 = new MockComponent("2");
     myPanel.add(label2);
-    CHECK.compareAll(new JComponent[]{label1, label2}, getChildren());
+    assertThat(getChildren()).containsExactly(label1, label2);
   }
 
   public void testubTree() {
@@ -49,7 +51,7 @@ public class IJSwingUtilitiesTest extends TestCase {
     subPanel.add(label2);
     subPanel.add(label3);
     myPanel.add(label4);
-    CHECK.compareAll(new JComponent[]{label1, subPanel, label2, label3, label4}, getChildren());
+    assertThat(getChildren()).containsExactly(label1, subPanel, label2, label3, label4);
   }
 
   private List<Component> getChildren() {
@@ -63,6 +65,7 @@ public class IJSwingUtilitiesTest extends TestCase {
       myName = name;
     }
 
+    @Override
     public String toString() {
       return myName;
     }

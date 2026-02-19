@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
@@ -17,7 +17,7 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatu
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.New;
 
 final class ProjectRootSearchUtil {
-  private final static ProjectRootFinder[] ROOT_FINDERS = {
+  private static final ProjectRootFinder[] ROOT_FINDERS = {
     new IntellijProjectRootFinder(),
     new GradleProjectRootFinder(),
     new GitProjectRootFinder(),
@@ -48,12 +48,12 @@ final class ProjectRootSearchUtil {
     if (requiresConfirmation.get()) {
       final VirtualFile newProjectRoot = confirmOrChooseProjectDir(project, result.get());
       if (newProjectRoot != null) {
-        LightEditFeatureUsagesUtil.logOpenFileInProject(New);
+        LightEditFeatureUsagesUtil.logOpenFileInProject(project, New);
       }
       result.set(newProjectRoot);
     }
     else {
-      LightEditFeatureUsagesUtil.logOpenFileInProject(Existing);
+      LightEditFeatureUsagesUtil.logOpenFileInProject(project, Existing);
     }
     return result.get();
   }

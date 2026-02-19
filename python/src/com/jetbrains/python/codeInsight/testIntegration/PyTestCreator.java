@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.testIntegration;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,14 +16,20 @@ import com.intellij.testIntegration.TestCreator;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.testing.PythonUnitTestDetectorsBasedOnSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 
-public class PyTestCreator implements TestCreator {
+public final class PyTestCreator implements TestCreator {
   private static final Logger LOG = Logger.getInstance(PyTestCreator.class);
 
   @Override
@@ -55,7 +61,7 @@ public class PyTestCreator implements TestCreator {
    *
    * @return file with test
    */
-  static PsiFile generateTestAndNavigate(@NotNull final PsiElement anchor, @NotNull final PyTestCreationModel creationModel) {
+  static PsiFile generateTestAndNavigate(final @NotNull PsiElement anchor, final @NotNull PyTestCreationModel creationModel) {
     final Project project = anchor.getProject();
     return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
       () -> ApplicationManager.getApplication().runWriteAction((Computable<PsiFile>)() -> {
@@ -76,8 +82,8 @@ public class PyTestCreator implements TestCreator {
    *
    * @return newly created test class
    */
-  @NotNull
-  static PyElement generateTest(@NotNull final PsiElement anchor, @NotNull final PyTestCreationModel model) {
+  @VisibleForTesting
+  public static @NotNull PyElement generateTest(final @NotNull PsiElement anchor, final @NotNull PyTestCreationModel model) {
     final Project project = anchor.getProject();
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
@@ -85,7 +91,7 @@ public class PyTestCreator implements TestCreator {
     if (!fileName.endsWith(".py")) {
       fileName = fileName + "." + PythonFileType.INSTANCE.getDefaultExtension();
     }
-    final PyFile psiFile = PyRefactoringUtil.getOrCreateFile(model.getTargetDir() + "/" + fileName, project);
+    PyFile psiFile = PyClassRefactoringUtil.getOrCreateFile(model.getTargetDir() + "/" + fileName, project, false);
 
     final String className = model.getClassName();
     final List<String> methods = model.getMethods();

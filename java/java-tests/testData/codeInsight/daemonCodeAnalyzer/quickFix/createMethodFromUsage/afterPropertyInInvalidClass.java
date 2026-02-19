@@ -1,4 +1,4 @@
-// "Create property 'appOutputPath' in 'X'" "true"
+// "Create property 'appOutputPath' in 'X'" "true-preview"
 class X {
   void initOutputChecker() {
     getAppOutputPath();

@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
-import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -14,13 +12,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getManager;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getRootProjectPath;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
 
 /**
  * Holds local project-level external system-related settings (should be kept at the '*.iws' or 'workspace.xml').
@@ -28,16 +34,14 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
  * For example, we don't want to store recent tasks list at common external system settings, hence, that data
  * is kept at user-local settings.
  * <p/>
- * <b>Note:</b> non-abstract sub-classes of this class are expected to be marked by {@link State} annotation configured
+ * <b>Note:</b> non-abstract subclasses of this class are expected to be marked by {@link State} annotation configured
  * to be stored under a distinct name at a {@link StoragePathMacros#CACHE_FILE}.
- *
- * @author Denis Zhdanov
  */
 public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExternalSystemLocalSettings.State> {
   protected S state;
 
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private final Project myProject;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull Project myProject;
 
   protected AbstractExternalSystemLocalSettings(@NotNull ProjectSystemId externalSystemId, @NotNull Project project, @NotNull S state) {
     myExternalSystemId = externalSystemId;
@@ -75,15 +79,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
       }
     }
 
-    for (Iterator<Map.Entry<String, ExternalProjectBuildClasspathPojo>> it = state.projectBuildClasspath.entrySet().iterator();
-         it.hasNext(); ) {
-      Map.Entry<String, ExternalProjectBuildClasspathPojo> entry = it.next();
-      if (linkedProjectPathsToForget.contains(entry.getKey())
-          || linkedProjectPathsToForget.contains(getRootProjectPath(entry.getKey(), myExternalSystemId, myProject))) {
-        it.remove();
-      }
-    }
-
     for (Iterator<Map.Entry<String, SyncType>> it = state.projectSyncType.entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<String, SyncType> entry = it.next();
       if (linkedProjectPathsToForget.contains(entry.getKey())
@@ -98,8 +93,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     }
   }
 
-  @NotNull
-  public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> getAvailableProjects() {
+  public @NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> getAvailableProjects() {
     return state.availableProjects;
   }
 
@@ -107,38 +101,19 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     state.availableProjects = projects;
   }
 
-  /**
-   * @deprecated use {@link com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil#findProjectTasks(Project, ProjectSystemId, String)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  @NotNull
-  public Map<String, Collection<ExternalTaskPojo>> getAvailableTasks() {
-    return Collections.emptyMap();
-  }
-
-  @NotNull
-  public List<ExternalTaskExecutionInfo> getRecentTasks() {
+  public @NotNull @Unmodifiable List<ExternalTaskExecutionInfo> getRecentTasks() {
     return ContainerUtil.notNullize(state.recentTasks);
   }
 
-  @NotNull
-  public Map<String, Long> getExternalConfigModificationStamps() {
+  public @NotNull Map<String, Long> getExternalConfigModificationStamps() {
     return state.modificationStamps;
   }
 
-  @NotNull
-  public Map<String, ExternalProjectBuildClasspathPojo> getProjectBuildClasspath() {
-    return state.projectBuildClasspath;
-  }
-
-  @NotNull
-  public Map<String, SyncType> getProjectSyncType() {
+  public @NotNull Map<String, SyncType> getProjectSyncType() {
     return state.projectSyncType;
   }
 
-  @Nullable
-  public S getState() {
+  public @Nullable S getState() {
     return state;
   }
 
@@ -146,6 +121,13 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     //noinspection unchecked
     this.state = (S)state;
     pruneOutdatedEntries();
+  }
+
+  public void invalidateCaches() {
+    state.recentTasks.clear();
+    state.availableProjects.clear();
+    state.modificationStamps.clear();
+    state.projectSyncType.clear();
   }
 
   private void pruneOutdatedEntries() {
@@ -173,24 +155,10 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     }
   }
 
-  public void setProjectBuildClasspath(Map<String, ExternalProjectBuildClasspathPojo> value) {
-    state.projectBuildClasspath = value;
-  }
-
-  @Deprecated
-  public void fillState(@NotNull State otherState) {
-    otherState.recentTasks.clear();
-    otherState.availableProjects = state.availableProjects;
-    otherState.modificationStamps = state.modificationStamps;
-    otherState.projectBuildClasspath = state.projectBuildClasspath;
-    otherState.projectSyncType = state.projectSyncType;
-  }
-
   public static class State {
     public final List<ExternalTaskExecutionInfo> recentTasks = new SmartList<>();
     public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = CollectionFactory.createSmallMemoryFootprintMap();
     public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = CollectionFactory.createSmallMemoryFootprintMap();
-    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = CollectionFactory.createSmallMemoryFootprintMap();
     public Map<String/* linked project path */, SyncType> projectSyncType = CollectionFactory.createSmallMemoryFootprintMap();
   }
 

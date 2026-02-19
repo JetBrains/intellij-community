@@ -16,27 +16,8 @@
 package org.jetbrains.plugins.gradle.codeInsight
 
 import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.patterns.PlatformPatterns.psiFile
-import com.intellij.patterns.StandardPatterns.string
-import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl
 
 /**
  * @author Vladislav.Soroka
  */
-abstract class AbstractGradleCompletionContributor : CompletionContributor() {
-
-  protected fun findNamedArgumentValue(namedArgumentsOwner: GrNamedArgumentsOwner?, label: String): String? {
-    val namedArgument = namedArgumentsOwner?.findNamedArgument(label) ?: return null
-    return (namedArgument.expression as? GrLiteralImpl)?.value?.toString()
-  }
-
-  companion object {
-    val GRADLE_FILE_PATTERN: ElementPattern<PsiElement> = psiElement()
-      .inFile(psiFile().withName(string().endsWith('.' + GradleConstants.EXTENSION)))
-  }
-}
+abstract class AbstractGradleCompletionContributor : CompletionContributor()

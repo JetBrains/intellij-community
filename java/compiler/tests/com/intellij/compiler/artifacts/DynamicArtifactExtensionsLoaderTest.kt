@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts
 
 import com.intellij.openapi.Disposable
@@ -7,8 +7,16 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.packaging.artifacts.*
-import com.intellij.packaging.elements.*
+import com.intellij.packaging.artifacts.Artifact
+import com.intellij.packaging.artifacts.ArtifactManager
+import com.intellij.packaging.artifacts.ArtifactProperties
+import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
+import com.intellij.packaging.artifacts.ArtifactType
+import com.intellij.packaging.elements.CompositePackagingElement
+import com.intellij.packaging.elements.PackagingElement
+import com.intellij.packaging.elements.PackagingElementFactory
+import com.intellij.packaging.elements.PackagingElementOutputKind
+import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.ui.ArtifactEditorContext
@@ -16,13 +24,12 @@ import com.intellij.packaging.ui.ArtifactPropertiesEditor
 import com.intellij.packaging.ui.PackagingElementPresentation
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.ui.EmptyIcon
-import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.Icon
 
 class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
   fun `test unload and load artifact type`() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(Consumer {}, testRootDisposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable) {}
     val artifactManager = ArtifactManager.getInstance(myProject)
     runWithRegisteredExtension(MockArtifactType(), ArtifactType.EP_NAME) {
       artifactManager.addArtifact("mock", MockArtifactType.getInstance(), PackagingElementFactory.getInstance().createArtifactRootElement())
@@ -53,7 +60,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     assertOneElement(artifactManager.allArtifactsIncludingInvalid)
     val artifact = assertOneElement(artifactManager.getArtifactsByType(PlainArtifactType.getInstance()))
     assertEquals("mock", artifact.name)
-    assertEquals("data", (artifact.rootElement.children.single() as MockPackagingElement).state.data)
+    assertEmpty(artifact.rootElement.children)
   }
 
   fun `test unload and load artifact properties`() {
@@ -76,7 +83,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     assertEquals("data", (artifact.getProperties(MockArtifactPropertiesProvider.getInstance()) as MockArtifactProperties).data)
   }
 
-  private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
+  private inline fun <T : Any> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
     val disposable = Disposer.newDisposable()
     registerExtension(extension, extensionPoint, disposable)
     try {
@@ -87,7 +94,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
     }
   }
 
-  private fun <T> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
+  private fun <T : Any> registerExtension(type: T, extensionPointName: ExtensionPointName<T>, disposable: Disposable) {
     val artifactTypeDisposable = Disposer.newDisposable()
     Disposer.register(disposable, Disposable {
       runWriteAction {
@@ -99,7 +106,7 @@ class DynamicArtifactExtensionsLoaderTest : HeavyPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(Consumer {}, testRootDisposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable) {}
   }
 }
 
@@ -110,7 +117,7 @@ private class MockArtifactType : ArtifactType("mock", Supplier { "Mock" }) {
 
   override fun getIcon(): Icon = EmptyIcon.ICON_16
 
-  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String? = ""
+  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String = ""
 
   override fun createRootElement(artifactName: String): CompositePackagingElement<*> {
     return PackagingElementFactory.getInstance().createArtifactRootElement()
@@ -140,7 +147,7 @@ private class MockPackagingElementType : PackagingElementType<MockPackagingEleme
 
   override fun chooseAndCreate(context: ArtifactEditorContext,
                                artifact: Artifact,
-                               parent: CompositePackagingElement<*>): MutableList<out PackagingElement<*>> {
+                               parent: CompositePackagingElement<*>): List<PackagingElement<*>> {
     throw UnsupportedOperationException()
   }
 
@@ -149,10 +156,10 @@ private class MockPackagingElementType : PackagingElementType<MockPackagingEleme
   }
 }
 
-private class MockArtifactProperties : ArtifactProperties<MockArtifactProperties>() {
+internal class MockArtifactProperties : ArtifactProperties<MockArtifactProperties>() {
   var data: String = ""
 
-  override fun getState(): MockArtifactProperties? {
+  override fun getState(): MockArtifactProperties {
     return this
   }
 
@@ -165,7 +172,7 @@ private class MockArtifactProperties : ArtifactProperties<MockArtifactProperties
   }
 }
 
-private class MockArtifactPropertiesProvider : ArtifactPropertiesProvider("mock-properties") {
+internal class MockArtifactPropertiesProvider : ArtifactPropertiesProvider("mock-properties") {
   companion object {
     fun getInstance(): MockArtifactPropertiesProvider = EP_NAME.findExtensionOrFail(MockArtifactPropertiesProvider::class.java)
   }

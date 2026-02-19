@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiClass;
@@ -19,29 +19,29 @@ public final class AnnotationTargetsSearch {
     private final PsiClass myAnnotationClass;
     private final SearchScope myScope;
 
-    public Parameters(final PsiClass annotationClass, final SearchScope scope) {
+    public Parameters(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
       myAnnotationClass = annotationClass;
       myScope = scope;
     }
 
-    public PsiClass getAnnotationClass() {
+    public @NotNull PsiClass getAnnotationClass() {
       return myAnnotationClass;
     }
 
-    public SearchScope getScope() {
+    public @NotNull SearchScope getScope() {
       return myScope;
     }
   }
 
   private AnnotationTargetsSearch() {}
 
-  public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  public static @NotNull Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     final Query<PsiMember> members = AnnotatedMembersSearch.search(annotationClass, scope);
     final Query<PsiPackage> packages = AnnotatedPackagesSearch.search(annotationClass, scope);
     return new MergeQuery<>(members, packages);
   }
 
-  public static Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass) {
+  public static @NotNull Query<PsiModifierListOwner> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }
 }

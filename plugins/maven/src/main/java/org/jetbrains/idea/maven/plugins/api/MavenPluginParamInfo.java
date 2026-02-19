@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.lang.Language;
@@ -17,15 +17,20 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.*;
-import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
+import org.jetbrains.idea.maven.dom.model.MavenDomGoal;
+import org.jetbrains.idea.maven.dom.model.MavenDomGoals;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
-/**
- * @author Sergey Evdokimov
- */
-public class MavenPluginParamInfo {
+public final class MavenPluginParamInfo {
 
   private static final Logger LOG = Logger.getInstance(MavenPluginParamInfo.class);
 
@@ -51,12 +56,12 @@ public class MavenPluginParamInfo {
           Map pluginsMap = res;
 
           for (int i = paramPath.length - 1; i >= 0; i--) {
-            pluginsMap = MavenUtil.getOrCreate(pluginsMap, paramPath[i]);
+            pluginsMap = getOrCreate(pluginsMap, paramPath[i]);
           }
 
-          ParamInfo paramInfo = new ParamInfo(pluginDescriptor.getPluginDescriptor().getPluginClassLoader(), param);
+          ParamInfo paramInfo = new ParamInfo(pluginDescriptor.getPluginDescriptor().getClassLoader(), param);
 
-          Map<String, ParamInfo> goalsMap = MavenUtil.getOrCreate(pluginsMap, pluginId);
+          Map<String, ParamInfo> goalsMap = getOrCreate(pluginsMap, pluginId);
 
           String goal = pluginDescriptor.goal;
           assert goal == null || !goal.isEmpty();
@@ -71,6 +76,17 @@ public class MavenPluginParamInfo {
       }
 
       myMap = res;
+    }
+
+    return res;
+  }
+
+  private static @NotNull <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
+    V res = map.get(key);
+    if (res == null) {
+      //noinspection unchecked
+      res = (V)new HashMap<>();
+      map.put(key, res);
     }
 
     return res;
@@ -204,9 +220,9 @@ public class MavenPluginParamInfo {
   }
 
   public static final class ParamInfo {
-    private final ClassLoader myClassLoader;
+    private final @NotNull ClassLoader myClassLoader;
 
-    private final MavenPluginDescriptor.Param myParam;
+    private final @NotNull MavenPluginDescriptor.Param myParam;
 
     private volatile boolean myLanguageInitialized;
     private Language myLanguageInstance;
@@ -215,7 +231,8 @@ public class MavenPluginParamInfo {
     private volatile boolean myProviderInitialized;
     private volatile MavenParamReferenceProvider myProviderInstance;
 
-    private ParamInfo(ClassLoader classLoader, MavenPluginDescriptor.Param param) {
+    private ParamInfo(@NotNull ClassLoader classLoader,
+                      @NotNull MavenPluginDescriptor.Param param) {
       myClassLoader = classLoader;
       myParam = param;
     }
@@ -240,14 +257,12 @@ public class MavenPluginParamInfo {
       }
     }
 
-    @Nullable
-    public Language getLanguage() {
+    public @Nullable Language getLanguage() {
       ensureLanguageInit();
       return myLanguageInstance;
     }
 
-    @Nullable
-    public MavenParamLanguageProvider getLanguageProvider() {
+    public @Nullable MavenParamLanguageProvider getLanguageProvider() {
       ensureLanguageInit();
       return myLanguageProvider;
     }

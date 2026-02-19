@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jar;
 
 import com.intellij.execution.Location;
@@ -7,16 +7,15 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JarApplicationConfigurationProducer extends LazyRunConfigurationProducer<JarApplicationConfiguration> {
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return JarApplicationConfigurationType.getInstance();
   }
 
@@ -33,8 +32,7 @@ public final class JarApplicationConfigurationProducer extends LazyRunConfigurat
     return false;
   }
 
-  @Nullable
-  private static VirtualFile getJarFileFromContext(ConfigurationContext context) {
+  private static @Nullable VirtualFile getJarFileFromContext(ConfigurationContext context) {
     Location location = context.getLocation();
     if (location == null) return null;
 
@@ -45,6 +43,6 @@ public final class JarApplicationConfigurationProducer extends LazyRunConfigurat
   @Override
   public boolean isConfigurationFromContext(@NotNull JarApplicationConfiguration configuration, @NotNull ConfigurationContext context) {
     VirtualFile file = getJarFileFromContext(context);
-    return file != null && PathUtil.pathEqualsTo(file, configuration.getJarPath());
+    return file != null && VfsUtilCore.pathEqualsTo(file, configuration.getJarPath());
   }
 }

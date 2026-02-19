@@ -20,34 +20,42 @@ final class VerticalInfo extends DimensionInfo {
     super(layoutState, gap);
   }
 
+  @Override
   protected int getOriginalCell(final GridConstraints constraints){
     return constraints.getRow();
   }
 
+  @Override
   protected int getOriginalSpan(final GridConstraints constraints){
     return constraints.getRowSpan();
   }
 
+  @Override
   int getSizePolicy(final int componentIndex){
     return myLayoutState.getConstraints(componentIndex).getVSizePolicy();
   }
 
+  @Override
   int getChildLayoutCellCount(final GridLayoutManager childLayout) {
     return childLayout.getRowCount();
   }
 
+  @Override
   public int getMinimumWidth(final int componentIndex){
     return getMinimumSize(componentIndex).height;
   }
 
+  @Override
   public DimensionInfo getDimensionInfo(GridLayoutManager grid) {
     return grid.myVerticalInfo;
   }
 
+  @Override
   public int getCellCount(){
     return myLayoutState.getRowCount();
   }
 
+  @Override
   public int getPreferredWidth(final int componentIndex){
     return getPreferredSize(componentIndex).height;
   }

@@ -11,12 +11,17 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+final class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   MacEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
     super(editorTextField, editor);
   }
@@ -65,9 +70,9 @@ class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
 
         g2.translate(x, y);
 
-        Object op = editorTextField.getClientProperty("JComponent.outline");
+        DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(editorTextField);
         if (editorTextField.isEnabled() && op != null) {
-          DarculaUIUtil.paintOutlineBorder(g2, width, height, 0, true, hasFocus, DarculaUIUtil.Outline.valueOf(op.toString()));
+          DarculaUIUtil.paintOutlineBorder(g2, width, height, 0, true, hasFocus, op);
         }
         else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
           DarculaUIUtil.paintFocusBorder(g2, width, height, 0, true);

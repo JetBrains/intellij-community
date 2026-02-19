@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.progress.backend.jar
+  modules:
+  - name: intellij.platform.progress.backend

@@ -1,0 +1,13 @@
+================ Step #1 =================
+Cleaning output files:
+  test/ConstKt.class
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_fileWithConstantRemoved-a.kotlin_module
+  usage/UsageKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/fileWithConstantRemoved/a/usage.kt
+End of files
+------------------------------------------
+Exit code: ERROR

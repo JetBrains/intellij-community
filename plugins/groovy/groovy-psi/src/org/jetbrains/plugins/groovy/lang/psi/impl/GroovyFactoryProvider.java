@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 /**
 * @author Medvedev Max
 */
-public class GroovyFactoryProvider implements JVMElementFactoryProvider {
+public final class GroovyFactoryProvider implements JVMElementFactoryProvider {
   @Override
   public JVMElementFactory getFactory(Project project) {
     return GroovyPsiElementFactory.getInstance(project);

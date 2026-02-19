@@ -9,10 +9,15 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JTable;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.util.function.Supplier;
 
 public class ValidatingTableCellRendererWrapper extends CellRendererPanel implements TableCellRenderer {
@@ -45,7 +50,6 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     this.cellValidator = cellValidator;
     return this;
   }
-
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
@@ -65,6 +69,7 @@ public class ValidatingTableCellRendererWrapper extends CellRendererPanel implem
     }
 
     add(delegateRenderer, BorderLayout.CENTER);
+    setToolTipText(delegateRenderer.getToolTipText());
     setBorder(delegateRenderer.getBorder());
     delegateRenderer.setBorder(null);
 

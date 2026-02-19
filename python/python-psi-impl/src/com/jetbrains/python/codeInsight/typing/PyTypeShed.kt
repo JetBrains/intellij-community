@@ -15,17 +15,14 @@
  */
 package com.jetbrains.python.codeInsight.typing
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.PyPsiPackageUtil
-import com.jetbrains.python.PythonHelpersLocator
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PythonRuntimeService
-import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.psi.LanguageLevel
 import java.io.File
 
@@ -34,62 +31,163 @@ import java.io.File
  *
  * The original Git repo is located [here](https://github.com/JetBrains/typeshed).
  *
- * @author vlan
  */
 object PyTypeShed {
-  private const val ONLY_SUPPORTED_PY2_MINOR = 7
-  private val SUPPORTED_PY3_MINORS = LanguageLevel.SUPPORTED_LEVELS.filter { it.isPy3K }.map { it.minor }
+
+  private val stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels = mapOf(
+    // name to python versions when this name was introduced and removed
+    "_bootlocale" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON39),
+    "_dummy_thread" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON38),
+    "_dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
+    "_interpchannels" to (LanguageLevel.PYTHON313 to null),
+    "_interpqueues" to (LanguageLevel.PYTHON313 to null),
+    "_interpreters" to (LanguageLevel.PYTHON313 to null),
+    "_py_abc" to (LanguageLevel.PYTHON37 to null),
+    "aifc" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "asynchat" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
+    "asyncio.exceptions" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncio.format_helpers" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "asyncio.mixins" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
+    "asyncio.runners" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "asyncio.staggered" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncio.taskgroups" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "asyncio.threads" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "asyncio.timeouts" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "asyncio.trsock" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "asyncore" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
+    "audioop" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "binhex" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),
+    "cgi" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "cgitb" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "chunk" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "contextvars" to (LanguageLevel.PYTHON37 to null),
+    "crypt" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "dataclasses" to (LanguageLevel.PYTHON37 to null),
+    "dbm.sqlite3" to (LanguageLevel.PYTHON313 to null),
+    "distutils" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
+    "distutils.command.bdist_msi" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON310),  // likely it is ignored now
+    "distutils.command.bdist_wininst" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),  // likely it is ignored now
+    "dummy_threading" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON38),
+    "formatter" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "graphlib" to (LanguageLevel.PYTHON39 to null),
+    "imghdr" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "imp" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
+    "importlib._abc" to (LanguageLevel.PYTHON310 to null),
+    "importlib.metadata" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "importlib.metadata._meta" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
+    "importlib.metadata.diagnose" to (LanguageLevel.PYTHON313 to null),
+    "importlib.readers" to (LanguageLevel.PYTHON310 to null),
+    "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "importlib.resources.abc" to (LanguageLevel.PYTHON311 to null),
+    "importlib.resources.readers" to (LanguageLevel.PYTHON311 to null),
+    "importlib.resources.simple" to (LanguageLevel.PYTHON311 to null),
+    "importlib.simple" to (LanguageLevel.PYTHON311 to null),
+    "lib2to3" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "mailcap" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "msilib" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "multiprocessing.resource_tracker" to (LanguageLevel.PYTHON38 to null), // likely it is ignored now
+    "multiprocessing.shared_memory" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "nis" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "nntplib" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "ossaudiodev" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "pipes" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "smtpd" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON311),
+    "sndhdr" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "spwd" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "sunau" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "symbol" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "sys._monitoring" to (LanguageLevel.PYTHON312 to null),
+    "telnetlib" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "tkinter.tix" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "tomllib" to (LanguageLevel.PYTHON311 to null),
+    "unittest._log" to (LanguageLevel.PYTHON39 to null),  // likely it is ignored now
+    "unittest.async_case" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
+    "uu" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "wsgiref.types" to (LanguageLevel.PYTHON311 to null),  // likely it is ignored now
+    "xdrlib" to (LanguageLevel.PYTHON30 to LanguageLevel.PYTHON312),
+    "zipfile._path" to (LanguageLevel.PYTHON312 to null),
+    "zoneinfo" to (LanguageLevel.PYTHON39 to null)
+  ) // Modified by script 2024-07-31 07:30:25
+
+  // mapping of definitions that are in the incorrect place in typeshed
+  val typingRedirections: Map<String, String> = mapOf(
+    "typing.Hashable" to "_collections_abc.Hashable",
+    "typing.Awaitable" to "_collections_abc.Awaitable",
+    "typing.Coroutine" to "_collections_abc.Coroutine",
+    "typing.AsyncIterable" to "_collections_abc.AsyncIterable",
+    "typing.AsyncIterator" to "_collections_abc.AsyncIterator",
+    "typing.Iterable" to "_collections_abc.Iterable",
+    "typing.Iterator" to "_collections_abc.Iterator",
+    "typing.Reversible" to "_collections_abc.Reversible",
+    "typing.Sized" to "_collections_abc.Sized",
+    "typing.Container" to "_collections_abc.Container",
+    "typing.Collection" to "_collections_abc.Collection",
+    "typing.Callable" to "_collections_abc.Callable",
+    "typing.AbstractSet" to "_collections_abc.Set",
+    "typing.MutableSet" to "_collections_abc.MutableSet",
+    "typing.Mapping" to "_collections_abc.Mapping",
+    "typing.MutableMapping" to "_collections_abc.MutableMapping",
+    "typing.Sequence" to "_collections_abc.Sequence",
+    "typing.MutableSequence" to "_collections_abc.MutableSequence",
+    "typing.ByteString" to "_collections_abc.ByteString",
+    "typing.Deque" to "_collections.deque",
+    "typing.MappingView" to "_collections_abc.MappingView",
+    "typing.KeysView" to "_collections_abc.KeysView",
+    "typing.ItemsView" to "_collections_abc.ItemsView",
+    "typing.ValuesView" to "_collections_abc.ValuesView",
+    "typing.DefaultDict" to "_collections.defaultdict",
+    "typing.Generator" to "_collections_abc.Generator",
+    "typing.AsyncGenerator" to "_collections_abc.AsyncGenerator"
+  )
+
+  val typeshedModuleRedirections: Map<String, String> = mapOf(
+    "collections.abc" to "_collections_abc",
+  )
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */
-  fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk : Sdk): Boolean {
+  fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk: Sdk): Boolean {
     if (isInStandardLibrary(root)) {
-        return true
-    }
-    if (isInThirdPartyLibraries(root)) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        return true
+      val head = name.firstComponent ?: return true
+      val languageLevels = stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels[head] ?: return true
+      val currentLanguageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
+      return currentLanguageLevel.isAtLeast(languageLevels.first) && languageLevels.second.let {
+        it == null || it.isAtLeast(currentLanguageLevel)
       }
-      val possiblePackage = name.firstComponent ?: return false
-      val alternativePossiblePackages = PyPsiPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: emptyList()
-
-      val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
-      val installedPackages = packageManager.packages ?: return true
-
-      return packageManager.parseRequirement(possiblePackage)?.match(installedPackages) != null ||
-             alternativePossiblePackages.any { PyPsiPackageUtil.findPackage(installedPackages, it) != null }
     }
-    return false
+    return isInThirdPartyLibraries(root)
   }
 
   /**
-   * Returns the list of roots in typeshed for the Python language level of [sdk].
+   * Returns the stdlib roots in Typeshed for the Python language level of [sdk].
+   *
+   * For Python 2, there are two entries: typeshed/stdlib and typeshed/stdlib/@python2.
    */
-  fun findRootsForSdk(sdk: Sdk): List<VirtualFile> {
+  fun findStdlibRootsForSdk(sdk: Sdk): List<VirtualFile> {
     val level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
-    val dir = directory ?: return emptyList()
-    return findRootsForLanguageLevel(level)
-        .asSequence()
-        .map { dir.findFileByRelativePath(it) }
-        .filterNotNull()
-        .toList()
+    return findStdlibRootsForLanguageLevel(level)
   }
 
   /**
-   * Returns the list of roots in typeshed for the specified Python language [level].
+   * Returns the stdlib roots in Typeshed for the specified Python language [level].
+   *
+   * For Python 2, there are two entries: typeshed/stdlib and typeshed/stdlib/@python2.
    */
-  fun findRootsForLanguageLevel(level: LanguageLevel): List<String> {
-    val minors = when (level.major) {
-      2 -> listOf(ONLY_SUPPORTED_PY2_MINOR)
-      3 -> SUPPORTED_PY3_MINORS.reversed().filter { it <= level.minor }
-      else -> return emptyList()
-    }
-    return minors.map { "stdlib/${level.major}.$it" } +
-           listOf("stdlib/${level.major}",
-                  "stdlib/2and3",
-                  "third_party/${level.major}",
-                  "third_party/2and3")
+  fun findStdlibRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
+    val dir = directory ?: return emptyList()
+
+    val stdlib = stdlibRoot ?: return emptyList()
+    return if (level.isPython2) listOfNotNull(stdlib.findChild("@python2"), stdlib) else listOf(stdlib)
+  }
+
+  /**
+   * Returns both stdlib and third-party stub roots in Typeshed for the specified Python language [level].
+   */
+  fun findAllRootsForLanguageLevel(level: LanguageLevel): List<VirtualFile> {
+    // We no longer include Python 2 stubs for third-party packages, only for stdlib
+    return findStdlibRootsForLanguageLevel(level) + thirdPartyStubRoot?.children?.toList().orEmpty()
   }
 
   /**
@@ -108,26 +206,36 @@ object PyTypeShed {
     StandardFileSystems.local().findFileByPath(path)
   }
 
-  val directoryPath: String?
+  val thirdPartyStubRoot: VirtualFile? by lazy {
+    directory?.findChild("stubs")
+  }
+
+  private val stdlibRoot: VirtualFile? by lazy {
+    directory?.findChild("stdlib")
+  }
+
+  private val directoryPath: String?
     get() {
       val paths = listOf("${PathManager.getConfigPath()}/typeshed",
                          "${PathManager.getConfigPath()}/../typeshed",
-                         PythonHelpersLocator.getHelperPath("typeshed"))
+                         PythonHelpersLocator.findPathStringInHelpers("typeshed"))
       return paths.asSequence()
-          .filter { File(it).exists() }
-          .firstOrNull()
+        .filter { File(it).exists() }
+        .firstOrNull()
     }
 
+  fun isInThirdPartyLibraries(file: VirtualFile): Boolean =
+    thirdPartyStubRoot?.let { VfsUtilCore.isAncestor(it, file, false) } == true
+
+  fun isInStandardLibrary(file: VirtualFile): Boolean =
+    stdlibRoot?.let { VfsUtilCore.isAncestor(it, file, false) } == true
+
   /**
-   * A shallow check for a [file] being located inside the typeshed third-party stubs.
+   * Find the directory containing .pyi stubs for the package [packageName] under `typeshed/stubs`.
+   *
+   * [packageName] should match the name of the package on PyPI.
    */
-  fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "third_party" in file.path
-
-  fun isInStandardLibrary(file: VirtualFile): Boolean = "stdlib" in file.path
-
-  private val LanguageLevel.major: Int
-    get() = this.version / 10
-
-  private val LanguageLevel.minor: Int
-    get() = this.version % 10
+  fun getStubRootForPackage(packageName: String): VirtualFile? {
+    return thirdPartyStubRoot?.findChild(packageName)
+  }
 }

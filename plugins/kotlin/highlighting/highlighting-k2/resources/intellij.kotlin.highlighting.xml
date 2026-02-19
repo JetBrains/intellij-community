@@ -1,0 +1,36 @@
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.highlighting">
+  <dependencies>
+    <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.base.scripting"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.callHighlighterExtension"
+            interface="org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <highlightRangeExtension implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinTypeSemanticHighlightingVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinVariableReferenceSemanticHighlightingVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinExpressionsSmartcastHighlightingVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDslSemanticHighlightingVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinUnusedDeclarationHighlightingVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.visitor.KotlinUnresolvedKDocHighlightVisitor"/>
+
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
+
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.highlighting.SupportAvailabilityNotificationProvider"/>
+
+    <registryKey key="kotlin.highlighting.warmup"
+                 description="Enables Kotlin highlighting warmup – triggers resolution in parallel to prefill caches"
+                 defaultValue="true"/>
+    <registryKey key="kotlin.highlighting.internal.show.diagnostic.names"
+                 description="Shows diagnostic names in internal mode for debugging purposes."
+                 defaultValue="true"/>
+  </extensions>
+
+</idea-plugin>

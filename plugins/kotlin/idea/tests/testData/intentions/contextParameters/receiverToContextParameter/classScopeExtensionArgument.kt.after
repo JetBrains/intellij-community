@@ -1,0 +1,14 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+interface Foo
+
+context(c: Int, foo: Foo)
+fun foo(param: String) {
+}
+
+class Bar : Foo {
+    context(c1: Int)
+    fun baz() {
+        foo("boo")
+    }
+}

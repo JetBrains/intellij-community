@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
@@ -8,11 +8,26 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_IN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT_IN;
 
 /**
  * Precedence documentation - http://groovy-lang.org/operators.html#_operator_precedence
@@ -44,6 +59,7 @@ public final class ParenthesesUtils {
   private static final int BINARY_OR_PRECEDENCE;
   public static final int AND_PRECEDENCE;
   public static final int OR_PRECEDENCE;
+  public static final int IMPL_PRECEDENCE;
   public static final int CONDITIONAL_PRECEDENCE;
   public static final int SAFE_CAST_PRECEDENCE;
   private static final int ASSIGNMENT_PRECEDENCE;
@@ -73,6 +89,7 @@ public final class ParenthesesUtils {
     BINARY_OR_PRECEDENCE = i++;
     AND_PRECEDENCE = i++;
     OR_PRECEDENCE = i++;
+    IMPL_PRECEDENCE = i++;
     CONDITIONAL_PRECEDENCE = i++;
     SAFE_CAST_PRECEDENCE = i++;
     ASSIGNMENT_PRECEDENCE = i++;
@@ -90,6 +107,7 @@ public final class ParenthesesUtils {
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mSTAR_STAR, EXPONENTIAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mLAND, AND_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mLOR, OR_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mIMPL, IMPL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mBAND, BINARY_AND_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mBOR, BINARY_OR_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mBXOR, BINARY_XOR_PRECEDENCE);
@@ -97,14 +115,17 @@ public final class ParenthesesUtils {
     BINARY_PRECEDENCES.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, SHIFT_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, SHIFT_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_INCLUSIVE, RANGE_PRECEDENCE);
-    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_LEFT, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_RIGHT, RANGE_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mRANGE_EXCLUSIVE_BOTH, RANGE_PRECEDENCE);
 
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mGT, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mGE, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mLT, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mLE, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mEQUAL, EQUALITY_PRECEDENCE);
-    BINARY_PRECEDENCES.put(GroovyTokenTypes.kIN, RELATIONAL_PRECEDENCE);
+    BINARY_PRECEDENCES.put(KW_IN, RELATIONAL_PRECEDENCE);
+    BINARY_PRECEDENCES.put(T_NOT_IN, RELATIONAL_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mNOT_EQUAL, EQUALITY_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mCOMPARE_TO, EQUALITY_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.kAS, SAFE_CAST_PRECEDENCE);
@@ -123,6 +144,7 @@ public final class ParenthesesUtils {
   public static int getPrecedence(GrExpression expr) {
     if (expr instanceof GrUnaryExpression) return ((GrUnaryExpression)expr).isPostfix() ? POSTFIX_PRECEDENCE : PREFIX_PRECEDENCE;
     if (expr instanceof GrTypeCastExpression) return TYPE_CAST_PRECEDENCE;
+    if (expr instanceof GrRangeExpression) return RANGE_PRECEDENCE;
     if (expr instanceof GrConditionalExpression) return CONDITIONAL_PRECEDENCE;
     if (expr instanceof GrSafeCastExpression) return SAFE_CAST_PRECEDENCE;
     if (expr instanceof GrAssignmentExpression) return ASSIGNMENT_PRECEDENCE;
@@ -130,8 +152,7 @@ public final class ParenthesesUtils {
     if (expr instanceof GrInstanceOfExpression) return INSTANCEOF_PRECEDENCE;
     if (expr instanceof GrNewExpression) return NEW_EXPR_PRECEDENCE;
     if (expr instanceof GrParenthesizedExpression) return PARENTHESIZED_PRECEDENCE;
-    if (expr instanceof GrReferenceExpression) {
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression)expr;
+    if (expr instanceof GrReferenceExpression referenceExpression) {
       return referenceExpression.getQualifierExpression() == null ? LITERAL_PRECEDENCE : METHOD_CALL_PRECEDENCE;
     }
     if (expr instanceof GrBinaryExpression) {
@@ -141,19 +162,16 @@ public final class ParenthesesUtils {
     return  0;
   }
 
-  @NotNull
-  public static GrExpression parenthesize(@NotNull GrExpression expression) {
+  public static @NotNull GrExpression parenthesize(@NotNull GrExpression expression) {
     return parenthesize(expression, null);
   }
 
-  @NotNull
-  public static GrExpression parenthesize(@NotNull GrExpression expression, @Nullable PsiElement context) {
+  public static @NotNull GrExpression parenthesize(@NotNull GrExpression expression, @Nullable PsiElement context) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
     return factory.createParenthesizedExpr(expression, context);
   }
 
-  @NotNull
-  public static GrExpression unparenthesize(@NotNull GrExpression expression) {
+  public static @NotNull GrExpression unparenthesize(@NotNull GrExpression expression) {
     GrExpression currentExpression = expression;
     while (currentExpression instanceof GrParenthesizedExpression) {
       GrExpression operand = ((GrParenthesizedExpression)currentExpression).getOperand();
@@ -183,7 +201,17 @@ public final class ParenthesesUtils {
   }
 
   public static boolean checkPrecedenceForNonBinaryOps(int precedence, int parentPrecedence) {
-    return precedence > parentPrecedence;
+    return checkPrecedence(precedence, parentPrecedence);
+  }
+
+  /**
+   * Checks the priorities of the expressions based on their precedence. The lower precedence means that the expression has a higher priority.
+   * @param newPrecedence precedence of the new expression
+   * @param oldPrecedence precedence of the old expression
+   * @return {@code true} if new expression has higher priority than expression, false otherwise.
+   */
+  public static boolean checkPrecedence(int newPrecedence, int oldPrecedence) {
+    return newPrecedence > oldPrecedence;
   }
 
   public static boolean checkPrecedence(int precedence, @NotNull GrExpression oldExpr) {
@@ -191,10 +219,8 @@ public final class ParenthesesUtils {
     if (parent instanceof GrArgumentList) {
       parent = parent.getParent();
     }
-    if (!(parent instanceof GrExpression)) return false;
-    GrExpression oldParent = (GrExpression) parent;
-    if (oldParent instanceof GrBinaryExpression) {
-      GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
+    if (!(parent instanceof GrExpression oldParent)) return false;
+    if (oldParent instanceof GrBinaryExpression binaryExpression) {
       GrExpression rightOperand = binaryExpression.getRightOperand();
       return checkPrecedenceForBinaryOps(precedence, binaryExpression.getOperationTokenType(), oldExpr.equals(rightOperand));
     } else {

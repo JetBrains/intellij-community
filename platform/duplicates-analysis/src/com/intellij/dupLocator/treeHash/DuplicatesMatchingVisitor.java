@@ -15,19 +15,26 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
+final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   private final NodeSpecificHasherBase myNodeSpecificHasher;
   private final NodeFilter myNodeFilter;
   private final int myDiscardCost;
   private final TreeHasherBase myTreeHasher;
   private final Map<PsiElement, TreeHashResult> myPsiElement2HashAndCost = new HashMap<>();
 
-  public DuplicatesMatchingVisitor(NodeSpecificHasherBase nodeSpecificHasher,
+  DuplicatesMatchingVisitor(NodeSpecificHasherBase nodeSpecificHasher,
                                    @NotNull NodeFilter nodeFilter,
                                    int discardCost) {
     myNodeSpecificHasher = nodeSpecificHasher;
@@ -144,8 +151,8 @@ public final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return element2.getFirstChild() == null && element2.getTextLength() == 0;
     }
 
-    return matchSequentially(new FilteringNodeIterator(new SiblingNodeIterator(element1.getFirstChild()), getNodeFilter()),
-                             new FilteringNodeIterator(new SiblingNodeIterator(element2.getFirstChild()), getNodeFilter()));
+    return matchSequentially(new FilteringNodeIterator(SiblingNodeIterator.create(element1.getFirstChild()), getNodeFilter()),
+                             new FilteringNodeIterator(SiblingNodeIterator.create(element2.getFirstChild()), getNodeFilter()));
   }
 
   @Override
@@ -173,7 +180,7 @@ public final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return false;
     }
 
-    Int2ObjectOpenHashMap<List<PsiElement>> hashToElement = new Int2ObjectOpenHashMap<>(elements1.size());
+    Int2ObjectMap<List<PsiElement>> hashToElement = new Int2ObjectOpenHashMap<>(elements1.size());
     for (PsiElement element : elements1) {
       TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
       if (result != null) {
@@ -202,18 +209,17 @@ public final class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
           return false;
         }
 
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
           hashToElement.remove(hash);
         }
       }
     }
 
-    return hashToElement.size() == 0;
+    return hashToElement.isEmpty();
   }
 
-  @NotNull
   @Override
-  protected NodeFilter getNodeFilter() {
+  protected @NotNull NodeFilter getNodeFilter() {
     return myNodeFilter;
   }
 }

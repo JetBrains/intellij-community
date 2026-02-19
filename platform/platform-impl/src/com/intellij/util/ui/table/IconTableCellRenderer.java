@@ -1,28 +1,28 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer {
-  public static final IconTableCellRenderer<Iconable> ICONABLE = new IconTableCellRenderer<Iconable>() {
-    @Nullable
+  public static final IconTableCellRenderer<Iconable> ICONABLE = new IconTableCellRenderer<>() {
     @Override
-    protected Icon getIcon(@NotNull Iconable value, JTable table, int row) {
+    protected @Nullable Icon getIcon(@NotNull Iconable value, JTable table, int row) {
       return value.getIcon(Iconable.ICON_FLAG_VISIBILITY);
     }
   };
 
-  public static TableCellRenderer create(@NotNull final Icon icon) {
+  public static TableCellRenderer create(final @NotNull Icon icon) {
     return new IconTableCellRenderer() {
-      @Nullable
       @Override
-      protected Icon getIcon(@NotNull Object value, JTable table, int row) {
+      protected @NotNull Icon getIcon(@NotNull Object value, JTable table, int row) {
         return icon;
       }
     };
@@ -44,6 +44,5 @@ public abstract class IconTableCellRenderer<T> extends DefaultTableCellRenderer 
     return false;
   }
 
-  @Nullable
-  protected abstract Icon getIcon(@NotNull T value, JTable table, int row);
+  protected abstract @Nullable Icon getIcon(@NotNull T value, JTable table, int row);
 }

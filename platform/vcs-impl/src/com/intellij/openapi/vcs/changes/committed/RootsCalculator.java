@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,13 +25,14 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.function.Function.identity;
 
-public class RootsCalculator {
-  private final static Logger LOG = Logger.getInstance(RootsCalculator.class);
+@ApiStatus.Internal
+public final class RootsCalculator {
+  private static final Logger LOG = Logger.getInstance(RootsCalculator.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final AbstractVcs myVcs;
-  @NotNull private final ProjectLevelVcsManager myPlManager;
-  @NotNull private final RepositoryLocationCache myLocationCache;
+  private final @NotNull Project myProject;
+  private final @NotNull AbstractVcs myVcs;
+  private final @NotNull ProjectLevelVcsManager myPlManager;
+  private final @NotNull RepositoryLocationCache myLocationCache;
 
   public RootsCalculator(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull RepositoryLocationCache locationCache) {
     myProject = project;
@@ -39,8 +41,7 @@ public class RootsCalculator {
     myVcs = vcs;
   }
 
-  @NotNull
-  public Map<VirtualFile, RepositoryLocation> getRoots() {
+  public @NotNull Map<VirtualFile, RepositoryLocation> getRoots() {
     LOG.debug("Collecting roots for " + myVcs);
     // TODO: It is not quite clear why using just ProjectLevelVcsManager.getRootsUnderVcs() is not sufficient
     List<VirtualFile> roots = getRootsFromMappings();
@@ -61,8 +62,7 @@ public class RootsCalculator {
     return result;
   }
 
-  @NotNull
-  private List<VirtualFile> getRootsFromMappings() {
+  private @NotNull List<VirtualFile> getRootsFromMappings() {
     List<VirtualFile> result = new ArrayList<>();
 
     for (VcsDirectoryMapping mapping : myPlManager.getDirectoryMappings(myVcs)) {
@@ -85,8 +85,7 @@ public class RootsCalculator {
     return result;
   }
 
-  @Nullable
-  private RepositoryLocation getLocation(@NotNull VirtualFile file) {
+  private @Nullable RepositoryLocation getLocation(@NotNull VirtualFile file) {
     return myLocationCache.getLocation(myVcs, getFilePath(file), false);
   }
 

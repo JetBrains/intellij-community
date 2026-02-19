@@ -12,3 +12,7 @@ a, *b, c = seq
 
 () = []
 [] = []
+
+async def f():
+    <error descr="Cannot assign to await expression">await foo()</error> = 1
+    <error descr="An illegal target for a variable annotation"><error descr="Cannot assign to await expression">await foo()</error></error>: int = 1

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
@@ -19,13 +20,20 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
 import static com.intellij.tasks.generic.GenericRepositoryUtil.substituteTemplateVariables;
@@ -35,29 +43,26 @@ import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
  * @author Evgeny.Zakrevsky
  */
 @Tag("Generic")
-public class GenericRepository extends BaseRepositoryImpl {
-  @NonNls public static final String SERVER_URL = "serverUrl";
-  @NonNls public static final String USERNAME = "username";
-  @NonNls public static final String PASSWORD = "password";
+public final class GenericRepository extends BaseRepositoryImpl {
+  public static final @NonNls String SERVER_URL = "serverUrl";
+  public static final @NonNls String USERNAME = "username";
+  public static final @NonNls String PASSWORD = "password";
 
   private final FactoryVariable myServerTemplateVariable = new FactoryVariable(SERVER_URL) {
-    @NotNull
     @Override
-    public String getValue() {
+    public @NotNull String getValue() {
       return GenericRepository.this.getUrl();
     }
   };
   private final FactoryVariable myUserNameTemplateVariable = new FactoryVariable(USERNAME) {
-    @NotNull
     @Override
-    public String getValue() {
+    public @NotNull String getValue() {
       return GenericRepository.this.getUsername();
     }
   };
   private final FactoryVariable myPasswordTemplateVariable = new FactoryVariable(PASSWORD, true) {
-    @NotNull
     @Override
-    public String getValue() {
+    public @NotNull String getValue() {
       return GenericRepository.this.getPassword();
     }
   };
@@ -73,9 +78,9 @@ public class GenericRepository extends BaseRepositoryImpl {
   private HTTPMethod myTasksListMethodType = HTTPMethod.GET;
   private HTTPMethod mySingleTaskMethodType = HTTPMethod.GET;
 
-  private ResponseType myResponseType = ResponseType.XML;
+  private ResponseType myResponseType = ResponseType.JSON;
 
-  private EnumMap<ResponseType, ResponseHandler> myResponseHandlersMap = new EnumMap<>(ResponseType.class);
+  private EnumMap<ResponseType, ResponseHandler> responseHandlerMap = new EnumMap<>(ResponseType.class);
 
   private List<TemplateVariable> myTemplateVariables = new ArrayList<>();
 
@@ -112,11 +117,11 @@ public class GenericRepository extends BaseRepositoryImpl {
     myTemplateVariables = other.getTemplateVariables();
     mySubtypeName = other.getSubtypeName();
     myDownloadTasksInSeparateRequests = other.getDownloadTasksInSeparateRequests();
-    myResponseHandlersMap = new EnumMap<>(ResponseType.class);
-    for (Map.Entry<ResponseType, ResponseHandler> e : other.myResponseHandlersMap.entrySet()) {
+    responseHandlerMap = new EnumMap<>(ResponseType.class);
+    for (Map.Entry<ResponseType, ResponseHandler> e : other.responseHandlerMap.entrySet()) {
       ResponseHandler handler = e.getValue().clone();
       handler.setRepository(this);
-      myResponseHandlersMap.put(e.getKey(), handler);
+      responseHandlerMap.put(e.getKey(), handler);
     }
   }
 
@@ -128,26 +133,24 @@ public class GenericRepository extends BaseRepositoryImpl {
     myLoginMethodType = HTTPMethod.GET;
     myTasksListMethodType = HTTPMethod.GET;
     mySingleTaskMethodType = HTTPMethod.GET;
-    myResponseType = ResponseType.XML;
+    myResponseType = ResponseType.JSON;
     myTemplateVariables = new ArrayList<>();
-    myResponseHandlersMap = new EnumMap<>(ResponseType.class);
-    myResponseHandlersMap.put(ResponseType.XML, getXmlResponseHandlerDefault());
-    myResponseHandlersMap.put(ResponseType.JSON, getJsonResponseHandlerDefault());
-    myResponseHandlersMap.put(ResponseType.TEXT, getTextResponseHandlerDefault());
+    responseHandlerMap = new EnumMap<>(ResponseType.class);
+    responseHandlerMap.put(ResponseType.XML, getXmlResponseHandlerDefault());
+    responseHandlerMap.put(ResponseType.JSON, getJsonResponseHandlerDefault());
+    responseHandlerMap.put(ResponseType.TEXT, getTextResponseHandlerDefault());
   }
 
-  @NotNull
   @Override
-  public GenericRepository clone() {
+  public @NotNull GenericRepository clone() {
     return new GenericRepository(this);
   }
 
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof GenericRepository)) return false;
+    if (!(o instanceof GenericRepository that)) return false;
     if (!super.equals(o)) return false;
-    GenericRepository that = (GenericRepository)o;
     if (!Objects.equals(getLoginUrl(), that.getLoginUrl())) return false;
     if (!Objects.equals(getTasksListUrl(), that.getTasksListUrl())) return false;
     if (!Objects.equals(getSingleTaskUrl(), that.getSingleTaskUrl())) return false;
@@ -173,9 +176,9 @@ public class GenericRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
+  public Task[] getIssues(final @Nullable String query, final int max, final long since) throws Exception {
     if (StringUtil.isEmpty(myTasksListUrl)) {
-      throw new Exception("'Task list URL' configuration parameter is mandatory");
+      throw new Exception(TaskBundle.message("task.list.url.configuration.parameter.is.mandatory"));
     }
     if (!isLoginAnonymously() && !isUseHttpAuthentication()) {
       executeMethod(getLoginMethod());
@@ -233,18 +236,16 @@ public class GenericRepository extends BaseRepositoryImpl {
     return getHttpMethod(requestUrl, myLoginMethodType);
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull final String id) throws Exception {
+  public @Nullable Task findTask(final @NotNull String id) throws Exception {
     List<TemplateVariable> variables = concat(getAllTemplateVariables(), new TemplateVariable("id", id));
     String requestUrl = substituteTemplateVariables(getSingleTaskUrl(), variables);
     HttpMethod method = getHttpMethod(requestUrl, mySingleTaskMethodType);
     return getActiveResponseHandler().parseIssue(executeMethod(method));
   }
 
-  @Nullable
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
@@ -320,7 +321,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   /**
    * Returns all template variables including both predefined and defined by user
    */
-  public List<TemplateVariable> getAllTemplateVariables() {
+  public @Unmodifiable List<TemplateVariable> getAllTemplateVariables() {
     return ContainerUtil.concat(myPredefinedTemplateVariables, getTemplateVariables());
   }
 
@@ -349,11 +350,11 @@ public class GenericRepository extends BaseRepositoryImpl {
   }
 
   public ResponseHandler getResponseHandler(ResponseType type) {
-    return myResponseHandlersMap.get(type);
+    return responseHandlerMap.get(type);
   }
 
   public ResponseHandler getActiveResponseHandler() {
-    return myResponseHandlersMap.get(myResponseType);
+    return responseHandlerMap.get(myResponseType);
   }
 
   @XCollection(
@@ -363,22 +364,19 @@ public class GenericRepository extends BaseRepositoryImpl {
       RegExResponseHandler.class
     }
   )
-  public List<ResponseHandler> getResponseHandlers() {
-    if (myResponseHandlersMap.isEmpty()) {
-      return Collections.emptyList();
-    }
-    return Collections.unmodifiableList(new ArrayList<>(myResponseHandlersMap.values()));
+  public @NotNull List<ResponseHandler> getResponseHandlers() {
+    return responseHandlerMap.isEmpty() ? Collections.emptyList() : List.copyOf(responseHandlerMap.values());
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public void setResponseHandlers(List<ResponseHandler> responseHandlers) {
-    myResponseHandlersMap.clear();
+  public void setResponseHandlers(@NotNull List<ResponseHandler> responseHandlers) {
+    responseHandlerMap.clear();
     for (ResponseHandler handler : responseHandlers) {
-      myResponseHandlersMap.put(handler.getResponseType(), handler);
+      responseHandlerMap.put(handler.getResponseType(), handler);
     }
     // ResponseHandler#repository field is excluded from serialization to prevent
-    // circular dependency so it has to be done manually during serialization process
-    for (ResponseHandler handler : myResponseHandlersMap.values()) {
+    // circular dependency, so it has to be done manually during a serialization process
+    for (ResponseHandler handler : responseHandlerMap.values()) {
       handler.setRepository(this);
     }
   }

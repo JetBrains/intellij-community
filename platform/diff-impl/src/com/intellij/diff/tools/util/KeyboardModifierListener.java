@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
@@ -8,8 +9,8 @@ import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
@@ -19,7 +20,7 @@ public class KeyboardModifierListener implements Disposable {
   private boolean myCtrlPressed;
   private boolean myAltPressed;
 
-  @Nullable private Window myWindow;
+  private @Nullable Window myWindow;
 
   private final WindowFocusListener myWindowFocusListener = new WindowFocusListener() {
     @Override
@@ -62,6 +63,10 @@ public class KeyboardModifierListener implements Disposable {
   }
 
   private void onKeyEvent(KeyEvent e) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      return;
+    }
+
     final int keyCode = e.getKeyCode();
     if (keyCode == KeyEvent.VK_SHIFT) {
       myShiftPressed = e.getID() == KeyEvent.KEY_PRESSED;

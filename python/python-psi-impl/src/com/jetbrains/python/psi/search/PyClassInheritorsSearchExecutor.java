@@ -16,24 +16,23 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author yole
- */
-public class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, PyClassInheritorsSearch.SearchParameters> {
+
+public final class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, PyClassInheritorsSearch.SearchParameters> {
 
   /**
    * These base classes are to general to look for inheritors list.
    */
-  protected static final ImmutableSet<String> IGNORED_BASES = ImmutableSet.of("object", "BaseException", "Exception");
+  private static final ImmutableSet<String> IGNORED_BASES = ImmutableSet.of("object", "BaseException", "Exception");
 
   @Override
-  public boolean execute(@NotNull final PyClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<? super PyClass> consumer) {
+  public boolean execute(final @NotNull PyClassInheritorsSearch.SearchParameters queryParameters,
+                         final @NotNull Processor<? super PyClass> consumer) {
     Set<PyClass> processed = new HashSet<>();
     return processDirectInheritors(queryParameters.getSuperClass(), consumer, queryParameters.isCheckDeepInheritance(), processed);
   }
 
   private static boolean processDirectInheritors(
-      final PyClass superClass, final Processor<? super PyClass> consumer, final boolean checkDeep, final Set<PyClass> processed
+    final PyClass superClass, final Processor<? super PyClass> consumer, final boolean checkDeep, final Set<PyClass> processed
   ) {
     return ReadAction.compute(() -> {
       final String superClassName = superClass.getName();

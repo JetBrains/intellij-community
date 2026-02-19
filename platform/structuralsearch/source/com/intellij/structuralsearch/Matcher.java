@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
-import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.dupLocator.iterators.SingleNodeIterator;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -15,11 +16,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.structuralsearch.impl.matcher.*;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
+import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
@@ -37,8 +46,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
 
 /**
  * This class makes program structure tree matching:
@@ -155,7 +162,7 @@ public class Matcher {
       return false;
     }
     matchContext.setShouldRecursivelyMatch(false);
-    visitor.matchContext(newSingleNodeIterator(element));
+    visitor.matchContext(SingleNodeIterator.create(element));
     return !sink.getMatches().isEmpty();
   }
 
@@ -179,7 +186,7 @@ public class Matcher {
 
       final PsiElement parent = elements[0].getParent();
       if (matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
-        visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
+        visitor.matchContext(SsrFilteringNodeIterator.create(elements));
       }
       else {
         for (PsiElement element : elements) {
@@ -193,12 +200,15 @@ public class Matcher {
       if (scheduler == null) scheduler = new TaskScheduler();
       matchContext.getSink().setMatchingProcess(scheduler);
       scheduler.init();
-      findMatches();
+      PsiManager.getInstance(project).runInBatchFilesMode(() -> {
+        findMatches();
 
-      if (scheduler.getTaskQueueEndAction() == null) {
-        scheduler.setTaskQueueEndAction(() -> matchContext.getSink().matchingFinished());
-      }
-      scheduler.executeNext();
+        if (scheduler.getTaskQueueEndAction() == null) {
+          scheduler.setTaskQueueEndAction(() -> matchContext.getSink().matchingFinished());
+        }
+        scheduler.executeNext();
+        return null;
+      });
     }
   }
 
@@ -210,11 +220,10 @@ public class Matcher {
     final boolean ourOptimizedScope = searchScope != null;
     if (!ourOptimizedScope) searchScope = options.getScope();
 
-    if (searchScope instanceof GlobalSearchScope) {
-      final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
+    if (searchScope instanceof GlobalSearchScope scope) {
 
       final ContentIterator ci = fileOrDir -> {
-        if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
+        if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && !FileTypeRegistry.getInstance().isFileOfType(fileOrDir, FileTypes.UNKNOWN)) {
           ++totalFilesToScan;
           scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir));
         }
@@ -253,8 +262,6 @@ public class Matcher {
    * Finds the matches of given pattern starting from given tree element.
    * @param source string for search
    * @return list of matches found
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   public List<MatchResult> testFindMatches(String source,
                                            boolean fileContext,
@@ -284,8 +291,6 @@ public class Matcher {
   /**
    * Finds the matches of given pattern starting from given tree element.
    * @param sink match result destination
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   public void testFindMatches(MatchResultSink sink) throws MalformedPatternException, UnsupportedPatternException {
     isTesting = true;
@@ -317,7 +322,10 @@ public class Matcher {
     public void resume() {
       if (!suspended) return;
       suspended = false;
-      executeNext();
+      PsiManager.getInstance(project).runInBatchFilesMode(() -> {
+        executeNext();
+        return null;
+      });
     }
 
     @Override
@@ -369,20 +377,15 @@ public class Matcher {
       assert project != null;
       ended = false;
       suspended = false;
-      PsiManager.getInstance(project).startBatchFilesProcessingMode();
     }
 
     private void clearSchedule() {
       assert project != null;
       if (tasks != null) {
         taskQueueEndAction.run();
-        if (!project.isDisposed()) {
-          PsiManager.getInstance(project).finishBatchFilesProcessingMode();
-        }
         tasks = null;
       }
     }
-
   }
 
   /**
@@ -390,28 +393,28 @@ public class Matcher {
    * @param element the current search tree element
    */
   private void match(@NotNull PsiElement element) {
-    final MatchingStrategy strategy = getMatchContext().getPattern().getStrategy();
+    final MatchContext context = getMatchContext();
+    final MatchingStrategy strategy = context.getPattern().getStrategy();
 
     if (strategy.continueMatching(element)) {
-      visitor.matchContext(newSingleNodeIterator(element));
+      visitor.matchContext(SingleNodeIterator.create(element));
       return;
     }
-    for(PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
-      match(el);
-    }
-    if (element instanceof PsiLanguageInjectionHost) {
-      InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
-                                                               (injectedPsi, places) -> match(injectedPsi));
+    if (context.getOptions().isSearchInjectedCode()) {
+      for (PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
+        match(el);
+      }
+      if (element instanceof PsiLanguageInjectionHost) {
+        InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
+                                                                 (injectedPsi, places) -> match(injectedPsi));
+      }
     }
   }
 
   /**
    * Tests if given element is matched by given pattern starting from target variable.
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
-  @NotNull
-  public List<MatchResult> matchByDownUp(PsiElement element) throws MalformedPatternException, UnsupportedPatternException {
+  public @NotNull List<MatchResult> matchByDownUp(PsiElement element) throws MalformedPatternException, UnsupportedPatternException {
     final MatchContext matchContext = getMatchContext();
     matchContext.clear();
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
@@ -468,7 +471,7 @@ public class Matcher {
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    visitor.matchContext(newSingleNodeIterator(elementToStartMatching));
+    visitor.matchContext(SingleNodeIterator.create(elementToStartMatching));
     matchContext.getSink().matchingFinished();
     return sink.getMatches();
   }
@@ -480,9 +483,8 @@ public class Matcher {
       this.file = file;
     }
 
-    @NotNull
     @Override
-    protected List<PsiElement> getPsiElementsToProcess() {
+    protected @NotNull List<PsiElement> getPsiElementsToProcess() {
       final PsiElement file = this.file;
       this.file = null;
       return new SmartList<>(file);
@@ -496,9 +498,8 @@ public class Matcher {
       myFile = file;
     }
 
-    @NotNull
     @Override
-    protected List<PsiElement> getPsiElementsToProcess() {
+    protected @NotNull List<PsiElement> getPsiElementsToProcess() {
       assert project != null;
       return ReadAction.compute(
         () -> {
@@ -546,15 +547,12 @@ public class Matcher {
         ReadAction.nonBlocking(
           () -> {
             if (!file.isValid()) return;
-            final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(file);
-            if (profile == null) return;
-            match(profile.extendMatchOnePsiFile(file));
+            match(file);
           }
         ).inSmartMode(project).executeSynchronously();
       }
     }
 
-    @NotNull
-    protected abstract List<PsiElement> getPsiElementsToProcess();
+    protected abstract @NotNull List<PsiElement> getPsiElementsToProcess();
   }
 }

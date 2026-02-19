@@ -1,31 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.dictionary;
 
-import gnu.trove.THashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class ProjectDictionary implements EditableDictionary {
-  @NonNls private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien;
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present;
+
+public final class ProjectDictionary implements EditableDictionary {
+  public static final @NonNls String DEFAULT_CURRENT_DICT_NAME = "project";
   private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
   private String activeName;
   private Set<EditableDictionary> dictionaries;
@@ -37,9 +28,8 @@ public class ProjectDictionary implements EditableDictionary {
     this.dictionaries = dictionaries;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return DEFAULT_PROJECT_DICTIONARY_NAME;
   }
 
@@ -48,112 +38,123 @@ public class ProjectDictionary implements EditableDictionary {
   }
 
   @Override
-  @Nullable
-  public Boolean contains(@NotNull String word) {
+  public @Nullable Boolean contains(@NotNull String word) {
     if (dictionaries == null) {
-      return null; // still ("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+      // still ("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+      return null;
     }
+
     int errors = 0;
     for (Dictionary dictionary : dictionaries) {
-      Boolean contains = dictionary.contains(word);
-      if (contains == null) {
+      Dictionary.LookupStatus status = dictionary.lookup(word);
+      if (status == Alien) {
         errors++;
       }
-      else if (contains) {
+      else if (status == Present) {
         return true;
       }
     }
-    if (errors == dictionaries.size()) return null;//("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+
+    //("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+    if (errors == dictionaries.size()) {
+      return null;
+    }
     return false;
   }
 
   @Override
   public void addToDictionary(String word) {
-    getActiveDictionary().addToDictionary(word);
+    getOrCreateActiveDictionary().addToDictionary(word);
   }
 
   @Override
   public void removeFromDictionary(String word) {
-    getActiveDictionary().removeFromDictionary(word);
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return;
+    dictionary.removeFromDictionary(word);
   }
 
-  @NotNull
-  private EditableDictionary getActiveDictionary() {
-    return ensureCurrentUserDictionary();
+  private @Nullable EditableDictionary getActiveDictionary() {
+    if (activeName == null ||  dictionaries == null) return null;
+    return getDictionaryByName(activeName);
   }
 
-  @NotNull
-  private EditableDictionary ensureCurrentUserDictionary() {
+  private @NotNull EditableDictionary getOrCreateActiveDictionary() {
     if (activeName == null) {
-      activeName = DEFAULT_CURRENT_USER_NAME;
+      activeName = DEFAULT_CURRENT_DICT_NAME;
     }
-    EditableDictionary result = getDictionaryByName(activeName);
+    EditableDictionary result = getActiveDictionary();
     if (result == null) {
       result = new UserDictionary(activeName);
       if (dictionaries == null) {
-        dictionaries = new THashSet<>();
+        dictionaries = ConcurrentHashMap.newKeySet();
       }
       dictionaries.add(result);
     }
     return result;
   }
 
-  @Nullable
-  private EditableDictionary getDictionaryByName(@NotNull String name) {
+  private @Nullable EditableDictionary getDictionaryByName(@NotNull String name) {
     if (dictionaries == null) {
       return null;
     }
-    EditableDictionary result = null;
+
     for (EditableDictionary dictionary : dictionaries) {
       if (dictionary.getName().equals(name)) {
-        result = dictionary;
-        break;
+        return dictionary;
       }
     }
-    return result;
+    return null;
   }
 
   @Override
   public void replaceAll(@Nullable Collection<String> words) {
-    getActiveDictionary().replaceAll(words);
+    getOrCreateActiveDictionary().replaceAll(words);
   }
 
   @Override
   public void clear() {
-    getActiveDictionary().clear();
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return;
+    dictionary.clear();
   }
 
 
   @Override
-  @NotNull
-  public Set<String> getWords() {
+  public @NotNull Set<String> getWords() {
     if (dictionaries == null) {
       return Collections.emptySet();
     }
-    Set<String> words = new THashSet<>();
+    Set<String> words = CollectionFactory.createSmallMemoryFootprintSet();
     for (Dictionary dictionary : dictionaries) {
-      Set<String> otherWords = dictionary.getWords();
-      words.addAll(otherWords);
+      words.addAll(dictionary.getWords());
     }
     return words;
   }
 
   @Override
-  @NotNull
-  public Set<String> getEditableWords() {
-    return getActiveDictionary().getWords();
+  public @NotNull Set<String> getEditableWords() {
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return Set.of();
+    return dictionary.getEditableWords();
+  }
+
+  @Override
+  public @NotNull Set<String> getCamelCaseWords() {
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return Set.of();
+    return dictionary.getCamelCaseWords();
   }
 
 
   @Override
   public void addToDictionary(@Nullable Collection<String> words) {
-    getActiveDictionary().addToDictionary(words);
+    getOrCreateActiveDictionary().addToDictionary(words);
   }
 
   public Set<EditableDictionary> getDictionaries() {
     return dictionaries;
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -162,8 +163,8 @@ public class ProjectDictionary implements EditableDictionary {
 
     ProjectDictionary that = (ProjectDictionary)o;
 
-    if (activeName != null ? !activeName.equals(that.activeName) : that.activeName != null) return false;
-    if (dictionaries != null ? !dictionaries.equals(that.dictionaries) : that.dictionaries != null) return false;
+    if (!Objects.equals(activeName, that.activeName)) return false;
+    if (!Objects.equals(dictionaries, that.dictionaries)) return false;
 
     return true;
   }
@@ -175,9 +176,8 @@ public class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "ProjectDictionary{" + "activeName='" + activeName + '\'' + ", dictionaries=" + dictionaries + '}';
   }
 }

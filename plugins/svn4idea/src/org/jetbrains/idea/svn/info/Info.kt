@@ -2,7 +2,11 @@
 package org.jetbrains.idea.svn.info
 
 import com.intellij.openapi.util.io.FileUtil.isAbsolute
-import org.jetbrains.idea.svn.api.*
+import org.jetbrains.idea.svn.api.BaseNodeDescription
+import org.jetbrains.idea.svn.api.Depth
+import org.jetbrains.idea.svn.api.NodeKind
+import org.jetbrains.idea.svn.api.Revision
+import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.checkin.CommitInfo
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription
 import org.jetbrains.idea.svn.lock.Lock
@@ -36,19 +40,6 @@ class Info(val file: File?,
   val conflictOldFile = resolveConflictFile(file, conflictOldFilePath)
   val conflictNewFile = resolveConflictFile(file, conflictNewFilePath)
   val conflictWrkFile = resolveConflictFile(file, conflictWorkingFilePath)
-
-  @Deprecated("Use nodeKind property", ReplaceWith("nodeKind"))
-  val kind
-    get() = nodeKind
-
-  @Deprecated("Use url property", ReplaceWith("url"))
-  fun getURL() = url
-
-  @Deprecated("Use repositoryRootUrl property", ReplaceWith("repositoryRootUrl"))
-  fun getRepositoryRootURL(): Url? = repositoryRootUrl
-
-  @Deprecated("Use repositoryId property", ReplaceWith("repositoryId"))
-  fun getRepositoryUUID(): String? = repositoryId
 
   companion object {
     const val SCHEDULE_ADD = "add"

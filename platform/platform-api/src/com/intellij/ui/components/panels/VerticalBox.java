@@ -15,10 +15,13 @@
  */
 package com.intellij.ui.components.panels;
 
-import javax.swing.*;
-import java.awt.*;
+import com.intellij.ui.components.JBBox;
 
-public class VerticalBox extends Box {
+import javax.swing.BoxLayout;
+import javax.swing.JComponent;
+import java.awt.Component;
+
+public class VerticalBox extends JBBox {
 
   public VerticalBox() {
     super(BoxLayout.Y_AXIS);

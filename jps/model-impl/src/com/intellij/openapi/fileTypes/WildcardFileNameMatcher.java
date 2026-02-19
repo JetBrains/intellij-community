@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class WildcardFileNameMatcher implements FileNameMatcher {
   private final String myPattern;
@@ -16,25 +16,22 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   }
 
   private static final class RegexpMatcher implements MaskMatcher {
-    private final Matcher myMatcher;
+    private final Pattern pattern;
 
-    private RegexpMatcher(String pattern) {
-      myMatcher = PatternUtil.fromMask(pattern).matcher("");
+    RegexpMatcher(@NotNull String pattern) {
+      this.pattern = PatternUtil.fromMask(pattern);
     }
 
     @Override
     public boolean matches(final @NotNull CharSequence filename) {
-      synchronized (myMatcher) {
-        myMatcher.reset(filename);
-        return myMatcher.matches();
-      }
+      return pattern.matcher(filename).matches();
     }
   }
 
   private static final class SuffixMatcher implements MaskMatcher {
     private final String mySuffix;
 
-    private SuffixMatcher(final String suffix) {
+    SuffixMatcher(@NotNull String suffix) {
       mySuffix = suffix;
     }
 
@@ -47,7 +44,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   private static final class PrefixMatcher implements MaskMatcher {
     private final String myPrefix;
 
-    private PrefixMatcher(final String prefix) {
+    private PrefixMatcher(@NotNull String prefix) {
       myPrefix = prefix;
     }
 
@@ -60,7 +57,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   private static final class InfixMatcher implements MaskMatcher {
     private final String myInfix;
 
-    private InfixMatcher(final String infix) {
+    InfixMatcher(@NotNull String infix) {
       myInfix = infix;
     }
 
@@ -78,7 +75,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     myMatcher = createMatcher(pattern);
   }
 
-  private static MaskMatcher createMatcher(final String pattern) {
+  private static @NotNull MaskMatcher createMatcher(final @NotNull String pattern) {
     int len = pattern.length();
     if (len > 1 && pattern.indexOf('?') < 0) {
       if (pattern.charAt(0) == '*' && pattern.indexOf('*', 1) < 0) {
@@ -105,6 +102,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
   }
 
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -114,6 +112,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     return myPattern.equals(that.myPattern);
   }
 
+  @Override
   public int hashCode() {
     return myPattern.hashCode();
   }

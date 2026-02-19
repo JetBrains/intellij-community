@@ -1,0 +1,32 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.k2.injection">
+  <dependencies>
+    <module name="intellij.platform.langInjection"/>
+    <module name="kotlin.base.injection"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <languageInjectionContributor language="kotlin"
+                                  implementationClass="org.jetbrains.kotlin.idea.k2.injection.K2KotlinLanguageInjectionContributor"/>
+    <languageInjectionPerformer language="kotlin"
+                                implementationClass="org.jetbrains.kotlin.idea.k2.injection.K2KotlinLanguageInjectionPerformer"/>
+
+    <regExpLanguageHost forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
+                        implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
+
+    <registryKey key="kotlin.injection.handle.trimindent"
+                 description="Experimental `trimIndent` and `trimMargin` injection and fragment editor support for Kotlin"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey
+            key="kotlin.highlighting.injection.use.probably.injected.callable.names"
+            description="Use probably.injected.callable.names injection highlighting optimization"
+            defaultValue="false"
+            restartRequired="false" />
+  </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <languageSupport implementation="org.jetbrains.kotlin.idea.k2.injection.K2KotlinLanguageInjectionSupport"/>
+    <injectionConfig config="injection/kotlinInjections.k2.xml"/>
+  </extensions>
+</idea-plugin>

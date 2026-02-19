@@ -10,9 +10,9 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 public interface Printer {
-  void print(String text, ConsoleViewContentType contentType);
+  void print(@NotNull String text, @NotNull ConsoleViewContentType contentType);
   void onNewAvailable(@NotNull Printable printable);
-  void printHyperlink(String text, HyperlinkInfo info);
+  void printHyperlink(@NotNull String text, HyperlinkInfo info);
   void mark();
 
   default void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
@@ -26,11 +26,11 @@ public interface Printer {
       print(text1, ConsoleViewContentType.getConsoleViewType(attributes)));
   }
 
-  default void printExpectedActualHeader(String expected, String actual) {
+  default void printExpectedActualHeader(@NotNull String expected, @NotNull String actual) {
     printExpectedActualHeader(this, expected, actual);
   }
 
-  static void printExpectedActualHeader(Printer printer, String expected, String actual) {
+  static void printExpectedActualHeader(@NotNull Printer printer, @NotNull String expected, @NotNull String actual) {
     printer.print("\n", ConsoleViewContentType.ERROR_OUTPUT);
     printer.print(ExecutionBundle.message("diff.content.expected.for.file.title"), ConsoleViewContentType.SYSTEM_OUTPUT);
     printer.print(expected + "\n", ConsoleViewContentType.ERROR_OUTPUT);

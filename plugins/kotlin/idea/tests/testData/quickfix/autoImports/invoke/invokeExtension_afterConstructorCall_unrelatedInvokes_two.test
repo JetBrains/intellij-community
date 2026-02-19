@@ -1,0 +1,44 @@
+// FILE: first.before.kt
+// "Import operator 'A.invoke'" "true"
+// ERROR: Expression 'A()' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
+
+package test
+
+import a.A
+
+class Unrelated
+
+operator fun Unrelated.invoke(i: String) {}
+operator fun Unrelated.invoke(i: Int) {}
+
+fun main() {
+    <caret>A()()
+}
+//-----------------------
+
+
+// FILE: second.kt
+package a
+
+class A
+operator fun A.invoke() = 42
+//-----------------------
+
+// FILE: first.after.kt
+// "Import operator 'A.invoke'" "true"
+// ERROR: Expression 'A()' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
+
+package test
+
+import a.A
+import a.invoke
+
+class Unrelated
+
+operator fun Unrelated.invoke(i: String) {}
+operator fun Unrelated.invoke(i: Int) {}
+
+fun main() {
+    <caret>A()()
+}
+//-----------------------

@@ -12,25 +12,22 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.RemoveTrailingSemicolonQuickFix;
 import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyTrailingSemicolonInspection extends PyInspection {
+public final class PyTrailingSemicolonInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override

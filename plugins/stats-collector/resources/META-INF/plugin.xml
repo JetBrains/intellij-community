@@ -2,7 +2,7 @@
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
   <vendor>JetBrains</vendor>
-  <category>Other Tools</category>
+  <category>Platform Development</category>
 
   <description><![CDATA[
       <p>The plugin collects anonymous statistics about code completion usage.
@@ -25,8 +25,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.stats.completion.tracker.CompletionTrackerInitializer"/>
-
     <applicationService serviceInterface="com.intellij.stats.completion.tracker.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.tracker.CompletionFileLoggerProvider"/>
 
@@ -45,15 +43,18 @@
     <applicationService serviceInterface="com.intellij.stats.completion.tracker.InstallationIdProvider"
                         serviceImplementation="com.intellij.stats.completion.tracker.PermanentInstallationIdProvider"/>
 
-    <registryKey key="completion.stats.send.logs" defaultValue="true"
-                 description="Send anonymous logs about completion usage in EAP builds"/>
-
-    <registryKey key="completion.stats.analytics.platform.send" defaultValue="true"
+    <registryKey key="completion.stats.analytics.platform.send" defaultValue="true" restartRequired="true"
                  description="Send completion logs to Analytics Platform"/>
 
-    <registryKey key="completion.stats.analytics.platform.url" defaultValue="default"
+    <registryKey key="completion.stats.analytics.platform.url" defaultValue="default" restartRequired="true"
                  description="URL to status page with endpoints for sending completion logs to Analytics Platform"/>
 
-    <preloadingActivity implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>
+    <applicationActivity implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.stats.completion.tracker.CompletionLoggerInitializer"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"
+              activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

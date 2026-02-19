@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.model;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,7 +12,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.ArrayUtil;
@@ -26,7 +29,14 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterGroups;
 import org.testng.annotations.BeforeGroups;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class TestNGTestObject {
 
@@ -39,8 +49,7 @@ public abstract class TestNGTestObject {
     myConfig = config;
   }
 
-  @NotNull
-  public static TestNGTestObject fromConfig(@NotNull TestNGConfiguration config) {
+  public static @NotNull TestNGTestObject fromConfig(@NotNull TestNGConfiguration config) {
     final String testObject = config.getPersistantData().TEST_OBJECT;
     if (testObject.equals(TestType.PACKAGE.getType())) {
       return new TestNGTestPackage(config);
@@ -149,7 +158,7 @@ public abstract class TestNGTestObject {
       if (testAnnotation == null) {
         return;
       }
-      for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope)) {
+      for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, searchScope).asIterable()) {
         final PsiClass containingClass = psiMember.getContainingClass();
         if (containingClass == null) continue;
         if (skipUnrelated && ArrayUtil.find(classes, containingClass) < 0) continue;
@@ -242,8 +251,7 @@ public abstract class TestNGTestObject {
     return result;
   }
 
-  @NotNull
-  protected GlobalSearchScope getSearchScope() {
+  protected @NotNull GlobalSearchScope getSearchScope() {
     final TestData data = myConfig.getPersistantData();
     final Module module = myConfig.getConfigurationModule().getModule();
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {

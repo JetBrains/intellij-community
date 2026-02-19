@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.make;
 
@@ -12,11 +12,9 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
+import java.awt.Insets;
 
-/**
- * @author yole
- */
+
 public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
   private boolean myHaveCc = false;
 
@@ -37,7 +35,7 @@ public class FormLayoutSourceGenerator extends LayoutSourceGenerator {
   }
 
   private static void generateGroups(final FormSourceCodeGenerator generator, final String variable,
-                                     @NonNls final String methodName, final int[][] groups) {
+                                     final @NonNls String methodName, final int[][] groups) {
     if (groups.length == 0) return;
     generator.startMethodCall("((com.jgoodies.forms.layout.FormLayout) " + variable + ".getLayout())",
                               methodName);

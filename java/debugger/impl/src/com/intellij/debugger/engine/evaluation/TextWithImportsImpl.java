@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class TextWithImportsImpl implements TextWithImports{
+public final class TextWithImportsImpl implements TextWithImports {
 
   private final CodeFragmentKind myKind;
   private String myText;
@@ -32,7 +32,7 @@ public final class TextWithImportsImpl implements TextWithImports{
     myKind = CodeFragmentKind.EXPRESSION;
     final String text = expression.getText();
     PsiFile containingFile = expression.getContainingFile();
-    if(containingFile instanceof PsiExpressionCodeFragment) {
+    if (containingFile instanceof PsiExpressionCodeFragment) {
       myText = text;
       myImports = ((JavaCodeFragment)containingFile).importsToString();
       myFileType = JavaFileType.INSTANCE;
@@ -45,7 +45,7 @@ public final class TextWithImportsImpl implements TextWithImports{
     }
   }
 
-  public TextWithImportsImpl (CodeFragmentKind kind, @NotNull String text, @NotNull String imports, @Nullable FileType fileType) {
+  public TextWithImportsImpl(CodeFragmentKind kind, @NotNull String text, @NotNull String imports, @Nullable FileType fileType) {
     myKind = kind;
     myText = text;
     myImports = imports;
@@ -80,14 +80,12 @@ public final class TextWithImportsImpl implements TextWithImports{
     return myImports;
   }
 
+  @Override
   public boolean equals(Object object) {
-    if(!(object instanceof TextWithImportsImpl)) {
-      return false;
-    }
-    TextWithImportsImpl item = ((TextWithImportsImpl)object);
-    return Objects.equals(item.myText, myText) && Objects.equals(item.myImports, myImports);
+    return object instanceof TextWithImportsImpl item && Objects.equals(item.myText, myText) && Objects.equals(item.myImports, myImports);
   }
 
+  @Override
   public String toString() {
     return getText();
   }
@@ -104,6 +102,7 @@ public final class TextWithImportsImpl implements TextWithImports{
     return result;
   }
 
+  @Override
   public int hashCode() {
     return myText.hashCode();
   }
@@ -123,33 +122,29 @@ public final class TextWithImportsImpl implements TextWithImports{
     return myFileType;
   }
 
-  @Nullable
-  public static XExpression toXExpression(@Nullable TextWithImports text) {
+  public static @Nullable XExpression toXExpression(@Nullable TextWithImports text) {
     if (text != null && !text.getText().isEmpty()) {
+      FileType fileType = text.getFileType();
       return new XExpressionImpl(text.getText(),
-                                 LanguageUtil.getFileTypeLanguage(text.getFileType()),
+                                 fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType),
                                  StringUtil.nullize(text.getImports()),
                                  getMode(text.getKind()));
     }
     return null;
   }
 
-  @NotNull
-  private static EvaluationMode getMode(@NotNull CodeFragmentKind kind) {
-    switch (kind) {
-      case EXPRESSION: return EvaluationMode.EXPRESSION;
-      case CODE_BLOCK: return EvaluationMode.CODE_FRAGMENT;
-    }
-    throw new IllegalStateException("Unknown kind " + kind);
+  private static @NotNull EvaluationMode getMode(@NotNull CodeFragmentKind kind) {
+    return switch (kind) {
+      case EXPRESSION -> EvaluationMode.EXPRESSION;
+      case CODE_BLOCK -> EvaluationMode.CODE_FRAGMENT;
+    };
   }
 
-  @NotNull
-  private static CodeFragmentKind getKind(@NotNull EvaluationMode mode) {
-    switch (mode) {
-      case EXPRESSION: return CodeFragmentKind.EXPRESSION;
-      case CODE_FRAGMENT: return CodeFragmentKind.CODE_BLOCK;
-    }
-    throw new IllegalStateException("Unknown mode " + mode);
+  private static @NotNull CodeFragmentKind getKind(@NotNull EvaluationMode mode) {
+    return switch (mode) {
+      case EXPRESSION -> CodeFragmentKind.EXPRESSION;
+      case CODE_FRAGMENT -> CodeFragmentKind.CODE_BLOCK;
+    };
   }
 
   public static TextWithImports fromXExpression(@Nullable XExpression expression) {

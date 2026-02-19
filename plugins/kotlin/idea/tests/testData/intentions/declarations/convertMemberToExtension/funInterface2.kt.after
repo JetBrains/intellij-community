@@ -1,0 +1,6 @@
+fun interface I {
+    fun foo(): Int
+
+}
+
+fun I.bar(): Int = 42

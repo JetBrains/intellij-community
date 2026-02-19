@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -8,17 +8,20 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class ExceptionUtilRt {
-  public static void rethrowUnchecked(@Nullable Throwable t) {
-    if (t instanceof Error) throw (Error)t;
-    if (t instanceof RuntimeException) throw (RuntimeException)t;
+public final class ExceptionUtilRt {
+
+  private ExceptionUtilRt() {}
+
+  public static void rethrowUnchecked(@Nullable Throwable t) throws RuntimeException, Error {
+    if (t instanceof Error) throw addRethrownStackAsSuppressed((Error)t);
+    if (t instanceof RuntimeException) throw addRethrownStackAsSuppressed((RuntimeException)t);
   }
 
   @Contract("!null->fail")
   public static void rethrowAll(@Nullable Throwable t) throws Exception {
     if (t != null) {
       rethrowUnchecked(t);
-      throw (Exception)t;
+      throw addRethrownStackAsSuppressed((Exception)t);
     }
   }
 
@@ -34,6 +37,32 @@ public class ExceptionUtilRt {
     return findCause(e, klass) != null;
   }
 
+  @NotNull
+  public static <T extends Throwable> T addRethrownStackAsSuppressed(@NotNull T throwable) {
+    if (!(throwable instanceof RethrownStack)) {
+      throwable.addSuppressed(new RethrownStack());
+    }
+    return throwable;
+  }
+
+  private static class RethrownStack extends Throwable {
+    RethrownStack() {
+      super("Rethrown at");
+    }
+  }
+
+  /**
+   * @param throwable exception to unwrap
+   * @param classToUnwrap exception class to unwrap
+   * @return the supplied exception, or unwrapped exception (if the supplied exception class is classToUnwrap)
+   */
+  @NotNull
+  public static Throwable unwrapException(@NotNull Throwable throwable, @NotNull Class<? extends Throwable> classToUnwrap) {
+    while (classToUnwrap.isInstance(throwable) && throwable.getCause() != null && throwable.getCause() != throwable) {
+      throwable = throwable.getCause();
+    }
+    return throwable;
+  }
 
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable, @NotNull String stackFrameSkipPattern) {

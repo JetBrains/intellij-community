@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
@@ -16,13 +16,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * This class represents an item of a lookup list.
  */
-public class LookupItem<T> extends MutableLookupElement implements Comparable {
+public class LookupItem<T> extends MutableLookupElement implements Comparable<LookupItem<?>> {
   public static final ClassConditionKey<LookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(LookupItem.class);
 
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
@@ -32,8 +36,6 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   public static final Object TAIL_TEXT_SMALL_ATTR = Key.create("tailTextSmall");
 
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
-
-  public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
 
   public static final Key<TailType> TAIL_TYPE_ATTR = Key.create("myTailType"); // one of constants defined in SimpleTailType interface
 
@@ -56,22 +58,14 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
     setLookupString(lookupString);
   }
 
-  /**
-   * @deprecated use {@link LookupElementBuilder}
-   */
-  @Deprecated
-  public static LookupItem fromString(String s) {
-    return new LookupItem<>(s, s);
-  }
-
   public void setObject(@NotNull T o) {
     myObject = o;
   }
 
+  @Override
   public boolean equals(Object o){
     if (o == this) return true;
-    if (o instanceof LookupItem){
-      LookupItem item = (LookupItem)o;
+    if (o instanceof LookupItem<?> item){
       return Comparing.equal(myObject, item.myObject)
              && Objects.equals(myLookupString, item.myLookupString)
              && Comparing.equal(myAllLookupStrings, item.myAllLookupStrings)
@@ -80,12 +74,14 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
     return false;
   }
 
+  @Override
   public int hashCode() {
     final Object object = getObject();
     assert object != this: getClass().getName();
     return myAllLookupStrings.hashCode() * 239 + object.hashCode();
   }
 
+  @Override
   public String toString() {
     return getLookupString();
   }
@@ -94,18 +90,15 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
    * Returns a data object.  This object is used e.g. for rendering the node.
    */
   @Override
-  @NotNull
-  public T getObject() {
+  public @NotNull T getObject() {
     return (T)myObject;
   }
 
   /**
-   * Returns a string which will be inserted to the editor when this item is
-   * choosen.
+   * Returns a string which will be inserted to the editor when this item is chosen.
    */
   @Override
-  @NotNull
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myLookupString;
   }
 
@@ -163,80 +156,69 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context) {
+  public void handleInsert(final @NotNull InsertionContext context) {
     final InsertHandler<? extends LookupElement> handler = getInsertHandler();
     if (handler != null) {
       //noinspection unchecked
       ((InsertHandler)handler).handleInsert(context, this);
     }
-    if (getTailType() != TailType.UNKNOWN && myInsertHandler == null) {
+    if (getTailType() != TailTypes.unknownType() && myInsertHandler == null) {
       context.setAddCompletionChar(false);
       final TailType type = handleCompletionChar(context.getEditor(), this, context.getCompletionChar());
       type.processTail(context.getEditor(), context.getTailOffset());
     }
   }
 
-  @Nullable
-  public static TailType getDefaultTailType(final char completionChar) {
-    switch(completionChar){
-      case '.': return new CharTailType('.', false);
-      case ',': return CommaTailType.INSTANCE;
-      case ';': return TailType.SEMICOLON;
-      case '=': return EqTailType.INSTANCE;
-      case ' ': return TailType.SPACE;
-      case ':': return TailType.CASE_COLON; //?
-    }
-    return null;
+  public static @Nullable TailType getDefaultTailType(final char completionChar) {
+    return switch (completionChar) {
+      case '.' -> TailTypes.charType('.', false);
+      case ',' -> CommaTailType.INSTANCE;
+      case ';' -> TailTypes.semicolonType();
+      case '=' -> EqTailType.INSTANCE;
+      case ' ' -> TailTypes.spaceType();
+      case ':' -> TailTypes.caseColonType(); //?
+      default -> null;
+    };
   }
 
-  @NotNull
-  public static TailType handleCompletionChar(@NotNull final Editor editor, @NotNull final LookupElement lookupElement, final char completionChar) {
+  public static @NotNull TailType handleCompletionChar(final @NotNull Editor editor, final @NotNull LookupElement lookupElement, final char completionChar) {
     final TailType type = getDefaultTailType(completionChar);
     if (type != null) {
       return type;
     }
 
-    if (lookupElement instanceof LookupItem) {
-      final LookupItem<?> item = (LookupItem)lookupElement;
+    if (lookupElement instanceof LookupItem<?> item) {
       final TailType attr = item.getAttribute(TAIL_TYPE_ATTR);
       if (attr != null) {
         return attr;
       }
     }
-    return TailType.NONE;
+    return TailTypes.noneType();
   }
 
 
-  @NotNull
-  public TailType getTailType(){
+  public @NotNull TailType getTailType(){
     final TailType tailType = getAttribute(TAIL_TYPE_ATTR);
-    return tailType != null ? tailType : TailType.UNKNOWN;
+    return tailType != null ? tailType : TailTypes.unknownType();
   }
 
-  @NotNull
-  public LookupItem<T> setTailType(@NotNull TailType type) {
+  public @NotNull LookupItem<T> setTailType(@NotNull TailType type) {
     setAttribute(TAIL_TYPE_ATTR, type);
     return this;
   }
 
   @Override
-  public int compareTo(@NotNull Object o){
-    if(o instanceof String){
-      return getLookupString().compareTo((String)o);
-    }
-    if(!(o instanceof LookupItem)){
-      throw new RuntimeException("Trying to compare LookupItem with " + o.getClass() + "!!!");
-    }
-    return getLookupString().compareTo(((LookupItem)o).getLookupString());
+  public int compareTo(@NotNull LookupItem<?> o){
+    return getLookupString().compareTo(o.getLookupString());
   }
 
-  public LookupItem<T> setInsertHandler(@NotNull final InsertHandler<? extends LookupElement> handler) {
+  public LookupItem<T> setInsertHandler(final @NotNull InsertHandler<? extends LookupElement> handler) {
     myInsertHandler = handler;
     return this;
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     for (ElementLookupRenderer renderer : ElementLookupRenderer.EP_NAME.getExtensionList()) {
       T object = getObject();
       if (renderer.handlesItem(object)) {
@@ -263,18 +245,16 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   @Override
-  public AutoCompletionPolicy getAutoCompletionPolicy() {
+  public @NotNull AutoCompletionPolicy getAutoCompletionPolicy() {
     return myAutoCompletionPolicy;
   }
 
-  @NotNull
-  public LookupItem<T> setIcon(Icon icon) {
+  public @NotNull LookupItem<T> setIcon(Icon icon) {
     setAttribute(ICON_ATTR, icon);
     return this;
   }
 
-  @NotNull
-  public LookupItem<T> setPriority(double priority) {
+  public @NotNull LookupItem<T> setPriority(double priority) {
     myPriority = priority;
     return this;
   }
@@ -283,36 +263,28 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
     return myPriority;
   }
 
-  @NotNull
-  public LookupItem<T> setPresentableText(@NotNull final String displayText) {
+  public @NotNull LookupItem<T> setPresentableText(final @NotNull String displayText) {
     myPresentable = displayText;
     return this;
   }
 
-  @Nullable
-  public String getPresentableText() {
+  public @Nullable String getPresentableText() {
     return myPresentable;
   }
 
-  @NotNull
-  public LookupItem<T> setTailText(final String text, final boolean grayed) {
+  public @NotNull LookupItem<T> setTailText(final String text, final boolean grayed) {
     setAttribute(TAIL_TEXT_ATTR, text);
     setAttribute(TAIL_TEXT_SMALL_ATTR, Boolean.TRUE);
     return this;
   }
 
-  public LookupItem<T> addLookupStrings(@NonNls final String... additionalLookupStrings) {
+  public LookupItem<T> addLookupStrings(final @NonNls String... additionalLookupStrings) {
     ContainerUtil.addAll(myAllLookupStrings, additionalLookupStrings);
     return this;
   }
 
   @Override
-  public Set<String> getAllLookupStrings() {
+  public @NotNull Set<String> getAllLookupStrings() {
     return myAllLookupStrings;
-  }
-
-  @Override
-  public boolean isCaseSensitive() {
-    return !Boolean.TRUE.equals(getAttribute(CASE_INSENSITIVE));
   }
 }

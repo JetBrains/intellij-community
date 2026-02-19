@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -18,8 +18,7 @@ import java.util.List;
 import static com.intellij.psi.util.PsiTreeUtil.countChildrenOfType;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 28.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTypeArgumentList, PsiListLikeElement {
 
@@ -65,7 +64,7 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     if (first == last && first.getPsi() instanceof GrTypeElement) {
       if (anchor == null) {
         anchor = getLastChild().getNode();
@@ -88,9 +87,8 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getTypeArgumentElements());
   }
 }

@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.featuresTrainer._test"/>
+    <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.python.community.junit5Tests.framework._test"/>
+    <module name="intellij.python.featuresTrainer"/>
+    <module name="intellij.python.test.env.junit5"/>
+  </dependencies>
+</idea-plugin>

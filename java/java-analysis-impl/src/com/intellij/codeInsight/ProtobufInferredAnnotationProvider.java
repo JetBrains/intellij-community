@@ -1,9 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class ProtobufInferredAnnotationProvider implements InferredAnnotationProvider {
+public final class ProtobufInferredAnnotationProvider implements InferredAnnotationProvider {
   @Override
   public @Nullable PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     if (!isProtobufGetter(listOwner)) return null;
@@ -24,8 +31,7 @@ public class ProtobufInferredAnnotationProvider implements InferredAnnotationPro
   }
 
   private static boolean isProtobufGetter(@NotNull PsiModifierListOwner listOwner) {
-    if (!(listOwner instanceof PsiMethod)) return false;
-    PsiMethod method = (PsiMethod)listOwner;
+    if (!(listOwner instanceof PsiMethod method)) return false;
     if (!method.getName().startsWith("get")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();

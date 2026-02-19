@@ -15,86 +15,78 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStarImportElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.toolbox.ChainIterable;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author dcheryasov
- */
 public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportElementStub> implements PyStarImportElement {
   public PyStarImportElementImpl(ASTNode astNode) {
     super(astNode);
   }
 
   public PyStarImportElementImpl(final PyStarImportElementStub stub) {
-    super(stub, PyElementTypes.STAR_IMPORT_ELEMENT);
+    super(stub, PyStubElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @Override
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
-    if (getParent() instanceof PyFromImportStatement) {
-      PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
-      final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
-      ChainIterable<PyElement> chain = new ChainIterable<>();
-      for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
-        final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
-        if (source instanceof PyFile) {
-          final PyFile sourceFile = (PyFile)source;
-          chain.add(filterStarImportableNames(sourceFile.iterateNames(), sourceFile));
-        }
-      }
-      return chain;
+  public @NotNull Iterable<PyElement> iterateNames() {
+    if (getParent() instanceof PyFromImportStatement fromImportStatement) {
+      return StreamEx.of(fromImportStatement.resolveImportSourceCandidates())
+        .distinct()
+        .map(PyUtil::turnDirIntoInit)
+        .select(PyFile.class)
+        .flatMap(file -> StreamEx.of(file.iterateNames().iterator())
+          .filter(e -> {
+            String name = e.getName();
+            return name != null && PyUtil.isStarImportableFrom(name, file);
+          }))
+        .toImmutableList();
     }
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static Iterable<PyElement> filterStarImportableNames(@NotNull Iterable<PyElement> declaredNames, @NotNull final PyFile file) {
-    return Iterables.filter(declaredNames, input -> {
-      final String name = input != null ? input.getName() : null;
-      return name != null && PyUtil.isStarImportableFrom(name, file);
-    });
-  }
-
   @Override
-  @NotNull
-  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
+  public @NotNull List<RatedResolveResult> multiResolveName(@NotNull String name) {
     return PyUtil.getParameterizedCachedValue(this, name, this::calculateMultiResolveName);
   }
 
-  @NotNull
-  private List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
+  private @NotNull List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
     final PsiElement parent = getParentByStub();
-    if (parent instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
+    if (parent instanceof PyFromImportStatement fromImportStatement) {
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PyFile sourceFile = as(PyUtil.turnDirIntoInit(importedFile), PyFile.class);
         if (sourceFile != null && PyUtil.isStarImportableFrom(name, sourceFile)) {
           final PyModuleType moduleType = new PyModuleType(sourceFile);
+          final var context = TypeEvalContext.codeInsightFallback(sourceFile.getProject());
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
-                                                                                      PyResolveContext.defaultContext());
+                                                                                      PyResolveContext.defaultContext(context));
           if (!ContainerUtil.isEmpty(results)) {
             return Lists.newArrayList(results);
           }

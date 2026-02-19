@@ -17,14 +17,24 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
@@ -101,7 +111,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
       final List<PsiType>
         expectedThrownTypes = ContainerUtil.map(interfaceMethod.getThrowsList().getReferencedTypes(),
-                                                (Function<PsiType, PsiType>)type -> session.substituteWithInferenceVariables(substitutor.substitute(type)));
+                                                type -> session.substituteWithInferenceVariables(substitutor.substitute(type)));
       final List<PsiType> expectedNonProperThrownTypes = new ArrayList<>();
       for (PsiType type : expectedThrownTypes) {
         if (!session.isProperType(type)) {

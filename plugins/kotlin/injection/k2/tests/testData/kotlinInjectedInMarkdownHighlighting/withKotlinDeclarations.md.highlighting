@@ -1,0 +1,11 @@
+<!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_MARKER'")!>```<!><!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_LANGUAGE'")!>kotlin<!>
+class A {
+    class B {
+
+    }
+}
+
+fun functionC(x: Int) {
+    println(A.b().toString())
+}
+<!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_MARKER'")!>```<!>

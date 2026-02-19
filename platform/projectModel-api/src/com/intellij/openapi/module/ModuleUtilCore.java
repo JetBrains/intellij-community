@@ -1,60 +1,87 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.graph.Graph;
+import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import static com.intellij.platform.workspace.jps.entities.ExtensionsKt.collectTransitivelyDependentModules;
 
 public class ModuleUtilCore {
   public static final Key<Module> KEY_MODULE = new Key<>("Module");
 
+  @ApiStatus.Internal
+  protected ModuleUtilCore() {
+  }
+
   public static boolean projectContainsFile(@NotNull Project project, @NotNull VirtualFile file, boolean isLibraryElement) {
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     if (isLibraryElement) {
-      List<OrderEntry> orders = projectFileIndex.getOrderEntriesForFile(file);
-      for(OrderEntry orderEntry:orders) {
-        if (orderEntry instanceof JdkOrderEntry || orderEntry instanceof LibraryOrderEntry) {
-          return true;
-        }
-      }
-      return false;
+      return !projectFileIndex.findContainingSdks(file).isEmpty() || !projectFileIndex.findContainingLibraries(file).isEmpty();
     }
     else {
       return projectFileIndex.isInContent(file);
     }
   }
 
-  @NotNull
-  public static String getModuleNameInReadAction(@NotNull final Module module) {
+  public static @NotNull String getModuleNameInReadAction(@NotNull Module module) {
     return ReadAction.compute(module::getName);
   }
 
   public static boolean isModuleDisposed(@NotNull PsiElement element) {
     if (!element.isValid()) return true;
-    final Project project = element.getProject();
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
-    final PsiFile file = element.getContainingFile();
+    Project project = element.getProject();
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+    PsiFile file = element.getContainingFile();
     if (file == null) return true;
     VirtualFile vFile = file.getVirtualFile();
-    final Module module = vFile == null ? null : projectFileIndex.getModuleForFile(vFile);
+    Module module = vFile == null ? null : projectFileIndex.getModuleForFile(vFile);
     // element may be in library
     return module == null ? !projectFileIndex.isInLibraryClasses(vFile) : module.isDisposed();
   }
 
-  @Nullable
-  public static Module findModuleForFile(@Nullable PsiFile containingFile) {
+  /**
+   * @return module where {@code containingFile} is located,
+   * null for project files outside module content roots or library files
+   */
+  public static @Nullable Module findModuleForFile(@Nullable PsiFile containingFile) {
     if (containingFile != null) {
       VirtualFile vFile = containingFile.getVirtualFile();
       if (vFile != null) {
@@ -64,27 +91,45 @@ public class ModuleUtilCore {
     return null;
   }
 
-  @Nullable
-  public static Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
+  /**
+   * @return module where {@code file} is located,
+   * null for project files outside module content roots or library files
+   */
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static @Nullable Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return null;
     }
-    return ProjectFileIndex.getInstance(project).getModuleForFile(file);
+    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModuleForFile(file));
   }
 
-  @Nullable
-  public static Module findModuleForPsiElement(@NotNull PsiElement element) {
-    PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) {
-      if (!element.isValid()) return null;
+  /**
+   * @return modules which include the file,
+   *         empty list for project files outside module content roots or library files
+   */
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable Set<Module> findModulesForFile(@NotNull VirtualFile file, @NotNull Project project) {
+    if (project.isDefault()) {
+      return Collections.emptySet();
     }
-    else {
-      if (!containingFile.isValid()) return null;
-    }
+    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModulesForFile(file, true));
+  }
 
-    Project project = (containingFile == null ? element : containingFile).getProject();
+  /**
+   * Return module where containing file of the {@code element} is located.
+   * <br>
+   * For {@link com.intellij.psi.PsiDirectory}, corresponding virtual file is checked directly.
+   * If this virtual file belongs to a library or SDK and this library/SDK is attached to exactly one module, then this module will be returned.
+   */
+  public static @Nullable Module findModuleForPsiElement(@NotNull PsiElement element) {
+    PsiFile containingFile = element.getContainingFile();
+    PsiElement highestPsi = containingFile == null ? element : containingFile;
+    if (!highestPsi.isValid()) {
+      return null;
+    }
+    Project project = highestPsi.getProject();
     if (project.isDefault()) return null;
-    final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
 
     if (element instanceof PsiFileSystemItem && (!(element instanceof PsiFile) || element.getContext() == null)) {
       VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
@@ -94,28 +139,43 @@ public class ModuleUtilCore {
           return element.getUserData(KEY_MODULE);
         }
       }
+
       if (fileIndex.isInLibrary(vFile)) {
-        final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
-        if (orderEntries.isEmpty()) {
+        List<WorkspaceEntityWithSymbolicId> entities = new ArrayList<>();
+        entities.addAll(fileIndex.findContainingSdks(vFile));
+        entities.addAll(fileIndex.findContainingLibraries(vFile));
+        if (entities.isEmpty()) {
           return null;
         }
-        if (orderEntries.size() == 1) {
-          return orderEntries.get(0).getOwnerModule();
+
+        var modelLegacyBridge = project.getService(WorkspaceModelLegacyBridge.class);
+        var currentSnapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+        var modules = new ArrayList<Module>();
+        for (var entity : entities) {
+          Sequence<Module> modulesSequence =
+            SequencesKt.filterNotNull(SequencesKt.map(currentSnapshot.referrers(entity.getSymbolicId(), ModuleEntity.class), modelLegacyBridge::findLegacyModule));
+          SequencesKt.toCollection(modulesSequence, modules);
         }
-        Set<Module> modules = new HashSet<>();
-        for (OrderEntry orderEntry : orderEntries) {
-          modules.add(orderEntry.getOwnerModule());
+        Optional<Module> module = modules
+          .stream()
+          .min(ModuleManager.getInstance(project).moduleDependencyComparator());
+        if (module.isPresent()) {
+          return module.get();
         }
-        final Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
-        Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
-        return candidates[0];
+      }
+
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(project) && containingFile != null) {
+        var currentContext = CodeInsightContextManager.getInstance(project).getCodeInsightContext(containingFile.getViewProvider());
+        if (currentContext instanceof ModuleContext) {
+          return ((ModuleContext) currentContext).getModule();
+        }
       }
       return fileIndex.getModuleForFile(vFile);
     }
     if (containingFile != null) {
       PsiElement context;
       while ((context = containingFile.getContext()) != null) {
-        final PsiFile file = context.getContainingFile();
+        PsiFile file = context.getContainingFile();
         if (file == null) break;
         containingFile = file;
       }
@@ -124,12 +184,20 @@ public class ModuleUtilCore {
         return containingFile.getUserData(KEY_MODULE);
       }
 
-      final PsiFile originalFile = containingFile.getOriginalFile();
+      PsiFile originalFile = containingFile.getOriginalFile();
       if (originalFile.getUserData(KEY_MODULE) != null) {
         return originalFile.getUserData(KEY_MODULE);
       }
 
-      final VirtualFile virtualFile = originalFile.getVirtualFile();
+      CodeInsightContext codeInsightContext = CodeInsightContextUtil.getCodeInsightContext(originalFile);
+      if (codeInsightContext instanceof ModuleContext) {
+        Module module = ((ModuleContext)codeInsightContext).getModule();
+        if (module != null) {
+          return module;
+        }
+      }
+
+      VirtualFile virtualFile = originalFile.getVirtualFile();
       if (virtualFile != null) {
         return fileIndex.getModuleForFile(virtualFile);
       }
@@ -149,51 +217,47 @@ public class ModuleUtilCore {
   }
 
   /**
-   * collect transitive module dependants
+   * <h3>Obsolescence notice</h3>
+   * This method uses
+   * {@link com.intellij.platform.workspace.jps.entities.ExtensionsKt#collectTransitivelyDependentModules(ModuleEntity, EntityStorage)},
+   * and remains for compatibility. 
+   * <p>
+   *   
+   * Collect transitive dependent modules.
+   *
    * @param module to find dependencies on
    * @param result resulted set
    */
-  public static void collectModulesDependsOn(@NotNull final Module module, @NotNull Set<? super Module> result) {
-    if (!result.add(module)) {
-      return;
-    }
+  @ApiStatus.Obsolete(since = "2025.1")
+  public static void collectModulesDependsOn(@NotNull Module module, @NotNull Set<? super Module> result) {
+    var project = module.getProject();
+    var legacyBridge = project.getService(WorkspaceModelLegacyBridge.class);
+    var moduleEntity = legacyBridge.findModuleEntity(module);
+    if (moduleEntity == null) return; // error?
 
-    final ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
-    final List<Module> dependentModules = moduleManager.getModuleDependentModules(module);
-    for (final Module dependentModule : dependentModules) {
-      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(dependentModule).getOrderEntries();
-      for (OrderEntry o : orderEntries) {
-        if (o instanceof ModuleOrderEntry) {
-          final ModuleOrderEntry orderEntry = (ModuleOrderEntry)o;
-          if (orderEntry.getModule() == module) {
-            if (orderEntry.isExported()) {
-              collectModulesDependsOn(dependentModule, result);
-            }
-            else {
-              result.add(dependentModule);
-            }
-            break;
-          }
-        }
-      }
+    var tmpSet = collectTransitivelyDependentModules(moduleEntity, WorkspaceModel.getInstance(project).getCurrentSnapshot());
+    ProgressManager.checkCanceled();
+    for (var dependentModule : tmpSet) {
+      var legacyModule = legacyBridge.findLegacyModule(dependentModule);
+      if (legacyModule != null)
+        result.add(legacyModule);
     }
   }
 
-  @NotNull
-  public static List<Module> getAllDependentModules(@NotNull Module module) {
+  public static @NotNull List<Module> getAllDependentModules(@NotNull Module module) {
     List<Module> list = new ArrayList<>();
     Graph<Module> graph = ModuleManager.getInstance(module.getProject()).moduleGraph();
-    for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
+    for (Iterator<Module> i = graph.getOut(module); i.hasNext(); ) {
       list.add(i.next());
     }
     return list;
   }
 
-  public static boolean visitMeAndDependentModules(@NotNull final Module module, @NotNull ModuleVisitor visitor) {
+  public static boolean visitMeAndDependentModules(@NotNull Module module, @NotNull ModuleVisitor visitor) {
     if (!visitor.visit(module)) {
       return false;
     }
-    final List<Module> list = getAllDependentModules(module);
+    List<Module> list = getAllDependentModules(module);
     for (Module dependentModule : list) {
       if (!visitor.visit(dependentModule)) {
         return false;
@@ -202,7 +266,7 @@ public class ModuleUtilCore {
     return true;
   }
 
-  public static boolean moduleContainsFile(@NotNull final Module module, @NotNull VirtualFile file, boolean isLibraryElement) {
+  public static boolean moduleContainsFile(@NotNull Module module, @NotNull VirtualFile file, boolean isLibraryElement) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     if (isLibraryElement) {
       OrderEntry orderEntry = moduleRootManager.getFileIndex().getOrderEntryForFile(file);
@@ -214,15 +278,14 @@ public class ModuleUtilCore {
   }
 
   public static boolean isModuleFile(@NotNull Module module, @NotNull VirtualFile file) {
-    return StringUtil.equal(file.getPath(), module.getModuleFilePath(), file.isCaseSensitive());
+    return VfsUtilCore.pathEqualsTo(file, module.getModuleFilePath());
   }
 
   public static boolean isModuleDir(@NotNull Module module, @NotNull VirtualFile dir) {
-    return StringUtil.equal(dir.getPath(), getModuleDirPath(module), dir.isCaseSensitive());
+    return VfsUtilCore.pathEqualsTo(dir, getModuleDirPath(module));
   }
 
-  @NotNull
-  public static String getModuleDirPath(@NotNull Module module) {
+  public static @NotNull String getModuleDirPath(@NotNull Module module) {
     return PathUtilRt.getParentPath(module.getModuleFilePath());
   }
 

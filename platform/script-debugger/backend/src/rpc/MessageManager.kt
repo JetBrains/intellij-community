@@ -15,11 +15,15 @@
  */
 package org.jetbrains.rpc
 
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.createError
 import org.jetbrains.jsonProtocol.Request
 import java.io.IOException
-import java.util.*
+import java.util.Arrays
+import java.util.concurrent.CancellationException
 
 interface MessageProcessor {
   fun cancelWaitingRequests()
@@ -29,8 +33,10 @@ interface MessageProcessor {
   fun <RESULT> send(message: Request<RESULT>): Promise<RESULT>
 }
 
+private val MESSAGE_MANAGER_LOG = logger<MessageProcessor>()
+
 class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
-  private val callbackMap = ContainerUtil.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
+  private val callbackMap = ConcurrentCollectionFactory.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
 
   interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS> {
     fun getUpdatedSequence(message: OUTGOING): Int
@@ -56,29 +62,63 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
 
     val sequence = handler.getUpdatedSequence(message)
-    callbackMap.put(sequence, callback)
+    callbackMap.put(sequence, decorateCallback(callback))
 
     val success: Boolean
     try {
       success = handler.write(message)
     }
-    catch (e: Throwable) {
+    catch (e: CancellationException) {
+      // Promise must be canceled regardless of the origin of the cancellation exception
+      // ("rogue" CE or CE thrown because the current coroutine was canceled) because:
+      // - we need to remove it from the callback map
+      // - since the write operation wasn't finished, this promise isn't valid anymore
+      cancelled(sequence)
+      throw e
+    } catch (e: Throwable) {
       try {
-        failedToSend(sequence)
+        failedToSend(sequence, message.methodName)
       }
       finally {
-        LOG.error("Failed to send", e)
+        MESSAGE_MANAGER_LOG.error("Failed to send", e)
       }
       return
     }
 
     if (!success) {
-      failedToSend(sequence)
+      failedToSend(sequence, message.methodName)
     }
   }
 
-  private fun failedToSend(sequence: Int) {
-    callbackMap.remove(sequence)?.onError("Failed to send")
+  private fun decorateCallback(callback: RequestCallback<SUCCESS>): RequestCallback<SUCCESS> {
+    val currentId = ClientId.current
+    return object : RequestCallback<SUCCESS> {
+      override fun onSuccess(response: SUCCESS?, resultReader: ResultReader<SUCCESS>?) {
+        ClientId.withClientId(currentId) {
+          callback.onSuccess(response, resultReader)
+        }
+      }
+
+      override fun onError(error: Throwable) {
+        ClientId.withClientId(currentId) {
+          callback.onError(error)
+        }
+      }
+
+      override fun onCancel(error: Throwable?) {
+        ClientId.withClientId(currentId) {
+          callback.onCancel(error)
+        }
+      }
+    }
+  }
+
+  private fun cancelled(sequence: Int) {
+    callbackMap.remove(sequence)?.onCancel()
+  }
+
+  private fun failedToSend(sequence: Int, methodName: String) {
+    callbackMap.remove(sequence)?.onError("Failed to send ($methodName)")
   }
 
   fun processIncoming(incomingParsed: INCOMING) {
@@ -86,7 +126,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     if (commandResponse == null) {
       if (closed) {
         // just ignore
-        LOG.info("Connection closed, ignore incoming")
+        MESSAGE_MANAGER_LOG.info("Connection closed, ignore incoming")
       }
       else {
         handler.acceptNonSequence(incomingParsed)
@@ -104,7 +144,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
     catch (e: Throwable) {
       callback.onError(e)
-      LOG.error("Failed to dispatch response to callback", e)
+      MESSAGE_MANAGER_LOG.error("Failed to dispatch response to callback", e)
     }
   }
 
@@ -116,7 +156,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     val keys = map.keys()
     Arrays.sort(keys)
     for (key in keys) {
-      map.get(key)?.reject()
+      map.get(key)?.onCancel(createError(CONNECTION_CLOSED_MESSAGE))
     }
   }
 }

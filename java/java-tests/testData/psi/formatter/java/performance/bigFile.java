@@ -34,6 +34,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -5200,7 +5202,7 @@ public final class YYYYYYY extends UserDataHolderBase implements EditorEx, Highl
   }
 
   static void assertIsDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
   }
 
   private static void assertReadAccess() {
@@ -5595,7 +5597,7 @@ public final class YYYYYYY extends UserDataHolderBase implements EditorEx, Highl
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
         // JDK currently properly supports this functionality only for TextComponent/JTextComponent descendants.
         // For our editor component we need this workaround.
-        // After https://bugs.openjdk.java.net/browse/JDK-8074882 is fixed, this workaround should be replaced with a proper solution.
+        // After https://bugs.openjdk.org/browse/JDK-8074882 is fixed, this workaround should be replaced with a proper solution.
         myNeedToSelectPreviousChar = false;
         getCaretModel().runForEachCaret(new CaretAction() {
           @Override

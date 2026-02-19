@@ -16,7 +16,16 @@
 package com.intellij.lang.java;
 
 import com.intellij.navigation.AnonymousElementProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,7 +34,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
+public final class JavaAnonymousClassesProvider implements AnonymousElementProvider {
   @Override
   public PsiElement @NotNull [] getAnonymousElements(@NotNull PsiElement parent) {
     if (suite(parent)) {
@@ -37,7 +46,7 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
         final PsiElement element = parent;
         element.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
             final PsiExpressionList arguments = aClass.getArgumentList();
             if (arguments != null) {
               for (PsiExpression expression : arguments.getExpressions()) {
@@ -48,7 +57,7 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
           }
 
           @Override
-          public void visitClass(PsiClass aClass) {
+          public void visitClass(@NotNull PsiClass aClass) {
             if (aClass == element) {
               super.visitClass(aClass);
             }

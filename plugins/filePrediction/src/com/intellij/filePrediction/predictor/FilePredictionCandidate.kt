@@ -3,9 +3,10 @@ package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
 import com.intellij.filePrediction.features.FilePredictionFeature
+import com.intellij.openapi.util.NlsSafe
 
 data class FilePredictionCandidate(
-  val path: String,
+  @NlsSafe val path: String,
   val source: FilePredictionCandidateSource,
   val features: Map<String, FilePredictionFeature>,
   val featuresComputation: Long,

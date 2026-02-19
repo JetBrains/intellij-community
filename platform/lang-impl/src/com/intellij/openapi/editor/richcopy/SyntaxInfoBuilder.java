@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -24,20 +24,20 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Arrays;
 import java.util.Comparator;
 
 public final class SyntaxInfoBuilder {
   private SyntaxInfoBuilder() { }
 
-  @NotNull
-  static MyMarkupIterator createMarkupIterator(@NotNull EditorHighlighter highlighter,
-                                               @NotNull CharSequence text,
-                                               @NotNull EditorColorsScheme schemeToUse,
-                                               @Nullable MarkupModel markupModel,
-                                               int startOffsetToUse,
-                                               int endOffset) {
+  static @NotNull MyMarkupIterator createMarkupIterator(@NotNull EditorHighlighter highlighter,
+                                                        @NotNull CharSequence text,
+                                                        @NotNull EditorColorsScheme schemeToUse,
+                                                        @Nullable MarkupModel markupModel,
+                                                        int startOffsetToUse,
+                                                        int endOffset) {
 
     CompositeRangeIterator iterator =  new CompositeRangeIterator(
       schemeToUse,
@@ -62,7 +62,7 @@ public final class SyntaxInfoBuilder {
     void dispose();
   }
 
-  static class MyMarkupIterator {
+  static final class MyMarkupIterator {
     private final SegmentIterator mySegmentIterator;
     private final RangeIterator myRangeIterator;
     private int myCurrentFontStyle;
@@ -104,18 +104,15 @@ public final class SyntaxInfoBuilder {
       return myCurrentFontStyle;
     }
 
-    @NotNull
-    public String getFontFamilyName() {
+    public @NotNull String getFontFamilyName() {
       return mySegmentIterator.getCurrentFontFamilyName();
     }
 
-    @Nullable
-    public Color getForegroundColor() {
+    public @Nullable Color getForegroundColor() {
       return myCurrentForegroundColor;
     }
 
-    @Nullable
-    public Color getBackgroundColor() {
+    public @Nullable Color getBackgroundColor() {
       return myCurrentBackgroundColor;
     }
 
@@ -124,7 +121,7 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  static class CompositeRangeIterator implements RangeIterator {
+  static final class CompositeRangeIterator implements RangeIterator {
     private final @NotNull Color myDefaultForeground;
     private final @NotNull Color myDefaultBackground;
     private final IteratorWrapper[] myIterators;
@@ -209,7 +206,7 @@ public final class SyntaxInfoBuilder {
       }
     }
 
-    private final Comparator<IteratorWrapper> RANGE_SORTER = new Comparator<IteratorWrapper>() {
+    private final Comparator<IteratorWrapper> RANGE_SORTER = new Comparator<>() {
       @Override
       public int compare(IteratorWrapper o1, IteratorWrapper o2) {
         if (o1 == null) {
@@ -413,7 +410,7 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  static class HighlighterRangeIterator implements RangeIterator {
+  static final class HighlighterRangeIterator implements RangeIterator {
     private static final TextAttributes EMPTY_ATTRIBUTES = new TextAttributes();
 
     private final EditorHighlighter myHighlighter;
@@ -529,17 +526,17 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  static class Context {
+  static final class Context {
 
     private final SyntaxInfo.Builder builder;
 
-    @NotNull private final CharSequence myText;
-    @NotNull private final Color        myDefaultForeground;
-    @NotNull private final Color        myDefaultBackground;
+    private final @NotNull CharSequence myText;
+    private final @NotNull Color        myDefaultForeground;
+    private final @NotNull Color        myDefaultBackground;
 
-    @Nullable private Color  myBackground;
-    @Nullable private Color  myForeground;
-    @Nullable private String myFontFamilyName;
+    private @Nullable Color  myBackground;
+    private @Nullable Color  myForeground;
+    private @Nullable String myFontFamilyName;
 
     private final int myIndentSymbolsToStrip;
 
@@ -554,7 +551,7 @@ public final class SyntaxInfoBuilder {
       myDefaultForeground = scheme.getDefaultForeground();
       myDefaultBackground = scheme.getDefaultBackground();
 
-      int javaFontSize = scheme.getEditorFontSize();
+      float javaFontSize = scheme.getEditorFontSize2D();
       float fontSize = SystemInfo.isMac || ApplicationManager.getApplication().isHeadlessEnvironment() ?
                        javaFontSize :
                        javaFontSize * 0.75f / UISettings.getDefFontScale(); // matching font size in external apps
@@ -687,8 +684,7 @@ public final class SyntaxInfoBuilder {
       builder.addText(position + myOffsetShift, position + myOffsetShift + 1);
     }
 
-    @NotNull
-    public SyntaxInfo finish() {
+    public @NotNull SyntaxInfo finish() {
       return builder.build();
     }
   }

@@ -1,17 +1,24 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public abstract class VcsCheckBoxWithSpinnerConfigurable implements Configurable {
   protected final Project myProject;
   private final @NlsContexts.Checkbox String myCheckboxText;
@@ -26,8 +33,7 @@ public abstract class VcsCheckBoxWithSpinnerConfigurable implements Configurable
   }
 
   @Override
-  @NotNull
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     myHighlightRecentlyChanged = new JCheckBox(myCheckboxText);
     myHighlightInterval = new JSpinner(createSpinnerModel());

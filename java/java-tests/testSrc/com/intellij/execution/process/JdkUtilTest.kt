@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.CommandLineWrapper
@@ -125,18 +124,16 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   }
 
   private fun doTest(vararg expected: String) {
-    val environmentFactory = LocalTargetEnvironmentFactory()
-    val request = environmentFactory.createRequest()
-    val cmd = parameters.toCommandLine(request, environmentFactory.targetConfiguration)
-    val environment = environmentFactory.prepareRemoteEnvironment(request, EmptyProgressIndicator())
-    cmd.getUserData(JdkUtil.COMMAND_LINE_SETUP_KEY)!!.provideEnvironment(environment, EmptyProgressIndicator())
+    val request = LocalTargetEnvironmentRequest()
+    val cmd = parameters.toCommandLine(request)
+    request.prepareEnvironment(TargetProgressIndicator.EMPTY)
     filesToDelete = cmd.filesToDeleteOnTermination
 
     val actual = ParametersList()
     actual.addAll(cmd.build().collectCommandsSynchronously())
     val toCompare = mutableListOf<String>()
     actual.parameters.forEachIndexed { i, arg ->
-      if (i > 0 && !arg.startsWith("-Dfile.encoding=")) {
+      if (i > 0 && !arg.contains(".encoding=")) {
         toCompare += when {
           arg.contains(File.pathSeparatorChar) -> arg.splitToSequence(File.pathSeparatorChar).map { mapPath(it) }.joinToString(":")
           arg.contains(File.separatorChar) -> mapPath(arg)
@@ -157,7 +154,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
       path.matches("$tempDir/idea_vm_params\\d*".toRegex()) -> "#vm_params#"
       path.matches("$tempDir/idea_app_params\\d*".toRegex()) -> "#app_params#"
       path.matches("@$tempDir/idea_arg_file\\d*".toRegex()) -> "#arg_file#"
-      path.endsWith("/intellij.java.rt") || path.endsWith("/idea_rt.jar") -> "#idea_rt#"
+      path.contains("/production/intellij.java.rt/") || path.endsWith("/production/intellij.java.rt") || path.endsWith("/idea_rt.jar") -> "#idea_rt#"
       else -> path
     }
   }

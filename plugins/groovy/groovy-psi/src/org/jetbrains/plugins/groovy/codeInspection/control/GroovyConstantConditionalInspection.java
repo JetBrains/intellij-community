@@ -15,30 +15,29 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GroovyConstantConditionalInspection extends BaseInspection {
+public final class GroovyConstantConditionalInspection extends BaseInspection {
 
-    @NotNull
     @Override
-    public BaseInspectionVisitor buildVisitor() {
+    public @NotNull BaseInspectionVisitor buildVisitor() {
         return new ConstantConditionalExpressionVisitor();
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... args) {
+    public @NotNull String buildErrorString(Object... args) {
         return GroovyBundle.message("inspection.message.ref.can.be.simplified");
     }
 
@@ -57,27 +56,25 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
     }
 
     @Override
-    public GroovyFix buildFix(@NotNull PsiElement location) {
+    public LocalQuickFix buildFix(@NotNull PsiElement location) {
         return new ConstantConditionalFix();
     }
 
-    private static class ConstantConditionalFix extends GroovyFix {
+    private static class ConstantConditionalFix extends PsiUpdateModCommandQuickFix {
 
         @Override
-        @NotNull
-        public String getFamilyName() {
+        public @NotNull String getFamilyName() {
             return GroovyBundle.message("intention.family.name.simplify");
         }
 
-        @Override
-        public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-                throws IncorrectOperationException {
+      @Override
+      protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
             final GrConditionalExpression expression =
-                    (GrConditionalExpression) descriptor.getPsiElement();
+                    (GrConditionalExpression) element;
             final String newExpression =
                     calculateReplacementExpression(expression);
-            replaceExpression(expression, newExpression);
-        }
+        GrInspectionUtil.replaceExpression(expression, newExpression);
+      }
     }
 
     private static class ConstantConditionalExpressionVisitor
@@ -102,12 +99,12 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
     }
 
     private static boolean isFalse(GrExpression expression) {
-        @NonNls final String text = expression.getText();
+        final @NonNls String text = expression.getText();
         return "false".equals(text);
     }
 
     private static boolean isTrue(GrExpression expression) {
-        @NonNls final String text = expression.getText();
+        final @NonNls String text = expression.getText();
         return "true".equals(text);
     }
 }

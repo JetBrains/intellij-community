@@ -1,0 +1,9 @@
+// HIGHLIGHT: INFORMATION
+fun test() = true
+
+fun foo() {
+    val b = !when (test()) {
+        true -> true
+        else -> false
+    }
+}

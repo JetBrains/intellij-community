@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
@@ -8,23 +8,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenCommandLineOptions.Option;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
+import static com.intellij.openapi.util.text.StringUtil.substringAfterLast;
 
-/**
- * @author ibessonov
- */
 public class RunAnythingMavenItem extends RunAnythingItemBase {
 
   public RunAnythingMavenItem(@NotNull String command, @Nullable Icon icon) {
     super(command, icon);
   }
 
-  @NotNull
   @Override
-  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
+  public @NotNull Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
     String command = getCommand();
     JPanel component = (JPanel)super.createComponent(pattern, isSelected, hasFocus);
 

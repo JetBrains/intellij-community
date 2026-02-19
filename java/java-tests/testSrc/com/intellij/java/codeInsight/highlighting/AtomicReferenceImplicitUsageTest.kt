@@ -5,9 +5,6 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class AtomicReferenceImplicitUsageTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_8
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/atomicReferenceImplicitUsage/"

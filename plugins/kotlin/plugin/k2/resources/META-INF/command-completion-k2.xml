@@ -1,0 +1,16 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+<!--    <codeInsight.completion.command.provider language="kotlin"-->
+<!--                                             implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider"/>-->
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
+<!--    <codeInsight.completion.command.provider language="kotlin"-->
+<!--                                               implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommandProvider"/>-->
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByLineCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByBlockCompletionCommandProvider"/>
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider" order="last"/>
+  </extensions>
+
+</idea-plugin>

@@ -8,19 +8,32 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.testFramework.JavaResolveTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@PerformanceUnitTest
 public class ResolvePerformanceTest extends JavaResolveTestCase {
   public void testPerformance1() throws Exception{
     final String fullPath = PathManagerEx.getTestDataPath() + "/psi/resolve/Thinlet.java";
@@ -33,7 +46,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     String fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile));
     myFile = createFile(vFile.getName(), fileText);
     myFile.accept(new JavaRecursiveElementWalkingVisitor(){
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression){
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
         references.add(expression);
         visitElement(expression);
       }
@@ -69,14 +82,14 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     fileText = StringUtil.convertLineSeparators(fileText);
     myFile = createFile(vFile.getName(), fileText);
     myFile.accept(new XmlRecursiveElementVisitor(){
-      @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
+      @Override public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         ContainerUtil.addAll(references, value.getReferences());
         super.visitXmlAttributeValue(value);
       }
     });
 
     myFile.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression){
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
         references.add(expression);
         visitElement(expression);
       }
@@ -105,8 +118,11 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
 
     PsiReference ref = configureByFile("class/" + getTestName(false) + ".java");
     ensureIndexUpToDate();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> assertNull(ref.resolve()))
-      .attempts(1).assertTiming();
+    Benchmark.newBenchmark(getTestName(false), () -> assertNull(ref.resolve()))
+      .warmupIterations(20)
+      .attempts(50)
+      .start();
+    // attempt.min.ms varies below the measurement threshold
   }
 
   public void testResolveOfManyStaticallyImportedFields() throws Exception {
@@ -127,14 +143,16 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
 
     List<PsiJavaCodeReferenceElement> refs = SyntaxTraverser.psiTraverser(file).filter(PsiJavaCodeReferenceElement.class).toList();
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 1_000, () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       for (PsiJavaCodeReferenceElement ref : refs) {
         assertNotNull(ref.resolve());
       }
     })
       .setup(getPsiManager()::dropPsiCaches)
-      .assertTiming();
-
+      .warmupIterations(100)
+      .attempts(500)
+      .start();
+    // attempt.min.ms varies ~7% (from experiments)
   }
 
   private void ensureIndexUpToDate() {
@@ -167,15 +185,22 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     }
 
     ensureIndexUpToDate();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> assertNull(ref.resolve()))
-      .attempts(1).assertTiming();
+    Benchmark.newBenchmark(getTestName(false), () -> assertNull(ref.resolve()))
+      .warmupIterations(20)
+      .attempts(50)
+      .start();
+    // attempt.min.ms varies below the measurement threshold
   }
 
   public void testLongIdentifierDotChain() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       PsiFile file = createDummyFile("a.java", "class C { { " + StringUtil.repeat("obj.", 100) + "foo } }");
       PsiReference ref = file.findReferenceAt(file.getText().indexOf("foo"));
       assertNull(ref.resolve());
-    }).assertTiming();
+    })
+      .warmupIterations(100)
+      .attempts(300)
+      .start();
+    // attempt.min.ms varies below the measurement threshold
   }
 }

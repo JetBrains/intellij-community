@@ -1,28 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.usages.UsageViewSettings;
-import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SliceToTextFileExporter implements ExporterToTextFile {
+@ApiStatus.Internal
+public final class SliceToTextFileExporter implements ExporterToTextFile {
   private final SliceTreeBuilder myBuilder;
-  @NotNull private final UsageViewSettings myUsageViewSettings;
-  private final String myLineSeparator = SystemProperties.getLineSeparator();
+  private final @NotNull UsageViewSettings myUsageViewSettings;
+  private static final String myLineSeparator = System.lineSeparator();
 
   public SliceToTextFileExporter(@NotNull SliceTreeBuilder builder, @NotNull UsageViewSettings usageViewSettings) {
     myBuilder = builder;
     myUsageViewSettings = usageViewSettings;
   }
 
-  @NotNull
   @Override
-  public String getReportText() {
+  public @NotNull String getReportText() {
     StringBuilder buffer = new StringBuilder();
     appendChildren(buffer, myBuilder.getRootSliceNode(), "");
     return buffer.toString();
@@ -46,9 +44,8 @@ public class SliceToTextFileExporter implements ExporterToTextFile {
     }
   }
 
-  @NotNull
   @Override
-  public String getDefaultFilePath() {
+  public @NotNull String getDefaultFilePath() {
     return myUsageViewSettings.getExportFileName();
   }
 

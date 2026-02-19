@@ -1,57 +1,53 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
-public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJavaLocalInspectionTool {
-  private final static Logger LOG = Logger.getInstance(StaticPseudoFunctionalStyleMethodInspection.class);
+public final class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   private final StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
-    myOptions.readExternal(node);
   }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    myOptions.writeExternal(node);
   }
 
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    return myOptions.createPanel();
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.STREAMS.isFeatureSupported(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression) {
         String qName = methodCallExpression.getMethodExpression().getQualifiedName();
         if (qName == null) {
           return;
@@ -75,7 +71,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
         }
         StaticPseudoFunctionalStyleMethodOptions.PipelineElement suitableHandler = null;
         for (StaticPseudoFunctionalStyleMethodOptions.PipelineElement h : handlerInfos) {
-          if (h.getHandlerClass().equals(classQualifiedName)) {
+          if (h.handlerClass().equals(classQualifiedName)) {
             suitableHandler = h;
             break;
           }
@@ -83,7 +79,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
         if (suitableHandler == null) {
           return;
         }
-        final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.getTemplate().validate(methodCallExpression);
+        final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.template().validate(methodCallExpression);
         if (validationInfo != null) {
           holder.registerProblem(methodCallExpression.getMethodExpression(),
                                  JavaBundle.message("inspection.message.pseudo.functional.style.code"),
@@ -93,27 +89,22 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     };
   }
 
-  public static final class ReplacePseudoLambdaWithLambda implements LocalQuickFix {
+  public static final class ReplacePseudoLambdaWithLambda extends PsiUpdateModCommandQuickFix {
     private final StaticPseudoFunctionalStyleMethodOptions.PipelineElement myHandler;
 
     private ReplacePseudoLambdaWithLambda(StaticPseudoFunctionalStyleMethodOptions.PipelineElement handler) {
       myHandler = handler;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.with.java.stream.api.pipeline");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiReferenceExpression) {
-        PsiElement parent = psiElement.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          myHandler.getTemplate().convertToStream((PsiMethodCallExpression)parent, null, false);
-        }
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement psiElement, @NotNull ModPsiUpdater updater) {
+      if (psiElement instanceof PsiReferenceExpression && psiElement.getParent() instanceof PsiMethodCallExpression call) {
+        myHandler.template().convertToStream(call, null, false);
       }
     }
   }

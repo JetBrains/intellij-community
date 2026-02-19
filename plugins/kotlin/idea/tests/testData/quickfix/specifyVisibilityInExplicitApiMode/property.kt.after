@@ -1,0 +1,9 @@
+// "Make 'bar' public explicitly" "true"
+// PRIORITY: HIGH
+// COMPILER_ARGUMENTS: -Xexplicit-api=strict
+
+public class Foo(public val bar: Int, private var bar2: String, internal var bar3: Long, public var bar4: Int)
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicExplicitlyFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPublicModCommandAction

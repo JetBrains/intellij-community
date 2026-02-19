@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.redmine;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -19,7 +19,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,9 +96,8 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
     myAPIKey.setVisible(!myRepository.isUseHttpAuthentication());
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     myProjectLabel = new JBLabel(TaskBundle.message("label.project"), SwingConstants.RIGHT);
     myProjectCombo = new ComboBox<>(300);
     //myProjectCombo.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Set URL and password/token first"));
@@ -123,7 +126,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
   }
 
   @Override
-  public void setAnchor(@Nullable final JComponent anchor) {
+  public void setAnchor(final @Nullable JComponent anchor) {
     super.setAnchor(anchor);
     myProjectLabel.setAnchor(anchor);
     myAPIKeyLabel.setAnchor(anchor);
@@ -168,16 +171,14 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
       return new RedmineProjectItem(RedmineRepository.UNSPECIFIED_PROJECT, 0);
     }
 
-    @Nullable
     @Override
-    public RedmineProjectItem getSelectedItem() {
+    public @Nullable RedmineProjectItem getSelectedItem() {
       RedmineProject currentProject = myRepository.getCurrentProject();
       return currentProject != null ? new RedmineProjectItem(currentProject, -1) : null;
     }
 
-    @NotNull
     @Override
-    protected List<RedmineProjectItem> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+    protected @NotNull List<RedmineProjectItem> fetch(@NotNull ProgressIndicator indicator) throws Exception {
       // Seems that Redmine always return its project hierarchy in DFS order.
       // So it's easy to find level of each project using stack of parents.
       Stack<RedmineProject> parents = new Stack<>();

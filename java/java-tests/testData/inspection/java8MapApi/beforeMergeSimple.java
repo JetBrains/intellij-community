@@ -1,4 +1,4 @@
-// "Replace with 'merge' method call" "GENERIC_ERROR_OR_WARNING"
+// "Replace with 'merge()' call" "GENERIC_ERROR_OR_WARNING"
 import java.util.Map;
 
 public class Main {

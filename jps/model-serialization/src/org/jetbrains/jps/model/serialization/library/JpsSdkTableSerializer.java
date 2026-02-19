@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.library;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -19,22 +20,23 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
 import java.io.File;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class JpsSdkTableSerializer {
   private static final Logger LOG = Logger.getInstance(JpsSdkTableSerializer.class);
 
-  private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPE_SERIALIZERS = {
+  public static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPE_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("classPath", JpsOrderRootType.COMPILED, true),
     new JpsLibraryRootTypeSerializer("sourcePath", JpsOrderRootType.SOURCES, true)
   };
-  private static final JpsSdkPropertiesSerializer<JpsDummyElement> JPS_JAVA_SDK_PROPERTIES_LOADER =
+  public static final JpsSdkPropertiesSerializer<JpsDummyElement> JPS_JAVA_SDK_PROPERTIES_LOADER =
     new JpsSdkPropertiesSerializer<JpsDummyElement>("JavaSDK", JpsJavaSdkType.INSTANCE) {
-      @NotNull
       @Override
-      public JpsDummyElement loadProperties(Element propertiesElement) {
+      public @NotNull JpsDummyElement loadProperties(Element propertiesElement) {
         return JpsElementFactory.getInstance().createDummyElement();
       }
     };
@@ -51,24 +53,26 @@ public final class JpsSdkTableSerializer {
   private static final String URL_ATTRIBUTE = "url";
   private static final String ADDITIONAL_TAG = "additional";
 
-  public static void loadSdks(@Nullable Element sdkListElement, JpsLibraryCollection result) {
+  public static void loadSdks(@Nullable Element sdkListElement,
+                              JpsLibraryCollection result,
+                              @NotNull JpsPathMapper pathMapper) {
     for (Element sdkElement : JDOMUtil.getChildren(sdkListElement, JDK_TAG)) {
-      result.addLibrary(loadSdk(sdkElement));
+      result.addLibrary(loadSdk(sdkElement, pathMapper));
     }
   }
 
-  private static JpsLibrary loadSdk(Element sdkElement) {
+  private static JpsLibrary loadSdk(Element sdkElement, @NotNull JpsPathMapper pathMapper) {
     String name = getAttributeValue(sdkElement, NAME_TAG);
     String typeId = getAttributeValue(sdkElement, TYPE_TAG);
     LOG.debug("Loading " + typeId + " SDK '" + name + "'");
     JpsSdkPropertiesSerializer<?> serializer = getSdkPropertiesSerializer(typeId);
-    final JpsLibrary library = createSdk(name, serializer, sdkElement);
+    final JpsLibrary library = createSdk(name, serializer, pathMapper, sdkElement);
     final Element roots = sdkElement.getChild(ROOTS_TAG);
     for (Element rootTypeElement : JDOMUtil.getChildren(roots)) {
       JpsLibraryRootTypeSerializer rootTypeSerializer = getRootTypeSerializer(rootTypeElement.getName());
       if (rootTypeSerializer != null) {
         for (Element rootElement : rootTypeElement.getChildren()) {
-          loadRoots(rootElement, library, rootTypeSerializer.getType());
+          loadRoots(rootElement, library, rootTypeSerializer.getType(), pathMapper);
         }
       }
       else {
@@ -85,20 +89,22 @@ public final class JpsSdkTableSerializer {
     return library;
   }
 
-  private static void loadRoots(Element rootElement, JpsLibrary library, JpsOrderRootType rootType) {
+  private static void loadRoots(Element rootElement, JpsLibrary library, JpsOrderRootType rootType, @NotNull JpsPathMapper pathMapper) {
     final String type = rootElement.getAttributeValue(TYPE_ATTRIBUTE);
     if (type.equals(COMPOSITE_TYPE)) {
       for (Element element : rootElement.getChildren()) {
-        loadRoots(element, library, rootType);
+        loadRoots(element, library, rootType, pathMapper);
       }
     }
     else if (type.equals(SIMPLE_TYPE)) {
-      library.addRoot(rootElement.getAttributeValue(URL_ATTRIBUTE), rootType);
+      String url = pathMapper.mapUrl(rootElement.getAttributeValue(URL_ATTRIBUTE));
+      if (url != null) {
+        library.addRoot(url, rootType);
+      }
     }
   }
 
-  @Nullable
-  private static JpsLibraryRootTypeSerializer getRootTypeSerializer(String typeId) {
+  private static @Nullable JpsLibraryRootTypeSerializer getRootTypeSerializer(String typeId) {
     for (JpsLibraryRootTypeSerializer serializer : PREDEFINED_ROOT_TYPE_SERIALIZERS) {
       if (serializer.getTypeId().equals(typeId)) {
         return serializer;
@@ -114,9 +120,9 @@ public final class JpsSdkTableSerializer {
     return null;
   }
 
-  private static <P extends JpsElement> JpsLibrary createSdk(String name, JpsSdkPropertiesSerializer<P> loader, Element sdkElement) {
+  private static <P extends JpsElement> JpsLibrary createSdk(String name, JpsSdkPropertiesSerializer<P> loader, @NotNull JpsPathMapper pathMapper, Element sdkElement) {
     String versionString = getAttributeValue(sdkElement, VERSION_TAG);
-    String homePath = getAttributeValue(sdkElement, HOME_PATH_TAG);
+    String homePath = pathMapper.mapUrl(getAttributeValue(sdkElement, HOME_PATH_TAG));
     Element propertiesTag = sdkElement.getChild(ADDITIONAL_TAG);
     P properties = loader.loadProperties(propertiesTag);
     return JpsElementFactory.getInstance().createSdk(name, homePath, versionString, loader.getType(), properties);
@@ -133,8 +139,7 @@ public final class JpsSdkTableSerializer {
     return JPS_JAVA_SDK_PROPERTIES_LOADER;
   }
 
-  @Nullable
-  private static String getAttributeValue(Element element, String childName) {
+  private static @Nullable String getAttributeValue(Element element, String childName) {
     final Element child = element.getChild(childName);
     return child != null ? child.getAttributeValue(VALUE_ATTRIBUTE) : null;
   }

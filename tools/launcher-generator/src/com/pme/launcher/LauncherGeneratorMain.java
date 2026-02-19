@@ -1,202 +1,132 @@
-/*
- * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.pme.launcher;
 
-import org.apache.commons.imaging.ImageFormats;
-import org.apache.commons.imaging.Imaging;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
-
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
-/**
- * @author yole
- */
-public class LauncherGeneratorMain {
-  public static void main(String[] args) {
+@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
+public final class LauncherGeneratorMain {
+  public static void main(String... args) {
     if (args.length != 5) {
-      System.err.println("Usage: LauncherGeneratorMain <template EXE file> <app info file> <resource.h file> <properties> <output>");
+      System.err.println(
+        "Usage: LauncherGeneratorMain <template .exe file> <resource.h file> <properties file> <.ico file> <output .exe file>");
       System.exit(1);
     }
 
-    File template = new File(args[0]);
-    if (!template.exists()) {
-      System.err.println("Launcher template EXE file " + args[0] + " not found");
+    var templateFile = Path.of(args[0]);
+    if (!Files.isRegularFile(templateFile)) {
+      System.err.println("Launcher template .exe file '" + args[0] + "' not found");
       System.exit(2);
     }
 
-    String appInfoFileName = args[1];
-    InputStream appInfoStream;
-    try {
-      appInfoStream = new FileInputStream(appInfoFileName);
-    }
-    catch (FileNotFoundException e) {
-      appInfoStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(appInfoFileName);
-    }
-
-    if (appInfoStream == null) {
-      System.err.println("Application info file " + appInfoFileName + " not found");
+    var resourceHeaderFile = Path.of(args[1]);
+    if (!Files.isRegularFile(templateFile)) {
+      System.err.println("Resource header file '" + args[1] + "' not found");
       System.exit(3);
     }
-    Document appInfo;
-    try {
-      appInfo = new SAXBuilder().build(appInfoStream);
-    } catch (Exception e) {
-      System.err.println("Error loading application info file " + appInfoFileName + ": " + e.getMessage());
+    var resourceIDs = new HashMap<String, Integer>();
+    try (var lines = Files.lines(resourceHeaderFile)) {
+      var pattern = Pattern.compile("#define (\\w+)\\s+(\\d+)");
+      lines.map(pattern::matcher).filter(Matcher::matches).forEach(m -> {
+        resourceIDs.put(m.group(1), Integer.parseInt(m.group(2)));
+      });
+    }
+    catch (IOException | NumberFormatException e) {
+      System.err.println("Error loading '" + resourceHeaderFile + "': " + e.getMessage());
+      System.exit(3);
+    }
+
+    if (resourceIDs.get("IDI_WINLAUNCHER") == null) {
+      System.err.println("Key 'IDI_WINLAUNCHER' is missing from '" + resourceHeaderFile);
+      System.exit(3);
+    }
+
+    var propertiesFile = Path.of(args[2]);
+    if (!Files.isRegularFile(propertiesFile)) {
+      System.err.println("Properties file '" + args[2] + "' not found");
       System.exit(4);
-      return;
     }
-
-    Element appInfoRoot = appInfo.getRootElement();
-    String splashUrl = getChild(appInfoRoot, "logo").getAttributeValue("url");
-    if (splashUrl.startsWith("/")) {
-      splashUrl = splashUrl.substring(1);
-    }
-    InputStream splashStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(splashUrl);
-    if (splashStream == null) {
-      System.err.println("Splash screen image file file " + splashUrl + " not found");
-      System.exit(5);
-    }
-
-    ByteArrayOutputStream splashBmpStream = new ByteArrayOutputStream();
+    var properties = new Properties();
     try {
-      BufferedImage bufferedImage = Imaging.getBufferedImage(splashStream);
-      Imaging.writeImage(bufferedImage, splashBmpStream, ImageFormats.BMP, new HashMap());
-    }
-    catch (Exception e) {
-      System.err.println("Error converting splash screen to BMP: " + e.getMessage());
-      System.exit(6);
-    }
-
-    String icoUrl = getChild(appInfoRoot, "icon").getAttributeValue("ico");
-    if (icoUrl == null) {
-      System.err.println(".ico file URL not specified in application info file " + appInfoFileName);
-      System.exit(11);
-    }
-    InputStream iconStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(icoUrl);
-    if (iconStream == null) {
-      System.err.println(".ico file " + icoUrl + " not found");
-      System.exit(12);
-    }
-
-    Map<String, Integer> resourceIDs;
-    try {
-      resourceIDs = loadResourceIDs(args[2]);
-    }
-    catch (Exception e) {
-      System.err.println("Error loading resource.h: " + e.getMessage());
-      System.exit(7);
-      return;
-    }
-
-    Properties properties = new Properties();
-    try {
-      FileInputStream fis = new FileInputStream(args[3]);
-      try {
-        properties.load(fis);
-      }
-      finally {
-        fis.close();
+      try (var inputStream = Files.newInputStream(propertiesFile)) {
+        properties.load(inputStream);
       }
     }
     catch (IOException e) {
-      System.err.println("Error loading launcher properties: " + e.getMessage());
-      System.exit(8);
+      System.err.println("Error loading '" + propertiesFile + "': " + e.getMessage());
+      System.exit(4);
     }
 
-    String companyName = getChild(appInfoRoot, "company").getAttributeValue("name");
-    Element names = getChild(appInfoRoot, "names");
-    String productShortName = names.getAttributeValue("product");
-    String productFullName = names.getAttributeValue("fullname", productShortName);
-    Element versionElement = getChild(appInfoRoot, "version");
-    int majorVersion = Integer.parseInt(versionElement.getAttributeValue("major"));
-    String minorVersionString = versionElement.getAttributeValue("minor");
-    Pattern p = Pattern.compile("(\\d+)(\\.(\\d+))?");
-    Matcher matcher = p.matcher(minorVersionString);
-    if (!matcher.matches()) {
-      System.err.println("Unexpected minor version format: " + minorVersionString);
+    for (var key : properties.stringPropertyNames()) {
+      if (key.startsWith("IDS_") && resourceIDs.get(key) == null) {
+        System.err.println("Key '" + key + "' is missing from '" + resourceHeaderFile);
+        System.exit(3);
+      }
     }
-    int minorVersion = Integer.parseInt(matcher.group(1));
-    int bugfixVersion = matcher.group(3) != null ? Integer.parseInt(matcher.group(3)) : 0;
-    String buildNumber = getChild(appInfoRoot, "build").getAttributeValue("number");
-    String versionString = "" + majorVersion + "." + minorVersion + "." + bugfixVersion + "." + buildNumber;
 
-    int year = new GregorianCalendar().get(Calendar.YEAR);
+    var fileVersion = properties.getProperty("FileVersion");
+    var productVersion = properties.getProperty("ProductVersion");
+    if (productVersion == null) {
+      System.err.println("Key 'ProductVersion' is missing from '" + propertiesFile);
+      System.exit(4);
+    }
+    var productCodeSeparator = productVersion.indexOf('-');
+    if (productCodeSeparator > 0) {
+      productVersion = productVersion.substring(0, productCodeSeparator);
+    }
 
-    LauncherGenerator generator = new LauncherGenerator(template, new File(args[4]));
+    var icoFile = Path.of(args[3]);
+    if (!Files.isRegularFile(icoFile)) {
+      System.err.println("Icon file '" + args[3] + "' not found");
+      System.exit(5);
+    }
+
+    var outputFile = Path.of(args[4]);
+    var generator = new LauncherGenerator(templateFile, outputFile);
     try {
       generator.load();
 
-      for (Map.Entry<Object, Object> pair : properties.entrySet()) {
-        String key = (String) pair.getKey();
-        Integer id = resourceIDs.get(key);
-        if (id == null) {
-          System.err.println("Invalid stringtable ID found: " + key);
-          System.exit(9);
+      for (var key : properties.stringPropertyNames()) {
+        if (key.startsWith("IDS_")) {
+          generator.setResourceString(resourceIDs.get(key), properties.getProperty(key));
         }
-        generator.setResourceString(id, (String) pair.getValue());
+        else {
+          generator.setVersionInfoString(key, properties.getProperty(key));
+        }
+      }
+      generator.setVersionInfoString("OriginalFilename", outputFile.getFileName().toString());
+
+      try (var iconStream = Files.newInputStream(icoFile)) {
+        generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
       }
 
-      generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
-      generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
-
-      generator.setVersionInfoString("LegalCopyright", "Copyright (C) 2000-" + year + " " + companyName);
-      generator.setVersionInfoString("ProductName", productFullName);
-      generator.setVersionInfoString("FileVersion", versionString);
-      generator.setVersionInfoString("FileDescription", productFullName);
-      generator.setVersionInfoString("ProductVersion", versionString);
-      generator.setVersionInfoString("InternalName", productShortName.toLowerCase() + ".exe");
-      generator.setVersionInfoString("OriginalFilename", productShortName.toLowerCase() + ".exe");
-      generator.setVersionNumber(majorVersion, minorVersion, bugfixVersion);
+      if (fileVersion != null) {
+        generator.setFileVersionNumber(splitVersion(fileVersion));
+      }
+      generator.setProductVersionNumber(splitVersion(productVersion));
 
       generator.generate();
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       e.printStackTrace();
-      System.exit(10);
+      System.exit(6);
     }
   }
 
-  private static Element getChild(Element appInfoRoot, String logo) {
-    return appInfoRoot.getChild(logo, appInfoRoot.getNamespace());
-  }
-
-  private static Map<String, Integer> loadResourceIDs(String arg) throws IOException {
-    Map<String, Integer> result = new HashMap<String, Integer>();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(arg)));
-    Pattern pattern = Pattern.compile("#define (\\w+)\\s+(\\d+)");
+  private static int[] splitVersion(String version) {
     try {
-      while(true) {
-        String line = reader.readLine();
-        if (line == null) break;
-        Matcher m = pattern.matcher(line);
-        if (m.matches()) {
-          result.put(m.group(1), Integer.parseInt(m.group(2)));
-        }
-      }
+      var parts = Stream.of(version.split("\\.")).mapToInt(Integer::parseInt).toArray();
+      if (parts.length != 4) throw new IllegalArgumentException("Invalid version format: " + version);
+      return parts;
     }
-    finally {
-      reader.close();
+    catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Invalid version format: " + version);
     }
-    return result;
   }
 }

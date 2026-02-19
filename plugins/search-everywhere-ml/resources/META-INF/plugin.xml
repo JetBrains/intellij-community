@@ -1,0 +1,94 @@
+<idea-plugin>
+  <id>com.intellij.searcheverywhere.ml</id>
+  <name>Machine Learning in Search Everywhere</name>
+  <vendor>JetBrains</vendor>
+  <category>Local AI/ML Tools</category>
+
+  <description><![CDATA[
+    <p>The plugin improves the Search Everywhere feature by ordering the search results using machine learning,
+    making more relevant results appear higher up the list.
+    </p>
+    <br>
+    <i>Machine learning ranking is currently available and switched on by default for the Classes, Files, and Actions tabs.
+    As an experiment, some portion of users will also have it enabled in the All tab.</i>
+  ]]></description>
+
+  <dependencies>
+    <module name="intellij.json.backend"/>
+  </dependencies>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.ml.logs"/>
+
+    <module name="intellij.searchEverywhereMl.typos"/>
+    <module name="intellij.searchEverywhereMl.ranking.ext"/>
+    <module name="intellij.searchEverywhereMl.ranking.core"/>
+    <module name="intellij.searchEverywhereMl.ranking.java"/>
+    <module name="intellij.searchEverywhereMl.ranking.yaml"/>
+    <module name="intellij.searchEverywhereMl.ranking.vcs"/>
+  </content>
+
+  <resource-bundle>messages.searchEverywhereMlCoreBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Please add the appropriate getter in the SearchEverywhereMlRegistry after adding a new key here -->
+    <registryKey defaultValue="-1"
+                 description="Defines the experiment group number. Negative value will be ignored."
+                 key="search.everywhere.ml.experiment.group"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML logs and experiments in Search Everywhere will be disabled"
+                 key="search.everywhere.force.disable.logging.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with actions order won't be performed"
+                 key="search.everywhere.force.disable.experiment.action.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with files order won't be performed"
+                 key="search.everywhere.force.disable.experiment.files.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with classes order won't be performed"
+                 key="search.everywhere.force.disable.experiment.classes.ml"/>
+    <registryKey defaultValue="false"
+                 description="When enabled ML experiments with symbols order won't be performed"
+                 key="search.everywhere.force.disable.experiment.symbols.ml"/>
+    <registryKey defaultValue="true"
+                 description="When enabled ML experiments to order All tab items won't be performed"
+                 key="search.everywhere.force.disable.experiment.all.ml"/>
+    <registryKey defaultValue="false"
+                 description="When true, ML experiments with predicting essential contributors won't be performed"
+                 key="search.everywhere.force.disable.experiment.essential.contributors.ml"/>
+
+
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
+                     property="enableActionsTabMlRanking"/>
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
+                     property="enableFilesTabMlRanking"/>
+    <advancedSetting default="true" id="searcheverywhere.ml.sort.classes"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
+                     property="enableClassesTabMlRanking"/>
+    <advancedSetting default="false" id="searcheverywhere.ml.sort.all"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
+                     property="enableAllTabMlRanking"/>
+
+    <statistic.eventLog.eventLoggerProvider
+      implementation="com.intellij.searchEverywhereMl.SearchEverywhereEventLoggerProvider"
+      order="first"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+      interface="com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider"
+      dynamic="true" name="searchEverywhereStateFeaturesProvider"/>
+    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.textEmbeddingProvider"
+                    interface="com.intellij.searchEverywhereMl.TextEmbeddingProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

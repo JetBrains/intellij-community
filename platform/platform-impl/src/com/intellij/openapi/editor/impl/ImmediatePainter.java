@@ -1,20 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -29,12 +39,25 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import sun.awt.image.SunVolatileImage;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Toolkit;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.util.ArrayList;
@@ -45,12 +68,13 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 /**
  * @author Pavel Fatin
  */
-class ImmediatePainter {
+@ApiStatus.Internal
+public final class ImmediatePainter {
   private static final Logger LOG = Logger.getInstance(ImmediatePainter.class);
   private static final int DEBUG_PAUSE_DURATION = 1000;
 
-  static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
-  static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
+  public static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
+  public static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
   private static final RegistryValue PIPELINE_FLUSH = Registry.get("editor.zero.latency.rendering.pipeline.flush");
   private static final RegistryValue DEBUG = Registry.get("editor.zero.latency.rendering.debug");
 
@@ -68,7 +92,7 @@ class ImmediatePainter {
   }
 
   boolean paint(final Graphics g, final EditorActionPlan plan) {
-    if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
+    if (ENABLED.asBoolean() && canPaintImmediately(myEditor) && myEditor.myAdView == null) {
       if (plan.getCaretShift() != 1) return false;
 
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
@@ -96,6 +120,7 @@ class ImmediatePainter {
     final Document document = editor.getDocument();
 
     return document instanceof DocumentImpl &&
+           !editor.getSettings().isAnimatedCaret() &&
            editor.getHighlighter() instanceof LexerEditorHighlighter &&
            !(editor.getComponent().getParent() instanceof EditorTextField) &&
            editor.myView.getTopOverhang() <= 0 && editor.myView.getBottomOverhang() <= 0 &&
@@ -104,7 +129,8 @@ class ImmediatePainter {
            !isInVirtualSpace(editor, caret) &&
            !isInsertion(document, caret.getOffset()) &&
            !caret.isAtRtlLocation() &&
-           !caret.isAtBidiRunBoundary();
+           !caret.isAtBidiRunBoundary() &&
+           noBorderEffectPainted(editor, caret);
   }
 
   private static boolean isInVirtualSpace(final Editor editor, final Caret caret) {
@@ -115,17 +141,27 @@ class ImmediatePainter {
     return offset < document.getTextLength() && document.getCharsSequence().charAt(offset) != '\n';
   }
 
+  private static boolean noBorderEffectPainted(EditorEx editor, Caret caret) {
+    int offset = caret.getOffset();
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    return editor.getMarkupModel().processRangeHighlightersOverlappingWith(offset, offset, h -> {
+      TextAttributes attrs = h.getTextAttributes(colorsScheme);
+      return attrs == null || !attrs.hasEffects() ||
+             TextAttributesEffectsBuilder.create(attrs).getEffectDescriptor(TextAttributesEffectsBuilder.EffectSlot.FRAME_SLOT) == null;
+    });
+  }
+
   private void paintImmediately(final Graphics2D g, final int offset, final char c2) {
     final EditorImpl editor = myEditor;
-    final Document document = editor.getDocument();
+    final Document document = editor.getUiDocument();
     final LexerEditorHighlighter highlighter = (LexerEditorHighlighter)myEditor.getHighlighter();
 
     final EditorSettings settings = editor.getSettings();
     final boolean isBlockCursor = editor.isInsertMode() == settings.isBlockCursor();
     final int lineHeight = editor.getLineHeight();
+    final int caretHeight = editor.myView.getCaretHeight();
     final int ascent = editor.getAscent();
-    final int topOverhang = editor.myView.getTopOverhang();
-    final int bottomOverhang = editor.myView.getBottomOverhang();
+    final int topOverhang = settings.isFullLineHeightCursor() ? 0 : editor.myView.getTopOverhang();
 
     final char c1 = offset == 0 ? ' ' : document.getCharsSequence().charAt(offset - 1);
 
@@ -161,24 +197,30 @@ class ImmediatePainter {
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     //noinspection ConstantConditions
     final float caretWidth = isBlockCursor ? editor.getCaretLocations(false)[0].myWidth
-                                         : JBUIScale.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
+                                         : JBUIScale.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth())) * myEditor.getScale();
     final float caretShift = isBlockCursor ? 0 : caretWidth <= 1 ? 0 : 1 / JBUIScale.sysScale(g);
     final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,
-                                                             caretWidth, lineHeight + topOverhang + bottomOverhang);
+                                                             caretWidth, caretHeight);
 
+    final float rectangle2Start = (float)PaintUtil.alignToInt(p2x, g, PaintUtil.RoundingMode.FLOOR);
+    final float rectangle2End = (float)PaintUtil.alignToInt(p2x + width2 + caretWidth - caretShift, g, PaintUtil.RoundingMode.CEIL);
     final Rectangle2D rectangle1 = new Rectangle2D.Float(p2x - width1, p2y, width1, lineHeight);
-    final Rectangle2D rectangle2 = new Rectangle2D.Float(p2x, p2y, width2 + caretWidth - caretShift, lineHeight);
+    final Rectangle2D rectangle2 = new Rectangle2D.Float(rectangle2Start, p2y, rectangle2End - rectangle2Start, lineHeight);
 
     final Consumer<Graphics2D> painter = graphics -> {
       EditorUIUtil.setupAntialiasing(graphics);
-      graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, editor.myFractionalMetricsHintValue);
+      graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
 
-      fillRect(graphics, rectangle2, attributes2.getBackgroundColor());
+      EditorPainter.fillRectExact(graphics, rectangle2, attributes2.getBackgroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
-      fillRect(graphics, caretRectangle, getCaretColor(editor));
+      if (isBlockCursor) {
+        fillRect(graphics, caretRectangle, getCaretColor(editor));
+      } else {
+        paintCaretBar(graphics, caretRectangle, getCaretColor(editor));
+      }
 
-      fillRect(graphics, rectangle1, attributes1.getBackgroundColor());
+      EditorPainter.fillRectExact(graphics, rectangle1, attributes1.getBackgroundColor());
       drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
     };
 
@@ -266,6 +308,18 @@ class ImmediatePainter {
       if (imageConfig != null && componentConfig != null && imageConfig.getDevice() != componentConfig.getDevice()) return false;
     }
     return image.validate(componentConfig) != VolatileImage.IMAGE_INCOMPATIBLE;
+  }
+
+  private void paintCaretBar(final Graphics2D g, final Rectangle2D r, final Color color) {
+    double w = r.getWidth();
+
+    var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g.setColor(color);
+    g.fill(new RoundRectangle2D.Double(r.getX(), r.getY(), w, r.getHeight(), w, w));
+    if (old != null) {
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+    }
   }
 
   private static void fillRect(final Graphics2D g, final Rectangle2D r, final Color color) {

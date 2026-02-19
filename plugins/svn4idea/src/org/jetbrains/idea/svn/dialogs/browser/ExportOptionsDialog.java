@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -23,8 +23,12 @@ import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Url;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -54,8 +58,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "svn4idea.export.options";
   }
 
@@ -75,15 +78,13 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return !myExternalsCheckbox.isSelected();
   }
 
-  @Nullable
-  public String getEOLStyle() {
+  public @Nullable String getEOLStyle() {
     LineSeparator separator = myLineSeparatorComboBoxModel.getSelected();
     return separator != null ? separator.name() : null;
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBagConstraints gc = new GridBagConstraints();
@@ -163,21 +164,15 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return panel;
   }
 
-  @NotNull
-  private ComboBox<LineSeparator> createLineSeparatorComboBox() {
+  private @NotNull ComboBox<LineSeparator> createLineSeparatorComboBox() {
     ComboBox<LineSeparator> comboBox = new ComboBox<>(myLineSeparatorComboBoxModel);
 
-    comboBox.setRenderer(SimpleListCellRenderer.create(message("combobox.crlf.none"), separator -> {
-      switch (separator) {
-        case LF:
-          return ApplicationBundle.message("combobox.crlf.unix");
-        case CRLF:
-          return ApplicationBundle.message("combobox.crlf.windows");
-        case CR:
-          return ApplicationBundle.message("combobox.crlf.mac");
-      }
-      throw new IllegalArgumentException("unknown line separator " + separator);
-    }));
+    comboBox.setRenderer(SimpleListCellRenderer.create(message("combobox.crlf.none"), separator ->
+      ApplicationBundle.message(switch (separator) {
+        case LF -> "combobox.crlf.unix";
+        case CRLF -> "combobox.crlf.windows";
+        case CR -> "combobox.crlf.mac";
+      })));
 
     return comboBox;
   }

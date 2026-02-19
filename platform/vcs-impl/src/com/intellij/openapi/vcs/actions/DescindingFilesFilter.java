@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.project.Project;
@@ -9,12 +9,21 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class DescindingFilesFilter {
   private DescindingFilesFilter() {
   }
 
+  /**
+   * Filter-out nested folders for VCSes that do not {@link AbstractVcs#allowsNestedRoots}
+   * and paths not under VCS.
+   */
   public static FilePath @NotNull [] filterDescindingFiles(FilePath @NotNull [] roots, Project project) {
     final List<FilePath> result = new ArrayList<>();
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
@@ -36,7 +45,8 @@ public final class DescindingFilesFilter {
         final List<FilePath> newList = new ArrayList<>();
         newList.add(root);
         chains.put(vcs.getKeyInstanceMethod(), newList);
-      } else {
+      }
+      else {
         boolean failed = false;
         for (FilePath chainedPath : chain) {
           if (VfsUtilCore.isAncestor(chainedPath.getIOFile(), root.getIOFile(), false)) {
@@ -45,7 +55,7 @@ public final class DescindingFilesFilter {
             break;
           }
         }
-        if (! failed) {
+        if (!failed) {
           chain.add(root);
         }
       }
@@ -59,7 +69,7 @@ public final class DescindingFilesFilter {
   }
 
   private static class FilePathComparator implements Comparator<FilePath> {
-    private final static FilePathComparator ourInstance = new FilePathComparator();
+    private static final FilePathComparator ourInstance = new FilePathComparator();
 
     public static FilePathComparator getInstance() {
       return ourInstance;

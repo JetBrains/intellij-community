@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,9 +31,9 @@ public class LatestExistentSearcher {
 
   private long myStartNumber;
   private boolean myStartExistsKnown;
-  @NotNull private final Url myUrl;
-  @NotNull private final Url myRepositoryUrl;
-  @NotNull private final String myRelativeUrl;
+  private final @NotNull Url myUrl;
+  private final @NotNull Url myRepositoryUrl;
+  private final @NotNull String myRelativeUrl;
   private final SvnVcs myVcs;
   private long myEndNumber;
 
@@ -83,15 +83,14 @@ public class LatestExistentSearcher {
     return latest.get().longValue();
   }
 
-  @NotNull
-  private LogEntryConsumer createHandler(@NotNull final Ref<Long> latest) {
+  private @NotNull LogEntryConsumer createHandler(final @NotNull Ref<Long> latest) {
     return logEntry -> {
       final Map changedPaths = logEntry.getChangedPaths();
       for (Object o : changedPaths.values()) {
         final LogEntryPath path = (LogEntryPath)o;
         if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
           latest.set(logEntry.getRevision());
-          throw new SvnBindException(message("error.latest.existent.revision.found.for.url", myRelativeUrl));
+          throw new SvnBindException(message("error.latest.existing.revision.found.for.url", myRelativeUrl));
         }
       }
     };
@@ -134,8 +133,7 @@ public class LatestExistentSearcher {
     return true;
   }
 
-  @Nullable
-  private Url getExistingParent(Url url) throws SvnBindException {
+  private @Nullable Url getExistingParent(Url url) throws SvnBindException {
     while (url != null && !url.equals(myRepositoryUrl) && !existsInRevision(url, myEndNumber)) {
       url = SvnUtil.removePathTail(url);
     }

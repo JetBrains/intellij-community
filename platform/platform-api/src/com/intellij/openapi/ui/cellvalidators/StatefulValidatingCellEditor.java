@@ -9,10 +9,14 @@ import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultCellEditor;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
+import java.awt.Component;
 import java.awt.event.ItemListener;
 import java.util.function.Consumer;
 import java.util.function.Supplier;

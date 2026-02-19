@@ -1,0 +1,5 @@
+// DISABLE_ERRORS
+expect class <caret>My(a: Int, b: String) {
+    val a: Int
+    fun foo(param: String): Int
+}

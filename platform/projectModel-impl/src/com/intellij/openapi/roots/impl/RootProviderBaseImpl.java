@@ -22,9 +22,6 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 @ApiStatus.Internal
 public abstract class RootProviderBaseImpl implements RootProvider {
   protected final EventDispatcher<RootSetChangedListener> myDispatcher = EventDispatcher.create(RootSetChangedListener.class);

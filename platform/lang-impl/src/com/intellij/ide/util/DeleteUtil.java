@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -9,33 +8,34 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
-import java.text.MessageFormat;
 import java.util.HashMap;
-import java.util.Map;
 
-/**
- * @author dsl
- */
+@ApiStatus.Internal
 public final class DeleteUtil {
   private DeleteUtil() { }
 
-  public static @NlsContexts.DialogMessage String generateWarningMessage(@NlsContexts.DialogMessage String messageTemplate, final PsiElement[] elements) {
+  public static @NlsContexts.DialogMessage String generateWarningMessage(
+    @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String key,
+    @NotNull PsiElement @NotNull [] elements
+  ) {
     if (elements.length == 1) {
-      String name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE);
-      String type = ElementDescriptionUtil.getElementDescription(elements[0], DeleteTypeDescriptionLocation.SINGULAR);
-      return MessageFormat.format(messageTemplate, type + (StringUtil.isEmptyOrSpaces(name) ? "" : " \"" + name + "\""));
+      var name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE);
+      var type = ElementDescriptionUtil.getElementDescription(elements[0], DeleteTypeDescriptionLocation.SINGULAR);
+      return IdeBundle.message(key, type + (StringUtil.isEmptyOrSpaces(name) ? "" : " \"" + name + '"'));
     }
 
-    Map<String, Integer> countMap = FactoryMap.create(key -> 0);
-    Map<String, String> pluralToSingular = new HashMap<>();
-    int directoryCount = 0;
-    String containerType = null;
-
-    for (final PsiElement elementToDelete : elements) {
-      String type = ElementDescriptionUtil.getElementDescription(elementToDelete, DeleteTypeDescriptionLocation.PLURAL);
+    var countMap = FactoryMap.<String, Integer>create(k -> 0);
+    var pluralToSingular = new HashMap<String, String>();
+    var directoryCount = 0;
+    var containerType = (String)null;
+    for (var elementToDelete : elements) {
+      var type = ElementDescriptionUtil.getElementDescription(elementToDelete, DeleteTypeDescriptionLocation.PLURAL);
       pluralToSingular.put(type, ElementDescriptionUtil.getElementDescription(elementToDelete, DeleteTypeDescriptionLocation.SINGULAR));
-      int oldCount = countMap.get(type).intValue();
+      var oldCount = countMap.get(type).intValue();
       countMap.put(type, oldCount+1);
       if (elementToDelete instanceof PsiDirectoryContainer) {
         containerType = type;
@@ -43,13 +43,13 @@ public final class DeleteUtil {
       }
     }
 
-    StringBuilder buffer = new StringBuilder();
-    for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
-      if (buffer.length() > 0) {
+    var buffer = new StringBuilder();
+    for (var entry : countMap.entrySet()) {
+      if (!buffer.isEmpty()) {
         buffer.append(" ").append(IdeBundle.message("prompt.delete.and")).append(" ");
       }
-      final int count = entry.getValue().intValue();
 
+      var count = entry.getValue().intValue();
       buffer.append(count).append(" ");
       if (count == 1) {
         buffer.append(pluralToSingular.get(entry.getKey()));
@@ -62,6 +62,7 @@ public final class DeleteUtil {
         buffer.append(" ").append(IdeBundle.message("prompt.delete.directory.paren", directoryCount));
       }
     }
-    return MessageFormat.format(messageTemplate, buffer.toString());
+
+    return IdeBundle.message(key, buffer.toString());
   }
 }

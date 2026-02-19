@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
@@ -6,23 +6,34 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.presentation.CodeStyleBoundedIntegerSettingPresentation;
+import com.intellij.psi.codeStyle.presentation.CodeStyleCommaSeparatedIdentifiersPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSoftMarginsPresentation;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
@@ -35,6 +46,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
                                     ApplicationBundle.message("settings.code.style.visual.guides.optional"));
   private final JComboBox<String> myWrapOnTypingCombo = new ComboBox<>(getInstance().WRAP_ON_TYPING_OPTIONS);
+  private final CommaSeparatedIdentifiersField myCommaSeparatedIdentifiersField = new CommaSeparatedIdentifiersField();
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
@@ -74,19 +86,20 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       for (CodeStyleSettingPresentation setting : entry.getValue()) {
         String fieldName = setting.getFieldName();
         String uiName = setting.getUiName();
-        if (setting instanceof CodeStyleBoundedIntegerSettingPresentation) {
-          CodeStyleBoundedIntegerSettingPresentation intSetting = (CodeStyleBoundedIntegerSettingPresentation)setting;
+        if (setting instanceof CodeStyleBoundedIntegerSettingPresentation intSetting) {
           int defaultValue = intSetting.getDefaultValue();
           addOption(fieldName, uiName, group.name, intSetting.getLowerBound(), intSetting.getUpperBound(), defaultValue,
                     getDefaultIntValueRenderer(fieldName));
         }
-        else if (setting instanceof CodeStyleSelectSettingPresentation) {
-          CodeStyleSelectSettingPresentation selectSetting = (CodeStyleSelectSettingPresentation)setting;
+        else if (setting instanceof CodeStyleSelectSettingPresentation selectSetting) {
           addOption(fieldName, uiName, group.name, selectSetting.getOptions(), selectSetting.getValues());
         }
         else if (setting instanceof CodeStyleSoftMarginsPresentation) {
           addSoftMarginsOption(fieldName, uiName, group.name);
           showOption(fieldName);
+        }
+        else if (setting instanceof CodeStyleCommaSeparatedIdentifiersPresentation) {
+          addCustomOption(new CommaSeparatedIdentifiersOption(fieldName, uiName, group.name));
         }
         else {
           addOption(fieldName, uiName, group.name);
@@ -124,15 +137,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
   }
 
-  protected static class SettingsGroup {
-    public final String title;
-    public final Collection<String> commonCodeStyleSettingFieldNames;
-
-    public SettingsGroup(@NotNull String title,
+  protected record SettingsGroup(@NotNull String title,
                          @NotNull Collection<String> commonCodeStyleSettingFieldNames) {
-      this.title = title;
-      this.commonCodeStyleSettingFieldNames = commonCodeStyleSettingFieldNames;
-    }
   }
 
 
@@ -143,14 +149,14 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
-  private static class SoftMarginsOption extends Option {
+  private static final class SoftMarginsOption extends Option {
 
     private final Language myLanguage;
 
-    protected SoftMarginsOption(@NotNull Language language,
-                                @NotNull String optionName,
-                                @NotNull String title,
-                                @Nullable String groupName) {
+    private SoftMarginsOption(@NotNull Language language,
+                              @NotNull String optionName,
+                              @NotNull String title,
+                              @Nullable String groupName) {
       super(optionName, title, groupName, null, null);
       myLanguage = language;
     }
@@ -172,17 +178,44 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
-  private static List<Integer> castToIntList(@Nullable Object value) {
-    if (value instanceof List && ((List<?>)value).size() > 0 && ((List<?>)value).get(0) instanceof Integer) {
+  private final class CommaSeparatedIdentifiersOption extends FieldOption {
+
+    private CommaSeparatedIdentifiersOption(@NotNull String optionName,
+                                            @NotNull String title,
+                                            @Nullable String groupName) {
+      super(null, optionName, title, groupName, null, null);
+    }
+
+    @Override
+    public Object getValue(CodeStyleSettings settings) {
+      try {
+        return field.get(getSettings(settings));
+      }
+      catch (IllegalAccessException e) {
+        return null;
+      }
+    }
+
+    @Override
+    public void setValue(Object value, CodeStyleSettings settings) {
+      try {
+        field.set(getSettings(settings), value);
+      }
+      catch (IllegalAccessException ignored) {
+      }
+    }
+  }
+
+  private static @NotNull List<Integer> castToIntList(@Nullable Object value) {
+    if (value instanceof List && !((List<?>)value).isEmpty() && ((List<?>)value).get(0) instanceof Integer) {
       //noinspection unchecked
       return (List<Integer>)value;
     }
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  protected JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
+  protected @Nullable JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
     if (CodeStyleSoftMarginsPresentation.OPTION_NAME.equals(optionName)) {
       JLabel softMarginsLabel = new JLabel(getSoftMarginsString(castToIntList(value)));
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, softMarginsLabel);
@@ -195,20 +228,34 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
         return wrapLabel;
       }
     }
+    else if ("BUILDER_METHODS".equals(optionName)) {
+      if (value instanceof @Nls String strValue) {
+        String tooltipText = ApplicationBundle.message("settings.code.style.builder.methods.tooltip");
+        if (StringUtil.isEmptyOrSpaces(strValue)) {
+          ColoredLabel hintLabel = new ColoredLabel(ApplicationBundle.message("settings.code.style.builder.method.names"), JBColor.gray);
+          UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, hintLabel);
+          hintLabel.setToolTipText(tooltipText);
+          return hintLabel;
+        }
+        else if (!strValue.contains(",")){
+          JLabel valueLabel = new JLabel(strValue);
+          valueLabel.setToolTipText(tooltipText);
+          return valueLabel;
+        }
+      }
+    }
     return super.getCustomValueRenderer(optionName, value);
   }
 
-  @NotNull
-  private @NlsContexts.Label String getSoftMarginsString(@NotNull List<Integer> intList) {
-    if (intList.size() > 0) {
+  private @NotNull @NlsContexts.Label String getSoftMarginsString(@NotNull List<Integer> intList) {
+    if (!intList.isEmpty()) {
       return CommaSeparatedIntegersValueEditor.intListToString(intList);
     }
     return MarginOptionsUtil.getDefaultVisualGuidesText(getSettings());
   }
 
-  @Nullable
   @Override
-  protected JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
+  protected @Nullable JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
     String optionName = node.getKey().getOptionName();
     if (CodeStyleSoftMarginsPresentation.OPTION_NAME.equals(optionName)) {
       mySoftMarginsEditor.setValue(castToIntList(node.getValue()));
@@ -226,18 +273,27 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       }
       return myWrapOnTypingCombo;
     }
+    else if (node.getKey() instanceof CommaSeparatedIdentifiersOption) {
+      myCommaSeparatedIdentifiersField.setValueName(node.getText());
+      String currValue = (String)node.getValue();
+      myCommaSeparatedIdentifiersField.setText(currValue);
+      myCommaSeparatedIdentifiersField.getEditor().setDefaultValue(currValue);
+      return myCommaSeparatedIdentifiersField;
+    }
     return super.getCustomNodeEditor(node);
   }
 
-  @Nullable
   @Override
-  protected Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
+  protected @Nullable Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
     if (customEditor instanceof CommaSeparatedIntegersField) {
       return ((CommaSeparatedIntegersField)customEditor).getValue();
     }
     else if (customEditor == myWrapOnTypingCombo) {
       int i = myWrapOnTypingCombo.getSelectedIndex();
       return i >= 0 ? getInstance().WRAP_ON_TYPING_OPTIONS[i] : null;
+    }
+    else if (customEditor == myCommaSeparatedIdentifiersField) {
+      return myCommaSeparatedIdentifiersField.getEditor().getValue();
     }
     return super.getCustomNodeEditorValue(customEditor);
   }

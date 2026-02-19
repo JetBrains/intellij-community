@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ public final class ProblemsTreeModel extends BaseTreeModel<Node> implements Invo
   }
 
   @Override
+  @ApiStatus.Internal
   public @NotNull Invoker getInvoker() {
     return invoker;
   }
@@ -57,7 +59,7 @@ public final class ProblemsTreeModel extends BaseTreeModel<Node> implements Invo
     return children.stream().sorted(comparator.get()).collect(toList());
   }
 
-  void setComparator(@NotNull Comparator<Node> comparator) {
+  public void setComparator(@NotNull Comparator<Node> comparator) {
     if (!comparator.equals(this.comparator.getAndSet(comparator))) structureChanged(null);
   }
 
@@ -65,17 +67,19 @@ public final class ProblemsTreeModel extends BaseTreeModel<Node> implements Invo
     return root == this.root.get();
   }
 
-  void setRoot(@Nullable Root root) {
+  public void setRoot(@Nullable Root root) {
     Root old = this.root.getAndSet(root);
-    if (old != root && old != null) Disposer.dispose(old);
+    if (old != root && old != null) {
+      Disposer.dispose(old);
+    }
     structureChanged(null);
   }
 
-  void structureChanged(@Nullable TreePath path) {
+  public void structureChanged(@Nullable TreePath path) {
     treeStructureChanged(path, null, null);
   }
 
-  void nodeChanged(@NotNull TreePath path) {
+  public void nodeChanged(@NotNull TreePath path) {
     treeNodesChanged(path, null, null);
   }
 }

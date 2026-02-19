@@ -1,0 +1,11 @@
+<fold text='/ Some header .../' expand='false'>/*
+ * Some header
+ */</fold>
+
+val a = 12
+
+<fold text='/ Other .../' expand='true'>/*
+ * Other
+ */</fold>
+
+<caret>// SET_TRUE: setCollapseFileHeader

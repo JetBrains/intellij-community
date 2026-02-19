@@ -1,0 +1,62 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.json.backend"/>
+  </dependencies>
+
+  <resource-bundle>messages.DevKitThemesBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor"/>
+    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
+    <psi.referenceContributor language="JSON" implementation="org.jetbrains.idea.devkit.themes.ThemeJsonPsiReferenceContributor"/>
+    <spellchecker.support language="JSON" order="first" implementationClass="org.jetbrains.idea.devkit.themes.ThemeSpellcheckingStrategy"/>
+    <editorNotificationProvider implementation="org.jetbrains.idea.devkit.themes.actions.ThemeEditorToolbar"/>
+    <lang.documentationProvider language="JSON" order="first"
+                                implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonDocumentationProvider"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.themes.ThemeEPPathReferenceContributor"/>
+    <localInspection language="JSON" shortName="UnresolvedIntelliJThemeKey"
+                     enabledByDefault="true" level="WARNING"
+                     groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     implementationClass="org.jetbrains.idea.devkit.themes.UnresolvedThemeKeyInspection"
+                     bundle="messages.DevKitThemesBundle" key="inspection.unresolved.theme.key.display.name"/>
+    <localInspection language="JSON" shortName="UnresolvedIntelliJThemeNamedColor"
+                     enabledByDefault="true" level="ERROR"
+                     groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     implementationClass="org.jetbrains.idea.devkit.themes.UnresolvedThemeJsonNamedColorInspection"
+                     bundle="messages.DevKitThemesBundle" key="inspection.unresolved.theme.json.named.color.display.name"/>
+    <localInspection language="JSON" shortName="UnusedIntelliJThemeNamedColor"
+                     enabledByDefault="true" level="WARNING"
+                     groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     implementationClass="org.jetbrains.idea.devkit.themes.UnusedThemeJsonNamedColorInspection"
+                     bundle="messages.DevKitThemesBundle" key="inspection.unused.theme.json.named.color.display.name"/>
+    <localInspection language="UAST" shortName="UnregisteredNamedColor"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" isInternal="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.themes.UnregisteredNamedColorInspection"
+                     key="inspection.unregistered.named.color.display.name"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory"/>
+  </extensions>
+
+  <actions>
+    <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.themes.actions.NewThemeAction" icon="AllIcons.Actions.Colors">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <group id="DevKit.ThemeEditorToolbar">
+      <action id="DevKit.ApplyTheme" class="org.jetbrains.idea.devkit.themes.actions.ApplyThemeAction"
+              icon="AllIcons.Actions.Execute"/>
+      <action id="DevKit.RollbackTheme" class="org.jetbrains.idea.devkit.themes.actions.RollbackThemeAction"
+              icon="AllIcons.Actions.Suspend"/>
+      <action id="DevKit.EditThemeEditorColorScheme" class="org.jetbrains.idea.devkit.themes.actions.EditThemeEditorColorSchemeAction"
+              icon="AllIcons.Actions.EditScheme"/>
+      <separator/>
+      <action id="DevKit.OpenThemeReferenceDocs" class="org.jetbrains.idea.devkit.themes.actions.OpenThemeReferenceDocsAction"
+              icon="AllIcons.Actions.Help"/>
+    </group>
+  </actions>
+</idea-plugin>

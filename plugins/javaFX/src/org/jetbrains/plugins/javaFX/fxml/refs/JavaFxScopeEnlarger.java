@@ -1,23 +1,14 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -30,10 +21,9 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-public class JavaFxScopeEnlarger extends UseScopeEnlarger {
-  @Nullable
+public final class JavaFxScopeEnlarger extends UseScopeEnlarger {
   @Override
-  public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
+  public @Nullable SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
     PsiClass containingClass = null;
     if (element instanceof PsiField) {
       containingClass = ((PsiField)element).getContainingClass();
@@ -70,13 +60,13 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
 
   private static boolean needToEnlargeMethodScope(PsiMethod method) {
     final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    return isStatic && method.getParameterList().getParametersCount() == 2 &&
+    return isStatic && method.getParameterList().getParametersCount() == 2 && PropertyUtilBase.hasAccessorName(method) &&
            InheritanceUtil.isInheritor(method.getParameterList().getParameters()[0].getType(), JavaFxCommonNames.JAVAFX_SCENE_NODE) ||
            !isStatic && !method.hasModifierProperty(PsiModifier.PUBLIC) &&
            AnnotationUtil.isAnnotated(method, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, 0);
   }
 
-  public static class GlobalFxmlSearchScope extends DelegatingGlobalSearchScope {
+  public static final class GlobalFxmlSearchScope extends DelegatingGlobalSearchScope {
     public GlobalFxmlSearchScope(GlobalSearchScope baseScope) {
       super(baseScope);
     }

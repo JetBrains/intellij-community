@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql;
 
 import com.intellij.lexer.Lexer;
@@ -5,12 +6,17 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.COMMA;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.NUMBER;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.OPERATION_SIGN;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.PARENTHESES;
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.STRING;
 
 /**
  * @author Mikhail Golubev
@@ -29,9 +35,8 @@ public class JqlHighlighter extends SyntaxHighlighterBase {
     KEYS.put(JqlTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
   }
 
-  @NotNull
   @Override
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return new JqlLexer();
   }
 

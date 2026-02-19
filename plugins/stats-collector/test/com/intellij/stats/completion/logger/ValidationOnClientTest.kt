@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o.
+ * Copyright 2000-2020 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,13 @@
 package com.intellij.stats.completion.logger
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.completion.*
+import com.intellij.stats.completion.DeserializedLogEvent
+import com.intellij.stats.completion.LogEventSerializer
+import com.intellij.stats.completion.LookupState
+import com.intellij.stats.completion.ValidationStatus
 import com.intellij.stats.completion.events.DownPressedEvent
 import com.intellij.stats.completion.events.LogEvent
+import com.intellij.stats.completion.withSelected
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
 import java.util.concurrent.LinkedBlockingQueue
@@ -40,7 +44,7 @@ class ValidationOnClientTest : HeavyPlatformTestCase() {
 
         TestCase.assertEquals(ValidationStatus.UNKNOWN, event1.validationStatus)
         val queue = LinkedBlockingQueue<DeserializedLogEvent>()
-        val logger = createLogger { queue.add(it) }
+        val logger = createLogger { queue.addAll(it) }
 
         logger.log(event1)
         logger.log(event2)
@@ -56,7 +60,7 @@ class ValidationOnClientTest : HeavyPlatformTestCase() {
 
         val queue = LinkedBlockingQueue<DeserializedLogEvent>()
 
-        val logger = createLogger { queue.put(it) }
+        val logger = createLogger { queue.addAll(it) }
 
         logger.log(event1)
         TestCase.assertTrue(queue.isEmpty())
@@ -90,14 +94,15 @@ class ValidationOnClientTest : HeavyPlatformTestCase() {
         }
     }
 
-    private fun createLogger(onLogCallback: (DeserializedLogEvent) -> Unit): EventLoggerWithValidation {
+    private fun createLogger(onLogCallback: (List<DeserializedLogEvent>) -> Unit): EventLoggerWithValidation {
         return EventLoggerWithValidation(object : FileLogger {
-            override fun println(message: String) {
-                onLogCallback(LogEventSerializer.fromString(message))
+
+            override fun printLines(lines: List<String>) {
+                val session = lines.map { LogEventSerializer.fromString(it) }
+                onLogCallback(session)
             }
 
-            override fun flush() {
-            }
+            override fun flush() = Unit
         }, DefaultValidator())
     }
 }

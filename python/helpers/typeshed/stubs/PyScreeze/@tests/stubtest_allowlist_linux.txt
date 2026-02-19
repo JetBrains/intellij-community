@@ -1,0 +1,2 @@
+# temp variable used to define scrotExists by checking if the command "scrot" exists
+pyscreeze.whichProc

@@ -1,0 +1,13 @@
+# TODO: fix name collision and rename entity
+fragment glCommit on Commit {
+  sha
+  shortId
+  fullTitle
+  description
+
+  author {
+    ...user
+  }
+  authorName
+  authoredDate
+}

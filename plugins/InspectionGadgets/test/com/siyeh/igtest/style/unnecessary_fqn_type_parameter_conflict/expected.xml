@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>Test.java</file>
-    <line>7</line>
-    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
-    <description>Qualifier &lt;code&gt;java.util&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
-  </problem>
-</problems>

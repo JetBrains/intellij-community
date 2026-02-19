@@ -4,7 +4,25 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,6 +33,7 @@ import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +73,7 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
 
     PsiType type2 = var.getType();
     assertNotNull(type2);
-    assertEquals(PsiType.INT.getCanonicalText(false), type2.getCanonicalText(false));
+    assertEquals(PsiTypes.intType().getCanonicalText(false), type2.getCanonicalText(false));
   }
 
   public void testDuplicatesFromSeveralAugmenterCallsAreIgnored() {
@@ -79,6 +98,30 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
 
       PsiUtilCore.ensureValid(psiClass.findFieldByName(AUGMENTED_FIELD, false));
     });
+  }
+
+  public void testPassNameHintToAugmenter() {
+    PsiClass psiClass = myFixture.addClass("class C {}");
+
+    List<String> hints = new ArrayList<>();
+    PsiAugmentProvider.EP_NAME.getPoint().registerExtension(new PsiAugmentProvider() {
+      @Override
+      protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                                        @NotNull Class<Psi> type,
+                                                                        @Nullable String nameHint) {
+        if (element == psiClass) {
+          hints.add(nameHint);
+        }
+        return Collections.emptyList();
+      }
+    }, myFixture.getTestRootDisposable());
+
+    assertNotNull(psiClass.findFieldByName(AUGMENTED_FIELD, true));
+    assertNull(psiClass.findFieldByName("another", false));
+    assertSize(1, psiClass.getFields());
+    assertSize(2, psiClass.getAllFields());
+
+    assertOrderedEquals(hints, AUGMENTED_FIELD, "another", null);
   }
 
   private static class TestAugmentProvider extends PsiAugmentProvider {
@@ -133,7 +176,7 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
       var count = manager.getModificationTracker().getModificationCount();
       if (type.equals(PsiField.class)) {
         //noinspection unchecked
-        return (List<Psi>)Collections.singletonList(new LightFieldBuilder(manager, AUGMENTED_FIELD, PsiType.BOOLEAN) {
+        return (List<Psi>)Collections.singletonList(new LightFieldBuilder(manager, AUGMENTED_FIELD, PsiTypes.booleanType()) {
           @Override
           public int hashCode() {
             return 0;

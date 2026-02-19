@@ -1,4 +1,4 @@
-// "Remove element" "true"
+// "Remove type parameters" "true-preview"
 record R() {
   R() {}
 }

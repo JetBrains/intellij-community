@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -7,20 +7,29 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Base class for editable templates with applicable expressions conditions.
+ * Template data is backed by live template.
+ * It supports selecting the expression a template is applied to.
+ *
+ * @param <ConditionType> expression condition type
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/advanced-postfix-templates.html">Advanced Postfix Templates (IntelliJ Platform Docs)</a>
+ */
 public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionType extends PostfixTemplateExpressionCondition>
   extends EditablePostfixTemplate {
 
-  @NotNull protected final Set<ConditionType> myExpressionConditions;
+  protected final @NotNull Set<? extends ConditionType> myExpressionConditions;
   protected final boolean myUseTopmostExpression;
 
   protected EditablePostfixTemplateWithMultipleExpressions(@NotNull String templateId,
                                                            @NotNull String templateName,
                                                            @NotNull TemplateImpl liveTemplate,
                                                            @NotNull String example,
-                                                           @NotNull Set<ConditionType> expressionConditions,
+                                                           @NotNull Set<? extends ConditionType> expressionConditions,
                                                            boolean useTopmostExpression,
                                                            @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, liveTemplate, example, provider);
@@ -33,7 +42,7 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
                                                            @NotNull String templateKey,
                                                            @NotNull TemplateImpl liveTemplate,
                                                            @NotNull String example,
-                                                           @NotNull Set<ConditionType> expressionConditions,
+                                                           @NotNull Set<? extends ConditionType> expressionConditions,
                                                            boolean useTopmostExpression,
                                                            @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, templateKey, liveTemplate, example, provider);
@@ -41,8 +50,7 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
     myUseTopmostExpression = useTopmostExpression;
   }
 
-  @NotNull
-  protected static TemplateImpl createTemplate(@NotNull String templateText) {
+  protected static @NotNull TemplateImpl createTemplate(@NotNull String templateText) {
     TemplateImpl template = new TemplateImpl("fakeKey", templateText, "");
     template.setToReformat(true);
     template.parseSegments();
@@ -50,21 +58,18 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
   }
 
 
-  @NotNull
   @Override
-  protected PsiElement getElementToRemove(@NotNull PsiElement element) {
+  protected @NotNull PsiElement getElementToRemove(@NotNull PsiElement element) {
     if (myUseTopmostExpression) {
       return getTopmostExpression(element);
     }
     return element;
   }
 
-  @NotNull
-  protected abstract PsiElement getTopmostExpression(@NotNull PsiElement element);
+  protected abstract @NotNull PsiElement getTopmostExpression(@NotNull PsiElement element);
 
-  @NotNull
-  public Set<ConditionType> getExpressionConditions() {
-    return myExpressionConditions;
+  public @NotNull Set<? extends ConditionType> getExpressionConditions() {
+    return Collections.unmodifiableSet(myExpressionConditions);
   }
 
   public boolean isUseTopmostExpression() {
@@ -81,8 +86,7 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
            Objects.equals(myExpressionConditions, that.myExpressionConditions);
   }
 
-  @NotNull
-  protected Condition<PsiElement> getExpressionCompositeCondition() {
+  protected @NotNull Condition<PsiElement> getExpressionCompositeCondition() {
     return e -> {
       for (ConditionType condition : myExpressionConditions) {
         //noinspection unchecked

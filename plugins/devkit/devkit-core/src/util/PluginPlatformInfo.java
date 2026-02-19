@@ -1,23 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.workspaceModel.ide.LibraryEntities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -53,8 +53,7 @@ public final class PluginPlatformInfo {
     return myMainIdeaPlugin;
   }
 
-  @Nullable
-  public BuildNumber getSinceBuildNumber() {
+  public @Nullable BuildNumber getSinceBuildNumber() {
     return mySinceBuildNumber;
   }
 
@@ -94,7 +93,7 @@ public final class PluginPlatformInfo {
   public static PluginPlatformInfo forModule(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject())
       .getCachedValue(module, () ->
-        CachedValueProvider.Result.createSingleDependency(_forModule(module), ProjectRootManager.getInstance(module.getProject())));
+        Result.createSingleDependency(_forModule(module), JavaLibraryModificationTracker.getInstance(module.getProject())));
   }
 
   private static PluginPlatformInfo _forModule(@NotNull Module module) {
@@ -104,24 +103,51 @@ public final class PluginPlatformInfo {
       return UNRESOLVED_INSTANCE;
     }
 
-    final OrderEntry entry = LibraryUtil.findLibraryEntry(markerClass.getContainingFile().getVirtualFile(), module.getProject());
-    if ((!(entry instanceof LibraryOrderEntry))) {
+    var libraryEntity = ContainerUtil.getFirstItem(ProjectFileIndex
+                                 .getInstance(module.getProject()).findContainingLibraries(markerClass.getContainingFile().getVirtualFile()));
+    if (libraryEntity == null) {
       return UNRESOLVED_INSTANCE;
     }
 
-    final String libraryName = entry.getPresentableName();
+    final String libraryName = LibraryEntities.getPresentableName(libraryEntity);
 
-    String versionSuffix = StringUtil.substringAfterLast(libraryName, ":20");
-    if (versionSuffix == null ||
-        !StringUtil.containsChar(versionSuffix, '.')) {
-      return UNRESOLVED_INSTANCE;
-    }
-    versionSuffix = StringUtil.replace(versionSuffix, ".", "");
-    if (versionSuffix.length() < 3) {
+    String version = StringUtil.substringAfterLast(libraryName, ":");
+    if (StringUtil.isEmpty(version)) {
       return UNRESOLVED_INSTANCE;
     }
 
-    final String branch =  versionSuffix.substring(0, 3);
+    // Gradle using 'localPath': strip product prefix
+    if (Character.isUpperCase(version.charAt(0))) {
+      version = StringUtil.substringAfter(version, "-");
+      assert version != null;
+    }
+
+    if (version.contains("-")) {
+      version = StringUtil.substringBefore(version, "-");
+      assert version != null;
+    }
+
+    String major = version.contains(".") ? StringUtil.substringBefore(version, ".") : version;
+    if (major == null) {
+      return UNRESOLVED_INSTANCE;
+    }
+
+    String branch;
+    if (major.length() == 4 && version.length() >= 6) {
+      version = StringUtil.replace(version, ".", "").substring(2);
+
+      if (version.length() < 3) {
+        return UNRESOLVED_INSTANCE;
+      }
+      branch = version.substring(0, 3);
+    }
+    else if (major.length() == 3) {
+      branch = version;
+    }
+    else {
+      return UNRESOLVED_INSTANCE;
+    }
+
     final BuildNumber number = BuildNumber.fromStringOrNull(branch);
     if (number == null) {
       return UNRESOLVED_INSTANCE;

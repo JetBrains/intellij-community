@@ -1,5 +1,4 @@
-// "Replace with 'new Object[]{a}'" "false"
-// "Replace with 'new Object[]{b}'" "false"
+// "Fix all 'Suspicious ternary operator in varargs method call' problems in file" "false"
 
 class Test {
   static void bar(boolean flag) {

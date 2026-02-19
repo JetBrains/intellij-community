@@ -1,0 +1,11 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsStartupActivity"/>
+
+    <workspaceModel.fileIndexContributor
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceFileIndexContributor"/>
+    <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileSystemImpl"
+                       key="fwd" physical="false"/>
+  </extensions>
+</idea-plugin>

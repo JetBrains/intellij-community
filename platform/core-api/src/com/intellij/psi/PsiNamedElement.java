@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a declaration which introduces a named entity and can be renamed (for example, a class or a method).
  * References should not implement this interface since they don't usually introduce a new entity.
+ *
+ * @see com.intellij.model.psi.PsiSymbolDeclaration
+ * @see PsiNameIdentifierOwner
  */
 public interface PsiNamedElement extends PsiElement {
   /**
@@ -29,8 +32,8 @@ public interface PsiNamedElement extends PsiElement {
    * Renames the element.
    *
    * @param name the new element name.
-   * @return the element corresponding to this element after the rename (either {@code this}
-   * or a different element if the rename caused the element to be replaced).
+   * @return the element corresponding to this element after the renaming (either {@code this}
+   * or a different element if the renaming caused the element to be replaced).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement setName(@NlsSafe @NotNull String name) throws IncorrectOperationException;

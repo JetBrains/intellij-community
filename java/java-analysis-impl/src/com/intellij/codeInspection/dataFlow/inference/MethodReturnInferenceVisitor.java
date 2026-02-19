@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInsight.Nullability;
@@ -8,16 +8,60 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.FileLocalResolver;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
+import com.intellij.psi.impl.source.tree.java.PsiSwitchLabeledRuleStatementImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
 
-import static com.intellij.psi.impl.source.JavaLightTreeUtil.*;
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.JavaLightTreeUtil.findExpressionChild;
+import static com.intellij.psi.impl.source.JavaLightTreeUtil.getExpressionChildren;
+import static com.intellij.psi.impl.source.JavaLightTreeUtil.getNameIdentifierText;
+import static com.intellij.psi.impl.source.JavaLightTreeUtil.isNullLiteralExpression;
+import static com.intellij.psi.impl.source.JavaLightTreeUtil.skipParenthesesCastsDown;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ARRAY_ACCESS_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ASSIGNMENT_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.BINARY_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.BLOCK_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.BREAK_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CODE_BLOCK;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CONDITIONAL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CONTINUE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECLARATION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.EXPRESSION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.IF_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.INSTANCE_OF_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LAMBDA_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LITERAL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LOCAL_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_CALL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_REF_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.NEW_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.POLYADIC_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.POSTFIX_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PREFIX_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.REFERENCE_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RETURN_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SWITCH_LABELED_RULE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.SYNCHRONIZED_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.THROW_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.WHILE_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.YIELD_STATEMENT;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.firstChildOfType;
 import static com.intellij.psi.impl.source.tree.LightTreeUtil.getChildrenOfType;
 
@@ -45,8 +89,9 @@ class MethodReturnInferenceVisitor {
     else if (type == RETURN_STATEMENT) {
       LighterASTNode value = findExpressionChild(tree, element);
       if (value == null) {
-        hasErrors= true;
-      } else {
+        hasErrors = true;
+      }
+      else {
         myReturnValue = ReturnValue.merge(myReturnValue, getExpressionValue(value));
       }
     }
@@ -61,18 +106,17 @@ class MethodReturnInferenceVisitor {
     }
   }
 
-  @NotNull
-  private ReturnValue getExpressionValue(@Nullable LighterASTNode expr) {
+  private @NotNull ReturnValue getExpressionValue(@Nullable LighterASTNode expr) {
     expr = skipParenthesesCastsDown(tree, expr);
     if (expr == null) {
       return ReturnValue.UNKNOWN;
     }
     IElementType type = expr.getTokenType();
-    if (isNullLiteral(expr)) {
+    if (isNullLiteralExpression(tree, expr)) {
       return ReturnValue.NULLABLE;
     }
     if (type == LAMBDA_EXPRESSION || type == NEW_EXPRESSION || type == METHOD_REF_EXPRESSION ||
-             type == LITERAL_EXPRESSION || type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
+        type == LITERAL_EXPRESSION || type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
       return ReturnValue.NOT_NULL;
     }
     if (type == METHOD_CALL_EXPRESSION) {
@@ -81,9 +125,12 @@ class MethodReturnInferenceVisitor {
         return ReturnValue.delegate(calledMethod, ExpressionRange.create(expr, myBody.getStartOffset()));
       }
     }
+    if (type == SWITCH_EXPRESSION) {
+      return findValueInSwitchExpression(expr);
+    }
     else if (type == CONDITIONAL_EXPRESSION) {
       List<LighterASTNode> expressionChildren = getExpressionChildren(tree, expr);
-      if(expressionChildren.size() == 3) {
+      if (expressionChildren.size() == 3) {
         return ReturnValue.merge(getExpressionValue(expressionChildren.get(1)), // then-branch
                                  getExpressionValue(expressionChildren.get(2))); // else-branch
       }
@@ -98,8 +145,69 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.UNKNOWN;
   }
 
-  @NotNull
-  private ReturnValue findVariableValue(LighterASTNode expr, LighterASTNode target) {
+  private @NotNull ReturnValue findValueInSwitchExpression(@NotNull LighterASTNode expr) {
+    if (expr.getTokenType() != SWITCH_EXPRESSION) return ReturnValue.UNKNOWN;
+    LighterASTNode block = firstChildOfType(tree, expr, CODE_BLOCK);
+    if (block == null) return ReturnValue.UNKNOWN;
+    List<LighterASTNode> rules = getChildrenOfType(tree, block, SWITCH_LABELED_RULE);
+    List<ReturnValue> values = new ArrayList<>();
+    if (!rules.isEmpty()) {
+      for (LighterASTNode rule : rules) {
+        ReturnValue ruleReturnValue = findValueInRule(rule);
+        if (ruleReturnValue != null) {
+          values.add(ruleReturnValue);
+        }
+      }
+    }
+    else {
+      values.addAll(findValueInSwitchBlock(block));
+    }
+    return values.stream()
+      .reduce(ReturnValue::merge)
+      .orElse(ReturnValue.UNKNOWN);
+  }
+
+  private @NotNull List<ReturnValue> findValueInSwitchBlock(@NotNull LighterASTNode expr) {
+    var visitor = new RecursiveLighterASTNodeWalkingVisitor(tree) {
+      private final List<ReturnValue> values = new ArrayList<>();
+
+      @Override
+      public void visitNode(LighterASTNode element) {
+        IElementType type = element.getTokenType();
+        if (type == YIELD_STATEMENT) {
+          values.add(getExpressionValue(findExpressionChild(tree, element)));
+          return;
+        }
+        if (ElementType.JAVA_STATEMENT_BIT_SET.contains(type) || type == CODE_BLOCK) {
+          super.visitNode(element);
+        }
+      }
+    };
+    visitor.visitNode(expr);
+    return visitor.values;
+  }
+
+  private @Nullable ReturnValue findValueInRule(@NotNull LighterASTNode rule) {
+    LighterASTNode body = firstChildOfType(tree, rule, PsiSwitchLabeledRuleStatementImpl.BODY_STATEMENTS);
+    if (body == null) {
+      return ReturnValue.UNKNOWN;
+    }
+    else if (body.getTokenType() == EXPRESSION_STATEMENT) {
+      return getExpressionValue(findExpressionChild(tree, body));
+    }
+    else if (body.getTokenType() == THROW_STATEMENT) {
+      return null;
+    }
+    else if (body.getTokenType() == BLOCK_STATEMENT) {
+      List<ReturnValue> values = findValueInSwitchBlock(body);
+      return values.stream()
+        .reduce(ReturnValue::merge)
+        .orElse(ReturnValue.UNKNOWN);
+    }
+    return ReturnValue.UNKNOWN;
+  }
+
+  private @NotNull ReturnValue findVariableValue(LighterASTNode expr, LighterASTNode target) {
     LighterASTNode parent;
     while (true) {
       parent = tree.getParent(expr);
@@ -133,8 +241,7 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.UNKNOWN;
   }
 
-  @NotNull
-  private ReturnValue findValueBeforeStatement(LighterASTNode statement, LighterASTNode target) {
+  private @NotNull ReturnValue findValueBeforeStatement(LighterASTNode statement, LighterASTNode target) {
     LighterASTNode parent = tree.getParent(statement);
     if (parent == null) {
       return ReturnValue.UNKNOWN;
@@ -185,8 +292,7 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.UNKNOWN;
   }
 
-  @Nullable
-  private ReturnValue findValueInStatement(LighterASTNode statement, LighterASTNode target) {
+  private @Nullable ReturnValue findValueInStatement(LighterASTNode statement, LighterASTNode target) {
     if (statement == null) return null;
     IElementType tokenType = statement.getTokenType();
     if (tokenType == EXPRESSION_STATEMENT) {
@@ -195,8 +301,7 @@ class MethodReturnInferenceVisitor {
     }
     if (tokenType == DECLARATION_STATEMENT) {
       List<LighterASTNode> declaredElements = tree.getChildren(statement);
-      for (int i = declaredElements.size() - 1; i >= 0; i--) {
-        LighterASTNode declared = declaredElements.get(i);
+      for (LighterASTNode declared : declaredElements.reversed()) {
         if (declared.getTokenType() != LOCAL_VARIABLE) continue;
         LighterASTNode initializer = findExpressionChild(tree, declared);
         if (declared.equals(target)) {
@@ -212,12 +317,8 @@ class MethodReturnInferenceVisitor {
       LighterASTNode block = firstChildOfType(tree, statement, CODE_BLOCK);
       if (block != null) {
         List<LighterASTNode> children = getChildrenOfType(tree, block, ElementType.JAVA_STATEMENT_BIT_SET);
-        for (int i = children.size() - 1; i >= 0; i--) {
-          ReturnValue value = findValueInStatement(children.get(i), target);
-          if (value != null) {
-            return value;
-          }
-        }
+        return StreamEx.ofReversed(children).map(node -> findValueInStatement(node, target))
+          .nonNull().findFirst().orElse(null);
       }
       return null;
     }
@@ -231,8 +332,7 @@ class MethodReturnInferenceVisitor {
     return null;
   }
 
-  @Nullable
-  private ReturnValue findValueInIfStatement(LighterASTNode statement, LighterASTNode target) {
+  private @Nullable ReturnValue findValueInIfStatement(LighterASTNode statement, LighterASTNode target) {
     List<LighterASTNode> branches = getChildrenOfType(tree, statement, ElementType.JAVA_STATEMENT_BIT_SET);
     LighterASTNode condition = findExpressionChild(tree, statement);
     LighterASTNode thenBranch = ContainerUtil.getFirstItem(branches);
@@ -269,8 +369,7 @@ class MethodReturnInferenceVisitor {
     return ReturnValue.merge(thenValue, elseValue);
   }
 
-  @Nullable
-  private ReturnValue findValueInExpression(LighterASTNode expression, LighterASTNode target) {
+  private @Nullable ReturnValue findValueInExpression(LighterASTNode expression, LighterASTNode target) {
     if (expression == null) return null;
     IElementType type = expression.getTokenType();
     if (type == ASSIGNMENT_EXPRESSION) {
@@ -311,7 +410,7 @@ class MethodReturnInferenceVisitor {
   private boolean isAssignedInside(LighterASTNode element, LighterASTNode target) {
     Queue<LighterASTNode> workList = new ArrayDeque<>();
     workList.add(element);
-    while(!workList.isEmpty()) {
+    while (!workList.isEmpty()) {
       LighterASTNode node = workList.poll();
       if (isReferenceToLocal(node, target)) {
         LighterASTNode parent = tree.getParent(node);
@@ -332,7 +431,7 @@ class MethodReturnInferenceVisitor {
   private boolean isDereferencedInside(LighterASTNode expression, LighterASTNode target) {
     Queue<LighterASTNode> workList = new ArrayDeque<>();
     workList.add(expression);
-    while(!workList.isEmpty()) {
+    while (!workList.isEmpty()) {
       LighterASTNode node = workList.poll();
       if (isReferenceToLocal(node, target)) {
         LighterASTNode parent = tree.getParent(node);
@@ -345,7 +444,8 @@ class MethodReturnInferenceVisitor {
       if (tokenType == CONDITIONAL_EXPRESSION || tokenType == SWITCH_EXPRESSION ||
           (tokenType == POLYADIC_EXPRESSION || tokenType == BINARY_EXPRESSION) && firstChildOfType(tree, node, SHORT_CIRCUIT) != null) {
         ContainerUtil.addIfNotNull(workList, findExpressionChild(tree, node));
-      } else if (tokenType != LAMBDA_EXPRESSION && tokenType != TYPE_PARAMETER_LIST && tokenType != ANONYMOUS_CLASS) {
+      }
+      else if (tokenType != LAMBDA_EXPRESSION && tokenType != TYPE_PARAMETER_LIST && tokenType != ANONYMOUS_CLASS) {
         workList.addAll(tree.getChildren(node));
       }
     }
@@ -360,7 +460,7 @@ class MethodReturnInferenceVisitor {
     if (type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
       List<LighterASTNode> operands = getExpressionChildren(tree, expr);
       if (firstChildOfType(tree, expr, negated ? JavaTokenType.EQEQ : JavaTokenType.NE) != null) {
-        return operands.size() == 2 && isNullLiteral(operands.get(1)) && isReferenceToLocal(operands.get(0), var);
+        return operands.size() == 2 && isNullLiteralExpression(tree, operands.get(1)) && isReferenceToLocal(operands.get(0), var);
       }
 
       if (firstChildOfType(tree, expr, negated ? JavaTokenType.OROR : JavaTokenType.ANDAND) == null) return false;
@@ -384,10 +484,6 @@ class MethodReturnInferenceVisitor {
            Objects.requireNonNull(tree.getParent(operand)).getTokenType() != METHOD_CALL_EXPRESSION &&
            findExpressionChild(tree, operand) == null && // non-qualified
            Objects.equals(getNameIdentifierText(tree, operand), getNameIdentifierText(tree, var));
-  }
-
-  private boolean isNullLiteral(@NotNull LighterASTNode value) {
-    return value.getTokenType() == LITERAL_EXPRESSION && tree.getChildren(value).get(0).getTokenType() == JavaTokenType.NULL_KEYWORD;
   }
 
   @Nullable

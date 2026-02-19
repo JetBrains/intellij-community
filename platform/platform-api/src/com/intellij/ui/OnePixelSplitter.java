@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.OnePixelDivider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 import java.util.function.Supplier;
 
 /**
@@ -62,6 +62,11 @@ public class OnePixelSplitter extends JBSplitter {
 
   public OnePixelSplitter(boolean vertical, float proportion, float minProp, float maxProp) {
     super(vertical, proportion, minProp, maxProp);
+    init();
+  }
+
+  public OnePixelSplitter(boolean vertical, @NotNull @NonNls String proportionKey, float minProp, float maxProp) {
+    super(vertical, proportionKey,  minProp, maxProp);
     init();
   }
 

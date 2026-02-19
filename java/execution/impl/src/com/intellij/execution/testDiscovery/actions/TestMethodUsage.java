@@ -1,11 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.SelectInEditorManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.TextEditorLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -15,7 +20,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.TextChunk;
@@ -28,16 +37,13 @@ import com.intellij.usages.rules.UsageInModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 
-class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage, DataProvider {
-  @NotNull
-  private final SmartPsiElementPointer<? extends PsiMethod> myTestMethodPointer;
-  @Nullable
-  private final SmartPsiElementPointer<? extends PsiClass> myTestClassPointer;
+class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage, UiDataProvider {
+  private final @NotNull SmartPsiElementPointer<? extends PsiMethod> myTestMethodPointer;
+  private final @Nullable SmartPsiElementPointer<? extends PsiClass> myTestClassPointer;
 
   TestMethodUsage(@NotNull SmartPsiElementPointer<? extends PsiMethod> testMethod,
                   @NotNull SmartPsiElementPointer<? extends PsiClass> testClass,
@@ -46,8 +52,7 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
     myTestClassPointer = parameters.isEmpty() ? null : testClass;
   }
 
-  @Nullable
-  public Location<PsiMethod> calculateLocation() {
+  public @Nullable Location<PsiMethod> calculateLocation() {
     PsiMethod m = myTestMethodPointer.getElement();
     if (m == null) return null;
     PsiClass c = myTestClassPointer == null ? m.getContainingClass() : myTestClassPointer.getElement();
@@ -65,24 +70,26 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
     return ModuleUtilCore.findModuleForFile(getPointer().getContainingFile());
   }
 
-  @NotNull
   @Override
-  public UsagePresentation getPresentation() {
+  public @NotNull UsagePresentation getPresentation() {
     return new UsagePresentation() {
       @Override
       public TextChunk @NotNull [] getText() {
         return new TextChunk[]{new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), getPlainText())};
       }
 
-      @NotNull
       @Override
-      public @NlsSafe String getPlainText() {
-        return StringUtil.notNullize(Objects.requireNonNull(getElement()).getName());
+      public @NotNull @NlsSafe String getPlainText() {
+        PsiMember element = getElement();
+        if (element == null) return "";
+        return StringUtil.notNullize(element.getName());
       }
 
       @Override
       public Icon getIcon() {
-        return Objects.requireNonNull(getElement()).getIcon(0);
+        PsiMember element = getElement();
+        if (element == null) return null;
+        return element.getIcon(0);
       }
 
       @Override
@@ -94,7 +101,7 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
   @Override
   public boolean isValid() {
-    return getPointer().getElement() != null;
+    return getElement() != null;
   }
 
   @Override
@@ -102,18 +109,17 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
     return true;
   }
 
-  @Nullable
   @Override
-  public FileEditorLocation getLocation() {
+  public @Nullable FileEditorLocation getLocation() {
     VirtualFile virtualFile = getFile();
     if (virtualFile == null) return null;
     Project project = getPointer().getProject();
     FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-    if (!(editor instanceof TextEditor)) return null;
+    if (!(editor instanceof TextEditor te)) return null;
 
     Segment segment = getPointer().getPsiRange();
     if (segment == null) return null;
-    return new TextEditorLocation(segment.getStartOffset(), (TextEditor)editor);
+    return new TextEditorLocation(segment.getStartOffset(), te);
   }
 
   @Override
@@ -149,15 +155,20 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
     return true;
   }
 
-  @Nullable
   @Override
-  public PsiMember getElement() {
+  public @Nullable PsiMember getElement() {
     return getPointer().getElement();
   }
 
-  @NotNull
-  private SmartPsiElementPointer<? extends PsiMember> getPointer() {
+  private @NotNull SmartPsiElementPointer<? extends PsiMember> getPointer() {
     return myTestClassPointer != null ? myTestClassPointer : myTestMethodPointer;
+  }
+
+  @Override
+  public int getNavigationOffset() {
+    Segment segment = getPointer().getPsiRange();
+    if (segment == null) return -1;
+    return segment.getStartOffset();
   }
 
   @Override
@@ -165,11 +176,11 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
     return false;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (!UsageView.USAGE_INFO_LIST_KEY.is(dataId)) return null;
-    PsiElement psi = getElement();
-    return psi == null ? null : Collections.singletonList(new UsageInfo(psi));
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.lazy(UsageView.USAGE_INFO_LIST_KEY, () -> {
+      PsiElement psi = getElement();
+      return psi == null ? null : Collections.singletonList(new UsageInfo(psi));
+    });
   }
 }

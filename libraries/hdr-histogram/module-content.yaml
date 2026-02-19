@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.hdr.histogram.jar
+  modules:
+  - name: intellij.libraries.hdr.histogram
+    libraries:
+      HdrHistogram:
+      - name: $MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2/HdrHistogram-2.jar

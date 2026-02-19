@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package git4idea.remote
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.sortRepositories
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -12,37 +11,45 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType.IDE
-import com.intellij.openapi.ui.DialogWrapper.IdeModalityType.PROJECT
-import com.intellij.openapi.ui.Messages.*
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.ui.Messages.YES
+import com.intellij.openapi.ui.Messages.getQuestionIcon
+import com.intellij.openapi.ui.Messages.showErrorDialog
+import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
+import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRemote
-import git4idea.repo.GitRemote.ORIGIN
+import git4idea.repo.GitRemote.Companion.ORIGIN
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
-import java.awt.Component
 import java.awt.Font
 import java.awt.event.MouseEvent
-import java.util.*
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.DefaultListSelectionModel
+import javax.swing.JComponent
+import javax.swing.JTable
+import javax.swing.ListSelectionModel
+import javax.swing.SwingConstants
+import javax.swing.UIManager
 import javax.swing.table.AbstractTableModel
 import kotlin.math.min
 
 private val LOG = logger<GitConfigureRemotesDialog>()
 
 class GitConfigureRemotesDialog(val project: Project, val repositories: Collection<GitRepository>) :
-    DialogWrapper(project, true, getModalityType()) {
+    DialogWrapper(project, true, IDE) {
 
-  private val git = service<Git>()
+  private val git = Git.getInstance()
 
   private val NAME_COLUMN = 0
   private val URL_COLUMN = 1
@@ -63,7 +70,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   override fun getPreferredFocusedComponent(): JBTable = table
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     table.selectionModel = DefaultListSelectionModel()
     table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     table.intercellSpacing = JBUI.emptySize()
@@ -96,7 +103,8 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
       runInModalTask(message("remotes.dialog.adding.remote"),
                      message("remote.dialog.add.remote"),
                      message("remotes.dialog.cannot.add.remote.error.message", dialog.remoteName, dialog.remoteUrl),
-                     repository, rebuildTreeOnSuccess) {
+                     repository, { if (dialog.shouldFetch) doFetch(repository, dialog.remoteName, dialog.remoteUrl) },
+                     onSuccess = rebuildTreeOnSuccess) {
         arrayListOf<GitCommandResult>().apply {
           add(git.addRemote(repository, dialog.remoteName, dialog.remoteUrl))
         }
@@ -109,7 +117,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     val remote = remoteNode.remote
     val repository = remoteNode.repository
 
-    removeRemotes(git, repository, setOf(remote), rootPane, rebuildTreeOnSuccess)
+    removeRemotes(git, repository, setOf(remote), rebuildTreeOnSuccess)
   }
 
   private fun editRemote() {
@@ -222,29 +230,31 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   private inner class MyCellRenderer : ColoredTableCellRenderer() {
     override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-      if (value is RepoNode) {
-        append(value.getPresentableString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-      }
-      else if (value is RemoteNode) {
-        if (repositories.size > 1) append("", SimpleTextAttributes.REGULAR_ATTRIBUTES, REMOTE_PADDING, SwingConstants.LEFT)
-        append(value.getPresentableString())
-      }
-      else if (value is String) {
-        append(value)
+      when (value) {
+        is RepoNode -> {
+          append(value.getPresentableString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+        }
+        is RemoteNode -> {
+          if (repositories.size > 1) append("", SimpleTextAttributes.REGULAR_ATTRIBUTES, REMOTE_PADDING, SwingConstants.LEFT)
+          append(value.getPresentableString())
+        }
+        is String -> {
+          append(value)
+        }
       }
       border = null
     }
   }
 }
 
-fun removeRemotes(git: Git, repository: GitRepository, remotes: Set<GitRemote>, parent: Component? = null, onSuccess: () -> Unit = {}) {
-  if (YES == showYesNoDialog(if (parent == null) parent else repository.project,
+fun removeRemotes(git: Git, repository: GitRepository, remotes: Set<GitRemote>, onSuccess: () -> Unit = {}) {
+  if (YES == showYesNoDialog(repository.project,
                              message("remotes.dialog.remove.remote.message", remotes.size, remotes.toStringRepresentation()),
                              message("remotes.dialog.remove.remote.title", remotes.size), getQuestionIcon())) {
     runInModalTask(message("remotes.dialog.removing.remote.progress", remotes.size),
                    message("remotes.dialog.removing.remote.error.title", remotes.size),
-                   message("remotes.dialog.removing.remote.error.message", remotes.size, remotes.toStringRepresentation()), //FIXME
-                   repository, onSuccess) {
+                   message("remotes.dialog.removing.remote.error.message", remotes.size, remotes.toStringRepresentation()),
+                   repository, onSuccess = onSuccess) {
       arrayListOf<GitCommandResult>().apply {
         for (remote in remotes) {
           add(git.removeRemote(repository, remote))
@@ -265,11 +275,20 @@ fun editRemote(git: Git, repository: GitRepository, remote: GitRemote, onSuccess
     runInModalTask(message("remotes.changing.remote.progress"),
                    message("remotes.changing.remote.error.title"),
                    message("remotes.changing.remote.error.message", oldName, newRemoteName, newRemoteUrl),
-                   repository, onSuccess) {
+                   repository, { if (dialog.shouldFetch) doFetch(repository, newRemoteName, newRemoteUrl) }, onSuccess) {
       arrayListOf<GitCommandResult>().apply {
         add(changeRemote(git, repository, oldName, oldUrl, newRemoteName, newRemoteUrl))
       }
     }
+  }
+}
+
+private fun doFetch(repository: GitRepository, remoteName: String, remoteUrl: String) {
+  val remoteToFetch = repository.remotes.find { remote -> remote.name == remoteName
+                                                          && remote.urls.any { url -> url == remoteUrl } }
+  if (remoteToFetch != null) {
+    GitFetchSupport.fetchSupport(repository.project)
+      .fetch(repository, remoteToFetch).showNotificationIfFailed()
   }
 }
 
@@ -294,6 +313,7 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
                            @Nls(capitalization = Nls.Capitalization.Title) errorTitle: String,
                            @Nls(capitalization = Nls.Capitalization.Sentence) errorMessage: String,
                            repository: GitRepository,
+                           afterRepoRefresh: () -> Unit = {},
                            onSuccess: () -> Unit,
                            operation: () -> List<GitCommandResult>?) {
   ProgressManager.getInstance().run(object : Task.Modal(repository.project, title, true) {
@@ -302,6 +322,7 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
     override fun run(indicator: ProgressIndicator) {
       results = operation()
       repository.update()
+      afterRepoRefresh()
     }
 
     override fun onSuccess() {
@@ -309,13 +330,11 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
       if (results == null || results!!.any { !it.success() }) {
         val errorDetails =
           if (results == null) message("remotes.operation.not.executed.message")
-          else results!!.joinToString(separator = "\n") { it.errorOutputAsJoinedString }
+          else results!!.joinToString(separator = UIUtil.BR) { it.errorOutputAsHtmlString }
         val message = message("remotes.operation.error.message", errorMessage, repository, errorDetails)
         LOG.warn(message)
-        showErrorDialog(myProject, message, errorTitle)
+        showErrorDialog(myProject, XmlStringUtil.wrapInHtml(message), errorTitle)
       }
     }
   })
 }
-
-private fun getModalityType() = if (Registry.`is`("ide.perProjectModality")) PROJECT else IDE

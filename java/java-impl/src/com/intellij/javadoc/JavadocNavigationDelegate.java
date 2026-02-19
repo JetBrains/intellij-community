@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorNavigationDelegateAdapter;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
@@ -30,13 +20,8 @@ import java.util.List;
 
 /**
  * Holds javadoc-specific navigation logic.
- * 
- * @author Denis Zhdanov
  */
-public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
-
-  private static final JavadocHelper ourHelper = JavadocHelper.getInstance();
-  
+public final class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
   /**
    * Improves navigation in case of incomplete javadoc parameter descriptions.
    * <p/>
@@ -71,9 +56,8 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
    * @param editor      current editor
    * @return            processing result
    */
-  @NotNull
   @Override
-  public Result navigateToLineEnd(@NotNull Editor editor, @NotNull DataContext dataContext) {
+  public @NotNull Result navigateToLineEnd(@NotNull Editor editor, @NotNull DataContext dataContext) {
     if (!CodeInsightSettings.getInstance().SMART_END_ACTION) {
       return Result.CONTINUE;
     }
@@ -96,7 +80,14 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
   }
   
   public static Result navigateToLineEnd(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-    final Document document = editor.getDocument();
+    final Document document;
+
+    try {
+      document = psiFile.getFileDocument();
+    } catch (UnsupportedOperationException ignored) {
+      return Result.CONTINUE;
+    }
+
     final CaretModel caretModel = editor.getCaretModel();
     final int offset = caretModel.getOffset();
 
@@ -111,13 +102,13 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
       return Result.CONTINUE;
     }
 
-    final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair = ourHelper.parse(psiFile, editor, offset);
+    final Pair<JavadocHelper.JavadocParameterInfo,List<JavadocHelper.JavadocParameterInfo>> pair = JavadocHelper.parse(psiFile, editor, offset);
     if (pair.first == null || pair.first.parameterDescriptionStartPosition != null) {
       return Result.CONTINUE;
     }
 
-    final LogicalPosition position = ourHelper.calculateDescriptionStartPosition(psiFile, pair.second, pair.first);
-    ourHelper.navigate(position, editor, psiFile.getProject());
+    final LogicalPosition position = JavadocHelper.calculateDescriptionStartPosition(psiFile, pair.second, pair.first);
+    JavadocHelper.navigate(position, editor, psiFile.getProject());
     return Result.STOP;
   }
 }

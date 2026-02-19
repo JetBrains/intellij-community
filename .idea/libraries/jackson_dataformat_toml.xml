@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jackson-dataformat-toml" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.19.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2.19.0/jackson-dataformat-toml-2.19.0.jar">
+          <sha256sum>e6312d390c6bef67681f8e258f29ced2f3d0fa1d83a72e0bec1513b8c1c4f430</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2.19.0/jackson-dataformat-toml-2.19.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2.19.0/jackson-dataformat-toml-2.19.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

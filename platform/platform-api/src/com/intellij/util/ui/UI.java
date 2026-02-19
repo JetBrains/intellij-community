@@ -1,21 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
+import com.intellij.ui.scale.JBUIScale;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JProgressBar;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UI extends JBUI {
-
+public final class UI {
   public enum Anchor {
     Top,
     Center,
     Bottom
+  }
+
+  public static int scale(int i) {
+    return JBUIScale.scale(i);
   }
 
   /**
@@ -60,6 +65,7 @@ public class UI extends JBUI {
      * @return a newly created instance of {@link ComponentPanelBuilder} for configuring the panel before
      * creation.
      */
+    @Deprecated
     public static ComponentPanelBuilder panel(JComponent component) {
       return new ComponentPanelBuilder(component);
     }
@@ -80,6 +86,7 @@ public class UI extends JBUI {
      *
      * @return a newly created {@link PanelGridBuilder}
      */
+    @Deprecated
     public static PanelGridBuilder grid() {
       return new PanelGridBuilder();
     }

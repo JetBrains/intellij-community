@@ -21,7 +21,8 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import junit.framework.TestCase;
 
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.LayoutManager;
 
 public final class GridChangeUtilTest extends TestCase {
 

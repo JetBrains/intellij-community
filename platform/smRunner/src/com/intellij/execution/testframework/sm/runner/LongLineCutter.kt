@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.sm.runner
 
 import com.intellij.execution.impl.ConsoleBuffer
+import com.intellij.execution.testframework.sm.ServiceMessageUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 
 private const val ELLIPSIS = "<...>"
@@ -22,7 +23,7 @@ fun cutLineIfTooLong(text: String, maxLength: Int = ConsoleBuffer.getCycleBuffer
     return text
   }
 
-  val message = ServiceMessage.parse(text.trim())
+  val message = ServiceMessageUtil.parse(text.trim(), false, false)
 
   if (message == null) {
     //Not a message, cut as regular text
@@ -51,15 +52,15 @@ fun cutLineIfTooLong(text: String, maxLength: Int = ConsoleBuffer.getCycleBuffer
 
 private class Shortener(private val attributes: MutableMap<String, String>,
                         var currentLength: Int,
-                        private val minValueLengthToCut: Int,
-                        private val margin: Int) {
+                        private val margin: Int,
+                        private val minValueLengthToCut: Int) {
   private val shortened = mutableSetOf<String>()
   fun shortenAttribute(attribute: String) {
     if (attribute in shortened) {
       return
     }
     val value = attributes[attribute] ?: return
-    if (value.length <= minValueLengthToCut) { // Tool short to cut
+    if (value.length <= minValueLengthToCut) { // Too short to cut
       return
     }
 

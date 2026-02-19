@@ -2,9 +2,8 @@ EditorConfig file
   EditorConfigSectionImpl(SECTION)
     EditorConfigHeaderImpl(HEADER)
       PsiElement(EditorConfigTokenType.L_BRACKET)('[')
-      EditorConfigPatternImpl(PATTERN)
-        EditorConfigAsteriskPatternImpl(ASTERISK_PATTERN)
-          PsiElement(EditorConfigTokenType.ASTERISK)('*')
+      EditorConfigAsteriskPatternImpl(ASTERISK_PATTERN)
+        PsiElement(EditorConfigTokenType.ASTERISK)('*')
       PsiElement(EditorConfigTokenType.R_BRACKET)(']')
     PsiWhiteSpace('\n')
     charset=utf-8,utf-16,utf-32:warning

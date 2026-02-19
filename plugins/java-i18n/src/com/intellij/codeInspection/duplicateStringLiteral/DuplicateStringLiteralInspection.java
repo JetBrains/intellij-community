@@ -1,79 +1,123 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.util.occurrences.BaseOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
+import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
-public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final int MAX_FILES_TO_ON_THE_FLY_SEARCH = 10;
 
   @SuppressWarnings("WeakerAccess") public int MIN_STRING_LENGTH = 5;
   @SuppressWarnings("WeakerAccess") public boolean IGNORE_PROPERTY_KEYS;
-  @NonNls private static final String BR = "<br>";
+  private static final @NonNls String BR = "<br>";
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         visitExpression(expression);
       }
 
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         checkStringLiteralExpression(expression, holder, isOnTheFly);
       }
     };
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "DuplicateStringLiteralInspection";
   }
 
-  @NotNull
-  private static List<PsiLiteralExpression> findDuplicateLiterals(@NotNull StringLiteralSearchQuery query, @NotNull Project project) {
+  private static @NotNull List<PsiLiteralExpression> findDuplicateLiterals(@NotNull StringLiteralSearchQuery query, @NotNull Project project) {
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     final List<String> words = ContainerUtil.filter(StringUtil.getWordsInStringLongestFirst(query.stringToFind), s -> s.length() >= query.minStringLength);
     if (words.isEmpty()) return Collections.emptyList();
@@ -82,7 +126,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     CacheManager.getInstance(project).processVirtualFilesWithAllWords(words,
                                                                       UsageSearchContext.IN_STRINGS,
                                                                       scope,
-                                                                      true, new Processor<VirtualFile>() {
+                                                                      true, new Processor<>() {
         int filesWithLiterals;
 
         @Override
@@ -107,17 +151,15 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     return foundExpressions;
   }
 
-  @NotNull
-  private static List<PsiLiteralExpression> findDuplicateLiteralsInFile(@NotNull String stringToFind, boolean ignorePropertyKeys, @NotNull PsiFile file) {
+  private static @NotNull List<PsiLiteralExpression> findDuplicateLiteralsInFile(@NotNull String stringToFind, boolean ignorePropertyKeys, @NotNull PsiFile file) {
     ProgressManager.checkCanceled();
     CharSequence text = file.getViewProvider().getContents();
     StringSearcher searcher = new StringSearcher(stringToFind, true, true);
 
     List<PsiLiteralExpression> foundExpr = new SmartList<>();
-    LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, offset -> {
+    LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, offset -> {
       PsiElement element = file.findElementAt(offset);
-      if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
-      PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
+      if (element == null || !(element.getParent() instanceof PsiLiteralExpression expression)) return true;
       if (Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(expression, ignorePropertyKeys)) {
         foundExpr.add(expression);
       }
@@ -126,12 +168,12 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     return foundExpr;
   }
 
-  private void checkStringLiteralExpression(@NotNull final PsiLiteralExpression originalExpression,
+  private void checkStringLiteralExpression(final @NotNull PsiLiteralExpression originalExpression,
                                             @NotNull ProblemsHolder holder,
                                             final boolean isOnTheFly) {
     PsiExpression[] foundExpr = getDuplicateLiterals(holder.getProject(), originalExpression, isOnTheFly);
     if (foundExpr.length == 0) return;
-    Set<PsiClass> classes = new THashSet<>();
+    Set<PsiClass> classes = new HashSet<>();
     for (PsiElement aClass : foundExpr) {
       if (aClass == originalExpression) continue;
       ProgressManager.checkCanceled();
@@ -168,7 +210,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
 
     Collection<LocalQuickFix> fixes = new SmartList<>();
     if (isOnTheFly) {
-      fixes.add(new IntroduceLiteralConstantFix(originalExpression));
+      fixes.add(new IntroduceLiteralConstantFix());
       fixes.add(new NavigateToOccurrencesFix(originalExpression));
     }
     createReplaceFixes(foundExpr, originalExpression, fixes);
@@ -178,9 +220,8 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
 
   private PsiExpression @NotNull [] getDuplicateLiterals(@NotNull Project project, @NotNull PsiLiteralExpression place, boolean isOnTheFly) {
     Object value = place.getValue();
-    if (!(value instanceof String)) return PsiExpression.EMPTY_ARRAY;
+    if (!(value instanceof String stringToFind)) return PsiExpression.EMPTY_ARRAY;
     if (!shouldCheck(place, IGNORE_PROPERTY_KEYS)) return PsiExpression.EMPTY_ARRAY;
-    String stringToFind = (String)value;
     if (stringToFind.isEmpty()) return PsiExpression.EMPTY_ARRAY;
     Map<StringLiteralSearchQuery, PsiExpression[]> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<StringLiteralSearchQuery, PsiExpression[]> duplicates = ConcurrentFactoryMap.createMap(
@@ -197,13 +238,12 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 
-  private static void createReplaceFixes(PsiExpression @NotNull [] foundExpr, @NotNull PsiExpression originalExpression,
+  private static void createReplaceFixes(PsiExpression @NotNull [] foundExpr, @NotNull PsiLiteralExpression originalExpression,
                                          @NotNull Collection<? super LocalQuickFix> fixes) {
     for (PsiExpression expr : foundExpr) {
       if (expr == originalExpression) continue;
       PsiElement parent = expr.getParent();
-      if (parent instanceof PsiField) {
-        final PsiField field = (PsiField)parent;
+      if (parent instanceof PsiField field) {
         if (field.getInitializer() == expr && field.hasModifierProperty(PsiModifier.STATIC)) {
           final PsiClass containingClass = field.getContainingClass();
           if (containingClass == null) continue;
@@ -212,14 +252,13 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
           if (!isAccessible && containingClass.getQualifiedName() == null) {
             continue;
           }
-          fixes.add(new ReplaceFix(field, originalExpression));
+          fixes.add(LocalQuickFix.from(new ReplaceFix(field, originalExpression)));
         }
       }
     }
   }
 
-  @Nullable
-  private static PsiReferenceExpression createReferenceTo(@NotNull PsiField constant) throws IncorrectOperationException {
+  private static @Nullable PsiReferenceExpression createReferenceTo(@NotNull PsiField constant) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(constant.getProject()).getElementFactory();
     PsiReferenceExpression reference = (PsiReferenceExpression)factory.createExpressionFromText("XXX." + constant.getName(), null);
     final PsiReferenceExpression classQualifier = (PsiReferenceExpression)reference.getQualifierExpression();
@@ -232,67 +271,31 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final OptionsPanel optionsPanel = new OptionsPanel();
-    optionsPanel.myIgnorePropertyKeyExpressions.addActionListener(
-      e -> IGNORE_PROPERTY_KEYS = optionsPanel.myIgnorePropertyKeyExpressions.isSelected());
-    optionsPanel.myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
-        try {
-          MIN_STRING_LENGTH = Integer.parseInt(optionsPanel.myMinStringLengthField.getText());
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    });
-    optionsPanel.myIgnorePropertyKeyExpressions.setSelected(IGNORE_PROPERTY_KEYS);
-    optionsPanel.myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
-    return optionsPanel.myPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("MIN_STRING_LENGTH", JavaI18nBundle.message("inspection.duplicates.option"), 1, 10_000),
+      checkbox("IGNORE_PROPERTY_KEYS", JavaI18nBundle.message("inspection.duplicates.option.report.propertykey.expressions"))
+    );
   }
 
-  public static class OptionsPanel {
-     private JTextField myMinStringLengthField;
-     private JPanel myPanel;
-     private JCheckBox myIgnorePropertyKeyExpressions;
-  }
-
-  private class IntroduceLiteralConstantFix extends LocalQuickFixOnPsiElement {
-    IntroduceLiteralConstantFix(PsiLiteralExpression representative) {
-      super(representative);
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return getFamilyName();
+  private class IntroduceLiteralConstantFix extends IntroduceConstantFix {
+    private IntroduceLiteralConstantFix() {
+      super(JavaI18nBundle.message("introduce.constant.across.the.project"));
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return JavaI18nBundle.message("introduce.constant.across.the.project");
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      PsiExpression[] literalExpressions = getDuplicateLiteralsUnderProgress(startElement);
+    protected void doIntroduce(@NotNull Project project, PsiExpression element) {
+      PsiExpression[] literalExpressions = getDuplicateLiteralsUnderProgress(element);
       if (literalExpressions == null) return;
       introduceConstant(literalExpressions, project);
     }
   }
 
-  private static final class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  private static final class ReplaceFix extends PsiUpdateModCommandAction<PsiLiteralExpression> {
     private final @IntentionName String myText;
-    @SafeFieldForPreview
     private final SmartPsiElementPointer<PsiField> myConst;
 
-    private ReplaceFix(PsiField constant, PsiExpression originalExpression) {
+    private ReplaceFix(PsiField constant, PsiLiteralExpression originalExpression) {
       super(originalExpression);
       myText = JavaI18nBundle.message("inspection.duplicates.replace.quickfix", PsiFormatUtil
         .formatVariable(constant, PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
@@ -302,43 +305,31 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
       myConst = SmartPointerManager.getInstance(constant.getProject()).createSmartPsiElementPointer(constant);
     }
 
-    @NotNull
     @Override
-    public String getText() {
-      return myText;
+    protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiLiteralExpression element) {
+      return Presentation.of(myText);
     }
 
     @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
-                       @Nullable Editor editor,
-                       @NotNull PsiElement startElement,
-                       @NotNull PsiElement endElement) {
-      final PsiLiteralExpression myOriginalExpression = (PsiLiteralExpression)startElement;
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiLiteralExpression literal, @NotNull ModPsiUpdater updater) {
       final PsiField myConstant = myConst.getElement();
       if (myConstant == null) return;
       final PsiExpression initializer = myConstant.getInitializer();
       if (!(initializer instanceof PsiLiteralExpression)) {
         return;
       }
-      try {
-        final PsiReferenceExpression reference = createReferenceTo(myConstant);
-        if (reference != null) {
-          final PsiReferenceExpression newReference = (PsiReferenceExpression)myOriginalExpression.replace(reference);
-          if (UnnecessarilyQualifiedStaticUsageInspection.isUnnecessarilyQualifiedAccess(newReference, false, false, true)) {
-            //remove qualifier
-            newReference.getChildren()[0].delete();
-          }
+      final PsiReferenceExpression reference = createReferenceTo(myConstant);
+      if (reference != null) {
+        final PsiReferenceExpression newReference = (PsiReferenceExpression)literal.replace(reference);
+        if (UnnecessarilyQualifiedStaticUsageInspection.isUnnecessarilyQualifiedAccess(newReference, false, false, true)) {
+          //remove qualifier
+          newReference.getChildren()[0].delete();
         }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
       }
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaI18nBundle.message("inspection.duplicates.replace.family.quickfix");
     }
   }
@@ -354,7 +345,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       PsiExpression[] literalExpressions = getDuplicateLiteralsUnderProgress(startElement);
       if (literalExpressions == null) return;
 
@@ -369,7 +360,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
       presentation.setTabName(title);
       presentation.setTabText(title);
       presentation.setShowCancelButton(true);
-      UsageView view = UsageViewManager.getInstance(project).showUsages(new UsageTarget[]{new PsiElement2UsageTargetAdapter(startElement) {
+      UsageView view = UsageViewManager.getInstance(project).showUsages(new UsageTarget[]{new PsiElement2UsageTargetAdapter(startElement, false) {
         @Override
         public String getPresentableText() {
           return "String literal: '" + ((PsiLiteralExpression)startElement).getValue() + "'";
@@ -381,59 +372,57 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
       }, JavaI18nBundle.message("introduce.constant.across.the.project"));
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return getFamilyName();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaI18nBundle.message("inspection.duplicates.navigate.to.occurrences");
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiElement element = previewDescriptor.getPsiElement();
+      if (element instanceof PsiLiteralExpression literal) {
+        final PsiExpression[] duplicates = getDuplicateLiterals(project, literal, true);
+        if (duplicates.length < 10) {
+          return new IntentionPreviewInfo.Html(JavaI18nBundle.message(
+            "inspection.duplicates.navigate.to.occurrences.preview",
+            duplicates.length,
+            literal.getText()
+          ));
+        }
+        return new IntentionPreviewInfo.Html(JavaI18nBundle.message(
+          "inspection.duplicates.navigate.to.many.occurrences.preview",
+          duplicates.length,
+          literal.getText()
+        ));
+      }
+      return IntentionPreviewInfo.EMPTY;
     }
   }
 
-  private static final class StringLiteralSearchQuery {
-    @NotNull
-    private final String stringToFind;
-    private final boolean ignorePropertyKeys;
-    private final int minStringLength;
-    private final boolean isOnFlySearch;
-
-    private StringLiteralSearchQuery(@NotNull String stringToFind, boolean ignorePropertyKeys, int minStringLength, boolean isOnFlySearch) {
-      this.stringToFind = stringToFind;
-      this.ignorePropertyKeys = ignorePropertyKeys;
-      this.minStringLength = minStringLength;
-      this.isOnFlySearch = isOnFlySearch;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      StringLiteralSearchQuery query = (StringLiteralSearchQuery)o;
-      return ignorePropertyKeys == query.ignorePropertyKeys &&
-             minStringLength == query.minStringLength &&
-             isOnFlySearch == query.isOnFlySearch &&
-             Objects.equals(stringToFind, query.stringToFind);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(stringToFind, ignorePropertyKeys, minStringLength, isOnFlySearch);
-    }
+  private record StringLiteralSearchQuery(@NotNull String stringToFind, boolean ignorePropertyKeys, int minStringLength,
+                                          boolean isOnFlySearch) {
   }
 
   private PsiExpression @Nullable [] getDuplicateLiteralsUnderProgress(@NotNull PsiElement literalExpression) {
     if (!(literalExpression instanceof PsiLiteralExpression)) return null;
     Project project = literalExpression.getProject();
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      return getDuplicateLiterals(project,
-                                  (PsiLiteralExpression)literalExpression,
-                                  false /* here we want find all the expressions */);
-    }, JavaI18nBundle.message("progress.title.searching.for.duplicates.of.0", ((PsiLiteralExpression)literalExpression).getValue()), true, project);
+    ThrowableComputable<PsiExpression[], RuntimeException> findDuplicatesComputable = () -> {
+      return ReadAction.compute(() -> getDuplicateLiterals(project,
+                                                           (PsiLiteralExpression)literalExpression,
+                                                           false /* here we want find all the expressions */));
+    };
+    if (IntentionPreviewUtils.isPreviewElement(literalExpression)) {
+      PsiExpression[] expressions = findDuplicatesComputable.compute();
+      if (expressions == null) return null;
+      PsiFile file = literalExpression.getContainingFile();
+      return ContainerUtil.map2Array(expressions, PsiExpression.EMPTY_ARRAY, e -> PsiTreeUtil.findSameElementInCopy(e, file));
+    }
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(findDuplicatesComputable, JavaI18nBundle.message("progress.title.searching.for.duplicates.of.0", ((PsiLiteralExpression)literalExpression).getValue()), true, project);
   }
 
   private static void introduceConstant(PsiExpression @NotNull [] expressions, @NotNull Project project) {

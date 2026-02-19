@@ -1,23 +1,23 @@
-// "Fix all 'Optional can be replaced with sequence of if statements' problems in file" "true"
+// "Fix all ''Optional' can be replaced with sequence of 'if' statements' problems in file" "true"
 
 import java.util.*;
 
 class Test {
 
   String reusesVariable(String in) {
-      String s1 = null;
+      String s = null;
       if (in == null) throw new NullPointerException();
-      String s = toName(in);
-      if (s != null) s1 = s;
-      if (s1 == null) {
-          String value = toDefaultName();
-          s1 = value;
+      String name = toName(in);
+      if (name != null) s = name;
+      if (s == null) {
+          String defaultName = toDefaultName();
+          s = defaultName;
       }
-      return s1;
+      return s;
   }
 
   String removesRedundantAssignment(String in) {
-      String s1 = null;
+      String string = null;
       String s = null;
       if (in == null) throw new NullPointerException();
       s = in;

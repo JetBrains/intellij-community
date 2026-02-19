@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.idea.android.customization` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "idea-android-customization_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "idea-android-customization",
+  module_name = "intellij.idea.android.customization",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":idea-android-customization_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
+    "//libraries/kotlinx/coroutines/core",
+    "@lib//:studio-platform",
+    "//platform/util",
+  ]
+)
+
+jvm_library(
+  name = "idea-android-customization_test_lib",
+  module_name = "intellij.idea.android.customization",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":idea-android-customization",
+    "//platform/ide-core:ide-core_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util:util_test_lib",
+  ]
+)
+### auto-generated section `build intellij.idea.android.customization` end

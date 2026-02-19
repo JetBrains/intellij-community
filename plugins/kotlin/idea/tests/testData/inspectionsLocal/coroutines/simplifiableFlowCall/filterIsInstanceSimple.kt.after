@@ -1,0 +1,9 @@
+// WITH_COROUTINES
+// IGNORE_K1
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+
+fun test(flow: Flow<Any>) {
+    flow.filterIsInstance<String>()
+}

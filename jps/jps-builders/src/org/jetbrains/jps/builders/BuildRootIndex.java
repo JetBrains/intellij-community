@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +8,7 @@ import org.jetbrains.jps.incremental.CompileContext;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,7 +21,8 @@ public interface BuildRootIndex {
   <R extends BuildRootDescriptor> List<R> getTempTargetRoots(@NotNull BuildTarget<R> target, @NotNull CompileContext context);
 
   @NotNull
-  <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root, @Nullable Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
+  <R extends BuildRootDescriptor> List<R> getRootDescriptors(@NotNull File root,
+                                                             @Nullable Collection<? extends BuildTargetType<? extends BuildTarget<R>>> types,
                                                              @Nullable CompileContext context);
 
   <R extends BuildRootDescriptor> void associateTempRoot(@NotNull CompileContext context, @NotNull BuildTarget<R> target, @NotNull R root);
@@ -60,7 +48,7 @@ public interface BuildRootIndex {
   @NotNull
   FileFilter getRootFilter(@NotNull BuildRootDescriptor descriptor);
 
-  boolean isDirectoryAccepted(@NotNull File dir, @NotNull BuildRootDescriptor descriptor);
+  boolean isDirectoryAccepted(@NotNull Path dir, @NotNull BuildRootDescriptor descriptor);
 
-  boolean isFileAccepted(@NotNull File file, @NotNull BuildRootDescriptor descriptor);
+  boolean isFileAccepted(@NotNull Path file, @NotNull BuildRootDescriptor descriptor);
 }

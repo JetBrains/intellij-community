@@ -1,8 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +27,6 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
 
-/**
- * @author ilyas
- */
 public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
   implements GrTypeParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
 
@@ -48,7 +49,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
     final GrTypeParameter[] typeParameters = getTypeParameters();
     for (int i = 0; i < typeParameters.length; i++) {
       if (typeParameters[i].equals(typeParameter)) return i;
@@ -71,7 +72,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     appendParenthesesIfNeeded();
 
     if (first == last && first.getPsi() instanceof PsiTypeParameter) {
@@ -136,9 +137,8 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
     return true;
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getTypeParameters());
   }
 }

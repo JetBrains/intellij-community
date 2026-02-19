@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -25,7 +25,7 @@ public final class PluginBuildUtil {
   private PluginBuildUtil() {
   }
 
-  @NonNls @Nullable public static String getPluginExPath(Module module) {
+  public static @NonNls @Nullable String getPluginExPath(Module module) {
     final Sdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getSdk());
     if (jdk == null) {
       return null;
@@ -43,7 +43,7 @@ public final class PluginBuildUtil {
 
   public static void getDependencies(Module module, final Set<? super Module> modules) {
     productionRuntimeDependencies(module).forEachModule(dep -> {
-      if (ModuleType.get(dep) == StdModuleTypes.JAVA && !modules.contains(dep)) {
+      if (ModuleType.get(dep) == JavaModuleType.getModuleType() && !modules.contains(dep)) {
         modules.add(dep);
         getDependencies(dep, modules);
       }

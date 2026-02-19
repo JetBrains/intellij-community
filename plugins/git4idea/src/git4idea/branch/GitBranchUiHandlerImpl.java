@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -29,11 +30,9 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -43,26 +42,38 @@ import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.message;
 import static com.intellij.openapi.ui.Messages.YES;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static git4idea.GitNotificationIdsHolder.BRANCH_OPERATION_ERROR;
+import static git4idea.GitNotificationIdsHolder.UNRESOLVED_CONFLICTS;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANCEL;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE;
 
 public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
-  @NonNls private static final String RESOLVE_HREF_ATTRIBUTE = "resolve";
+  private final @NotNull Project myProject;
+  private final @NotNull ProgressIndicator myProgressIndicator;
 
-  @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
-  @NotNull private final ProgressIndicator myProgressIndicator;
-
+  /**
+   * @deprecated Git no longer required
+   */
+  @Deprecated
   public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator indicator) {
+    this(project, indicator);
+  }
+
+  public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
-    myGit = git;
     myProgressIndicator = indicator;
   }
 
   @Override
-  public boolean notifyErrorWithRollbackProposal(@NotNull final String title,
-                                                 @NotNull final String message,
-                                                 @NotNull final String rollbackProposal) {
+  public void notifyError(@NotNull @NlsContexts.NotificationTitle String title,
+                          @NotNull @NlsContexts.NotificationContent String message) {
+    VcsNotifier.getInstance(myProject).notifyError(BRANCH_OPERATION_ERROR, title, message);
+  }
+
+  @Override
+  public boolean notifyErrorWithRollbackProposal(final @NotNull String title,
+                                                 final @NotNull String message,
+                                                 final @NotNull String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       StringBuilder description = new StringBuilder();
@@ -78,27 +89,29 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public void showUnmergedFilesNotification(@NotNull final String operationName, @NotNull final Collection<? extends GitRepository> repositories) {
+  public void showUnmergedFilesNotification(final @NotNull String operationName,
+                                            final @NotNull Collection<? extends GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    VcsNotifier.getInstance(myProject).notifyError("git.unresolved.conflicts", title, description,
-                                                   new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification,
-                                    @NotNull HyperlinkEvent event) {
-          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals(RESOLVE_HREF_ATTRIBUTE)) {
-            GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
-              setMergeDescription(GitBundle.message("branch.ui.handler.merge.notification.description", operationName)).
-              setErrorNotificationTitle(GitBundle.message("branch.ui.handler.merge.error.notification.title"));
-            new GitConflictResolver(myProject, GitUtil.getRootsFromRepositories(repositories), params).merge();
-          }
-        }
-      }
-    );
+    VcsNotifier.importantNotification().createNotification(title, description, NotificationType.ERROR)
+      .setDisplayId(UNRESOLVED_CONFLICTS)
+      .addAction(NotificationAction.createSimple(
+        GitBundle.messagePointer("branch.ui.handler.unmerged.files.error.resolve.conflicts.action.text"), () -> {
+          new Task.Backgroundable(myProject, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
+                setMergeDescription(GitBundle.message("branch.ui.handler.merge.notification.description", operationName)).
+                setErrorNotificationTitle(GitBundle.message("branch.ui.handler.merge.error.notification.title"));
+              new GitConflictResolver(myProject, GitUtil.getRootsFromRepositories(repositories), params).merge();
+            }
+          }.queue();
+        }))
+      .notify(myProject);
   }
 
   @Override
-  public boolean showUnmergedFilesMessageWithRollback(@NotNull String operationName, @NotNull final String rollbackProposal) {
+  public boolean showUnmergedFilesMessageWithRollback(@NotNull String operationName, final @NotNull String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       String description = XmlStringUtil.wrapInHtml(
@@ -117,14 +130,13 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull final String rollbackProposal,
-                                                      @NotNull VirtualFile root, @NotNull final Collection<String> relativePaths) {
+  public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, final @NotNull String rollbackProposal,
+                                                      @NotNull VirtualFile root, final @NotNull Collection<String> relativePaths) {
     return GitUntrackedFilesHelper.showUntrackedFilesDialogWithRollback(myProject, operationName, rollbackProposal, root, relativePaths);
   }
 
-  @NotNull
   @Override
-  public ProgressIndicator getProgressIndicator() {
+  public @NotNull ProgressIndicator getProgressIndicator() {
     return myProgressIndicator;
   }
 
@@ -151,11 +163,10 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     return restore.get();
   }
 
-  @NotNull
   @Override
-  public DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull List<String> branchNames,
-                                                                @NotNull Collection<@NlsSafe String> trackingBranches,
-                                                                @NotNull Collection<GitRepository> repositories) {
+  public @NotNull DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull List<String> branchNames,
+                                                                         @NotNull Collection<@NlsSafe String> trackingBranches,
+                                                                         @NotNull Collection<GitRepository> repositories) {
     boolean deleteMultipleBranches = branchNames.size() > 1;
     String title = GitBundle.message("branch.ui.handler.delete.remote.branches", branchNames.size());
     String remoteBranches = deleteMultipleBranches ? StringUtil.join(branchNames, ", ") : branchNames.iterator().next();
@@ -176,15 +187,14 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     Ref<Boolean> deleteChoice = Ref.create(false);
     boolean delete =
       MessageDialogBuilder.yesNo(title, message).yesText(deleteButtonText).noText(getCancelButtonText())
-        .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
+        .doNotAsk(new DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(boolean isSelected, int exitCode) {
             deleteChoice.set(isSelected);
           }
 
-          @NotNull
           @Override
-          public String getDoNotShowMessage() {
+          public @NotNull String getDoNotShowMessage() {
             return checkboxMessage;
           }
         })
@@ -195,15 +205,11 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
              : CANCEL;
   }
 
-  @NotNull
-  @NlsContexts.DialogTitle
-  private static String unmergedFilesErrorTitle(@NotNull String operationName) {
+  private static @NotNull @NlsContexts.DialogTitle String unmergedFilesErrorTitle(@NotNull String operationName) {
     return GitBundle.message("branch.ui.handler.can.not.operation.name.because.of.unmerged.files", operationName);
   }
 
-  @NotNull
-  @NlsContexts.NotificationContent
-  private static String unmergedFilesErrorNotificationDescription(String operationName) {
-    return GitBundle.message("branch.ui.handler.unmerged.files.error.notification", RESOLVE_HREF_ATTRIBUTE, operationName);
+  private static @NotNull @NlsContexts.NotificationContent String unmergedFilesErrorNotificationDescription(String operationName) {
+    return GitBundle.message("branch.ui.handler.unmerged.files.error.notification.text", operationName);
   }
 }

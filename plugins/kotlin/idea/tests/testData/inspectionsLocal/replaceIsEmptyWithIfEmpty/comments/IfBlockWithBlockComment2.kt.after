@@ -1,0 +1,5 @@
+// IGNORE_K1
+fun test(list: List<Int>) {
+    /* comment line 1 */
+    list.ifEmpty { listOf() }
+}

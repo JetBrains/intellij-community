@@ -59,8 +59,7 @@ final class SsiFsize implements SsiCommand {
 
   // We try to mimic Apache here, as we do everywhere
   // All the 'magic' numbers are from the util_script.c Apache source file.
-  @NlsSafe
-  private static String formatSize(long size, @NotNull String format) {
+  private static @NlsSafe String formatSize(long size, @NotNull String format) {
     if (format.equalsIgnoreCase("bytes")) {
       return new DecimalFormat("#,##0").format(size);
     }
@@ -91,10 +90,6 @@ final class SsiFsize implements SsiCommand {
       return result;
     }
 
-    StringBuilder buf = new StringBuilder();
-    for (int i = 0; i < charsToAdd; i++) {
-      buf.append(' ');
-    }
-    return buf.append(result).toString();
+    return " ".repeat(charsToAdd) + result;
   }
 }

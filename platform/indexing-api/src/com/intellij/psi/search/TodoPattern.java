@@ -1,34 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
 public final class TodoPattern implements Cloneable {
-  private static final Logger LOG = Logger.getInstance(TodoPattern.class);
+  private static final String CASE_SENS_ATT = "case-sensitive";
+  private static final String PATTERN_ATT = "pattern";
 
-  private IndexPattern myIndexPattern;
-
+  private final IndexPattern myIndexPattern;
   private TodoAttributes myAttributes;
 
-  @NonNls private static final String CASE_SENS_ATT = "case-sensitive";
-  @NonNls private static final String PATTERN_ATT = "pattern";
-
+  @Internal
   public TodoPattern(@NotNull TodoAttributes attributes) {
     this("", attributes, false);
   }
 
+  @Internal
   public TodoPattern(@NotNull Element state, @NotNull TextAttributes defaultTodoAttributes) {
     myAttributes = new TodoAttributes(state, defaultTodoAttributes);
-    myIndexPattern = new IndexPattern(state.getAttributeValue(PATTERN_ATT, "").trim(), Boolean.parseBoolean(state.getAttributeValue(CASE_SENS_ATT)));
+    myIndexPattern = new IndexPattern(
+      state.getAttributeValue(PATTERN_ATT, "").trim(),
+      Boolean.parseBoolean(state.getAttributeValue(CASE_SENS_ATT)));
   }
 
   public TodoPattern(@NotNull String patternString, @NotNull TodoAttributes attributes, boolean caseSensitive) {
@@ -37,24 +36,12 @@ public final class TodoPattern implements Cloneable {
   }
 
   @Override
-  public TodoPattern clone(){
-    try{
-      TodoAttributes attributes = myAttributes.clone();
-      TodoPattern pattern = (TodoPattern)super.clone();
-      pattern.myIndexPattern = new IndexPattern(myIndexPattern.getPatternString(), myIndexPattern.isCaseSensitive());
-      pattern.myAttributes = attributes;
-
-      return pattern;
-    }
-    catch(CloneNotSupportedException e){
-      LOG.error(e);
-      return null;
-    }
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  public TodoPattern clone() {
+    return new TodoPattern(myIndexPattern.getPatternString(), myAttributes.clone(), myIndexPattern.isCaseSensitive());
   }
 
-  @NotNull
-  @NlsSafe
-  public String getPatternString() {
+  public @NotNull @NlsSafe String getPatternString() {
     return myIndexPattern.getPatternString();
   }
 
@@ -62,8 +49,7 @@ public final class TodoPattern implements Cloneable {
     myIndexPattern.setPatternString(patternString);
   }
 
-  @NotNull
-  public TodoAttributes getAttributes() {
+  public @NotNull TodoAttributes getAttributes() {
     return myAttributes;
   }
 
@@ -79,8 +65,7 @@ public final class TodoPattern implements Cloneable {
     myIndexPattern.setCaseSensitive(caseSensitive);
   }
 
-  @Nullable
-  public Pattern getPattern(){
+  public @Nullable Pattern getPattern() {
     return myIndexPattern.getPattern();
   }
 
@@ -92,26 +77,14 @@ public final class TodoPattern implements Cloneable {
     element.setAttribute(PATTERN_ATT, myIndexPattern.getPatternString());
   }
 
-  public boolean equals(Object obj){
-    if (!(obj instanceof TodoPattern)){
-      return false;
-    }
-
-    TodoPattern pattern = (TodoPattern)obj;
-
-    if (!myIndexPattern.equals(pattern.myIndexPattern)) {
-      return false;
-    }
-
-    if (!Comparing.equal(myAttributes, pattern.myAttributes)){
-      return false;
-    }
-
-    return true;
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof TodoPattern that && myIndexPattern.equals(that.myIndexPattern) && myAttributes.equals(that.myAttributes);
   }
 
-  public int hashCode(){
-    return myIndexPattern.hashCode();
+  @Override
+  public int hashCode() {
+    return myIndexPattern.hashCode() * 31 + myAttributes.hashCode();
   }
 
   public IndexPattern getIndexPattern() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
@@ -20,25 +20,37 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.SortedListModel;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class DetectionExcludesConfigurable implements Configurable {
+@ApiStatus.Internal
+public final class DetectionExcludesConfigurable implements Configurable {
   private final Project myProject;
   private final DetectionExcludesConfigurationImpl myConfiguration;
   private final SortedListModel<ExcludeListItem> myModel;
@@ -51,22 +63,25 @@ public class DetectionExcludesConfigurable implements Configurable {
     myModel = new SortedListModel<>(ExcludeListItem.COMPARATOR);
   }
 
-  @Nls
   @Override
-  @NotNull
-  public JComponent createComponent() {
+  public @Nls @NotNull JComponent createComponent() {
     myEnabledDetectionCheckBox = new JCheckBox(ProjectBundle.message("checkbox.text.enable.framework.detection"));
     myEnabledDetectionCheckBox.setBorder(new EmptyBorder(10, 10, 0, 0));
     final JBList<ExcludeListItem> excludesList = new JBList<>(myModel);
-    final ColoredListCellRenderer<ExcludeListItem> renderer = new ColoredListCellRenderer<ExcludeListItem>() {
+    final ColoredListCellRenderer<ExcludeListItem> renderer = new ColoredListCellRenderer<>() {
       final JPanel panel = new JPanel(new BorderLayout());
+
       {
         panel.setBorder(JBUI.Borders.empty(2, 10, 2, 0));
         panel.add(this);
       }
 
       @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends ExcludeListItem> list, ExcludeListItem value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends ExcludeListItem> list,
+                                           ExcludeListItem value,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
         setIconTextGap(4);
         if (value != null) {
           value.renderItem(this);
@@ -75,7 +90,11 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
 
       @Override
-      public Component getListCellRendererComponent(JList<? extends ExcludeListItem> list, ExcludeListItem value, int index, boolean selected, boolean hasFocus) {
+      public Component getListCellRendererComponent(JList<? extends ExcludeListItem> list,
+                                                    ExcludeListItem value,
+                                                    int index,
+                                                    boolean selected,
+                                                    boolean hasFocus) {
         super.getListCellRendererComponent(list, value, index, selected, hasFocus);
         panel.setBackground(UIUtil.getListBackground(selected, hasFocus));
         return panel;
@@ -118,17 +137,16 @@ public class DetectionExcludesConfigurable implements Configurable {
     }
     types.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     types.add(0, null);
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<FrameworkType>(
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
       LangBundle.message("popup.title.framework.to.exclude"), types) {
       @Override
       public Icon getIconFor(FrameworkType value) {
         return value != null ? value.getIcon() : null;
       }
 
-      @NotNull
       @Override
-      public String getTextFor(FrameworkType value) {
-        return value != null ? value.getPresentableName() : "All Frameworks...";
+      public @NotNull String getTextFor(FrameworkType value) {
+        return value != null ? value.getPresentableName() : ProjectBundle.message("list.item.all.frameworks");
       }
 
       @Override
@@ -137,7 +155,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
 
       @Override
-      public PopupStep onChosen(final FrameworkType frameworkType, boolean finalChoice) {
+      public PopupStep<?> onChosen(final FrameworkType frameworkType, boolean finalChoice) {
         if (frameworkType == null) {
           return doFinalStep(() -> chooseDirectoryAndAdd(null));
         }
@@ -147,12 +165,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
     });
     final RelativePoint popupPoint = button.getPreferredPopupPoint();
-    if (popupPoint != null) {
-      popup.show(popupPoint);
-    }
-    else {
-      popup.showInCenterOf(myMainPanel);
-    }
+    popup.show(popupPoint);
   }
 
   private boolean isExcluded(@NotNull FrameworkType type) {
@@ -164,11 +177,11 @@ public class DetectionExcludesConfigurable implements Configurable {
     return false;
   }
 
-  private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
-    final String projectItem = "In the whole project";
-    return new BaseListPopupStep<String>(null, projectItem, "In directory...") {
+  private PopupStep<?> addExcludedFramework(final @NotNull FrameworkType frameworkType) {
+    String projectItem = LangBundle.message("list.item.disable.framework.detection.in.whole.project");
+    return new BaseListPopupStep<>(null, projectItem, LangBundle.message("list.item.disable.framework.detection.in.directory")) {
       @Override
-      public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {
           addAndRemoveDuplicates(frameworkType, null);
           return FINAL_CHOICE;
@@ -229,8 +242,7 @@ public class DetectionExcludesConfigurable implements Configurable {
     myConfiguration.loadState(computeState());
   }
 
-  @Nullable
-  private ExcludesConfigurationState computeState() {
+  private @NotNull ExcludesConfigurationState computeState() {
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     state.setDetectionEnabled(myEnabledDetectionCheckBox.isSelected());
     for (ExcludeListItem item : myModel.getItems()) {
@@ -268,9 +280,8 @@ public class DetectionExcludesConfigurable implements Configurable {
     }
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return ProjectBundle.message("configurable.DetectionExcludesConfigurable.display.name");
   }
 }

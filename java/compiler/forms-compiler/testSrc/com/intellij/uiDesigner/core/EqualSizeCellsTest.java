@@ -17,8 +17,10 @@ package com.intellij.uiDesigner.core;
 
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 public final class EqualSizeCellsTest extends TestCase{
   /**

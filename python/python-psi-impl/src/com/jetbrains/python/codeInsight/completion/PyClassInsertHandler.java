@@ -12,9 +12,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public final class PyClassInsertHandler implements InsertHandler<LookupElement> {
   public static PyClassInsertHandler INSTANCE = new PyClassInsertHandler();
 
@@ -33,11 +31,11 @@ public final class PyClassInsertHandler implements InsertHandler<LookupElement> 
       PyClass pyClass = PyUtil.as(item.getPsiElement(), PyClass.class);
       PyFunction init = pyClass != null ? pyClass.findInitOrNew(true, null) : null;
       if (init != null && PyFunctionInsertHandler.hasParams(context, init)) {
-        editor.getCaretModel().moveToOffset(offset+1);
+        editor.getCaretModel().moveToOffset(offset + 1);
         AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), init);
       }
       else {
-        editor.getCaretModel().moveToOffset(offset+2);
+        editor.getCaretModel().moveToOffset(offset + 2);
       }
     }
   }

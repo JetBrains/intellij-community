@@ -4,35 +4,61 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.InspectionsKt;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
+    ThreadingAssertions.assertEventDispatchThread();
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
   }
 
   @Override
@@ -59,7 +85,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
 
     AnalysisScope scope = new AnalysisScope(getFile());
     context.doInspections(scope);
-    UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invoke later
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for launchInspections in invoke later
 
     Tools tools = context.getTools().get(shortName);
     GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
@@ -67,12 +93,65 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
     assertEquals(1, presentation.getProblemDescriptors().size());
 
     context.doInspections(scope);
-    UIUtil.dispatchAllInvocationEvents(); // wait for launchInspections in invoke later
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for launchInspections in invoke later
 
     tools = context.getTools().get(shortName);
     toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
     presentation = context.getPresentation(toolWrapper);
     assertEquals(1, presentation.getProblemDescriptors().size());
+  }
+
+  public void testBatchInspectionMustBeRunUnderDaemonProgressIndicatorToAvoidSpammingStatusBarWithIrrelevantMessages() throws Throwable {
+    AtomicBoolean run = new AtomicBoolean();
+    AtomicReference<Throwable> throwable = new AtomicReference<>();
+    LocalInspectionTool tool = new LocalInspectionTool() {
+      @Nls
+      @NotNull
+      @Override
+      public String getGroupDisplayName() {
+        return "fegna2";
+      }
+
+      @Nls
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return getGroupDisplayName();
+      }
+
+      @NotNull
+      @Override
+      public String getShortName() {
+        return getGroupDisplayName();
+      }
+
+      @NotNull
+      @Override
+      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+        return new PsiElementVisitor() {
+          @Override
+          public void visitFile(@NotNull PsiFile psiFile) {
+            run.set(true);
+            ProgressIndicator indicator = ProgressWrapper.unwrapAll(ProgressManager.getGlobalProgressIndicator());
+            if (!(indicator instanceof DaemonProgressIndicator)) {
+              throwable.set(new IllegalStateException("expected DaemonProgressIndicator but got: " + indicator +" "+indicator.getClass()));
+            }
+          }
+        };
+      }
+    };
+    InspectionProfileImpl profile = InspectionsKt.configureInspections(new InspectionProfileEntry[]{tool}, getProject(), getTestRootDisposable());
+
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
+    context.setExternalProfile(profile);
+    configureByText(PlainTextFileType.INSTANCE, "blah");
+
+    AnalysisScope scope = new AnalysisScope(getFile());
+    context.doInspections(scope);
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // wait for launchInspections in invoke later
+
+    assertTrue(run.get());
+    if (throwable.get() != null) throw throwable.get();
   }
 
   public void testRunInspectionContext() {
@@ -92,11 +171,14 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
   }
 
   public void testJavaMethodExternalization() throws Exception {
+    PsiFile file = createFile("Foo.java", """
+      public class Foo {
+          <T> void foo(T t) {
+          }
+      }""");
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext();
-    PsiFile file = createFile("Foo.java", "public class Foo {\n" +
-                                          "    <T> void foo(T t) {\n" +
-                                          "    }\n" +
-                                          "}");
+    context.setCurrentScope(new AnalysisScope(file));
+    context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     PsiClass[] classes = ((PsiClassOwner)file).getClasses();
     PsiClass fooClass = classes[0];
     PsiMethod fooMethod = fooClass.findMethodsByName("foo", false)[0];
@@ -111,7 +193,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
     AtomicBoolean doRunInspection = new AtomicBoolean(true);
     GlobalSimpleInspectionTool myTool = new GlobalSimpleInspectionTool() {
       @Override
-      public void checkFile(@NotNull PsiFile file,
+      public void checkFile(@NotNull PsiFile psiFile,
                             @NotNull InspectionManager manager,
                             @NotNull ProblemsHolder problemsHolder,
                             @NotNull GlobalInspectionContext globalContext,
@@ -120,7 +202,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
         while (doRunInspection.get()) {
           ProgressManager.checkCanceled();
         }
-        problemsHolder.registerProblem(manager.createProblemDescriptor(file, "Finished: "+getShortName(), (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
+        problemsHolder.registerProblem(manager.createProblemDescriptor(psiFile, "Finished: " + getShortName(), (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true));
       }
 
       @NotNull
@@ -162,7 +244,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
 
         // have to restart
         while (!inspectionStarted.get()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
 
         doRunInspection.set(false);
@@ -171,7 +253,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
 
     context.doInspections(scope);
 
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     Tools tools = context.getTools().get(shortName);
     GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();

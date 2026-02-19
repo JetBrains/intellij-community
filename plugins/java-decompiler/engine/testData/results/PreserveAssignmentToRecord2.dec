@@ -1,0 +1,49 @@
+package org.example;
+
+public record PreserveAssignmentToRecord2(int x) {
+   private static final int x2 = 1;
+
+   public PreserveAssignmentToRecord2(int x) {
+      this.x = 1;// 7
+      System.out.println("1");// 8
+   }// 9
+
+   public int x() {
+      return this.x;// 3
+   }
+}
+
+class 'org/example/PreserveAssignmentToRecord2' {
+   method '<init> (I)V' {
+      4      6
+      5      6
+      6      6
+      7      6
+      8      6
+      9      7
+      a      7
+      b      7
+      c      7
+      d      7
+      e      7
+      f      7
+      10      7
+      11      8
+   }
+
+   method 'x ()I' {
+      0      11
+      1      11
+      2      11
+      3      11
+      4      11
+   }
+}
+
+Lines mapping:
+3 <-> 12
+7 <-> 7
+8 <-> 8
+9 <-> 9
+Not mapped:
+6

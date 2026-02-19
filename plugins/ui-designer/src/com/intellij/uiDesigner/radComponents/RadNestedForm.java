@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -9,18 +9,23 @@ import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.LoaderFactory;
+import com.intellij.uiDesigner.ModuleProvider;
+import com.intellij.uiDesigner.UIFormXmlConstants;
+import com.intellij.uiDesigner.XmlReader;
+import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
-/**
- * @author yole
- */
+
 public class RadNestedForm extends RadComponent {
   private static final Logger LOG = Logger.getInstance(RadNestedForm.class);
 
@@ -77,8 +82,7 @@ public class RadNestedForm extends RadComponent {
   }
 
   @Override
-  @NotNull
-  public String getComponentClassName() {
+  public @NotNull String getComponentClassName() {
     return myRootContainer.getClassToBind();
   }
 

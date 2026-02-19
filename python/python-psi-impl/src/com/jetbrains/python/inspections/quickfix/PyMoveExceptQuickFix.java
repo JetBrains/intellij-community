@@ -2,35 +2,39 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTryExceptStatement;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class PyMoveExceptQuickFix implements LocalQuickFix {
+public class PyMoveExceptQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.move.except.up");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyExceptPart part = PsiTreeUtil.getParentOfType(element, PyExceptPart.class);
     if (part == null) return;
     final PyExpression exceptClassExpression = part.getExceptClass();
     if (exceptClassExpression == null) return;
 
-    final PsiElement exceptClass = ((PyReferenceExpression)exceptClassExpression).followAssignmentsChain(PyResolveContext.defaultContext()).getElement();
+    final var resolveContext = PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(project));
+    final PsiElement exceptClass = ((PyReferenceExpression)exceptClassExpression).followAssignmentsChain(resolveContext).getElement();
     if (exceptClass instanceof PyClass) {
       final PyTryExceptStatement statement = PsiTreeUtil.getParentOfType(part, PyTryExceptStatement.class);
       if (statement == null) return;
@@ -40,7 +44,7 @@ public class PyMoveExceptQuickFix implements LocalQuickFix {
       while (prevExceptPart != null) {
         final PyExpression classExpression = prevExceptPart.getExceptClass();
         if (classExpression == null) return;
-        final PsiElement aClass = ((PyReferenceExpression)classExpression).followAssignmentsChain(PyResolveContext.defaultContext()).getElement();
+        final PsiElement aClass = ((PyReferenceExpression)classExpression).followAssignmentsChain(resolveContext).getElement();
         if (aClass instanceof PyClass) {
           if (superClasses.contains(aClass)) {
             statement.addBefore(part, prevExceptPart);

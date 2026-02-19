@@ -1,23 +1,21 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
 import sun.awt.AWTAccessor;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.LayoutManager;
+import java.awt.LayoutManager2;
+import java.awt.Rectangle;
 
 /**
  * Cell renderer CPU optimization.
@@ -30,7 +28,11 @@ public class CellRendererPanel extends JPanel {
   private boolean mySelected;
 
   public CellRendererPanel() {
-    super(null); // we do the layout ourselves
+    this(null);
+  }
+
+  public CellRendererPanel(LayoutManager lm) {
+    super(lm);
     super.setOpaque(false); // to be consistent with #isOpaque
     super.setFont(null);
   }
@@ -59,16 +61,6 @@ public class CellRendererPanel extends JPanel {
   public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
   }
 
-  // isOpaque() optimization ----------------
-  @Override
-  public final boolean isOpaque() {
-    return false;
-  }
-
-  @Override
-  public final void setOpaque(boolean isOpaque) {
-  }
-
   @Override
   protected void paintComponent(Graphics g) {
     if (mySelected) {
@@ -80,6 +72,7 @@ public class CellRendererPanel extends JPanel {
   // BEGIN no validation methods --------------
   @Override
   public void doLayout() {
+    if (getWidth() == 0 || getHeight() == 0) return;
     synchronized (getTreeLock()) {
       int count = getComponentCount();
       if (count == 1) {
@@ -88,14 +81,14 @@ public class CellRendererPanel extends JPanel {
         JComponent child = (JComponent)getComponent(0);
         reshapeImpl(child, bounds.x, bounds.y, bounds.width, bounds.height);
         invalidateLayout(child);
-        child.doLayout();
+        child.validate();
       }
       else {
         invalidateLayout(this);
         super.doLayout();
         for (int i = 0; i < count; i++) {
           Component c = getComponent(i);
-          c.doLayout();
+          c.validate();
         }
       }
     }
@@ -111,6 +104,30 @@ public class CellRendererPanel extends JPanel {
 
   protected final Dimension super_getPreferredSize() {
     return super.getPreferredSize();
+  }
+
+  /**
+   * Calculate preferred size via layout manager every time.
+   *
+   * <p>
+   *   When running {@link Container#validateTree()} the flag {@link Component#valid}
+   * can change its value to {@code true}. But {@link CellRendererPanel#invalidate()} has empty body and never rewrites the flag value.
+   * Therefore {@link Component#preferredSize()} uses a cached value for preferred size and never changes it after.
+   * </p>
+   *
+   * <p>
+   *   To avoid that CellRendererPanel overrides default implementation to calculate preferred size via layout manager every time.
+   * </p>
+   *
+   * @deprecated do not this method directly, use {@link #getPreferredSize()} instead
+   */
+  @Deprecated
+  @Override
+  public final Dimension preferredSize() {
+    LayoutManager layoutMgr = getLayout();
+    return (layoutMgr != null) ?
+           layoutMgr.preferredLayoutSize(this) :
+           super.preferredSize();
   }
 
   @Override
@@ -166,4 +183,17 @@ public class CellRendererPanel extends JPanel {
   }
 
   // END no validation methods --------------
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJPanel() {
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.LABEL;
+        }
+      };
+    }
+    return accessibleContext;
+  }
 }

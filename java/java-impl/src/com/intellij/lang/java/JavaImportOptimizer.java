@@ -1,33 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaImportOptimizer implements ImportOptimizer {
+public final class JavaImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance(JavaImportOptimizer.class);
 
   @Override
-  @NotNull
-  public Runnable processFile(@NotNull final PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) {
+  public @NotNull Runnable processFile(@NotNull PsiFile file) {
+    if (!(file instanceof PsiJavaFile javaFile) || !CodeStyle.isFormattingEnabled(file)) {
       return EmptyRunnable.getInstance();
     }
     Project project = file.getProject();
-    final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
+    final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult(javaFile);
     if (newImportList == null) return EmptyRunnable.getInstance();
 
     return new CollectingInfoRunnable() {
@@ -37,37 +43,19 @@ public class JavaImportOptimizer implements ImportOptimizer {
       @Override
       public void run() {
         try {
-          final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-          final Document document = manager.getDocument(file);
-          if (document != null) {
-            manager.commitDocument(document);
-          }
-          final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
+          PsiDocumentManager.getInstance(file.getProject()).commitDocument(file.getFileDocument());
+          final PsiImportList oldImportList = javaFile.getImportList();
           assert oldImportList != null;
-          final Multiset<PsiElement> oldImports = HashMultiset.create();
-          for (PsiImportStatement statement : oldImportList.getImportStatements()) {
-            oldImports.add(statement.resolve());
+          if (oldImportList instanceof JspxImportList) {
+            oldImportList.replace(newImportList);
           }
-
-          final Multiset<PsiElement> oldStaticImports = HashMultiset.create();
-          for (PsiImportStaticStatement statement : oldImportList.getImportStaticStatements()) {
-            oldStaticImports.add(statement.resolve());
+          else {
+            oldImportList.getParent()
+              .addRangeAfter(newImportList.getParent().getFirstChild(), newImportList.getParent().getLastChild(), oldImportList);
+            oldImportList.delete();
           }
-
-          oldImportList.replace(newImportList);
-          for (PsiImportStatement statement : newImportList.getImportStatements()) {
-            if (!oldImports.remove(statement.resolve())) {
-              myImportsAdded++;
-            }
-          }
-          myImportsRemoved += oldImports.size();
-
-          for (PsiImportStaticStatement statement : newImportList.getImportStaticStatements()) {
-            if (!oldStaticImports.remove(statement.resolve())) {
-              myImportsAdded++;
-            }
-          }
-          myImportsRemoved += oldStaticImports.size();
+          myImportsAdded = ImportHelper.getImportsAdded(newImportList);
+          myImportsRemoved = ImportHelper.getImportsRemoved(newImportList);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -90,9 +78,12 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
   @Override
   public boolean supports(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile
-           && !TemplateLanguageUtil.isTemplateDataFile(file)
-           && ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(file.getViewProvider().getVirtualFile())
-      ;
+    if (file instanceof PsiJavaFile && !(file instanceof JspFile) && !TemplateLanguageUtil.isTemplateDataFile(file)) {
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
+      return virtualFile != null && (ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(virtualFile) ||
+                                     virtualFile instanceof LightVirtualFile ||
+                                     ScratchUtil.isScratch(virtualFile));
+    }
+    return false;
   }
 }

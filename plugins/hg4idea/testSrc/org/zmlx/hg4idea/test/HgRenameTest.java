@@ -25,6 +25,7 @@ public class HgRenameTest extends HgSingleUserTest {
   @Test
   public void testRenameUnmodifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     myChangeListManager.ensureUpToDate();
     renameFileInCommand(file, "b.txt");
@@ -35,6 +36,7 @@ public class HgRenameTest extends HgSingleUserTest {
   @Test
   public void testRenameModifiedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     myChangeListManager.ensureUpToDate();
     overwrite(VfsUtilCore.virtualToIoFile(file), "modified new file content");
@@ -55,6 +57,7 @@ public class HgRenameTest extends HgSingleUserTest {
   @Test
   public void testRenameRenamedFile() throws Exception {
     VirtualFile file = createFileInCommand("a.txt", "new file content");
+    myChangeListManager.ensureUpToDate();
     runHgOnProjectRepo("commit", "-m", "added file");
     myChangeListManager.ensureUpToDate();
     renameFileInCommand(file, "b.txt");

@@ -1,25 +1,46 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.TextIcon;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.HorizontalLayout;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.LinearGradientPaint;
+import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
-public class TestTextFieldAction extends DumbAwareAction {
+public final class TestTextFieldAction extends DumbAwareAction {
   private JFrame frame;
 
   @Override
@@ -40,6 +61,11 @@ public class TestTextFieldAction extends DumbAwareAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private enum Fill {None, Both, Horizontal, Vertical}
 
   private static final class View extends JPanel {
@@ -51,8 +77,7 @@ public class TestTextFieldAction extends DumbAwareAction {
     private final JPanel center = new JPanel(new GridBagLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        if (g instanceof Graphics2D && gradient.isSelected()) {
-          Graphics2D g2d = (Graphics2D)g;
+        if (g instanceof Graphics2D g2d && gradient.isSelected()) {
           Rectangle bounds = new Rectangle(getWidth(), getHeight());
           g2d.setPaint(new LinearGradientPaint(
             bounds.x, bounds.y, bounds.width, bounds.height, new float[]{0, 1},
@@ -89,6 +114,11 @@ public class TestTextFieldAction extends DumbAwareAction {
             public boolean isIconBeforeText() {
               return true;
             }
+
+            @Override
+            public boolean isFocusable() {
+              return true;
+            }
           },
           new ExtendableTextComponent.Extension() {
             @Override
@@ -103,6 +133,11 @@ public class TestTextFieldAction extends DumbAwareAction {
 
             @Override
             public boolean isIconBeforeText() {
+              return true;
+            }
+
+            @Override
+            public boolean isFocusable() {
               return true;
             }
           },

@@ -1,8 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -13,8 +18,7 @@ import java.util.List;
  * @author Medvedev Max
  */
 public class AnnotationGenerator extends Generator {
-  @NotNull
-  private final List<String> SKIPPED = Collections.singletonList("groovy.transform");
+  private static final @NotNull List<String> SKIPPED = Collections.singletonList("groovy.transform");
   private final StringBuilder builder;
 
   private final ExpressionContext context;
@@ -61,7 +65,7 @@ public class AnnotationGenerator extends Generator {
   @Override
   public void visitAnnotation(@NotNull GrAnnotation annotation) {
     String qualifiedName = annotation.getQualifiedName();
-    if (qualifiedName != null && SKIPPED.stream().anyMatch(qualifiedName::contains)) return;
+    if (qualifiedName != null && ContainerUtil.exists(SKIPPED, qualifiedName::contains)) return;
     builder.append('@');
     GrCodeReferenceElement classReference = annotation.getClassReference();
     GenerationUtil.writeCodeReferenceElement(builder, classReference);

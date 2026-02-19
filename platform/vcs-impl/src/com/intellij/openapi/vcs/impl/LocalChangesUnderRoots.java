@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
@@ -20,7 +20,6 @@ import java.util.Map;
 /**
  * Utility class to sort changes by roots.
  *
- * @author irengrig
  * @author Kirill Likhodedov
  */
 public final class LocalChangesUnderRoots {
@@ -41,9 +40,9 @@ public final class LocalChangesUnderRoots {
     return groupChanges(rootsToSave, changeListManager.getAllChanges(), ProjectLevelVcsManager.getInstance(project));
   }
 
-  private @NotNull static Map<VirtualFile, Collection<Change>> groupChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
-                                                                           @NotNull Collection<? extends Change> allChanges,
-                                                                           @NotNull ProjectLevelVcsManager vcsManager) {
+  private static @NotNull Map<VirtualFile, Collection<Change>> groupChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
+                                                                            @NotNull Collection<? extends Change> allChanges,
+                                                                            @NotNull ProjectLevelVcsManager vcsManager) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : allChanges) {
       VirtualFile root = getRootForChange(change, vcsManager);

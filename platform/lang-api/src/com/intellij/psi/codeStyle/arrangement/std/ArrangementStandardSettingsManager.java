@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -8,24 +8,29 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Wraps {@link ArrangementStandardSettingsAware} for the common arrangement UI managing code.
- *
- * @author Denis Zhdanov
  */
 public class ArrangementStandardSettingsManager {
 
-  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWidths  = new TObjectIntHashMap<>();
-  @NotNull private final TObjectIntHashMap<ArrangementSettingsToken> myWeights = new TObjectIntHashMap<>();
+  private final @NotNull ObjectIntMap<ArrangementSettingsToken> myWidths  = new ObjectIntHashMap<>();
+  private final @NotNull ObjectIntMap<ArrangementSettingsToken> myWeights = new ObjectIntHashMap<>();
 
-  @NotNull private final Comparator<ArrangementSettingsToken> myComparator = (t1, t2) -> {
+  private final @NotNull Comparator<ArrangementSettingsToken> myComparator = (t1, t2) -> {
     if (myWeights.containsKey(t1)) {
       if (myWeights.containsKey(t2)) {
         return myWeights.get(t1) - myWeights.get(t2);
@@ -42,17 +47,17 @@ public class ArrangementStandardSettingsManager {
     }
   };
 
-  @NotNull private final ArrangementStandardSettingsAware          myDelegate;
-  @NotNull private final ArrangementColorsProvider                 myColorsProvider;
-  @NotNull private final Collection<Set<ArrangementSettingsToken>> myMutexes;
+  private final @NotNull ArrangementStandardSettingsAware          myDelegate;
+  private final @NotNull ArrangementColorsProvider                 myColorsProvider;
+  private final @NotNull Collection<Set<ArrangementSettingsToken>> myMutexes;
 
-  @Nullable private final StdArrangementSettings                  myDefaultSettings;
-  @Nullable private final List<CompositeArrangementSettingsToken> myGroupingTokens;
-  @Nullable private final List<CompositeArrangementSettingsToken> myMatchingTokens;
+  private final @Nullable StdArrangementSettings                  myDefaultSettings;
+  private final @Nullable List<CompositeArrangementSettingsToken> myGroupingTokens;
+  private final @Nullable List<CompositeArrangementSettingsToken> myMatchingTokens;
 
-  @NotNull private final Collection<StdArrangementRuleAliasToken> myRuleAliases;
-  @NotNull private final Set<ArrangementSettingsToken> myRuleAliasMutex;
-  @Nullable private CompositeArrangementSettingsToken myRuleAliasToken;
+  private final @NotNull Collection<StdArrangementRuleAliasToken> myRuleAliases;
+  private final @NotNull Set<ArrangementSettingsToken> myRuleAliasMutex;
+  private @Nullable CompositeArrangementSettingsToken myRuleAliasToken;
 
   public ArrangementStandardSettingsManager(@NotNull ArrangementStandardSettingsAware delegate,
                                             @NotNull ArrangementColorsProvider colorsProvider) {
@@ -61,7 +66,7 @@ public class ArrangementStandardSettingsManager {
 
   public ArrangementStandardSettingsManager(@NotNull ArrangementStandardSettingsAware delegate,
                                             @NotNull ArrangementColorsProvider colorsProvider,
-                                            @NotNull Collection<StdArrangementRuleAliasToken> aliases)
+                                            @NotNull @Unmodifiable Collection<StdArrangementRuleAliasToken> aliases)
   {
     myDelegate = delegate;
     myColorsProvider = colorsProvider;
@@ -81,8 +86,7 @@ public class ArrangementStandardSettingsManager {
       buildWeights(myMatchingTokens);
     }
 
-    final Set<ArrangementSettingsToken> aliasTokens = new HashSet<>();
-    aliasTokens.addAll(aliases);
+    final Set<ArrangementSettingsToken> aliasTokens = new HashSet<>(aliases);
 
     myRuleAliases = aliases;
     myRuleAliasMutex = aliasTokens;
@@ -91,13 +95,11 @@ public class ArrangementStandardSettingsManager {
     }
   }
 
-  @NotNull
-  public Collection<StdArrangementRuleAliasToken> getRuleAliases() {
+  public @NotNull @Unmodifiable Collection<StdArrangementRuleAliasToken> getRuleAliases() {
     return myRuleAliases;
   }
 
-  @NotNull
-  public ArrangementStandardSettingsAware getDelegate() {
+  public @NotNull ArrangementStandardSettingsAware getDelegate() {
     return myDelegate;
   }
 
@@ -124,8 +126,7 @@ public class ArrangementStandardSettingsManager {
   /**
    * @see ArrangementStandardSettingsAware#getDefaultSettings()
    */
-  @Nullable
-  public StdArrangementSettings getDefaultSettings() {
+  public @Nullable StdArrangementSettings getDefaultSettings() {
     return myDefaultSettings;
   }
 
@@ -136,16 +137,14 @@ public class ArrangementStandardSettingsManager {
   /**
    * @see ArrangementStandardSettingsAware#getSupportedGroupingTokens()
    */
-  @Nullable
-  public List<CompositeArrangementSettingsToken> getSupportedGroupingTokens() {
+  public @Nullable List<CompositeArrangementSettingsToken> getSupportedGroupingTokens() {
     return myGroupingTokens;
   }
 
   /**
    * @see ArrangementStandardSettingsAware#getSupportedMatchingTokens()
    */
-  @Nullable
-  public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
+  public @Nullable List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
     if (myMatchingTokens == null || myRuleAliasToken == null) {
       return myMatchingTokens;
     }
@@ -162,8 +161,7 @@ public class ArrangementStandardSettingsManager {
     return myDelegate.isEnabled(token, current);
   }
 
-  @NotNull
-  public ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
+  public @NotNull ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
     ArrangementEntryMatcher matcher = ArrangementUtil.buildMatcher(condition);
     if (matcher == null) {
       matcher = myDelegate.buildMatcher(condition);
@@ -171,8 +169,7 @@ public class ArrangementStandardSettingsManager {
     return matcher;
   }
 
-  @NotNull
-  public Collection<Set<ArrangementSettingsToken>> getMutexes() {
+  public @NotNull Collection<Set<ArrangementSettingsToken>> getMutexes() {
     if (myRuleAliasMutex.isEmpty()) {
       return myMutexes;
     }
@@ -199,8 +196,7 @@ public class ArrangementStandardSettingsManager {
     return Math.max(result, renderer.getPreferredSize().width);
   }
 
-  @NotNull
-  private static @Nls String getPresentationValue(@NotNull ArrangementSettingsToken token) {
+  private static @NotNull @Nls String getPresentationValue(@NotNull ArrangementSettingsToken token) {
     if (token instanceof InvertibleArrangementSettingsToken) {
       return ((InvertibleArrangementSettingsToken)token).getInvertedRepresentationValue();
     }

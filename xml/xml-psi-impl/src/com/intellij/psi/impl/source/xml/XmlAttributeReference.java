@@ -1,10 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtilRt;
@@ -13,12 +17,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.XmlAttributeDescriptorEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlAttributeReference implements PsiPolyVariantReference {
-  private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
+  private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<>() {
     @Override
     protected XmlAttributeDescriptor compute() {
       return myAttribute.getDescriptor();
@@ -29,22 +32,14 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
   public XmlAttributeReference(@NotNull XmlAttribute attribute) {
     myAttribute = attribute;
   }
-  
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public XmlAttributeReference(@NotNull XmlAttributeImpl attribute) {
-    myAttribute = attribute;
-  }
 
-  @NotNull
   @Override
-  public XmlAttribute getElement() {
+  public @NotNull XmlAttribute getElement() {
     return myAttribute;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final int parentOffset = myAttribute.getNameElement().getStartOffsetInParent();
     int nsLen = myAttribute.getNamespacePrefix().length();
     String realName = XmlAttributeImpl.getRealName(myAttribute);
@@ -59,8 +54,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myAttribute.getName();
   }
 
@@ -73,8 +67,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     String newName = newElementName;
-    if (getDescriptor() instanceof XmlAttributeDescriptorEx) {
-      final XmlAttributeDescriptorEx xmlAttributeDescriptorEx = (XmlAttributeDescriptorEx)getDescriptor();
+    if (getDescriptor() instanceof XmlAttributeDescriptorEx xmlAttributeDescriptorEx) {
       final String s = xmlAttributeDescriptorEx.handleTargetRename(newElementName);
       if (s != null) {
         final String prefix = myAttribute.getNamespacePrefix();
@@ -86,8 +79,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaOwner owner = (PsiMetaOwner)element;
+    if (element instanceof PsiMetaOwner owner) {
       if (owner.getMetaData() instanceof XmlElementDescriptor) {
         myAttribute.setName(owner.getMetaData().getName());
       }
@@ -112,8 +104,7 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
     return getDescriptor() == null;
   }
 
-  @Nullable
-  protected XmlAttributeDescriptor getDescriptor() {
+  protected @Nullable XmlAttributeDescriptor getDescriptor() {
     return myDescriptor.getValue();
   }
 }

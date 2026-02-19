@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -9,7 +9,14 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.TexturePaint;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
@@ -46,9 +53,8 @@ public class ColorsIcon extends ColorIcon {
     myColors = icon.myColors;
   }
 
-  @NotNull
   @Override
-  public ColorsIcon copy() {
+  public @NotNull ColorsIcon copy() {
     return new ColorsIcon(this);
   }
 

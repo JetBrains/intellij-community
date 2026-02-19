@@ -1,4 +1,4 @@
-// "Make 'getDrawerAppsList' return 'java.util.ArrayList<ResolveInfo>'" "true"
+// "Make 'getDrawerAppsList()' return 'java.util.ArrayList<ResolveInfo>' or ancestor" "true-preview"
 import java.util.*;
 class Test {
   

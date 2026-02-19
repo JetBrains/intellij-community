@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.tree.IElementType;
@@ -9,7 +9,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedenceForBinaryOps;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.getPrecedence;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.precedenceForBinaryOperator;
 
 public class SimpleBinaryTransformation extends BinaryTransformation {
 
@@ -19,8 +23,7 @@ public class SimpleBinaryTransformation extends BinaryTransformation {
     myOperator = operatorType;
   }
 
-  @NotNull
-  protected String getOperatorText() {
+  protected @NotNull String getOperatorText() {
     return myOperator.toString();
   }
 

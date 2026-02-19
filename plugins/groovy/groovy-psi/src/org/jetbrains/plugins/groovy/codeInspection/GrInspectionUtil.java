@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -35,14 +35,14 @@ public final class GrInspectionUtil {
     return GroovyTokenTypes.mNOT_EQUAL == tokenType;
   }
 
-  public static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
-                                                     @NotNull HighlightDisplayLevel displayLevel,
-                                                     @NotNull @DetailedDescription String message) {
+  public static @NotNull HighlightInfo.Builder createAnnotationForRef(@NotNull GrReferenceElement ref,
+                                                                      @NotNull HighlightDisplayLevel displayLevel,
+                                                                      @NotNull @DetailedDescription String message) {
     PsiElement refNameElement = ref.getReferenceNameElement();
     assert refNameElement != null;
 
     if (displayLevel == HighlightDisplayLevel.ERROR) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message);
     }
 
     if (displayLevel == HighlightDisplayLevel.WEAK_WARNING) {
@@ -51,11 +51,11 @@ public final class GrInspectionUtil {
 
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(infotype).range(refNameElement);
       builder.descriptionAndTooltip(message);
-      return builder.needsUpdateOnTyping(false).textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS).create();
+      return builder.textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS);
     }
 
     HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());
-    return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message).create();
+    return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message);
   }
 
   public static void replaceExpression(GrExpression expression, @NlsSafe String newExpression) {

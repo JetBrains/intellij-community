@@ -1,0 +1,6 @@
+public class A {
+    public A(String x) {
+    }
+    public A(Integer x) {
+    }
+}

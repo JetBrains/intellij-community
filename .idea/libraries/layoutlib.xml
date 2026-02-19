@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="layoutlib" type="repository">
+    <properties maven-id="com.android.tools.layoutlib:layoutlib:16.0.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/android/tools/layoutlib/layoutlib/16.0.1/layoutlib-16.0.1.jar">
+          <sha256sum>8460773e25756838521ccfe06cd13eee11bf55a0a272785890988b9d45eca937</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/android/tools/layoutlib/layoutlib/16.0.1/layoutlib-16.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

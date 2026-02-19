@@ -528,7 +528,7 @@ public abstract class ClassLoader
     if (sm != null)
       {
 	ClassLoader cl = <error descr="Cannot resolve symbol 'VMStackWalker'">VMStackWalker</error>.getCallingClassLoader();
-	if (cl != null && ! cl.<error descr="Cannot resolve method 'isAncestorOf(java.lang.ClassLoader)'">isAncestorOf</error>(this))
+	if (cl != null && ! cl.<error descr="Cannot resolve method 'isAncestorOf' in 'ClassLoader'">isAncestorOf</error>(this))
           sm.<error descr="Cannot resolve method 'checkPermission(RuntimePermission)'">checkPermission</error>(new <error descr="Cannot resolve symbol 'RuntimePermission'">RuntimePermission</error>("getClassLoader"));
       }
     return parent;
@@ -817,7 +817,7 @@ public abstract class ClassLoader
                             implTitle, implVendor, implVersion, sealed);
     synchronized (definedPackages)
       {
-        definedPackages.put(name, <error descr="'put(java.lang.Object, java.lang.Object)' in 'java.util.HashMap' cannot be applied to '(java.lang.String, Package)'">p</error>);
+        definedPackages.put(name, p);
       }
     return p;
   }
@@ -862,7 +862,7 @@ public abstract class ClassLoader
     synchronized(definedPackages)
       {
         packages = new <error descr="Cannot resolve symbol 'Package'">Package</error>[definedPackages.size()];
-        definedPackages.values().toArray<error descr="'toArray(java.lang.Object[])' in 'java.util.Collection' cannot be applied to '(Package[])'">(packages)</error>;
+        definedPackages.values().toArray(packages);
       }
 
     // If we have a parent get all packages defined by our parents.
@@ -1085,9 +1085,9 @@ public abstract class ClassLoader
 		{
 		    int lastDot = name.lastIndexOf('.');
 		    if (lastDot != -1)
-			sm.<error descr="Cannot resolve method 'checkPackageAccess(java.lang.String)'">checkPackageAccess</error>(name.substring(0, lastDot));
+			sm.<error descr="Cannot resolve method 'checkPackageAccess(String)'">checkPackageAccess</error>(name.substring(0, lastDot));
 		}
-		return super.<error descr="Cannot resolve method 'loadClass(java.lang.String, boolean)'">loadClass</error>(name, resolve);
+		return super.<error descr="Cannot resolve method 'loadClass' in 'Object'">loadClass</error>(name, resolve);
 	    }
 	};
   }
@@ -1103,7 +1103,7 @@ public abstract class ClassLoader
       {
 	<error descr="Cannot resolve symbol 'Constructor'">Constructor</error> c = Class.forName(loader, false, parent)
 	    .getConstructor(new Class[] { ClassLoader.class });
-	return (ClassLoader)c.<error descr="Cannot resolve method 'newInstance(java.lang.Object[])'">newInstance</error>(new Object[] { parent });
+	return (ClassLoader)c.<error descr="Cannot resolve method 'newInstance(Object[])'">newInstance</error>(new Object[] { parent });
       }
     catch (Exception e)
       {

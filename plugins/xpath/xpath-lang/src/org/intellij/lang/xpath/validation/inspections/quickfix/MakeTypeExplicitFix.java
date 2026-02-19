@@ -27,7 +27,7 @@ import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
-    private final XPathType myType;
+    @SafeFieldForPreview private final XPathType myType;
 
     public MakeTypeExplicitFix(XPathExpression expression, XPathType type) {
         super(expression);
@@ -35,14 +35,12 @@ public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return getFamilyName();
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.make.type.conversion.explicit");
     }
 

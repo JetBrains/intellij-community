@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -9,14 +9,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import javax.swing.*;
+import javax.swing.ListSelectionModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,9 +29,10 @@ import java.util.List;
  * @author Max Medvedev
  */
 public abstract class GrCreateFromUsageBaseFix extends Intention {
+  @SafeFieldForPreview // all inheritors handle preview
   protected final SmartPsiElementPointer<GrReferenceExpression> myRefExpression;
 
-  public GrCreateFromUsageBaseFix(@NotNull GrReferenceExpression refExpression) {
+  protected GrCreateFromUsageBaseFix(@NotNull GrReferenceExpression refExpression) {
     myRefExpression = SmartPointerManager.getInstance(refExpression.getProject()).createSmartPsiElementPointer(refExpression);
   }
 
@@ -36,7 +41,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final GrReferenceExpression element = myRefExpression.getElement();
     if (element == null || !element.isValid()) {
       return false;
@@ -58,9 +63,8 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     }
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
@@ -86,7 +90,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
 
   protected abstract void invokeImpl(Project project, @NotNull PsiClass targetClass);
 
-  private List<PsiClass> getTargetClasses() {
+  protected List<PsiClass> getTargetClasses() {
     final GrReferenceExpression ref = getRefExpr();
     final PsiClass targetClass = QuickfixUtil.findTargetClass(ref);
     if (targetClass == null || !canBeTargetClass(targetClass)) return Collections.emptyList();

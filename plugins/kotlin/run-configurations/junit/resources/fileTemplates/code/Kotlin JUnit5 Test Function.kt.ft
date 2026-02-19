@@ -1,0 +1,4 @@
+@org.junit.jupiter.api.Test
+fun ${NAME}() {
+  ${BODY}
+}

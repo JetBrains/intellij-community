@@ -1,0 +1,13 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.java.compiler"/>
+
+    <plugin id="com.intellij.modules.remoteServers"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+</idea-plugin>

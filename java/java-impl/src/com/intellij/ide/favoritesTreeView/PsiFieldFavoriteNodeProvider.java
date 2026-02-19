@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -7,7 +7,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -21,16 +21,17 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
+public final class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
-  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, final @NotNull ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
+    PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(context);
     if (elements == null) {
       final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
       if (element != null) {
@@ -50,7 +51,7 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, final @NotNull ViewSettings viewSettings) {
     if (element instanceof PsiField) {
       return new FieldSmartPointerNode(project, (PsiField)element, viewSettings);
     }
@@ -87,15 +88,13 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  @NotNull
-  public String getFavoriteTypeId() {
+  public @NotNull String getFavoriteTypeId() {
     return "field";
   }
 
   @Override
   public String getElementUrl(final Object element) {
-    if (element instanceof PsiField) {
-      final PsiField aField = (PsiField)element;
+    if (element instanceof PsiField aField) {
       return aField.getContainingClass().getQualifiedName() + ";" + aField.getName();
     }
     return null;
@@ -113,14 +112,19 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     if (DumbService.isDumb(project)) return null;
+    var context = createBookmarkContext(project, url, moduleName);
+    return context == null ? null : new Object[]{context};
+  }
+
+  @Override
+  public @Nullable Object createBookmarkContext(@NotNull Project project, @NotNull String url, @Nullable String moduleName) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.allScope(project);
     final String[] paths = url.split(";");
     if (paths.length != 2) return null;
     final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(paths[0], scope);
     if (aClass == null) return null;
-    final PsiField aField = aClass.findFieldByName(paths[1], false);
-    return new Object[]{aField};
+    return aClass.findFieldByName(paths[1], false);
   }
 
 

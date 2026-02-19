@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
@@ -12,7 +12,11 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.openapi.options.SchemeImportUtil;
+import com.intellij.openapi.options.SchemeImporter;
+import com.intellij.openapi.options.SchemeImporterEP;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -23,25 +27,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorColorsScheme> {
 
   protected ColorSchemeActions(@NotNull AbstractSchemesPanel<EditorColorsScheme, ?> schemesPanel) {
     super(schemesPanel);
   }
 
-  @NotNull
   @Override
-  protected Collection<String> getSchemeImportersNames() {
+  protected @NotNull Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
     for (ImportHandler importHandler : ImportHandler.EP_NAME.getExtensionList()) {
       importersNames.add(importHandler.getTitle());
@@ -82,9 +90,9 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
                                 String newName = SchemeNameGenerator.getUniqueName(name != null ? name : "Unnamed",
                                                                                    candidate -> getSchemesPanel().getModel()
                                                                                      .containsScheme(candidate, false));
-                                AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
+                                AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.getEmptyScheme());
                                 newScheme.setName(newName);
-                                newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE);
+                                newScheme.setDefaultMetaInfo(EmptyColorScheme.getEmptyScheme());
                                 return newScheme;
                               });
       if (imported != null) {
@@ -130,7 +138,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       if (dialog.showAndGet()) {
         List<ColorSchemeItem> selectedItems = dialog.getSelectedItems();
         for (ColorSchemeItem item : selectedItems) {
-          doImport(importer, item.getFile());
+          doImport(importer, item.file());
         }
       }
     }
@@ -198,24 +206,22 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     super.exportScheme(project, schemeToExport, exporterName);
   }
 
-  @NotNull
   @Override
-  protected Class<EditorColorsScheme> getSchemeType() {
+  protected @NotNull Class<EditorColorsScheme> getSchemeType() {
     return EditorColorsScheme.class;
   }
 
-  @NotNull
-  protected abstract ColorAndFontOptions getOptions();
+  protected abstract @NotNull ColorAndFontOptions getOptions();
 
-  private static class ImportSchemeChooserDialog extends DialogWrapper {
+  private static final class ImportSchemeChooserDialog extends DialogWrapper {
 
     private final Component myComponentAbove;
     private final List<ColorSchemeItem> mySchemeItems;
     private JBList<ColorSchemeItem> mySchemeList;
 
-    protected ImportSchemeChooserDialog(@NotNull Component parent,
-                                        @NotNull Component componentAbove,
-                                        @NotNull List<ColorSchemeItem> schemeItems) {
+    private ImportSchemeChooserDialog(@NotNull Component parent,
+                                      @NotNull Component componentAbove,
+                                      @NotNull List<ColorSchemeItem> schemeItems) {
       super(parent, false);
       setTitle(ApplicationBundle.message("settings.editor.scheme.import.chooser.title"));
       setOKButtonText(ApplicationBundle.message("settings.editor.scheme.import.chooser.button"));
@@ -224,17 +230,15 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       init();
     }
 
-    @Nullable
     @Override
-    public Point getInitialLocation() {
+    public @Nullable Point getInitialLocation() {
       Point location = myComponentAbove.getLocationOnScreen();
       location.translate(0, myComponentAbove.getHeight() + JBUIScale.scale(20));
       return location;
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       JPanel schemesPanel = new JPanel(new BorderLayout());
       mySchemeList = new JBList<>(mySchemeItems);
       schemesPanel.add(mySchemeList, BorderLayout.CENTER);
@@ -251,26 +255,6 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     }
   }
 
-  private static class ColorSchemeItem {
-    private final String myName;
-    private final VirtualFile myFile;
-
-    ColorSchemeItem(String name, VirtualFile file) {
-      myName = name;
-      myFile = file;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
+  private record ColorSchemeItem(String name, VirtualFile file) {
   }
 }

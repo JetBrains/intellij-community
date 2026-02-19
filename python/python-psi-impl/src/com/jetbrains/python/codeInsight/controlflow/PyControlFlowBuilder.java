@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.controlflow.TransparentInstruction;
+import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
+import com.intellij.codeInsight.controlflow.impl.TransparentInstructionImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -27,51 +30,138 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyAsPattern;
+import com.jetbrains.python.psi.PyAssertStatement;
+import com.jetbrains.python.psi.PyAssignmentExpression;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyBoolLiteralExpression;
+import com.jetbrains.python.psi.PyBreakStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCapturePattern;
+import com.jetbrains.python.psi.PyCaseClause;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyClassPattern;
+import com.jetbrains.python.psi.PyComprehensionComponent;
+import com.jetbrains.python.psi.PyComprehensionElement;
+import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyComprehensionIfComponent;
+import com.jetbrains.python.psi.PyConditionalExpression;
+import com.jetbrains.python.psi.PyConditionalStatementPart;
+import com.jetbrains.python.psi.PyContinueStatement;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyDelStatement;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyElsePart;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFinallyPart;
+import com.jetbrains.python.psi.PyForPart;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyGroupPattern;
+import com.jetbrains.python.psi.PyIfPart;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyLoopStatement;
+import com.jetbrains.python.psi.PyMatchStatement;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyNoneLiteralExpression;
+import com.jetbrains.python.psi.PyOrPattern;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PyPassStatement;
+import com.jetbrains.python.psi.PyPattern;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyRaiseStatement;
+import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyReturnStatement;
+import com.jetbrains.python.psi.PyStarImportElement;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStatementPart;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTryExceptStatement;
+import com.jetbrains.python.psi.PyTryPart;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyTypeAliasStatement;
+import com.jetbrains.python.psi.PyTypeDeclarationStatement;
+import com.jetbrains.python.psi.PyTypeParameterList;
+import com.jetbrains.python.psi.PyValuePattern;
+import com.jetbrains.python.psi.PyWhileStatement;
+import com.jetbrains.python.psi.PyWithStatement;
+import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
-import kotlin.Triple;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
-  @NotNull
-  private static final Set<String> EXCEPTION_SUPPRESSORS = ImmutableSet.of("suppress", "assertRaises", "assertRaisesRegex");
-
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
+  private final @Nullable LanguageLevel myLanguageLevel;
 
-  public ControlFlow buildControlFlow(@NotNull final ScopeOwner owner) {
-    return myBuilder.build(this, owner);
+  private @Nullable TrueFalseNodes myTrueFalseNodes;
+
+  // see com.jetbrains.python.PyPatternTypeTest.testMatchClassPatternShadowingCapture
+  private final @NotNull List<String> myPatternBindingNames = new ArrayList<>();
+
+  public PyControlFlowBuilder(@Nullable LanguageLevel languageLevel) { myLanguageLevel = languageLevel; }
+
+  private record TrueFalseNodes(@NotNull Instruction trueNode, @NotNull Instruction falseNode) {
   }
 
-  @NotNull
-  protected ControlFlowBuilder getBuilder() {
-    return this.myBuilder;
+  public PyControlFlow buildControlFlow(final @NotNull ScopeOwner owner) {
+    ControlFlow flow = myBuilder.build(this, owner);
+    Instruction[] instructions = flow.getInstructions();
+    for (int i = 0; i < instructions.length; i++) {
+      if (i != instructions[i].num()) {
+        throw new IllegalStateException();
+      }
+    }
+    return new PyControlFlow(instructions);
   }
+
+  protected @NotNull ControlFlowBuilder getBuilder() {
+    return myBuilder;
+  }
+
 
   @Override
   public void visitPyFunction(final @NotNull PyFunction node) {
     // Create node and stop here
     myBuilder.startNode(node);
+
     visitParameterListExpressions(node.getParameterList());
     visitDecorators(node.getDecoratorList());
-    final PyAnnotation annotation = node.getAnnotation();
-    if (annotation != null) {
-      annotation.accept(this);
+    if (node.getTypeParameterList() == null) {
+      final PyAnnotation annotation = node.getAnnotation();
+      if (annotation != null) {
+        annotation.acceptChildren(this);
+      }
     }
 
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.addNodeAndCheckPending(instruction);
   }
 
   @Override
@@ -94,9 +184,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         if (defaultValue != null) {
           defaultValue.accept(PyControlFlowBuilder.this);
         }
-        final PyAnnotation annotation = param.getAnnotation();
-        if (annotation != null) {
-          annotation.accept(PyControlFlowBuilder.this);
+        if (parameterList.getParent() instanceof PyFunction function && function.getTypeParameterList() == null) {
+          final PyAnnotation annotation = param.getAnnotation();
+          if (annotation != null) {
+            annotation.acceptChildren(PyControlFlowBuilder.this);
+          }
         }
       }
     });
@@ -106,13 +198,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyClass(final @NotNull PyClass node) {
     // Create node and stop here
     myBuilder.startNode(node);
+
     for (PsiElement element : node.getSuperClassExpressions()) {
       element.accept(this);
     }
     visitDecorators(node.getDecoratorList());
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.addNodeAndCheckPending(instruction);
   }
 
   @Override
@@ -132,24 +224,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyCallExpression(final @NotNull PyCallExpression node) {
-    final PyExpression callee = node.getCallee();
-    // Flow abrupted
-    final String repr = PyUtil.getReadableRepr(callee, true);
-    if (callee != null && ("sys.exit".equals(repr) ||
-                           "self.fail".equals(repr))) {
-      callee.accept(this);
-      for (PyExpression expression : node.getArguments()) {
-        expression.accept(this);
-      }
-      abruptFlow(node);
-    }
-    else {
-      super.visitPyCallExpression(node);
-    }
+    super.visitPyCallExpression(node);
+
+    var callInstruction = new CallInstruction(myBuilder, node);
+    myBuilder.addNodeAndCheckPending(callInstruction);
+
     if (node.isCalleeText(PyNames.ASSERT_IS_INSTANCE)) {
-      final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
-      node.accept(assertionEvaluator);
-      InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+      addTypeAssertionNodes(node, true);
     }
   }
 
@@ -177,25 +258,22 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final ReadWriteInstruction.ACCESS access = PyAugAssignmentStatementNavigator.getStatementByTarget(node) != null
                                                ? ReadWriteInstruction.ACCESS.READWRITE
                                                : ReadWriteInstruction.ACCESS.READ;
-    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
-    myBuilder.addNode(readWriteInstruction);
-    myBuilder.checkPending(readWriteInstruction);
+    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, getName(node), access);
+    myBuilder.addNodeAndCheckPending(readWriteInstruction);
   }
 
   @Override
   public void visitPyBoolLiteralExpression(@NotNull PyBoolLiteralExpression node) {
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
                                                                                           ReadWriteInstruction.ACCESS.READ);
-    myBuilder.addNode(readWriteInstruction);
-    myBuilder.checkPending(readWriteInstruction);
+    myBuilder.addNodeAndCheckPending(readWriteInstruction);
   }
 
   @Override
   public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
                                                                                           ReadWriteInstruction.ACCESS.READ);
-    myBuilder.addNode(readWriteInstruction);
-    myBuilder.checkPending(readWriteInstruction);
+    myBuilder.addNodeAndCheckPending(readWriteInstruction);
   }
 
   @Override
@@ -228,12 +306,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyDelStatement(@NotNull PyDelStatement node) {
     myBuilder.startNode(node);
     for (PyExpression target : node.getTargets()) {
-      if (target instanceof PyReferenceExpression){
-        PyReferenceExpression expr = (PyReferenceExpression)target;
-        myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, expr.getName(), ReadWriteInstruction.ACCESS.DELETE));
+      if (target instanceof PyReferenceExpression expr) {
         PyExpression qualifier = expr.getQualifier();
         if (qualifier != null) {
           qualifier.accept(this);
+        }
+        else {
+          myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, expr.getName(), ReadWriteInstruction.ACCESS.DELETE));
         }
       }
       else {
@@ -258,8 +337,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (qName != null) {
       final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, qName.toString(),
                                                                                    ReadWriteInstruction.ACCESS.WRITE);
-      myBuilder.addNode(instruction);
-      myBuilder.checkPending(instruction);
+      myBuilder.addNodeAndCheckPending(instruction);
     }
 
     final PyExpression qualifier = node.getQualifier();
@@ -270,13 +348,24 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyNamedParameter(final @NotNull PyNamedParameter node) {
-    final PyExpression defaultValue = node.getDefaultValue();
-    if (defaultValue != null) {
-      defaultValue.accept(this);
+    PyAnnotation annotation = node.getAnnotation();
+    if (annotation != null) {
+      annotation.accept(this);
     }
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.addNodeAndCheckPending(instruction);
+  }
+
+  @Override
+  public void visitPyAnnotation(@NotNull PyAnnotation node) {
+    // Unless there is a type parameter list, return type and parameter annotations for functions are evaluated in their enclosing scope
+    // and processed in visitPyFunction.
+    // If there are type parameters, though, we need to put the corresponding instructions *inside* the function's scope to be able to
+    // access them from annotations. 
+    PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, PyStatement.class);
+    if (function == null || function.getTypeParameterList() != null) {
+      super.visitPyAnnotation(node);
+    }
   }
 
   @Override
@@ -302,184 +391,320 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
     for (PyImportElement importElement : node.getImportElements()) {
       final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, importElement, importElement.getVisibleName());
-      myBuilder.addNode(instruction);
-      myBuilder.checkPending(instruction);
+      myBuilder.addNodeAndCheckPending(instruction);
     }
-  }
-
-  @NotNull
-  private List<Pair<PsiElement, Instruction>> getPrevInstructions(@Nullable PyElement condition) {
-    final List<Pair<PsiElement, Instruction>> result = ContainerUtil.newArrayList(Pair.create(condition, myBuilder.prevInstruction));
-    myBuilder.processPending((pendingScope, instruction) -> {
-      if (pendingScope != null && PsiTreeUtil.isAncestor(condition, pendingScope, false)) {
-        result.add(Pair.create(pendingScope, instruction));
-      }
-      else {
-        myBuilder.addPendingEdge(pendingScope, instruction);
-      }
-    });
-    return result;
   }
 
   @Override
   public void visitPyConditionalExpression(@NotNull PyConditionalExpression node) {
     myBuilder.startNode(node);
+    TransparentInstruction trueNode = addTransparentInstruction();
+    TransparentInstruction falseNode = addTransparentInstruction();
+    TransparentInstruction exitNode = addTransparentInstruction();
     final PyExpression condition = node.getCondition();
-    final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
     if (condition != null) {
-      condition.accept(this);
-      condition.accept(assertionEvaluator);
+      visitCondition(condition, trueNode, falseNode);
     }
-    final Instruction branchingPoint = myBuilder.prevInstruction;
     final PyExpression truePart = node.getTruePart();
     final PyExpression falsePart = node.getFalsePart();
     if (truePart != null) {
-      InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+      myBuilder.prevInstruction = trueNode;
       truePart.accept(this);
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      myBuilder.addEdge(myBuilder.prevInstruction, exitNode);
     }
     if (falsePart != null) {
-      myBuilder.prevInstruction = branchingPoint;
+      myBuilder.prevInstruction = falseNode;
       falsePart.accept(this);
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      myBuilder.addEdge(myBuilder.prevInstruction, exitNode);
     }
+    myBuilder.prevInstruction = exitNode;
+  }
+
+  @Override
+  public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
+    myBuilder.startNode(matchStatement);
+    PyExpression subject = matchStatement.getSubject();
+    if (subject != null) {
+      subject.accept(this);
+    }
+    Instruction nextClause = myBuilder.prevInstruction;
+    boolean unreachable = false;
+    for (PyCaseClause clause : matchStatement.getCaseClauses()) {
+      myBuilder.prevInstruction = nextClause;
+      nextClause = addTransparentInstruction();
+
+      myPatternBindingNames.clear();
+
+      PyPattern pattern = clause.getPattern();
+      if (pattern != null) {
+        pattern.accept(this);
+        addTypeAssertionNodes(clause, true, myPatternBindingNames);
+      }
+
+      PyExpression guard = clause.getGuardCondition();
+      if (guard != null) {
+        TransparentInstruction trueNode = addTransparentInstruction();
+        visitCondition(guard, trueNode, nextClause);
+        myBuilder.prevInstruction = trueNode;
+        addTypeAssertionNodes(guard, true);
+      }
+
+      if (unreachable) {
+        myBuilder.addNode(new PyUnreachableInstruction(myBuilder, false));
+      }
+      if (pattern != null && pattern.isIrrefutable() && (guard == null || PyEvaluator.evaluateAsBooleanNoResolve(guard, false))) {
+        unreachable = true;
+      }
+      myBuilder.startNode(clause.getStatementList());
+      clause.getStatementList().accept(this);
+      myBuilder.addPendingEdge(matchStatement, myBuilder.prevInstruction);
+      myBuilder.updatePendingElementScope(clause.getStatementList(), matchStatement);
+    }
+    myBuilder.prevInstruction = nextClause;
+    myBuilder.addNodeAndCheckPending(new TransparentInstructionImpl(myBuilder, matchStatement, ""));
+    if (!myBuilder.prevInstruction.allPred().isEmpty()) {
+      addTypeAssertionNodes(matchStatement, false);
+    }
+    myBuilder.addPendingEdge(matchStatement, myBuilder.prevInstruction);
+    myBuilder.prevInstruction = null;
+  }
+
+  @Override
+  public void visitPyPattern(@NotNull PyPattern node) {
+    boolean isRefutable = !node.isIrrefutable();
+    if (isRefutable) {
+      myBuilder.addNodeAndCheckPending(new RefutablePatternInstruction(myBuilder, node, false));
+    }
+    else {
+      myBuilder.startNode(node);
+    }
+    myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
+
+    node.acceptChildren(this);
+    myBuilder.updatePendingElementScope(node, node.getParent());
+
+    if (isRefutable) {
+      myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+    }
+  }
+
+  @Override
+  public void visitPyOrPattern(@NotNull PyOrPattern node) {
+    myBuilder.addNodeAndCheckPending(new RefutablePatternInstruction(myBuilder, node, false));
+
+    TransparentInstruction onSuccess = new TransparentInstructionImpl(myBuilder, node, "onSuccess");
+    List<PyPattern> alternatives = node.getAlternatives();
+    PyPattern lastAlternative = ContainerUtil.getLastItem(alternatives);
+
+    for (PyPattern alternative : alternatives) {
+      alternative.accept(this);
+      if (alternative != lastAlternative) {
+        // Allow next alternative to handle the fail edge of this alternative
+        myBuilder.updatePendingElementScope(node, alternative);
+      }
+      myBuilder.addEdge(myBuilder.prevInstruction, onSuccess);
+      myBuilder.prevInstruction = null;
+    }
+    myBuilder.addNode(onSuccess);
+    myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+    myBuilder.updatePendingElementScope(node, node.getParent());
+  }
+
+  @Override
+  public void visitPyClassPattern(@NotNull PyClassPattern node) {
+    myBuilder.addNodeAndCheckPending(new RefutablePatternInstruction(myBuilder, node, false));
+
+    node.getClassNameReference().accept(this);
+    myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
+
+    node.getArgumentList().acceptChildren(this);
+    myBuilder.updatePendingElementScope(node, node.getParent());
+
+    myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+  }
+
+  @Override
+  public void visitPyValuePattern(@NotNull PyValuePattern node) {
+    myBuilder.addNodeAndCheckPending(new RefutablePatternInstruction(myBuilder, node, false));
+
+    node.getValue().accept(this);
+    myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
+
+    myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+  }
+
+  @Override
+  public void visitPyAsPattern(@NotNull PyAsPattern node) {
+    // AsPattern can't fail by itself – it fails only if its child fails.
+    // So no need to create an additional fail edge
+    myBuilder.startNode(node);
+    node.acceptChildren(this);
+    if (node.getTarget() != null) {
+      myPatternBindingNames.add(node.getTarget().getName());
+    }
+    myBuilder.updatePendingElementScope(node, node.getParent());
+  }
+
+  @Override
+  public void visitPyCapturePattern(@NotNull PyCapturePattern node) {
+    node.acceptChildren(this);
+    // Although capture pattern is irrefutable, I add fail edge
+    // here to add some connection to the next case clause.
+    // Perhaps this can be reworked and simplified later.
+    myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
+    myPatternBindingNames.add(node.getTarget().getName());
+  }
+
+  @Override
+  public void visitPyGroupPattern(@NotNull PyGroupPattern node) {
+    // GroupPattern can't fail by itself – it fails only if its child fails.
+    // So no need to create an additional fail edge 
+    // Also no need for a dedicated node for GroupPattern itself
+    node.acceptChildren(this);
+    myBuilder.updatePendingElementScope(node, node.getParent());
   }
 
   @Override
   public void visitPyIfStatement(final @NotNull PyIfStatement node) {
     myBuilder.startNode(node);
 
-    PyExpression lastCondition = null; // last visited condition
-    List<Pair<PsiElement, Instruction>> lastBranchingPoints = Collections.emptyList(); // outcoming edges from the last visited condition
-    final List<Boolean> conditionResults = new ArrayList<>(); // visited conditions results
-
-    final PyIfPart firstIfPart = node.getIfPart();
-
-    for (PyIfPart part : StreamEx.of(firstIfPart).append(node.getElifParts())) {
-      if (part != firstIfPart) {
-        // first `if` could not be considered as some `if` inheritor
-        if (!ContainerUtil.exists(conditionResults, Boolean.TRUE::equals)) {
-          // edges to `if` would be created below if there were no conditions evaluated to `True` earlier
-          lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
-        }
-        myBuilder.prevInstruction = null;
-
-        myBuilder.startConditionalNode(part, lastCondition, false);
+    List<Instruction> exitInstructions = new ArrayList<>();
+    @Nullable PyExpression alwaysTrueCondition = null;
+    for (PyIfPart ifPart : StreamEx.of(node.getIfPart()).append(node.getElifParts())) {
+      TransparentInstruction thenNode = addTransparentInstruction();
+      TransparentInstruction elseNode = addTransparentInstruction();
+      PyExpression condition = ifPart.getCondition();
+      if (condition != null) {
+        visitCondition(condition, thenNode, elseNode);
       }
+      myBuilder.prevInstruction = thenNode;
 
-      final Triple<PyExpression, List<Pair<PsiElement, Instruction>>, Boolean> currentPartResults = visitPyIfPart(part, node);
-      lastCondition = currentPartResults.getFirst();
-      lastBranchingPoints = currentPartResults.getSecond();
-      conditionResults.add(currentPartResults.getThird());
-    }
-
-    final PyTypeAssertionEvaluator negativeAssertionEvaluator = new PyTypeAssertionEvaluator(false);
-    final PyExpression firstIfPartCondition = firstIfPart.getCondition();
-    // TODO: Add support for 'elif'
-    if (firstIfPartCondition != null) {
-      firstIfPartCondition.accept(negativeAssertionEvaluator);
-    }
-
-    final PyElsePart elseBranch = node.getElsePart();
-    if (elseBranch != null) {
-      if (!ContainerUtil.exists(conditionResults, Boolean.TRUE::equals)) {
-        // edges to `else` would be created below if there were no conditions evaluated to `True` earlier
-        lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
-      }
-      myBuilder.prevInstruction = null;
-
-      final PyStatementList statements = elseBranch.getStatementList();
-
-      myBuilder.startConditionalNode(statements, lastCondition, false);
-      InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
-      statements.accept(this);
-
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-    }
-    else if (ContainerUtil.getLastItem(conditionResults) != Boolean.TRUE) {
-      // if last condition was evaluated to `True`, all outcoming `if` statement edges were correctly processed in the last `if`
-
-      myBuilder.prevInstruction = null;
-
-      final Instruction instruction =
-        ContainerUtil.getFirstItem(InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator));
-      if (instruction != null) {
-        lastBranchingPoints.forEach(p -> myBuilder.addEdge(p.getSecond(), instruction));
-      }
-      else {
-        lastBranchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
-      }
-
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-    }
-  }
-
-  @NotNull
-  private Triple<PyExpression, List<Pair<PsiElement, Instruction>>, Boolean> visitPyIfPart(@NotNull PyIfPart part,
-                                                                                           @NotNull PyIfStatement node) {
-    final PyExpression condition = part.getCondition();
-    final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
-    final Boolean conditionResult = PyEvaluator.evaluateAsBooleanNoResolve(condition);
-
-    if (condition != null) {
-      condition.accept(this);
-      condition.accept(assertionEvaluator);
-    }
-
-    final List<Pair<PsiElement, Instruction>> branchingPoints = getPrevInstructions(condition);
-    if (conditionResult != Boolean.FALSE) {
-      // edges to the statement list under `if` would be created below if condition were not evaluated to `False`
-      branchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
-    }
-    myBuilder.prevInstruction = null;
-
-    visitPyIfPartStatements(part, assertionEvaluator, node);
-
-    return new Triple<>(condition, branchingPoints, conditionResult);
-  }
-
-  private void visitPyIfPartStatements(@NotNull PyIfPart part,
-                                       @NotNull PyTypeAssertionEvaluator assertionEvaluator,
-                                       @NotNull PyIfStatement node) {
-    final PyStatementList statements = part.getStatementList();
-
-    myBuilder.startConditionalNode(statements, part.getCondition(), true);
-    InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
-    statements.accept(this);
-
-    myBuilder.processPending(
-      (pendingScope, instruction) -> {
-        if (pendingScope != null && PsiTreeUtil.isAncestor(statements, pendingScope, false)) {
-          myBuilder.addPendingEdge(node, instruction);
+      Boolean conditionResult = PyEvaluator.evaluateAsBooleanNoResolve(condition, myLanguageLevel);
+      boolean unreachable = alwaysTrueCondition != null || Boolean.FALSE.equals(conditionResult);
+      if (unreachable) {
+        boolean isUnreachableForTypeChecking;
+        if (alwaysTrueCondition != null) {
+          isUnreachableForTypeChecking = isTypeCheckingCondition(alwaysTrueCondition);
         }
         else {
-          myBuilder.addPendingEdge(pendingScope, instruction);
+          isUnreachableForTypeChecking = isTypeCheckingCondition(condition);
+        }
+        myBuilder.addNode(new PyUnreachableInstruction(myBuilder, isUnreachableForTypeChecking));
+      }
+      if (Boolean.TRUE.equals(conditionResult)) {
+        alwaysTrueCondition = condition;
+      }
+      visitPyStatementPart(ifPart);
+
+      if (!unreachable) {
+        exitInstructions.add(myBuilder.prevInstruction);
+      }
+      myBuilder.prevInstruction = elseNode;
+    }
+
+    final PyElsePart elsePart = node.getElsePart();
+    if (elsePart != null) {
+      if (alwaysTrueCondition != null) {
+        myBuilder.addNode(new PyUnreachableInstruction(myBuilder, isTypeCheckingCondition(alwaysTrueCondition)));
+      }
+      visitPyStatementPart(elsePart);
+    }
+
+    if (alwaysTrueCondition == null) {
+      exitInstructions.add(myBuilder.prevInstruction);
+    }
+    myBuilder.prevInstruction = addTransparentInstruction(node);
+
+    for (Instruction exitInstruction : Lists.reverse(exitInstructions)) {
+      myBuilder.addEdge(exitInstruction, myBuilder.prevInstruction);
+    }
+  }
+
+  private static boolean isTypeCheckingCondition(@Nullable PyExpression expression) {
+    return isTypeCheckingCheck(expression) || isVersionCheck(expression);
+  }
+
+  private static boolean isTypeCheckingCheck(@Nullable PyExpression expression) {
+    expression = PyPsiUtils.flattenParens(expression);
+    if (expression instanceof PyPrefixExpression prefixExpression && prefixExpression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+      return isTypeCheckingCondition(prefixExpression.getOperand());
+    }
+    return PyEvaluator.isTypeCheckingExpression(expression);
+  }
+
+  private static boolean isVersionCheck(@Nullable PyExpression expression) {
+    expression = PyPsiUtils.flattenParens(expression);
+    if (expression instanceof PyPrefixExpression prefixExpression && prefixExpression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+      return isVersionCheck(prefixExpression.getOperand());
+    }
+    if (expression instanceof PyBinaryExpression binaryExpression) {
+      PyElementType op = binaryExpression.getOperator();
+      if (PyTokenTypes.AND_KEYWORD.equals(op) || PyTokenTypes.OR_KEYWORD.equals(op)) {
+        return isVersionCheck(binaryExpression.getLeftExpression()) &&
+               isVersionCheck(binaryExpression.getRightExpression());
+      }
+      if (PyTokenTypes.RELATIONAL_OPERATIONS.contains(op)) {
+        if (PyEvaluator.isSysVersionInfoExpression(binaryExpression.getLeftExpression()) &&
+            PyPsiUtils.flattenParens(binaryExpression.getRightExpression()) instanceof PyTupleExpression) {
+          return true;
+        }
+        if (PyPsiUtils.flattenParens(binaryExpression.getLeftExpression()) instanceof PyTupleExpression &&
+            PyEvaluator.isSysVersionInfoExpression(binaryExpression.getRightExpression())) {
+          return true;
         }
       }
-    );
+    }
+    return false;
+  }
 
-    myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+  @Override
+  public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
+    if (myTrueFalseNodes != null && node.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+      PyExpression operand = node.getOperand();
+      if (operand != null) {
+        visitCondition(operand, myTrueFalseNodes.falseNode, myTrueFalseNodes.trueNode);
+      }
+    }
+    else {
+      super.visitPyPrefixExpression(node);
+    }
   }
 
   @Override
   public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
-    final PyElementType operator = node.getOperator();
+    PyElementType operator = node.getOperator();
     if (operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD) {
-      myBuilder.startNode(node);
-      final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator(operator == PyTokenTypes.AND_KEYWORD);
-
       final PyExpression left = node.getLeftExpression();
-      if (left != null) {
-        left.accept(this);
-        left.accept(assertionEvaluator);
-        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      final PyExpression right = node.getRightExpression();
+      if (left == null || right == null) return;
+
+      myBuilder.startNode(node);
+
+      Instruction trueNode;
+      Instruction falseNode;
+      Instruction exitNode;
+      if (myTrueFalseNodes == null) {
+        trueNode = falseNode = exitNode = addTransparentInstruction();
+      }
+      else {
+        trueNode = myTrueFalseNodes.trueNode;
+        falseNode = myTrueFalseNodes.falseNode;
+        exitNode = null;
       }
 
-      final PyExpression right = node.getRightExpression();
-      if (right != null) {
-        InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
-        right.accept(this);
-        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      Instruction rightNode = addTransparentInstruction();
+      if (operator == PyTokenTypes.AND_KEYWORD) {
+        visitCondition(left, rightNode, falseNode);
+      }
+      else {
+        visitCondition(left, trueNode, rightNode);
+      }
+
+      myBuilder.prevInstruction = rightNode;
+      visitCondition(right, trueNode, falseNode);
+
+      if (exitNode != null) {
+        myBuilder.prevInstruction = exitNode;
       }
     }
     else {
@@ -489,35 +714,32 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyWhileStatement(final @NotNull PyWhileStatement node) {
-    final Instruction instruction = myBuilder.startNode(node);
-    final PyWhilePart whilePart = node.getWhilePart();
+    Instruction entryNode = myBuilder.startNode(node);
+
+    TransparentInstruction thenNode = addTransparentInstruction();
+    TransparentInstruction elseNode = addTransparentInstruction();
+
+    final PyConditionalStatementPart whilePart = node.getWhilePart();
     final PyExpression condition = whilePart.getCondition();
-    boolean isStaticallyTrue = false;
     if (condition != null) {
-      condition.accept(this);
-      isStaticallyTrue = loopHasAtLeastOneIteration(node);
+      visitCondition(condition, thenNode, elseNode);
     }
-    final Instruction head = myBuilder.prevInstruction;
-    final PyElsePart elsePart = node.getElsePart();
-    if (elsePart == null && !isStaticallyTrue) {
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-    }
-    final PyStatementList list = whilePart.getStatementList();
-    myBuilder.startConditionalNode(list, condition, true);
-    list.accept(this);
-    // Loop edges
-    if (myBuilder.prevInstruction != null) {
-      myBuilder.addEdge(myBuilder.prevInstruction, instruction);
-    }
-    myBuilder.checkPending(instruction);
 
+    final Boolean conditionResult = PyEvaluator.evaluateAsBooleanNoResolve(condition);
+
+    myBuilder.prevInstruction = Boolean.FALSE.equals(conditionResult) ? null : thenNode;
+    visitPyStatementPart(whilePart);
+
+    myBuilder.checkPending(entryNode);
+    myBuilder.addEdge(myBuilder.prevInstruction, entryNode);
+
+    myBuilder.prevInstruction = Boolean.TRUE.equals(conditionResult) ? null : elseNode;
+    PyElsePart elsePart = node.getElsePart();
     if (elsePart != null) {
-      myBuilder.prevInstruction = !isStaticallyTrue ? head : null;
-      elsePart.accept(this);
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      visitPyStatementPart(elsePart);
     }
 
-    myBuilder.flowAbrupted();
+    collectInternalPendingEdges(node);
   }
 
   @Override
@@ -562,7 +784,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
+
+
     myBuilder.flowAbrupted();
+    collectInternalPendingEdges(node);
   }
 
   private static boolean loopHasAtLeastOneIteration(@NotNull PyLoopStatement loopStatement) {
@@ -629,16 +854,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     for (PyExpression expression : expressions) {
       expression.accept(this);
     }
-
-    myBuilder.processPending((pendingScope, instruction) -> {
-      final PsiElement pendingElement = instruction.getElement();
-      if (pendingElement != null && PsiTreeUtil.isAncestor(node, pendingElement, false)) {
-        myBuilder.addEdge(null, instruction);
-      }
-      else {
-        myBuilder.addPendingEdge(pendingScope, instruction);
-      }
-    });
+    myBuilder.addNode(new PyRaiseInstruction(myBuilder, node));
     myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
     myBuilder.flowAbrupted();
   }
@@ -650,7 +866,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (expression != null) {
       expression.accept(this);
     }
-    abruptFlow(node);
+    myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+    myBuilder.flowAbrupted();
   }
 
   @Override
@@ -712,6 +929,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.flowAbrupted();
       finallyFailInstruction = myBuilder.startNode(finallyPart);
       finallyPart.accept(this);
+      myBuilder.addNodeAndCheckPending(new PyFinallyFailExitInstruction(myBuilder, finallyFailInstruction));
       myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
       myBuilder.flowAbrupted();
     }
@@ -767,7 +985,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       });
 
       // Duplicate CFG for finally (-fail and -success) only if there are some successful exits from the
-      // try part. Otherwise a single CFG for finally provides the correct control flow
+      // try part. Otherwise, a single CFG for finally provides the correct control flow
       final Instruction finallyInstruction;
       if (!pendingNormalExits.isEmpty()) {
         // Finally-success part handling
@@ -792,13 +1010,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
         myBuilder.addEdge(instruction, finallyInstruction);
 
-        // When instruction continues outside of try-except statement scope
+        // When instruction continues outside try-except statement scope
         // the last instruction in finally-block is marked as pointing to that continuation
         if (PsiTreeUtil.isAncestor(pendingScope, node, true)) {
           myBuilder.addPendingEdge(pendingScope, myBuilder.prevInstruction);
         }
       }
     }
+
+    collectInternalPendingEdges(node);
   }
 
   @Override
@@ -808,8 +1028,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     List<Instruction> iterators = new ArrayList<>();
 
     for (PyComprehensionComponent component : node.getComponents()) {
-      if (component instanceof PyComprehensionForComponent) {
-        final PyComprehensionForComponent c = (PyComprehensionForComponent)component;
+      if (component instanceof PyComprehensionForComponent c) {
         final PyExpression iteratedList = c.getIteratedList();
         final PyExpression iteratorVariable = c.getIteratorVariable();
         if (prevCondition != null) {
@@ -833,8 +1052,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         // Inner "for" and "if" constructs will be linked to all outer iterators
         iterators.add(iterator);
       }
-      else if (component instanceof PyComprehensionIfComponent) {
-        final PyComprehensionIfComponent c = (PyComprehensionIfComponent)component;
+      else if (component instanceof PyComprehensionIfComponent c) {
         final PyExpression condition = c.getTest();
         if (condition == null) {
           continue;
@@ -845,10 +1063,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         else {
           myBuilder.startNode(condition);
         }
-        final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
         condition.accept(this);
-        condition.accept(assertionEvaluator);
-        InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+        addTypeAssertionNodes(condition, true);
 
         // Condition is true for nested "for" and "if" constructs, next startNode() should create a conditional node
         prevCondition = condition;
@@ -876,21 +1092,37 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.addEdge(myBuilder.prevInstruction, i);
       }
     }
+
+    collectInternalPendingEdges(node);
   }
 
   @Override
   public void visitPyAssertStatement(final @NotNull PyAssertStatement node) {
     myBuilder.startNode(node);
-    super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
-    // assert False
-    if (args.length >= 1 && !PyEvaluator.evaluateAsBooleanNoResolve(args[0], true)) {
-      abruptFlow(node);
-      return;
+    for (PyExpression arg : args) {
+      arg.accept(this);
     }
-    PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator();
-    node.acceptChildren(evaluator);
-    InstructionBuilder.addAssertInstructions(myBuilder, evaluator);
+    // assert False
+    if (args.length >= 1) {
+      if (!PyEvaluator.evaluateAsBooleanNoResolve(args[0], true)) {
+        myBuilder.addNode(new PyRaiseInstruction(myBuilder, node));
+        myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+        myBuilder.flowAbrupted();
+        return;
+      }
+
+      TransparentInstruction trueNode = addTransparentInstruction(node);
+      TransparentInstruction falseNode = addTransparentInstruction(node);
+      visitCondition(args[0], trueNode, falseNode);
+
+      PyRaiseInstruction raiseInstruction = new PyRaiseInstruction(myBuilder, node);
+      myBuilder.instructions.add(raiseInstruction);
+      myBuilder.addEdge(falseNode, raiseInstruction);
+
+      myBuilder.addPendingEdge(null, raiseInstruction);
+      myBuilder.prevInstruction = trueNode;
+    }
   }
 
   @Override
@@ -901,25 +1133,54 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyWithStatement(final @NotNull PyWithStatement node) {
-    super.visitPyWithStatement(node);
+    myBuilder.startNode(node);
 
-    final boolean suppressor = StreamEx
-      .of(node.getWithItems())
-      .map(PyWithItem::getExpression)
-      .select(PyCallExpression.class)
-      .map(PyCallExpression::getCallee)
-      .select(PyReferenceExpression.class)
-      .anyMatch(it -> EXCEPTION_SUPPRESSORS.contains(it.getReferencedName()));
-
-    myBuilder.processPending((pendingScope, instruction) -> {
-      final PsiElement element = instruction.getElement();
-      if (element != null &&
-          PsiTreeUtil.isAncestor(node, element, true) &&
-          (suppressor && canRaiseExceptions(instruction) || PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null)) {
-        myBuilder.addPendingEdge(node, instruction);
+    List<Instruction> exits = new ArrayList<>();
+    for (var item : node.getWithItems()) {
+      int itemStart = myBuilder.instructions.size();
+      item.accept(this);
+      int itemEnd = myBuilder.instructions.size();
+      for (int i = itemStart; i < itemEnd; i++) {
+        final Instruction instruction = myBuilder.instructions.get(i);
+        final PsiElement e = instruction.getElement();
+        if (e == null || !canRaiseExceptions(instruction) || !PsiTreeUtil.isAncestor(node, e, false)) {
+          continue;
+        }
+        for (var exit : exits) {
+          myBuilder.addEdge(myBuilder.instructions.get(i), exit);
+        }
       }
-      myBuilder.addPendingEdge(pendingScope, instruction);
-    });
+
+      var nextExit = new PyWithContextExitInstruction(myBuilder, item);
+      exits.add(nextExit);
+      myBuilder.instructions.add(nextExit);
+      // ControlFlowUtil.iterate assumes nodes are added to CFG in order they are created
+    }
+
+    final var toAllExits = addTransparentInstruction();
+    final var fromAllExits = addTransparentInstruction();
+    for (var exit : exits) {
+      myBuilder.addEdge(toAllExits, exit);
+      myBuilder.addEdge(exit, fromAllExits);
+    }
+
+    int stmtStart = myBuilder.instructions.size();
+    node.getStatementList().accept(this);
+    int stmtEnd = myBuilder.instructions.size();
+
+    for (int j = stmtStart; j < stmtEnd; j++) {
+      final Instruction instruction = myBuilder.instructions.get(j);
+      final PsiElement e = instruction.getElement();
+      if (e == null || !canRaiseExceptions(instruction) || !PsiTreeUtil.isAncestor(node, e, false)) {
+        continue;
+      }
+      myBuilder.addEdge(instruction, toAllExits);
+    }
+    myBuilder.addEdge(myBuilder.prevInstruction, toAllExits);
+
+    if (!exits.isEmpty()) {
+      myBuilder.addPendingEdge(node, fromAllExits);
+    }
   }
 
   @Override
@@ -931,26 +1192,122 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (target != null) target.accept(this);
   }
 
-  private void abruptFlow(final PsiElement node) {
-    // Here we process pending instructions!!!
+  @Override
+  public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
+    myBuilder.startNode(node);
+
+    final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
+    myBuilder.addNodeAndCheckPending(instruction);
+  }
+
+  @Override
+  public void visitPyTypeParameterList(@NotNull PyTypeParameterList node) { }
+
+  private void visitCondition(@NotNull PyExpression expression, @NotNull Instruction trueNode, @NotNull Instruction falseNode) {
+    TrueFalseNodes prevTrueFalseNodes = myTrueFalseNodes;
+    myTrueFalseNodes = new TrueFalseNodes(trueNode, falseNode);
+    expression.accept(this);
+    myTrueFalseNodes = prevTrueFalseNodes;
+
+    final PyExpression condition = PyPsiUtils.flattenParens(expression);
+    if (condition != null && !isLogicalExpression(condition)) {
+      addConditionalNode(expression, false, falseNode);
+      addConditionalNode(expression, true, trueNode);
+    }
+  }
+
+  private static boolean isLogicalExpression(@NotNull PyExpression expression) {
+    if (expression instanceof PyBinaryExpression binaryExpression) {
+      PyElementType operator = binaryExpression.getOperator();
+      return operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD;
+    }
+    if (expression instanceof PyPrefixExpression prefixExpression) {
+      return prefixExpression.getOperator() == PyTokenTypes.NOT_KEYWORD;
+    }
+    return false;
+  }
+
+  private void addConditionalNode(@NotNull PyExpression condition, boolean result, @NotNull Instruction target) {
+    Instruction prevInstruction = myBuilder.prevInstruction;
+    myBuilder.addNode(new ConditionalInstructionImpl(myBuilder, null, condition, result));
+    addTypeAssertionNodes(condition, result);
+    myBuilder.addEdge(myBuilder.prevInstruction, target);
+    myBuilder.prevInstruction = prevInstruction;
+  }
+
+  private void visitPyStatementPart(@NotNull PyStatementPart statementPart) {
+    PyStatementList statementList = statementPart.getStatementList();
+    myBuilder.startNode(statementList);
+    statementList.accept(this);
+  }
+
+  private static boolean canRaiseExceptions(@NotNull Instruction instruction) {
+    if (instruction instanceof ReadWriteInstruction) {
+      return true;
+    }
+    PsiElement element = instruction.getElement();
+    return !(element instanceof PyReturnStatement returnStatement && returnStatement.getExpression() == null
+             || element instanceof PyContinueStatement
+             || element instanceof PyBreakStatement
+             || element instanceof PyPassStatement
+             || element instanceof PyStatementList);
+  }
+
+  private void addTypeAssertionNodes(@NotNull PyElement condition, boolean positive) {
+    addTypeAssertionNodes(condition, positive, null);
+  }
+
+  private void addTypeAssertionNodes(@NotNull PyElement condition, boolean positive, @Nullable List<String> ignoredNames) {
+    final PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator(positive);
+    condition.accept(evaluator);
+    for (PyTypeAssertionEvaluator.Assertion def : evaluator.getDefinitions()) {
+      final PyQualifiedExpression e = def.getElement();
+      @Nullable String name = null;
+      if (e != null) {
+        name = getName(e);
+      }
+      if (name != null && ignoredNames != null && ignoredNames.contains(name)) {
+        continue;
+      }
+      myBuilder.addNode(ReadWriteInstruction.assertType(myBuilder, e, name, def.getTypeEvalFunction()));
+    }
+  }
+
+  private static @Nullable String getName(@NotNull PyQualifiedExpression expr) {
+    final QualifiedName qname = expr.asQualifiedName();
+    return qname != null ? qname.toString() : expr.getName();
+  }
+
+  private TransparentInstruction addTransparentInstruction() {
+    return addTransparentInstruction(null);
+  }
+
+  private TransparentInstruction addTransparentInstruction(@Nullable PsiElement element) {
+    TransparentInstructionImpl instruction = new TransparentInstructionImpl(myBuilder, element, "");
+    myBuilder.instructions.add(instruction);
+    return instruction;
+  }
+
+  /**
+   * Can be used to collect all pending edges
+   * that we used to build CFG for `node`,
+   * but are not relevant to other elements.
+   * Is almost equivalent to this:
+   *
+   * <pre>{@code
+   * visitPy...(node);
+   * myBuilder.startNode(node.nextSibling); // collectInternalPendingEdges does this, without needing nextSibling
+   * }</pre>
+   */
+  private void collectInternalPendingEdges(@NotNull PyElement node) {
+    myBuilder.addNode(new TransparentInstructionImpl(myBuilder, node, "")); // exit
     myBuilder.processPending((pendingScope, instruction) -> {
       if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
-        myBuilder.addPendingEdge(null, instruction);
+        myBuilder.addEdge(instruction, myBuilder.prevInstruction); // to exit
       }
       else {
         myBuilder.addPendingEdge(pendingScope, instruction);
       }
     });
-    myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
-    myBuilder.flowAbrupted();
-  }
-
-  private static boolean canRaiseExceptions(final Instruction instruction) {
-    if (instruction instanceof ReadWriteInstruction) {
-      return true;
-    }
-    return !PsiTreeUtil.instanceOf(instruction.getElement(),
-                                   PyStatementList.class);
   }
 }
-

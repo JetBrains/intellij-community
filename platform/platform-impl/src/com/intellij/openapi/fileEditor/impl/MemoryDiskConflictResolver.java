@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.diff.DiffContentFactory;
@@ -20,19 +20,21 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
-class MemoryDiskConflictResolver {
+@ApiStatus.Internal
+public class MemoryDiskConflictResolver {
   private static final Logger LOG = Logger.getInstance(MemoryDiskConflictResolver.class);
 
   private final Set<VirtualFile> myConflicts = new LinkedHashSet<>();
@@ -55,15 +57,17 @@ class MemoryDiskConflictResolver {
       LOG.info("  oldFileStamp:" + oldFileStamp);
       if (myConflicts.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.info("  fileStamp:" + event.getModificationStamp());
+          LOG.info("  document content:" + document.getText());
           myConflictAppeared = new Throwable();
         }
-        ApplicationManager.getApplication().invokeLater(this::processConflicts);
+        ApplicationManager.getApplication().invokeLater(() -> processConflicts());
       }
       myConflicts.add(file);
     }
   }
 
-  boolean hasConflict(VirtualFile file) {
+  boolean hasConflict(@NotNull VirtualFile file) {
     return myConflicts.contains(file);
   }
 
@@ -80,7 +84,8 @@ class MemoryDiskConflictResolver {
     myConflictAppeared = null;
   }
 
-  boolean askReloadFromDisk(VirtualFile file, Document document) {
+  @VisibleForTesting
+  protected boolean askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
     if (myConflictAppeared != null) {
       Throwable trace = myConflictAppeared;
       myConflictAppeared = null;
@@ -120,7 +125,6 @@ class MemoryDiskConflictResolver {
       }
     });
     builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
-    builder.setButtonsAlignment(SwingConstants.CENTER);
     builder.setHelpId("reference.dialogs.fileCacheConflict");
     return builder.show() == 0;
   }

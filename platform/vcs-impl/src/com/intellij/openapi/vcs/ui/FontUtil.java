@@ -1,27 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ui;
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 
 public final class FontUtil {
-  @NotNull
-  @Nls
-  public static String getHtmlWithFonts(@NotNull @Nls String input) {
-    Font font = UIUtil.getLabelFont();
+  public static @NotNull @Nls String getHtmlWithFonts(@NotNull @Nls String input) {
+    Font font = StartupUiUtil.getLabelFont();
     return getHtmlWithFonts(input, font.getStyle(), font);
   }
 
-  @NotNull
-  @Nls
-  public static String getHtmlWithFonts(@NotNull @Nls String input, int style, @NotNull Font baseFont) {
+  public static @NotNull @Nls String getHtmlWithFonts(@NotNull @Nls String input, int style, @NotNull Font baseFont) {
     int start = baseFont.canDisplayUpTo(input);
     if (start == -1) return input;
 
@@ -52,18 +50,16 @@ public final class FontUtil {
     return result.toString();
   }
 
-  @NotNull
-  public static Font getEditorFont() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+  public static @NotNull Font getEditorFont() {
+    return EditorFontType.getGlobalPlainFont().deriveFont(UISettingsUtils.getInstance().getScaledEditorFontSize());
   }
 
-  @NotNull
-  public static Font getCommitMessageFont() {
+  public static @NotNull Font getCommitMessageFont() {
     return getEditorFont();
   }
 
   public static Font getCommitMetadataFont() {
-    return UIUtil.getLabelFont();
+    return StartupUiUtil.getLabelFont();
   }
 
   public static int getStandardAscent(@NotNull Font font, @NotNull Graphics g) {

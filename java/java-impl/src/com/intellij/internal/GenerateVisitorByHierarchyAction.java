@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -9,6 +9,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -23,7 +24,22 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -33,17 +49,25 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
-public class GenerateVisitorByHierarchyAction extends AnAction {
+final class GenerateVisitorByHierarchyAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -86,7 +110,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         labeledComponent.setComponent(nameField);
         nameField.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
-          protected void textChanged(@NotNull final DocumentEvent e) {
+          protected void textChanged(final @NotNull DocumentEvent e) {
             visitorNameRef.set(nameField.getText());
           }
         });
@@ -103,7 +127,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         labeledComponent.setComponent(editorTextField);
         editorTextField.addDocumentListener(new DocumentListener() {
           @Override
-          public void documentChanged(@NotNull final com.intellij.openapi.editor.event.DocumentEvent e) {
+          public void documentChanged(final @NotNull com.intellij.openapi.editor.event.DocumentEvent e) {
             parentClassRef.set(null);
             try {
               final PsiType psiType = codeFragment.getType();
@@ -131,7 +155,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE ||
         dialog.getSelectedPackage() == null ||
-        dialog.getSelectedPackage().getQualifiedName().length() == 0 ||
+        dialog.getSelectedPackage().getQualifiedName().isEmpty() ||
         parentClassRef.isNull()) {
       return;
     }
@@ -144,8 +168,8 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
   }
 
   public static String generateEverything(final PsiPackage psiPackage, final PsiClass rootClass, final String visitorName) {
-    final String visitorQName = PsiNameHelper.getShortClassName(visitorName).equals(visitorName)?
-                                psiPackage.getQualifiedName()+"."+ visitorName : visitorName;
+    final String visitorQName = PsiNameHelper.getShortClassName(visitorName).equals(visitorName) ?
+                                psiPackage.getQualifiedName() + "." + visitorName : visitorName;
     final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(rootClass.getProject(),
                                                                                StringUtil.getPackageName(visitorQName), null, false);
     generateVisitorClass(visitorQName, rootClass, directory, new PackageScope(psiPackage, false, false));
@@ -153,8 +177,13 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(e.getProject() != null);
   }
 
   private static void generateVisitorClass(final String visitorName,
@@ -162,16 +191,16 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
                                            final PsiDirectory directory,
                                            final GlobalSearchScope scope) {
 
-    final THashMap<PsiClass, Set<PsiClass>> classes = new THashMap<>();
+    final Map<PsiClass, Set<PsiClass>> classes = new HashMap<>();
     for (PsiClass aClass : ClassInheritorsSearch.search(baseClass, scope, true).findAll()) {
       if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) == baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final List<PsiClass> implementors =
           ContainerUtil.findAll(ClassInheritorsSearch.search(aClass).findAll(),
                                 psiClass -> !psiClass.hasModifierProperty(PsiModifier.ABSTRACT));
-        classes.put(aClass, new THashSet<>(implementors));
+        classes.put(aClass, new HashSet<>(implementors));
       }
     }
-    final THashMap<PsiClass, Set<PsiClass>> pathMap = new THashMap<>();
+    final Map<PsiClass, Set<PsiClass>> pathMap = new HashMap<>();
     for (PsiClass aClass : classes.keySet()) {
       final Set<PsiClass> superClasses = new LinkedHashSet<>();
       for (PsiClass superClass : aClass.getSupers()) {
@@ -222,8 +251,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     }
   }
 
-  @NotNull
-  private static String detectClassPrefix(Collection<PsiClass> classes) {
+  private static @NotNull String detectClassPrefix(Collection<PsiClass> classes) {
     String detectedPrefix = "";
     List<TextRange> range = new SmartList<>();
     for (PsiClass aClass : classes) {
@@ -232,7 +260,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       TextRange prefixRange = ContainerUtil.getFirstItem(range);
       if (prefixRange != null) {
         String prefix = prefixRange.substring(className);
-        detectedPrefix = detectedPrefix == "" ? prefix : detectedPrefix.equals(prefix) ? detectedPrefix : null;
+        detectedPrefix = detectedPrefix.isEmpty() ? prefix : detectedPrefix.equals(prefix) ? detectedPrefix : null;
       }
       if (detectedPrefix == null) return "";
     }
@@ -240,7 +268,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
   }
 
   private static void generateVisitorClass(final PsiClass visitorClass, final Map<PsiClass, Set<PsiClass>> classes,
-                                           final THashMap<PsiClass, Set<PsiClass>> pathMap, int classPrefix) throws Throwable {
+                                           final Map<PsiClass, Set<PsiClass>> pathMap, int classPrefix) throws Throwable {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(visitorClass.getProject());
     for (PsiClass psiClass : classes.keySet()) {
       final PsiMethod method = elementFactory.createMethodFromText(
@@ -250,7 +278,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       }
     }
 
-    final THashSet<PsiClass> visitedClasses = new THashSet<>();
+    final Set<PsiClass> visitedClasses = new HashSet<>();
     final LinkedList<PsiClass> toProcess = new LinkedList<>(classes.keySet());
     while (!toProcess.isEmpty()) {
       final PsiClass psiClass = toProcess.removeFirst();
@@ -287,6 +315,4 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         new PsiGenerationInfo<>(method)));
     }
   }
-
-
 }

@@ -66,7 +66,7 @@ public interface OutputEventQueue {
       }
 
       public String getQName() {
-        return myPrefix != null && myPrefix.length() > 0 ? myPrefix + ":" + myLocalName : myLocalName;
+        return myPrefix != null && !myPrefix.isEmpty() ? myPrefix + ":" + myLocalName : myLocalName;
       }
     }
 

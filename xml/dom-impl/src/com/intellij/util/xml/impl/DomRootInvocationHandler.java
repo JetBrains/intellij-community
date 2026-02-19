@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomRootInvocationHandler extends DomInvocationHandler {
   private static final Logger LOG = Logger.getInstance(DomRootInvocationHandler.class);
   private final DomFileElementImpl<?> myParent;
@@ -44,13 +27,12 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   public DomRootInvocationHandler(final Class aClass,
                                   final RootDomParentStrategy strategy,
                                   @NotNull DomFileElementImpl<?> fileElement,
-                                  @NotNull final EvaluatedXmlName tagName,
+                                  final @NotNull EvaluatedXmlName tagName,
                                   @Nullable ElementStub stub
   ) {
     super(aClass, strategy, tagName, new AbstractDomChildDescriptionImpl(aClass) {
       @Override
-      @NotNull
-      public List<? extends DomElement> getValues(@NotNull final DomElement parent) {
+      public @NotNull List<? extends DomElement> getValues(final @NotNull DomElement parent) {
         throw new UnsupportedOperationException();
       }
 
@@ -77,13 +59,14 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     }
   }
 
+  @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof DomRootInvocationHandler)) return false;
+    if (!(obj instanceof DomRootInvocationHandler handler)) return false;
 
-    final DomRootInvocationHandler handler = (DomRootInvocationHandler)obj;
     return myParent.equals(handler.myParent);
   }
 
+  @Override
   public int hashCode() {
     return myParent.hashCode();
   }
@@ -95,8 +78,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   }
 
   @Override
-  @NotNull
-  public String getXmlElementNamespace() {
+  public @NotNull String getXmlElementNamespace() {
     return getXmlName().getNamespace(getFile(), getFile());
   }
 
@@ -116,8 +98,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   }
 
   @Override
-  @NotNull
-  public DomFileElementImpl<?> getParent() {
+  public @NotNull DomFileElementImpl<?> getParent() {
     return myParent;
   }
 
@@ -133,7 +114,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     getManager().runChange(() -> {
       try {
         final String namespace = getXmlElementNamespace();
-        @NonNls final String nsDecl = StringUtil.isEmpty(namespace) ? "" : " xmlns=\"" + namespace + "\"";
+        final @NonNls String nsDecl = StringUtil.isEmpty(namespace) ? "" : " xmlns=\"" + namespace + "\"";
         final XmlFile xmlFile = getFile();
         final XmlTag tag = XmlElementFactory.getInstance(xmlFile.getProject()).createTagFromText("<" + getXmlElementName() + nsDecl + "/>");
         result[0] = ((XmlDocument)xmlFile.getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
@@ -146,8 +127,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
   }
 
   @Override
-  @NotNull
-  public final DomNameStrategy getNameStrategy() {
+  public final @NotNull DomNameStrategy getNameStrategy() {
     final Class<?> rawType = getRawType();
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType, isAttribute());
     if (strategy != null) {

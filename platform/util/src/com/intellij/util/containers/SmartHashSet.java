@@ -1,182 +1,327 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
- * Hash set (based on THashSet) which is fast when contains one or zero elements (avoids to calculate hash codes and call equals whenever possible).
- * For other sizes it delegates to THashSet.
+ * Hash set which is fast and footprint-efficient when contains one or zero elements (avoids calculating hash codes and call equals whenever possible).
+ * For other sizes, it delegates to {@link java.util.HashSet}.
+ * Use only when anticipate empty or one-element sized maps, in all other cases prefer {@link java.util.HashSet}.
  * Null keys are NOT PERMITTED.
+ * Not thread-safe
  */
-public final class SmartHashSet<T> extends THashSet<T> {
-  private T theElement; // contains the only element if size() == 1
-
+public final class SmartHashSet<T> extends AbstractSet<T> {
+  private Object theElement; // null if empty, the only element if size() == 1, MySet otherwise
   public SmartHashSet() {
   }
-
-  public SmartHashSet(int initialCapacity) {
-    super(initialCapacity);
-  }
-
+  // for binary compatibility
   public SmartHashSet(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
+  }
+  // for binary compatibility
+  public SmartHashSet(int initialCapacity) {
   }
 
   public SmartHashSet(@NotNull Collection<? extends @NotNull T> collection) {
-    super(collection.size() == 1 ? Collections.emptyList() : collection);
     if (collection.size() == 1) {
       T element = collection.iterator().next();
+      //noinspection ConstantConditions
       if (element == null) {
-        throw new IllegalArgumentException("Null elements are not permitted but got: "+collection);
+        throw new IllegalArgumentException("Null elements are not permitted but got: " + collection);
       }
       theElement = element;
+    }
+    else if (!collection.isEmpty()) {
+      theElement = new MySet<T>(collection);
+    }
+  }
+
+  private static final class MySet<T> extends HashSet<T> {
+    MySet(@NotNull Collection<? extends T> collection) {
+      super(collection);
+    }
+
+    MySet(@NotNull T element1, @NotNull T element2) {
+      add(element1);
+      add(element2);
     }
   }
 
   @Override
   public boolean contains(@NotNull Object obj) {
-    T theElement = this.theElement;
-    if (theElement != null) {
-      return eq(theElement, (T)obj);
+    Object element = this.theElement;
+    if (element == null) {
+      return false;
     }
-    return !super.isEmpty() && super.contains(obj);
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet == null) {
+      return Objects.equals(obj, element);
+    }
+    return hashSet.contains(obj);
   }
 
   @Override
   public boolean add(@NotNull T obj) {
-    T theElement = this.theElement;
-    if (theElement != null) {
-      if (eq(theElement, obj)) return false;
-      super.add(theElement);
-      this.theElement = null;
-      // fallthrough
-    }
-    else if (super.isEmpty()) {
-      this.theElement = obj;
+    Object element = this.theElement;
+    if (element == null) {
+      theElement = obj;
       return true;
     }
-    return super.add(obj);
-  }
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet == null) {
+      if (Objects.equals(obj, element)) {
+        return false;
+      }
 
-  private boolean eq(T obj, T theElement) {
-    return theElement == obj || _hashingStrategy.equals(theElement, obj);
+      //noinspection unchecked
+      this.theElement = new MySet<>((T)element, obj);
+      return true;
+    }
+    else {
+      return hashSet.add(obj);
+    }
   }
 
   @Override
   public boolean equals(@Nullable Object other) {
-    T theElement = this.theElement;
-    if (theElement != null) {
-      return other instanceof Set && ((Set<?>)other).size() == 1 && eq(theElement, ((Set<T>)other).iterator().next());
+    if (!(other instanceof Set)) {
+      return false;
     }
-
-    return super.equals(other);
+    Object element = this.theElement;
+    if (element == null) {
+      return ((Set<?>)other).isEmpty();
+    }
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      return other.equals(hashSet);
+    }
+    return ((Set<?>)other).size() == 1 && Objects.equals(((Set<?>)other).iterator().next(), element);
   }
 
   @Override
   public int hashCode() {
-    T theElement = this.theElement;
-    if (theElement != null) {
-      return _hashingStrategy.computeHashCode(theElement);
-    }
-    return super.hashCode();
+    return Objects.hashCode(theElement);
   }
 
   @Override
   public void clear() {
     theElement = null;
-    super.clear();
   }
 
   @Override
   public int size() {
-    if (theElement != null) {
-      return 1;
+    Object element = theElement;
+    if (element == null) {
+      return 0;
     }
-    return super.size();
+    MySet<T> hashSet = asHashSet(element);
+    return hashSet == null ? 1 : hashSet.size();
   }
 
   @Override
   public boolean isEmpty() {
-    return theElement == null && super.isEmpty();
+    return theElement == null;
   }
 
   @Override
   public boolean remove(@NotNull Object obj) {
-    T theElement = this.theElement;
-    if (theElement != null) {
-      if (eq(theElement, (T)obj)) {
-        this.theElement = null;
-        return true;
-      }
+    Object element = this.theElement;
+    if (element == null) {
       return false;
     }
-    return super.remove(obj);
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      boolean removed = hashSet.remove(obj);
+      if (removed) {
+        if (hashSet.isEmpty()) {
+          theElement = null;
+        }
+        else if (hashSet.size() == 1) {
+          theElement = hashSet.iterator().next();
+        }
+      }
+      return removed;
+    }
+    else if (Objects.equals(obj, element)) {
+      this.theElement = null;
+      return true;
+    }
+    return false;
   }
 
-  @NotNull
+  private @Nullable MySet<T> asHashSet(Object element) {
+    if (element instanceof MySet) {
+      //noinspection unchecked
+      MySet<T> set = (MySet<T>)element;
+      assert set.size()>1 : set;
+      return set;
+    }
+    return null;
+  }
+
   @Override
-  public Iterator<T> iterator() {
-    if (theElement != null) {
-      return new SingletonIteratorBase<T>() {
+  public @NotNull Iterator<T> iterator() {
+    Object element = theElement;
+    if (element == null) {
+      return Collections.emptyIterator();
+    }
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      return new Iterator<T>() {
+        private final Iterator<T> hashIterator = hashSet.iterator();
         @Override
-        protected void checkCoModification() {
-          if (theElement == null) {
-            throw new ConcurrentModificationException();
-          }
+        public boolean hasNext() {
+          return hashIterator.hasNext();
         }
 
         @Override
-        protected T getElement() {
-          return theElement;
+        public T next() {
+          return hashIterator.next();
         }
 
         @Override
         public void remove() {
-          checkCoModification();
-          clear();
+          hashIterator.remove();
+          if (hashSet.isEmpty()) {
+            theElement = null;
+          }
+          else if (hashSet.size() == 1) {
+            theElement = hashSet.iterator().next();
+          }
         }
       };
     }
-    return super.iterator();
+    return new SingletonIteratorBase<T>() {
+      @Override
+      protected void checkCoModification() {
+        if (theElement == null) {
+          throw new ConcurrentModificationException();
+        }
+      }
+
+      @Override
+      protected T getElement() {
+        //noinspection unchecked
+        return (T)element;
+      }
+
+      @Override
+      public void remove() {
+        checkCoModification();
+        clear();
+      }
+    };
   }
 
   @Override
-  public boolean forEach(@NotNull TObjectProcedure<T> procedure) {
-    T theElement = this.theElement;
-    if (theElement != null) {
-      return procedure.execute(theElement);
+  public void forEach(Consumer<? super T> action) {
+    Object element = this.theElement;
+    if (element == null) {
+      return;
     }
-    return super.forEach(procedure);
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      hashSet.forEach(action);
+    }
+    else {
+      //noinspection unchecked
+      action.accept((T)element);
+    }
   }
 
   @Override
   public Object @NotNull [] toArray() {
-    T theElement = this.theElement;
-    if (theElement != null) {
-      return new Object[]{theElement};
+    Object element = this.theElement;
+    if (element == null) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    return super.toArray();
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      return hashSet.toArray();
+    }
+    else {
+      return new Object[]{element};
+    }
   }
 
   @Override
-  public <T> T @NotNull [] toArray(T @NotNull [] a) {
-    T theElement = (T)this.theElement;
-    if (theElement != null) {
-      if (a.length == 0) {
-        a = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
-      }
-      a[0] = theElement;
-      if (a.length > 1) {
-        a[1] = null;
+  public <O> O @NotNull [] toArray(O @NotNull [] a) {
+    Object element = this.theElement;
+    if (element == null) {
+      if (a.length != 0) {
+        a[0] = null;
       }
       return a;
     }
-    return super.toArray(a);
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      return hashSet.toArray(a);
+    }
+
+    if (a.length == 0) {
+      a = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
+    }
+    //noinspection unchecked
+    a[0] = (O)element;
+    if (a.length > 1) {
+      a[1] = null;
+    }
+    return a;
+  }
+
+  @Override
+  public @NotNull Stream<T> stream() {
+    Object element = this.theElement;
+    if (element == null) {
+      return Stream.empty();
+    }
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      return hashSet.stream();
+    }
+
+    //noinspection unchecked
+    return Stream.of((T)element);
+  }
+
+  @Override
+  public @NotNull Spliterator<T> spliterator() {
+    Object element = this.theElement;
+    if (element == null) {
+      return Spliterators.emptySpliterator();
+    }
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      return hashSet.spliterator();
+    }
+    //noinspection unchecked
+    return Stream.of((T)element).spliterator();
+  }
+
+  @Override
+  public String toString() {
+    Object element = this.theElement;
+    if (element == null) {
+      return "[]";
+    }
+    MySet<T> hashSet = asHashSet(element);
+    if (hashSet != null) {
+      return hashSet.toString();
+    }
+    return "["+element+"]";
   }
 }

@@ -4,21 +4,23 @@ package com.intellij.laf.macos;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
-  public static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(22));
+public final class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
   public MacIntelliJCheckBoxUI(JCheckBox c) {
     c.setOpaque(false);
@@ -30,28 +32,18 @@ public class MacIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   }
 
   @Override
-  public Icon getDefaultIcon() {
-    return DEFAULT_ICON;
-  }
-
-  @Override
-  protected int textIconGap() {
-    return JBUIScale.scale(3);
-  }
-
-  @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
 
-      Object op = b.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(b);
       boolean hasFocus = op == null && b.hasFocus();
       Icon icon = MacIconLookup.getIcon(iconName, selected || isIndeterminate(b), hasFocus, b.isEnabled());
       icon.paintIcon(b, g2, iconRect.x, iconRect.y);
 
       if (op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, b.hasFocus());
+        op.setGraphicsColor(g2, b.hasFocus());
         Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         outline.append(new RoundRectangle2D.Float(
           iconRect.x + JBUIScale.scale(1), iconRect.y + JBUIScale.scale(1), JBUIScale.scale(20), JBUIScale.scale(20), JBUIScale.scale(12),

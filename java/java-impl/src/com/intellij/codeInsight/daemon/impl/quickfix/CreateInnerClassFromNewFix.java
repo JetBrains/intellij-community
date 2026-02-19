@@ -1,34 +1,31 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+import java.util.List;
+
+
 public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   private static final Logger LOG = Logger.getInstance(CreateInnerClassFromNewFix.class);
 
@@ -53,17 +50,29 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   }
 
   @Override
-  protected boolean rejectQualifier(PsiExpression qualifier) {
+  protected boolean rejectContainer(PsiNewExpression qualifier) {
     return false;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     chooseTargetClass(project, editor, this::invokeImpl);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
+    List<PsiClass> targetClasses = filterTargetClasses(element, project);
+    if (targetClasses.isEmpty()) return IntentionPreviewInfo.EMPTY;
+    invokeImpl(targetClasses.get(0));
+    return IntentionPreviewInfo.DIFF;
   }
 
   private void invokeImpl(final PsiClass targetClass) {
     PsiNewExpression newExpression = getNewExpression();
+    if (!targetClass.isPhysical()) {
+      newExpression = PsiTreeUtil.findSameElementInCopy(newExpression, targetClass.getContainingFile());
+    }
     PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
     assert ref != null;
     String refName = ref.getReferenceName();

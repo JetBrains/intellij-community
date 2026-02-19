@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.ImageObjectRenderer"/>
-  </extensions>
-</idea-plugin>

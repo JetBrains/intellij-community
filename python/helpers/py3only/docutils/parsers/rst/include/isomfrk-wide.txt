@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |Afr| unicode:: U+1D504 .. MATHEMATICAL FRAKTUR CAPITAL A
 .. |afr| unicode:: U+1D51E .. MATHEMATICAL FRAKTUR SMALL A

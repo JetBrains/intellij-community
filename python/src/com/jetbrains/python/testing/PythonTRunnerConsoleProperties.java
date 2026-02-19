@@ -1,23 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
-import com.intellij.execution.testframework.sm.runner.*;
+import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.events.TestDurationStrategy;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
@@ -49,9 +40,8 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
     return myIsEditable;
   }
 
-  @Nullable
   @Override
-  public SMTestLocator getTestLocator() {
+  public @Nullable SMTestLocator getTestLocator() {
     return myLocator;
   }
 
@@ -73,7 +63,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
 
 
     @Override
-    public void onBeforeTestingFinished(@NotNull final SMTestProxy.SMRootTestProxy testsRoot) {
+    public void onBeforeTestingFinished(final @NotNull SMTestProxy.SMRootTestProxy testsRoot) {
       // manual duration for root means root must have wall time
       if (testsRoot.getDurationStrategy() == TestDurationStrategy.MANUAL) {
         testsRoot.setDuration(System.currentTimeMillis() - myStarted);
@@ -82,18 +72,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
         testsRoot.setPresentation(getEmptySuite());
         testsRoot.setTestFailed(getEmptySuite(), null, false);
       }
-      PySMTestProxyUtilsKt.calculateAndReturnMagnitude(testsRoot);
       super.onBeforeTestingFinished(testsRoot);
-    }
-
-    @Override
-    public void onTestFailed(@NotNull final SMTestProxy test) {
-      super.onTestFailed(test);
-      SMTestProxy currentTest = test.getParent();
-      while (currentTest != null && currentTest.getParent() != null) {
-        currentTest.setTestFailed(" ", null, false);
-        currentTest = currentTest.getParent();
-      }
     }
 
     private static String getEmptySuite() {

@@ -19,12 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.MultiMap;
-import java.util.HashSet;
 import org.junit.Assert;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -34,7 +33,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
   public void testBuilder() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("Semantic.xsd");
     assert file != null;
-    final FileInputStream is = new FileInputStream(new File(file.getPath()));
+    final FileInputStream is = new FileInputStream(file.getPath());
     final MultiMap<SchemaTypeInfo, SchemaTypeInfo> map = XsdComplexTypeInfoBuilder.parse(is);
 
     final Collection<SchemaTypeInfo> node = map.get(new SchemaTypeInfo("tConversationNode", true, ourNs));

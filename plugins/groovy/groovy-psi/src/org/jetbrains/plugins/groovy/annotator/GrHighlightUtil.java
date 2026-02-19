@@ -1,10 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -45,11 +51,10 @@ public final class GrHighlightUtil {
     PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceExpression) || ((GrReferenceExpression)element).isQualified()) {
+        if (!(element instanceof GrReferenceExpression ref) || ref.isQualified()) {
           return true;
         }
 
-        GrReferenceExpression ref = (GrReferenceExpression)element;
         if (isWriteAccess(ref)) {
           PsiElement target = ref.resolve();
           if (target instanceof GrVariable && ((GrVariable)target).getInitializerGroovy() != null ||
@@ -96,9 +101,8 @@ public final class GrHighlightUtil {
     }
 
     final PsiType type = qualifier.getType();
-    if (type instanceof PsiClassType &&
+    if (type instanceof PsiClassType classType &&
         !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof GroovyScriptClass)) {
-      final PsiClassType classType = (PsiClassType)type;
       final PsiClass psiClass = classType.resolve();
       if (psiClass instanceof GroovyScriptClass) {
         return true;
@@ -107,8 +111,7 @@ public final class GrHighlightUtil {
     return false;
   }
 
-  @NotNull
-  public static TextRange getMethodHeaderTextRange(@NotNull PsiMethod method) {
+  public static @NotNull TextRange getMethodHeaderTextRange(@NotNull PsiMethod method) {
     int startOffset = method.getTextRange().getStartOffset();
     int endOffset = method.getParameterList().getTextRange().getEndOffset();
     return new TextRange(startOffset, endOffset);
@@ -147,8 +150,7 @@ public final class GrHighlightUtil {
     return new TextRange(startOffset, endOffset);
   }
 
-  @Nullable
-  public static GrMember findClassMemberContainer(@NotNull GrReferenceExpression ref, @NotNull PsiClass aClass) {
+  public static @Nullable GrMember findClassMemberContainer(@NotNull GrReferenceExpression ref, @NotNull PsiClass aClass) {
     for (PsiElement parent = ref.getParent(); parent != null && parent != aClass; parent = parent.getParent()) {
       if (parent instanceof GrMember && ((GrMember)parent).getContainingClass() == aClass) {
         return (GrMember)parent;

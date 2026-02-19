@@ -1,26 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Used to group ordered collections of {@link StdArrangementTokens} along with their {@link StdArrangementTokenUiRole roles}.
- *
- * @author Denis Zhdanov
  */
 public class CompositeArrangementSettingsToken {
 
   private static final Function<ArrangementSettingsToken, CompositeArrangementSettingsToken> WRAPPER =
     token -> new CompositeArrangementSettingsToken(token, deduceRole(token), Collections.emptyList());
 
-  @NotNull private final List<CompositeArrangementSettingsToken> myChildren = new ArrayList<>();
+  private final @NotNull List<CompositeArrangementSettingsToken> myChildren = new ArrayList<>();
 
-  @NotNull private final ArrangementSettingsToken  myToken;
-  @NotNull private final StdArrangementTokenUiRole myRole;
+  private final @NotNull ArrangementSettingsToken  myToken;
+  private final @NotNull StdArrangementTokenUiRole myRole;
 
   /**
    * Creates new {@code CompositeArrangementSettingsToken} object with no nested tokens.
@@ -47,14 +49,13 @@ public class CompositeArrangementSettingsToken {
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
                                            ArrangementSettingsToken @NotNull ... children)
   {
-    this(token, deduceRole(token),
-         ContainerUtil.map2List(Arrays.asList(children), WRAPPER));
+    this(token, deduceRole(token), ContainerUtil.map(Arrays.asList(children), WRAPPER));
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
                                            @NotNull Collection<? extends ArrangementSettingsToken> children)
   {
-    this(token, deduceRole(token), ContainerUtil.map2List(children, WRAPPER));
+    this(token, deduceRole(token), ContainerUtil.map(children, WRAPPER));
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
@@ -66,8 +67,7 @@ public class CompositeArrangementSettingsToken {
     myChildren.addAll(children);
   }
 
-  @NotNull
-  private static StdArrangementTokenUiRole deduceRole(@NotNull ArrangementSettingsToken token) {
+  private static @NotNull StdArrangementTokenUiRole deduceRole(@NotNull ArrangementSettingsToken token) {
     final StdArrangementTokenUiRole role = token instanceof StdArrangementSettingsToken ?
                                      ((StdArrangementSettingsToken)token).getTokenType().getUiRole() : null;
     if (role == null) {
@@ -76,18 +76,15 @@ public class CompositeArrangementSettingsToken {
     return role;
   }
 
-  @NotNull
-  public List<CompositeArrangementSettingsToken> getChildren() {
+  public @NotNull List<CompositeArrangementSettingsToken> getChildren() {
     return myChildren;
   }
 
-  @NotNull
-  public ArrangementSettingsToken getToken() {
+  public @NotNull ArrangementSettingsToken getToken() {
     return myToken;
   }
 
-  @NotNull
-  public StdArrangementTokenUiRole getRole() {
+  public @NotNull StdArrangementTokenUiRole getRole() {
     return myRole;
   }
 

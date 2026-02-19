@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
  * @see SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
  */
 public interface SyntaxHighlighter {
+
+  @ApiStatus.Internal
   ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.syntaxHighlighter");
 
   /**
@@ -39,7 +42,7 @@ public interface SyntaxHighlighter {
    * {@link SyntaxHighlighterFactory#getSyntaxHighlighter(com.intellij.lang.Language, com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   SyntaxHighlighterProvider PROVIDER = new FileTypeExtensionFactory<>(SyntaxHighlighterProvider.class, EP_NAME).get();
 
   /**

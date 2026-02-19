@@ -1,0 +1,15 @@
+<html>
+<body>
+<h1>Checked exceptions in Kotlin</h1>
+<p>This inspection works only for methods annotated with <code>com.intellij.openapi.ThrowsChecked</code>.</p>
+<p>The inspection tries to find cases when an annotated function is called, but the exception is not caught.</p>
+<p>Differences from Java's checked exceptions:</p>
+<ul>
+  <li>This inspection produces warnings and doesn't break compilation.</li>
+  <li>By design, it's fine to suppress the exception.</li>
+  <li>The inspection should not try to prove in every case that some exception is not caught. It's supposed only to remind API users about
+    exceptions.
+  </li>
+</ul>
+</body>
+</html>

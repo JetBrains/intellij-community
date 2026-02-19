@@ -27,7 +27,11 @@ import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.support.jaxen.extensions.FunctionImplementation;
 import org.intellij.plugins.xpathView.util.Namespace;
 import org.intellij.plugins.xpathView.util.NamespaceCollector;
-import org.jaxen.*;
+import org.jaxen.JaxenException;
+import org.jaxen.SimpleNamespaceContext;
+import org.jaxen.UnresolvableException;
+import org.jaxen.XPath;
+import org.jaxen.XPathFunctionContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +80,7 @@ class XPathSupportImpl extends XPathSupport {
         public String translateNamespacePrefixToUri(String prefix) {
             final String uri = super.translateNamespacePrefixToUri(prefix);
             // avoid matching of undefined prefixes on default namespace
-            if (prefix != null && prefix.length() > 0) {
+            if (prefix != null && !prefix.isEmpty()) {
                 if (uri == null) {
                     LOG.debug("Undefined prefix: " + prefix);
                     return "urn:xpathview:undefined-namespace";

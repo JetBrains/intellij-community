@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * @author Medvdedev Max
  */
 
-public class AnnotationCollectorChecker extends CustomAnnotationChecker {
+public final class AnnotationCollectorChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     return isInAliasDeclaration(annotation);

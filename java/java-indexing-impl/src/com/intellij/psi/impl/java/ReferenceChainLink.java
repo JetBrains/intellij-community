@@ -1,25 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.search.ApproximateResolver;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,6 +25,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author peter
- */
 public class ReferenceChainLink {
   final String referenceName;
   final boolean isCall;
@@ -57,15 +47,10 @@ public class ReferenceChainLink {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ReferenceChainLink)) return false;
-
-    ReferenceChainLink link = (ReferenceChainLink)o;
-
-    if (isCall != link.isCall) return false;
-    if (argCount != link.argCount) return false;
-    if (!referenceName.equals(link.referenceName)) return false;
-
-    return true;
+    return o instanceof ReferenceChainLink link &&
+           isCall == link.isCall &&
+           argCount == link.argCount &&
+           referenceName.equals(link.referenceName);
   }
 
   @Override
@@ -85,6 +70,7 @@ public class ReferenceChainLink {
 
 
   @Nullable
+  @Unmodifiable
   List<PsiMember> getGlobalMembers(VirtualFile placeFile, Project project) {
     if (isExpensive(project)) return null;
 
@@ -109,8 +95,7 @@ public class ReferenceChainLink {
     return ContainerUtil.filter(candidates, candidate -> canBeAccessible(placeFile, candidate));
   }
 
-  @Nullable
-  private List<PsiMember> calcMembersUnlessTooMany(@NotNull GlobalSearchScope scope) {
+  private @Nullable List<PsiMember> calcMembersUnlessTooMany(@NotNull GlobalSearchScope scope) {
     List<PsiMember> candidates = new ArrayList<>();
     AtomicInteger count = new AtomicInteger();
     Processor<PsiMember> processor = member -> {
@@ -149,12 +134,13 @@ public class ReferenceChainLink {
   private void markExpensive(Project project) {
     Set<ReferenceChainLink> expensive = project.getUserData(EXPENSIVE_LINKS);
     if (expensive == null) {
-      project.putUserData(EXPENSIVE_LINKS, expensive = ContainerUtil.newConcurrentSet());
+      project.putUserData(EXPENSIVE_LINKS, expensive = ConcurrentCollectionFactory.createConcurrentSet());
     }
     expensive.add(this);
   }
 
-  public List<? extends PsiMember> getSymbolMembers(Set<? extends PsiClass> qualifiers) {
+  @NotNull
+  List<? extends PsiMember> getSymbolMembers(@NotNull Set<? extends PsiClass> qualifiers) {
     return isCall ? ApproximateResolver.getPossibleMethods(qualifiers, referenceName, argCount)
                   : ApproximateResolver.getPossibleNonMethods(qualifiers, referenceName);
   }

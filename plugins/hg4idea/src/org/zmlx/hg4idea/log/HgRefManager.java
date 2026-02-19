@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.log;
 
-import com.intellij.dvcs.repo.RepositoryManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogRefManager;
+import com.intellij.vcs.log.VcsLogStandardColors;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.SimpleRefGroup;
 import com.intellij.vcs.log.impl.SimpleRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
@@ -19,15 +21,21 @@ import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.branch.HgBranchManager;
 import org.zmlx.hg4idea.branch.HgBranchType;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgUtil;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.ui.JBColor.namedColor;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class HgRefManager implements VcsLogRefManager {
@@ -94,23 +102,19 @@ public class HgRefManager implements VcsLogRefManager {
     return VcsLogUtil.compareRoots(ref1.getRoot(), ref2.getRoot());
   };
 
-  @NotNull private final HgBranchManager myBranchManager;
-  @NotNull private final RepositoryManager<HgRepository> myRepositoryManager;
+  private final @NotNull Project myProject;
 
-  public HgRefManager(@NotNull Project project, @NotNull RepositoryManager<HgRepository> repositoryManager) {
-    myRepositoryManager = repositoryManager;
-    myBranchManager = ServiceManager.getService(project, HgBranchManager.class);
+  public HgRefManager(@NotNull Project project) {
+    myProject = project;
   }
 
-  @NotNull
   @Override
-  public Comparator<VcsRef> getLabelsOrderComparator() {
+  public @NotNull Comparator<VcsRef> getLabelsOrderComparator() {
     return REF_COMPARATOR;
   }
 
-  @NotNull
   @Override
-  public List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
+  public @NotNull List<RefGroup> groupForBranchFilter(@NotNull Collection<? extends VcsRef> refs) {
     List<VcsRef> sortedRefs = sort(refs);
     MultiMap<VcsRefType, VcsRef> groupedRefs = ContainerUtil.groupBy(sortedRefs, VcsRef::getType);
 
@@ -131,15 +135,14 @@ public class HgRefManager implements VcsLogRefManager {
       }
     }
 
-    if (!branches.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.branches"), branches, false));
-    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.bookmarks"), bookmarks, false));
+    if (!branches.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.branches"), branches));
+    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.bookmarks"), bookmarks));
 
     return result;
   }
 
-  @NotNull
   @Override
-  public List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> references, boolean compact, boolean showTagNames) {
+  public @NotNull List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> references, boolean compact, boolean showTagNames) {
     List<VcsRef> sortedReferences = sort(references);
 
     List<VcsRef> headAndTip = new ArrayList<>();
@@ -153,15 +156,18 @@ public class HgRefManager implements VcsLogRefManager {
       }
     }
 
-    List<RefGroup> result = new ArrayList<>();
-    SimpleRefGroup.buildGroups(groupedRefs, compact, showTagNames, result);
-    RefGroup firstGroup = getFirstItem(result);
+    List<RefGroup> refGroups = SimpleRefGroup.buildGroups(emptyList(), groupedRefs, compact, showTagNames);
+    if (headAndTip.isEmpty()) return refGroups;
+
+    RefGroup firstGroup = getFirstItem(refGroups);
     if (firstGroup != null) {
       firstGroup.getRefs().addAll(0, headAndTip);
+      return refGroups;
     }
-    else {
-      result.add(new SimpleRefGroup("", headAndTip));
-    }
+
+    List<RefGroup> result = new ArrayList<>();
+    result.add(new SimpleRefGroup("", headAndTip));
+    result.addAll(refGroups);
 
     return result;
   }
@@ -171,46 +177,43 @@ public class HgRefManager implements VcsLogRefManager {
     out.writeInt(REF_TYPE_INDEX.indexOf(type));
   }
 
-  @NotNull
   @Override
-  public VcsRefType deserialize(@NotNull DataInput in) throws IOException {
+  public @NotNull VcsRefType deserialize(@NotNull DataInput in) throws IOException {
     int id = in.readInt();
     if (id < 0 || id > REF_TYPE_INDEX.size() - 1) throw new IOException("Reference type by id " + id + " does not exist");
     return REF_TYPE_INDEX.get(id);
   }
 
-  @NotNull
-  private static HgBranchType getBranchType(@NotNull VcsRef reference) {
+  private static @NotNull HgBranchType getBranchType(@NotNull VcsRef reference) {
     return reference.getType().equals(BOOKMARK) ? HgBranchType.BOOKMARK : HgBranchType.BRANCH;
   }
 
-  @Nullable
   @CalledInAny
-  private HgRepository getRepository(@NotNull VcsRef reference) {
-    return myRepositoryManager.getRepositoryForRootQuick(reference.getRoot());
+  private @Nullable HgRepository getRepository(@NotNull VcsRef reference) {
+    return HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(reference.getRoot());
   }
 
   @Override
   public boolean isFavorite(@NotNull VcsRef reference) {
     if (reference.getType().equals(HEAD) || reference.getType().equals(TIP)) return true;
     if (!reference.getType().isBranch()) return false;
-    return myBranchManager.isFavorite(getBranchType(reference), getRepository(reference), reference.getName());
+    return myProject.getService(HgBranchManager.class)
+      .isFavorite(getBranchType(reference), getRepository(reference), reference.getName());
   }
 
   @Override
   public void setFavorite(@NotNull VcsRef reference, boolean favorite) {
     if (!reference.getType().isBranch() || reference.getType().equals(HEAD) || reference.getType().equals(TIP)) return;
-    myBranchManager.setFavorite(getBranchType(reference), getRepository(reference), reference.getName(), favorite);
+    myProject.getService(HgBranchManager.class)
+      .setFavorite(getBranchType(reference), getRepository(reference), reference.getName(), favorite);
   }
 
-  @NotNull
   @Override
-  public Comparator<VcsRef> getBranchLayoutComparator() {
+  public @NotNull Comparator<VcsRef> getBranchLayoutComparator() {
     return REF_COMPARATOR;
   }
 
-  @NotNull
-  private List<VcsRef> sort(@NotNull Collection<? extends VcsRef> refs) {
+  private @NotNull List<VcsRef> sort(@NotNull Collection<? extends VcsRef> refs) {
     return ContainerUtil.sorted(refs, getLabelsOrderComparator());
   }
 }

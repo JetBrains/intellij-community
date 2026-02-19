@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.libraries.hamcrest` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "hamcrest_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "hamcrest",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":hamcrest_resources"],
+  exports = ["@lib//:hamcrest"],
+  runtime_deps = ["@lib//:hamcrest"]
+)
+
+jvm_library(
+  name = "hamcrest_test_lib",
+  module_name = "intellij.libraries.hamcrest",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:hamcrest"],
+  runtime_deps = [":hamcrest"]
+)
+### auto-generated section `build intellij.libraries.hamcrest` end

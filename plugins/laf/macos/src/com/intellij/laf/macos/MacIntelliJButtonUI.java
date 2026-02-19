@@ -8,18 +8,32 @@ import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.laf.macos.MacIntelliJTextBorder.*;
+import static com.intellij.laf.macos.MacIntelliJTextBorder.ARC;
+import static com.intellij.laf.macos.MacIntelliJTextBorder.LW;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJButtonUI extends DarculaButtonUI {
+public final class MacIntelliJButtonUI extends DarculaButtonUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new MacIntelliJButtonUI();
@@ -124,11 +138,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     else {
       return super.getDarculaButtonSize(c, prefSize);
     }
-  }
-
-  @Override
-  protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.codeStyle;
 
@@ -29,18 +15,22 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.FlowLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   
   private final CodeStyleSchemesModel myModel;
@@ -90,9 +80,8 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     }
   }
 
-  @NotNull
   @Override
-  protected AbstractSchemeActions<CodeStyleScheme> createSchemeActions() {
+  protected @NotNull AbstractSchemeActions<CodeStyleScheme> createSchemeActions() {
     return
       new CodeStyleSchemesActions(this) {
 
@@ -113,9 +102,8 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
       };
   }
 
-  @NotNull
   @Override
-  public SchemesModel<CodeStyleScheme> getModel() {
+  public @NotNull SchemesModel<CodeStyleScheme> getModel() {
     return myModel;
   }
 
@@ -134,9 +122,8 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     return true;
   }
 
-  @Nullable
   @Override
-  protected JComponent createBottomComponent() {
+  protected @Nullable JComponent createBottomComponent() {
     myBottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     JLabel iconLabel = new JLabel();
     iconLabel.setIcon(AllIcons.General.Warning);
@@ -144,11 +131,8 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     myBottomPanel.add(Box.createRigidArea(new JBDimension(5,0)));
     myBottomLabel = new JLabel();
     myBottomPanel.add(myBottomLabel);
-    LinkLabel<Object> disableHyperLink = new LinkLabel<>(LangBundle.message("action.link.disable"), null, new LinkListener<>() {
-      @Override
-      public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+    ActionLink disableHyperLink = new ActionLink(LangBundle.message("action.link.disable"), e -> {
         disableOverriding();
-      }
     });
     myBottomPanel.add(disableHyperLink);
     myBottomPanel.setVisible(false);
@@ -162,7 +146,7 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
       final CodeStyleSettings currSettings = currScheme.getCodeStyleSettings();
       final CodeStyleSettings modelSettings = myModel.getCloneSettings(currScheme);
       for (CodeStyleSettingsModifier modifier : status.getModifiers()) {
-        Consumer<CodeStyleSettings> disablingFunction = modifier.getDisablingFunction();
+        Consumer<CodeStyleSettings> disablingFunction = modifier.getDisablingFunction(myModel.getProject());
         if (disablingFunction != null) {
           disablingFunction.accept(currSettings);
           CodeStyleSettingsManager.getInstance(myModel.getProject()).notifyCodeStyleSettingsChanged();

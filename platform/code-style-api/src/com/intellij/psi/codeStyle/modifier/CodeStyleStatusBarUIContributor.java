@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface CodeStyleStatusBarUIContributor {
 
@@ -30,8 +30,7 @@ public interface CodeStyleStatusBarUIContributor {
   /**
    * @return A title used for a group of actions opened from the status bar or {@code null} if no title is shown.
    */
-  @Nullable
-  default @NlsContexts.PopupTitle String getActionGroupTitle() {
+  default @Nullable @NlsContexts.PopupTitle String getActionGroupTitle() {
     return null;
   }
 
@@ -40,21 +39,6 @@ public interface CodeStyleStatusBarUIContributor {
    */
   @Nullable @NlsContexts.Tooltip
   String getTooltip();
-
-  /**
-   * Returns a text shown in a popup to drag user's attention to a UI element associated with the current indent options and related actions.
-   * The advertisement text may contain basic information about the source of the current indent options so that a user becomes aware of it.
-   * The popup is supposed to be shown just once per a case which requires explanation. Subsequent calls to the method may return {@code null}.
-   *
-   * @param psiFile A PSI file to show the advertisement text for.
-   * @return The text to be shown or null for no popup.
-   * @deprecated Dropped. The returned text is ignored.
-   */
-  @Nullable
-  @Deprecated
-  default String getAdvertisementText(@NotNull PsiFile psiFile) {
-    return null;
-  }
 
   /**
    * Creates an action which can be used to disable the code style source.
@@ -70,8 +54,7 @@ public interface CodeStyleStatusBarUIContributor {
    * @param project The project to show the files for.
    * @return The "Show all" action or {@code null} if not applicable;
    */
-  @Nullable
-  default AnAction createShowAllAction(@NotNull Project project) {
+  default @Nullable AnAction createShowAllAction(@NotNull Project project) {
     return null;
   }
 
@@ -87,8 +70,7 @@ public interface CodeStyleStatusBarUIContributor {
    * @param psiFile The currently open {@code PsiFile}.
    * @return A status text to be shown in code style widget for the given {@code PsiFile}
    */
-  @NotNull
-  default @NlsContexts.StatusBarText String getStatusText(@NotNull PsiFile psiFile) {
+  default @NotNull @NlsContexts.StatusBarText String getStatusText(@NotNull PsiFile psiFile) {
     return "*";
   }
 }

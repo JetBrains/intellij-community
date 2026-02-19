@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.info;
 
 import com.intellij.execution.Location;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public final class LocationUtil {
-  public static boolean isJarAttached(@NotNull Location location, @NotNull final PsiPackage aPackage, final String... fqn) {
+  public static boolean isJarAttached(@NotNull Location location, final @NotNull PsiPackage aPackage, final String... fqn) {
     return isJarAttached(location, aPackage.getDirectories(), fqn);
   }
 
@@ -23,6 +24,7 @@ public final class LocationUtil {
                                       final PsiDirectory[] directories,
                                       final String... fqns) {
     final Project project = location.getProject();
+    if (DumbService.isDumb(project)) return false; //disable creation of junit/testng package configurations in dumb mode
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final Module locationModule = location.getModule();
     VirtualFile locationVirtualFile = location.getVirtualFile();

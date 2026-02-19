@@ -1,19 +1,19 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Maxim.Mossienko
 */
 abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
-  private final Set<String> scanned = new THashSet<>();
-  private final Set<String> scannedText = new THashSet<>();
-  private final Set<String> scannedComments = new THashSet<>();
-  private final Set<String> scannedLiterals = new THashSet<>();
+  private final Set<String> scanned = new HashSet<>();
+  private final Set<String> scannedText = new HashSet<>();
+  private final Set<String> scannedComments = new HashSet<>();
+  private final Set<String> scannedLiterals = new HashSet<>();
   protected int scanRequest;
 
   @Override

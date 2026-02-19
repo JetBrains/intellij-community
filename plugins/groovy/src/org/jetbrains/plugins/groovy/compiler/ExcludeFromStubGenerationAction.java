@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -14,12 +15,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-/**
- * @author peter
- */
 public class ExcludeFromStubGenerationAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
 
     assert file != null && file.getLanguage() == GroovyLanguage.INSTANCE;
@@ -34,6 +32,11 @@ public class ExcludeFromStubGenerationAction extends AnAction implements DumbAwa
 
     final GroovyCompilerConfigurable configurable = new GroovyCompilerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.getExcludes().addEntry(new ExcludeEntryDescription(virtualFile, false, true, project)));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

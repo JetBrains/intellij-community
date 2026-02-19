@@ -1,17 +1,36 @@
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CompletionUtilCore;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyLiteralPattern;
+import com.jetbrains.python.psi.PyPlainStringElement;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,16 +53,16 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *     print(f'# {line&lt;caret&gt;}')
  * </code></pre>
  */
-public class PyFStringLikeCompletionContributor extends CompletionContributor {
-  private static final String FEATURE_ID = "python.completion.fstring.like";
+public final class PyFStringLikeCompletionContributor extends CompletionContributor implements DumbAware {
 
-  private static final PsiElementPattern.Capture<PyPlainStringElement> INSIDE_NON_FORMATTED_STRING_ELEMENT =
+  private static final PsiElementPattern.Capture<PyPlainStringElement> APPLICABLE_STRING_ELEMENT =
     psiElement(PyPlainStringElement.class)
       .withParent(PyStringLiteralExpression.class)
+      .andNot(psiElement().withSuperParent(2, PyLiteralPattern.class))
       .andNot(psiElement().inside(PyStringFormatCompletionContributor.FORMAT_STRING_CAPTURE));
 
   public PyFStringLikeCompletionContributor() {
-    extend(CompletionType.BASIC, INSIDE_NON_FORMATTED_STRING_ELEMENT, new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, APPLICABLE_STRING_ELEMENT, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -56,6 +75,11 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
           return;
         }
         PyStringLiteralExpression stringLiteral = (PyStringLiteralExpression)stringElem.getParent();
+        boolean templateStringExpected = isTemplateStringExpected(stringLiteral);
+        if (templateStringExpected && LanguageLevel.forElement(stringElem).isOlderThan(LanguageLevel.PYTHON314)) {
+          return;
+        }
+        String newPrefixChar = templateStringExpected ? "t" : "f";
         String stringElemText = stringElem.getText();
         int offset = parameters.getOffset();
         int stringElemStart = stringElem.getTextRange().getStartOffset();
@@ -65,10 +89,20 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
           return;
         }
         String completionPrefix = stringElemText.substring(braceOffset + 1, relOffset);
-        if (!PyNames.isIdentifier(completionPrefix)) {
+        boolean autoPopupAfterOpeningBrace = completionPrefix.isEmpty() && parameters.isAutoPopup();
+        if (autoPopupAfterOpeningBrace) {
           return;
         }
-        PyExpression fString = PyUtil.createExpressionFromFragment("f" + stringElemText, stringLiteral.getParent());
+        boolean prefixCannotStartReference = !completionPrefix.isEmpty() && !PyNames.isIdentifier(completionPrefix);
+        if (prefixCannotStartReference) {
+          return;
+        }
+
+        String fStringText = new StringBuilder()
+          .append(newPrefixChar).append(stringElemText)
+          .insert(relOffset + 1 + CompletionUtilCore.DUMMY_IDENTIFIER.length(), "} ")
+          .toString();
+        PyExpression fString = PyUtil.createExpressionFromFragment(fStringText, stringLiteral.getParent());
         assert fString != null;
         PsiReference reference = fString.findReferenceAt(relOffset + 1);
         if (reference == null) {
@@ -80,11 +114,9 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
         }
         CompletionResultSet prefixPatchedResultSet = result.withPrefixMatcher(completionPrefix);
         for (LookupElement variant : fStringVariants) {
-          prefixPatchedResultSet.addElement(new LookupElementDecorator<LookupElement>(variant) {
+          prefixPatchedResultSet.addElement(new LookupElementDecorator<>(variant) {
             @Override
             public void handleInsert(@NotNull InsertionContext context) {
-              FeatureUsageTracker.getInstance().triggerFeatureUsed(FEATURE_ID);
-
               super.handleInsert(context);
               Document document = context.getDocument();
               CharSequence docChars = document.getCharsSequence();
@@ -93,14 +125,26 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
                 document.insertString(tailOffset, "}");
               }
               // It can happen when completion is invoked on multiple carets inside the same string
-              String stringElemPrefix = PyStringLiteralUtil.getPrefix(docChars, stringElemStart);
-              if (!PyStringLiteralUtil.isFormattedPrefix(stringElemPrefix)) {
-                document.insertString(stringElemStart, "f");
+              String stringElemPrefix = PyStringLiteralCoreUtil.getPrefix(docChars, stringElemStart);
+              if (!StringUtil.containsIgnoreCase(stringElemPrefix, newPrefixChar)) {
+                document.insertString(stringElemStart, newPrefixChar);
               }
             }
           });
         }
       }
     });
+  }
+
+  private static boolean isTemplateStringExpected(@NotNull PyStringLiteralExpression stringLiteral) {
+    TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(stringLiteral.getProject(), stringLiteral.getContainingFile());
+    PyPsiFacade psiFacade = PyPsiFacade.getInstance(stringLiteral.getProject());
+    PyClass templateClass = psiFacade.createClassByQName(PyNames.TEMPLATELIB_TEMPLATE, stringLiteral);
+    if (templateClass == null) {
+      return false;
+    }
+    PyClassType templateType = psiFacade.createClassType(templateClass, false);
+    PyType expectedType = PyExpectedTypeJudgement.getExpectedType(stringLiteral, typeEvalContext);
+    return templateType.equals(expectedType);
   }
 }

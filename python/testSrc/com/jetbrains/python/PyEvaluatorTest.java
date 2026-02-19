@@ -3,7 +3,12 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +59,7 @@ public class PyEvaluatorTest extends PyTestCase {
   }
 
   public void testLong() {
-    final long expected = Long.valueOf(Integer.MAX_VALUE) + 1;
+    final long expected = (long)Integer.MAX_VALUE + 1;
     final long l = byExpression(Long.toString(expected), Long.class);
     assertEquals(expected, l);
   }
@@ -227,8 +232,8 @@ public class PyEvaluatorTest extends PyTestCase {
   public void testNumbersAddition() {
     assertEquals(Integer.valueOf(3), byExpression("1 + 2", Integer.class));
 
-    assertEquals(Long.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1), byExpression("1 + " + Integer.MAX_VALUE, Long.class));
-    assertEquals(Long.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1), byExpression(Integer.MAX_VALUE + "+ 1", Long.class));
+    assertEquals(Long.valueOf((long)Integer.MAX_VALUE + 1), byExpression("1 + " + Integer.MAX_VALUE, Long.class));
+    assertEquals(Long.valueOf((long)Integer.MAX_VALUE + 1), byExpression(Integer.MAX_VALUE + "+ 1", Long.class));
 
     assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression("1 + " + Long.MAX_VALUE, BigInteger.class));
     assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression(Long.MAX_VALUE + "+ 1", BigInteger.class));
@@ -249,6 +254,12 @@ public class PyEvaluatorTest extends PyTestCase {
     assertTrue(byExpression("2 != 1", Boolean.class));
   }
 
+  public void testPositiveNumberLiteral() {
+    assertEquals(Integer.valueOf(5), byExpression("+5", Integer.class));
+    assertEquals(Long.valueOf(Long.MAX_VALUE), byExpression("+" + Long.MAX_VALUE, Long.class));
+    assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression("+" + BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), BigInteger.class));
+  }
+
   public void testBooleanOperators() {
     assertTrue(byExpression("True and True", Boolean.class));
     assertTrue(byExpression("True or False", Boolean.class));
@@ -256,11 +267,12 @@ public class PyEvaluatorTest extends PyTestCase {
   }
 
   public void testMultiResolve() {
-    final PyExpression expression = parseText("if condition:\n" +
-                                              "    a = 1\n" +
-                                              "else:\n" +
-                                              "    a = 3\n" +
-                                              "expr = a < 2");
+    final PyExpression expression = parseText("""
+                                                if condition:
+                                                    a = 1
+                                                else:
+                                                    a = 3
+                                                expr = a < 2""");
     assertNull(new PyEvaluator().evaluate(expression));
   }
 
@@ -311,6 +323,25 @@ public class PyEvaluatorTest extends PyTestCase {
 
     assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = [1]\nexpr = a")));
     assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = []\nexpr = a")));
+  }
+
+  public void testTypingTypeChecking() {
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = typing.TYPE_CHECKING")));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = TYPE_CHECKING")));
+  }
+
+  public void testSysVersionCheck() {
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info >= (3, 4)"), LanguageLevel.PYTHON34));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info >= (3, 5)"), LanguageLevel.PYTHON34));
+
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info > (3, 4)"), LanguageLevel.PYTHON34));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info > (3, 3)"), LanguageLevel.PYTHON34));
+
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info <= (3, 4)"), LanguageLevel.PYTHON34));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info <= (3, 3)"), LanguageLevel.PYTHON34));
+
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info < (3, 4)"), LanguageLevel.PYTHON34));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info < (3, 5)"), LanguageLevel.PYTHON34));
   }
 
   @NotNull

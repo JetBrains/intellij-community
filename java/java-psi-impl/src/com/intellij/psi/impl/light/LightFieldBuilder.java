@@ -16,7 +16,16 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +59,15 @@ public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> i
   }
 
   @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitField(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+  @Override
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
     myInitializer = initializer;
   }
@@ -57,6 +75,11 @@ public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> i
   @Override
   public PsiExpression getInitializer() {
     return myInitializer;
+  }
+
+  @Override
+  public boolean hasInitializer() {
+    return myInitializer != null;
   }
 
   @Override

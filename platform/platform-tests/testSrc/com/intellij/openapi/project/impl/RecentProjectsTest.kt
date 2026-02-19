@@ -1,22 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.project.impl
 
-import com.intellij.ide.*
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.ProjectGroup
+import com.intellij.ide.ProjectGroupActionGroup
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.ui.DeferredIconImpl
+import com.intellij.ui.JBColor
+import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
+import com.intellij.util.ui.AvatarUtils
+import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
+import java.awt.Color
 import java.nio.file.Path
+import kotlin.test.assertEquals
 
 class RecentProjectsTest {
   companion object {
@@ -31,6 +50,10 @@ class RecentProjectsTest {
 
   @Rule
   @JvmField
+  val disposableRule = DisposableRule()
+
+  @Rule
+  @JvmField
   internal val busConnection = RecentProjectManagerListenerRule()
 
   @Rule
@@ -38,7 +61,7 @@ class RecentProjectsTest {
   val tempDir = TemporaryDirectory()
 
   @Test
-  fun testMostRecentOnTop() {
+  fun mostRecentOnTop() = runBlocking {
     val p1 = createAndOpenProject("p1")
     val p2 = createAndOpenProject("p2")
     val p3 = createAndOpenProject("p3")
@@ -51,7 +74,7 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun testGroupsOrder() {
+  fun groupOrder() = runBlocking {
     val p1 = createAndOpenProject("p1")
     val p2 = createAndOpenProject("p2")
     val p3 = createAndOpenProject("p3")
@@ -75,24 +98,95 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun timestampForOpenProjectUpdatesWhenGetStateCalled() {
-    val path = tempDir.newPath("z1")
-    var project = PlatformTestUtil.loadAndOpenProject(path)
+  fun timestampForOpenProjectUpdatesWhenGetStateCalled(): Unit = runBlocking {
+    val z1 = tempDir.newPath("z1")
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    var project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
     try {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      project = PlatformTestUtil.loadAndOpenProject(path)
+      val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+      recentProjectManager.projectOpened(project)
+
       val timestamp = getProjectOpenTimestamp("z1")
-      RecentProjectsManagerBase.instanceEx.updateLastProjectPath()
-      // "Timestamp for opened project has not been updated"
+      projectManager.forceCloseProjectAsync(project)
+      project = projectManager.openProjectAsync(z1, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+      recentProjectManager.projectOpened(project)
+      recentProjectManager.updateLastProjectPath()
+      // "Timestamp for an opened project has not been updated"
       assertThat(getProjectOpenTimestamp("z1")).isGreaterThan(timestamp)
     }
     finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      projectManager.forceCloseProjectAsync(project)
+    }
+  }
+
+  @Test
+  fun solutionLikeProjectIcon() {
+    doSolutionLikeProjectIcon()
+  }
+
+  @Test
+  fun solutionLikeProjectIconForDarkTheme() {
+    JBColor.setDark(true)
+    doSolutionLikeProjectIcon()
+  }
+
+  private fun doSolutionLikeProjectIcon() = timeoutRunBlocking {
+    // For Rider
+    val rpm = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
+
+    val projectDir = Path.of("${PlatformTestUtil.getPlatformTestDataPath()}/recentProjects/dotNetSampleRecent/Povysh")
+    val slnFile = projectDir.resolve("Povysh.sln")
+
+    val icon = (rpm.getProjectIcon(slnFile.toString(), isProjectValid = true) as DeferredIconImpl<*>).evaluateAsync()
+    assertThat(icon).isNotInstanceOf(EmptyIcon::class.java)
+
+    // For custom icons we add a 2px empty border
+    val emptyBorderWidth = 2
+    val iconSize = 20
+
+    // Check that image is loaded from file, and not generated by IDE
+    val iconImage = IconUtil.toBufferedImage(icon)
+    for (x in 0 until iconImage.width) {
+      for (y in 0 until iconImage.height) {
+        val color = iconImage.getRGB(x, y)
+
+        if (x >= emptyBorderWidth && x < (iconSize - emptyBorderWidth) &&
+            y >= emptyBorderWidth && y < (iconSize - emptyBorderWidth)) {
+          assertThat(color).isEqualTo(if (JBColor.isBright()) Color.BLUE.rgb else Color.RED.rgb)
+        }
+        else {
+          assertThat(color).isEqualTo(0)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun projectInitialsMakeSense() {
+     val cases = mapOf("John Smith" to "JS",
+                       "John Smith-Harris" to "JS",
+                       "John-Smith-Harris" to "JH",
+                       "John-Smith Harris" to "JH",
+                       "MyProject" to "MP",
+                       "My-Project" to "MP",
+                       "My-Project_Strong" to "MP",
+                       "My_Project_Strong" to "MS",
+                       "One,Two-Four" to "OT",
+                       "One.Two.Four" to "OF",
+                       "Project_" to "P",
+                       "_internal-project" to "IP",
+                       ".internal-project" to "IP",
+                       ".internalProject" to "IP",
+                       "proj_[ver1]" to "PV",
+                       "myProject-0" to "MP")
+
+    for ((name, expected) in cases) {
+      assertEquals(expected, AvatarUtils.initials(name))
     }
   }
 
   private fun getProjectOpenTimestamp(@Suppress("SameParameterValue") projectName: String): Long {
-    val additionalInfo = RecentProjectsManagerBase.instanceEx.state.additionalInfo
+    val additionalInfo = RecentProjectsManagerBase.getInstanceEx().state.additionalInfo
     for (s in additionalInfo.keys) {
       if (s.endsWith(projectName) || s.substringBeforeLast('_').endsWith(projectName)) {
         return additionalInfo.get(s)!!.projectOpenTimestamp
@@ -101,15 +195,24 @@ class RecentProjectsTest {
     return -1
   }
 
-  private fun doReopenCloseAndCheck(projectPath: Path, vararg results: String) {
-    val project = PlatformTestUtil.loadAndOpenProject(projectPath)
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  private suspend fun doReopenCloseAndCheck(projectPath: Path, vararg results: String) {
+    openProjectAndClose(projectPath)
     checkRecents(*results)
   }
 
-  private fun doReopenCloseAndCheckGroups(projectPath: Path, results: List<String>) {
-    val project = PlatformTestUtil.loadAndOpenProject(projectPath)
-    PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+  private suspend fun openProjectAndClose(projectPath: Path) {
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    val project = projectManager.openProjectAsync(projectPath, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+    try {
+      RecentProjectsManagerBase.getInstanceEx().projectOpened(project)
+    }
+    finally {
+      projectManager.forceCloseProjectAsync(project)
+    }
+  }
+
+  private suspend fun doReopenCloseAndCheckGroups(projectPath: Path, results: List<String>) {
+    openProjectAndClose(projectPath)
     checkGroups(results)
   }
 
@@ -124,24 +227,28 @@ class RecentProjectsTest {
   }
 
   private fun checkGroups(groups: List<String>) {
-    val recentGroups = RecentProjectListActionProvider.getInstance().getActions(false, true).asSequence()
+    val recentGroups = RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false, useGroups = true).asSequence()
       .filter { a -> a is ProjectGroupActionGroup }
       .map { a -> (a as ProjectGroupActionGroup).group.name }
       .toList()
     assertThat(recentGroups).isEqualTo(groups)
   }
 
-  private fun createAndOpenProject(name: String): Path {
+  private suspend fun createAndOpenProject(name: String): Path {
     val path = tempDir.newPath(name)
-    var project = PlatformTestUtil.loadAndOpenProject(path)
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    var project = projectManager.openProjectAsync(path, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
     try {
+      val recentProjectManager = RecentProjectsManagerBase.getInstanceEx()
+      recentProjectManager.projectOpened(project)
       project.stateStore.saveComponent(RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      project = PlatformTestUtil.loadAndOpenProject(path)
+      projectManager.forceCloseProjectAsync(project)
+      project = projectManager.openProjectAsync(path, createTestOpenProjectOptions(runPostStartUpActivities = false))!!
+      recentProjectManager.projectOpened(project)
       return path
     }
     finally {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      projectManager.forceCloseProjectAsync(project)
     }
   }
 }
@@ -151,7 +258,7 @@ internal class RecentProjectManagerListenerRule : ExternalResource() {
 
   override fun before() {
     connection = ApplicationManager.getApplication().messageBus.simpleConnect()
-    connection!!.subscribe(ProjectManager.TOPIC, RecentProjectsManagerBase.MyProjectListener())
+    connection!!.subscribe(ProjectCloseListener.TOPIC, RecentProjectsManagerBase.MyProjectListener())
     connection!!.subscribe(AppLifecycleListener.TOPIC, RecentProjectsManagerBase.MyAppLifecycleListener())
   }
 

@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +11,7 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
-public class RemoteRepositoryDescription {
+public final class RemoteRepositoryDescription {
   public static final RemoteRepositoryDescription MAVEN_CENTRAL = new RemoteRepositoryDescription(
     "central",
     "Maven Central repository",
@@ -23,22 +22,22 @@ public class RemoteRepositoryDescription {
     "JBoss Community repository",
     "https://repository.jboss.org/nexus/content/repositories/public/"
   );
-  public static final List<RemoteRepositoryDescription> DEFAULT_REPOSITORIES = ContainerUtil.immutableList(
+  public static final List<RemoteRepositoryDescription> DEFAULT_REPOSITORIES = List.of(
     MAVEN_CENTRAL, JBOSS_COMMUNITY
   );
 
-  private final String myId;
-  private final String myName;
-  private final @NlsSafe String myUrl;
+  private final @NotNull String myId;
+  private final @NotNull String myName;
+  private final @NlsSafe @NotNull String myUrl;
   private final boolean myAllowSnapshots;
 
-  public RemoteRepositoryDescription(@NonNls @NotNull String id, @NotNull String name, @NotNull String url) {
+  public RemoteRepositoryDescription(@NonNls @NotNull String id, @NotNull String name, @NlsSafe @NotNull String url) {
     this(id, name, url, true);
   }
 
   public RemoteRepositoryDescription(@NotNull String id,
                                      @NotNull String name,
-                                     @NotNull String url,
+                                     @NlsSafe @NotNull String url,
                                      boolean allowSnapshots) {
     myId = id;
     myName = name;
@@ -46,15 +45,15 @@ public class RemoteRepositoryDescription {
     myAllowSnapshots = allowSnapshots;
   }
 
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  public @NlsSafe String getUrl() {
+  public @NlsSafe @NotNull String getUrl() {
     return myUrl;
   }
 

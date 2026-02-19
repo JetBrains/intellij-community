@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -22,13 +22,16 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.paint.LinePainter2D;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.LineMetrics;
@@ -74,18 +77,18 @@ final class TextPainter extends BasePainter {
   private final String myPrintDate;
   private final String myPrintTime;
 
-  @NonNls private static final String DEFAULT_MEASURE_HEIGHT_TEXT = "A";
-  @NonNls private static final String DEFAULT_MEASURE_WIDTH_TEXT = "w";
+  private static final @NonNls String DEFAULT_MEASURE_HEIGHT_TEXT = "A";
+  private static final @NonNls String DEFAULT_MEASURE_WIDTH_TEXT = "w";
 
-  @NonNls private static final String HEADER_TOKEN_PAGE = "PAGE";
-  @NonNls private static final String HEADER_TOKEN_TOTALPAGES = "TOTALPAGES";
-  @NonNls private static final String HEADER_TOKEN_FILE = "FILE";
-  @NonNls private static final String HEADER_TOKEN_FILENAME = "FILENAME";
-  @NonNls private static final String HEADER_TOKEN_DATE = "DATE";
-  @NonNls private static final String HEADER_TOKEN_TIME = "TIME";
+  private static final @NonNls String HEADER_TOKEN_PAGE = "PAGE";
+  private static final @NonNls String HEADER_TOKEN_TOTALPAGES = "TOTALPAGES";
+  private static final @NonNls String HEADER_TOKEN_FILE = "FILE";
+  private static final @NonNls String HEADER_TOKEN_FILENAME = "FILENAME";
+  private static final @NonNls String HEADER_TOKEN_DATE = "DATE";
+  private static final @NonNls String HEADER_TOKEN_TIME = "TIME";
 
-  @NonNls private static final String DATE_FORMAT = "yyyy-MM-dd";
-  @NonNls private static final String TIME_FORMAT = "HH:mm:ss";
+  private static final @NonNls String DATE_FORMAT = "yyyy-MM-dd";
+  private static final @NonNls String TIME_FORMAT = "HH:mm:ss";
 
   TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
@@ -120,8 +123,7 @@ final class TextPainter extends BasePainter {
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     myMethodSeparatorColor = colorsManager.isDarkEditor()
-                             ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
-                               .getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
+                             ? colorsManager.getDefaultScheme().getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
                              : null;
   }
 
@@ -446,8 +448,7 @@ final class TextPainter extends BasePainter {
     g.translate(-clip.getX(), 0);
   }
 
-  @Nullable
-  private Color getMethodSeparatorColor(int line) {
+  private @Nullable Color getMethodSeparatorColor(int line) {
     LineMarkerInfo<?> marker = null;
     LineMarkerInfo<?> tmpMarker;
     while (myCurrentMethodSeparator < myMethodSeparators.size() &&
@@ -528,9 +529,9 @@ final class TextPainter extends BasePainter {
       double width = myHeaderFont.getStringBounds(headerText, fontRenderContext).getWidth() + getCharWidth(g);
       float yPos = (float) (lineHeight - descent + y);
       switch (alignment) {
-        case Left: drawStringToGraphics(g, headerText, x, yPos); break;
-        case Center: drawStringToGraphics(g, headerText, (float) (x + (w - width) / 2), yPos); break;
-        case Right: drawStringToGraphics(g, headerText, (float) (x + w - width), yPos); break;
+        case Left -> drawStringToGraphics(g, headerText, x, yPos);
+        case Center -> drawStringToGraphics(g, headerText, (float)(x + (w - width) / 2), yPos);
+        case Right -> drawStringToGraphics(g, headerText, (float)(x + w - width), yPos);
       }
     }
     return lineHeight;
@@ -546,24 +547,12 @@ final class TextPainter extends BasePainter {
         String token = s.substring(start, i);
         if (isExpression) {
           switch (token) {
-            case HEADER_TOKEN_PAGE:
-              result.append(myPageIndex + 1);
-              break;
-            case HEADER_TOKEN_TOTALPAGES:
-              result.append(myNumberOfPages);
-              break;
-            case HEADER_TOKEN_FILE:
-              result.append(myFullFileName);
-              break;
-            case HEADER_TOKEN_FILENAME:
-              result.append(myShortFileName);
-              break;
-            case HEADER_TOKEN_DATE:
-              result.append(myPrintDate);
-              break;
-            case HEADER_TOKEN_TIME:
-              result.append(myPrintTime);
-              break;
+            case HEADER_TOKEN_PAGE -> result.append(myPageIndex + 1);
+            case HEADER_TOKEN_TOTALPAGES -> result.append(myNumberOfPages);
+            case HEADER_TOKEN_FILE -> result.append(myFullFileName);
+            case HEADER_TOKEN_FILENAME -> result.append(myShortFileName);
+            case HEADER_TOKEN_DATE -> result.append(myPrintDate);
+            case HEADER_TOKEN_TIME -> result.append(myPrintTime);
           }
         } else {
           result.append(token);
@@ -628,8 +617,8 @@ final class TextPainter extends BasePainter {
     if (myPrintSettings.WRAP) {
       double w = getTextSegmentWidth(text, myOffset, end - myOffset, position.getX(), g);
       if (position.getX() + w > clip.getWidth()) {
-        IntArrayList breakOffsets = LineWrapper.calcBreakOffsets(text, myOffset, end, lineStart, position.getX(), clip.getWidth(),
-                                                                 (t, start, count, x) -> getTextSegmentWidth(t, start, count, x, g));
+        IntList breakOffsets = LineWrapper.calcBreakOffsets(text, myOffset, end, lineStart, position.getX(), clip.getWidth(),
+                                                            (t, start, count, x) -> getTextSegmentWidth(t, start, count, x, g));
         for (int i = 0; i < breakOffsets.size(); i++) {
           int breakOffset = breakOffsets.getInt(i);
           drawTabbedString(g, text, breakOffset - myOffset, position, backColor, underscoredColor);
@@ -756,7 +745,7 @@ final class TextPainter extends BasePainter {
 
   // Wraps HighlighterIterator, joining adjacent regions with identical attributes
   private static final class HighlightingAttributesIterator {
-    @NotNull private final HighlighterIterator myDelegate;
+    private final @NotNull HighlighterIterator myDelegate;
     private int myEnd;
     private TextAttributes myAttributes;
 

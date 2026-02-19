@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -8,24 +8,33 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionLinkSelectionColor;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainBackground;
 
-public class WelcomeScreenFocusManager {
+@ApiStatus.Internal
+public final class WelcomeScreenFocusManager {
 
-  static void installFocusable(@NotNull final Container parentContainer,
-                               final JComponent comp,
-                               final AnAction action,
-                               final int nextKeyCode,
-                               final int prevKeyCode,
-                               @Nullable final Component focusedOnLeft) {
+  public static void installFocusable(final @NotNull Container parentContainer,
+                                      final JComponent comp,
+                                      final AnAction action,
+                                      final int nextKeyCode,
+                                      final int prevKeyCode,
+                                      final @Nullable Component focusedOnLeft) {
     comp.setFocusable(true);
     comp.setFocusTraversalKeysEnabled(true);
     comp.addKeyListener(new KeyAdapter() {
@@ -96,4 +105,5 @@ public class WelcomeScreenFocusManager {
       }
     }
   }
+
 }

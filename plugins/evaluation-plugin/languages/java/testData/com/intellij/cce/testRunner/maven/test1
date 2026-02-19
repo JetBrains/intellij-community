@@ -1,0 +1,1419 @@
+/bin/sh ./mvnw -Didea.version=2025.2 -Dmaven.ext.class.path=/Users/Anton.Spilnyy/work/ai/ultimate6/out/classes/production/intellij.maven.server.eventListener -Djansi.passthrough=true -Dstyle.color=always test
+[IJ]-1-ProjectDiscoveryStarted-[IJ]-id=unknown
+[INFO] Scanning for projects...
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-base:pom:2.16.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-bom:pom:2.16.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-parent:pom:2.16-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml:oss-parent:pom:56-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers-git:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:39-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:29-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:pom:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:pom:1.7.36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-parent:pom:1.7.36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:52-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:23-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.7.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-text:pom:1.10.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:54-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:27-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.9.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:pom:3.12.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.7.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-git-commons:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:pom:3.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:51-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:jar:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:jar:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.7.36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-text:jar:1.10.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:jar:3.12.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-git-commons:jar:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:jar:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-manager-plexus:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-managers:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-manager-plexus:jar:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:jar:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:jar:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:jar:3.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.7.36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.kathrynhuxtable.maven.wagon:wagon-gitsite:pom:0.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-manager-plexus:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-managers:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.5.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.5.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:2.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.xbean:xbean-reflect:pom:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.xbean:xbean:pom:3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=log4j:log4j:pom:1.2.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-logging:commons-logging-api:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.collections:google-collections:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google:google:pom:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:pom:3.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers-git:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-providers:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=regexp:regexp:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-git-commons:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon-provider-api:pom:1.0-beta-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon:pom:1.0-beta-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.kathrynhuxtable.maven.wagon:wagon-gitsite:jar:0.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-api:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:1.5.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-manager-plexus:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-gitexe:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=regexp:regexp:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.scm:maven-scm-provider-git-commons:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon-provider-api:jar:1.0-beta-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:pom:5.1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:felix-parent:pom:7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.core:pom:6.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:biz.aQute.bndlib:pom:6.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.dto:pom:1.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.resource:pom:1.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.framework:pom:1.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.util.tracker:pom:1.5.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:osgi.annotation:pom:8.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.service.log:pom:1.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.service.repository:pom:1.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.util.function:pom:1.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.util.promise:pom:1.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.util.function:pom:1.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:biz.aQute.bnd.util:pom:6.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:pom:1.7.25-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-parent:pom:1.7.25-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.bundlerepository:pom:1.6.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:felix-parent:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.core:pom:4.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.easymock:easymock:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.utils:pom:1.6.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.compendium:pom:4.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:pom:3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:16-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-archiver:pom:3.5.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:34-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:34-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:23-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.0.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:3.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings-builder:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.19-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:pom:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-sec-dispatcher:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-cipher:pom:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:org.eclipse.sisu.plexus:pom:0.0.0.M5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:sisu-plexus:pom:0.0.0.M5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.oss:oss-parent:pom:7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.enterprise:cdi-api:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jboss.weld:weld-api-parent:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jboss.weld:weld-api-bom:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jboss.weld:weld-parent:pom:6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.annotation:jsr250-api:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava:pom:10.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava-parent:pom:10.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.findbugs:jsr305:pom:1.3.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:pom:3.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-parent:pom:3.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=aopalliance:aopalliance:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:org.eclipse.sisu.inject:pom:0.0.0.M5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:sisu-inject:pom:0.0.0.M5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:16-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model-builder:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-aether-provider:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-api:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-spi:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-impl:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:2.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:pom:3.3.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:42-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:18-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-compress:pom:1.20-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:48-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-archiver:pom:4.2.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-io:pom:3.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-compress:pom:1.21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.iq80.snappy:snappy:pom:0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.tukaani:xz:pom:1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.26-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-dependency-tree:pom:3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:25-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:pom:1.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:3.3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:pom:0.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice:spice-parent:pom:15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-site-renderer:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sitetools:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-core:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.0-alpha-30-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.0-alpha-30-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.4.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:1.2-alpha-9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-i18n:pom:1.0-beta-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:1.1.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-velocity:pom:1.1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.0-alpha-20-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.0-alpha-20-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:1.2-alpha-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.velocity:velocity:pom:1.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:pom:3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=oro:oro:pom:2.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-decoration-model:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:pom:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-apt:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-modules:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-fml:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xdoc:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xhtml:pom:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jdom:jdom:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:jar:5.1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.core:jar:6.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:biz.aQute.bndlib:jar:6.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.dto:jar:1.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.resource:jar:1.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.framework:jar:1.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.util.tracker:jar:1.5.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:osgi.annotation:jar:8.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.service.log:jar:1.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.service.repository:jar:1.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.util.function:jar:1.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.util.promise:jar:1.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=biz.aQute.bnd:biz.aQute.bnd.util:jar:6.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.7.25-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.bundlerepository:jar:1.6.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.easymock:easymock:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:org.apache.felix.utils:jar:1.6.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.osgi:org.osgi.compendium:jar:4.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-archiver:jar:3.5.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings-builder:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model-builder:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-aether-provider:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-spi:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-impl:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-api:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.0.0.M5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.enterprise:cdi-api:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.annotation:jsr250-api:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:jar:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava:jar:10.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.findbugs:jsr305:jar:1.3.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:jar:no_aop:3.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=aopalliance:aopalliance:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:org.eclipse.sisu.inject:jar:0.0.0.M5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:jar:2.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-sec-dispatcher:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-cipher:jar:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:jar:3.3.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-compress:jar:1.20-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-archiver:jar:4.2.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-io:jar:3.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.iq80.snappy:snappy:jar:0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.tukaani:xz:jar:1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:jar:1.26-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-dependency-tree:jar:3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:jar:0.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-site-renderer:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-core:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-i18n:jar:1.0-beta-7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-30-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:3.8.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-velocity:jar:1.1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.velocity:velocity:jar:1.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=oro:oro:jar:2.0.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-decoration-model:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:jar:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-apt:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-fml:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xdoc:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-module-xhtml:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jdom:jdom:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plugins:nexus-staging-maven-plugin:pom:1.6.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.maven:nexus-staging:pom:1.6.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.maven:nexus-maven-plugins:pom:1.6.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.buildsupport:public-parent:pom:32-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.buildsupport:buildsupport:pom:32-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.maven:nexus-common:pom:1.6.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-sec-dispatcher:pom:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-cipher:pom:1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava:pom:14.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava-parent:pom:14.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.0.24-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:4.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-plexus:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-plexus:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-bean:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:containers:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-parent:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-bean:pom:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-compat:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model-builder:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:3.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings-builder:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guava:pom:0.9.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guava-parent:pom:0.9.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-aether-provider:pom:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether-api:pom:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether:pom:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether-spi:pom:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether-util:pom:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether-impl:pom:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon-provider-api:pom:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon:pom:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-annotations:pom:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-tools:pom:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:22-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus:nexus-client-core:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus:nexus-components:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus:nexus-parent:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.buildsupport:public-parent:pom:9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.buildsupport:buildsupport:pom:9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-all:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-commons:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-db:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-gwt:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-httpclient:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-insight:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-maven:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-messaging:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-shiro:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-bouncycastle:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-jetty:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-goodies:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-groovy:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-guice:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-logging:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-osgi:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-other:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-plexus:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-rest:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-testing:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.buildsupport:nexus-buildsupport-metrics:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.plugins:nexus-restlet1x-model:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.plugins:nexus-plugins-restlet1x:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.plugins:nexus-plugins:pom:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.findbugs:jsr305:pom:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.intellij:annotations:pom:9.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.thoughtworks.xstream:xstream:pom:1.4.19-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.thoughtworks.xstream:xstream-parent:pom:1.4.19-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=io.github.x-stream:mxparser:pom:1.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xmlpull:xmlpull:pom:1.1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=joda-time:joda-time:pom:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:pom:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:17-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-beanutils:commons-beanutils:pom:1.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:47-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:19-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:pom:3.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:39-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:16-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.siesta:siesta-client:pom:1.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.siesta:siesta:pom:1.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.buildsupport:public-parent:pom:5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.buildsupport:buildsupport:pom:5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.siesta:siesta-common:pom:1.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.ws.rs:jsr311-api:pom:1.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.jersey:jersey-core:pom:1.17.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.jersey:jersey-project:pom:1.17.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=net.java:jvnet-parent:pom:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.validation:validation-api:pom:1.1.0.Final-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.jersey:jersey-client:pom:1.17.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.jersey.contribs:jersey-apache-client4:pom:1.17.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.jersey.contribs:jersey-contribs:pom:1.17.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.httpcomponents:httpclient:pom:4.5.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.httpcomponents:httpcomponents-client:pom:4.5.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.httpcomponents:httpcomponents-parent:pom:11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.httpcomponents:httpcore:pom:4.4.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.httpcomponents:httpcomponents-core:pom:4.4.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-codec:commons-codec:pom:1.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:jcl-over-slf4j:pom:1.7.36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.siesta:siesta-jackson:pom:1.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.core:jackson-annotations:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-parent:pom:2.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml:oss-parent:pom:43-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.core:jackson-core:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-base:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-bom:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.core:jackson-databind:pom:2.13.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.jaxrs:jackson-jaxrs-providers:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.module:jackson-module-jaxb-annotations:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.module:jackson-modules-base:pom:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=jakarta.xml.bind:jakarta.xml.bind-api:pom:2.3.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=jakarta.xml.bind:jakarta.xml.bind-api-parent:pom:2.3.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.ee4j:project:pom:1.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=jakarta.activation:jakarta.activation-api:pom:1.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.activation:all:pom:1.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=jakarta.activation:jakarta.activation-api:pom:1.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.activation:all:pom:1.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.ee4j:project:pom:1.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice.zapper:spice-zapper:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.buildsupport:public-parent:pom:6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.buildsupport:buildsupport:pom:6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.fusesource.hawtbuf:hawtbuf-proto:pom:1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.fusesource.hawtbuf:hawtbuf-project:pom:1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.fusesource:fusesource-pom:pom:1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.fusesource.hawtbuf:hawtbuf:pom:1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=ch.qos.logback:logback-core:pom:1.2.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=ch.qos.logback:logback-parent:pom:1.2.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=ch.qos.logback:logback-classic:pom:1.2.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plugins:nexus-staging-maven-plugin:jar:1.6.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.maven:nexus-common:jar:1.6.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-sec-dispatcher:jar:1.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-cipher:jar:1.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava:jar:14.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-plexus:jar:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-bean:jar:2.3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:jar:no_aop:3.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-compat:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model-builder:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings-builder:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-aether-provider:jar:3.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether-spi:jar:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether-impl:jar:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether-util:jar:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon-provider-api:jar:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugin-tools:maven-plugin-annotations:jar:3.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus:nexus-client-core:jar:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.nexus.plugins:nexus-restlet1x-model:jar:2.15.1-02-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.7.36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.findbugs:jsr305:jar:2.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.intellij:annotations:jar:9.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.thoughtworks.xstream:xstream:jar:1.4.19-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=io.github.x-stream:mxparser:jar:1.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xmlpull:xmlpull:jar:1.1.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=joda-time:joda-time:jar:2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-beanutils:commons-beanutils:jar:1.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-collections:commons-collections:jar:3.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.siesta:siesta-client:jar:1.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.siesta:siesta-common:jar:1.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.ws.rs:jsr311-api:jar:1.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.jersey:jersey-core:jar:1.17.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.validation:validation-api:jar:1.1.0.Final-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.jersey:jersey-client:jar:1.17.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.sun.jersey.contribs:jersey-apache-client4:jar:1.17.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.siesta:siesta-jackson:jar:1.8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.core:jackson-annotations:jar:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.core:jackson-core:jar:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.core:jackson-databind:jar:2.13.2.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:jar:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:jar:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=jakarta.activation:jakarta.activation-api:jar:1.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.httpcomponents:httpclient:jar:4.5.13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-codec:commons-codec:jar:1.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.httpcomponents:httpcore:jar:4.4.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:jcl-over-slf4j:jar:1.7.36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:jar:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.spice.zapper:spice-zapper:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.fusesource.hawtbuf:hawtbuf-proto:jar:1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.fusesource.hawtbuf:hawtbuf:jar:1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.0.24-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:jar:1.15-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.aether:aether-api:jar:1.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=ch.qos.logback:logback-core:jar:1.2.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=ch.qos.logback:logback-classic:jar:1.2.11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-base:pom:2.16.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-bom:pom:2.16.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml.jackson:jackson-parent:pom:2.16-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.fasterxml:oss-parent:pom:56-[IJ]-error=
+[INFO] Inspecting build with total of 1 modules...
+[INFO] Installing Nexus Staging features:
+[INFO]   ... total of 1 executions of maven-deploy-plugin replaced with nexus-staging-maven-plugin
+[IJ]-1-SessionStarted-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-projects=com.fasterxml.jackson.core:jackson-core:2.16.1-SNAPSHOT&&
+[IJ]-1-ProjectStarted-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT
+[INFO]
+[INFO] --------------< com.fasterxml.jackson.core:jackson-core >---------------
+[INFO] Building Jackson-core 2.16.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:jacoco-maven-plugin:pom:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:org.jacoco.build:pom:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm-bom:pom:9.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2:ow2:pom:1.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:jacoco-maven-plugin:jar:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=de.jjohannes:gradle-module-metadata-maven-plugin:pom:0.4.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=de.jjohannes:gradle-module-metadata-maven-plugin:jar:0.4.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-site-plugin:pom:4.0.0-M11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-plugins:pom:40-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:40-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:30-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-site-plugin:jar:4.0.0-M11-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-enforcer-plugin:pom:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer:pom:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.10.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-enforcer-plugin:jar:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.maven-replacer-plugin:replacer:pom:1.5.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.maven-replacer-plugin:replacer:jar:1.5.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:build-helper-maven-plugin:pom:3.4.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:mojo-parent:pom:74-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit:junit-bom:pom:5.9.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:build-helper-maven-plugin:jar:3.4.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:pom:3.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-plugins:pom:39-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:jar:3.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:pom:3.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:jar:3.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:pom:5.1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.felix:maven-bundle-plugin:jar:5.1.9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-surefire-plugin:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-surefire-plugin:jar:3.2.1-[IJ]-error=
+[IJ]-1-DependencyResolutionRequest-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=ch.randelshofer:fastdoubleparser:pom:0.9.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.vintage:junit-vintage-engine:pom:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-engine:pom:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.opentest4j:opentest4j:pom:1.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-commons:pom:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apiguardian:apiguardian-api:pom:1.1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:pom:4.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.hamcrest:hamcrest-core:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.hamcrest:hamcrest-parent:pom:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter:pom:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-api:pom:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-params:pom:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-engine:pom:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.assertj:assertj-core:pom:3.24.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.assertj:assertj-parent:pom:3.24.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.assertj:assertj-build:pom:3.24.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.mockito:mockito-bom:pom:4.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=net.bytebuddy:byte-buddy:pom:1.12.21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=net.bytebuddy:byte-buddy-parent:pom:1.12.21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=ch.randelshofer:fastdoubleparser:jar:0.9.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.vintage:junit-vintage-engine:jar:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-engine:jar:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.opentest4j:opentest4j:jar:1.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-commons:jar:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apiguardian:apiguardian-api:jar:1.1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter:jar:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-api:jar:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-params:jar:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.jupiter:junit-jupiter-engine:jar:5.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.assertj:assertj-core:jar:3.24.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=net.bytebuddy:byte-buddy:jar:1.12.21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:4.13.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.hamcrest:hamcrest-core:jar:1.3-[IJ]-error=
+[IJ]-1-DependencyResolutionResult-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=enforce-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-enforcer-plugin:pom:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-api:pom:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-rules:pom:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:pom:1.0.0.v20140518-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether:pom:1.0.0.v20140518-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-api:pom:1.0.0.v20140518-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:pom:3.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:58-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-codec:commons-codec:pom:1.16.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache-extras.beanshell:bsh:pom:2.0b6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-enforcer-plugin:jar:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-api:jar:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.enforcer:enforcer-rules:jar:3.4.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:jar:1.0.0.v20140518-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:jar:3.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-codec:commons-codec:jar:1.16.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache-extras.beanshell:bsh:jar:2.0b6-[IJ]-error=
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] Rule 2: org.apache.maven.enforcer.rules.RequirePluginVersions passed
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=enforce-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=enforce-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-properties) @ jackson-core ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.property.RequireProperty passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.property.RequireProperty passed
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=enforce-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=prepare-agent-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- jacoco:0.8.10:prepare-agent (default) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:jacoco-maven-plugin:pom:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:file-management:pom:1.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-io:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:8-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:pom:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:pom:1.0-alpha-9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:1.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:pom:4.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.0.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:pom:1.1-alpha-2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon-provider-api:pom:1.0-alpha-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon:pom:1.0-alpha-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.4.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:1.5.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:1.0.12-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:org.jacoco.agent:pom:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:org.jacoco.core:pom:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:pom:9.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm-commons:pom:9.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm-tree:pom:9.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:org.jacoco.report:pom:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:jacoco-maven-plugin:jar:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.0.24-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:file-management:jar:1.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-io:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact-manager:jar:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:jar:2.0.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.wagon:wagon-provider-api:jar:1.0-alpha-6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-container-default:jar:1.0-alpha-9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=junit:junit:jar:4.13.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.hamcrest:hamcrest-core:jar:1.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=classworlds:classworlds:jar:1.1-alpha-2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.reporting:maven-reporting-api:jar:3.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.doxia:doxia-sink-api:jar:1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:org.jacoco.agent:jar:runtime:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:org.jacoco.core:jar:0.8.10-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:jar:9.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm-commons:jar:9.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm-tree:jar:9.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jacoco:org.jacoco.report:jar:0.8.10-[IJ]-error=
+[INFO] argLine set to -javaagent:/Users/Anton.Spilnyy/.m2/repository/org/jacoco/org.jacoco.agent/0.8.10/org.jacoco.agent-0.8.10-runtime.jar=destfile=/Users/Anton.Spilnyy/work/ai/ml-eval/jackson-core/target/jacoco.exec
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=prepare-agent-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=replace-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- replacer:1.5.3:replace (process-packageVersion) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.maven-replacer-plugin:replacer:pom:1.5.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:pom:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-plexus:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-plexus:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-bean:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-parent:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:2.0.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-bean:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:pom:2.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-parent:pom:2.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant:pom:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant-parent:pom:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant-launcher:pom:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:22-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xerces:xercesImpl:pom:2.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xml-apis:xml-apis:pom:1.3.03-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.code.maven-replacer-plugin:replacer:jar:1.5.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:2.0.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:jar:3.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-plexus:jar:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:jar:2.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-inject-bean:jar:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:jar:no_aop:2.9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant:jar:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.ant:ant-launcher:jar:1.8.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-lang:commons-lang:jar:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xerces:xercesImpl:jar:2.8.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=xml-apis:xml-apis:jar:1.3.03-[IJ]-error=
+[INFO] Replacement run on 1 file.
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=replace-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=add-source-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- build-helper:3.4.0:add-source (add-generated-sources) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:build-helper-maven-plugin:pom:3.4.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:file-management:pom:3.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-parent:pom:36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache:apache:pom:26-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.4.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.mojo:build-helper-maven-plugin:jar:3.4.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache-extras.beanshell:bsh:jar:2.0b6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:file-management:jar:3.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.7.36-[IJ]-error=
+[INFO] Source directory: /Users/Anton.Spilnyy/work/ai/ml-eval/jackson-core/target/generated-sources added.
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=add-source-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=add-resource-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- build-helper:3.4.0:add-resource (add-resource) @ jackson-core ---
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=add-resource-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=resources-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:pom:3.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-filtering:pom:3.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:39-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:3.5.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-resources-plugin:jar:3.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:jar:1.26-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.5.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-filtering:jar:3.3.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:jar:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.slf4j:slf4j-api:jar:1.7.36-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.plexus:plexus-build-api:jar:0.0.7-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-lang3:jar:3.12.0-[IJ]-error=
+[INFO] Copying 3 resources from src/main/resources to target/classes
+[INFO] Copying 1 resource from  to target/classes/META-INF
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=resources-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- compiler:3.11.0:compile (default-compile) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:pom:3.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:pom:9.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:pom:3.3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-incremental:pom:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-components:pom:19-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-java:pom:1.1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-languages:pom:1.1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:pom:9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.thoughtworks.qdox:qdox:pom:2.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.oss:oss-parent:pom:9-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-api:pom:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler:pom:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-components:pom:10.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-manager:pom:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:2.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:6.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-javac:pom:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compilers:pom:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-compiler-plugin:jar:3.11.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:jar:9.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-utils:jar:3.3.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.6-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-shared-incremental:jar:1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-java:jar:1.1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.thoughtworks.qdox:qdox:jar:2.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-api:jar:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:3.5.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-manager:jar:2.13.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-compiler-javac:jar:2.13.0-[IJ]-error=
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 134 source files with javac [debug:lines,source,vars deprecation target 1.8] to target/classes
+[WARNING] bootstrap class path not set in conjunction with -source 8
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=compile-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=manifest-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- bundle:5.1.9:manifest (bundle-manifest) @ jackson-core ---
+[INFO] Writing manifest: /Users/Anton.Spilnyy/work/ai/ml-eval/jackson-core/target/classes/META-INF/MANIFEST.MF
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=manifest-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=testResources-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ jackson-core ---
+[INFO] Copying 6 resources from src/test/resources to target/test-classes
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=testResources-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=testCompile-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ jackson-core ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 211 source files with javac [debug:lines,source,vars deprecation target 1.8] to target/test-classes
+[WARNING] bootstrap class path not set in conjunction with -source 8
+[IJ]-1-MojoSucceeded-[IJ]-source=LIFECYCLE-[IJ]-goal=testCompile-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[IJ]-1-MojoStarted-[IJ]-source=LIFECYCLE-[IJ]-goal=test-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=
+[INFO]
+[INFO] --- surefire:3.2.1:test (default-test) @ jackson-core ---
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-surefire-plugin:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:maven-surefire-common:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-logger-api:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-shared-utils:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-extensions-api:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-booter:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-extensions-spi:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-common-artifact-filters:pom:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-artifact:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:pom:4.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus:pom:13-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-core:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-settings-builder:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-interpolation:pom:1.21-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-repository-metadata:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-plugin-api:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:org.eclipse.sisu.plexus:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:sisu-plexus:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.annotation:javax.annotation-api:pom:1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=net.java:jvnet-parent:pom:3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.enterprise:cdi-api:pom:1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.jboss.weld:weld-parent:pom:26-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:org.eclipse.sisu.inject:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:sisu-inject:pom:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:pom:2.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-containers:pom:2.1.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:2.6.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-model-builder:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-aether-provider:pom:3.2.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-spi:pom:1.0.0.v20140518-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-impl:pom:1.0.0.v20140518-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu:sisu-guice:pom:3.2.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.sisu.inject:guice-parent:pom:3.2.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.sonatype.forge:forge-parent:pom:38-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava:pom:16.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.google.guava:guava-parent:pom:16.0.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:pom:2.5.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:pom:2.12.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.commons:commons-parent:pom:57-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-xml:pom:4.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-xml-impl:pom:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven:pom:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-bom:pom:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-api-xml:pom:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-api:pom:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-api-meta:pom:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.plugins:maven-surefire-plugin:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:maven-surefire-common:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-logger-api:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-extensions-api:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-booter:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-extensions-spi:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-util:jar:1.0.0.v20140518-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.aether:aether-api:jar:1.0.0.v20140518-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.shared:maven-common-artifact-filters:jar:3.1.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-utils:jar:4.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.annotation:javax.annotation-api:jar:1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.enterprise:cdi-api:jar:1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.eclipse.sisu:org.eclipse.sisu.inject:jar:0.9.0.M2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=javax.inject:javax.inject:jar:1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-classworlds:jar:2.5.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-component-annotations:jar:1.5.5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=commons-io:commons-io:jar:2.12.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-java:jar:1.1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.ow2.asm:asm:jar:9.4-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=com.thoughtworks.qdox:qdox:jar:2.0.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.codehaus.plexus:plexus-xml:jar:4.0.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-xml-impl:jar:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-api-xml:jar:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven:maven-api-meta:jar:4.0.0-alpha-5-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-shared-utils:jar:3.2.1-[IJ]-error=
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-booter:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-booter:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-logger-api:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-shared-utils:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-extensions-spi:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-junit-platform:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-providers:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:common-java5:pom:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-launcher:pom:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-junit-platform:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:common-java5:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-shared-utils:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-launcher:jar:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-engine:jar:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.opentest4j:opentest4j:jar:1.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-commons:jar:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apiguardian:apiguardian-api:jar:1.1.2-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-api:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apache.maven.surefire:surefire-logger-api:jar:3.2.1-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-launcher:jar:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-engine:jar:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.opentest4j:opentest4j:jar:1.2.0-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.junit.platform:junit-platform-commons:jar:1.9.3-[IJ]-error=
+[IJ]-1-ARTIFACT_RESOLVING-[IJ]-path=-[IJ]-artifactCoord=org.apiguardian:apiguardian-api:jar:1.1.2-[IJ]-error=
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.fasterxml.jackson.core.write.ArrayWriteTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in com.fasterxml.jackson.core.write.ArrayWriteTest
+[INFO] Running com.fasterxml.jackson.core.write.BoundsChecksWithGeneratorTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.fasterxml.jackson.core.write.BoundsChecksWithGeneratorTest
+[INFO] Running com.fasterxml.jackson.core.write.WriteTypeIdTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.write.WriteTypeIdTest
+[INFO] Running com.fasterxml.jackson.core.write.GeneratorMiscTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.370 s -- in com.fasterxml.jackson.core.write.GeneratorMiscTest
+[INFO] Running com.fasterxml.jackson.core.write.FastDoubleObjectWriteTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.fasterxml.jackson.core.write.FastDoubleObjectWriteTest
+[INFO] Running com.fasterxml.jackson.core.write.SerializedStringWriteTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.fasterxml.jackson.core.write.SerializedStringWriteTest
+[INFO] Running com.fasterxml.jackson.core.write.PrettyPrinterTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.write.PrettyPrinterTest
+[INFO] Running com.fasterxml.jackson.core.write.RawStringWriteTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.061 s -- in com.fasterxml.jackson.core.write.RawStringWriteTest
+[INFO] Running com.fasterxml.jackson.core.write.GeneratorDupHandlingTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.write.GeneratorDupHandlingTest
+[INFO] Running com.fasterxml.jackson.core.write.GeneratorBasicTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in com.fasterxml.jackson.core.write.GeneratorBasicTest
+[INFO] Running com.fasterxml.jackson.core.write.WriterBasedJsonGeneratorTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.write.WriterBasedJsonGeneratorTest
+[INFO] Running com.fasterxml.jackson.core.write.ObjectWriteTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.write.ObjectWriteTest
+[INFO] Running com.fasterxml.jackson.core.write.GeneratorCopyTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.write.GeneratorCopyTest
+[INFO] Running com.fasterxml.jackson.core.write.ArrayGenerationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.059 s -- in com.fasterxml.jackson.core.write.ArrayGenerationTest
+[INFO] Running com.fasterxml.jackson.core.write.FastDoubleArrayGenerationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.032 s -- in com.fasterxml.jackson.core.write.FastDoubleArrayGenerationTest
+[INFO] Running com.fasterxml.jackson.core.write.GeneratorCloseTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.write.GeneratorCloseTest
+[INFO] Running com.fasterxml.jackson.core.write.UTF8GeneratorTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.write.UTF8GeneratorTest
+[INFO] Running com.fasterxml.jackson.core.sym.TestByteBasedSymbols
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.fasterxml.jackson.core.sym.TestByteBasedSymbols
+[INFO] Running com.fasterxml.jackson.core.sym.TestSymbolsWithMediaItem
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.sym.TestSymbolsWithMediaItem
+[INFO] Running com.fasterxml.jackson.core.sym.SymbolTableMergingTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.sym.SymbolTableMergingTest
+[INFO] Running com.fasterxml.jackson.core.sym.SymbolsViaParserTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.sym.SymbolsViaParserTest
+[INFO] Running com.fasterxml.jackson.core.sym.TestSymbolTables
+[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.118 s -- in com.fasterxml.jackson.core.sym.TestSymbolTables
+[INFO] Running com.fasterxml.jackson.core.sym.TestHashCollisionChars
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.sym.TestHashCollisionChars
+[INFO] Running com.fasterxml.jackson.core.sym.PlaceholderSymbolTableTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.sym.PlaceholderSymbolTableTest
+[INFO] Running com.fasterxml.jackson.core.JsonLocationTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.052 s -- in com.fasterxml.jackson.core.JsonLocationTest
+[INFO] Running com.fasterxml.jackson.core.jsonptr.JsonPointerTest
+[ERROR] Tests run: 16, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.005 s <<< FAILURE! -- in com.fasterxml.jackson.core.jsonptr.JsonPointerTest
+[ERROR] com.fasterxml.jackson.core.jsonptr.JsonPointerTest.testAppendWithFinalSlash -- Time elapsed: 0.001 s <<< FAILURE!
+junit.framework.ComparisonFailure: expected:</Image/15/name/[/]extension> but was:</Image/15/name/[]extension>
+	at junit.framework.Assert.assertEquals(Assert.java:100)
+	at junit.framework.Assert.assertEquals(Assert.java:107)
+	at junit.framework.TestCase.assertEquals(TestCase.java:260)
+	at com.fasterxml.jackson.core.jsonptr.JsonPointerTest.testAppendWithFinalSlash(JsonPointerTest.java:196)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at junit.framework.TestCase.runTest(TestCase.java:177)
+	at junit.framework.TestCase.runBare(TestCase.java:142)
+	at junit.framework.TestResult$1.protect(TestResult.java:122)
+	at junit.framework.TestResult.runProtected(TestResult.java:142)
+	at junit.framework.TestResult.run(TestResult.java:125)
+	at junit.framework.TestCase.run(TestCase.java:130)
+	at junit.framework.TestSuite.runTest(TestSuite.java:241)
+	at junit.framework.TestSuite.run(TestSuite.java:236)
+	at org.junit.internal.runners.JUnit38ClassRunner.run(JUnit38ClassRunner.java:90)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:115)
+	at org.junit.vintage.engine.execution.RunnerExecutor.execute(RunnerExecutor.java:42)
+	at org.junit.vintage.engine.VintageTestEngine.executeAllChildren(VintageTestEngine.java:80)
+	at org.junit.vintage.engine.VintageTestEngine.execute(VintageTestEngine.java:72)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:147)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:127)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:90)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:55)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:102)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:54)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:114)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:86)
+	at org.junit.platform.launcher.core.DefaultLauncherSession$DelegatingLauncher.execute(DefaultLauncherSession.java:86)
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+
+[INFO] Running com.fasterxml.jackson.core.jsonptr.PointerFromContextTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.jsonptr.PointerFromContextTest
+[INFO] Running com.fasterxml.jackson.core.jsonptr.Fuzz51806JsonPointerParse818Test
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.628 s -- in com.fasterxml.jackson.core.jsonptr.Fuzz51806JsonPointerParse818Test
+[INFO] Running com.fasterxml.jackson.core.jsonptr.JsonPointerOOME736Test
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.022 s -- in com.fasterxml.jackson.core.jsonptr.JsonPointerOOME736Test
+[INFO] Running com.fasterxml.jackson.core.jsonptr.JsonPointer1168Test
+[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.001 s <<< FAILURE! -- in com.fasterxml.jackson.core.jsonptr.JsonPointer1168Test
+[ERROR] com.fasterxml.jackson.core.jsonptr.JsonPointer1168Test.testAppendWithTail -- Time elapsed: 0.001 s <<< FAILURE!
+junit.framework.ComparisonFailure: expected:</a2/[]b/c> but was:</a2/[a1/]b/c>
+	at junit.framework.Assert.assertEquals(Assert.java:100)
+	at junit.framework.Assert.assertEquals(Assert.java:107)
+	at junit.framework.TestCase.assertEquals(TestCase.java:260)
+	at com.fasterxml.jackson.core.jsonptr.JsonPointer1168Test.testAppendWithTail(JsonPointer1168Test.java:18)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at junit.framework.TestCase.runTest(TestCase.java:177)
+	at junit.framework.TestCase.runBare(TestCase.java:142)
+	at junit.framework.TestResult$1.protect(TestResult.java:122)
+	at junit.framework.TestResult.runProtected(TestResult.java:142)
+	at junit.framework.TestResult.run(TestResult.java:125)
+	at junit.framework.TestCase.run(TestCase.java:130)
+	at junit.framework.TestSuite.runTest(TestSuite.java:241)
+	at junit.framework.TestSuite.run(TestSuite.java:236)
+	at org.junit.internal.runners.JUnit38ClassRunner.run(JUnit38ClassRunner.java:90)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:137)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:115)
+	at org.junit.vintage.engine.execution.RunnerExecutor.execute(RunnerExecutor.java:42)
+	at org.junit.vintage.engine.VintageTestEngine.executeAllChildren(VintageTestEngine.java:80)
+	at org.junit.vintage.engine.VintageTestEngine.execute(VintageTestEngine.java:72)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:147)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:127)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:90)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:55)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:102)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:54)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:114)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:86)
+	at org.junit.platform.launcher.core.DefaultLauncherSession$DelegatingLauncher.execute(DefaultLauncherSession.java:86)
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+
+[INFO] Running com.fasterxml.jackson.core.dos.PerfBigDecimalToInteger968Test
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.fasterxml.jackson.core.dos.PerfBigDecimalToInteger968Test
+[INFO] Running com.fasterxml.jackson.core.dos.PerfBigDecimalParser967Test
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.dos.PerfBigDecimalParser967Test
+[INFO] Running com.fasterxml.jackson.core.constraints.LargeNumberReadTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in com.fasterxml.jackson.core.constraints.LargeNumberReadTest
+[INFO] Running com.fasterxml.jackson.core.constraints.StreamWriteConstraintsDefaultsTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.constraints.StreamWriteConstraintsDefaultsTest
+[INFO] Running com.fasterxml.jackson.core.constraints.DeeplyNestedContentReadTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.fasterxml.jackson.core.constraints.DeeplyNestedContentReadTest
+[INFO] Running com.fasterxml.jackson.core.constraints.LargeNumberWriteTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in com.fasterxml.jackson.core.constraints.LargeNumberWriteTest
+[INFO] Running com.fasterxml.jackson.core.constraints.StreamReadConstraintsDefaultsTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.constraints.StreamReadConstraintsDefaultsTest
+[INFO] Running com.fasterxml.jackson.core.constraints.LargeDocReadTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.fasterxml.jackson.core.constraints.LargeDocReadTest
+[INFO] Running com.fasterxml.jackson.core.constraints.LargeNameReadTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.constraints.LargeNameReadTest
+[INFO] Running com.fasterxml.jackson.core.util.TestSerializedString
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.util.TestSerializedString
+[INFO] Running com.fasterxml.jackson.core.util.SeparatorsTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.util.SeparatorsTest
+[INFO] Running com.fasterxml.jackson.core.util.TestTextBuffer
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in com.fasterxml.jackson.core.util.TestTextBuffer
+[INFO] Running com.fasterxml.jackson.core.util.TestCharTypes
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.util.TestCharTypes
+[INFO] Running com.fasterxml.jackson.core.util.TestDefaultPrettyPrinter
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.fasterxml.jackson.core.util.TestDefaultPrettyPrinter
+[INFO] Running com.fasterxml.jackson.core.util.TestDelegates
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.fasterxml.jackson.core.util.TestDelegates
+[INFO] Running com.fasterxml.jackson.core.util.DefaultIndenterTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.util.DefaultIndenterTest
+[INFO] Running com.fasterxml.jackson.core.util.TestVersionUtil
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.util.TestVersionUtil
+[INFO] Running com.fasterxml.jackson.core.util.ByteArrayBuilderTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.util.ByteArrayBuilderTest
+[INFO] Running com.fasterxml.jackson.core.util.VersionUtilTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.util.VersionUtilTest
+[INFO] Running com.fasterxml.jackson.core.util.RequestPayloadTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.util.RequestPayloadTest
+[INFO] Running com.fasterxml.jackson.core.util.TestNumberPrinting
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.111 s -- in com.fasterxml.jackson.core.util.TestNumberPrinting
+[INFO] Running com.fasterxml.jackson.core.ParserFeatureDefaultsTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.ParserFeatureDefaultsTest
+[INFO] Running com.fasterxml.jackson.core.ErrorReportConfigurationTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in com.fasterxml.jackson.core.ErrorReportConfigurationTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserErrorHandlingTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.ParserErrorHandlingTest
+[INFO] Running com.fasterxml.jackson.core.read.NonStandardParserFeaturesTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.NonStandardParserFeaturesTest
+[INFO] Running com.fasterxml.jackson.core.read.NextNameParserTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.NextNameParserTest
+[INFO] Running com.fasterxml.jackson.core.read.NextXxxAccessTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.729 s -- in com.fasterxml.jackson.core.read.NextXxxAccessTest
+[INFO] Running com.fasterxml.jackson.core.read.LocationDuringReaderParsingTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.read.LocationDuringReaderParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserFeaturesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.ParserFeaturesTest
+[INFO] Running com.fasterxml.jackson.core.read.NumberOverflowTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.099 s -- in com.fasterxml.jackson.core.read.NumberOverflowTest
+[INFO] Running com.fasterxml.jackson.core.read.NonStandardNumberParsingTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.read.NonStandardNumberParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.UTF8NamesParseTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in com.fasterxml.jackson.core.read.UTF8NamesParseTest
+[INFO] Running com.fasterxml.jackson.core.read.NonStandardUnquotedNamesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in com.fasterxml.jackson.core.read.NonStandardUnquotedNamesTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserSymbolHandlingTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.ParserSymbolHandlingTest
+[INFO] Running com.fasterxml.jackson.core.read.LocationDuringStreamParsingTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.read.LocationDuringStreamParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserScopeMatchingTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.ParserScopeMatchingTest
+[INFO] Running com.fasterxml.jackson.core.read.ValueConversionsTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.read.ValueConversionsTest
+[INFO] Running com.fasterxml.jackson.core.read.TrailingCommas616Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.TrailingCommas616Test
+[INFO] Running com.fasterxml.jackson.core.read.ArrayParsingTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.ArrayParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.LocationInObjectTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.LocationInObjectTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserPrecisionLoss730Test
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.ParserPrecisionLoss730Test
+[INFO] Running com.fasterxml.jackson.core.read.NonStandardAposQuotedNamesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.NonStandardAposQuotedNamesTest
+[INFO] Running com.fasterxml.jackson.core.read.LocationOffsetsTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.fasterxml.jackson.core.read.LocationOffsetsTest
+[INFO] Running com.fasterxml.jackson.core.read.NumberCoercionTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.NumberCoercionTest
+[INFO] Running com.fasterxml.jackson.core.read.LocationOffsets455Test
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.LocationOffsets455Test
+[INFO] Running com.fasterxml.jackson.core.read.NumberParsingTest
+[INFO] Tests run: 33, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.388 s -- in com.fasterxml.jackson.core.read.NumberParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.UTF32ParseTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.UTF32ParseTest
+[INFO] Running com.fasterxml.jackson.core.read.FloatParsingTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.fasterxml.jackson.core.read.FloatParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserLinefeedsTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.ParserLinefeedsTest
+[INFO] Running com.fasterxml.jackson.core.read.SimpleParserTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.036 s -- in com.fasterxml.jackson.core.read.SimpleParserTest
+[INFO] Running com.fasterxml.jackson.core.read.NumberDeferredReadTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.NumberDeferredReadTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserDupHandlingTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.read.ParserDupHandlingTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserClosingTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.ParserClosingTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserSequenceTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.ParserSequenceTest
+[INFO] Running com.fasterxml.jackson.core.read.ParserWithObjectsTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.ParserWithObjectsTest
+[INFO] Running com.fasterxml.jackson.core.read.TrailingCommasTest
+[INFO] Tests run: 260, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in com.fasterxml.jackson.core.read.TrailingCommasTest
+[INFO] Running com.fasterxml.jackson.core.read.LocationInArrayTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.LocationInArrayTest
+[INFO] Running com.fasterxml.jackson.core.read.FastParserNonStandardNumberParsingTest
+[INFO] Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.read.FastParserNonStandardNumberParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.CommentParsingTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.read.CommentParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.FastParserNumberParsingTest
+[INFO] Tests run: 33, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.198 s -- in com.fasterxml.jackson.core.read.FastParserNumberParsingTest
+[INFO] Running com.fasterxml.jackson.core.read.DataInputTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.read.DataInputTest
+[INFO] Running com.fasterxml.jackson.core.base64.Base64CodecTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.base64.Base64CodecTest
+[INFO] Running com.fasterxml.jackson.core.base64.Base64Padding912Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.base64.Base64Padding912Test
+[INFO] Running com.fasterxml.jackson.core.base64.Base64GenerationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.base64.Base64GenerationTest
+[INFO] Running com.fasterxml.jackson.core.base64.Base64BinaryParsingTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.063 s -- in com.fasterxml.jackson.core.base64.Base64BinaryParsingTest
+[INFO] Running com.fasterxml.jackson.core.io.schubfach.SchubfachFloatTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.io.schubfach.SchubfachFloatTest
+[INFO] Running com.fasterxml.jackson.core.io.schubfach.SchubfachDoubleTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.io.schubfach.SchubfachDoubleTest
+[INFO] Running com.fasterxml.jackson.core.io.TestIOContext
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.io.TestIOContext
+[INFO] Running com.fasterxml.jackson.core.io.TestMergedStream
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.io.TestMergedStream
+[INFO] Running com.fasterxml.jackson.core.io.SegmentedStringWriterTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.io.SegmentedStringWriterTest
+[INFO] Running com.fasterxml.jackson.core.io.TestCharTypes
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.io.TestCharTypes
+[INFO] Running com.fasterxml.jackson.core.io.TestJsonStringEncoder
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in com.fasterxml.jackson.core.io.TestJsonStringEncoder
+[INFO] Running com.fasterxml.jackson.core.io.BufferRecyclerPoolTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.fasterxml.jackson.core.io.BufferRecyclerPoolTest
+[INFO] Running com.fasterxml.jackson.core.io.BigDecimalParserTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.io.BigDecimalParserTest
+[INFO] Running com.fasterxml.jackson.core.io.TestNumberInput
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.io.TestNumberInput
+[INFO] Running com.fasterxml.jackson.core.io.BigIntegerParserTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.io.BigIntegerParserTest
+[INFO] Running com.fasterxml.jackson.core.io.UTF8WriterTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.fasterxml.jackson.core.io.UTF8WriterTest
+[INFO] Running com.fasterxml.jackson.core.JsonpCharacterEscapesTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.JsonpCharacterEscapesTest
+[INFO] Running com.fasterxml.jackson.core.json.JsonReadContextTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.JsonReadContextTest
+[INFO] Running com.fasterxml.jackson.core.json.TestMaxErrorSize
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.TestMaxErrorSize
+[INFO] Running com.fasterxml.jackson.core.json.JsonFactoryTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.json.JsonFactoryTest
+[INFO] Running com.fasterxml.jackson.core.json.BoundsChecksWithJsonFactoryTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.BoundsChecksWithJsonFactoryTest
+[INFO] Running com.fasterxml.jackson.core.json.CustomQuoteCharTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.CustomQuoteCharTest
+[INFO] Running com.fasterxml.jackson.core.json.TestWithTonsaSymbols
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in com.fasterxml.jackson.core.json.TestWithTonsaSymbols
+[INFO] Running com.fasterxml.jackson.core.json.TestRootValues
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.TestRootValues
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncNumberCoercionTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncNumberCoercionTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncMissingValuesInObjectTest
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.json.async.AsyncMissingValuesInObjectTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncStringObjectTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncStringObjectTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncSimpleObjectTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncSimpleObjectTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncPointerFromContext563Test
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncPointerFromContext563Test
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncScalarArrayTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.json.async.AsyncScalarArrayTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncLocationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.async.AsyncLocationTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncConcurrencyByteBufferTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.008 s -- in com.fasterxml.jackson.core.json.async.AsyncConcurrencyByteBufferTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncStringArrayTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.019 s -- in com.fasterxml.jackson.core.json.async.AsyncStringArrayTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncInvalidCharsTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncInvalidCharsTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncCharEscapingTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncCharEscapingTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncFieldNamesTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncFieldNamesTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncNonStandardNumberParsingTest
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.json.async.AsyncNonStandardNumberParsingTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncCommentParsingTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncCommentParsingTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncRootValuesTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncRootValuesTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncTokenFilterTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.async.AsyncTokenFilterTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncRootNumbersTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncRootNumbersTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncConcurrencyTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.836 s -- in com.fasterxml.jackson.core.json.async.AsyncConcurrencyTest
+[INFO] Running com.fasterxml.jackson.core.json.async.ConfigTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.async.ConfigTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncParserNamesTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.json.async.AsyncParserNamesTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncNonStdParsingTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in com.fasterxml.jackson.core.json.async.AsyncNonStdParsingTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncScopeMatchingTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.async.AsyncScopeMatchingTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncUnicodeHandlingTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in com.fasterxml.jackson.core.json.async.AsyncUnicodeHandlingTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncSimpleNestedTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.async.AsyncSimpleNestedTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncBinaryParseTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.104 s -- in com.fasterxml.jackson.core.json.async.AsyncBinaryParseTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncNonStdNumberHandlingTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncNonStdNumberHandlingTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncMissingValuesInArrayTest
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.json.async.AsyncMissingValuesInArrayTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncNumberDeferredReadTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.async.AsyncNumberDeferredReadTest
+[INFO] Running com.fasterxml.jackson.core.json.async.AsyncNaNHandlingTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.async.AsyncNaNHandlingTest
+[INFO] Running com.fasterxml.jackson.core.json.TestCharEscaping
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.json.TestCharEscaping
+[INFO] Running com.fasterxml.jackson.core.json.OutputStreamInitTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.OutputStreamInitTest
+[INFO] Running com.fasterxml.jackson.core.json.GeneratorFailFromReaderTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.GeneratorFailFromReaderTest
+[INFO] Running com.fasterxml.jackson.core.json.StringGenerationFromReaderTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.330 s -- in com.fasterxml.jackson.core.json.StringGenerationFromReaderTest
+[INFO] Running com.fasterxml.jackson.core.json.InputStreamInitTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.json.InputStreamInitTest
+[INFO] Running com.fasterxml.jackson.core.json.RawValueWithSurrogatesTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s -- in com.fasterxml.jackson.core.json.RawValueWithSurrogatesTest
+[INFO] Running com.fasterxml.jackson.core.json.TestDecorators
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.TestDecorators
+[INFO] Running com.fasterxml.jackson.core.json.TestCustomEscaping
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.TestCustomEscaping
+[INFO] Running com.fasterxml.jackson.core.json.GeneratorFailTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.GeneratorFailTest
+[INFO] Running com.fasterxml.jackson.core.json.TestParserOverrides
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.TestParserOverrides
+[INFO] Running com.fasterxml.jackson.core.json.StringGenerationTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.188 s -- in com.fasterxml.jackson.core.json.StringGenerationTest
+[INFO] Running com.fasterxml.jackson.core.json.TestUnicode
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.TestUnicode
+[INFO] Running com.fasterxml.jackson.core.json.RequestPayloadOnExceptionTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.json.RequestPayloadOnExceptionTest
+[INFO] Running com.fasterxml.jackson.core.json.JsonParserClosedCaseTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.json.JsonParserClosedCaseTest
+[INFO] Running com.fasterxml.jackson.core.json.GeneratorFeaturesTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.fasterxml.jackson.core.json.GeneratorFeaturesTest
+[INFO] Running com.fasterxml.jackson.core.type.TypeReferenceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.type.TypeReferenceTest
+[INFO] Running com.fasterxml.jackson.core.TestVersions
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.TestVersions
+[INFO] Running com.fasterxml.jackson.core.format.TestJsonFormatDetection
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.format.TestJsonFormatDetection
+[INFO] Running com.fasterxml.jackson.core.format.DataFormatMatcherTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.format.DataFormatMatcherTest
+[INFO] Running com.fasterxml.jackson.core.fuzz.Fuzz32208UTF32ParseTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.fuzz.Fuzz32208UTF32ParseTest
+[INFO] Running com.fasterxml.jackson.core.fuzz.Fuzz52688ParseTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.fuzz.Fuzz52688ParseTest
+[INFO] Running com.fasterxml.jackson.core.fuzz.Fuzz34435ParseTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in com.fasterxml.jackson.core.fuzz.Fuzz34435ParseTest
+[INFO] Running com.fasterxml.jackson.core.filter.ParserFiltering700Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.filter.ParserFiltering700Test
+[INFO] Running com.fasterxml.jackson.core.filter.BasicGeneratorFilteringTest
+[INFO] Tests run: 33, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.filter.BasicGeneratorFilteringTest
+[INFO] Running com.fasterxml.jackson.core.filter.BasicParserFilteringTest
+[INFO] Tests run: 44, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.fasterxml.jackson.core.filter.BasicParserFilteringTest
+[INFO] Running com.fasterxml.jackson.core.filter.GeneratorFiltering609Test
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.filter.GeneratorFiltering609Test
+[INFO] Running com.fasterxml.jackson.core.filter.JsonPointerGeneratorFilteringTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.filter.JsonPointerGeneratorFilteringTest
+[INFO] Running com.fasterxml.jackson.core.filter.JsonPointerParserFilteringTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.filter.JsonPointerParserFilteringTest
+[INFO] Running com.fasterxml.jackson.core.filter.GeneratorFiltering890Test
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.fasterxml.jackson.core.filter.GeneratorFiltering890Test
+[INFO] Running com.fasterxml.jackson.core.TestJDKSerializability
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s -- in com.fasterxml.jackson.core.TestJDKSerializability
+[INFO] Running com.fasterxml.jackson.core.TestExceptions
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 s -- in com.fasterxml.jackson.core.TestExceptions
+[INFO] Running com.fasterxml.jackson.core.VersionTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.fasterxml.jackson.core.VersionTest
+[INFO] Running com.fasterxml.jackson.core.util.ReadConstrainedTextBufferTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in com.fasterxml.jackson.core.util.ReadConstrainedTextBufferTest
+[INFO] Running com.fasterxml.jackson.core.io.schubfach.FloatToDecimalTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.401 s -- in com.fasterxml.jackson.core.io.schubfach.FloatToDecimalTest
+[INFO] Running com.fasterxml.jackson.core.io.schubfach.MathUtilsTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.io.schubfach.MathUtilsTest
+[INFO] Running com.fasterxml.jackson.core.io.schubfach.DoubleToDecimalTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.134 s -- in com.fasterxml.jackson.core.io.schubfach.DoubleToDecimalTest
+[INFO] Running com.fasterxml.jackson.core.io.doubleparser.ReaderTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in com.fasterxml.jackson.core.io.doubleparser.ReaderTest
+[INFO]
+[INFO] Results:
+[INFO]
+[ERROR] Failures:
+[ERROR]   JsonPointer1168Test.testAppendWithTail:18 expected:</a2/[]b/c> but was:</a2/[a1/]b/c>
+[ERROR]   JsonPointerTest.testAppendWithFinalSlash:196 expected:</Image/15/name/[/]extension> but was:</Image/15/name/[]extension>
+[INFO]
+[ERROR] Tests run: 1292, Failures: 2, Errors: 0, Skipped: 0
+[INFO]
+[IJ]-1-MojoFailed-[IJ]-source=LIFECYCLE-[IJ]-goal=test-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT-[IJ]-error=There are test failures.-[N]--[N]-Please refer to /Users/Anton.Spilnyy/work/ai/ml-eval/jackson-core/target/surefire-reports for the individual test results.-[N]-Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[IJ]-1-ProjectFailed-[IJ]-id=com.fasterxml.jackson.core:jackson-core:jar:2.16.1-SNAPSHOT
+[IJ]-1-SessionEnded-[IJ]-id=unknown
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  23.625 s
+[INFO] Finished at: 2025-05-20T11:48:27+02:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.1:test (default-test) on project jackson-core: There are test failures.
+[ERROR]
+[ERROR] Please refer to /Users/Anton.Spilnyy/work/ai/ml-eval/jackson-core/target/surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

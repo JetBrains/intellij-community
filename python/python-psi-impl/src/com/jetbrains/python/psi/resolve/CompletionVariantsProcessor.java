@@ -8,18 +8,27 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
+import com.jetbrains.python.codeInsight.completion.PyParameterizedTypeInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyCallableParameter;
@@ -27,16 +36,17 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class CompletionVariantsProcessor extends VariantsProcessor {
 
-  @NotNull
-  private final Map<String, LookupElement> myVariants = new HashMap<>();
+  private final @NotNull Map<String, LookupElement> myVariants = new HashMap<>();
 
   private final boolean mySuppressParentheses;
 
@@ -61,17 +71,19 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     mySuppressParentheses = suppressParentheses;
   }
 
-  @NotNull
-  private LookupElement setupItem(@NotNull LookupElementBuilder item) {
+  private @NotNull LookupElement setupItem(@NotNull LookupElementBuilder item) {
     final PsiElement element = item.getPsiElement();
     if (!myPlainNamesOnly && element != null) {
       final Project project = element.getProject();
       final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
 
-      if (!mySuppressParentheses &&
-          element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
-          !PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, context) &&
-          !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
+      if (myContext != null && PyParameterizedTypeInsertHandler.isCompletingParameterizedType(element, myContext, context)) {
+        item = item.withInsertHandler(PyParameterizedTypeInsertHandler.INSTANCE);
+      }
+      else if (!mySuppressParentheses &&
+               element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
+               !PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, context) &&
+               !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final List<PyCallableParameter> parameters = ((PyFunction)element).getParameters(context);
         final String params = StringUtil.join(parameters, PyCallableParameter::getName, ", ");
@@ -88,8 +100,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       if (element instanceof PyFunction) {
         cls = ((PyFunction)element).getContainingClass();
       }
-      else if (element instanceof PyTargetExpression) {
-        final PyTargetExpression expr = (PyTargetExpression)element;
+      else if (element instanceof PyTargetExpression expr) {
         if (expr.isQualified() || ScopeUtil.getScopeOwner(expr) instanceof PyClass) {
           cls = expr.getContainingClass();
         }
@@ -105,9 +116,10 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         source = cls.getName();
       }
       else if (myContext == null || !PyUtil.inSameFile(myContext, element)) {
-        final QualifiedName path = QualifiedNameFinder.findShortestImportableQName(PyPsiUtils.getFileSystemItem(element));
+        final PsiFileSystemItem fileSystemItem = PyPsiUtils.getFileSystemItem(element);
+        final QualifiedName path = QualifiedNameFinder.findShortestImportableQName(fileSystemItem);
         if (path != null) {
-          source = ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(path, null), path).toString();
+          source = ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(fileSystemItem, path, null), path).toString();
         }
       }
     }
@@ -151,8 +163,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     return variants.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public List<LookupElement> getResultList() {
+  public @NotNull List<LookupElement> getResultList() {
     return new ArrayList<>(myVariants.values());
   }
 
@@ -166,7 +177,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   protected void addImportedElement(@NotNull String name, @NotNull PyElement element) {
     Icon icon = element.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
-    if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
+    if (icon == null) icon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
     markAsProcessed(name);
     myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(icon)));
   }

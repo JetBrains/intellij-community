@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -33,7 +19,23 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -42,7 +44,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,8 +114,7 @@ public class JavaTestGenerator implements TestGenerator {
       }));
   }
 
-  @Nullable
-  private static PsiClass createTestClass(CreateTestDialog d) {
+  private static @Nullable PsiClass createTestClass(CreateTestDialog d) {
     final TestFramework testFrameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
     final FileTemplateDescriptor fileTemplateDescriptor = TestIntegrationUtils.MethodKind.TEST_CLASS.getFileTemplateDescriptor(testFrameworkDescriptor);
     final PsiDirectory targetDirectory = d.getTargetDirectory();
@@ -188,8 +188,7 @@ public class JavaTestGenerator implements TestGenerator {
     }
   }
 
-  @Nullable
-  private static PsiClass findClass(Project project, String fqName) {
+  private static @Nullable PsiClass findClass(Project project, String fqName) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
   }
@@ -223,8 +222,17 @@ public class JavaTestGenerator implements TestGenerator {
     final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor,
                                                                             targetClass, sourceClass, null, true, existingNames);
     JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
-    final String prefix = elementFactory != null ? elementFactory.createMethodFromText(template.getTemplateText(), targetClass).getName() : "";
-    existingNames.addAll(ContainerUtil.map(targetClass.getAllMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
+    String prefix;
+    try {
+      prefix = elementFactory != null ? elementFactory.createMethodFromText(template.getTemplateText(), targetClass).getName() : "";
+    }
+    catch (IncorrectOperationException e) {
+      prefix = "";
+    }
+
+    for (PsiMethod existingMethod : targetClass.getAllMethods()) {
+      existingNames.add(StringUtil.decapitalize(StringUtil.trimStart(existingMethod.getName(), prefix)));
+    }
 
     for (MemberInfo m : methods) {
       anchor = generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, sourceClass, editor, m.getMember().getName(), existingNames, anchor);

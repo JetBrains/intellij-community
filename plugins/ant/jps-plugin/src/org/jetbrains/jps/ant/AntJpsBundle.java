@@ -7,16 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.jps.api.JpsDynamicBundle;
 
-public final class AntJpsBundle extends JpsDynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.AntJpsBundle";
-  private static final AntJpsBundle INSTANCE = new AntJpsBundle();
+public final class AntJpsBundle {
+  private static final @NonNls String BUNDLE = "messages.AntJpsBundle";
+  private static final JpsDynamicBundle INSTANCE = new JpsDynamicBundle(AntJpsBundle.class, BUNDLE);
 
   private AntJpsBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 }

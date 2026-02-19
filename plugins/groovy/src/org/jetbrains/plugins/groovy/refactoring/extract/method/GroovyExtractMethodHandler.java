@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -12,7 +11,12 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -52,17 +56,15 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
-/**
- * @author ilyas
- */
 public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(GroovyExtractMethodHandler.class);
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, @Nullable DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final SelectionModel model = editor.getSelectionModel();
     if (model.hasSelection()) {
@@ -70,21 +72,21 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
     else {
       final List<GrExpression> expressions = GrIntroduceHandlerBase.collectExpressions(file, editor, editor.getCaretModel().getOffset(), true);
-      final Pass<GrExpression> callback = new Callback(project, editor, file);
+      final Consumer<GrExpression> callback = new Callback(project, editor, file);
       if (expressions.size() == 1) {
-        callback.pass(expressions.get(0));
+        callback.accept(expressions.get(0));
       }
       else if (expressions.isEmpty()) {
         model.selectLineAtCaret();
         invokeImpl(project, editor, file, model.getSelectionStart(), model.getSelectionEnd());
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions, callback, GrIntroduceHandlerBase.GR_EXPRESSION_RENDERER);
+        IntroduceTargetChooser.showChooser(editor, expressions, Pass.create(callback), GrIntroduceHandlerBase.GR_EXPRESSION_RENDERER);
       }
     }
   }
 
-  private final class Callback extends Pass<GrExpression> {
+  private final class Callback implements Consumer<GrExpression> {
     private final Project project;
     private final Editor editor;
     private final PsiFile file;
@@ -97,7 +99,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     @Override
-    public void pass(@NotNull final GrExpression selectedValue) {
+    public void accept(final @NotNull GrExpression selectedValue) {
       final TextRange range = selectedValue.getTextRange();
       invokeImpl(project, editor, file, range.getStartOffset(), range.getEndOffset());
     }
@@ -138,7 +140,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       }
 
       //skip 'print' and 'println'
-      private boolean skipResult(GroovyResolveResult result) {
+      private static boolean skipResult(GroovyResolveResult result) {
         PsiElement element = result.getElement();
         if (element instanceof PsiMethod) {
           String name = ((PsiMethod)element).getName();
@@ -164,7 +166,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     return !BaseRefactoringProcessor.processConflicts(info.getProject(), conflicts);
   }
 
-  private void performRefactoring(@NotNull final InitialInfo initialInfo, @Nullable final Editor editor) {
+  private void performRefactoring(final @NotNull InitialInfo initialInfo, final @Nullable Editor editor) {
     final PsiClass owner = PsiUtil.getContextClass(initialInfo.getContext());
     LOG.assertTrue(owner!=null);
 
@@ -198,8 +200,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
   }
 
-  @Nullable
-  protected ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
+  protected @Nullable ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
     GroovyExtractMethodDialog dialog = new GroovyExtractMethodDialog(initialInfo, owner);
     if (!dialog.showAndGet()) {
       return null;
@@ -214,8 +215,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     // does nothing
   }
 
-  @Nullable
-  private static PsiElement calculateAnchorToInsertBefore(PsiClass owner, PsiElement startElement) {
+  private static @Nullable PsiElement calculateAnchorToInsertBefore(PsiClass owner, PsiElement startElement) {
     while (startElement != null && !isEnclosingDefinition(owner, startElement)) {
       if (startElement.getParent() instanceof GroovyFile) {
         return startElement.getNextSibling();
@@ -230,8 +230,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   private static boolean isEnclosingDefinition(PsiClass owner, PsiElement startElement) {
-    if (owner instanceof GrTypeDefinition) {
-      GrTypeDefinition definition = (GrTypeDefinition) owner;
+    if (owner instanceof GrTypeDefinition definition) {
       return startElement.getParent() == definition.getBody();
     }
     return false;
@@ -251,10 +250,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         for (final GrStatement statement : statements) {
           statement.accept(new PsiRecursiveElementVisitor() {
             @Override
-            public void visitElement(@NotNull final PsiElement element) {
+            public void visitElement(final @NotNull PsiElement element) {
               super.visitElement(element);
-              if (element instanceof GrReferenceExpression) {
-                GrReferenceExpression expr = (GrReferenceExpression) element;
+              if (element instanceof GrReferenceExpression expr) {
                 if (!expr.isQualified() && oldName.equals(expr.getReferenceName())) {
                   result.add(expr);
                 }

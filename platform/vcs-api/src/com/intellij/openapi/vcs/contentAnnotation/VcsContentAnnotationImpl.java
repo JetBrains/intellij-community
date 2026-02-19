@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.contentAnnotation;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -25,7 +24,7 @@ public final class VcsContentAnnotationImpl implements VcsContentAnnotation {
   private static final Logger LOG = Logger.getInstance(VcsContentAnnotationImpl.class);
 
   public static VcsContentAnnotation getInstance(final Project project) {
-    return ServiceManager.getService(project, VcsContentAnnotation.class);
+    return project.getService(VcsContentAnnotation.class);
   }
 
   public VcsContentAnnotationImpl(Project project) {
@@ -34,14 +33,14 @@ public final class VcsContentAnnotationImpl implements VcsContentAnnotation {
     myContentAnnotationCache = project.getService(ContentAnnotationCache.class);
   }
 
-  @Nullable
   @Override
-  public VcsRevisionNumber fileRecentlyChanged(VirtualFile vf) {
+  public @Nullable VcsRevisionNumber fileRecentlyChanged(VirtualFile vf) {
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     final AbstractVcs vcs = vcsManager.getVcsFor(vf);
     if (vcs == null) return null;
     if (vcs.getDiffProvider() instanceof DiffMixin) {
       final VcsRevisionDescription description = ((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(vf);
+      if (description == null) return null;
       final Date date = description.getRevisionDate();
       return isRecent(date) ? description.getRevisionNumber() : null;
     }

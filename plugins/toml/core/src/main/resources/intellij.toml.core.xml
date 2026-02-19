@@ -1,0 +1,24 @@
+<idea-plugin visibility="public">
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="TOML"
+                  language="TOML"
+                  implementationClass="org.toml.lang.psi.TomlFileType"
+                  fieldName="INSTANCE"
+                  extensions="toml"
+                  fileNames="Cargo.lock;Cargo.toml.orig;Gopkg.lock;Pipfile;pdm.lock;poetry.lock;uv.lock"/>
+        <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
+        <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
+        <lang.commenter language="TOML" implementationClass="org.toml.ide.TomlCommenter"/>
+        <lang.braceMatcher language="TOML" implementationClass="org.toml.ide.TomlBraceMatcher"/>
+        <lang.quoteHandler language="TOML" implementationClass="org.toml.ide.TomlQuoteHandler"/>
+        <lang.elementManipulator forClass="org.toml.lang.psi.TomlLiteral" implementationClass="org.toml.lang.psi.TomlStringLiteralManipulator"/>
+        <lang.elementManipulator forClass="org.toml.lang.psi.TomlKeySegment" implementationClass="org.toml.lang.psi.TomlKeySegmentManipulator"/>
+
+        <!-- Formatting -->
+        <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
+        <langCodeStyleSettingsProvider implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
+
+        <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
+        <!--<editor.rd.localSupport filetype="TOML"/> IJPL-189393 -->
+    </extensions>
+</idea-plugin>

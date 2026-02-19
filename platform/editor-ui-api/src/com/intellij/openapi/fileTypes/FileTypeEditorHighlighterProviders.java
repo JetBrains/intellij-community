@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -6,23 +6,32 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPointPriorityListener;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.KeyedLazyInstance;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
 public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<EditorHighlighterProvider> {
+
+  @ApiStatus.Internal
   public static final ExtensionPointName<KeyedLazyInstance<EditorHighlighterProvider>> EP_NAME = ExtensionPointName.create("com.intellij.editorHighlighterProvider");
+
+  /**
+   * @deprecated use {@link #getInstance()} instead
+   */
+  @Deprecated
   public static final FileTypeEditorHighlighterProviders INSTANCE = new FileTypeEditorHighlighterProviders();
+
+  public static FileTypeEditorHighlighterProviders getInstance() {
+    return INSTANCE;
+  }
 
   private boolean myEPListenerAdded = false;
 
@@ -30,9 +39,8 @@ public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<
     super(EP_NAME);
   }
 
-  @NotNull
   @Override
-  protected List<EditorHighlighterProvider> buildExtensions(@NotNull String stringKey, @NotNull final FileType key) {
+  protected @NotNull List<EditorHighlighterProvider> buildExtensions(@NotNull String stringKey, final @NotNull FileType key) {
     List<EditorHighlighterProvider> fromEP = super.buildExtensions(stringKey, key);
     if (fromEP.isEmpty()) {
       checkAddEPListener();
@@ -46,7 +54,7 @@ public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<
             SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, virtualFile), colors);
         }
       };
-      return Collections.singletonList(defaultProvider);
+      return List.of(defaultProvider);
     }
     return fromEP;
   }
@@ -55,21 +63,23 @@ public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<
     if (!myEPListenerAdded) {
       myEPListenerAdded = true;
 
-      SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedFactoryEPBean>() {
-        @Override
-        public void extensionAdded(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          if (extension.key != null) {
-            invalidateCacheForExtension(extension.key);
-          }
-        }
+      SyntaxHighlighter.EP_NAME.addExtensionPointListener(new MyEPListener(), null);
+    }
+  }
 
-        @Override
-        public void extensionRemoved(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          if (extension.key != null) {
-            invalidateCacheForExtension(extension.key);
-          }
-        }
-      }, null);
+  private class MyEPListener implements ExtensionPointListener<KeyedFactoryEPBean>, ExtensionPointPriorityListener {
+    @Override
+    public void extensionAdded(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+      if (extension.key != null) {
+        invalidateCacheForExtension(extension.key);
+      }
+    }
+
+    @Override
+    public void extensionRemoved(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+      if (extension.key != null) {
+        invalidateCacheForExtension(extension.key);
+      }
     }
   }
 }

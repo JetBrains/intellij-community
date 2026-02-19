@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -14,10 +15,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcsUtil.VcsUtil
-import org.junit.Assume
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileSystemException
@@ -42,14 +45,12 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private lateinit var vcsCVS: MockAbstractVcs
 
   override fun setUpProject() {
-    TestLoggerFactory.enableDebugLogging(testRootDisposable,
-                                         "#" + NewMappings::class.java.name,
-                                         "#" + VcsInitialization::class.java.name)
+    TestLoggerFactory.enableDebugLogging(testRootDisposable, NewMappings::class.java, VcsInitialization::class.java)
 
     val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
     projectRoot = createTestProjectStructure(null, root, false, tempDir)
 
-    myProject = PlatformTestUtil.loadAndOpenProject(projectRoot.toNioPath().resolve("directoryMappings.ipr"))
+    myProject = PlatformTestUtil.loadAndOpenProject(projectRoot.toNioPath().resolve("directoryMappings.ipr"), testRootDisposable)
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)
@@ -61,7 +62,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     vcses.registerManually(vcsCVS)
 
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
-    mappings = NewMappings(myProject, vcsManager)
+    mappings = NewMappings(myProject, vcsManager, (myProject as ComponentManagerEx).getCoroutineScope())
     Disposer.register(testRootDisposable, mappings)
     mappings.activateActiveVcses()
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -259,7 +260,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingCaseSensitive() {
-    Assume.assumeTrue(SystemInfo.isFileSystemCaseSensitive)
+    IoTestUtil.assumeCaseSensitiveFS()
 
     val roots = listOf(
       "$rootPath/parent/Child",
@@ -292,7 +293,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingCaseInsensitive() {
-    Assume.assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+    IoTestUtil.assumeCaseInsensitiveFS()
 
     val roots = listOf(
       "$rootPath/parent/Child",
@@ -325,6 +326,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     assertMappedRoot("$rootPath/parent/child/dir/subChild/subSubChild/file", "$rootPath/parent/child/dir/subChild/subSubChild")
   }
 
+  @PerformanceUnitTest
   fun testPerformanceFewRootsFilePaths() {
     val roots = listOf(
       "$rootPath/parent/module1",
@@ -340,15 +342,16 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/non_existent/some/path"
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings few roots FilePaths", 1000) {
+    Benchmark.newBenchmark("NewMappings few roots FilePaths") {
       for (i in 0..20000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceManyRootsFilePaths() {
     val roots = (0..1000).map { "$rootPath/parent/module$it" } +
                 "$rootPath/parent"
@@ -363,15 +366,16 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/non_existent/some/path"
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings many roots FilePaths", 1000) {
+    Benchmark.newBenchmark("NewMappings many roots FilePaths") {
       for (i in 0..20000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceNestedRootsFilePaths() {
     var path = "$rootPath/parent"
     val roots = mutableListOf<String>()
@@ -390,15 +394,16 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(220)
     ).map { it.filePath }
 
-    PlatformTestUtil.startPerformanceTest("NewMappings nested roots FilePaths", 1000) {
+    Benchmark.newBenchmark("NewMappings nested roots FilePaths") {
       for (i in 0..2000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceFewRootsVirtualFiles() {
     val roots = listOf(
       "$rootPath/parent/module1",
@@ -414,15 +419,16 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/non_existent/some/path"
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings few roots VirtualFiles", 500) {
+    Benchmark.newBenchmark("NewMappings few roots VirtualFiles") {
       for (i in 0..60000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceManyRootsVirtualFiles() {
     val roots = (0..1000).map { "$rootPath/parent/module$it" } +
                 "$rootPath/parent"
@@ -437,15 +443,16 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/non_existent/some/path"
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings many roots VirtualFiles", 500) {
+    Benchmark.newBenchmark("NewMappings many roots VirtualFiles") {
       for (i in 0..80000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
+  @PerformanceUnitTest
   fun testPerformanceNestedRootsVirtualFiles() {
     var path = "$rootPath/parent"
     val roots = mutableListOf<String>()
@@ -464,13 +471,58 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(200)
     ))
 
-    PlatformTestUtil.startPerformanceTest("NewMappings nested roots VirtualFiles", 500) {
+    Benchmark.newBenchmark("NewMappings nested roots VirtualFiles") {
       for (i in 0..15000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
         }
       }
-    }.assertTiming()
+    }.start()
+  }
+
+  fun testRootMappingAppliedInSync1() {
+    ThreadingAssertions.assertEventDispatchThread() // updateVcsMappings is sync from BGT
+
+    val children = listOf(
+      "$rootPath/parent/child1",
+      "$rootPath\\parent\\middle\\child2",
+      "$rootPath/parent/middle/child3",
+      "$rootPath/parent/child/inner"
+    )
+    val files = createDirectories(children)
+
+    mappings.freezeMappedRootsUpdate(testRootDisposable)
+    mappings.setMapping("$rootPath/parent", CVS)
+    mappings.setMapping("$rootPath/parent/child", MOCK)
+
+    val awaitedVcsNames = listOf(CVS, CVS, CVS, MOCK)
+    for (i in children.indices) {
+      val mapping = getMappingFor(files[i])
+      assertEquals(awaitedVcsNames[i], mapping?.vcs)
+    }
+  }
+
+  fun testRootMappingAppliedInSync2() {
+    ThreadingAssertions.assertEventDispatchThread() // updateVcsMappings is sync from BGT
+
+    val children = listOf(
+      "$rootPath/parent/child1",
+      "$rootPath\\parent\\middle\\child2",
+      "$rootPath/parent/middle/child3",
+      "$rootPath/parent/child/inner"
+    )
+    val files = createDirectories(children)
+
+    mappings.freezeMappedRootsUpdate(testRootDisposable)
+    mappings.setMapping("", CVS)
+    mappings.setMapping("$rootPath/parent", CVS)
+    mappings.setMapping("$rootPath/parent/child", MOCK)
+
+    val awaitedVcsNames = listOf(CVS, CVS, CVS, MOCK)
+    for (i in children.indices) {
+      val mapping = getMappingFor(files[i])
+      assertEquals(awaitedVcsNames[i], mapping?.vcs)
+    }
   }
 
   private fun createDirectories(paths: List<String>): List<VirtualFile> {

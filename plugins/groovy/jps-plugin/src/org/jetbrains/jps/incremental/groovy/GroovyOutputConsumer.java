@@ -27,9 +27,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author peter
- */
 interface GroovyOutputConsumer {
   void registerCompiledClass(BuildTarget<?> target, File srcFile, File outputFile, byte[] bytes) throws IOException;
 }

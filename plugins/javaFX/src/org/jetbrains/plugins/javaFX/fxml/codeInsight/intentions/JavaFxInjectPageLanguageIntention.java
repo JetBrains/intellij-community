@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -31,9 +31,13 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
-public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
+public final class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAction {
   public static final Logger LOG = Logger.getInstance(JavaFxInjectPageLanguageIntention.class);
 
   public static Set<String> getAvailableLanguages(Project project) {
@@ -66,7 +70,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlFile containingFile = (XmlFile)element.getContainingFile();
     final Set<String> availableLanguages = getAvailableLanguages(project);
@@ -88,7 +92,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
   public void registerPageLanguage(final Project project, final XmlFile containingFile, final String languageName) {
     WriteCommandAction.writeCommandAction(project).withName(getFamilyName()).run(() -> {
       final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-      final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", StdFileTypes.XML,
+      final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", XmlFileType.INSTANCE,
                                                                     "<?language " + languageName + "?>");
       final XmlDocument document = dummyFile.getDocument();
       if (document != null) {
@@ -100,7 +104,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
           final XmlProlog xmlProlog = xmlDocument.getProlog();
           if (xmlProlog != null) {
             final PsiElement element = xmlProlog.addBefore(instructions.iterator().next(), xmlProlog.getFirstChild());
-            xmlProlog.addAfter(PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n\n"), element);
+            xmlProlog.addAfter(PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n\n"), element);
           }
         }
       }
@@ -116,9 +120,8 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
     return element.isValid();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaFXBundle.message("javafx.inject.page.language.intention.family.name");
   }
 

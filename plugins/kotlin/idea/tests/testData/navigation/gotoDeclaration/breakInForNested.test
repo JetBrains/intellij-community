@@ -1,0 +1,22 @@
+// FILE: before.kt
+// IGNORE_K1
+fun foo(a: List<Int>?) {
+    for(i in 1..10) {
+        run {
+            for (j in a ?: <caret>break) {
+                println("inner")
+            }
+        }
+    }
+}
+// FILE: after.kt
+// IGNORE_K1
+fun foo(a: List<Int>?) {
+    for(i in 1..10) {
+        run {
+            for (j in a ?: break) {
+                println("inner")
+            }
+        }
+    }<caret>
+}

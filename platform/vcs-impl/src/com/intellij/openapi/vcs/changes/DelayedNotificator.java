@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.local.ChangeListCommand;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -14,16 +14,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class DelayedNotificator implements ChangeListListener {
+@ApiStatus.Internal
+public final class DelayedNotificator implements ChangeListListener {
   private static final Logger LOG = Logger.getInstance(DelayedNotificator.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final ChangeListManagerImpl myManager;
-  @NotNull private final ChangeListManagerImpl.Scheduler myScheduler;
+  private final @NotNull Project myProject;
+  private final @NotNull ChangeListManagerImpl myManager;
+  private final @NotNull ChangeListScheduler myScheduler;
 
   public DelayedNotificator(@NotNull Project project,
                             @NotNull ChangeListManagerImpl manager,
-                            @NotNull ChangeListManagerImpl.Scheduler scheduler) {
+                            @NotNull ChangeListScheduler scheduler) {
     myProject = project;
     myManager = manager;
     myScheduler = scheduler;
@@ -49,12 +50,12 @@ public class DelayedNotificator implements ChangeListListener {
   }
 
   @Override
-  public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
+  public void changesRemoved(final Collection<? extends Change> changes, final ChangeList fromList) {
     myScheduler.submit(() -> getMulticaster().changesRemoved(changes, fromList));
   }
 
   @Override
-  public void changesAdded(final Collection<Change> changes, final ChangeList toList) {
+  public void changesAdded(final Collection<? extends Change> changes, final ChangeList toList) {
     myScheduler.submit(() -> getMulticaster().changesAdded(changes, toList));
   }
 
@@ -84,7 +85,7 @@ public class DelayedNotificator implements ChangeListListener {
   }
 
   @Override
-  public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+  public void changesMoved(final Collection<? extends Change> changes, final ChangeList fromList, final ChangeList toList) {
     myScheduler.submit(() -> getMulticaster().changesMoved(changes, fromList, toList));
   }
 
@@ -100,8 +101,13 @@ public class DelayedNotificator implements ChangeListListener {
 
 
   @Override
-  public void unchangedFileStatusChanged() {
-    myScheduler.submit(() -> getMulticaster().unchangedFileStatusChanged());
+  public void changedFileStatusChanged(boolean upToDate) {
+    myScheduler.submit(() -> getMulticaster().changedFileStatusChanged(upToDate));
+  }
+
+  @Override
+  public void unchangedFileStatusChanged(boolean upToDate) {
+    myScheduler.submit(() -> getMulticaster().unchangedFileStatusChanged(upToDate));
   }
 
   @Override
@@ -145,8 +151,7 @@ public class DelayedNotificator implements ChangeListListener {
     });
   }
 
-  @NotNull
-  private ChangeListListener getMulticaster() {
-    return BackgroundTaskUtil.syncPublisher(myProject, ChangeListListener.TOPIC);
+  private @NotNull ChangeListListener getMulticaster() {
+    return myProject.getMessageBus().syncPublisher(ChangeListListener.TOPIC);
   }
 }

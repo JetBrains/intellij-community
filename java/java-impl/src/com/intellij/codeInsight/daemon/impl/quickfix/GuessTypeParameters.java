@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -8,7 +8,23 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypeVisitor;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,12 +36,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.codeInsight.ExpectedTypeInfo.*;
+import static com.intellij.codeInsight.ExpectedTypeInfo.TYPE_OR_SUBTYPE;
+import static com.intellij.codeInsight.ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
+import static com.intellij.codeInsight.ExpectedTypeInfo.TYPE_STRICTLY;
+import static com.intellij.codeInsight.ExpectedTypeInfo.Type;
 import static com.intellij.util.containers.ContainerUtil.map;
 
-/**
- * @author ven
-  */
 public class GuessTypeParameters {
 
   private static final Logger LOG = Logger.getInstance(GuessTypeParameters.class);
@@ -47,13 +63,14 @@ public class GuessTypeParameters {
     mySubstitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
   }
 
-  @NotNull
-  public PsiTypeElement setupTypeElement(@NotNull PsiTypeElement typeElement,
-                                         ExpectedTypeInfo @NotNull [] infos,
-                                         @Nullable PsiElement context,
-                                         @NotNull PsiClass targetClass) {
+  public @NotNull PsiTypeElement setupTypeElement(@NotNull PsiTypeElement typeElement,
+                                                  ExpectedTypeInfo @NotNull [] infos,
+                                                  @Nullable PsiElement context,
+                                                  @NotNull PsiClass targetClass) {
     LOG.assertTrue(typeElement.isValid());
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    if (typeElement.isPhysical()) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    }
 
     GlobalSearchScope scope = typeElement.getResolveScope();
 
@@ -142,8 +159,7 @@ public class GuessTypeParameters {
     return substitutor;
   }
 
-  @Nullable
-  private static PsiClassType getComponentType (PsiType type) {
+  private static @Nullable PsiClassType getComponentType (PsiType type) {
     type = type.getDeepComponentType();
     if (type instanceof PsiClassType) return (PsiClassType)type;
 
@@ -214,7 +230,7 @@ public class GuessTypeParameters {
 
     @Override
     public PsiType visitType(@NotNull PsiType type) {
-      if (type.equals(PsiType.NULL)) return PsiType.getJavaLangObject(myManager, myResolveScope);
+      if (type.equals(PsiTypes.nullType())) return PsiType.getJavaLangObject(myManager, myResolveScope);
       return type;
     }
 
@@ -227,8 +243,7 @@ public class GuessTypeParameters {
   /**
    * @return list of type parameters which match expected type after substitution
    */
-  @NotNull
-  private static List<PsiTypeParameter> matchingTypeParameters(@NotNull PsiSubstitutor substitutor,
+  private static @NotNull List<PsiTypeParameter> matchingTypeParameters(@NotNull PsiSubstitutor substitutor,
                                                                @NotNull PsiType expectedType,
                                                                @Type int kind) {
     final List<PsiTypeParameter> result = new SmartList<>();
@@ -242,22 +257,15 @@ public class GuessTypeParameters {
   }
 
   private static boolean matches(@NotNull PsiType type, @NotNull PsiType expectedType, @Type int kind) {
-    switch (kind) {
-      case TYPE_STRICTLY:
-        return type.equals(expectedType);
-      case TYPE_OR_SUBTYPE:
-        return expectedType.isAssignableFrom(type);
-      case TYPE_OR_SUPERTYPE:
-        return type.isAssignableFrom(expectedType);
-      default:
-        return false;
-    }
+    return switch (kind) {
+      case TYPE_STRICTLY -> type.equals(expectedType);
+      case TYPE_OR_SUBTYPE -> expectedType.isAssignableFrom(type);
+      case TYPE_OR_SUPERTYPE -> type.isAssignableFrom(expectedType);
+      default -> false;
+    };
   }
 
   private static boolean hasNullSubstitutions(@NotNull PsiSubstitutor substitutor) {
-    for (PsiType type : substitutor.getSubstitutionMap().values()) {
-      if (type == null) return true;
-    }
-    return false;
+    return substitutor.getSubstitutionMap().containsValue(null);
   }
 }

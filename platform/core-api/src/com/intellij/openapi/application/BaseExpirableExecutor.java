@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -10,17 +9,19 @@ import org.jetbrains.concurrency.CancellablePromise;
 import java.util.concurrent.Callable;
 
 /**
- * DO NOT USE DIRECTLY
+ * DO NOT USE
+ *
  * @see ExpirableExecutor
  * @see AppUIExecutor
+ * @deprecated use coroutines and their cancellation mechanism instead
  */
-@ApiStatus.Internal
+@Deprecated
 public interface BaseExpirableExecutor<E extends BaseExpirableExecutor<E>> {
   /**
    * @return an executor that no longer invokes the given runnable after the supplied Disposable is disposed
    */
   @NotNull
-  @Contract(pure=true)
+  @Contract(pure = true)
   E expireWith(@NotNull Disposable parentDisposable);
 
   /**

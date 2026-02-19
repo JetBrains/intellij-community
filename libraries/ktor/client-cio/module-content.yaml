@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.ktor.client.cio.jar
+  modules:
+  - name: intellij.libraries.ktor.client.cio
+    libraries:
+      ktor-client-cio-internal:
+      - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3/ktor-client-cio-jvm-3.jar

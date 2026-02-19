@@ -1,15 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.array;
 
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.*;
-import java.awt.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -42,9 +52,8 @@ public class JBTableWithRowHeaders extends AbstractDataViewTable {
     myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, myRowHeaderTable.getTableHeader()); //NON-NLS
   }
 
-  @NotNull
   @Override
-  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+  public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component component = super.prepareRenderer(renderer, row, column);
     JTableHeader header = getTableHeader();
     TableColumn resizingColumn = header.getResizingColumn();
@@ -112,9 +121,8 @@ public class JBTableWithRowHeaders extends AbstractDataViewTable {
       setPreferredScrollableViewportSize(getPreferredSize());
     }
 
-    @NotNull
     @Override
-    public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+    public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
       Component component = super.prepareRenderer(renderer, row, column);
       if (myAutoResize) {
         getPreferredSize().width = updateColumnWidth(column, component.getPreferredSize().width, this);
@@ -167,7 +175,7 @@ public class JBTableWithRowHeaders extends AbstractDataViewTable {
     }
 
 
-    private class RowNumberRenderer extends DefaultTableCellRenderer {
+    private static class RowNumberRenderer extends DefaultTableCellRenderer {
       RowNumberRenderer() {
         setHorizontalAlignment(SwingConstants.CENTER);
       }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,7 +20,8 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask> {
+@ApiStatus.Internal
+public final class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask> {
   private final Key<UnknownTask> myId;
 
   public UnknownBeforeRunTaskProvider(String mirrorProviderName) {
@@ -38,7 +40,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
 
   @Override
   public String getDescription(UnknownTask task) {
-    return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString();
+    return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString(); //NON-NLS
   }
 
   @Override
@@ -72,16 +74,17 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     public void writeExternal(@NotNull Element element) {
       if (myConfig != null) {
         element.removeContent();
-        final List attributes = myConfig.getAttributes();
-        for (Object attribute : attributes) {
-         element.setAttribute(((Attribute)attribute).clone());
+        final List<Attribute> attributes = myConfig.getAttributes();
+        for (Attribute attribute : attributes) {
+         element.setAttribute(attribute.clone());
         }
-        for (Object child : myConfig.getChildren()) {
-          element.addContent(((Element)child).clone());
+        for (Element child : myConfig.getChildren()) {
+          element.addContent(child.clone());
         }
       }
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -94,6 +97,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result = super.hashCode();
       result = 31 * result + JDOMUtil.hashCode(myConfig, false);

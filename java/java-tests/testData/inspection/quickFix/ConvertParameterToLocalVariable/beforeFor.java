@@ -1,4 +1,4 @@
-// "Convert to local" "true"
+// "Convert to local variable" "true"
 class Temp {
   public Temp(int <caret>p) {
     for (int i = 0; i < 10; i++) {

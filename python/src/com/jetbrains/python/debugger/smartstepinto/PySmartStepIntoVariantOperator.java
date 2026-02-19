@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.smartstepinto;
 
 import com.google.common.collect.ImmutableMap;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class PySmartStepIntoVariantOperator extends PySmartStepIntoVariant {
-  @NonNls private static final Map<String, String> UNARY_OPERATOR_MAPPING = ImmutableMap.of(
+  private static final @NonNls Map<String, String> UNARY_OPERATOR_MAPPING = ImmutableMap.of(
     "__sub__", "__neg__",
     "__add__", "__pos__",
     "__invert__", "__invert__"
@@ -26,9 +26,8 @@ public class PySmartStepIntoVariantOperator extends PySmartStepIntoVariant {
     super(element, callOrder, context);
   }
 
-  @Nullable
   @Override
-  public String getFunctionName() {
+  public @Nullable String getFunctionName() {
     if (myElement instanceof LeafPsiElement) {
       return ((PyElementType)((LeafPsiElement)myElement).getElementType()).getSpecialMethodName();
     }
@@ -38,23 +37,20 @@ public class PySmartStepIntoVariantOperator extends PySmartStepIntoVariant {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     String text =  myElement.getText();
     return myElement instanceof PyPrefixExpression ? text.substring(0, 1) : text;
   }
 
-  @NotNull
   @Override
-  public TextRange getHighlightRange() {
+  public @NotNull TextRange getHighlightRange() {
     TextRange textRange = myElement.getTextRange();
     return myElement instanceof PyPrefixExpression ?
            new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + 1) : textRange;
   }
 
-  @Nullable
-  public static String getUnaryOperatorSpecialMethodName(@NotNull PyElementType operator) {
+  public static @Nullable String getUnaryOperatorSpecialMethodName(@NotNull PyElementType operator) {
     return UNARY_OPERATOR_MAPPING.getOrDefault(operator.getSpecialMethodName(), null);
   }
 }

@@ -1,10 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJShellHolderMethod;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -48,27 +70,23 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return result == null? PsiElement.EMPTY_ARRAY : result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @Nullable
   @Override
-  public PsiType getReturnType() {
-    return PsiType.VOID;
+  public @Nullable PsiType getReturnType() {
+    return PsiTypes.voidType();
   }
 
-  @Nullable
   @Override
-  public PsiTypeElement getReturnTypeElement() {
+  public @Nullable PsiTypeElement getReturnTypeElement() {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiParameterList getParameterList() {
+  public @NotNull PsiParameterList getParameterList() {
     if (myParameterList != null) {
       return myParameterList;
     }
@@ -83,16 +101,15 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     }
   }
 
-  @NotNull
   @Override
-  public PsiReferenceList getThrowsList() {
+  public @NotNull PsiReferenceList getThrowsList() {
     if (myThrowsList != null) {
       return myThrowsList;
     }
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     try {
       myThrowsList = elementFactory.createReferenceList(new PsiJavaCodeReferenceElement[]{
-        elementFactory.createFQClassNameReferenceElement("java.lang.Throwable", getResolveScope())
+        elementFactory.createFQClassNameReferenceElement(CommonClassNames.JAVA_LANG_THROWABLE, getResolveScope())
       });
       return myThrowsList;
     }
@@ -102,10 +119,9 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     }
   }
 
-  @Nullable
   @Override
-  public PsiCodeBlock getBody() {
-    final PsiElement child = getFirstChild();
+  public @Nullable PsiCodeBlock getBody() {
+    PsiElement child = getFirstChild();
     return child instanceof PsiCodeBlock? (PsiCodeBlock)child : null;
   }
 
@@ -119,15 +135,13 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return false;
   }
 
-  @NotNull
   @Override
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+  public @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, PsiSubstitutor.EMPTY);
   }
 
-  @Nullable
   @Override
-  public PsiIdentifier getNameIdentifier() {
+  public @Nullable PsiIdentifier getNameIdentifier() {
     return null;
   }
 
@@ -146,15 +160,13 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
+  public @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public PsiMethod findDeepestSuperMethod() {
+  public @Nullable PsiMethod findDeepestSuperMethod() {
     return null;
   }
 
@@ -163,9 +175,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     return new LightModifierList(getManager());
   }
 
@@ -174,9 +185,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     throw new IncorrectOperationException("Can't change name of JShell holder method");
   }
 
-  @NotNull
   @Override
-  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+  public @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
@@ -185,9 +195,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiDocComment getDocComment() {
+  public @Nullable PsiDocComment getDocComment() {
     return null;
   }
 
@@ -196,9 +205,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiTypeParameterList getTypeParameterList() {
+  public @Nullable PsiTypeParameterList getTypeParameterList() {
     return null;
   }
 
@@ -207,9 +215,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     return (PsiClass)getParent();
   }
 

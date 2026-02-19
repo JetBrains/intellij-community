@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.Block;
@@ -26,9 +26,8 @@ public class ClosureBodyBlock extends GroovyBlock {
     super(node, indent, wrap, context);
   }
 
-  @NotNull
   @Override
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     init();
     return myTextRange;
   }
@@ -48,16 +47,14 @@ public class ClosureBodyBlock extends GroovyBlock {
     }
   }
 
-  @NotNull
   @Override
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     init();
     return mySubBlocks;
   }
 
-  @NotNull
   @Override
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     return new ChildAttributes(Indent.getNormalIndent(), null);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -27,10 +27,10 @@ import java.util.List;
 /**
  * GlobalMatchingVisitor does the walking of the pattern tree, and invokes the language specific MatchingVisitor on elements.
  * It also stores the current code element to match. MatchingVisitor visits pattern elements, not code elements.
- * A language specific matching visitor can retrieve the current code element from the GlobalMatchingVisitor by calling
- * {@link #getElement()} from inside the visit methods.
+ * A language-specific matching visitor can retrieve the current code element from the GlobalMatchingVisitor by calling
+ * {@link #getElement(Class)} or {@link #getElement()} from inside the visit methods.
  */
-public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
+public final class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private static final Logger LOG = Logger.getInstance(GlobalMatchingVisitor.class);
   public static final Key<List<? extends PsiElement>> UNMATCHED_ELEMENTS_KEY = Key.create("UnmatchedElements");
 
@@ -40,7 +40,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private PsiElement myElement;
 
   /**
-   * The result of matching in the language specific visitor
+   * The result of matching in the language-specific visitor
    */
   private boolean myResult;
 
@@ -53,17 +53,32 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return myElement;
   }
 
+  /**
+   * @return the current element cast to the specified type, null if cast was unsuccessful.
+   * Also sets result to false if the current element can't be cast.
+   */
+  public <T extends PsiElement> T getElement(@NotNull Class<T> aClass) {
+    return setResult(aClass.isInstance(myElement)) ? aClass.cast(myElement) : null;
+  }
+
+  /**
+   * @return the current result.
+   */
   public boolean getResult() {
     return myResult;
   }
 
+  /**
+   * Set the current result to the specified value.
+   * @param result  the new result value
+   * @return the current value of a result, i.e., the value just set. To allow a call to this method used as an if condition.
+   */
   @Contract("true->true;false->false")
   public boolean setResult(boolean result) {
-    return this.myResult = result;
+    return myResult = result;
   }
 
-  @NotNull
-  public MatchContext getMatchContext() {
+  public @NotNull MatchContext getMatchContext() {
     return matchContext;
   }
 
@@ -83,13 +98,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
            : handler.validate(matchContext, 0);
   }
 
-  @NotNull
   @Override
-  protected NodeFilter getNodeFilter() {
+  protected @NotNull NodeFilter getNodeFilter() {
     return LexicalNodesFilter.getInstance();
   }
 
-  public final boolean handleTypedElement(PsiElement typedElement, PsiElement match) {
+  public boolean handleTypedElement(PsiElement typedElement, PsiElement match) {
     final MatchingHandler initialHandler = matchContext.getPattern().getHandler(typedElement);
     MatchingHandler handler = initialHandler;
     if (handler instanceof DelegatingHandler) {
@@ -107,7 +121,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   /**
-   * Identifies the match between given element of program tree and pattern element
+   * Identifies the match between given element of a program tree and pattern element
    *
    * @param patternElement the pattern element
    * @param matchElement the match element from the code.
@@ -118,7 +132,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     ProgressManager.checkCanceled();
     if (patternElement == matchElement) return true;
     if (patternElement == null) {
-      // absence of pattern element is match
+      // absence of a pattern element is match
       return true;
     }
     if (matchElement == null) {
@@ -146,8 +160,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return myResult;
   }
 
-  @Nullable
-  private PsiElementVisitor getVisitorForElement(PsiElement element) {
+  private @Nullable PsiElementVisitor getVisitorForElement(PsiElement element) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     if (profile == null) {
       LOG.warn("No StructuralSearchProfile found for language " + element.getLanguage().getID());
@@ -248,7 +261,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
         setResult(handler.handle(matchNode, matchContext));
 
         final MatchResultImpl nestedResult = handler.getNestedResult();
-        if (nestedResult != null) { // some constraint prevent from adding
+        if (nestedResult != null) { // some constraint prevents from adding
           copyResults(nestedResult);
           handler.setNestedResult(null);
         }
@@ -259,8 +272,10 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     }
   }
 
-  private void copyResults(MatchResult ourResult) {
-    final MatchResultImpl result = matchContext.getResult();
-    for (MatchResult son : ourResult.getChildren()) result.addChild(son);
+  private void copyResults(MatchResult source) {
+    MatchResultImpl result = matchContext.getResult();
+    for (MatchResult child : source.getChildren()) {
+      result.addChild(child);
+    }
   }
 }

@@ -1,0 +1,10 @@
+// "Convert expression to 'Int'" "true"
+// WITH_STDLIB
+fun foo() {
+    bar("1".toLong().toInt()<caret>)
+}
+
+fun bar(l: Int) {
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

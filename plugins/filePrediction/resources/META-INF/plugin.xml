@@ -5,7 +5,14 @@
   <resource-bundle>messages.FilePredictionBundle</resource-bundle>
 
   <description><![CDATA[Predicts next file which will be open in IDE to start long running analysis and pre-load caches.]]></description>
-
+  <dependencies>
+    <module name="intellij.platform.ml.impl"/>
+  </dependencies>
+  <!--suppress PluginXmlValidity -->
+  <content namespace="jetbrains">
+    <!-- The implicit main module of the plugin depends on internal modules (intellij.platform.ml.impl), so it's required to set the namespace for it
+         todo: extract elements and dependencies to an explicit content module (see IJPL-212351) -->
+  </content>
   <depends optional="true" config-file="file-prediction-java.xml">com.intellij.java</depends>
   <depends optional="true" config-file="file-prediction-vcs.xml">Git4Idea</depends>
 
@@ -20,9 +27,9 @@
     <notificationGroup id="NextFilePrediction" displayType="BALLOON" bundle="messages.FilePredictionBundle" key="file.prediction.notification.group"/>
     <registryKey key="filePrediction.calculate.features" defaultValue="true" description="Record opened files features to predict which file will be opened next and pre-load caches."/>
     <registryKey key="filePrediction.calculate.candidates.percent" defaultValue="1.0" description="Defines percentage of opened files for which next candidates will be calculated."/>
-    <registryKey key="filePrediction.action.use.all.candidates" defaultValue="false" description="If true, 'Show Next File Candidates' action will use all available providers."/>
     <registryKey key="filePrediction.action.calculate.candidates" defaultValue="50" description="Number of candidates used to predict next file in 'Show Next File Candidates' action."/>
     <registryKey key="filePrediction.action.show.candidates" defaultValue="10" description="Number of next file candidates to show in 'Show Next File Candidates' action."/>
+    <registryKey key="filePrediction.highlighting.cache.enabled" defaultValue="true" description="Enables highlighting cache for predicted next open files."/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.filePrediction.logger.FileNavigationLogger"/>
     <statistics.validation.customValidationRule implementation="com.intellij.filePrediction.logger.FilePredictionFeaturesValidator"/>
@@ -39,9 +46,6 @@
 
     <filePrediction.ml.model implementation="com.intellij.filePrediction.predictor.model.FilePredictionMLModelProvider"/>
 
-    <projectService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
-    <projectService serviceImplementation="com.intellij.filePrediction.features.history.FilePredictionHistory"/>
-    <projectService serviceImplementation="com.intellij.filePrediction.FilePredictionSessionHistory"/>
   </extensions>
 
   <projectListeners>
@@ -49,7 +53,7 @@
   </projectListeners>
 
   <applicationListeners>
-    <listener class="com.intellij.filePrediction.features.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    <listener class="com.intellij.filePrediction.features.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectCloseListener"/>
   </applicationListeners>
 
   <actions>

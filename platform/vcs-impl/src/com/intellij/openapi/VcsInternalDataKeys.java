@@ -3,7 +3,9 @@ package com.intellij.openapi;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.vcs.history.FileHistoryRefresherI;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public interface VcsInternalDataKeys {
   DataKey<FileHistoryRefresherI> FILE_HISTORY_REFRESHER = DataKey.create("FILE_HISTORY_REFRESHER");
 }

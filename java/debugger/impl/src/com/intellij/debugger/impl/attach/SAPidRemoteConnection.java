@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -33,15 +33,14 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
       Class<?> connectorClass = Class.forName("sun.jvm.hotspot.jdi.SAPIDAttachingConnector",
                                               true,
                                               new JBSAJDIClassLoader(getBaseSAJDIClassLoader(saJarPath), saJarPath));
-      return (AttachingConnector)connectorClass.newInstance();
+      return (AttachingConnector)connectorClass.getDeclaredConstructor().newInstance();
     }
     catch (Exception e) {
       throw new ExecutionException(JavaDebuggerBundle.message("error.unable.to.create.sapidattachingconnector"), e);
     }
   }
 
-  @NotNull
-  private static synchronized ClassLoader getBaseSAJDIClassLoader(Path fallback) {
+  private static synchronized @NotNull ClassLoader getBaseSAJDIClassLoader(Path fallback) {
     if (BASE_SA_JDI_CLASS_LOADER == null) {
       Path saJdiJar = Paths.get(SystemProperties.getJavaHome(), "lib/sa-jdi.jar");
       if (!Files.exists(saJdiJar)) {
@@ -83,9 +82,8 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
       return c;
     }
 
-    @Nullable
     @Override
-    public URL getResource(String name) {
+    public @Nullable URL getResource(String name) {
       if ("sa.properties".equals(name)) {
         URL resource = findResource(name);
         if (resource != null) {

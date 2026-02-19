@@ -1,0 +1,16 @@
+// FIR_IDENTICAL
+interface A {
+    var Int.foo : Double
+}
+
+class B : A {
+    override var Int.foo: Double
+        get() = <selection><caret>TODO("Not yet implemented")</selection>
+        set(value) {}
+}
+
+// MEMBER_K2: "Int.foo: Double"
+// MEMBER_K1: "foo: Double"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

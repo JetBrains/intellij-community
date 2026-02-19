@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.associations.impl;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -29,7 +30,12 @@ class ConfigureAssociationsAction extends AnAction {
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void actionPerformed(final @NotNull AnActionEvent e) {
         final Project project = e.getProject();
         if (project == null) return;
 

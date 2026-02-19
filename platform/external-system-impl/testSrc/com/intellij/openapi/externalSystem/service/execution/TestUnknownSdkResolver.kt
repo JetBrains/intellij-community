@@ -51,14 +51,14 @@ object TestUnknownSdkResolver : UnknownSdkResolver {
     val homePath = sdk.homePath ?: return null
     val versionString = sdk.versionString ?: return null
     val version = JavaVersion.tryParse(versionString) ?: return null
-    return TestUnknownSdkLocalFix(homePath, versionString, version, sdk.name)
+    return TestUnknownSdkLocalFix(homePath, versionString, version, sdk.name, sdk)
   }
 
   private fun createTestUnknownSdkLocalFix(homePath: String): TestUnknownSdkLocalFix? {
     val versionString = javaSdkType.getVersionString(homePath) ?: return null
     val version = JavaVersion.tryParse(versionString) ?: return null
     val suggestedName = javaSdkType.suggestSdkName(null, homePath)
-    return TestUnknownSdkLocalFix(homePath, versionString, version, suggestedName)
+    return TestUnknownSdkLocalFix(homePath, versionString, version, suggestedName, null)
   }
 
   private class TestUnknownSdkLookup : UnknownSdkLookup {
@@ -73,7 +73,7 @@ object TestUnknownSdkResolver : UnknownSdkResolver {
         .filter { sdk.sdkVersionStringPredicate?.test(it.versionString) != false }
         .filter { sdk.sdkHomePredicate?.test(it.existingSdkHome) != false }
         .filter { nameFilter?.matches(it) != false }
-        .maxBy { it.version }
+        .maxByOrNull { it.version }
     }
 
     override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkDownloadableSdkFix? {
@@ -86,12 +86,14 @@ object TestUnknownSdkResolver : UnknownSdkResolver {
     private val homeDir: String,
     private val versionString: String,
     val version: JavaVersion,
-    private val suggestedName: String
+    private val suggestedName: String,
+    private val prototype: Sdk?
   ) : UnknownSdkLocalSdkFix {
     override fun getExistingSdkHome() = homeDir
     override fun getVersionString() = versionString
     override fun getSuggestedSdkName(): String = suggestedName
-    override fun configureSdk(sdk: Sdk) {}
+    override fun configureSdk(sdk: Sdk) = Unit
+    override fun getRegisteredSdkPrototype() = prototype
   }
 
   private class TestUnknownSdkDownloadableSdkFix : UnknownSdkDownloadableSdkFix {

@@ -20,14 +20,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * Callback which allows to customize colors used at the arrangement UI on the basis of existing coloring scheme.
  * <p/>
  * It's save to return 'null' from all color retrieval services - default values will be used then.
- * 
- * @author Denis Zhdanov
  */
 public interface ArrangementColorsAware {
   

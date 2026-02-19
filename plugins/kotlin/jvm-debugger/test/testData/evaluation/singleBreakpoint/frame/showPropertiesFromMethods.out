@@ -1,0 +1,10 @@
+LineBreakpoint created at showPropertiesFromMethods.kt:35
+Run Java
+Connected to the target VM
+showPropertiesFromMethods.kt:35
+KotlinStackFrame (showPropertiesFromMethods.kt:35)
+    JavaValue[local] instance: showPropertiesFromMethods.TestClass = showPropertiesFromMethods.TestClass@hashCode (showPropertiesFromMethods.kt:33)
+        DummyMessageValueNode = Class has no properties
+Disconnected from the target VM
+
+Process finished with exit code 0

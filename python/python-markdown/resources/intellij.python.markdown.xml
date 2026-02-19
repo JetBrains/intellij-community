@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.intellij.plugins.markdown"/>
+    <module name="intellij.python.community.impl"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <fenceLanguageProvider implementation="com.intellij.python.markdown.PyCodeFenceLanguageProvider"/>
+  </extensions>
+</idea-plugin>

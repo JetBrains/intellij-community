@@ -1,0 +1,6 @@
+# Error: is not present at runtime
+# =============================
+# Error class attributes that aren't defined.
+grpc.RpcError.code
+grpc.RpcError.details
+grpc.RpcError.trailing_metadata

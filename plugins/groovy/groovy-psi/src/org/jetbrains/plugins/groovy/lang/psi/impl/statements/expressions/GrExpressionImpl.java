@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-/**
- * @author ilyas
- */
 public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements GrExpression {
   public GrExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -24,8 +21,7 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
   }
 
   @Override
-  @Nullable
-  public PsiType getNominalType() {
+  public @Nullable PsiType getNominalType() {
     return getType();
   }
 

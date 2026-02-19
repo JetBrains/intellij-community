@@ -1,10 +1,17 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.webSocket
 
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.codec.http.FullHttpResponse
-import io.netty.handler.codec.http.websocketx.*
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker
+import io.netty.handler.codec.http.websocketx.WebSocketFrame
+import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator
 import io.netty.util.CharsetUtil
 import io.netty.util.ReferenceCountUtil
 import org.jetbrains.builtInWebServer.LOG
@@ -36,6 +43,7 @@ abstract class WebSocketProtocolHandler : ChannelInboundHandlerAdapter() {
 
   protected open fun closeFrameReceived(channel: Channel, message: CloseWebSocketFrame) {
     channel.close()
+    message.release()
   }
 
   @Suppress("OverridingDeprecatedMember")
@@ -51,7 +59,6 @@ open class WebSocketProtocolHandshakeHandler(private val handshaker: WebSocketCl
       try {
         handshaker.finishHandshake(channel, message as FullHttpResponse)
         val pipeline = channel.pipeline()
-        @Suppress("HardCodedStringLiteral")
         pipeline.replace(this, "aggregator", WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH))
         // https codec is removed by finishHandshake
         completed()

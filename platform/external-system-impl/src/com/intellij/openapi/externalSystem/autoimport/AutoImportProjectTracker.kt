@@ -1,190 +1,342 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.ide.file.BatchFileChangeListener
+import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros.CACHE_FILE
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.HIDDEN
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.UNKNOWN
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.INTERNAL
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
-import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
+import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+import com.intellij.openapi.observable.operation.core.MutableOperationTrace
+import com.intellij.openapi.observable.operation.core.isOperationInProgress
+import com.intellij.openapi.observable.operation.core.whenOperationFinished
+import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.observable.properties.BooleanProperty
+import com.intellij.openapi.observable.properties.MutableBooleanProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
+import com.intellij.openapi.observable.properties.whenPropertyReset
+import com.intellij.openapi.observable.properties.whenPropertySet
+import com.intellij.openapi.observable.util.setObservableProperty
+import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.LocalTimeCounter.currentTime
+import com.intellij.platform.backend.observation.trackActivityBlocking
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import com.intellij.util.ui.update.queueTracked
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.TreeMap
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.streams.asStream
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
+private val MERGING_TIME_SPAN = 300.milliseconds
+private val MERGING_TIME_SPAN_MS = MERGING_TIME_SPAN.inWholeMilliseconds
+
+private val DEFAULT_SMART_PROJECT_RELOAD_DELAY = 3.seconds
+
+@ApiStatus.Internal
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
-class AutoImportProjectTracker(private val project: Project) : ExternalSystemProjectTracker, PersistentStateComponent<AutoImportProjectTracker.State> {
-  @Suppress("unused")
-  private val debugThrowable = Throwable("Initialized with project=(${project.isDisposed}, ${Disposer.isDisposed(project)}, $project)")
+class AutoImportProjectTracker(
+  private val project: Project
+) : ExternalSystemProjectTracker,
+    Disposable.Default,
+    PersistentStateComponent<AutoImportProjectTracker.State> {
 
-  private val AUTO_REPARSE_DELAY = DaemonCodeAnalyzerSettings.getInstance().autoReparseDelay
-  private val AUTO_RELOAD_DELAY = 2000
+  private val serviceDisposable: Disposable = this
 
-  private val settings get() = AutoImportProjectTrackerSettings.getInstance(project)
-  private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
+  private val settings = AutoImportProjectTrackerSettings.getInstance(project)
+  private val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
+
+  private val projectDataStates = ConcurrentHashMap<ExternalSystemProjectId, ProjectDataState>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
-  private val isDisabled = AtomicBooleanProperty(ApplicationManager.getApplication().isUnitTestMode)
-  private val asyncChangesProcessingProperty = AtomicBooleanProperty(!ApplicationManager.getApplication().isHeadlessEnvironment)
-  private val projectChangeOperation = AnonymousParallelOperationTrace(debugName = "Project change operation")
-  private val projectRefreshOperation = CompoundParallelOperationTrace<String>(debugName = "Project refresh operation")
-  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", AUTO_REPARSE_DELAY, false, null, project)
-  private val delayDispatcher = MergingUpdateQueue("AutoImportProjectTracker.delayDispatcher", AUTO_RELOAD_DELAY, false, null, project)
-  private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
+  private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
+  private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
 
-  var isAsyncChangesProcessing by asyncChangesProcessingProperty
+  private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    /* name = */ "AutoImportProjectTracker.backgroundExecutor",
+    /* maxThreads = */ 1
+  )
+
+  private val dispatcher = MergingUpdateQueue(
+    name = "AutoImportProjectTracker.dispatcher",
+    mergingTimeSpan = MERGING_TIME_SPAN_MS.toInt(),
+    isActive = true,
+    modalityStateComponent = null,
+    parent = serviceDisposable,
+    executeInDispatchThread = false
+  )
 
   private fun createProjectChangesListener() =
     object : ProjectBatchFileChangeListener(project) {
       override fun batchChangeStarted(activityName: String?) =
-        projectChangeOperation.startTask()
+        projectChangeOperation.traceStart()
 
       override fun batchChangeCompleted() =
-        projectChangeOperation.finishTask()
+        projectChangeOperation.traceFinish()
     }
 
-  private fun createProjectRefreshListener(projectData: ProjectData) =
-    object : ExternalSystemProjectRefreshListener {
-      val id = "ProjectTracker: ${projectData.projectAware.projectId.readableName}"
+  private fun createProjectReloadListener(projectData: ProjectData) =
+    object : ExternalSystemProjectListener {
 
-      override fun beforeProjectRefresh() {
-        projectRefreshOperation.startTask(id)
-        projectData.status.markSynchronized(currentTime())
+      override fun onProjectReloadStart() {
+        projectData.reloadOperation.traceStart()
+        projectData.status.markSynchronized(Stamp.nextStamp())
         projectData.isActivated = true
       }
 
-      override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
-        if (status != SUCCESS) projectData.status.markBroken(currentTime())
-        projectRefreshOperation.finishTask(id)
+      override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
+        if (status != SUCCESS) {
+          projectData.status.markBroken(Stamp.nextStamp())
+        }
+        projectData.reloadOperation.traceFinish()
       }
     }
+
+  private fun createProjectCompletionListener() = LookupManagerListener { _, newLookup ->
+    isProjectLookupActivateProperty.set(newLookup != null)
+  }
 
   override fun scheduleProjectRefresh() {
-    LOG.debug("Schedule project refresh", Throwable())
-    dispatcher.queue(PriorityEatUpdate(0) {
-      refreshProject(smart = false)
-    })
-  }
+    LOG.debug("Schedule change processing (isExplicitReload=true)", Throwable())
 
-  override fun scheduleProjectNotificationUpdate() {
-    LOG.debug("Schedule notification status update")
-    dispatcher.queue(PriorityEatUpdate(2) {
-      updateProjectNotification()
-    })
-  }
-
-  fun scheduleChangeProcessing() {
-    LOG.debug("Schedule change processing")
-    dispatcher.queue(PriorityEatUpdate(1) {
-      processChanges()
-    })
-  }
-
-  private fun delay(action: () -> Unit) {
-    delayDispatcher.queue(Update.create(this, action))
-  }
-
-  private fun processChanges() {
-    when (settings.autoReloadType) {
-      AutoReloadType.ALL -> when (getModificationType()) {
-        INTERNAL -> delay { refreshProject(smart = true) }
-        EXTERNAL -> delay { refreshProject(smart = true) }
-        null -> updateProjectNotification()
-      }
-      AutoReloadType.SELECTIVE -> when (getModificationType()) {
-        INTERNAL -> updateProjectNotification()
-        EXTERNAL -> delay { refreshProject(smart = true) }
-        null -> updateProjectNotification()
-      }
-      AutoReloadType.NONE -> updateProjectNotification()
+    schedule(priority = 0, dispatchIterations = 1) {
+      processChanges(isExplicitReload = true)
     }
   }
 
-  private fun refreshProject(smart: Boolean) {
-    LOG.debug("Incremental project refresh")
-    if (isDisabled.get() || Registry.`is`("external.system.auto.import.disabled")) return
-    if (!projectChangeOperation.isOperationCompleted()) return
-    if (smart && !projectRefreshOperation.isOperationCompleted()) return
-    var isSkippedProjectRefresh = true
+  override fun scheduleChangeProcessing() {
+    LOG.debug("Schedule change processing (isExplicitReload=false)")
+
+    schedule(priority = 1, dispatchIterations = 1) {
+      processChanges(isExplicitReload = false)
+    }
+  }
+
+  private fun scheduleDelayedProjectReload(projectsToReload: List<Pair<ExternalSystemProjectAware, ExternalSystemProjectReloadContext>>) {
+    LOG.debug("Schedule delayed project reload")
+
+    // See AutoImportProjectTracker.scheduleChangeProcessing for details
+    val smartProjectReloadDelay = projectDataMap.values.maxOfOrNull {
+      it.projectAware.smartProjectReloadDelay ?: DEFAULT_SMART_PROJECT_RELOAD_DELAY
+    } ?: DEFAULT_SMART_PROJECT_RELOAD_DELAY
+    // We already dispatched processChanges with the MERGING_TIME_SPAN delay
+    // See AutoImportProjectTracker.scheduleChangeProcessing for details
+    val smartProjectReloadDispatcherIterations = ((smartProjectReloadDelay - MERGING_TIME_SPAN) / MERGING_TIME_SPAN).toInt()
+    // smartProjectReloadDispatcherIterations can be negative if smartProjectReloadDelay is less than MERGING_TIME_SPAN
+    val dispatchIterations = maxOf(smartProjectReloadDispatcherIterations, 1)
+
+    schedule(priority = 2, dispatchIterations = dispatchIterations) {
+      reloadProject(projectsToReload)
+    }
+  }
+
+  private val currentActivityLock = ReentrantLock()
+  private var currentActivity: ProjectInitializationDiagnosticService.ActivityTracker? = null
+
+  private fun schedule(priority: Int, dispatchIterations: Int, action: () -> Unit) {
+    currentActivityLock.withLock { 
+      if (currentActivity == null) {
+        currentActivity = ProjectInitializationDiagnosticService.registerTracker(project, "AutoImportProjectTracker.schedule")
+      }
+    }
+    dispatcher.queueTracked(PriorityEatUpdate(priority) {
+      project.trackActivityBlocking(ExternalSystemActivityKey) {
+        if (dispatchIterations - 1 > 0) {
+          schedule(priority, dispatchIterations - 1, action)
+        }
+        else {
+          action()
+          if (dispatcher.isEmpty) {
+            currentActivityLock.withLock {
+              currentActivity?.activityFinished()
+              currentActivity = null
+            }
+          }
+        }
+      }
+    })
+  }
+
+  private fun processChanges(isExplicitReload: Boolean) {
+    LOG.debug("Process changes (isExplicitReload=$isExplicitReload)")
+
+    val projectsToReload = ArrayList<Pair<ExternalSystemProjectAware, ExternalSystemProjectReloadContext>>()
     for (projectData in projectDataMap.values) {
-      val projectId = projectData.projectAware.projectId.readableName
-      val isAllowAutoReload = !smart || projectData.isActivated
-      if (isAllowAutoReload && !projectData.isUpToDate()) {
-        isSkippedProjectRefresh = false
-        LOG.debug("$projectId: Project refresh")
-        val hasUndefinedModifications = !projectData.status.isUpToDate()
-        val settingsContext = projectData.settingsTracker.getSettingsContext()
-        val context = ProjectReloadContext(!smart, hasUndefinedModifications, settingsContext)
-        projectData.projectAware.reloadProject(context)
-      }
-      else {
-        LOG.debug("$projectId: Skip project refresh")
+      val context = ProjectReloadContext(
+        isExplicitReload = isExplicitReload,
+        hasUndefinedModifications = !projectData.status.isUpToDate(),
+        settingsFilesContext = projectData.settingsTracker.getSettingsContext()
+      )
+      val projectId = projectData.projectAware.projectId
+      when {
+        projectData.isUpToDate() -> {
+          LOG.debug("$projectId: Skip project reload (UpToDate)")
+          notificationAware.notificationExpire(projectId)
+        }
+        isDisabledReload(projectData, context) -> {
+          LOG.debug("$projectId: Skip project reload (disabled)")
+          notificationAware.notificationExpire(projectId)
+        }
+        !isExplicitReload && isDisabledAutoReload(projectData, context) -> {
+          LOG.debug("$projectId: Skip project auto-reload (disabled)")
+          notificationAware.notificationNotify(projectData.projectAware)
+        }
+        else -> {
+          LOG.debug("$projectId: Schedule project reload")
+          notificationAware.notificationExpire(projectId)
+          projectsToReload.add(projectData.projectAware to context)
+        }
       }
     }
-    if (isSkippedProjectRefresh) {
-      updateProjectNotification()
+
+    if (projectsToReload.isEmpty()) {
+      LOG.debug("Skip all project reloads")
+    }
+    else if (isExplicitReload) {
+      reloadProject(projectsToReload)
+    }
+    else {
+      scheduleDelayedProjectReload(projectsToReload)
     }
   }
 
-  private fun updateProjectNotification() {
-    LOG.debug("Notification status update")
-    if (isDisabled.get() || Registry.`is`("external.system.auto.import.disabled")) return
-    val notificationAware = ProjectNotificationAware.getInstance(project)
-    for ((projectId, data) in projectDataMap) {
-      when (data.isUpToDate()) {
-        true -> notificationAware.notificationExpire(projectId)
-        else -> notificationAware.notificationNotify(data.projectAware)
+  private fun reloadProject(projectsToReload: List<Pair<ExternalSystemProjectAware, ExternalSystemProjectReloadContext>>) {
+    LOG.debug("Reload projects")
+
+    invokeAndWaitIfNeeded { // needed for backward compatibility
+      for ((projectAware, context) in projectsToReload) {
+        LOG.debug("${projectAware.projectId}: reload project")
+        projectAware.reloadProject(context)
       }
     }
   }
 
-  private fun getModificationType(): ModificationType? {
-    return projectDataMap.values
-      .asSequence()
-      .mapNotNull { it.getModificationType() }
-      .asStream()
-      .reduce(ModificationType::merge)
-      .orElse(null)
+  private fun isDisabledReload(projectData: ProjectData, context: ExternalSystemProjectReloadContext): Boolean {
+    val projectId = projectData.projectAware.projectId
+
+    if (!isEnabledReload) {
+      LOG.debug("$projectId: Disabled reload (global property)")
+      return true
+    }
+
+    if (!projectData.isActivated) {
+      LOG.debug("$projectId: Disabled reload (activation)")
+      return true
+    }
+
+    if (projectChangeOperation.isOperationInProgress()) {
+      LOG.debug("$projectId: Disabled reload (project change)")
+      return true
+    }
+
+    if (projectData.reloadOperation.isOperationInProgress()) {
+      LOG.debug("$projectId: Disabled reload (project reload)")
+      return true
+    }
+
+    if (projectData.projectAware.isDisabledReload(context)) {
+      LOG.debug("$projectId: Disabled reload (custom)")
+      return true
+    }
+
+    return false
+  }
+
+  private fun isDisabledAutoReload(projectData: ProjectData, context: ExternalSystemProjectReloadContext): Boolean {
+    val projectId = projectData.projectAware.projectId
+
+    if (!isEnabledAutoReload) {
+      LOG.debug("$projectId: Disabled auto-reload (global property)")
+      return true
+    }
+
+    if (isProjectLookupActivateProperty.get()) {
+      LOG.debug("$projectId: Disabled auto-reload (project lookup)")
+      return true
+    }
+
+    val autoReloadType = settings.autoReloadType
+    val modificationType = projectData.getModificationType()
+    val isDisabledAutoReload = when (autoReloadType) {
+      AutoReloadType.ALL -> when (modificationType) {
+        EXTERNAL -> false
+        INTERNAL -> false
+        HIDDEN -> true
+        UNKNOWN -> true
+      }
+      AutoReloadType.SELECTIVE -> when (modificationType) {
+        EXTERNAL -> false
+        INTERNAL -> true
+        HIDDEN -> true
+        UNKNOWN -> true
+      }
+      AutoReloadType.NONE -> true
+    }
+    if (isDisabledAutoReload) {
+      LOG.debug("$projectId: Disabled auto-reload ($autoReloadType, $modificationType)")
+      return true
+    }
+
+    if (projectData.projectAware.isDisabledAutoReload(context)) {
+      LOG.debug("$projectId: Disabled auto-reload (custom)")
+      return true
+    }
+
+    return false
   }
 
   override fun register(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
     val activationProperty = AtomicBooleanProperty(false)
-    val projectStatus = ProjectStatus(debugName = projectId.readableName)
-    val parentDisposable = Disposer.newDisposable(projectId.readableName)
+    val reloadOperation = AtomicOperationTrace(name = "Reload $projectId")
+    val projectStatus = ProjectStatus(debugName = projectId.toString())
+    val parentDisposable = Disposer.newDisposable(serviceDisposable, projectId.toString())
     val settingsTracker = ProjectSettingsTracker(project, this, backgroundExecutor, projectAware, parentDisposable)
-    val projectData = ProjectData(projectStatus, activationProperty, projectAware, settingsTracker, parentDisposable)
-    val notificationAware = ProjectNotificationAware.getInstance(project)
+    val projectData = ProjectData(projectStatus, activationProperty, reloadOperation, projectAware, settingsTracker, parentDisposable)
 
     projectDataMap[projectId] = projectData
 
-    val id = "ProjectSettingsTracker: ${projectData.projectAware.projectId.readableName}"
-    settingsTracker.beforeApplyChanges { projectRefreshOperation.startTask(id) }
-    settingsTracker.afterApplyChanges { projectRefreshOperation.finishTask(id) }
-    activationProperty.afterSet({ scheduleChangeProcessing() }, parentDisposable)
+    settingsTracker.beforeApplyChanges(parentDisposable) { reloadOperation.traceStart() }
+    settingsTracker.afterApplyChanges(parentDisposable) { reloadOperation.traceFinish() }
 
-    Disposer.register(project, parentDisposable)
-    projectAware.subscribe(createProjectRefreshListener(projectData), parentDisposable)
-    Disposer.register(parentDisposable, Disposable { notificationAware.notificationExpire(projectId) })
+    activationProperty.whenPropertySet(parentDisposable) {
+      LOG.debug("$projectId is activated")
+      scheduleChangeProcessing()
+    }
+    reloadOperation.whenOperationStarted(serviceDisposable) {
+      LOG.debug("$projectId: Detected project reload start event")
+      scheduleChangeProcessing()
+    }
+    reloadOperation.whenOperationFinished(serviceDisposable) {
+      LOG.debug("$projectId: Detected project reload finish event")
+      scheduleChangeProcessing()
+    }
+
+    projectAware.subscribe(createProjectReloadListener(projectData), parentDisposable)
+    parentDisposable.whenDisposed { notificationAware.notificationExpire(projectId) }
 
     loadState(projectId, projectData)
   }
@@ -201,7 +353,14 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
 
   override fun markDirty(id: ExternalSystemProjectId) {
     val projectData = projectDataMap(id) { get(it) } ?: return
-    projectData.status.markDirty(currentTime())
+    projectData.status.markDirty(Stamp.nextStamp())
+  }
+
+  override fun markDirtyAllProjects() {
+    val modificationTimeStamp = Stamp.nextStamp()
+    for (projectData in projectDataMap.values) {
+      projectData.status.markDirty(modificationTimeStamp)
+    }
   }
 
   private fun projectDataMap(
@@ -216,22 +375,33 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   }
 
   override fun getState(): State {
-    val projectSettingsTrackerStates = projectDataMap.asSequence()
-      .map { (id, data) -> id.getState() to data.getState() }
-      .toMap()
-    return State(projectSettingsTrackerStates)
+    val systemStates = TreeMap<String, TreeMap<String, ProjectDataState>>()
+    for ((projectId, projectData) in projectDataMap) {
+      val (systemId, externalProjectPath) = projectId
+      val projectStates = systemStates.computeIfAbsent(systemId.id) { TreeMap() }
+      projectStates[externalProjectPath] = ProjectDataState(
+        projectData.status.isDirty(),
+        projectData.settingsTracker.getState()
+      )
+    }
+    return State(systemStates)
   }
 
   override fun loadState(state: State) {
-    projectStates.putAll(state.projectSettingsTrackerStates)
+    for ((systemId, systemData) in state.projectData) {
+      for ((externalProjectPath, projectData) in systemData) {
+        val projectId = ExternalSystemProjectId(ProjectSystemId(systemId), externalProjectPath)
+        projectDataStates[projectId] = projectData
+      }
+    }
     projectDataMap.forEach { (id, data) -> loadState(id, data) }
   }
 
   private fun loadState(projectId: ExternalSystemProjectId, projectData: ProjectData) {
-    val projectState = projectStates.remove(projectId.getState())
+    val projectState = projectDataStates.remove(projectId)
     val settingsTrackerState = projectState?.settingsTracker
     if (settingsTrackerState == null || projectState.isDirty) {
-      projectData.status.markDirty(currentTime(), EXTERNAL)
+      projectData.status.markDirty(Stamp.nextStamp(), EXTERNAL)
       scheduleChangeProcessing()
       return
     }
@@ -239,83 +409,82 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
     projectData.settingsTracker.refreshChanges()
   }
 
-  override fun initializeComponent() {
-    LOG.debug("Project tracker initialization")
-    ApplicationManager.getApplication().messageBus.connect(project).subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
-    dispatcher.setRestartTimerOnAdd(true)
-    dispatcher.isPassThrough = !isAsyncChangesProcessing
-    dispatcher.activate()
-    delayDispatcher.setRestartTimerOnAdd(true)
-    delayDispatcher.isPassThrough = !isAsyncChangesProcessing
-    delayDispatcher.activate()
-  }
-
   @TestOnly
-  fun getActivatedProjects() =
-    projectDataMap.values
+  fun getActivatedProjects(): Set<ExternalSystemProjectId> {
+    return projectDataMap.values
+      .asSequence()
       .filter { it.isActivated }
       .map { it.projectAware.projectId }
       .toSet()
+  }
 
-  /**
-   * Enables auto-import in tests
-   * Note: project tracker automatically enabled out of tests
-   */
   @TestOnly
-  fun enableAutoImportInTests() {
-    isDisabled.set(false)
+  fun setDispatcherMergingSpan(delay: Int) {
+    dispatcher.setMergingTimeSpan(delay)
   }
 
   init {
-    val notificationAware = ProjectNotificationAware.getInstance(project)
-    projectRefreshOperation.beforeOperation { LOG.debug("Project refresh started") }
-    projectRefreshOperation.beforeOperation { notificationAware.notificationExpire() }
-    projectRefreshOperation.afterOperation { scheduleChangeProcessing() }
-    projectRefreshOperation.afterOperation { LOG.debug("Project refresh finished") }
-    projectChangeOperation.beforeOperation { LOG.debug("Project change started") }
-    projectChangeOperation.beforeOperation { notificationAware.notificationExpire() }
-    projectChangeOperation.afterOperation { scheduleChangeProcessing() }
-    projectChangeOperation.afterOperation { LOG.debug("Project change finished") }
-    settings.autoReloadTypeProperty.afterChange { scheduleChangeProcessing() }
-    asyncChangesProcessingProperty.afterChange { dispatcher.isPassThrough = !it }
-    asyncChangesProcessingProperty.afterChange { delayDispatcher.isPassThrough = !it }
+    LOG.debug("Project tracker initialization")
+
+    projectChangeOperation.whenOperationStarted(serviceDisposable) {
+      LOG.debug("Detected project change start event")
+      scheduleChangeProcessing()
+    }
+    projectChangeOperation.whenOperationFinished(serviceDisposable) {
+      LOG.debug("Detected project change finish event")
+      scheduleChangeProcessing()
+    }
+    isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) {
+      LOG.debug("Detected project lookup start event")
+      scheduleChangeProcessing()
+    }
+    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) {
+      LOG.debug("Detected project lookup finish event")
+      scheduleChangeProcessing()
+    }
+    settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) {
+      LOG.debug("Detected project reload type change event")
+      scheduleChangeProcessing()
+    }
+
+    dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
+    asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }
+
+    dispatcher.setRestartTimerOnAdd(true)
+
+    application.messageBus.connect(serviceDisposable)
+      .subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
+    project.messageBus.connect(serviceDisposable)
+      .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
   }
 
-  private fun ProjectData.getState() = State.Project(status.isDirty(), settingsTracker.getState())
-
-  private fun ProjectSystemId.getState() = id
-
-  private fun ExternalSystemProjectId.getState() = State.Id(systemId.getState(), externalProjectPath)
-
   private data class ProjectData(
-    val status: ProjectStatus,
-    val activationProperty: BooleanProperty,
-    val projectAware: ExternalSystemProjectAware,
-    val settingsTracker: ProjectSettingsTracker,
-    val parentDisposable: Disposable
+    @JvmField val status: ProjectStatus,
+    @JvmField val activationProperty: MutableBooleanProperty,
+    @JvmField val reloadOperation: MutableOperationTrace,
+    @JvmField val projectAware: ExternalSystemProjectAware,
+    @JvmField val settingsTracker: ProjectSettingsTracker,
+    @JvmField val parentDisposable: Disposable
   ) {
     var isActivated by activationProperty
 
     fun isUpToDate() = status.isUpToDate() && settingsTracker.isUpToDate()
 
-    fun getModificationType(): ModificationType? {
-      val trackerModificationType = status.getModificationType()
-      val settingsTrackerModificationType = settingsTracker.getModificationType()
-      return when {
-        trackerModificationType == null -> settingsTrackerModificationType
-        settingsTrackerModificationType == null -> trackerModificationType
-        else -> settingsTrackerModificationType.merge(trackerModificationType)
-      }
+    fun getModificationType(): ExternalSystemModificationType {
+      return ProjectStatus.merge(status.getModificationType(), settingsTracker.getModificationType())
     }
   }
 
-  data class State(var projectSettingsTrackerStates: Map<Id, Project> = emptyMap()) {
-    data class Id(var systemId: String? = null, var externalProjectPath: String? = null)
-    data class Project(
-      var isDirty: Boolean = false,
-      var settingsTracker: ProjectSettingsTracker.State? = null
-    )
-  }
+  @Serializable
+  data class State(
+    @JvmField val projectData: Map<String, Map<String, ProjectDataState>> = emptyMap()
+  )
+
+  @Serializable
+  data class ProjectDataState(
+    @JvmField val isDirty: Boolean = false,
+    @JvmField val settingsTracker: ProjectSettingsTracker.State? = null
+  )
 
   private data class ProjectReloadContext(
     override val isExplicitReload: Boolean,
@@ -324,12 +493,71 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   ) : ExternalSystemProjectReloadContext
 
   companion object {
+
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
 
-    @TestOnly
-    @JvmStatic
     fun getInstance(project: Project): AutoImportProjectTracker {
       return ExternalSystemProjectTracker.getInstance(project) as AutoImportProjectTracker
+    }
+
+    private val onceIgnoreDisableReloadRegistryProperty = AtomicBooleanProperty(false)
+
+    private val enableReloadProperty = AtomicBooleanProperty(!application.isUnitTestMode)
+
+    private val enableAutoReloadProperty = AtomicBooleanProperty(!application.isUnitTestMode)
+
+    private val asyncChangesProcessingProperty = AtomicBooleanProperty(
+      !application.isHeadlessEnvironment
+      || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+      || java.lang.Boolean.getBoolean("external.system.auto.import.headless.async")
+    )
+
+    private val isEnabledReload: Boolean
+      get() = enableReloadProperty.get() &&
+              (onceIgnoreDisableReloadRegistryProperty.getAndSet(false) ||
+               !Registry.`is`("external.system.auto.import.disabled"))
+
+    private val isEnabledAutoReload: Boolean
+      get() = isEnabledReload && enableAutoReloadProperty.get()
+
+    val isAsyncChangesProcessing: Boolean by asyncChangesProcessingProperty
+
+    /**
+     * In tests, enables only manual syncs executed using the [ExternalSystemProjectTracker] API.
+     *
+     * Note: auto-sync still will be disabled.
+     */
+    @TestOnly
+    fun enableReloadInTests(parentDisposable: Disposable) {
+      setObservableProperty(enableReloadProperty, true, parentDisposable)
+    }
+
+    /**
+     * In tests, enables all syncs executed using the [ExternalSystemProjectTracker] API.
+     *
+     * Note: manual syncs will be also enabled.
+     */
+    @TestOnly
+    fun enableAutoReloadInTests(parentDisposable: Disposable) {
+      setObservableProperty(enableReloadProperty, true, parentDisposable)
+      setObservableProperty(enableAutoReloadProperty, true, parentDisposable)
+    }
+
+    /**
+     * In tests, enables async project status processing.
+     */
+    @TestOnly
+    fun enableAsyncAutoReloadInTests(parentDisposable: Disposable) {
+      setObservableProperty(asyncChangesProcessingProperty, true, parentDisposable)
+    }
+
+    /**
+     * Ignores once disable auto-reload registry.
+     * Make sense only in a pair with registry key `external.system.auto.import.disabled`.
+     */
+    @ApiStatus.Internal
+    fun onceIgnoreDisableAutoReloadRegistry() {
+      onceIgnoreDisableReloadRegistryProperty.set(true)
     }
   }
 }

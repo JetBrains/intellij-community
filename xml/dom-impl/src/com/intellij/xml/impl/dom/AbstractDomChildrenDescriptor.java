@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.dom;
 
 import com.intellij.pom.PomTarget;
@@ -26,7 +12,12 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.impl.AttributeChildDescriptionImpl;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -39,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class AbstractDomChildrenDescriptor implements XmlElementDescriptor {
   protected final DomManager myManager;
 
@@ -85,8 +73,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
           }
 
           @Override
-          @Nullable
-          public PsiElement getDeclaration() {
+          public @Nullable PsiElement getDeclaration() {
             final PomTarget target = tagNameDescriptor.findDeclaration(domElement, name);
             return target == null ? null : PomService.convertToPsi(context.getProject(), target);
           }
@@ -106,8 +93,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   }
 
   @Override
-  @Nullable
-  public XmlElementDescriptor getElementDescriptor(@NotNull final XmlTag childTag, @Nullable XmlTag contextTag) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(final @NotNull XmlTag childTag, @Nullable XmlTag contextTag) {
     DomElement domElement = myManager.getDomElement(childTag);
     if (domElement == null) {
       domElement = myManager.getDomElement(contextTag);
@@ -133,8 +119,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
         }
 
         @Override
-        @Nullable
-        public PsiElement getDeclaration() {
+        public @Nullable PsiElement getDeclaration() {
           final PomTarget target = ((CustomDomChildrenDescription)description).getTagNameDescriptor().findDeclaration(finalDomElement);
           if (target == description) {
             return childTag;
@@ -156,10 +141,10 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     DomElement domElement = myManager.getDomElement(context);
     if (domElement == null) return XmlAttributeDescriptor.EMPTY;
 
-    final List<? extends DomAttributeChildDescription> descriptions = domElement.getGenericInfo().getAttributeChildrenDescriptions();
+    final List<? extends DomAttributeChildDescription<?>> descriptions = domElement.getGenericInfo().getAttributeChildrenDescriptions();
     List<XmlAttributeDescriptor> descriptors = new ArrayList<>();
 
-    for (DomAttributeChildDescription description : descriptions) {
+    for (DomAttributeChildDescription<?> description : descriptions) {
       descriptors.add(new DomAttributeXmlDescriptor(description, myManager.getProject()));
     }
     List<? extends CustomDomChildrenDescription> customs = domElement.getGenericInfo().getCustomNameChildrenDescription();
@@ -176,12 +161,11 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   }
 
   @Override
-  @Nullable
-  public XmlAttributeDescriptor getAttributeDescriptor(final String attributeName, final @Nullable XmlTag context) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(final String attributeName, final @Nullable XmlTag context) {
     DomElement domElement = myManager.getDomElement(context);
     if (domElement == null) return null;
 
-    for (DomAttributeChildDescription description : domElement.getGenericInfo().getAttributeChildrenDescriptions()) {
+    for (DomAttributeChildDescription<?> description : domElement.getGenericInfo().getAttributeChildrenDescriptions()) {
       if (attributeName.equals(DomAttributeXmlDescriptor.getQualifiedAttributeName(context, description.getXmlName()))) {
         return new DomAttributeXmlDescriptor(description, myManager.getProject());
       }
@@ -190,8 +174,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   }
 
   @Override
-  @Nullable
-  public XmlAttributeDescriptor getAttributeDescriptor(final XmlAttribute attribute) {
+  public @Nullable XmlAttributeDescriptor getAttributeDescriptor(final XmlAttribute attribute) {
     return getAttributeDescriptor(attribute.getName(), attribute.getParent());
   }
 
@@ -199,37 +182,32 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   public XmlNSDescriptor getNSDescriptor() {
     return new XmlNSDescriptor() {
       @Override
-      @Nullable
-      public XmlElementDescriptor getElementDescriptor(@NotNull final XmlTag tag) {
+      public @Nullable XmlElementDescriptor getElementDescriptor(final @NotNull XmlTag tag) {
         throw new UnsupportedOperationException("Method getElementDescriptor not implemented in " + getClass());
       }
 
       @Override
-      public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument document) {
+      public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(final @Nullable XmlDocument document) {
         throw new UnsupportedOperationException("Method getRootElementsDescriptors not implemented in " + getClass());
       }
 
       @Override
-      @Nullable
-      public XmlFile getDescriptorFile() {
+      public @Nullable XmlFile getDescriptorFile() {
         return null;
       }
 
       @Override
-      @Nullable
-      public PsiElement getDeclaration() {
+      public @Nullable PsiElement getDeclaration() {
         throw new UnsupportedOperationException("Method getDeclaration not implemented in " + getClass());
       }
 
       @Override
-      @NonNls
-      public String getName(final PsiElement context) {
+      public @NonNls String getName(final PsiElement context) {
         throw new UnsupportedOperationException("Method getName not implemented in " + getClass());
       }
 
       @Override
-      @NonNls
-      public String getName() {
+      public @NonNls String getName() {
         throw new UnsupportedOperationException("Method getName not implemented in " + getClass());
       }
 
@@ -266,8 +244,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
   }
 
   @Override
-  @NonNls
-  public String getName() {
+  public @NonNls String getName() {
     return getDefaultName();
   }
 

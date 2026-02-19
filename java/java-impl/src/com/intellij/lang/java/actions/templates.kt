@@ -7,10 +7,17 @@ import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.lang.jvm.actions.ExpectedTypes
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -34,7 +41,7 @@ internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: List
   //255 is the maximum number of method parameters
   for (i in 0 until minOf(parameters.size, 255)) {
     val parameterInfo = parameters[i]
-    val dummyParameter = factory.createParameter("p$i", PsiType.VOID)
+    val dummyParameter = factory.createParameter("p$i", PsiTypes.voidType())
     if (isInterface) {
       PsiUtil.setModifierProperty(dummyParameter, PsiModifier.FINAL, false)
     }
@@ -47,7 +54,7 @@ internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: List
 }
 
 internal fun TemplateContext.setupTypeElement(typeElement: PsiTypeElement?, types: ExpectedTypes) {
-  setupTypeElement(typeElement ?: return, extractExpectedTypes(project, types))
+  setupTypeElement(typeElement ?: return, extractExpectedTypes(project, types, typeElement))
 }
 
 @JvmName("setupTypeElementJ")
@@ -57,7 +64,7 @@ internal fun TemplateContext.setupTypeElement(typeElement: PsiTypeElement, types
 
 internal fun TemplateContext.setupParameterName(parameter: PsiParameter, expectedParameter: ExpectedParameter) {
   val nameIdentifier = parameter.nameIdentifier ?: return
-  val codeStyleManager: JavaCodeStyleManager = project.service()
+  val codeStyleManager = JavaCodeStyleManager.getInstance(project)
   val argumentType = expectedParameter.expectedTypes.firstOrNull()?.theType as? PsiType
   val names = codeStyleManager.suggestNames(expectedParameter.semanticNames, VariableKind.PARAMETER, argumentType).names
   val expression = CreateFromUsageUtils.ParameterNameExpression(names)

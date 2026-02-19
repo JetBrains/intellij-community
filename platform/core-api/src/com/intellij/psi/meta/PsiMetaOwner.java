@@ -17,9 +17,6 @@ package com.intellij.psi.meta;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface PsiMetaOwner {
   @Nullable
   PsiMetaData getMetaData();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.debugger.extensions;
 
@@ -26,24 +12,38 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.text.DefaultCaret;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 
-public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListener, ListSelectionListener  {
+public final class FocusDebugger implements UiDebuggerExtension, PropertyChangeListener, ListSelectionListener  {
 
   private JComponent myComponent;
 
@@ -94,7 +94,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     return result;
   }
 
-  class ClearAction extends AnAction {
+  final class ClearAction extends AnAction {
   ClearAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.clear"),
           IdeBundle.messagePointer("action.AnAction.description.clear"), AllIcons.Actions.Close);
@@ -169,7 +169,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     return greyOut ? attr.derive(attr.getStyle(), JBColor.GRAY, attr.getBgColor(), attr.getWaveColor()) : attr;
   }
 
-  static class FocusElementRenderer extends ColoredListCellRenderer<FocusElement> {
+  static final class FocusElementRenderer extends ColoredListCellRenderer<FocusElement> {
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends FocusElement> list,
                                          FocusElement value,
@@ -186,7 +186,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     }
   }
 
-  static class FocusElement {
+  static final class FocusElement {
     private final SimpleColoredText myText;
     private final Throwable myAllocation;
 

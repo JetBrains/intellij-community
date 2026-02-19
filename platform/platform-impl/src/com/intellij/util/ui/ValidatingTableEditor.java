@@ -1,51 +1,67 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyText {
-
   private static final Icon WARNING_ICON = UIUtil.getBalloonWarningIcon();
   private static final Icon EMPTY_ICON = IconManager.getInstance().createEmptyIcon(WARNING_ICON);
-  @NonNls private static final String REMOVE_KEY = "REMOVE_SELECTED";
+  private static final @NonNls String REMOVE_KEY = "REMOVE_SELECTED";
 
   public interface RowHeightProvider {
     int getRowHeight();
   }
 
   public interface Fix extends Runnable {
-    @NlsContexts.LinkLabel String getTitle();
+    @NlsContexts.LinkLabel
+    String getTitle();
   }
 
-  private class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
+  private final class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
     private final ColumnInfo<Item, Object> myDelegate;
 
     ColumnInfoWrapper(ColumnInfo<Item, Object> delegate) {
@@ -90,19 +106,18 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     }
   }
 
-  private JPanel myContentPane;
+  private final JPanel myContentPane;
   private TableView<Item> myTable;
-  private final AnActionButton myRemoveButton;
-  private JLabel myMessageLabel;
-  private HoverHyperlinkLabel myFixLink;
-  private JPanel myTablePanel;
+  private final AnAction myRemoveButton;
+  private final JLabel myMessageLabel;
+  private final HoverHyperlinkLabel myFixLink;
+  private final JPanel myTablePanel;
   private final List<String> myWarnings = new ArrayList<>();
   private Fix myFixRunnable;
 
   protected abstract Item cloneOf(Item item);
 
-  @Nullable
-  protected Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
+  protected @Nullable Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
     String error = null;
     for (int i = 0; i < current.size(); i++) {
       Item item = current.get(i);
@@ -115,15 +130,13 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return error != null ? Pair.create(error, (Fix)null) : null;
   }
 
-  @Nullable
-  protected String validate(Item item) {
+  protected @Nullable String validate(Item item) {
     return null;
   }
 
-  @Nullable
-  protected abstract Item createItem();
+  protected abstract @Nullable Item createItem();
 
-  private class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
+  private final class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
     IconColumn() {
       super(" ");
     }
@@ -149,33 +162,66 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     }
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myTable.getEmptyText();
   }
 
-  private void createUIComponents() {
-    myTable = new ChangesTrackingTableView<Item>() {
-      @Override
-      protected void onCellValueChanged(int row, int column, Object value) {
-        final Item original = getItems().get(row);
-        Item override = cloneOf(original);
-        final ColumnInfo<Item, Object> columnInfo = getTableModel().getColumnInfos()[column];
-        columnInfo.setValue(override, value);
-        updateMessage(row, override);
-      }
-
-      @Override
-      protected void onEditingStopped() {
-        updateMessage(-1, null);
-      }
-    };
-
-    myFixLink = new HoverHyperlinkLabel(null);
+  public void setShowGrid(boolean v) {
+    myTable.setShowGrid(v);
   }
 
-  protected ValidatingTableEditor(AnActionButton @Nullable ... extraButtons) {
+  protected ValidatingTableEditor(AnAction @Nullable ... extraButtons) {
+    {
+      myTable = new ChangesTrackingTableView<>() {
+        @Override
+        protected void onCellValueChanged(int row, int column, Object value) {
+          Item original = getItems().get(row);
+          Item override = cloneOf(original);
+          ColumnInfo<Item, Object> columnInfo = getTableModel().getColumnInfos()[column];
+          columnInfo.setValue(override, value);
+          updateMessage(row, override);
+        }
+
+        @Override
+        protected void onEditingStopped() {
+          updateMessage(-1, null);
+        }
+      };
+
+      myFixLink = new HoverHyperlinkLabel(null);
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myContentPane = new JPanel();
+      myContentPane.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+      myContentPane.add(panel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      myMessageLabel = new JLabel();
+      myMessageLabel.setText("Label"); //NON-NLS
+      panel1.add(myMessageLabel,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      panel1.add(spacer1, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      myFixLink.setText("Fix"); //NON-NLS
+      panel1.add(myFixLink,
+                 new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTablePanel = new JPanel();
+      myTablePanel.setLayout(new BorderLayout(0, 0));
+      myContentPane.add(myTablePanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                          null, null, null, 0, false));
+    }
     ToolbarDecorator decorator =
       ToolbarDecorator.createDecorator(myTable).disableRemoveAction().disableUpAction().disableDownAction();
     decorator.setAddAction(new AnActionButtonRunnable() {
@@ -187,29 +233,32 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     });
 
 
-    myRemoveButton = new AnActionButton(ApplicationBundle.message("button.remove"), IconUtil.getRemoveIcon()) {
+    myRemoveButton = new DumbAwareAction(ApplicationBundle.message("button.remove"), null, IconUtil.getRemoveIcon()) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(myTable.getSelectedRow() != -1);
+      }
+
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeSelected();
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
-    myRemoveButton.setShortcut(CustomShortcutSet.fromString("alt DELETE")); //NON-NLS
+    myRemoveButton.setShortcutSet(CustomShortcutSet.fromString("alt DELETE"));
     decorator.addExtraAction(myRemoveButton);
 
-    if (extraButtons != null &&  extraButtons.length != 0) {
-      for (AnActionButton extraButton : extraButtons) {
+    if (extraButtons != null) {
+      for (AnAction extraButton : extraButtons) {
         decorator.addExtraAction(extraButton);
       }
     }
 
     myTablePanel.add(decorator.createPanel(), BorderLayout.CENTER);
-
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
 
     myTable.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), REMOVE_KEY);
     myTable.getActionMap().put(REMOVE_KEY, new AbstractAction() {
@@ -234,8 +283,10 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     this(null);
   }
 
-  @Nullable
-  public List<Item> getSelectedItems() {
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myContentPane; }
+
+  public @Nullable List<Item> getSelectedItems() {
     return myTable.getSelectedObjects();
   }
 
@@ -311,7 +362,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     List<Item> items = new ArrayList<>(getTableModel().getItems());
     if (myTable.isEditing()) {
       Object value = ChangesTrackingTableView.getValue(myTable.getEditorComponent());
-      ColumnInfo column = ((ListTableModel)myTable.getModel()).getColumnInfos()[myTable.getEditingColumn()];
+      ColumnInfo column = ((ListTableModel<?>)myTable.getModel()).getColumnInfos()[myTable.getEditingColumn()];
       ((ColumnInfoWrapper)column).myDelegate.setValue(items.get(myTable.getEditingRow()), value);
     }
     return items;
@@ -319,7 +370,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   private void setItems(List<? extends Item> items) {
     if (items.isEmpty()) {
-      getTableModel().setItems(Collections.emptyList());
+      getTableModel().setItems(new ArrayList<>());
       myWarnings.clear();
     }
     else {
@@ -329,15 +380,10 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
       }
       getTableModel().setItems(new ArrayList<>(items));
     }
-    updateButtons();
   }
 
   public void setTableHeader(JTableHeader header) {
     myTable.setTableHeader(header);
-  }
-
-  private void updateButtons() {
-    myRemoveButton.setEnabled(myTable.getSelectedRow() != -1);
   }
 
   public void updateMessage(int index, @Nullable Item override) {
@@ -377,17 +423,17 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
 
-  private static class WarningIconCellRenderer extends DefaultTableCellRenderer {
-    private final NullableComputable<@NlsContexts.HintText String> myWarningProvider;
+  private static final class WarningIconCellRenderer extends DefaultTableCellRenderer {
+    private final Supplier<@Nullable @NlsContexts.HintText String> warningProvider;
 
-    WarningIconCellRenderer(NullableComputable<@NlsContexts.HintText String> warningProvider) {
-      myWarningProvider = warningProvider;
+    WarningIconCellRenderer(Supplier<@Nullable @NlsContexts.HintText String> warningProvider) {
+      this.warningProvider = warningProvider;
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      String message = myWarningProvider.compute();
+      String message = warningProvider.get();
       label.setIcon(message != null ? WARNING_ICON : null);
       label.setToolTipText(message);
       label.setHorizontalAlignment(CENTER);

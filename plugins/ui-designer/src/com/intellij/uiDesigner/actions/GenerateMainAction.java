@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -14,7 +15,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -30,15 +36,18 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JFrame;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class GenerateMainAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(GenerateMainAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -83,7 +92,7 @@ public class GenerateMainAction extends AnAction {
       return;
     }
 
-    @NonNls final StringBuilder mainBuilder = new StringBuilder("public static void main(String[] args) { ");
+    final @NonNls StringBuilder mainBuilder = new StringBuilder("public static void main(String[] args) { ");
     final JavaCodeStyleManager csm = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo nameInfo = csm.suggestVariableName(VariableKind.LOCAL_VARIABLE, "frame", null, null);
     String varName = nameInfo.names [0];

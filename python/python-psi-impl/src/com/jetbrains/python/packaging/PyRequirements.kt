@@ -1,28 +1,62 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging
 
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 
 /**
  * This helper is not an API, consider using methods listed below.
  *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
+ * @see PyRequirementParser.fromLine
+ * @see PyRequirementParser.fromText
+ * @see PyRequirementParser.fromFile
+ */
+
+fun pyRequirement(
+  name: String,
+  versionSpecs: List<PyRequirementVersionSpec>,
+  extras: List<String>,
+): PyRequirement {
+  val extrasString = extras.joinToString(prefix = "[", postfix = "]", separator = ",") { it }
+  return PyRequirementImpl(name,
+                           versionSpecs,
+                           listOf(name),
+                           extrasString)
+}
+
+
+fun pyRequirement(
+  name: String,
+  versionSpec: PyRequirementVersionSpec? = null,
+): PyRequirement = PyRequirementImpl(name,
+                                     listOfNotNull(versionSpec),
+                                     listOf(name),
+                                     "")
+
+fun pyRequirement(
+  name: String,
+  versionSpec: PyRequirementVersionSpec?,
+  extras: String,
+): PyRequirement = PyRequirementImpl(name,
+                                     listOfNotNull(versionSpec),
+                                     listOf(name),
+                                     extras)
+
+/**
+ * This helper is not an API, consider using methods listed below.
  *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromFile
  */
-fun pyRequirement(name: String): PyRequirement = PyRequirementImpl(name, emptyList(), listOf(name), "")
+fun pyRequirement(name: String, relation: PyRequirementRelation, version: String): PyRequirement =
+  pyRequirement(name, relation, version, "")
+
 
 /**
  * This helper is not an API, consider using methods listed below.
  * If given version could not be normalized, then specified relation will be replaced with [PyRequirementRelation.STR_EQ].
- *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
  *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
@@ -30,9 +64,18 @@ fun pyRequirement(name: String): PyRequirement = PyRequirementImpl(name, emptyLi
  *
  * @see pyRequirementVersionSpec
  */
-fun pyRequirement(name: String, relation: PyRequirementRelation, version: String): PyRequirement {
+fun pyRequirement(name: String, relation: PyRequirementRelation, version: String, extras: String = ""): PyRequirement {
   val versionSpec = pyRequirementVersionSpec(relation, version)
-  return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), "")
+  return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), extras)
+}
+
+fun pyRequirementVersionSpec(relationWithVersion: @NlsSafe String): PyRequirementVersionSpec {
+  val value = relationWithVersion.trim()
+  val relation =
+    PyRequirementRelation.entries.lastOrNull { value.startsWith(it.presentableText) } ?: PyRequirementRelation.EQ
+
+  val version = value.removePrefix(relation.presentableText)
+  return pyRequirementVersionSpec(relation, version)
 }
 
 /**
@@ -64,9 +107,11 @@ fun pyRequirementVersionSpec(relation: PyRequirementRelation, version: PyPackage
 /**
  * Instances of this class MUST be obtained from [pyRequirementVersionSpec].
  */
-private data class PyRequirementVersionSpecImpl(private val relation: PyRequirementRelation,
-                                                private val parsedVersion: PyPackageVersion?,
-                                                private val version: String) : PyRequirementVersionSpec {
+private data class PyRequirementVersionSpecImpl(
+  private val relation: PyRequirementRelation,
+  private val parsedVersion: PyPackageVersion?,
+  private val version: String,
+) : PyRequirementVersionSpec {
 
   override fun getRelation() = relation
   override fun getVersion() = version
@@ -99,12 +144,11 @@ private data class PyRequirementVersionSpecImpl(private val relation: PyRequirem
                                         toEqPartOfCompatibleRelation(parsedVersion)).matches(version)
       }
       PyRequirementRelation.STR_EQ -> version == this.version
-      else -> false
     }
   }
 
   private fun splitIntoPublicAndLocalVersions(version: PyPackageVersion): Pair<String, String> {
-    return version.copy(local = null).presentableText to StringUtil.notNullize(version.local)
+    return version.copy(local = null).presentableText to (version.local ?: "")
   }
 
   private fun splitIntoPublicAndLocalVersions(version: String): Pair<String, String> {

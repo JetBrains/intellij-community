@@ -17,9 +17,6 @@
 package com.intellij.ide.highlighter.custom.tokens;
 
 
-/**
- * @author dsl
- */
 public abstract class TokenParser {
   protected CharSequence myBuffer;
   protected int myStartOffset;

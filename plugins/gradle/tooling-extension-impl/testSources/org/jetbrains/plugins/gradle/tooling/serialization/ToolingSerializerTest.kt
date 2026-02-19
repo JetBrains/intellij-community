@@ -1,7 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization
 
-import com.intellij.openapi.externalSystem.model.project.dependencies.*
+import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.DefaultGradleBuildScriptClasspathModel
+import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializer
+import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNodeImpl
+import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependenciesImpl
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependenciesImpl
+import com.intellij.openapi.externalSystem.model.project.dependencies.ReferenceNode
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
 import org.assertj.core.api.Assertions.assertThat
@@ -9,23 +15,32 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.util.GradleVersion
 import org.jeasy.random.EasyRandom
 import org.jeasy.random.EasyRandomParameters
-import org.jeasy.random.FieldPredicates.*
+import org.jeasy.random.FieldPredicates.inClass
+import org.jeasy.random.FieldPredicates.named
+import org.jeasy.random.FieldPredicates.ofType
 import org.jeasy.random.ObjectCreationException
 import org.jeasy.random.api.ObjectFactory
 import org.jeasy.random.api.Randomizer
 import org.jeasy.random.api.RandomizerContext
 import org.jeasy.random.util.CollectionUtils
 import org.jeasy.random.util.ReflectionUtils
+import org.jetbrains.plugins.gradle.model.ClasspathEntryModel
 import org.jetbrains.plugins.gradle.model.DefaultExternalProject
 import org.jetbrains.plugins.gradle.model.DefaultExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.DefaultGradleExtensions
 import org.jetbrains.plugins.gradle.model.ExternalTask
+import org.jetbrains.plugins.gradle.model.MavenRepositoryModel
 import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl
-import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl
-import org.jetbrains.plugins.gradle.tooling.internal.RepositoriesModelImpl
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*
+import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoryModels
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalGradleProject
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalGradleTask
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalIdeaContentRoot
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalIdeaDependencyScope
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalIdeaModule
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalIdeaProject
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
 import org.junit.Before
 import org.junit.Test
@@ -33,8 +48,11 @@ import org.objenesis.Objenesis
 import org.objenesis.ObjenesisStd
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.Collections
+import java.util.IdentityHashMap
+import java.util.TreeMap
 import java.util.function.Consumer
+import java.util.stream.Collectors
 import kotlin.random.Random
 
 /**
@@ -77,7 +95,15 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `build script classpath serialization test`() {
-    doTest(BuildScriptClasspathModelImpl::class.java)
+    myRandomParameters.randomize(DefaultGradleBuildScriptClasspathModel::class.java) {
+      val result = DefaultGradleBuildScriptClasspathModel()
+      result.gradleVersion = myRandom.nextObject(String::class.java)
+      myRandom.objects(ClasspathEntryModel::class.java, myRandom.nextInt(1, 10))
+        .forEach { result.add(it) }
+      return@randomize result
+    }
+    doTest(
+      DefaultGradleBuildScriptClasspathModel::class.java)
   }
 
   @Test
@@ -96,14 +122,20 @@ class ToolingSerializerTest {
 
   @Test
   @Throws(Exception::class)
-  fun `repositories model serialization test`() {
-    doTest(RepositoriesModelImpl::class.java)
+  fun `repository models serialization test`() {
+    myRandomParameters.randomize(DefaultRepositoryModels::class.java) {
+      DefaultRepositoryModels(myRandom
+                                .objects(MavenRepositoryModel::class.java, myRandom.nextInt(1, 10))
+                                .collect(Collectors.toList()))
+    }
+    doTest(DefaultRepositoryModels::class.java)
   }
 
   @Test
   @Throws(Exception::class)
   fun `IDEA project serialization test`() {
-    val gradleVersion = GradleVersion.version("5.5")
+    // do not assert GradleVersion.buildTime and GradleVersion.commitId properties of GradleVersionComparator.myVersion field
+    val gradleVersion = GradleVersion.version(GradleVersion.current().version)
     myRandomParameters
       .randomize(
         ofType(GradleVersionComparator::class.java).and(inClass(InternalIdeaContentRoot::class.java)),
@@ -115,12 +147,9 @@ class ToolingSerializerTest {
       )
       .excludeField(named("parent").and(ofType(InternalIdeaProject::class.java)).and(inClass(InternalIdeaModule::class.java)))
       .excludeField(named("parent").and(ofType(InternalGradleProject::class.java)).and(inClass(InternalGradleProject::class.java)))
-      // relax InternalBuildIdentifier.rootDir absolute path assertion
-      .randomize(File::class.java) { File(myRandom.nextObject(String::class.java)).absoluteFile }
       .excludeField(named("gradleProject").and(inClass(InternalGradleTask::class.java)))
 
     val serializer = ToolingSerializer()
-    serializer.register(IdeaProjectSerializationService(gradleVersion))
     doTest(InternalIdeaProject::class.java, Consumer { ideaProject ->
       val buildIdentifier = InternalBuildIdentifier(myRandom.nextObject(File::class.java))
       ideaProject.children.forEach { ideaModule ->
@@ -167,7 +196,7 @@ class ToolingSerializerTest {
     val testComponentDependencies = ComponentDependenciesImpl("test", testCompileDependencies, testRuntimeDependencies)
     projectDependencies.add(testComponentDependencies)
 
-    val bytes = ToolingSerializer().write(projectDependencies, ProjectDependenciesImpl::class.java)
+    val bytes = ToolingSerializer().write(projectDependencies)
     val deserializedObject = ToolingSerializer().read(bytes, ProjectDependenciesImpl::class.java)
 
     val deserializedMainNestedDependency = deserializedObject!!.componentsDependencies[0].runtimeDependenciesGraph.dependencies[0].dependencies[0]
@@ -193,7 +222,7 @@ class ToolingSerializerTest {
                          serializer: ToolingSerializer) {
     val generatedObject = myRandom.nextObject(modelClazz)
     generatedObjectPatcher?.accept(generatedObject)
-    val bytes = serializer.write(generatedObject as Any, modelClazz)
+    val bytes = serializer.write(generatedObject as Any)
     val deserializedObject = serializer.read(bytes, modelClazz)
     assertThat(deserializedObject).usingRecursiveComparison().isEqualTo(generatedObject)
   }
@@ -241,7 +270,6 @@ class ToolingSerializerTest {
         tasks[task.name] = task
       }
 
-      @Suppress("UNCHECKED_CAST")
       val projectMap = externalProject.childProjects as TreeMap<String, DefaultExternalProject>
       for (key in projectMap.keys.toList()) {
         val childProject = projectMap.remove(key)

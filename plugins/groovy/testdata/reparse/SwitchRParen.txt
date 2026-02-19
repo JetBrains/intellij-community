@@ -130,6 +130,6 @@ Groovy script
                     PsiElement())(')')
               PsiElement(new line)('\n    ')
               PsiElement(})('}')
-      PsiWhiteSpace('\n  ')
+      PsiElement(new line)('\n  ')
       PsiElement(})('}')
   PsiElement(new line)('\n')

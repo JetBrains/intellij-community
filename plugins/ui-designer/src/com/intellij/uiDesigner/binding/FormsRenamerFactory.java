@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.psi.PsiClass;
@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-public class FormsRenamerFactory implements AutomaticRenamerFactory {
+public final class FormsRenamerFactory implements AutomaticRenamerFactory {
   @Override
-  public boolean isApplicable(@NotNull final PsiElement element) {
+  public boolean isApplicable(final @NotNull PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(element.getProject(), (PsiClass)element);
-    return forms.size() > 0;
+    return !forms.isEmpty();
   }
 
   @Override
@@ -36,8 +36,7 @@ public class FormsRenamerFactory implements AutomaticRenamerFactory {
   }
 
   @Override
-  @NotNull
-  public AutomaticRenamer createRenamer(final PsiElement element, final String newName, final Collection<UsageInfo> usages) {
+  public @NotNull AutomaticRenamer createRenamer(final PsiElement element, final String newName, final Collection<UsageInfo> usages) {
     return new FormsRenamer((PsiClass) element, newName);
   }
 }

@@ -1,21 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware {
+@ApiStatus.Internal
+public final class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public QuickChangeSchemesAction() {
     myActionPlace = ActionPlaces.QUICK_SWITCH_SCHEME_POPUP;
   }
 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    final AnAction[] actions = getGroup().getChildren(null);
+    AnAction[] actions = getGroup().getChildren(ActionManager.getInstance());
     for (AnAction action : actions) {
       group.add(action);
     }
@@ -24,12 +32,6 @@ public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements
   @Override
   protected String getPopupTitle(@NotNull AnActionEvent e) {
     return IdeBundle.message("popup.title.switch");
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    super.actionPerformed(e);
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.scheme.quickswitch");
   }
 
   private static DefaultActionGroup getGroup() {

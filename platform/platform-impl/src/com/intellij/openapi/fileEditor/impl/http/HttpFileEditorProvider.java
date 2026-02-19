@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -13,33 +13,34 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
+final class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
-  public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public boolean accept(final @NotNull Project project, final @NotNull VirtualFile file) {
     return file instanceof HttpVirtualFile && !file.isDirectory();
   }
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public boolean acceptRequiresReadAction() {
+    return false;
+  }
+
+  @Override
+  public @NotNull FileEditor createEditor(final @NotNull Project project, final @NotNull VirtualFile file) {
     return new HttpFileEditor(project, (HttpVirtualFile)file);
   }
 
   @Override
-  @NotNull
-  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     return new TextEditorState();
   }
 
   @Override
-  @NotNull
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return "httpFileEditor";
   }
 
   @Override
-  @NotNull
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +15,6 @@ import java.io.StringWriter;
  * <p/>
  * This class allows to extract textual description of the target problem and deliver it for further processing without risking to 
  * get the problems mentioned above. I.e. it doesn't require anything specific can be safely delivered to ide process then.
- * 
- * @author Denis Zhdanov
  */
 public class ExternalSystemException extends RuntimeException {
 
@@ -23,8 +22,7 @@ public class ExternalSystemException extends RuntimeException {
   
   private final String myOriginalReason;
 
-  @NotNull
-  private final String[] myQuickFixes;
+  private final @NotNull String[] myQuickFixes;
   private boolean myCauseInitialized;
 
   public ExternalSystemException() {
@@ -54,12 +52,8 @@ public class ExternalSystemException extends RuntimeException {
     }
     
     StringWriter stringWriter = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(stringWriter);
-    try {
+    try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
       cause.printStackTrace(printWriter);
-    }
-    finally {
-      printWriter.close();
     }
     myOriginalReason = stringWriter.toString();
   }
@@ -67,13 +61,11 @@ public class ExternalSystemException extends RuntimeException {
   /**
    * @return    textual description of the wrapped exception (if any); empty string otherwise
    */
-  @NotNull
-  public String getOriginalReason() {
+  public @NotNull String getOriginalReason() {
     return myOriginalReason;
   }
 
-  @NotNull
-  public String[] getQuickFixes() {
+  public @NotNull String[] getQuickFixes() {
     return myQuickFixes;
   }
 
@@ -99,8 +91,7 @@ public class ExternalSystemException extends RuntimeException {
     return super.initCause(cause);
   }
 
-  @Nullable
-  private static String extractMessage(@Nullable String message, @Nullable Throwable cause) {
+  private static @NotNull String extractMessage(@Nullable String message, @Nullable Throwable cause) {
     StringBuilder buffer = new StringBuilder();
     if (message != null) {
       buffer.append(message);
@@ -114,6 +105,10 @@ public class ExternalSystemException extends RuntimeException {
       }
       if (first) {
         first = false;
+        // do not append same exception.message twice
+        if (m.equals(message)) {
+          continue;
+        }
       }
       else if (buffer.length() > 0) {
         buffer.append("\n");

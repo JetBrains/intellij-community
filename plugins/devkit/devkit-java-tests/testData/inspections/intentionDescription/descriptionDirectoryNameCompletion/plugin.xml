@@ -1,0 +1,9 @@
+<idea-plugin>
+  <id>com.intellij.example</id>
+  <extensions defaultExtensionNs="com.intellij">
+    <intentionAction>
+      <className>MyIntentionAction</className>
+      <descriptionDirectoryName><caret></descriptionDirectoryName>
+    </intentionAction>
+  </extensions>
+</idea-plugin>

@@ -1,34 +1,26 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.ClassTypePointerFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiClassReferenceTypePointerFactory implements ClassTypePointerFactory {
+public final class PsiClassReferenceTypePointerFactory implements ClassTypePointerFactory {
   private static final Logger LOG = Logger.getInstance(PsiClassReferenceTypePointerFactory.class);
 
-  @Nullable
   @Override
-  public SmartTypePointer createClassTypePointer(@NotNull PsiClassType classType, @NotNull Project project) {
+  public @Nullable SmartTypePointer createClassTypePointer(@NotNull PsiClassType classType, @NotNull Project project) {
     if (classType instanceof PsiClassReferenceType) {
       return new ClassReferenceTypePointer((PsiClassReferenceType)classType, project);
     }
@@ -37,7 +29,7 @@ public class PsiClassReferenceTypePointerFactory implements ClassTypePointerFact
   }
 
   private static class ClassReferenceTypePointer extends TypePointerBase<PsiClassReferenceType> {
-    private final SmartPsiElementPointer mySmartPsiElementPointer;
+    private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> mySmartPsiElementPointer;
     private final String myReferenceText;
     private final Project myProject;
 
@@ -53,7 +45,7 @@ public class PsiClassReferenceTypePointerFactory implements ClassTypePointerFact
     @Override
     protected PsiClassReferenceType calcType() {
       PsiClassReferenceType myType = null;
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)mySmartPsiElementPointer.getElement();
+      final PsiJavaCodeReferenceElement referenceElement = mySmartPsiElementPointer.getElement();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
       if (referenceElement != null) {
         myType = (PsiClassReferenceType)factory.createType(referenceElement);

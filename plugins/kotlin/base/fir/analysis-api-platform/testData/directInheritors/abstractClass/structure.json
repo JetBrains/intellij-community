@@ -1,0 +1,8 @@
+{
+    "modules": [
+        { "name": "main" }
+    ],
+    "targets": [
+        { "module": "main", "file": "main.kt" }
+    ]
+}

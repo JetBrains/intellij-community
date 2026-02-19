@@ -1,9 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.SpeedSearchFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
@@ -14,14 +18,12 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchFilter<ComponentItem> {
   private final ArrayList<ComponentItem> myItems = new ArrayList<>();
   private final ComponentItem myInitialSelection;
@@ -45,8 +47,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   }
 
   @Override
-  @NotNull
-  public List<ComponentItem> getValues() {
+  public @NotNull List<ComponentItem> getValues() {
     return myItems;
   }
 
@@ -61,8 +62,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   }
 
   @Override
-  @NotNull
-  public String getTextFor(final ComponentItem value) {
+  public @NotNull String getTextFor(final ComponentItem value) {
     if (value.isAnyComponent()) {
       return UIDesignerBundle.message("palette.non.palette.component");
     }
@@ -91,7 +91,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   }
 
   @Override
-  public PopupStep onChosen(final ComponentItem selectedValue, final boolean finalChoice) {
+  public PopupStep<?> onChosen(final ComponentItem selectedValue, final boolean finalChoice) {
     myFinalRunnable = () -> myRunnable.process(selectedValue);
     return PopupStep.FINAL_CHOICE;
   }

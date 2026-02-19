@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -38,10 +38,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-import javax.swing.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -69,7 +77,7 @@ public final class MethodOrClosureScopeChooser {
                                final PairFunction<? super GrParameterListOwner, ? super PsiElement, Object> callback) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JCheckBox superMethod = new JCheckBox(GroovyBundle.message("change.base.method.label"), true);
-    superMethod.setMnemonic('U');
+    superMethod.setMnemonic(KeyEvent.VK_U);
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList list = new JBList(scopes.toArray());
     list.setVisibleRowCount(5);
@@ -79,8 +87,7 @@ public final class MethodOrClosureScopeChooser {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
         final String text;
-        if (value instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)value;
+        if (value instanceof PsiMethod method) {
           text = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
                                             PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                             PsiFormatUtilBase.SHOW_NAME |
@@ -128,8 +135,7 @@ public final class MethodOrClosureScopeChooser {
 
 
           final PsiElement toSearchFor;
-          if (ToSearchIn instanceof GrMethod) {
-            final GrMethod method = (GrMethod)ToSearchIn;
+          if (ToSearchIn instanceof GrMethod method) {
             toSearchFor = superMethod.isEnabled() && superMethod.isSelected() ? method.findDeepestSuperMethod() : method;
           }
           else {
@@ -175,8 +181,7 @@ public final class MethodOrClosureScopeChooser {
     }
   }
 
-  @Nullable
-  public static GrVariable findVariableToUse(@NotNull GrParameterListOwner owner) {
+  public static @Nullable GrVariable findVariableToUse(@NotNull GrParameterListOwner owner) {
     final PsiElement parent = owner.getParent();
     if (parent instanceof GrVariable) return (GrVariable)parent;
     if (parent instanceof GrAssignmentExpression &&

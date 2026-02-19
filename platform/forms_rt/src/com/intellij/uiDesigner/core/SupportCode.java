@@ -1,12 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.lang.reflect.Method;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class SupportCode {
   /**
    * Parses text that might contain mnemonic and returns structure which contains

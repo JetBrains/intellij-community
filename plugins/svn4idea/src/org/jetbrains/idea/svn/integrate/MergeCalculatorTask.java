@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,12 +29,12 @@ public class MergeCalculatorTask extends BaseMergeTask {
   private static final Logger LOG = Logger.getInstance(MergeCalculatorTask.class);
 
   public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
-  private final static int BUNCH_SIZE = 100;
+  private static final int BUNCH_SIZE = 100;
 
-  @Nullable private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
-  @NotNull private final OneShotMergeInfoHelper myMergeChecker;
-  @NotNull private final List<SvnChangeList> myChangeLists;
-  @NotNull private final Consumer<MergeCalculatorTask> myCallback;
+  private final @Nullable SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+  private final @NotNull OneShotMergeInfoHelper myMergeChecker;
+  private final @NotNull List<SvnChangeList> myChangeLists;
+  private final @NotNull Consumer<MergeCalculatorTask> myCallback;
   private boolean myAllListsLoaded;
 
   public MergeCalculatorTask(@NotNull QuickMerge mergeProcess,
@@ -54,13 +54,11 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return myAllListsLoaded;
   }
 
-  @NotNull
-  public MergeChecker getMergeChecker() {
+  public @NotNull MergeChecker getMergeChecker() {
     return myMergeChecker;
   }
 
-  @NotNull
-  public List<SvnChangeList> getChangeLists() {
+  public @NotNull List<SvnChangeList> getChangeLists() {
     return myChangeLists;
   }
 
@@ -90,8 +88,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
     }
   }
 
-  @NotNull
-  private List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsAfter(long revision) throws VcsException {
+  private @NotNull List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsAfter(long revision) throws VcsException {
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
     settings.CHANGE_AFTER = Long.toString(revision);
     settings.USE_CHANGE_AFTER_FILTER = true;
@@ -99,8 +96,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return getChangeLists(myMergeContext, settings, revision, -1, Pair::create);
   }
 
-  @NotNull
-  private List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
+  private @NotNull List<SvnChangeList> getNotMergedChangeLists(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
     List<SvnChangeList> result = new ArrayList<>();
 
     progress(message("progress.text.collecting.not.merged.revisions"));
@@ -116,8 +112,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return result;
   }
 
-  @NotNull
-  public static Pair<List<SvnChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
+  public static @NotNull Pair<List<SvnChangeList>, Boolean> loadChangeLists(@NotNull MergeContext mergeContext, long beforeRevision, int size)
     throws VcsException {
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
     if (beforeRevision > 0) {
@@ -137,12 +132,11 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return configuredSize != null ? configuredSize : size > 0 ? size : BUNCH_SIZE;
   }
 
-  @NotNull
-  private static <T> List<T> getChangeLists(@NotNull MergeContext mergeContext,
-                                            @NotNull ChangeBrowserSettings settings,
-                                            long revisionToExclude,
-                                            int size,
-                                            @NotNull PairFunction<SvnChangeList, LogHierarchyNode, T> resultProvider) throws VcsException {
+  private static @NotNull <T> List<T> getChangeLists(@NotNull MergeContext mergeContext,
+                                                     @NotNull ChangeBrowserSettings settings,
+                                                     long revisionToExclude,
+                                                     int size,
+                                                     @NotNull PairFunction<SvnChangeList, LogHierarchyNode, T> resultProvider) throws VcsException {
     List<T> result = new ArrayList<>();
 
     ((SvnCommittedChangesProvider)mergeContext.getVcs().getCommittedChangesProvider())

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class ProductionModuleOutputElementType extends ModuleOutputElementTypeBase<ProductionModuleOutputPackagingElement> {
   public static final ProductionModuleOutputElementType ELEMENT_TYPE = new ProductionModuleOutputElementType();
@@ -19,8 +19,7 @@ public final class ProductionModuleOutputElementType extends ModuleOutputElement
   }
 
   @Override
-  @NotNull
-  public ProductionModuleOutputPackagingElement createEmpty(@NotNull Project project) {
+  public @NotNull ProductionModuleOutputPackagingElement createEmpty(@NotNull Project project) {
     return new ProductionModuleOutputPackagingElement(project);
   }
 
@@ -32,12 +31,6 @@ public final class ProductionModuleOutputElementType extends ModuleOutputElement
   @Override
   public Icon getCreateElementIcon() {
     return AllIcons.Nodes.Module;
-  }
-
-  @NotNull
-  @Override
-  public String getElementText(@NotNull String moduleName) {
-    return JavaCompilerBundle.message("node.text.0.compile.output", moduleName);
   }
 
   @Override

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -12,10 +13,9 @@ import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
-@SuppressWarnings("ComponentNotRegistered")
 public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
   private final Supplier<? extends FileTemplate> myTemplate;
 
@@ -45,8 +45,12 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     presentation.setEnabledAndVisible(isEnabled);
   }
 
-  @NotNull
-  public FileTemplate getTemplate() {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  public @NotNull FileTemplate getTemplate() {
     return myTemplate.get();
   }
 }

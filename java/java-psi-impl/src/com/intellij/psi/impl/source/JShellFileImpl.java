@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.highlighter.JShellFileType;
@@ -6,31 +6,37 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JShellLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.JShellElementType;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEmptyStatement;
+import com.intellij.psi.PsiJShellFile;
+import com.intellij.psi.PsiJShellHolderMethod;
+import com.intellij.psi.PsiJShellRootClass;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.lang.java.JShellParserDefinition.FILE_ELEMENT_TYPE;
+
 /**
  * @author Eugene Zhuravlev
  */
 public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile {
   public JShellFileImpl(FileViewProvider viewProvider) {
-    super(JShellElementType.FILE, JShellElementType.FILE, viewProvider);
+    super(FILE_ELEMENT_TYPE, FILE_ELEMENT_TYPE, viewProvider);
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JShellLanguage.INSTANCE;
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return JShellFileType.INSTANCE;
   }
 
@@ -41,7 +47,7 @@ public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile
 
   @Override
   public Collection<PsiElement> getExecutableSnippets() {
-    final List<PsiElement> result = new SmartList<>();
+    List<PsiElement> result = new SmartList<>();
     collectExecutableSnippets(this, result);
     return result;
   }

@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.MessageEvent.Kind.*
+import com.intellij.build.events.MessageEvent.Kind.ERROR
+import com.intellij.build.events.MessageEvent.Kind.INFO
+import com.intellij.build.events.MessageEvent.Kind.WARNING
 import com.intellij.build.events.impl.MessageEventImpl
 import org.junit.Assert
 import org.junit.Test
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Collections
 
 class BuildOutputInstantReaderImplTest {
 
@@ -44,7 +45,7 @@ class BuildOutputInstantReaderImplTest {
     val predicate: (String) -> Boolean = { it.startsWith("[warning]") }
     val parser = BuildOutputParser { line, reader, c ->
       var next: String? = line
-      var count = 0;
+      var count = 0
       while (next != null) {
         if (predicate(next)) {
           count++
@@ -52,7 +53,7 @@ class BuildOutputInstantReaderImplTest {
         }
         else {
           if (count != 0) {
-            c.accept(MessageEventImpl(Object(), WARNING, "test", "lines of warns:" + count, null))
+            c.accept(MessageEventImpl(Object(), WARNING, "test", "lines of warns:$count", null))
             reader.pushBack()
             return@BuildOutputParser true
           }
@@ -75,8 +76,8 @@ class BuildOutputInstantReaderImplTest {
                                                     listOf(parser, createParser("[error]", ERROR)), pushBackBufferSize)
 
     val inputData = buildString {
-      appendln("[warning] this is a warning\n".repeat(80))
-      appendln("[error] error1\n")
+      appendLine("[warning] this is a warning\n".repeat(80))
+      appendLine("[error] error1\n")
     }
 
     outputReader.append(inputData).closeAndGetFuture().get()
@@ -134,7 +135,7 @@ class BuildOutputInstantReaderImplTest {
     val lines = (0..5).map(::line)
     val outputReader = BuildOutputInstantReaderImpl(Object(), Object(), BuildProgressListener { _, _ -> }, listOf(slowParser), 0, 1)
     lines.forEach {
-      outputReader.appendln(it)
+      outputReader.appendLine(it)
       eventLog += it.appended()
     }
     outputReader.closeAndGetFuture().get()
@@ -185,14 +186,14 @@ class BuildOutputInstantReaderImplTest {
       """.trimIndent()
       val inputData = buildString {
         trashOut.joinTo(this, "\n", postfix = "\n")
-        appendln(errLines)
-        appendln()
-        appendln(infoLines)
-        appendln()
-        appendln(infoLines) /* checks that duplicate messages are not sent */
-        appendln()
+        appendLine(errLines)
+        appendLine()
+        appendLine(infoLines)
+        appendLine()
+        appendLine(infoLines) /* checks that duplicate messages are not sent */
+        appendLine()
         trashOut.joinTo(this, "\n", postfix = "\n")
-        appendln(warnLines)
+        appendLine(warnLines)
       }
       outputReader.append(inputData).closeAndGetFuture().get()
 
@@ -217,7 +218,7 @@ class BuildOutputInstantReaderImplTest {
           val buf = StringBuilder()
           var nextLine: String? = line.dropWhile { !it.isWhitespace() }.trimStart()
           while (!nextLine.isNullOrBlank() && !nextLine.startsWith('[')) {
-            buf.appendln(nextLine)
+            buf.appendLine(nextLine)
             nextLine = reader.readLine()
           }
           messageConsumer.accept(MessageEventImpl(reader.parentEventId, kind, null, buf.toString().dropLast(1), null))

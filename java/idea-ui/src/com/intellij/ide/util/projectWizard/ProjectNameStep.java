@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -15,8 +17,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.io.File;
 import java.util.List;
 
@@ -71,7 +78,7 @@ public final class ProjectNameStep extends ModuleWizardStep {
     if (name == null) {
       List<String> components = StringUtil.split(FileUtil.toSystemIndependentName(myWizardContext.getProjectFileDirectory()), "/");
       if (!components.isEmpty()) {
-        name = components.get(components.size()-1);
+        name = components.getLast();
       }
     }
     myNamePathComponent.setNameValue(name);
@@ -95,13 +102,13 @@ public final class ProjectNameStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     String name = myNamePathComponent.getNameValue();
-    if (name.length() == 0) {
+    if (name.isEmpty()) {
       ApplicationNamesInfo info = ApplicationNamesInfo.getInstance();
       throw new ConfigurationException(JavaUiBundle.message("prompt.new.project.file.name", info.getFullProductName(), myWizardContext.getPresentationName()));
     }
 
     final String projectFileDirectory = getProjectFileDirectory();
-    if (projectFileDirectory.length() == 0) {
+    if (projectFileDirectory.isEmpty()) {
       throw new ConfigurationException(JavaUiBundle.message("prompt.enter.project.file.location", myWizardContext.getPresentationName()));
     }
 
@@ -118,13 +125,13 @@ public final class ProjectNameStep extends ModuleWizardStep {
     final File projectFile = new File(path);
     if (projectFile.exists()) {
       final String title = myWizardContext.isCreatingNewProject()
-                           ? IdeBundle.message("title.new.project")
-                           : IdeBundle.message("title.add.module");
+                           ? IdeCoreBundle.message("title.new.project")
+                           : IdeCoreBundle.message("title.add.module");
       final String message = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
                              ? JavaUiBundle.message("prompt.overwrite.project.folder",
                                                  Project.DIRECTORY_STORE_FOLDER, projectFile.getParentFile().getAbsolutePath())
-                             : JavaUiBundle.message("prompt.overwrite.project.file",
-                                                 projectFile.getAbsolutePath(), myWizardContext.getPresentationName());
+                             : CoreBundle.message("prompt.overwrite.project.file",
+                                                  projectFile.getAbsolutePath(), myWizardContext.getPresentationName());
       int answer = MessageDialogBuilder.yesNo(title, message).show();
       shouldContinue = answer == Messages.YES;
     }
@@ -132,8 +139,7 @@ public final class ProjectNameStep extends ModuleWizardStep {
     return shouldContinue;
   }
 
-  @NonNls
-  public String getProjectFilePath() {
+  public @NonNls String getProjectFilePath() {
     return getProjectFileDirectory() + "/" + myNamePathComponent.getNameValue()/*myTfProjectName.getText().trim()*/ +
       (myWizardContext.getProject() == null ? ProjectFileType.DOT_DEFAULT_EXTENSION : ModuleFileType.DOT_DEFAULT_EXTENSION);
   }

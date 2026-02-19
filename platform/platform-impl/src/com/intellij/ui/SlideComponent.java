@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -7,11 +7,22 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
@@ -19,10 +30,9 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 /**
- * @author Alexey Pegov
  * @author Konstantin Bulenkov
  */
-class SlideComponent extends JComponent {
+final class SlideComponent extends JComponent {
   private static final int OFFSET = 11;
   private int myPointerValue = 0;
   private int myValue = 0;
@@ -126,9 +136,9 @@ class SlideComponent extends JComponent {
 
       final HintHint hint = new HintHint(this, point)
         .setPreferredPosition(myVertical ? Balloon.Position.atLeft : Balloon.Position.above)
-        .setBorderColor(Color.BLACK)
+        .setBorderColor(HintUtil.getHintBorderColor())
         .setAwtTooltip(true)
-        .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+        .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
         .setTextBg(HintUtil.getInformationColor())
         .setShowImmediately(true);
 
@@ -204,7 +214,7 @@ class SlideComponent extends JComponent {
   }
 
   @Override
-  public final void setToolTipText(String text) {
+  public void setToolTipText(String text) {
     //disable tooltips
   }
 

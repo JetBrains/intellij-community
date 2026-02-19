@@ -1,24 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
-public class SelectionModelImpl implements SelectionModel {
+import static com.intellij.ui.ColorUtil.desaturate;
+
+//@ApiStatus.Internal
+public final class SelectionModelImpl implements SelectionModel {
   private static final Logger LOG = Logger.getInstance(SelectionModelImpl.class);
 
   private final List<SelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -26,6 +36,7 @@ public class SelectionModelImpl implements SelectionModel {
 
   private TextAttributes myTextAttributes;
 
+  @ApiStatus.Internal
   public SelectionModelImpl(EditorImpl editor) {
     myEditor = editor;
   }
@@ -33,6 +44,7 @@ public class SelectionModelImpl implements SelectionModel {
   /**
    * @see CaretImpl#setUnknownDirection(boolean)
    */
+  @ApiStatus.Internal
   public boolean isUnknownDirection() {
     return myEditor.getCaretModel().getCurrentCaret().isUnknownDirection();
   }
@@ -40,6 +52,7 @@ public class SelectionModelImpl implements SelectionModel {
   /**
    * @see CaretImpl#setUnknownDirection(boolean)
    */
+  @ApiStatus.Internal
   public void setUnknownDirection(boolean unknownDirection) {
     myEditor.getCaretModel().getCurrentCaret().setUnknownDirection(unknownDirection);
   }
@@ -119,27 +132,7 @@ public class SelectionModelImpl implements SelectionModel {
   @Override
   public void removeSelectionListener(@NotNull SelectionListener listener) {
     boolean success = mySelectionListeners.remove(listener);
-    LOG.assertTrue(success);
-  }
-
-  public static void doSelectLineAtCaret(Caret caret) {
-    Editor editor = caret.getEditor();
-    int lineNumber = caret.getLogicalPosition().line;
-    Document document = editor.getDocument();
-    if (lineNumber >= document.getLineCount()) {
-      return;
-    }
-
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(caret);
-    LogicalPosition lineStart = lines.first;
-    LogicalPosition nextLineStart = lines.second;
-
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = editor.logicalPositionToOffset(nextLineStart);
-
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    caret.removeSelection();
-    caret.setSelection(start, end);
+    LOG.assertTrue(success, "Failed to remove listener: " + listener + "from editor: " + myEditor);
   }
 
   @Override
@@ -153,13 +146,24 @@ public class SelectionModelImpl implements SelectionModel {
       TextAttributes textAttributes = new TextAttributes();
       EditorColorsScheme scheme = myEditor.getColorsScheme();
       textAttributes.setForegroundColor(scheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR));
-      textAttributes.setBackgroundColor(scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR));
+
+      var backgroundColor = scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
+      if (backgroundColor == null || myEditor.isInFocus()) {
+        textAttributes.setBackgroundColor(backgroundColor);
+      } else {
+        var inactiveColor = scheme.getColor(EditorColors.INACTIVE_SELECTION_BACKGROUND_COLOR);
+        textAttributes.setBackgroundColor(
+          inactiveColor != null ? inactiveColor :
+          ColorUtil.mix(myEditor.getBackgroundColor(), desaturate(backgroundColor, 2), 0.3)
+        );
+      }
       myTextAttributes = textAttributes;
     }
 
     return myTextAttributes;
   }
 
+  @ApiStatus.Internal
   public void reinitSettings() {
     myTextAttributes = null;
   }

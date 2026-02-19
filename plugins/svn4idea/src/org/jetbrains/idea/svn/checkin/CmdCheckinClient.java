@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -13,17 +13,27 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.Command;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,15 +55,18 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return runCommit(paths, message);
   }
 
-  private CommitInfo @NotNull [] runCommit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
+  private CommitInfo @NotNull [] runCommit(@NotNull @Unmodifiable List<File> paths, @NotNull String message) throws VcsException {
     if (ContainerUtil.isEmpty(paths)) return new CommitInfo[]{CommitInfo.EMPTY};
 
     Command command = newCommand(SvnCommandName.ci);
 
     command.put(Depth.EMPTY);
+    if (SvnConfiguration.getInstance(myVcs.getProject()).isKeepLocks()) {
+      command.put("--no-unlock");
+    }
     command.put("-m", message);
     // TODO: seems that sort is not necessary here
-    ContainerUtil.sort(paths);
+    paths = ContainerUtil.sorted(paths);
     command.setTargets(paths);
 
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
@@ -75,8 +88,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return revision;
   }
 
-  @NotNull
-  private List<File> filterCommittables(@NotNull List<File> committables) throws SvnBindException {
+  private @NotNull List<File> filterCommittables(@NotNull List<File> committables) throws SvnBindException {
     final Set<String> childrenOfSomebody = new HashSet<>();
     new AbstractFilterChildren<File>() {
       @Override
@@ -131,7 +143,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     private static final String PATH = "\\s*(.*?)\\s*";
     private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + OPTIONAL_FILE_TYPE + PATH);
 
-    @Nullable private final CommitEventHandler myHandler;
+    private final @Nullable CommitEventHandler myHandler;
     private SvnBindException myException;
     private long myCommittedRevision = INVALID_REVISION_NUMBER;
     private File myBase;
@@ -204,7 +216,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
           num.append(substring.charAt(cnt));
           ++ cnt;
         }
-        if (num.length() > 0) {
+        if (!num.isEmpty()) {
           try {
             myCommittedRevision = Long.parseLong(num.toString());
             if (myHandler != null) {
@@ -235,8 +247,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
       }
     }
 
-    @NotNull
-    private File toFile(@NotNull String path) {
+    private @NotNull File toFile(@NotNull String path) {
       return SvnUtil.resolvePath(myBase, path);
     }
   }

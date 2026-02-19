@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="lucene-memory" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-memory:10.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/10.3.0/lucene-memory-10.3.0.jar">
+          <sha256sum>ea77d0b2eb0b3e1f7fa04f2fbe671f5af3ae836cc40320411e195bdc9421f17b</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/10.3.0/lucene-memory-10.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/10.3.0/lucene-memory-10.3.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/10.3.0/lucene-memory-10.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

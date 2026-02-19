@@ -15,6 +15,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class VcsCloneComponentStub(
+  private val project: Project,
   private val checkoutProvider: CheckoutProvider,
   @Nls private val primaryActionText: String = VcsBundle.message("clone.dialog.clone.button")
 ) : VcsCloneComponent {
@@ -29,13 +30,14 @@ class VcsCloneComponentStub(
     return panel
   }
 
-  override fun doClone(project: Project, listener: CheckoutProvider.Listener) = checkoutProvider.doCheckout(project, listener)
+  @Suppress("DEPRECATION")
+  override fun doClone(listener: CheckoutProvider.Listener): Unit = checkoutProvider.doCheckout(project, listener)
 
-  override fun isOkEnabled() = true
+  override fun isOkEnabled(): Boolean = true
 
-  override fun doValidateAll() = emptyList<ValidationInfo>()
+  override fun doValidateAll(): List<ValidationInfo> = emptyList<ValidationInfo>()
 
-  override fun getOkButtonText() = primaryActionText
+  override fun getOkButtonText(): String = primaryActionText
 
   override fun getPreferredFocusedComponent(): JComponent? {
     // TODO: implement obtaining focus for GitHub

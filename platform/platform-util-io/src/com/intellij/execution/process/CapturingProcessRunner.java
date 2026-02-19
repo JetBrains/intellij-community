@@ -1,31 +1,41 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
 public class CapturingProcessRunner {
-  @NotNull private static final Logger LOG = Logger.getInstance(CapturingProcessRunner.class);
+  private static final @NotNull Logger LOG = Logger.getInstance(CapturingProcessRunner.class);
 
-  @NotNull private final ProcessOutput myOutput;
-  @NotNull private final BaseProcessHandler<?> myProcessHandler;
+  private final @NotNull ProcessOutput myOutput;
+  private final @NotNull ProcessHandler myProcessHandler;
 
   public CapturingProcessRunner(@NotNull BaseProcessHandler<?> processHandler) {
-    this(processHandler, processOutput -> new CapturingProcessAdapter(processOutput));
+    this((ProcessHandler)processHandler);
   }
 
   public CapturingProcessRunner(@NotNull BaseProcessHandler<?> processHandler,
-                                @NotNull Function<? super ProcessOutput, ? extends ProcessAdapter> processAdapterProducer) {
-    myOutput = new ProcessOutput();
-    myProcessHandler = processHandler;
-    myProcessHandler.addProcessListener(processAdapterProducer.apply(myOutput));
+                                @NotNull Function<? super ProcessOutput, ? extends ProcessListener> processListenerProducer) {
+    this((ProcessHandler)processHandler, processListenerProducer);
   }
 
-  @NotNull
-  public ProcessOutput runProcess() {
+  public CapturingProcessRunner(@NotNull ProcessHandler processHandler) {
+    this(processHandler, processOutput -> new CapturingProcessAdapter(processOutput));
+  }
+
+  public CapturingProcessRunner(@NotNull ProcessHandler processHandler,
+                                @NotNull Function<? super ProcessOutput, ? extends ProcessListener> processListenerProducer) {
+    myOutput = new ProcessOutput();
+    myProcessHandler = processHandler;
+    myProcessHandler.addProcessListener(processListenerProducer.apply(myOutput));
+  }
+
+  @RequiresBackgroundThread(generateAssertion = false)
+  public final @NotNull ProcessOutput runProcess() {
     myProcessHandler.startNotify();
     if (myProcessHandler.waitFor()) {
       setErrorCodeIfNotYetSet();
@@ -36,13 +46,13 @@ public class CapturingProcessRunner {
     return myOutput;
   }
 
-  @NotNull
-  public ProcessOutput runProcess(int timeoutInMilliseconds) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public @NotNull ProcessOutput runProcess(int timeoutInMilliseconds) {
     return runProcess(timeoutInMilliseconds, true);
   }
 
-  @NotNull
-  public ProcessOutput runProcess(int timeoutInMilliseconds, boolean destroyOnTimeout) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public @NotNull ProcessOutput runProcess(int timeoutInMilliseconds, boolean destroyOnTimeout) {
     // keep in sync with runProcessWithProgressIndicator
     if (timeoutInMilliseconds <= 0) {
       return runProcess();
@@ -62,20 +72,17 @@ public class CapturingProcessRunner {
     }
   }
 
-  @NotNull
-  public ProcessOutput runProcess(@NotNull ProgressIndicator indicator) {
+  public @NotNull ProcessOutput runProcess(@NotNull ProgressIndicator indicator) {
     return runProcess(indicator, -1);
   }
 
-  @NotNull
-  public ProcessOutput runProcess(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
+  public @NotNull ProcessOutput runProcess(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
     return runProcess(indicator, timeoutInMilliseconds, true);
   }
 
-  @NotNull
-  public ProcessOutput runProcess(@NotNull ProgressIndicator indicator,
-                                  int timeoutInMilliseconds,
-                                  boolean destroyOnTimeout) {
+  public @NotNull ProcessOutput runProcess(@NotNull ProgressIndicator indicator,
+                                           int timeoutInMilliseconds,
+                                           boolean destroyOnTimeout) {
     // keep in sync with runProcess
     if (timeoutInMilliseconds <= 0) {
       timeoutInMilliseconds = Integer.MAX_VALUE;
@@ -120,11 +127,22 @@ public class CapturingProcessRunner {
     return myOutput;
   }
 
+  public void destroyProcess() {
+    if (!myProcessHandler.isStartNotified()) {
+      myProcessHandler.startNotify();
+    }
+    // This check mainly avoids warnings about processes that were already terminated.
+    // The process status might still change after the check, but that should be harmless.
+    if (!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated()) {
+      myProcessHandler.destroyProcess();
+    }
+  }
+
   private void setErrorCodeIfNotYetSet() {
     // if exit code was set on processTerminated, no need to rewrite it
     // WinPtyProcess returns -2 if pty is already closed
-    if (!myOutput.isExitCodeSet()) {
-      myOutput.setExitCode(myProcessHandler.getProcess().exitValue());
+    if (!myOutput.isExitCodeSet() && myProcessHandler instanceof BaseProcessHandler) {
+      myOutput.setExitCode(((BaseProcessHandler<?>)myProcessHandler).getProcess().exitValue());
     }
   }
 }

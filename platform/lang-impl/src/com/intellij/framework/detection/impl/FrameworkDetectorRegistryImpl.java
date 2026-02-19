@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.FrameworkType;
@@ -10,14 +10,21 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+@ApiStatus.Internal
 public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry implements Disposable {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectorRegistryImpl.class);
 
-  private volatile Map<String, FrameworkDetector> myDetectorById;
+  private volatile Map<String, FrameworkDetector> myDetectorsById;
   private volatile MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> myDetectorsMap;
   private volatile MultiMap<FileType, String> myDetectorsByFileType;
   private volatile FileType[] myAcceptedTypes;
@@ -25,8 +32,8 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
 
   private final Object myInitializationLock = new Object();
 
-  public FrameworkDetectorRegistryImpl() {
-    FrameworkDetector.EP_NAME.addChangeListener(() -> onDetectorsChanged(), this);
+  public FrameworkDetectorRegistryImpl(@NotNull CoroutineScope coroutineScope) {
+    FrameworkDetector.EP_NAME.addChangeListener(coroutineScope, this::onDetectorsChanged);
   }
 
   private synchronized void ensureDetectorsLoaded() {
@@ -40,12 +47,12 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
   }
 
   private void loadDetectors() {
-    myDetectorById = new HashMap<>();
+    myDetectorsById = new HashMap<>();
     myDetectorsByFileType = new MultiMap<>();
     myDetectorsMap = new MultiMap<>();
 
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
-      myDetectorById.put(detector.getDetectorId(), detector);
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
+      myDetectorsById.put(detector.getDetectorId(), detector);
       myDetectorsByFileType.putValue(detector.getFileType(), detector.getDetectorId());
 
       myDetectorsMap.putValue(detector.getFileType(), Pair.create(detector.createSuitableFilePattern(), detector.getDetectorId()));
@@ -57,8 +64,7 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
   }
 
   @Override
-  @NotNull
-  public MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> getDetectorsMap() {
+  public @NotNull MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> getDetectorsMap() {
     ensureDetectorsLoaded();
     return myDetectorsMap;
   }
@@ -74,6 +80,7 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
       myAcceptedTypes = null;
       myDetectorsMap = null;
       myDetectorsByFileType = null;
+      myDetectorsById = null;
       myLoaded = false;
     }
   }
@@ -88,11 +95,10 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
     return null;
   }
 
-  @NotNull
   @Override
-  public List<? extends FrameworkType> getFrameworkTypes() {
+  public @NotNull List<? extends FrameworkType> getFrameworkTypes() {
     List<FrameworkType> types = new ArrayList<>();
-    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
+    for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
       types.add(detector.getFrameworkType());
     }
     return types;
@@ -101,21 +107,19 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
   @Override
   public FrameworkDetector getDetectorById(@NotNull String id) {
     ensureDetectorsLoaded();
-    return myDetectorById.get(id);
+    return myDetectorsById.get(id);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getDetectorIds(@NotNull FileType fileType) {
+  public @NotNull Collection<String> getDetectorIds(@NotNull FileType fileType) {
     ensureDetectorsLoaded();
     return myDetectorsByFileType.get(fileType);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getAllDetectorIds() {
+  public @NotNull Collection<String> getAllDetectorIds() {
     ensureDetectorsLoaded();
-    return myDetectorById.keySet();
+    return myDetectorsById.keySet();
   }
 
   @Override

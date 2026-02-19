@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project;
 
 import com.intellij.openapi.Disposable;
@@ -6,14 +6,15 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-public class LightEditDumbService extends DumbServiceImpl {
-  public LightEditDumbService(Project project) {
-    super(project);
+public final class LightEditDumbService extends DumbServiceImpl {
+  public LightEditDumbService(Project project, CoroutineScope scope) {
+    super(project, scope);
   }
 
   @Override
@@ -65,14 +66,6 @@ public class LightEditDumbService extends DumbServiceImpl {
   }
 
   @Override
-  public JComponent wrapWithSpoiler(@NotNull JComponent dumbAwareContent,
-                                    @NotNull Runnable updateRunnable,
-                                    @NotNull Disposable parentDisposable) {
-    reportUnavailable();
-    return null;
-  }
-
-  @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
 
   }
@@ -86,11 +79,6 @@ public class LightEditDumbService extends DumbServiceImpl {
   public void suspendIndexingAndRun(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String activityName,
                                     @NotNull Runnable activity) {
     reportUnavailable();
-  }
-
-  @Override
-  public boolean isSuspendedDumbMode() {
-    return false;
   }
 
   @Override

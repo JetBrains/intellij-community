@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint;
 
@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +25,7 @@ import java.util.Set;
 
 import static com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil.runTask;
 
-public class ShowParameterInfoHandler implements CodeInsightActionHandler {
+public final class ShowParameterInfoHandler implements CodeInsightActionHandler {
   private static final ParameterInfoHandler[] EMPTY_HANDLERS = new ParameterInfoHandler[0];
   private final boolean myRequestFocus;
 
@@ -39,21 +38,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    invoke(project, editor, file, -1, null, myRequestFocus);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    invoke(project, editor, psiFile, -1, null, myRequestFocus);
   }
 
   @Override
   public boolean startInWriteAction() {
     return false;
-  }
-
-  /**
-   * @deprecated use {@link #invoke(Project, Editor, PsiFile, int, PsiElement, boolean)} instead
-   */
-  @Deprecated
-  public static void invoke(final Project project, final Editor editor, PsiFile file, int lbraceOffset, PsiElement highlightedElement) {
-    invoke(project, editor, file, lbraceOffset, highlightedElement, false);
   }
 
   public static void invoke(final Project project, final Editor editor, PsiFile file,
@@ -99,15 +90,15 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                 getHandlers(project, language, file.getViewProvider().getBaseLanguage());
 
 
-              return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+              return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
                 for (ParameterInfoHandler<PsiElement, Object> handler : handlers) {
                   PsiElement element = handler.findElementForParameterInfo(context);
                   if (element != null) {
-                    return (Runnable)() -> FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+                    return (Runnable)() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
                       if (element.isValid()) {
                         handler.showParameterInfo(element, context);
                       }
-                    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+                    });
                   }
                 }
                 return null;
@@ -125,11 +116,11 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
             editor);
   }
 
-  public static ParameterInfoHandler @NotNull [] getHandlers(Project project, final Language... languages) {
+  public static ParameterInfoHandler @NotNull [] getHandlers(Project project, final Language @NotNull ... languages) {
     Set<ParameterInfoHandler> handlers = new LinkedHashSet<>();
     DumbService dumbService = DumbService.getInstance(project);
     for (final Language language : languages) {
-      handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
+      handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguageOrAny(language)));
     }
     return handlers.isEmpty() ? EMPTY_HANDLERS : handlers.toArray(new ParameterInfoHandler[0]);
   }

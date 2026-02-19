@@ -1,0 +1,12 @@
+// IGNORE_K1
+fun foo(n: Int) {
+    when (n) {
+        1 -> {
+            print("1")
+        }
+        2 -> {
+            print("2")
+        }
+    }
+    print("always printed")
+}

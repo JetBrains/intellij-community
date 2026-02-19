@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.ide.ui.UISettings;
@@ -9,22 +9,34 @@ import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.uiDesigner.radComponents.RadNestedForm;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.util.ui.PlatformColors;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.SwingUtilities;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class Painter {
   /**
    * This color is used to paint decoration of non selected components
@@ -46,12 +58,12 @@ public final class Painter {
    */
   static final Color NON_SELECTED_GRID_COLOR = new Color(130, 140, 155);
 
-  public final static int WEST_MASK = 1;
-  public final static int EAST_MASK = 2;
-  public final static int NORTH_MASK = 4;
-  public final static int SOUTH_MASK = 8;
-  private final static int R = 2;
-  private final static int GAP = R;
+  public static final int WEST_MASK = 1;
+  public static final int EAST_MASK = 2;
+  public static final int NORTH_MASK = 4;
+  public static final int SOUTH_MASK = 8;
+  private static final int R = 2;
+  private static final int GAP = R;
   private static final int NW = 0;
   private static final int N = 1;
   private static final int NE = 2;
@@ -121,15 +133,14 @@ public final class Painter {
    * Method does nothing if the {@code component} is not an instance
    * of {@code RadContainer}.
    */
-  private static void paintComponentBoundsImpl(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g) {
+  private static void paintComponentBoundsImpl(final GuiEditor editor, final @NotNull RadComponent component, final Graphics g) {
     if (!(component instanceof RadContainer) && !(component instanceof RadNestedForm) && !component.isDragBorder()) {
       return;
     }
 
     boolean highlightBoundaries = (getDesignTimeInsets(component) > 2);
 
-    if (component instanceof RadContainer && !component.isDragBorder()) {
-      RadContainer container = (RadContainer)component;
+    if (component instanceof RadContainer container && !component.isDragBorder()) {
       if (!highlightBoundaries && (container.getBorderTitle() != null || container.getBorderType() != BorderType.NONE)) {
         return;
       }
@@ -181,14 +192,13 @@ public final class Painter {
   /**
    * This method paints grid bounds for "grid" containers
    */
-  public static void paintGridOutline(final GuiEditor editor, @NotNull final RadComponent component, final Graphics g) {
+  public static void paintGridOutline(final GuiEditor editor, final @NotNull RadComponent component, final Graphics g) {
     if (!editor.isShowGrid()) {
       return;
     }
-    if (!(component instanceof RadContainer)) {
+    if (!(component instanceof RadContainer container)) {
       return;
     }
-    final RadContainer container = (RadContainer)component;
     if (!container.getLayoutManager().isGrid()) {
       return;
     }
@@ -260,7 +270,7 @@ public final class Painter {
    * @param x in component's coord system
    * @param y in component's coord system
    */
-  public static int getResizeMask(@NotNull final RadComponent component, final int x, final int y) {
+  public static int getResizeMask(final @NotNull RadComponent component, final int x, final int y) {
     if (component.getParent() == null || !component.isSelected()) {
       return 0;
     }
@@ -415,7 +425,7 @@ public final class Painter {
       if (prop.getName().equals(SwingProperties.TEXT)) {
         final Object desc = prop.getPropertyValue(component);
         if (!(desc instanceof StringDescriptor) || ((StringDescriptor)desc).getValue() == null ||
-            ((StringDescriptor)desc).getValue().length() > 0) {
+            !((StringDescriptor)desc).getValue().isEmpty()) {
           return;
         }
       }

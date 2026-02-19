@@ -1,0 +1,12 @@
+// "Replace with 'X<Int>'" "true"
+
+package ppp
+
+class X<T>
+
+@Deprecated("Will be dropped", replaceWith = ReplaceWith("X<Int>", "ppp.X"))
+typealias IntX = X<Int>
+
+fun foo(ix: <caret>X<Int>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

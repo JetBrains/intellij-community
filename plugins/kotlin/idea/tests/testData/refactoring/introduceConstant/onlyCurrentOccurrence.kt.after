@@ -1,0 +1,13 @@
+// EXTRACTION_TARGET: property with initializer
+// NO_DUPLICATES
+val a = 1
+
+private const val i = 2
+
+fun foo(): Int {
+    val x = 2 + 3
+    val y = 3 + 2 + 22
+    val z = "2"
+    return i
+}
+// IGNORE_K1

@@ -1,0 +1,6 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.vcs.core"/>
+    <module name="intellij.platform.vcs.shared"/>
+  </dependencies>
+</idea-plugin>

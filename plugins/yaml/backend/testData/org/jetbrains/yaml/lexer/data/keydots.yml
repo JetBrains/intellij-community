@@ -1,0 +1,3 @@
+my.testevent.pre:
+  type:     sfEvent
+

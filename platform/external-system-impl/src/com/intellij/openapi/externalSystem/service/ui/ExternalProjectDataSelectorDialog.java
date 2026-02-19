@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer;
 import com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizerImpl;
@@ -13,7 +14,11 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
+import com.intellij.openapi.externalSystem.model.project.Identifiable;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -22,8 +27,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
@@ -32,7 +38,13 @@ import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeBase;
+import com.intellij.ui.CheckboxTreeListener;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.BooleanValueHolder;
@@ -41,42 +53,56 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * @author Vladislav.Soroka
  */
 public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private static final int MAX_PATH_LENGTH = 50;
-  private static final Set<? extends Key<?>> DATA_KEYS = ContainerUtil.set(ProjectKeys.PROJECT, ProjectKeys.MODULE);
+  private static final Set<? extends Key<?>> DATA_KEYS = Set.of(ProjectKeys.PROJECT, ProjectKeys.MODULE);
   private static final com.intellij.openapi.util.Key<DataNode<?>> MODIFIED_NODE_KEY = com.intellij.openapi.util.Key.create("modifiedData");
   private static final com.intellij.openapi.util.Key<DataNodeCheckedTreeNode> CONNECTED_UI_NODE_KEY =
     com.intellij.openapi.util.Key.create("connectedUiNode");
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private JBLoadingPanel loadingPanel;
-  private JPanel mainPanel;
-  private JPanel contentPanel;
+  private final JPanel mainPanel;
+  private final JPanel contentPanel;
   @SuppressWarnings("unused")
-  private JBLabel myDescriptionLbl;
-  private JBLabel mySelectionStatusLbl;
+  private final JBLabel myDescriptionLbl;
+  private final JBLabel mySelectionStatusLbl;
   private ExternalSystemUiAware myExternalSystemUiAware;
   private ExternalProjectInfo myProjectInfo;
   private final Set<Key<?>> myIgnorableKeys;
   private final Set<Key<?>> myPublicKeys;
   private final Set<Key<? extends Identifiable>> myDependencyAwareDataKeys;
-  @Nullable
-  private final Object myPreselectedNodeObject;
+  private final @Nullable Object myPreselectedNodeObject;
   private CheckboxTree myTree;
   private final MultiMap<DataNode<Identifiable>, DataNode<Identifiable>> dependentNodeMap = MultiMap.createIdentity();
 
@@ -97,12 +123,82 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
                                            @Nullable Object preselectedNodeDataObject) {
     super(project, true);
     myProject = project;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      mainPanel = new JPanel();
+      mainPanel.setLayout(new BorderLayout(5, 5));
+      mainPanel.setEnabled(true);
+      mainPanel.setMinimumSize(new Dimension(300, 100));
+      mainPanel.setOpaque(false);
+      mainPanel.setPreferredSize(new Dimension(400, 300));
+      contentPanel = new JPanel();
+      contentPanel.setLayout(new BorderLayout(0, 0));
+      contentPanel.setAutoscrolls(true);
+      contentPanel.setMinimumSize(new Dimension(0, 0));
+      contentPanel.setPreferredSize(new Dimension(0, 0));
+      mainPanel.add(contentPanel, BorderLayout.CENTER);
+      mySelectionStatusLbl = new JBLabel();
+      contentPanel.add(mySelectionStatusLbl, BorderLayout.SOUTH);
+      myDescriptionLbl = new JBLabel();
+      this.$$$loadLabelText$$$(myDescriptionLbl, this.$$$getMessageFromBundle$$$("messages/ExternalSystemBundle",
+                                                                                 "label.please.select.the.modules.data.to.include.in.the.project"));
+      mainPanel.add(myDescriptionLbl, BorderLayout.NORTH);
+    }
     myIgnorableKeys = getIgnorableKeys();
     myPublicKeys = getPublicKeys();
     myDependencyAwareDataKeys = getDependencyAwareDataKeys();
     myPreselectedNodeObject = preselectedNodeDataObject;
     init(projectInfo);
   }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return mainPanel; }
 
   private void init(@NotNull ExternalProjectInfo projectInfo) {
     myProjectInfo = projectInfo;
@@ -131,9 +227,8 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     mySelectionStatusLbl.setText(selectionState.getValue().message);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree).
       addExtraAction(new SelectAllButton()).
       addExtraAction(new UnselectAllButton()).
@@ -150,9 +245,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private void reloadTree() {
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
     final Object root = treeModel.getRoot();
-    if (!(root instanceof CheckedTreeNode)) return;
-
-    final CheckedTreeNode rootNode = (CheckedTreeNode)root;
+    if (!(root instanceof CheckedTreeNode rootNode)) return;
 
     final Couple<CheckedTreeNode> rootAndPreselectedNode = createRoot();
     final CheckedTreeNode rootCopy = rootAndPreselectedNode.first;
@@ -187,14 +280,14 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         projectStructure.setIgnored(notIgnoredNode == null);
 
         // execute when current dialog is closed
-        ExternalSystemUtil.invokeLater(myProject, ModalityState.NON_MODAL, () -> {
+        ExternalSystemUtil.invokeLater(myProject, ModalityState.nonModal(), () -> {
           final ProjectData projectData = projectStructure.getData();
           String title = ExternalSystemBundle.message(
             "progress.refresh.text", projectData.getExternalName(), projectData.getOwner().getReadableName());
           new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
+              ProjectDataManager.getInstance().importData(projectStructure, myProject);
             }
           }.queue();
         });
@@ -222,10 +315,9 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof DataNodeCheckedTreeNode)) {
+        if (!(value instanceof DataNodeCheckedTreeNode node)) {
           return;
         }
-        final DataNodeCheckedTreeNode node = (DataNodeCheckedTreeNode)value;
 
         String tooltip = null;
         boolean hasErrors = false;
@@ -249,7 +341,8 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
                 }, "<br>");
             if (StringUtil.isNotEmpty(listOfUncheckedDependencies)) {
               hasErrors = true;
-              tooltip = ExternalSystemBundle.message("there.are.not.selected.module.dependencies.of.the.module.br.b.0.b", listOfUncheckedDependencies);
+              tooltip = ExternalSystemBundle.message("there.are.not.selected.module.dependencies.of.the.module.br.b.0.b",
+                                                     listOfUncheckedDependencies);
             }
           }
         }
@@ -329,21 +422,19 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (myPreselectedNodeObject != null && myPreselectedNodeObject.equals(node.getData())) {
           preselectedNode[0] = treeNode;
         }
-        if (node.getData() instanceof ModuleData) {
-          ModuleData moduleData = (ModuleData)node.getData();
+        if (node.getData() instanceof ModuleData moduleData) {
           if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(moduleData.getLinkedExternalProjectPath())) {
             rootModuleNode[0] = treeNode;
           }
           String ideGrouping = moduleData.getIdeGrouping();
-          if (ideGrouping != null) {
-            ideGroupingMap.put(ideGrouping, node);
-          }
-        } else {
+          ideGroupingMap.put(ideGrouping, node);
+        }
+        else {
           // add elements under module node like web/enterprise artifacts
           DataNode<ModuleData> parentModule = node.getParent(ModuleData.class);
-          if(parentModule != null) {
+          if (parentModule != null) {
             DataNodeCheckedTreeNode moduleTreeNode = treeNodeMap.get(parentModule);
-            if(moduleTreeNode != null) {
+            if (moduleTreeNode != null) {
               moduleTreeNode.add(treeNode);
               treeNode.setParent(moduleTreeNode);
             }
@@ -356,8 +447,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
     for (Map.Entry<String, DataNode<?>> groupingEntry : ideGroupingMap.entrySet()) {
       DataNode node = groupingEntry.getValue();
-      if (!(node.getData() instanceof ModuleData)) continue;
-      ModuleData moduleData = (ModuleData)node.getData();
+      if (!(node.getData() instanceof ModuleData moduleData)) continue;
       String ideParentGrouping = moduleData.getIdeParentGrouping();
       DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
       DataNodeCheckedTreeNode treeParentNode = structuralParent != null ? treeNodeMap.get(structuralParent) : null;
@@ -388,7 +478,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     final CheckedTreeNode root = new CheckedTreeNode(null);
     final DataNodeCheckedTreeNode projectNode = treeNodeMap.get(myProjectInfo.getExternalProjectStructure());
 
-    String rootModuleComment = "root module";
+    String rootModuleComment = ExternalSystemBundle.message("external.project.structure.project.root.module");
     if (rootModuleNode[0] != null && projectNode != null) {
       rootModuleNode[0].comment = rootModuleComment;
       if (!projectNode.isNodeChild(rootModuleNode[0])) {
@@ -396,7 +486,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
     }
 
-    List<TreeNode> nodes = projectNode != null ? TreeUtil.listChildren(projectNode) : ContainerUtil.emptyList();
+    List<TreeNode> nodes = projectNode != null ? TreeUtil.listChildren(projectNode) : new ArrayList<>();
     nodes.sort((o1, o2) -> {
       if (o1 instanceof DataNodeCheckedTreeNode && o2 instanceof DataNodeCheckedTreeNode) {
         if (rootModuleComment.equals(((DataNodeCheckedTreeNode)o1).comment)) return -1;
@@ -409,8 +499,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     return Couple.of(root, preselectedNode[0]);
   }
 
-  @NotNull
-  private static Set<Key<?>> getPublicKeys() {
+  private static @NotNull Set<Key<?>> getPublicKeys() {
     Set<Key<?>> result = new HashSet<>(DATA_KEYS);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
       result.addAll(customizer.getPublicDataKeys());
@@ -418,8 +507,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     return result;
   }
 
-  @NotNull
-  private static Set<Key<?>> getIgnorableKeys() {
+  private static @NotNull Set<Key<?>> getIgnorableKeys() {
     Set<Key<?>> result = new HashSet<>(DATA_KEYS);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
       result.addAll(customizer.getIgnorableDataKeys());
@@ -427,8 +515,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     return result;
   }
 
-  @NotNull
-  private static Set<Key<? extends Identifiable>> getDependencyAwareDataKeys() {
+  private static @NotNull Set<Key<? extends Identifiable>> getDependencyAwareDataKeys() {
     Set<Key<? extends Identifiable>> result = new HashSet<>();
     result.add(ProjectKeys.MODULE);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
@@ -441,11 +528,9 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     private static final int MAX_DEPENDENCIES_TO_DESCRIBE = 5;
 
     private final DataNode myDataNode;
-    @Nullable
-    private final Icon icon;
-    private String text;
-    @Nullable
-    private String comment;
+    private final @Nullable Icon icon;
+    private @Nls String text;
+    private @Nullable @Nls String comment;
 
     private DataNodeCheckedTreeNode(DataNode node) {
       super(node);
@@ -477,7 +562,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
 
       icon = anIconCandidate != null ? anIconCandidate : projectStructureCustomizer.suggestIcon(node, myExternalSystemUiAware);
-      final Couple<String> representationName = projectStructureCustomizer.getRepresentationName(node);
+      final Couple<@Nls String> representationName = projectStructureCustomizer.getRepresentationName(node);
       text = representationName.first;
       comment = representationName.second;
 
@@ -506,7 +591,8 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (moduleNode != null) {
           moduleNode.isChecked = true;
         }
-        ExternalSystemApiUtil.visit(moduleNode == null ? myDataNode : moduleNode.myDataNode, node -> getModifiableDataNode(node).setIgnored(false));
+        ExternalSystemApiUtil.visit(moduleNode == null ? myDataNode : moduleNode.myDataNode,
+                                    node -> getModifiableDataNode(node).setIgnored(false));
       }
       else {
         ExternalSystemApiUtil.visit(myDataNode, node -> getModifiableDataNode(node).setIgnored(true));
@@ -573,7 +659,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         }
       }
 
-      if (!deps.isEmpty() && !selectedModules.isEmpty()) {
+      if (!deps.isEmpty()) {
         final String message = checked ? getEnableMessage(selectedModules, deps) : getDisableMessage(deps);
         if (Messages.showOkCancelDialog(message, checked ? ExternalSystemBundle.message("enable.dependant.modules")
                                                          : ExternalSystemBundle.message("disable.modules.with.dependency.on.this"),
@@ -592,41 +678,27 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
     }
 
-    private String getEnableMessage(List<? extends DataNode<Identifiable>> selectedModules, Set<? extends DataNode<Identifiable>> deps) {
+    private @Nls String getEnableMessage(List<? extends DataNode<Identifiable>> selectedModules,
+                                         Set<? extends DataNode<Identifiable>> deps) {
       if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE || selectedModules.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
-        return String.format(
-          "%d disabled %s depend on %d selected %s. Would you like to enable %s too?",
-          deps.size(), StringUtil.pluralize("module", deps.size()),
-          selectedModules.size(), StringUtil.pluralize("module", selectedModules.size()),
-          deps.size() == 1 ? "it" : "them");
+        return ExternalSystemBundle.message("enable.dependant.modules.max.message", deps.size(), selectedModules.size());
       }
-
       final String listOfSelectedModules = StringUtil.join(selectedModules, node -> node.getData().getId(), ", ");
-
       final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
-      return String.format(
-        "<html>The following %s on which <b>%s</b> %s %s disabled:<br><b>%s</b><br>Would you like to enable %s?</html>",
-        StringUtil.pluralize("module", deps.size()), listOfSelectedModules,
-        StringUtil.pluralize("depend", selectedModules.size()), deps.size() == 1 ? "is" : "are",
-        listOfDependencies, deps.size() == 1 ? "it" : "them");
+      return ExternalSystemBundle.message("enable.dependant.modules.message", deps.size(), listOfSelectedModules, selectedModules.size(),
+                                          listOfDependencies);
     }
 
-    private String getDisableMessage(Set<? extends DataNode<Identifiable>> deps) {
+    private @Nls String getDisableMessage(Set<? extends DataNode<Identifiable>> deps) {
       if (deps.size() > MAX_DEPENDENCIES_TO_DESCRIBE) {
-        return String.format("%d enabled modules depend on selected modules. Would you like to disable them too?", deps.size());
+        return ExternalSystemBundle.message("disable.modules.with.dependency.on.this.max.message", deps.size());
       }
-
       final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
-      return String.format(
-        "<html>The following %s <br><b>%s</b><br>%s enabled and %s on selected modules. <br>Would you like to disable %s too?</html>",
-        StringUtil.pluralize("module", deps.size()), listOfDependencies, deps.size() == 1 ? "is" : "are",
-        StringUtil.pluralize("depend", deps.size()),
-        deps.size() == 1 ? "it" : "them");
+      return ExternalSystemBundle.message("disable.modules.with.dependency.on.this.message", deps.size(), listOfDependencies);
     }
   }
 
-  @NotNull
-  private static DataNode getModifiableDataNode(@NotNull DataNode node) {
+  private static @NotNull DataNode getModifiableDataNode(@NotNull DataNode node) {
     DataNode modifiedDataNode = (DataNode)node.getUserData(MODIFIED_NODE_KEY);
     if (modifiedDataNode == null) {
       modifiedDataNode = node.nodeCopy();
@@ -675,7 +747,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private static class SelectionState {
     boolean isRequiredSelectionEnabled;
-    @Nullable String message;
+    @Nullable @NlsContexts.Label String message;
 
     SelectionState(boolean isRequiredSelectionEnabled, @Nullable @NlsContexts.Label String message) {
       this.isRequiredSelectionEnabled = isRequiredSelectionEnabled;
@@ -683,7 +755,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
   }
 
-  private class SelectAllButton extends AnActionButton {
+  private class SelectAllButton extends DumbAwareAction {
     SelectAllButton() {
       super(ExternalSystemBundle.messagePointer("action.text.select.all"), AllIcons.Actions.Selectall);
     }
@@ -708,7 +780,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
   }
 
-  private class UnselectAllButton extends AnActionButton {
+  private class UnselectAllButton extends DumbAwareAction {
     UnselectAllButton() {
       super(ExternalSystemBundle.messagePointer("action.text.unselect.all"), AllIcons.Actions.Unselectall);
     }
@@ -732,15 +804,19 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
   }
 
-  private class ShowSelectedOnlyButton extends ToggleActionButton {
-
+  private class ShowSelectedOnlyButton extends ToggleAction {
     ShowSelectedOnlyButton() {
-      super(ExternalSystemBundle.messagePointer("show.selected.only"), AllIcons.Actions.ShowHiddens);
+      super(ExternalSystemBundle.messagePointer("show.selected.only"), AllIcons.Actions.ToggleVisibility);
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
       return myShowSelectedRowsOnly;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -750,12 +826,20 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
   }
 
-  private class SelectRequiredButton extends AnActionButton {
+  private class SelectRequiredButton extends DumbAwareAction {
     SelectRequiredButton() {
       super(ExternalSystemBundle.message("select.required"),
             ExternalSystemBundle.message("select.modules.depended.on.currently.selected.modules"), AllIcons.Actions.IntentionBulb);
+    }
 
-      addCustomUpdater(e -> selectionState.getValue().isRequiredSelectionEnabled);
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(selectionState.getValue().isRequiredSelectionEnabled);
     }
 
     @Override
@@ -795,9 +879,10 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
   @Override
   public boolean showAndGet() {
     final BooleanValueHolder result = new BooleanValueHolder(false);
-    DumbService.getInstance(myProject).suspendIndexingAndRun(ExternalSystemBundle.message("activity.name.select.external.data"),
-      () -> result.setValue(super.showAndGet())
-    );
+    UnindexedFilesScannerExecutor.getInstance(myProject)
+      .suspendScanningAndIndexingThenRun(ExternalSystemBundle.message("activity.name.select.external.data"),
+                                         () -> result.setValue(super.showAndGet())
+      );
     return result.getValue();
   }
 }

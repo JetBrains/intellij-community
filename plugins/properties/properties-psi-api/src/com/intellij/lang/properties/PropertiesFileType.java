@@ -1,61 +1,89 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.lang.Language;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
-public final class PropertiesFileType extends LanguageFileType {
+public class PropertiesFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
-  @NonNls public static final String DEFAULT_EXTENSION = "properties";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
+  public static final String DEFAULT_EXTENSION = "properties";
+  public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
-  private PropertiesFileType() {
+  protected PropertiesFileType() {
     super(PropertiesLanguage.INSTANCE);
   }
 
+  protected PropertiesFileType(@NotNull Language language) {
+    super(language);
+  }
+
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "Properties";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
-    return PropertiesBundle.message("properties.files.file.type.description");
+  public @NotNull String getDescription() {
+    return PropertiesBundle.message("filetype.properties.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.Properties;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.PropertiesFileType);
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
-    LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
-    Charset charset = guessed.hardCodedCharset == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed.hardCodedCharset;
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+    Charset charset = EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file);
     if (charset == null) {
-      charset = CharsetToolkit.getDefaultSystemCharset();
+      charset = getDefaultCharset();
+      if (content.length > 0 &&
+          StandardCharsets.UTF_8.equals(charset) &&
+          CharsetUtil.findUnmappableCharacters(ByteBuffer.wrap(content), StandardCharsets.UTF_8) != null) {
+        charset = StandardCharsets.ISO_8859_1;
+      }
     }
+
     if (EncodingRegistry.getInstance().isNative2Ascii(file)) {
-      charset = Native2AsciiCharset.wrap(charset);
+      if (!(charset instanceof Native2AsciiCharset)) {
+        charset = Native2AsciiCharset.wrap(charset);
+      }
+    }
+    else {
+      charset = Native2AsciiCharset.nativeToBaseCharset(charset);
     }
     return charset.name();
+  }
+
+  public @NotNull Charset getDefaultCharset() {
+    if (Registry.is("properties.file.encoding.legacy.support", false)) {
+      return StandardCharsets.ISO_8859_1;
+    }
+    else {
+      return StandardCharsets.UTF_8;
+    }
+  }
+
+  @Override
+  public boolean isCharsetHardcoded() {
+    return true;
   }
 }

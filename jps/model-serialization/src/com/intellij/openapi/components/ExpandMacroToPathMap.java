@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -17,29 +18,35 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
   private final Map<String, String> myPlainMap = new LinkedHashMap<>();
   private final Map<String, String> myMacroExpands = new HashMap<>();
 
+  @ApiStatus.Internal
+  public ExpandMacroToPathMap() {
+  }
+
+  @ApiStatus.Internal
   public void addMacroExpand(@NotNull String macroName, @NotNull String path) {
-    myMacroExpands.put(macroName, FileUtil.toSystemIndependentName(path));
+    myMacroExpands.put(macroName, FileUtilRt.toSystemIndependentName(path));
   }
 
   public void put(@NotNull String fromText, @NotNull String toText) {
     myPlainMap.put(fromText, toText);
   }
 
+  @ApiStatus.Internal
   public void putAll(@NotNull ExpandMacroToPathMap another) {
     myPlainMap.putAll(another.myPlainMap);
     myMacroExpands.putAll(another.myMacroExpands);
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  public String substitute(@NotNull String text, boolean caseSensitive) {
+  public @NotNull String substitute(@NotNull String text, boolean caseSensitive) {
     if (text.indexOf('$') < 0 && text.indexOf('%') < 0) {
       return text;
     }
 
     for (Map.Entry<String, String> entry : myPlainMap.entrySet()) {
-      // when replacing macros with actual paths the replace utility may be used as always 'case-sensitive'
-      // for case-insensitive file systems there will be no unnecessary toLowerCase() transforms.
+      // when replacing macros with actual paths, the replace utility may be used as always 'case-sensitive'
+      // for case-insensitive file systems, there will be no unnecessary toLowerCase() transforms.
       text = StringUtil.replace(text, entry.getKey(), entry.getValue(), false);
     }
 
@@ -50,8 +57,7 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
     return text;
   }
 
-  @NotNull
-  private static String replaceMacro(@NotNull String text, @NotNull String macroName, @NotNull String replacement) {
+  private static @NotNull String replaceMacro(@NotNull String text, @NotNull String macroName, @NotNull String replacement) {
     while (true) {
       int start = findMacroIndex(text, macroName);
       if (start < 0) {
@@ -83,6 +89,7 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public int hashCode() {
     return myPlainMap.hashCode() + myMacroExpands.hashCode();

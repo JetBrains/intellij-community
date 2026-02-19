@@ -1,0 +1,56 @@
+### auto-generated section `build intellij.platform.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "core_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.platform.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/util/progress",
+    "//platform/util/jdom",
+    "@lib//:kotlin-stdlib",
+    "//libraries/kotlinx/coroutines/core",
+    "//platform/util/xmlDom",
+    "//platform/diagnostic",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    "//platform/util/coroutines",
+    "@lib//:jetbrains-annotations",
+  ],
+  exports = ["//platform/extensions"]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  module_name = "intellij.platform.core",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "//platform/extensions",
+    "//platform/extensions:extensions_test_lib",
+  ],
+  runtime_deps = [
+    ":core",
+    "//platform/util:util_test_lib",
+    "//platform/extensions:extensions_test_lib",
+    "//platform/util/progress:progress_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "//platform/diagnostic:diagnostic_test_lib",
+    "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.core` end

@@ -1,11 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -16,9 +23,8 @@ public final class LookupItemUtil {
   /**
    * @deprecated use {@link LookupElementBuilder}
    */
-  @Deprecated
-  @NotNull
-  public static LookupElement objectToLookupItem(Object object) {
+  @Deprecated(forRemoval = true)
+  public static @NotNull LookupElement objectToLookupItem(Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;
     if (object instanceof PsiClass) {
       return JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)object, true);
@@ -39,21 +45,15 @@ public final class LookupItemUtil {
       return new PackageLookupItem((PsiPackage)object);
     }
 
-    String s = null;
-    LookupItem item = new LookupItem(object, "");
-    if (object instanceof PsiElement) {
-      s = PsiUtilCore.getName((PsiElement)object);
-    }
-    TailType tailType = TailType.NONE;
-    if (object instanceof PsiMetaData) {
-      s = ((PsiMetaData)object).getName();
-    }
-    else if (object instanceof String) {
-      s = (String)object;
-    }
-    else if (object instanceof PresentableLookupValue) {
-      s = ((PresentableLookupValue)object).getPresentation();
-    }
+    LookupItem<Object> item = new LookupItem<>(object, "");
+    TailType tailType = TailTypes.noneType();
+    String s = switch (object) {
+      case PsiElement element -> PsiUtilCore.getName(element);
+      case PsiMetaData data -> data.getName();
+      case String string -> string;
+      case PresentableLookupValue value -> value.getPresentation();
+      case null, default -> null;
+    };
 
     if (s == null) {
       LOG.error("Null string for object: " + object + " of class " + (object != null ? object.getClass() : null));

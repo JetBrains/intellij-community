@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.ignore;
 
 import com.intellij.openapi.util.Ref;
@@ -14,7 +14,12 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
@@ -53,8 +58,8 @@ public final class SvnPropertyService {
     extensionOk.set(checker.extensionOk());
   }
 
-  private static abstract class IgnorePropertyWorkTemplate {
-    @NotNull protected final SvnVcs myVcs;
+  private abstract static class IgnorePropertyWorkTemplate {
+    protected final @NotNull SvnVcs myVcs;
     protected final boolean myUseCommonExtension;
     protected final boolean myCanUseCachedProperty;
 
@@ -220,7 +225,7 @@ public final class SvnPropertyService {
     }
   }
 
-  private static String getNewPropertyValueForRemove(final Collection<String> data, @NotNull final String propertyValue) {
+  private static String getNewPropertyValueForRemove(final Collection<String> data, final @NotNull String propertyValue) {
     final StringBuilder sb = new StringBuilder();
     final StringTokenizer st = new StringTokenizer(propertyValue, "\r\n ");
     while (st.hasMoreElements()) {

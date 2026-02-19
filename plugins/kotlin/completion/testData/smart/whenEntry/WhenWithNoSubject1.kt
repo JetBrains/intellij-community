@@ -1,0 +1,13 @@
+fun foo(b1: Boolean, b2: Boolean) {
+    when {
+        <caret>
+    }
+}
+
+// EXIST: b1
+// EXIST: b2
+// ABSENT: true
+// ABSENT: false
+// ABSENT: else
+
+// IGNORE_K2

@@ -90,4 +90,21 @@ public class WidenPlusInLoop {
 
     return sections;
   }
+
+  void infiniteLoop() {
+    for (int i = 1; <warning descr="Condition 'i != 10' is always 'true'">i != 10</warning>; i += 2) {
+      // ...
+    }
+  }
+  
+  void nestedLoop() {
+    long value = 1;
+    for (int a = 0; a < 2; a++) {
+      for (int b = 0; b < 2; b++) {
+        b++;
+      }
+      if (<warning descr="Condition 'a >= 0' is always 'true'">a >= 0</warning>) {}
+      value <<= 2 * a;
+    }
+  }
 }

@@ -1,7 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiVariable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -11,6 +18,9 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A variable wrapper to be used in [UastVisitor].
  */
 interface UVariable : UDeclaration, PsiVariable {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiVariable
 
   @Suppress("DEPRECATION")
@@ -65,6 +75,9 @@ private fun UVariable.visitContents(visitor: UastVisitor) {
 }
 
 interface UParameter : UVariable, PsiParameter {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiParameter
 
   override fun asLogString(): String = log("name = $name")
@@ -83,7 +96,27 @@ interface UParameterEx : UParameter, UDeclarationEx {
 }
 
 interface UField : UVariable, PsiField {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiField
+
+  /**
+   * Returns all annotations as defined on the [sourcePsi], in some cases this can differ with [uAnnotations] where only annotations that
+   * are strictly applied to the field are returned. Consider the following example:
+   * ```Java
+   * public @interface Foo { }
+   * ```
+   * ```Kotlin
+   * @Foo
+   * val foo = 0
+   * ```
+   * According to the [Kotlin docs](https://kotlinlang.org/docs/annotations.html#annotation-use-site-targets), if no `@Target` is specified,
+   * the first applicable target will be taken from the following order: param, property, field. Therefore `Foo` will only be applied to the
+   * property and won't be returned in [uAnnotations], to get annotations that are applied to the property, use [sourceAnnotations].
+   */
+  val sourceAnnotations: List<UAnnotation>
+    @ApiStatus.Experimental get() = uAnnotations
 
   override fun asLogString(): String = log("name = $name")
 
@@ -96,11 +129,32 @@ interface UField : UVariable, PsiField {
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitField(this, data)
 }
 
+/**
+ * Returns all annotations as defined on the [UElement.sourcePsi].
+ * @see UField.sourceAnnotations
+ */
+@ApiStatus.Experimental
+fun UAnnotated.sourceAnnotations(): List<UAnnotation> {
+  return if (this is UField) sourceAnnotations else uAnnotations
+}
+
+/**
+ * Returns the first source annotation matching [fqName].
+ * @see sourceAnnotations
+ */
+@ApiStatus.Experimental
+fun UAnnotated.findSourceAnnotation(fqName: String): UAnnotation? {
+  return sourceAnnotations().firstOrNull { it.qualifiedName == fqName }
+}
+
 interface UFieldEx : UField, UDeclarationEx {
   override val javaPsi: PsiField
 }
 
 interface ULocalVariable : UVariable, PsiLocalVariable {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiLocalVariable
 
   override fun asLogString(): String = log("name = $name")
@@ -119,6 +173,9 @@ interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
 }
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiEnumConstant
 
   val initializingClass: UClass?
@@ -147,9 +204,9 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
       valueArguments.joinTo(this, prefix = "(", postfix = ")", transform = UExpression::asRenderString)
     }
     initializingClass?.let {
-      appendln(" {")
+      appendLine(" {")
       it.uastDeclarations.forEach { declaration ->
-        appendln(declaration.asRenderString().withMargin)
+        appendLine(declaration.asRenderString().withMargin)
       }
       append("}")
     }

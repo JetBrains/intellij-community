@@ -1,16 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
+import java.awt.Composite;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class GraphicsConfig {
+public final class GraphicsConfig {
   private final Graphics2D myG;
   private final Map myHints;
   private final Composite myComposite;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectImport;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;
@@ -13,8 +13,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
+/**
+ * An extension point for 'Import Module from Existing Sources'.
+ * See {@link com.intellij.ide.actions.ImportModuleAction#createImportWizard}.
+ */
 public abstract class ProjectImportProvider {
   public static final ExtensionPointName<ProjectImportProvider> PROJECT_IMPORT_PROVIDER = ExtensionPointName.create("com.intellij.projectImportProvider");
 
@@ -36,18 +40,15 @@ public abstract class ProjectImportProvider {
     return doGetBuilder();
   }
 
-  @NonNls @NotNull
-  public String getId(){
+  public @NonNls @NotNull String getId(){
     return getBuilder().getName();
   }
 
-  @NotNull
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getName(){
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getName(){
     return getBuilder().getName();
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return getBuilder().getIcon();
   }
 
@@ -80,20 +81,25 @@ public abstract class ProjectImportProvider {
     return true;
   }
 
-  public void addSteps(StepSequence sequence, WizardContext context, String id) {
+  /**
+   * Adds the {@link ModuleWizardStep}-s from {@link ProjectImportProvider#createSteps(WizardContext)} to the import wizard.
+   */
+  public void addSteps(@NotNull StepSequence sequence, @NotNull WizardContext context, @NotNull String id) {
     ModuleWizardStep[] steps = createSteps(context);
     for (ModuleWizardStep step : steps) {
       sequence.addSpecificStep(id, step);
     }
   }
 
+  /**
+   * Returns the {@link ModuleWizardStep}-s to be added to the import wizard.
+   */
   public ModuleWizardStep[] createSteps(WizardContext context) {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Language("HTML")
-  public @Nls String getFileSample() {
+  public @Nullable @Nls String getFileSample() {
     return null;
   }
 }

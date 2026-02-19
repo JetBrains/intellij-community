@@ -19,7 +19,6 @@ import java.util.List;
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
  * 
- * @author Denis Zhdanov
  * @param <E>   entry type
  */
 public interface Rearranger<E extends ArrangementEntry> {
@@ -32,6 +31,7 @@ public interface Rearranger<E extends ArrangementEntry> {
    * This is useful in a situation when new element is generated and we're deciding where to insert it (e.g. new field is
    * generated and we want to insert it according to the arrangement rules like 'fields before methods').
    * 
+   *
    * @param element   element to wrap into format eligible for further processing by arrangement engine
    * @param settings  arrangement settings to use. The primary idea is to make the rearranger aware about
    *                  {@link StdArrangementTokens.Grouping grouping rules} (if any). E.g. it's not worth to process java method bodies
@@ -43,7 +43,7 @@ public interface Rearranger<E extends ArrangementEntry> {
   @Nullable
   Pair<E, List<E>> parseWithNew(@NotNull PsiElement root,
                                 @Nullable Document document,
-                                @NotNull Collection<TextRange> ranges,
+                                @NotNull Collection<? extends TextRange> ranges,
                                 @NotNull PsiElement element,
                                 @NotNull ArrangementSettings settings);
   
@@ -61,7 +61,7 @@ public interface Rearranger<E extends ArrangementEntry> {
   @NotNull
   List<E> parse(@NotNull PsiElement root,
                 @Nullable Document document,
-                @NotNull Collection<TextRange> ranges,
+                @NotNull Collection<? extends TextRange> ranges,
                 @NotNull ArrangementSettings settings);
 
   /**

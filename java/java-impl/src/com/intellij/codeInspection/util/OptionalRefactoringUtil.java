@@ -1,15 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaParameterType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.JavaPsiMathUtil;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,15 +56,14 @@ public final class OptionalRefactoringUtil {
                          targetType != null &&
                          (trueType instanceof PsiLambdaParameterType || Objects.requireNonNull(trueType).isAssignableFrom(targetType));
     if (!trivialMap) {
-      if (stripped instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
-        PsiTypeCastExpression castExpression = (PsiTypeCastExpression)stripped;
+      if (stripped instanceof PsiTypeCastExpression castExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeElement castType = castExpression.getCastType();
         // pull cast outside to avoid the .map() step
         if (castType != null && ExpressionUtils.isReferenceTo(castExpression.getOperand(), var)) {
           return "(" + castType.getText() + ")" + qualifier + ".orElse(null)";
         }
       }
-      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueType)) {
+      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiTypes.booleanType().equals(trueType)) {
         if (ExpressionUtils.isLiteral(trueExpression, Boolean.TRUE)) {
           return qualifier + ".isPresent()";
         }
@@ -53,8 +72,7 @@ public final class OptionalRefactoringUtil {
       if (ExpressionUtils.isLiteral(falseExpression, Boolean.TRUE) && ExpressionUtils.isLiteral(trueExpression, Boolean.FALSE)) {
         return "!" + qualifier + ".isPresent()";
       }
-      if (stripped instanceof PsiConditionalExpression) {
-        PsiConditionalExpression condition = (PsiConditionalExpression)stripped;
+      if (stripped instanceof PsiConditionalExpression condition) {
         PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
         if (thenExpression != null && elseExpression != null) {
@@ -125,7 +143,7 @@ public final class OptionalRefactoringUtil {
         }
       }
       trueExpression =
-        targetType == null ? trueExpression : RefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
+        targetType == null ? trueExpression : CommonJavaRefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
       String typeArg = getMapTypeArgument(trueExpression, targetType, falseExpression);
       qualifier += "." + typeArg + "map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
@@ -138,11 +156,11 @@ public final class OptionalRefactoringUtil {
         Number falseValue = JavaPsiMathUtil.getNumberFromLiteral(falseExpression);
         if (falseValue != null) {
           falseText = falseValue.toString();
-          if (targetType.equals(PsiType.FLOAT)) {
+          if (targetType.equals(PsiTypes.floatType())) {
             falseText += "F";
-          } else if(targetType.equals(PsiType.DOUBLE) && !falseText.contains(".")) {
+          } else if(targetType.equals(PsiTypes.doubleType()) && !falseText.contains(".")) {
             falseText += ".0";
-          } else if(targetType.equals(PsiType.LONG)) {
+          } else if(targetType.equals(PsiTypes.longType())) {
             falseText += "L";
           }
         }
@@ -151,13 +169,11 @@ public final class OptionalRefactoringUtil {
     }
   }
 
-  @NotNull
-  public static String getMapTypeArgument(PsiExpression expression, PsiType type) {
+  public static @NotNull String getMapTypeArgument(PsiExpression expression, PsiType type) {
     return getMapTypeArgument(expression, type, null);
   }
 
-  @NotNull
-  private static String getMapTypeArgument(PsiExpression expression, PsiType type, PsiExpression falseExpression) {
+  private static @NotNull String getMapTypeArgument(PsiExpression expression, PsiType type, PsiExpression falseExpression) {
     if (!(type instanceof PsiClassType)) return "";
     String text = expression.getText();
     // PsiEmptyExpressionImpl might be passed here
@@ -165,12 +181,12 @@ public final class OptionalRefactoringUtil {
     PsiExpression copy = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(text, expression);
     PsiType exprType = copy.getType();
     if (exprType != null &&
-        !exprType.equals(PsiType.NULL) &&
+        !exprType.equals(PsiTypes.nullType()) &&
         !LambdaUtil.notInferredType(exprType) &&
         TypeConversionUtil.isAssignable(type, exprType)) {
       if (falseExpression == null) return "";
       PsiType falseType = falseExpression.getType();
-      if (falseType != null && (falseType.isAssignableFrom(exprType) || falseType.equals(PsiType.NULL))) return "";
+      if (falseType != null && (falseType.isAssignableFrom(exprType) || falseType.equals(PsiTypes.nullType()))) return "";
     }
     return "<" + type.getCanonicalText() + ">";
   }

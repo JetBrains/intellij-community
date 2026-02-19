@@ -25,10 +25,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.encapsulateFields.*;
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsDescriptor;
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor;
+import com.intellij.refactoring.encapsulateFields.FieldDescriptor;
+import com.intellij.refactoring.encapsulateFields.FieldDescriptorImpl;
+import com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAlreadyExist() {
@@ -60,10 +64,11 @@ public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testInaccessibleSuperMethod() {
-    myFixture.addClass("package a;\n" +
-                       "public class A {\n" +
-                       "  int getFoo();\n" +
-                       "}");
+    myFixture.addClass("""
+                         package a;
+                         public class A {
+                           int getFoo();
+                         }""");
     doTest("foo", "b.B", null);
   }
 

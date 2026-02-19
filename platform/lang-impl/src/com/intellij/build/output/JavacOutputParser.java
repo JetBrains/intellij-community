@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.output;
 
 import com.intellij.build.FilePosition;
@@ -12,12 +12,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOError;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -26,7 +28,7 @@ import java.util.function.Supplier;
 /**
  * Parses javac's output.
  */
-public class JavacOutputParser implements BuildOutputParser {
+public final class JavacOutputParser implements BuildOutputParser {
   private static final @NotNull Supplier<@BuildEventsNls.Title String> COMPILER_MESSAGES_GROUP =
     LangBundle.messagePointer("build.event.title.compiler");
 
@@ -79,7 +81,7 @@ public class JavacOutputParser implements BuildOutputParser {
         int javaFileExtensionIndex = message.indexOf(".java");
         if (javaFileExtensionIndex > 0) {
           File file = new File(message.substring(0, javaFileExtensionIndex + ".java".length()));
-          if (file.isFile()) {
+          if (isFileSafely(file)) {
             message = message.substring(javaFileExtensionIndex + ".java".length() + 1);
             String detailedMessage = amendNextInfoLinesIfNeeded(file.getPath() + ":\n" + message, reader);
             messageConsumer
@@ -94,7 +96,7 @@ public class JavacOutputParser implements BuildOutputParser {
       int colonIndex2 = line.indexOf(COLON, colonIndex1 + 1);
       if (colonIndex2 >= 0) {
         File file = new File(part1);
-        if (!file.isFile()) {
+        if (!isFileSafely(file)) {
           // the part one is not a file path.
           return false;
         }
@@ -103,15 +105,15 @@ public class JavacOutputParser implements BuildOutputParser {
           String text = line.substring(colonIndex2 + 1).trim();
           MessageEvent.Kind kind = MessageEvent.Kind.ERROR;
 
-          if (text.startsWith(WARNING_PREFIX)) {
+          if (StringUtil.startsWithIgnoreCase(text, WARNING_PREFIX)) {
             text = text.substring(WARNING_PREFIX.length()).trim();
             kind = MessageEvent.Kind.WARNING;
           }
-          else if (text.startsWith(NOTE_PREFIX)) {
+          else if (StringUtil.startsWithIgnoreCase(text, NOTE_PREFIX)) {
             text = text.substring(NOTE_PREFIX.length()).trim();
             kind = MessageEvent.Kind.INFO;
           }
-          else if (text.startsWith(ERROR_PREFIX)) {
+          else if (StringUtil.startsWithIgnoreCase(text, ERROR_PREFIX)) {
             text = text.substring(ERROR_PREFIX.length()).trim();
             kind = MessageEvent.Kind.ERROR;
           }
@@ -154,7 +156,7 @@ public class JavacOutputParser implements BuildOutputParser {
 
           if (column >= 0) {
             String message = StringUtil.join(convertMessages(messageList), "\n");
-            String detailedMessage = line + "\n" + outputCollector.getOutput(); //NON-NLS
+            String detailedMessage = StringsKt.trimIndent(line + "\n" + outputCollector.getOutput()); //NON-NLS
             messageConsumer.accept(new FileMessageEventImpl(reader.getParentEventId(), kind, COMPILER_MESSAGES_GROUP.get(),
                                                             message, detailedMessage, new FilePosition(file, lineNumber - 1, column)));
             return true;
@@ -172,6 +174,16 @@ public class JavacOutputParser implements BuildOutputParser {
     }
 
     return false;
+  }
+
+  private static boolean isFileSafely(@NotNull File file) {
+    try {
+      return file.isFile();
+    }
+    catch (IOError e) {
+      // e.g. "java.io.IOException: Unable to get working directory of drive 'W'"
+      return false;
+    }
   }
 
   private boolean isRelatedFile(File file) {
@@ -199,11 +211,10 @@ public class JavacOutputParser implements BuildOutputParser {
 
   @Contract("null -> false")
   private static boolean isMessageEnd(@Nullable String line) {
-    return line != null && line.length() > 0 && Character.isWhitespace(line.charAt(0));
+    return line != null && !line.isEmpty() && Character.isWhitespace(line.charAt(0));
   }
 
-  @NotNull
-  private static List<String> convertMessages(@NotNull List<String> messages) {
+  private static @NotNull List<String> convertMessages(@NotNull List<String> messages) {
     if (messages.size() <= 1) {
       return messages;
     }

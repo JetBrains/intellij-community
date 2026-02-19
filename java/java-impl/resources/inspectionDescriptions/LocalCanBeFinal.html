@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports local variables or parameters that may have the <code>final</code> modifier added to their declaration.
+<p>Example:</p>
+<pre><code>
+  ArrayList&lt;Integer&gt; list = new ArrayList();
+  fill(list);
+  return list;
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  final ArrayList&lt;Integer&gt; list = new ArrayList();
+  fill(list);
+  return list;
+</code></pre>
+<!-- tooltip end -->
+<p>
+  Use the inspection's options to define what kinds of parameters or local variables should be reported.
+</p>
+</body>
+</html>

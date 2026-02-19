@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -7,14 +7,34 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Bas Leijdekkers
@@ -62,7 +82,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   }
 
   @Override
-  protected void selectTargets(final @NotNull List<? extends PsiMember> targets, final @NotNull Consumer<? super List<? extends PsiMember>> selectionConsumer) {
+  protected void selectTargets(@NotNull @Unmodifiable List<? extends PsiMember> targets, final @NotNull Consumer<? super List<? extends PsiMember>> selectionConsumer) {
     if (targets.isEmpty()) {
       selectionConsumer.consume(Collections.emptyList());
       return;
@@ -75,19 +95,18 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       selectionConsumer.consume(targets);
       return;
     }
-    targets.sort(new PsiMemberComparator());
+    @Unmodifiable @NotNull List<? extends PsiMember> sortedTargets = ContainerUtil.sorted(targets, new PsiMemberComparator());
     final List<Object> model = new ArrayList<>();
     String allListed = CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry");
     model.add(allListed);
-    model.addAll(targets);
+    model.addAll(sortedTargets);
     final ListCellRenderer<Object> renderer = new NavigationItemListCellRenderer();
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(model)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setRenderer(renderer)
       .setNamerForFiltering(o -> {
-        if (o instanceof PsiMember) {
-          final PsiMember member = (PsiMember)o;
+        if (o instanceof PsiMember member) {
           return member.getName();
         }
         return o.toString();
@@ -97,7 +116,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
                 JavaBundle.message("highlight.imported.classes.chooser.title"))
       .setItemChosenCallback((selectedValue) -> {
         if (selectedValue.equals(allListed)) {
-          selectionConsumer.consume(targets);
+          selectionConsumer.consume(sortedTargets);
         }
         else {
           selectionConsumer.consume(Collections.singletonList((PsiMember)selectedValue));
@@ -138,7 +157,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (!myImportStatic && reference.getText().equals(reference.getQualifiedName())) {
         return;
@@ -176,8 +195,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
             addReference(member, reference);
           }
         }
-        else if (importTarget instanceof PsiClass) {
-          final PsiClass importClass = (PsiClass)importTarget;
+        else if (importTarget instanceof PsiClass importClass) {
           if (myOnDemand) {
             final PsiClass containingClass = member.getContainingClass();
             if (InheritanceUtil.isInheritorOrSelf(importClass, containingClass, true)) {
@@ -195,29 +213,25 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
 
     private void checkImportReference(PsiJavaCodeReferenceElement reference) {
       final PsiElement element = reference.resolve();
-      if (!(element instanceof PsiClass)) {
+      if (!(element instanceof PsiClass referencedClass)) {
         return;
       }
-      final PsiClass referencedClass = (PsiClass)element;
       for (PsiElement importTarget : myImportTargets) {
-        if (importTarget instanceof PsiPackage) {
+        if (importTarget instanceof PsiPackage aPackage) {
           if (referencedClass.getContainingClass() != null) {
             return;
           }
           final PsiFile file = referencedClass.getContainingFile();
-          if (!(file instanceof PsiJavaFile)) {
+          if (!(file instanceof PsiJavaFile javaFile)) {
             return;
           }
-          final PsiJavaFile javaFile = (PsiJavaFile)file;
-          final PsiPackage aPackage = (PsiPackage)importTarget;
           final String packageName = aPackage.getQualifiedName();
           final String filePackage = javaFile.getPackageName();
           if (filePackage.equals(packageName)) {
             addReference(referencedClass, reference);
           }
         }
-        else if (importTarget instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)importTarget;
+        else if (importTarget instanceof PsiClass aClass) {
           final String name = aClass.getQualifiedName();
           if (name == null) {
             return;
@@ -254,7 +268,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     }
   }
 
-  static class PsiMemberComparator implements Comparator<PsiMember> {
+  private static class PsiMemberComparator implements Comparator<PsiMember> {
 
     @Override
     public int compare(PsiMember member1, PsiMember member2) {

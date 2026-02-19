@@ -3,13 +3,10 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Container;
+import java.awt.Dimension;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class XYLayoutManagerImpl extends XYLayoutManager {
   private final Dimension myPreferredSize;
   private static final Dimension MIN_SIZE = new Dimension(20,20);

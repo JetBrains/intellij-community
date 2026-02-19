@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.json.backend.regexp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "regexp_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "regexp",
+  module_name = "intellij.json.backend.regexp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":regexp_resources"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//json/backend",
+    "//platform/core-api:core",
+    "//platform/util/multiplatform",
+    "//platform/util",
+    "//RegExpSupport:regexp",
+  ]
+)
+
+jvm_library(
+  name = "regexp_test_lib",
+  module_name = "intellij.json.backend.regexp",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":regexp",
+    "//json/backend:backend_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/util/multiplatform:multiplatform_test_lib",
+    "//platform/util:util_test_lib",
+    "//RegExpSupport:regexp_test_lib",
+  ]
+)
+### auto-generated section `build intellij.json.backend.regexp` end

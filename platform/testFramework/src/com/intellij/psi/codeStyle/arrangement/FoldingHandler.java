@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-/**
- * @author Denis Zhdanov
- */
 public class FoldingHandler implements RichTextHandler {
   @Override
   public String getMarker() {

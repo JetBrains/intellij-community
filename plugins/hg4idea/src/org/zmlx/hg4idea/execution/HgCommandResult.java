@@ -25,7 +25,7 @@ public final class HgCommandResult {
 
   public static final HgCommandResult CANCELLED = new HgCommandResult(new ProcessOutput(1));
 
-  @NotNull private final ProcessOutput myProcessOutput;
+  private final @NotNull ProcessOutput myProcessOutput;
   private final byte @NotNull [] myByteArrayOutput;
 
   public HgCommandResult(@NotNull ProcessOutput processOutput) {
@@ -37,25 +37,19 @@ public final class HgCommandResult {
     myByteArrayOutput = byteArrayOutput;
   }
 
-  @NotNull
-  public List<@NlsSafe String> getOutputLines() {
+  public @NotNull List<@NlsSafe String> getOutputLines() {
     return myProcessOutput.getStdoutLines();
   }
 
-  @NotNull
-  public List<@NlsSafe String> getErrorLines() {
+  public @NotNull List<@NlsSafe String> getErrorLines() {
     return myProcessOutput.getStderrLines();
   }
 
-  @NlsSafe
-  @NotNull
-  public String getRawOutput() {
+  public @NlsSafe @NotNull String getRawOutput() {
     return myProcessOutput.getStdout();
   }
 
-  @NlsSafe
-  @NotNull
-  public String getRawError() {
+  public @NlsSafe @NotNull String getRawError() {
     return myProcessOutput.getStderr();
   }
 

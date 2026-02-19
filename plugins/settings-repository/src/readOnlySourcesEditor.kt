@@ -1,25 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.Function
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.table.TableModelEditor
-import org.jetbrains.settingsRepository.git.asProgressMonitor
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
+import org.jetbrains.settingsRepository.git.JGitCoroutineProgressMonitor
 import org.jetbrains.settingsRepository.git.cloneBare
+import kotlin.io.path.exists
 import kotlin.properties.Delegates.notNull
 
 private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
@@ -45,12 +52,13 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
 
     override fun getItemClass() = ReadonlySource::class.java
 
-    override fun edit(item: ReadonlySource, mutator: Function<ReadonlySource, ReadonlySource>, isAdd: Boolean) {
+    override fun edit(item: ReadonlySource, mutator: Function<in ReadonlySource, out ReadonlySource>, isAdd: Boolean) {
       var urlField: TextFieldWithBrowseButton by notNull()
       val panel = panel {
         row(IcsBundle.message("readonly.sources.configuration.url.label")) {
-          urlField = textFieldWithBrowseButton(IcsBundle.message("readonly.sources.configuration.repository.chooser"),
-                                               fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
+          urlField = textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(IcsBundle.message("readonly.sources.configuration.repository.chooser")))
+            .columns(COLUMNS_LARGE)
+            .component
         }
       }
 
@@ -99,41 +107,42 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         return
       }
 
-      runModalTask(icsMessage("task.sync.title")) { indicator ->
-        indicator.isIndeterminate = true
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), icsMessage("task.sync.title")) {
+        reportRawProgress { reporter ->
+          val root = icsManager.readOnlySourcesManager.rootDir
 
-        val root = icsManager.readOnlySourcesManager.rootDir
-
-        if (toDelete.isNotEmpty()) {
-          indicator.text = icsMessage("progress.deleting.old.repositories")
-          for (path in toDelete) {
-            indicator.checkCanceled()
-            LOG.runAndLogException {
-              indicator.text2 = path
-              root.resolve(path).delete()
-            }
-          }
-        }
-
-        if (toCheckout.isNotEmpty()) {
-          for (source in toCheckout) {
-            indicator.checkCanceled()
-            LOG.runAndLogException {
-              indicator.text = icsMessage("progress.cloning.repository", source.url!!.trimMiddle(255))
-              val dir = root.resolve(source.path!!)
-              if (dir.exists()) {
-                dir.delete()
+          if (toDelete.isNotEmpty()) {
+            reporter.text(icsMessage("progress.deleting.old.repositories"))
+            for (path in toDelete) {
+              ensureActive()
+              LOG.runAndLogException {
+                reporter.details(path)
+                root.resolve(path).delete()
               }
-              cloneBare(source.url!!, dir, icsManager.credentialsStore, indicator.asProgressMonitor()).close()
             }
           }
-        }
 
-        icsManager.readOnlySourcesManager.setSources(newList)
+          if (toCheckout.isNotEmpty()) {
+            for (source in toCheckout) {
+              ensureActive()
+              LOG.runAndLogException {
+                reporter.text(icsMessage("progress.cloning.repository", source.url!!.trimMiddle(255)))
+                val dir = root.resolve(source.path!!)
+                if (dir.exists()) {
+                  dir.delete()
+                }
+                val progressMonitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
+                cloneBare(source.url!!, dir, icsManager.credentialsStore, progressMonitor).close()
+              }
+            }
+          }
 
-        // blindly reload all
-        icsManager.schemeManagerFactory.value.process {
-          it.reload()
+          icsManager.readOnlySourcesManager.setSources(newList)
+
+          // blindly reload all
+          icsManager.schemeManagerFactory.value.process {
+            it.reload()
+          }
         }
       }
     }

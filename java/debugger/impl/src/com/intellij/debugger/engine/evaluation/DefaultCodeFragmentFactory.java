@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.codeInsight.completion.CompletionService;
@@ -6,17 +6,23 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Eugene Zhuravlev
  */
-public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
+public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory {
   private static final class SingletonHolder {
     public static final DefaultCodeFragmentFactory ourInstance = new DefaultCodeFragmentFactory();
   }
@@ -37,12 +43,14 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   }
 
   @Override
-  public JavaCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
-    return createCodeFragment(item, context, project);
+  protected JavaCodeFragment createPresentationPsiCodeFragmentImpl(final @NotNull TextWithImports item,
+                                                                   final PsiElement context,
+                                                                   final @NotNull Project project) {
+    return createPsiCodeFragment(item, context, project);
   }
 
   @Override
-  public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, final Project project) {
+  public JavaCodeFragment createPsiCodeFragmentImpl(TextWithImports item, PsiElement context, final @NotNull Project project) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final String text = item.getText();
 
@@ -63,11 +71,10 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       fragment = factory.createCodeBlockCodeFragment(text, context, true);
     }
 
-    if(item.getImports().length() > 0) {
+    if (!item.getImports().isEmpty()) {
       fragment.addImportsFromString(item.getImports());
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    //noinspection HardCodedStringLiteral
     fragment.putUserData(KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
     fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, (expression, parameters) -> {
       if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
@@ -80,8 +87,8 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       }
 
       final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
-      DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
-      if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
+      DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
+      if (managerThread != null) {
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
         final AtomicReference<PsiType> nameRef = new AtomicReference<>();
@@ -93,7 +100,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
               semaphore.up();
             }
           };
-        debuggerSession.getProcess().getManagerThread().invoke(worker);
+        managerThread.invoke(worker);
         for (int i = 0; i < 50; i++) {
           ProgressManager.checkCanceled();
           if (semaphore.waitFor(20)) break;
@@ -112,14 +119,18 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   }
 
   @Override
-  @NotNull
-  public LanguageFileType getFileType() {
+  public @NotNull LanguageFileType getFileType() {
     return JavaFileType.INSTANCE;
   }
 
   @Override
   public EvaluatorBuilder getEvaluatorBuilder() {
     return EvaluatorBuilderImpl.getInstance();
+  }
+
+  @Override
+  public EvaluationContextWrapper createEvaluationContextWrapper() {
+    return new JavaEvaluationContextWrapper();
   }
 
   public static final Key<String> KEY = Key.create("DefaultCodeFragmentFactory.KEY");

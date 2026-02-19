@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -12,16 +12,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public final class CachedXmlDocumentSet {
   private final Map<String, String> nameToDir = new HashMap<>();
 
-  @Nullable
-  public Element load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
+  public @Nullable Element load(@NotNull String name, boolean refresh) throws IOException, JDOMException {
     assert nameToDir.containsKey(name) : name;
 
     VirtualFile file = getFile(name, refresh);
@@ -29,12 +26,8 @@ public final class CachedXmlDocumentSet {
       return null;
     }
 
-    InputStream inputStream = file.getInputStream();
-    try {
+    try (InputStream inputStream = file.getInputStream()) {
       return JDOMUtil.load(inputStream);
-    }
-    finally {
-      inputStream.close();
     }
   }
 
@@ -64,14 +57,5 @@ public final class CachedXmlDocumentSet {
       }
     }
     return file;
-  }
-
-  @NotNull
-  public List<String> getFilePaths() {
-    List<String> list = new ArrayList<>(nameToDir.size());
-    for (String name : nameToDir.keySet()) {
-      list.add(getParent(name) + '/' + name);
-    }
-    return list;
   }
 }

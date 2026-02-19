@@ -1,0 +1,2 @@
+[jvmFieldProperty.1.java] Unclassified 7 System.out.println("a.foo = " + A.foo);
+[jvmFieldProperty.2.java] Unclassified 7 A.foo = "a";

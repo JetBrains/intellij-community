@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -6,28 +6,20 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 public final class RunAnythingScrollingUtil {
-
-  /**
-   * @deprecated unused
-   */
-  @NonNls
-  @Deprecated
-  protected static final String SELECT_PREVIOUS_ROW_ACTION_ID = ListActions.Up.ID;
-
-  /**
-   * @deprecated unused
-   */
-  @NonNls
-  @Deprecated
-  protected static final String SELECT_NEXT_ROW_ACTION_ID = ListActions.Down.ID;
 
   public static void installActions(@NotNull JList list,
                                     @NotNull JTextField focusParent,
@@ -107,10 +99,10 @@ public final class RunAnythingScrollingUtil {
     selectionModel.setSelectionInterval(indexToSelect, indexToSelect);
   }
 
-  private static class MoveAction extends AbstractAction {
-    @NotNull private final String myId;
-    @NotNull private final JList myComponent;
-    @NotNull private final Runnable myHandleFocusParent;
+  private static final class MoveAction extends AbstractAction {
+    private final @NotNull String myId;
+    private final @NotNull JList myComponent;
+    private final @NotNull Runnable myHandleFocusParent;
     private final boolean myIsCycleScrolling;
 
     MoveAction(@NotNull String id, @NotNull JList component, @NotNull Runnable handleFocusParent, boolean isCycleScrolling) {

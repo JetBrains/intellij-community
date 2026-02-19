@@ -1,41 +1,46 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.problems;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ProblemImpl implements Problem {
-  private final VirtualFile virtualFile;
-  private final HighlightInfo highlightInfo;
-  private final boolean isSyntax;
+import java.util.Objects;
 
-  public ProblemImpl(@NotNull VirtualFile virtualFile, @NotNull HighlightInfo highlightInfo, final boolean isSyntax) {
+@ApiStatus.Internal
+public final class ProblemImpl implements Problem {
+  private final VirtualFile virtualFile;
+  private final boolean isSyntax;
+  private final @NotNull TextRange myTextRange;
+  private final @NotNull HighlightSeverity mySeverity;
+  private final @NotNull HighlightInfoType myType;
+  private final @NlsContexts.DetailedDescription String myDescription;
+  private final TextAttributes myForcedTextAttributes;
+  private final TextAttributesKey myForcedTextAttributesKey;
+
+  public ProblemImpl(@NotNull VirtualFile virtualFile, @NotNull HighlightInfo info, boolean isSyntax) {
     this.isSyntax = isSyntax;
     this.virtualFile = virtualFile;
-    this.highlightInfo = highlightInfo;
+    myTextRange = TextRange.create(info);
+    mySeverity = info.getSeverity();
+    myType = info.type;
+    myDescription = info.getDescription();
+    myForcedTextAttributes = info.forcedTextAttributes;
+    myForcedTextAttributesKey = info.forcedTextAttributesKey;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getVirtualFile() {
+  public @NotNull VirtualFile getVirtualFile() {
     return virtualFile;
   }
 
@@ -43,29 +48,31 @@ public class ProblemImpl implements Problem {
     return isSyntax;
   }
 
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ProblemImpl problem)) return false;
 
-    final ProblemImpl problem = (ProblemImpl)o;
-
-    if (isSyntax != problem.isSyntax) return false;
-    if (!highlightInfo.equals(problem.highlightInfo)) return false;
-    if (!virtualFile.equals(problem.virtualFile)) return false;
-
-    return true;
+    return isSyntax == problem.isSyntax &&
+           virtualFile.equals(problem.virtualFile) &&
+           myTextRange.equals(problem.myTextRange) &&
+           mySeverity.equals(problem.mySeverity) &&
+           myType.equals(problem.myType) &&
+           Objects.equals(myDescription, problem.myDescription) &&
+           Objects.equals(myForcedTextAttributes, problem.myForcedTextAttributes) &&
+           Objects.equals(myForcedTextAttributesKey, problem.myForcedTextAttributesKey);
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = virtualFile.hashCode();
-    result = 31 * result + highlightInfo.hashCode();
+    result = 31 * result + myTextRange.hashCode();
     result = 31 * result + (isSyntax ? 1 : 0);
     return result;
   }
 
-  @NonNls
-  public String toString() {
-    return "Problem: " + highlightInfo;
+  @Override
+  public @NonNls String toString() {
+    return "Problem: " + myTextRange + ": "+myDescription;
   }
 }

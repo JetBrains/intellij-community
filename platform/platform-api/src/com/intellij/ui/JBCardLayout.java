@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
@@ -11,8 +11,19 @@ import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
+import javax.swing.WindowConstants;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -64,11 +75,11 @@ public class JBCardLayout extends CardLayout {
     }
   }
 
-  public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction) {
+  public void swipe(final @NotNull Container parent, final @NotNull String name, @NotNull SwipeDirection direction) {
     swipe(parent, name, direction, null);
   }
 
-  public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction,
+  public void swipe(final @NotNull Container parent, final @NotNull String name, @NotNull SwipeDirection direction,
                     final @Nullable Runnable onDone) {
     stopSwipeIfNeeded();
     mySwipeFrom = findVisible(parent);
@@ -145,8 +156,7 @@ public class JBCardLayout extends CardLayout {
     }
   }
 
-  @Nullable
-  private static Component findVisible(Container parent) {
+  private static @Nullable Component findVisible(Container parent) {
     for (int i = 0; i < parent.getComponentCount(); i++) {
       Component component = parent.getComponent(i);
       if (component.isVisible()) return component;

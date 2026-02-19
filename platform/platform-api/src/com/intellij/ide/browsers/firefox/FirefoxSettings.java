@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.firefox;
 
 import com.intellij.ide.browsers.BrowserSpecificSettings;
@@ -29,9 +29,8 @@ public final class FirefoxSettings extends BrowserSpecificSettings {
     myProfile = StringUtil.nullize(profile);
   }
 
-  @Nullable
   @Tag("profiles-ini-path")
-  public String getProfilesIniPath() {
+  public @Nullable String getProfilesIniPath() {
     return myProfilesIniPath;
   }
 
@@ -39,9 +38,8 @@ public final class FirefoxSettings extends BrowserSpecificSettings {
     myProfilesIniPath = PathUtil.toSystemIndependentName(StringUtil.nullize(value));
   }
 
-  @Nullable
   @Tag("profile")
-  public @NlsSafe String getProfile() {
+  public @Nullable @NlsSafe String getProfile() {
     return myProfile;
   }
 
@@ -49,23 +47,20 @@ public final class FirefoxSettings extends BrowserSpecificSettings {
     myProfile = StringUtil.nullize(value);
   }
 
-  @NotNull
   @Override
-  public Configurable createConfigurable() {
+  public @NotNull Configurable createConfigurable() {
     return new FirefoxSettingsConfigurable(this);
   }
 
-  @Nullable
-  public File getProfilesIniFile() {
+  public @Nullable File getProfilesIniFile() {
     if (myProfilesIniPath != null) {
       return new File(FileUtil.toSystemDependentName(myProfilesIniPath));
     }
     return FirefoxUtil.getDefaultProfileIniPath();
   }
 
-  @NotNull
   @Override
-  public List<String> getAdditionalParameters() {
+  public @NotNull List<String> getAdditionalParameters() {
     List<FirefoxProfile> profiles = FirefoxUtil.computeProfiles(getProfilesIniFile());
     if (profiles.size() >= 2) {
       FirefoxProfile profile = FirefoxUtil.findProfileByNameOrDefault(myProfile, profiles);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
@@ -20,36 +6,45 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.WeighedItem;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import java.util.function.Supplier;
 
 /**
  * @author konstantin.aleev
  */
 public class RunDashboardRunConfigurationStatus implements WeighedItem {
   public static final RunDashboardRunConfigurationStatus STARTED = new RunDashboardRunConfigurationStatus(
-    ExecutionBundle.message("run.dashboard.started.group.name"), AllIcons.Actions.Execute, 10);
+    "STARTED", ExecutionBundle.messagePointer("run.dashboard.started.group.name"), AllIcons.Actions.Execute, 10);
   public static final RunDashboardRunConfigurationStatus FAILED = new RunDashboardRunConfigurationStatus(
-    ExecutionBundle.message("run.dashboard.failed.group.name"), AllIcons.General.Error, 20);
+    "FAILED", ExecutionBundle.messagePointer("run.dashboard.failed.group.name"), AllIcons.General.Error, 20);
   public static final RunDashboardRunConfigurationStatus STOPPED = new RunDashboardRunConfigurationStatus(
-    ExecutionBundle.message("run.dashboard.stopped.group.name"), AllIcons.Actions.Restart, 30);
+    "STOPPED", ExecutionBundle.messagePointer("run.dashboard.stopped.group.name"), AllIcons.Actions.Restart, 30);
   public static final RunDashboardRunConfigurationStatus CONFIGURED = new RunDashboardRunConfigurationStatus(
-    ExecutionBundle.message("run.dashboard.configured.group.name"), AllIcons.General.Settings, 40);
+    "CONFIGURED", ExecutionBundle.messagePointer("run.dashboard.configured.group.name"), AllIcons.General.Settings, 40);
 
-  private final @Nls String myName;
+  private final String myId;
+  private final Supplier<@Nls String> myName;
   private final Icon myIcon;
   private final int myWeight;
 
-  public RunDashboardRunConfigurationStatus(@Nls String name, Icon icon, int weight) {
+  public RunDashboardRunConfigurationStatus(String id, Supplier<@Nls String> name, Icon icon, int weight) {
+    myId = id;
     myName = name;
     myIcon = icon;
     myWeight = weight;
   }
 
+  public String getId() {
+    return myId;
+  }
+
   public @Nls String getName() {
-    return myName;
+    return myName.get();
   }
 
   public Icon getIcon() {
@@ -61,9 +56,7 @@ public class RunDashboardRunConfigurationStatus implements WeighedItem {
     return myWeight;
   }
 
-  @NotNull
-  public static RunDashboardRunConfigurationStatus getStatus(RunDashboardRunConfigurationNode node) {
-    RunContentDescriptor descriptor = node.getDescriptor();
+  public static @NotNull RunDashboardRunConfigurationStatus getStatus(@Nullable RunContentDescriptor descriptor) {
     if (descriptor == null) {
       return CONFIGURED;
     }
@@ -80,5 +73,18 @@ public class RunDashboardRunConfigurationStatus implements WeighedItem {
       return STOPPED;
     }
     return FAILED;
+  }
+
+  @Contract("null -> null")
+  public static @Nullable RunDashboardRunConfigurationStatus getStatusById(@Nullable String id) {
+    if (id == null) return null;
+
+    return switch (id) {
+      case "STARTED" -> STARTED;
+      case "FAILED" -> FAILED;
+      case "STOPPED" -> STOPPED;
+      case "CONFIGURED" -> CONFIGURED;
+      default -> null;
+    };
   }
 }

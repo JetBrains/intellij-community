@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.fetch;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,7 @@ import java.util.Collection;
 /**
  * High-level API to execute the {@code git fetch} command.
  */
+@ApiStatus.NonExtendable
 public interface GitFetchSupport {
 
   /**
@@ -35,11 +37,27 @@ public interface GitFetchSupport {
   @NotNull
   GitFetchResult fetch(@NotNull GitRepository repository, @NotNull GitRemote remote);
 
+  @NotNull
+  GitFetchResult fetchUnshallow(@NotNull GitRepository repository, @NotNull GitRemote remote);
+
+  /**
+   * Fetches the given remotes.
+   */
+  @NotNull
+  GitFetchResult fetchRemotes(@NotNull Collection<Pair<GitRepository, GitRemote>> remotes);
+
   /**
    * Fetches the given remote using provided refspec.
    */
   @NotNull
   GitFetchResult fetch(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String refspec);
+
+  /**
+   * Fetches all targets defined in {@code fetchSpec}
+   */
+  @NotNull
+  @ApiStatus.Internal
+  GitFetchResult fetch(@NotNull Collection<GitFetchSpec> fetchSpec);
 
   /**
    * Returns the default remote to fetch from, or null if there are no remotes in the repository,
@@ -54,8 +72,7 @@ public interface GitFetchSupport {
   @CalledInAny
   boolean isFetchRunning();
 
-  @NotNull
-  static GitFetchSupport fetchSupport(@NotNull Project project) {
-    return ServiceManager.getService(project, GitFetchSupport.class);
+  static @NotNull GitFetchSupport fetchSupport(@NotNull Project project) {
+    return project.getService(GitFetchSupport.class);
   }
 }

@@ -17,9 +17,15 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Insets;
 
 /**
  * @author kir
@@ -48,10 +54,10 @@ public class ErrorLabel extends JLabel {
     boolean newUnderline = text != null;
     myForeground = color;
     if (newUnderline) {
-      updateLabelView(newUnderline, text);
+      updateLabelView(true, text);
     }
     else if (myUnderline) {
-      updateLabelView(newUnderline, myTooltip);
+      updateLabelView(false, myTooltip);
     }
   }
 

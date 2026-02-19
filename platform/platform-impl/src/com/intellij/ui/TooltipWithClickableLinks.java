@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -6,11 +6,13 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.Point;
 
 /**
  * Custom tooltip implementation which supports clickable links in HTML text
@@ -34,11 +36,11 @@ public class TooltipWithClickableLinks extends IdeTooltip {
     return !event.isIsEventInsideBalloon();
   }
 
-  public static class ForBrowser extends TooltipWithClickableLinks {
+  public static final class ForBrowser extends TooltipWithClickableLinks {
     public ForBrowser(JComponent component, @NlsContexts.Tooltip String htmlText) {
       super(component, htmlText, new HyperlinkAdapter() {
         @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           BrowserUtil.browse(e.getURL());
         }
       });

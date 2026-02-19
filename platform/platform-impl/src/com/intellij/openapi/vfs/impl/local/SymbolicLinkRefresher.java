@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +8,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,9 +41,12 @@ final class SymbolicLinkRefresher {
 
   SymbolicLinkRefresher(LocalFileSystemImpl system) {
     mySystem = system;
-    ApplicationManager.getApplication().getMessageBus().connect(system).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+  }
+
+  void refresh() {
+    ApplicationManager.getApplication().getMessageBus().connect(mySystem).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         analyzeEvents(events);
       }
     });
@@ -53,7 +62,7 @@ final class SymbolicLinkRefresher {
     Consumer<String> queuePath = path -> toRefresh.addAll(fileWatcher.mapToAllSymlinks(FileUtil.toSystemDependentName(path)));
     Consumer<VirtualFile> queueFile = file -> {
       if (file instanceof VirtualFileSystemEntry) {
-        if (((VirtualFileSystemEntry)file).parentHasSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
+        if (((VirtualFileSystemEntry)file).thisOrParentHaveSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
           String obj = file.getCanonicalPath();
           file = obj == null ? null : mySystem.findFileByPathIfCached(obj);
           if (file != null && fileWatcher.belongsToWatchRoots(FileUtil.toSystemDependentName(file.getPath()), !file.isDirectory())) {
@@ -121,7 +130,7 @@ final class SymbolicLinkRefresher {
   }
 
   private static boolean isUnderRecursiveOrCircularSymlink(@NotNull VirtualFile file) {
-    if (((VirtualFileSystemEntry)file).parentHasSymlink()) {
+    if (((VirtualFileSystemEntry)file).thisOrParentHaveSymlink()) {
       while (file != null && !file.is(VFileProperty.SYMLINK)) {
         file = file.getParent();
       }

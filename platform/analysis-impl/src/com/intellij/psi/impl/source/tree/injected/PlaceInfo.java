@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.injection.MultiHostRegistrar;
@@ -17,12 +15,12 @@ import org.jetbrains.annotations.NotNull;
  * to the moment of {@link MultiHostRegistrar#doneInjecting()}
  */
 class PlaceInfo {
-  @NotNull final String prefix;
-  @NotNull final String suffix;
-  @NotNull final PsiLanguageInjectionHost host;
-  @NotNull final TextRange registeredRangeInsideHost;
-  @NotNull final LiteralTextEscaper<? extends PsiLanguageInjectionHost> myEscaper;
-  @NotNull final String myHostText;
+  final @NotNull String prefix;
+  final @NotNull String suffix;
+  final @NotNull PsiLanguageInjectionHost host;
+  final @NotNull TextRange registeredRangeInsideHost;
+  final @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> myEscaper;
+  final @NotNull String myHostText;
   ProperTextRange rangeInDecodedPSI;
   TextRange rangeInHostElement;
   Segment newInjectionHostRange;

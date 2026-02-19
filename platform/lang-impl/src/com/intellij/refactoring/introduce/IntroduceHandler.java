@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduce;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -7,7 +7,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,7 +25,12 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Base class for Introduce variable/field/etc refactorings. It provides skeleton for choosing the target and consequent invoking of the
@@ -63,12 +71,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
         invokeOnTarget(list.get(0), file, editor, project);
       }
       else {
-        IntroduceTargetChooser.showIntroduceTargetChooser(editor, list, new Pass<Target>() {
-          @Override
-          public void pass(final Target target) {
-            invokeOnTarget(target, file, editor, project);
-          }
-        }, RefactoringBundle.message("introduce.target.chooser.expressions.title"), targetInfo.getSecond());
+        IntroduceTargetChooser.showIntroduceTargetChooser(editor, list, target -> invokeOnTarget(target, file, editor, project), RefactoringBundle.message("introduce.target.chooser.expressions.title"), targetInfo.getSecond());
       }
     }
   }
@@ -150,23 +153,31 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
                                 @NotNull Editor editor,
                                 @NotNull Project project) {
     Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = getOccurrenceOptions(target, usages);
-    OccurrencesChooser<Object> chooser = new OccurrencesChooser<Object>(editor) {
+    OccurrencesChooser<Object> chooser = new OccurrencesChooser<>(editor) {
       @Override
       protected TextRange getOccurrenceRange(Object occurrence) {
         return IntroduceHandler.this.getOccurrenceRange(occurrence);
       }
     };
-    chooser.showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
-      @Override
-      public void pass(final OccurrencesChooser.ReplaceChoice choice) {
-        AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
-        introducer.startInplaceIntroduceTemplate();
-      }
-    }, occurrencesMap);
+    chooser.showChooser(occurrencesMap, choice -> {
+      startInplaceIntroduce(target, scope, usages, file, editor, project, choice);
+    });
   }
 
-  @NotNull
-  private TextRange getOccurrenceRange(@NotNull Object occurrence) {
+  public void startInplaceIntroduce(
+    @NotNull Target target,
+    @NotNull Scope scope,
+    @NotNull List<UsageInfo> usages,
+    @NotNull PsiFile file,
+    @NotNull Editor editor,
+    @NotNull Project project,
+    OccurrencesChooser.ReplaceChoice choice
+  ) {
+    AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
+    introducer.startInplaceIntroduceTemplate();
+  }
+
+  private @NotNull TextRange getOccurrenceRange(@NotNull Object occurrence) {
     if (occurrence instanceof PsiElement) {
       return ((PsiElement)occurrence).getTextRange();
     }
@@ -182,9 +193,8 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
     }
   }
 
-  @NotNull
-  private Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull Target target,
-                                                                                   @NotNull List<UsageInfo> usages) {
+  private @NotNull Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull Target target,
+                                                                                            @NotNull List<UsageInfo> usages) {
     HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = new LinkedHashMap<>();
 
     map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(target));
@@ -195,21 +205,18 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
   }
 
 
-  @NotNull
-  protected abstract List<UsageInfo> collectUsages(@NotNull Target target,
-                                                   @NotNull Scope scope);
+  protected abstract @NotNull List<UsageInfo> collectUsages(@NotNull Target target,
+                                                            @NotNull Scope scope);
 
   /**
    * @return null if everything is ok, or a short message describing why it's impossible to perform the refactoring. It will be shown in a balloon popup.
    */
-  @Nullable
-  protected abstract @NlsContexts.DialogMessage String checkUsages(@NotNull List<UsageInfo> usages);
+  protected abstract @Nullable @NlsContexts.DialogMessage String checkUsages(@NotNull List<UsageInfo> usages);
 
   /**
    * @return find all possible scopes for the target to introduce
    */
-  @NotNull
-  protected abstract List<Scope> collectTargetScopes(@NotNull Target target,
+  protected abstract @NotNull List<Scope> collectTargetScopes(@NotNull Target target,
                                                      @NotNull Editor editor,
                                                      @NotNull PsiFile file,
                                                      @NotNull Project project);
@@ -217,8 +224,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
   /**
    * @return candidates for refactoring (e.g. all expressions which are under caret)
    */
-  @NotNull
-  protected abstract Pair<List<Target>, Integer> collectTargets(@NotNull PsiFile file,
+  protected abstract @NotNull Pair<List<Target>, Integer> collectTargets(@NotNull PsiFile file,
                                                                 @NotNull Editor editor,
                                                                 @NotNull Project project);
 
@@ -228,8 +234,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
    * @param end end offset of the selection
    * @return the corresponding target, or null if the range doesn't match any target
    */
-  @Nullable
-  protected abstract Target findSelectionTarget(int start,
+  protected abstract @Nullable Target findSelectionTarget(int start,
                                                 int end,
                                                 @NotNull PsiFile file,
                                                 @NotNull Editor editor,
@@ -240,37 +245,31 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
    * @param target to check
    * @return null if everything is ok, or a short message describing why the refactoring cannot be performed
    */
-  @Nullable
-  protected abstract @NlsContexts.DialogMessage String checkSelectedTarget(@NotNull Target target,
+  protected abstract @Nullable @NlsContexts.DialogMessage String checkSelectedTarget(@NotNull Target target,
                                                                            @NotNull PsiFile file,
                                                                            @NotNull Editor editor,
                                                                            @NotNull Project project);
 
-  @NotNull
-  protected abstract @NlsContexts.DialogTitle String getRefactoringName();
+  protected abstract @NotNull @NlsContexts.DialogTitle String getRefactoringName();
 
-  @Nullable
-  protected abstract String getHelpID();
+  protected abstract @Nullable String getHelpID();
 
   /**
    * If {@link IntroduceHandler#collectTargetScopes}() returns several possible scopes, the Choose Scope Popup will be shown.
    * It will have this title.
    */
-  @NotNull
-  protected abstract @NlsContexts.PopupTitle String getChooseScopeTitle();
+  protected abstract @NotNull @NlsContexts.PopupTitle String getChooseScopeTitle();
 
   /**
    * If {@link IntroduceHandler#collectTargetScopes}() returns several possible scopes, the Choose Scope Popup will be shown.
    * It will use the provided renderer to paint scopes
    */
-  @NotNull
-  protected abstract PsiElementListCellRenderer<Scope> getScopeRenderer();
+  protected abstract @NotNull PsiElementListCellRenderer<Scope> getScopeRenderer();
 
   /**
    * @return in-place introducer for the refactoring
    */
-  @NotNull
-  protected abstract AbstractInplaceIntroducer<?, ?> getIntroducer(@NotNull Target target,
+  protected abstract @NotNull AbstractInplaceIntroducer<?, ?> getIntroducer(@NotNull Target target,
                                                                    @NotNull Scope scope,
                                                                    @NotNull List<UsageInfo> usages,
                                                                    @NotNull OccurrencesChooser.ReplaceChoice replaceChoice,
@@ -278,8 +277,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
                                                                    @NotNull Editor editor,
                                                                    @NotNull Project project);
 
-  @NotNull
-  protected @NlsContexts.DialogMessage String getEmptyScopeErrorMessage() {
+  protected @NotNull @NlsContexts.DialogMessage String getEmptyScopeErrorMessage() {
     return RefactoringBundle.message("dialog.message.refactoring.not.available.in.current.scope", getRefactoringName());
   }
 

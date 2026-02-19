@@ -1,31 +1,50 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
+
 
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
+ * <p>
  * Use one of {@link #createTextAttributesKey(String)} {@link #createTextAttributesKey(String, TextAttributesKey)}
- * to create a new key, fallbacks will help finding colors in all colors schemes.
- * Specifying different attributes for different color schemes is possible using additionalTextAttributes extension point.
+ * to create a new key, fallbacks will help to find colors in all colors schemes.
+ * </p>
+ * <p>
+ * Specifying different attributes for different color schemes is possible
+ * using {@code com.intellij.additionalTextAttributes} extension point.
+ * </p>
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/syntax-highlighting-and-error-highlighting.html">Syntax and Error Highlighting (IntelliJ Platform Docs)</a>
+ * @see CodeInsightColors
+ * @see com.intellij.openapi.editor.DefaultLanguageHighlighterColors
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   public static final TextAttributesKey[] EMPTY_ARRAY = new TextAttributesKey[0];
@@ -36,16 +55,9 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<>();
 
   private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider =
-    new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
-      @Nullable
-      @Override
-      protected TextAttributeKeyDefaultsProvider compute() {
-        return ServiceManager.getService(TextAttributeKeyDefaultsProvider.class);
-      }
-    };
+    volatileLazyNullable(() -> ApplicationManager.getApplication().getService(TextAttributeKeyDefaultsProvider.class));
 
-  @NotNull
-  private final String myExternalName;
+  private final @NotNull String myExternalName;
   private final TextAttributes myDefaultAttributes;
   private final TextAttributesKey myFallbackAttributeKey;
 
@@ -56,9 +68,15 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     myFallbackAttributeKey = fallbackAttributeKey;
 
     if (fallbackAttributeKey != null) {
-      JBIterable<TextAttributesKey> it = JBIterable.generate(myFallbackAttributeKey, o -> o == this ? null : o.myFallbackAttributeKey);
-      if (equals(it.find(o -> equals(o)))) {
-        throw new IllegalArgumentException("Can't use this fallback key: "+fallbackAttributeKey+": Cycle detected: " + StringUtil.join(it, "->"));
+      checkForCycle(fallbackAttributeKey);
+    }
+  }
+
+  private void checkForCycle(@NotNull TextAttributesKey fallbackAttributeKey) {
+    for (TextAttributesKey key = fallbackAttributeKey; key != null; key = key.myFallbackAttributeKey) {
+      if (equals(key)) {
+        throw new IllegalArgumentException("Can't use this fallback key: " + fallbackAttributeKey + ":" +
+          " Cycle detected: " + StringUtil.join(JBIterable.generate(myFallbackAttributeKey, o -> o == this ? null : o.myFallbackAttributeKey), "->"));
       }
     }
   }
@@ -74,20 +92,21 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     myFallbackAttributeKey = null;
   }
 
-  @NotNull
-  public static TextAttributesKey find(@NotNull @NonNls String externalName) {
+  public static @NotNull TextAttributesKey find(@NotNull @NonNls String externalName) {
     return ourRegistry.computeIfAbsent(externalName, name -> new TextAttributesKey(name, null, null));
   }
 
   @Override
-  @NlsSafe
-  public String toString() {
-    return myExternalName;
+  public @NlsSafe String toString() {
+    return myExternalName
+           + (myFallbackAttributeKey == null && myDefaultAttributes == null ? "" : " (")
+           + (myFallbackAttributeKey == null ? "" : "fallbackKey: " + myFallbackAttributeKey)
+           + (myDefaultAttributes == null ? "" : "; defaultAttributes: " + myDefaultAttributes)
+           + (myFallbackAttributeKey == null && myDefaultAttributes == null ? "" : ")")
+      ;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getExternalName() {
+  public @NotNull @NlsSafe String getExternalName() {
     return myExternalName;
   }
 
@@ -103,8 +122,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @return the new key instance, or an existing instance if the key with the same
    * identifier was already registered.
    */
-  @NotNull
-  public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName) {
+  public static @NotNull TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName) {
     return find(externalName);
   }
 
@@ -133,19 +151,20 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   }
 
   // can't use RecursionManager unfortunately because quite a few crazy tests would start screaming about prevented recursive access
-  private static final ThreadLocal<Set<String>> CALLED_RECURSIVELY = ThreadLocal.withInitial(()->new THashSet<>());
+  private static final ThreadLocal<Set<String>> CALLED_RECURSIVELY = ThreadLocal.withInitial(() -> new HashSet<>());
+
   /**
    * Returns the default text attributes associated with the key.
    *
    * @return the text attributes.
    */
-  public TextAttributes getDefaultAttributes() {
+  public @NotNull TextAttributes getDefaultAttributes() {
     TextAttributes defaultAttributes = myDefaultAttributes;
     if (defaultAttributes == null) {
       final TextAttributeKeyDefaultsProvider provider = ourDefaultsProvider.getValue();
       if (provider != null) {
         Set<String> called = CALLED_RECURSIVELY.get();
-        if (!called.add(myExternalName)) return null;
+        if (!called.add(myExternalName)) return NULL_ATTRIBUTES;
         try {
           return ObjectUtils.notNull(provider.getDefaultAttributes(this), NULL_ATTRIBUTES);
         }
@@ -154,7 +173,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
         }
       }
     }
-    return defaultAttributes;
+    return ObjectUtils.notNull(defaultAttributes, NULL_ATTRIBUTES);
   }
 
   /**
@@ -166,9 +185,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * identifier was already registered.
    * @deprecated Use {@link #createTextAttributesKey(String, TextAttributesKey)} to guarantee compatibility with generic color schemes.
    */
-  @NotNull
   @Deprecated
-  public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
+  public static @NotNull TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
     return getOrCreate(externalName, defaultAttributes, null);
   }
 
@@ -188,15 +206,13 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @return the new key instance, or an existing instance if the key with the same
    * identifier was already registered.
    */
-  @NotNull
-  public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
+  public static @NotNull TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
     return getOrCreate(externalName, null, fallbackAttributeKey);
   }
 
-  @NotNull
-  private static TextAttributesKey getOrCreate(@NotNull @NonNls String externalName,
-                                               TextAttributes defaultAttributes,
-                                               TextAttributesKey fallbackAttributeKey) {
+  private static @NotNull TextAttributesKey getOrCreate(@NotNull @NonNls String externalName,
+                                                        TextAttributes defaultAttributes,
+                                                        TextAttributesKey fallbackAttributeKey) {
     TextAttributesKey existing = ourRegistry.get(externalName);
     if (existing != null
         && (defaultAttributes == null || Comparing.equal(existing.myDefaultAttributes, defaultAttributes))
@@ -206,12 +222,13 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return ourRegistry.compute(externalName, (oldName, oldKey) -> mergeKeys(oldName, oldKey, defaultAttributes, fallbackAttributeKey));
   }
 
-  @NotNull
-  private static TextAttributesKey mergeKeys(@NonNls @NotNull String externalName,
-                                             @Nullable TextAttributesKey oldKey,
-                                             TextAttributes defaultAttributes,
-                                             TextAttributesKey fallbackAttributeKey) {
-    if (oldKey == null) return new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
+  private static @NotNull TextAttributesKey mergeKeys(@NonNls @NotNull String externalName,
+                                                      @Nullable TextAttributesKey oldKey,
+                                                      TextAttributes defaultAttributes,
+                                                      TextAttributesKey fallbackAttributeKey) {
+    if (oldKey == null) {
+      return new TextAttributesKey(externalName, defaultAttributes, fallbackAttributeKey);
+    }
     // ouch. Someone's re-creating already existing key with different attributes.
     // Have to re-create the new one with correct attributes, re-insert to the map
 
@@ -242,13 +259,11 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @return the new key instance, or an existing instance if the key with the same
    * identifier was already registered.
    */
-  @NotNull
-  public static TextAttributesKey createTempTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
+  public static @NotNull TextAttributesKey createTempTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
     return createTextAttributesKey(TEMP_PREFIX + externalName, defaultAttributes);
   }
 
-  @Nullable
-  public TextAttributesKey getFallbackAttributeKey() {
+  public @Nullable TextAttributesKey getFallbackAttributeKey() {
     return myFallbackAttributeKey;
   }
 
@@ -256,11 +271,13 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
    * @deprecated Use {@link #createTextAttributesKey(String, TextAttributesKey)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public void setFallbackAttributeKey(@Nullable TextAttributesKey fallbackAttributeKey) {
   }
 
   @TestOnly
-  static void removeTextAttributesKey(@NonNls @NotNull String externalName) {
+  @ApiStatus.Internal
+  public static void removeTextAttributesKey(@NonNls @NotNull String externalName) {
     ourRegistry.remove(externalName);
   }
 
@@ -268,9 +285,15 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return key.getExternalName().startsWith(TEMP_PREFIX);
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable List<TextAttributesKey> getAllKeys() {
+    return Collections.unmodifiableList(new ArrayList<>(ourRegistry.values()));
+  }
+
   @FunctionalInterface
   public interface TextAttributeKeyDefaultsProvider {
-    TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key);
+    @Nullable TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key);
   }
 
   /**

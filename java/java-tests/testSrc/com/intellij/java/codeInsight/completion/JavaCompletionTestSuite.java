@@ -1,12 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
+import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
+import com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateTestCase;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import java.util.List;
 
 /**
  * To run a separate test from this suite with needed IndexingMode in an IDE, comment in {@link #suite()}
@@ -28,21 +33,27 @@ public class JavaCompletionTestSuite extends TestSuite {
       return suite;
     }
     suite.setName("Java completion tests suite");
-    System.setProperty("intellij.build.test.groups", "JAVA_TESTS");
-    TestCaseLoader myTestCaseLoader = new TestCaseLoader("tests/testGroups.properties");
+    TestCaseLoader myTestCaseLoader = TestCaseLoader.Builder.fromEmpty()
+      .withTestGroupsResourcePath(TestCaseLoader.COMMON_TEST_GROUPS_RESOURCE_NAME)
+      .withTestGroups(List.of("JAVA_TESTS"))
+      .build();
     myTestCaseLoader.fillTestCases("", TestAll.getClassRoots());
-    for (Class<?> aClass : myTestCaseLoader.getClasses()) {
-      if (!aClass.getSimpleName().contains("Completion")) continue;
+    List<Class<?>> classes = myTestCaseLoader.getClasses();
+    for (Class<?> aClass : classes) {
+      if (!aClass.getSimpleName().contains("Completion") && 
+          !PostfixTemplateTestCase.class.isAssignableFrom(aClass)) continue;
+      // JavaCompletionFeaturesTest does not depend on indices
+      if (JavaCompletionFeaturesTest.class.equals(aClass)) continue;
+      // Exclude feature suggester tests
+      if (aClass.getPackageName().equals("com.intellij.java.ifs")) continue;
       if (TestIndexingModeSupporter.class.isAssignableFrom(aClass)) {
-        //noinspection unchecked
-        Class<? extends TestIndexingModeSupporter> testCaseClass = (Class<? extends TestIndexingModeSupporter>)aClass;
-        TestIndexingModeSupporter.addTest(testCaseClass, new TestIndexingModeSupporter.FullIndexSuite(), suite);
-        TestIndexingModeSupporter.addTest(testCaseClass, new TestIndexingModeSupporter.RuntimeOnlyIndexSuite(), suite);
-        TestIndexingModeSupporter.addTest(testCaseClass, new TestIndexingModeSupporter.EmptyIndexSuite(), suite);
+        Class<? extends TestIndexingModeSupporter> testCaseClass = aClass.asSubclass(TestIndexingModeSupporter.class);
+        TestIndexingModeSupporter.addAllTests(testCaseClass, suite);
       } else if (!JavaCompletionTestSuite.class.equals(aClass)) {
-        suite.addTest(warning("Unexpected class " + aClass + " in " + suite.getClass()));
+        suite.addTest(warning("Unexpected " + aClass + " in the " + suite.getClass().getName() + " suite: " +
+                              "its name contains 'Completion' substring but it doesn't implement TestIndexingModeSupporter"));
       }
     }
-    return suite;
+    return TestFrameworkUtil.flattenSuite(suite);
   }
 }

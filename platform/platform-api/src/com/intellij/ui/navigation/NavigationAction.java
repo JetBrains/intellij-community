@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.Disposable;
@@ -10,17 +10,21 @@ import com.intellij.openapi.ui.ShadowAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-abstract class NavigationAction extends AnAction implements DumbAware {
-  protected NavigationAction(JComponent c, final String originalActionID, @NotNull Disposable parentDisposable) {
-    final AnAction original = ActionManager.getInstance().getAction(originalActionID);
-    new ShadowAction(this, original, c, parentDisposable);
-    getTemplatePresentation().setIcon(original.getTemplatePresentation().getIcon());
+/**
+ * History must be provided via {@link History#KEY}.
+ *
+ * @see History
+ */
+public abstract class NavigationAction extends AnAction implements DumbAware {
+  protected NavigationAction(JComponent c, String originalActionID, @NotNull Disposable parentDisposable) {
+    new ShadowAction(this, originalActionID, c,  parentDisposable);
+    getTemplatePresentation().setIcon(ActionManager.getInstance().getAction(originalActionID).getTemplatePresentation().getIcon());
   }
 
   @Override
-  public final void update(@NotNull final AnActionEvent e) {
+  public final void update(final @NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getHistory(e) != null);
     if (e.getPresentation().isEnabled()) {
       doUpdate(e);
@@ -29,8 +33,7 @@ abstract class NavigationAction extends AnAction implements DumbAware {
 
   protected abstract void doUpdate(final AnActionEvent e);
 
-  @Nullable
-  protected static History getHistory(final AnActionEvent e) {
+  protected static @Nullable History getHistory(final AnActionEvent e) {
     return e.getData(History.KEY);
   }
 }

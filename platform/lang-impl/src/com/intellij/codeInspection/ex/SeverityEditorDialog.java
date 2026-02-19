@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -24,25 +24,50 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.codeInsight.daemon.impl.SeverityRegistrar.SeverityBasedTextAttributes;
 
+@ApiStatus.Internal
 public final class SeverityEditorDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(SeverityEditorDialog.class);
 
@@ -56,14 +81,14 @@ public final class SeverityEditorDialog extends DialogWrapper {
   private final boolean myCloseDialogWhenSettingsShown;
   private final CardLayout myCard;
   private final JPanel myRightPanel;
-  @NonNls private static final String DEFAULT = "DEFAULT";
-  @NonNls private static final String EDITABLE = "EDITABLE";
+  private static final @NonNls String DEFAULT = "DEFAULT";
+  private static final @NonNls String EDITABLE = "EDITABLE";
 
   public static void show(@NotNull Project project,
                           @Nullable HighlightSeverity selectedSeverity,
                           @NotNull SeverityRegistrar severityRegistrar,
                           boolean closeDialogWhenSettingsShown,
-                          @Nullable Consumer<? super HighlightSeverity> chosenSeverityCallback) {
+                          @Nullable Consumer<? super @NotNull HighlightSeverity> chosenSeverityCallback) {
     final SeverityEditorDialog dialog = new SeverityEditorDialog(project, selectedSeverity, severityRegistrar, closeDialogWhenSettingsShown);
     if (dialog.showAndGet()) {
       final HighlightInfoType type = dialog.getSelectedType();
@@ -104,7 +129,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
         }
       }
     });
-    TreeUIHelper.getInstance().installListSpeedSearch(myOptionsList, attrs -> attrs.getSeverity().getName());
+    TreeUIHelper.getInstance().installListSpeedSearch(myOptionsList, attrs -> StringUtil.toUpperCase(attrs.getSeverity().getDisplayName()));
     myOptionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JPanel leftPanel = ToolbarDecorator.createDecorator(myOptionsList)
@@ -207,7 +232,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
     final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
     button.addActionListener(e -> editColorsAndFonts());
     disabled.add(button,
-                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0,
+                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0,
                                         0));
     myRightPanel.add(DEFAULT, disabled);
     myRightPanel.add(EDITABLE, myOptionsPanel);
@@ -219,8 +244,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
     reset(myOptionsList.getSelectedValue());
   }
 
-  @NotNull
-  public SeverityBasedTextAttributes createSeverity(@NotNull String name, @NotNull TextAttributes parent) {
+  public @NotNull SeverityBasedTextAttributes createSeverity(@NotNull String name, @NotNull TextAttributes parent) {
     HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 50),
                                                                                                TextAttributesKey
                                                                                                  .createTextAttributesKey(name));
@@ -254,8 +278,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
 
   private void fillList(final @Nullable HighlightSeverity severity) {
     DefaultListModel<SeverityBasedTextAttributes> model = new DefaultListModel<>();
-    final List<SeverityBasedTextAttributes> infoTypes =
-      new ArrayList<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+    List<SeverityBasedTextAttributes> infoTypes = new ArrayList<>(getApplicableSeverities());
     SeverityBasedTextAttributes preselection = null;
     for (SeverityBasedTextAttributes type : infoTypes) {
       model.addElement(type);
@@ -270,6 +293,9 @@ public final class SeverityEditorDialog extends DialogWrapper {
     myOptionsList.setSelectedValue(preselection, true);
   }
 
+  private @Unmodifiable Collection<SeverityBasedTextAttributes> getApplicableSeverities() {
+    return ContainerUtil.filter(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar), t -> t.getType().isApplicableToInspections());
+  }
 
   private void apply(SeverityBasedTextAttributes info) {
     if (info == null) {
@@ -307,8 +333,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     apply(myOptionsList.getSelectedValue());
-    final Collection<SeverityBasedTextAttributes> infoTypes =
-      new HashSet<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+    Collection<SeverityBasedTextAttributes> infoTypes = new HashSet<>(getApplicableSeverities());
     final ListModel listModel = myOptionsList.getModel();
     final List<HighlightSeverity> order = new ArrayList<>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {
@@ -341,18 +366,16 @@ public final class SeverityEditorDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 
-  @Nullable
-  public HighlightInfoType getSelectedType() {
+  public @Nullable HighlightInfoType getSelectedType() {
     final SeverityBasedTextAttributes selection =  myOptionsList.getSelectedValue();
     return selection != null ? selection.getType() : null;
   }
 
-  private static class MyTextAttributesDescription extends TextAttributesDescription {
+  private static final class MyTextAttributesDescription extends TextAttributesDescription {
     MyTextAttributesDescription(final String name,
                                        final String group,
                                        final TextAttributes attributes,

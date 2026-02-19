@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -13,55 +13,67 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ui.CustomInspectionActions;
+import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.plugin.ui.*;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.ConfigurationCellRenderer;
+import com.intellij.structuralsearch.plugin.ui.ConfigurationUtil;
+import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
+import com.intellij.structuralsearch.plugin.ui.SearchContext;
+import com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractListModel;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Bas Leijdekkers
- */
-public class StructuralSearchFakeInspection extends LocalInspectionTool {
-
+public final class StructuralSearchFakeInspection extends LocalInspectionTool {
   private Configuration myMainConfiguration;
-  @NotNull private final List<Configuration> myConfigurations;
+  private final @NotNull List<Configuration> myConfigurations;
 
   public StructuralSearchFakeInspection(@NotNull Collection<@NotNull Configuration> configurations) {
     if (configurations.isEmpty()) throw new IllegalArgumentException();
+
     myConfigurations = new SmartList<>(configurations);
     myConfigurations.sort(Comparator.comparingInt(Configuration::getOrder));
+    final int size = myConfigurations.size();
+    for (int i = 0; i < size; i++) {
+      final Configuration configuration = myConfigurations.get(i);
+      if (configuration.getOrder() != i) {
+        configuration.setOrder(i); // fix corruption
+      }
+    }
     myMainConfiguration = myConfigurations.get(0);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
     return myMainConfiguration.getName();
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
-    return myMainConfiguration.getUuid().toString();
+  public @NotNull String getShortName() {
+    return myMainConfiguration.getUuid();
   }
 
   @Override
@@ -69,11 +81,16 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return true;
   }
 
-  @SuppressWarnings("PatternValidation")
-  @Pattern(VALID_ID_PATTERN)
-  @NotNull
+  public boolean isCleanup() {
+    return isCleanupAllowed() && myMainConfiguration.isCleanup();
+  }
+
+  private boolean isCleanupAllowed() {
+    return ContainerUtil.exists(myConfigurations, c -> c instanceof ReplaceConfiguration);
+  }
+
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     final HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
     if (key != null) {
       return key.getID(); // to avoid using a new suppress id before it is registered.
@@ -83,26 +100,27 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @Nullable String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return SSBasedInspection.SHORT_NAME;
   }
 
-  @Nullable
   @Override
-  public String getMainToolId() {
+  public @NotNull String getMainToolId() {
     return SSBasedInspection.SHORT_NAME;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayName() {
     return SSRBundle.message("structural.search.group.name");
   }
 
-  @Nullable
   @Override
-  public String getStaticDescription() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String @NotNull [] getGroupPath() {
+    return InspectionProfileUtil.getGroup();
+  }
+
+  @Override
+  public @NotNull String getStaticDescription() {
     final String description = myMainConfiguration.getDescription();
     if (StringUtil.isEmpty(description)) {
       return SSRBundle.message("no.description.message");
@@ -120,7 +138,12 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
     button.addActionListener(__ -> performEditMetaData(button));
 
-    final JList<Configuration> list = new JBList<>(model);
+    final JList<Configuration> list = new JBList<>(model) {
+      @Override
+      protected String itemToText(int index, Configuration value) {
+        return ConfigurationUtil.toXml(value);
+      }
+    };
     list.setCellRenderer(new ConfigurationCellRenderer());
     final JPanel listPanel = ToolbarDecorator.createDecorator(list)
       .setAddAction(b -> performAdd(list, b))
@@ -154,9 +177,11 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     if (profile == null) {
       return;
     }
-    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    final StructuralSearchProfileActionProvider.InspectionDataDialog dialog =
-      new StructuralSearchProfileActionProvider.InspectionDataDialog(project, inspection, myMainConfiguration, false);
+    final SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
+    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, profile.getDisplayName(), myMainConfiguration);
+    if (isCleanupAllowed()) {
+      dialog.showCleanupOption(myMainConfiguration.isCleanup());
+    }
     if (!dialog.showAndGet()) {
       return;
     }
@@ -164,17 +189,21 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     for (Configuration c : myConfigurations) {
       c.setName(name);
     }
+    myMainConfiguration.setDescription(dialog.getDescription());
+    myMainConfiguration.setProblemDescriptor(dialog.getProblemDescriptor());
+    myMainConfiguration.setSuppressId(dialog.getSuppressId());
+    myMainConfiguration.setCleanup(dialog.isCleanup());
     inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
     inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
-    InspectionProfileUtil.fireProfileChanged(profile);
+    CustomInspectionActions.fireProfileChanged(profile);
   }
 
   private void performMove(@NotNull JList<Configuration> list, boolean up) {
     final MyListModel model = (MyListModel)list.getModel();
-    final List<Configuration> values = list.getSelectedValuesList();
     final Comparator<Configuration> c = Comparator.comparingInt(Configuration::getOrder);
-    values.sort(up ? c : c.reversed());
+    final List<Configuration> values = ContainerUtil.sorted(list.getSelectedValuesList(),
+    up ? c : c.reversed());
     final int[] indices = new int[values.size()];
     for (int i = 0, size = values.size(); i < size; i++) {
       final Configuration value = values.get(i);
@@ -186,21 +215,15 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     list.setSelectedIndices(indices);
     list.scrollRectToVisible(list.getCellBounds(indices[0], indices[indices.length - 1]));
     model.fireContentsChanged(list);
-
-    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
-    if (profile == null) return;
-    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
-    inspection.addConfigurations(myConfigurations);
-    profile.setModified(true);
+    saveChangesToProfile(list);
   }
 
-  @NotNull
-  private static Configuration moveMetaData(@NotNull Configuration source, @NotNull Configuration target) {
+  private static @NotNull Configuration moveMetaData(@NotNull Configuration source, @NotNull Configuration target) {
     if (source == target) return source;
     target.setDescription(source.getDescription());
     target.setSuppressId(source.getSuppressId());
     target.setProblemDescriptor(source.getProblemDescriptor());
+    target.setCleanup(source.isCleanup());
     source.setDescription(null);
     source.setSuppressId(null);
     source.setProblemDescriptor(null);
@@ -210,7 +233,6 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   private void performAdd(@NotNull JList<Configuration> list, @NotNull AnActionButton b) {
     final AnAction[] children = new AnAction[]{new AddTemplateAction(list, false), new AddTemplateAction(list, true)};
     final RelativePoint point = b.getPreferredPopupPoint();
-    if (point == null) return;
     JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(children),
                                                         DataManager.getInstance().getDataContext(b.getContextComponent()),
                                                         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(point);
@@ -241,46 +263,40 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     }
     final int index = list.getSelectedIndex();
     list.scrollRectToVisible(list.getCellBounds(index, index));
-
-
-    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
-    if (profile == null) return;
-    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
-    inspection.addConfigurations(myConfigurations);
-    profile.setModified(true);
+    saveChangesToProfile(list);
   }
 
   private void performEdit(@NotNull JList<Configuration> list) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(list));
     if (project == null) return;
     final int index = list.getSelectedIndex();
+    if (index < 0) return;
     final Configuration configuration = myConfigurations.get(index);
     if (configuration == null) return;
     final SearchContext searchContext = new SearchContext(project);
     final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
     dialog.loadConfiguration(configuration);
-    dialog.setUseLastConfiguration(true);
     if (!dialog.showAndGet()) return;
     final Configuration newConfiguration = dialog.getConfiguration();
     if (configuration.getOrder() == 0) {
       myMainConfiguration = newConfiguration;
     }
     myConfigurations.set(index, newConfiguration);
-    final MyListModel model = (MyListModel)list.getModel();
-    model.fireContentsChanged(list);
+    ((MyListModel)list.getModel()).fireContentsChanged(list);
+    saveChangesToProfile(list);
+  }
 
+  private void saveChangesToProfile(@NotNull JList<Configuration> list) {
     final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
     if (profile == null) return;
-    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    inspection.removeConfiguration(configuration);
-    inspection.addConfiguration(newConfiguration);
+    final SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
+    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
+    inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
   }
 
   private final class AddTemplateAction extends DumbAwareAction {
-    @NotNull
-    private final JList<Configuration> myList;
+    private final @NotNull JList<Configuration> myList;
     private final boolean myReplace;
 
     private AddTemplateAction(@NotNull JList<Configuration> list, boolean replace) {
@@ -310,7 +326,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
       final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(myList);
       if (profile == null) return;
-      if (InspectionProfileUtil.getStructuralSearchInspection(profile).addConfiguration(configuration)) {
+      if (SSBasedInspection.getStructuralSearchInspection(profile).addConfiguration(configuration)) {
         myConfigurations.add(configuration);
         model.fireContentsChanged(myList);
         myList.setSelectedIndex(size);
@@ -342,6 +358,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     }
 
     public void swap(int first, int second) {
+      if (second == -1) return;
       final Configuration one = myConfigurations.get(first);
       final Configuration two = myConfigurations.get(second);
       final int order = one.getOrder();

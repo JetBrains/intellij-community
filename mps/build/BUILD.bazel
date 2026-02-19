@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.mps.build` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "build",
+  module_name = "intellij.mps.build",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//ant/lib:ant",
+    "//build",
+    "//java/java-runtime:rt",
+    "//jps/standalone-builder:tools-jps-build-standalone",
+    "@lib//:kotlin-stdlib",
+    "//platform/build-scripts/downloader",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:kotlinx-coroutines-core",
+  ]
+)
+
+jvm_library(
+  name = "build_test_lib",
+  module_name = "intellij.mps.build",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":build",
+    "//build:build_test_lib",
+    "//java/java-runtime:rt_test_lib",
+    "//jps/standalone-builder:tools-jps-build-standalone_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+  ]
+)
+### auto-generated section `build intellij.mps.build` end

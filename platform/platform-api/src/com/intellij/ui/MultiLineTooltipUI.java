@@ -24,9 +24,13 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.LineTokenizer;
 import org.jetbrains.annotations.Nls;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JToolTip;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.metal.MetalToolTipUI;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;

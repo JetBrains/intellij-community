@@ -55,7 +55,7 @@ class MultiplexedSocketReader(object):
 
     def start_reading(self):
         t = threading.Thread(target=self._read_forever)
-        t.setDaemon(True)
+        t.daemon = True
         t.start()
 
     def _read_forever(self):
@@ -136,7 +136,7 @@ class FramedWriter(object):
         pass
 
 
-class TBidirectionalClientTransport(TTransportBase, FramedWriter):
+class TBidirectionalClientTransport(FramedWriter, TTransportBase):
     def __init__(self, client_socket, reader, writer):
         super(TBidirectionalClientTransport, self).__init__()
 

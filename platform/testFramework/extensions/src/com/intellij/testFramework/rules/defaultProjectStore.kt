@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
@@ -27,17 +28,19 @@ private class TestComponent : SimplePersistentStateComponent<TestComponent.TestC
 }
 
 @ApiStatus.Internal
-fun checkDefaultProjectAsTemplate(task: (checkTask: (project: Project, defaultProjectTemplateShouldBeApplied: Boolean) -> Unit) -> Unit) {
+suspend fun checkDefaultProjectAsTemplate(
+  task: suspend (checkTask: suspend (project: Project, defaultProjectTemplateShouldBeApplied: Boolean) -> Unit) -> Unit,
+) {
   val defaultTestComponent = TestComponent()
   val defaultStateStore = ProjectManager.getInstance().defaultProject.service<IComponentStore>()
-  defaultStateStore.initComponent(defaultTestComponent, null, null)
+  defaultStateStore.initComponent(component = defaultTestComponent, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
   // must be after init otherwise will be not saved on disk (as will be not modified since init)
   defaultTestComponent.state.foo = Ksuid.generate()
   defaultTestComponent.state.bar = Ksuid.generate()
   try {
     task { project, defaultProjectTemplateShouldBeApplied ->
       val component = TestComponent()
-      project.stateStore.initComponent(component, null, null)
+      project.stateStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
       val assertThat = assertThat(component.state)
       if (defaultProjectTemplateShouldBeApplied) {
         assertThat.isEqualTo(defaultTestComponent.state)
@@ -49,6 +52,7 @@ fun checkDefaultProjectAsTemplate(task: (checkTask: (project: Project, defaultPr
   }
   finally {
     // clear state
+    @Suppress("TestOnlyProblems")
     defaultStateStore.removeComponent(TEST_COMPONENT_NAME)
   }
 }

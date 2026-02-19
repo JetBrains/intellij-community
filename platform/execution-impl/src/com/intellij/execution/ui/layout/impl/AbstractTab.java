@@ -16,12 +16,16 @@
 
 package com.intellij.execution.ui.layout.impl;
 
-import javax.swing.*;
+import com.intellij.util.xmlb.annotations.Transient;
+
+import javax.swing.Icon;
 
 abstract class AbstractTab {
 
   int myIndex;
   int myDefaultIndex = -1;
+
+  @Transient
   String myDisplayName;
   Icon myIcon;
 

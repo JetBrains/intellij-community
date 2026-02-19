@@ -1,14 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
-import com.intellij.ide.actions.StretchSplitAction.StretchDirection.*
+import com.intellij.ide.actions.StretchSplitAction.StretchDirection.BOTTOM
+import com.intellij.ide.actions.StretchSplitAction.StretchDirection.LEFT
+import com.intellij.ide.actions.StretchSplitAction.StretchDirection.RIGHT
+import com.intellij.ide.actions.StretchSplitAction.StretchDirection.TOP
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Splitter
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.OnePixelSplitter
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 
 
@@ -17,6 +21,7 @@ import java.awt.Component
  *
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 abstract class StretchSplitAction(private val direction: StretchDirection) : DumbAwareAction() {
 
   enum class StretchDirection {
@@ -24,7 +29,7 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     stretch(editor, direction)
   }
 
@@ -38,7 +43,7 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
     }
   }
 
-  private fun moveDivider(pixelSplitter: OnePixelSplitter, shrinkFirstComponent: Boolean) {
+  private fun moveDivider(pixelSplitter: Splitter, shrinkFirstComponent: Boolean) {
     //The action stretches/shrinks focused component for this amount of pixels
     val step = 50
     //Protects of situations when one part of the splitter becomes invisible
@@ -56,14 +61,14 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
     }
   }
 
-  private fun findSplitter(editor: Editor): OnePixelSplitter? {
+  private fun findSplitter(editor: Editor): Splitter? {
     val editorComponent = editor.component
     val pixelSplitter = ComponentUtil.findParentByCondition(editorComponent) {
-      p: Component? -> p is OnePixelSplitter
+      p: Component? -> p is Splitter
                        && p.isVertical == (direction == TOP || direction == BOTTOM)
                        && (p.proportion > 0 && p.proportion < 1)
     }
-    if (pixelSplitter is OnePixelSplitter) {
+    if (pixelSplitter is Splitter) {
       return pixelSplitter
     }
     return null
@@ -75,6 +80,8 @@ abstract class StretchSplitAction(private val direction: StretchDirection) : Dum
     val enabled = editor != null && findSplitter(editor) != null
     e.presentation.isEnabled = enabled
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   class StretchToTop: StretchSplitAction(TOP)
   class StretchToLeft: StretchSplitAction(LEFT)

@@ -1,8 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
 import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceCodeFragmentImpl;
@@ -11,46 +17,41 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
+public final class JavaCodeFragmentFactoryImpl extends JavaCodeFragmentFactory {
   private final Project myProject;
 
   public JavaCodeFragmentFactoryImpl(Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public PsiExpressionCodeFragment createExpressionCodeFragment(@NotNull final String text,
-                                                                @Nullable final PsiElement context,
-                                                                @Nullable final PsiType expectedType,
-                                                                final boolean isPhysical) {
+  public @NotNull PsiExpressionCodeFragment createExpressionCodeFragment(final @NotNull String text,
+                                                                         final @Nullable PsiElement context,
+                                                                         final @Nullable PsiType expectedType,
+                                                                         final boolean isPhysical) {
     return new PsiExpressionCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, expectedType, context);
   }
 
-  @NotNull
   @Override
-  public JavaCodeFragment createCodeBlockCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical) {
+  public @NotNull JavaCodeFragment createCodeBlockCodeFragment(final @NotNull String text, final @Nullable PsiElement context, final boolean isPhysical) {
     return new PsiCodeFragmentImpl(myProject, JavaElementType.STATEMENTS, isPhysical, "fragment.java", text, context);
   }
 
-  @NotNull
   @Override
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical) {
+  public @NotNull PsiTypeCodeFragment createTypeCodeFragment(final @NotNull String text, final @Nullable PsiElement context, final boolean isPhysical) {
     return createTypeCodeFragment(text, context, isPhysical, 0);
   }
 
-  @NotNull
   @Override
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical, final int flags) {
+  public @NotNull PsiTypeCodeFragment createTypeCodeFragment(final @NotNull String text, final @Nullable PsiElement context, final boolean isPhysical, final int flags) {
     return new PsiTypeCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, flags, context);
   }
 
-  @NotNull
   @Override
-  public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(@NotNull final String text,
-                                                                      @Nullable final PsiElement context,
-                                                                      final boolean isPhysical,
-                                                                      final boolean isClassesAccepted) {
+  public @NotNull PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(final @NotNull String text,
+                                                                               final @Nullable PsiElement context,
+                                                                               final boolean isPhysical,
+                                                                               final boolean isClassesAccepted) {
     return new PsiJavaCodeReferenceCodeFragmentImpl(myProject, isPhysical, "fragment.java", text, isClassesAccepted, context);
   }
 

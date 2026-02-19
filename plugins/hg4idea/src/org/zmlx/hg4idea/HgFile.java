@@ -48,8 +48,7 @@ public class HgFile {
     this(HgUtil.getHgRootOrNull(project, file), VcsUtil.getFilePath(file.getPath()));
   }
 
-  @NotNull
-  public VirtualFile getRepo() {
+  public @NotNull VirtualFile getRepo() {
     return vcsRoot;
   }
 
@@ -57,9 +56,7 @@ public class HgFile {
     return file;
   }
 
-  @NlsSafe
-  @Nullable
-  public String getRelativePath() {
+  public @NlsSafe @Nullable String getRelativePath() {
     if (relativePath == null) {
       //For configuration like "d:/.hg" File.getParent method has minimal prefix length, so vcsRoot will be "d:", getParent will be "d:/".
       relativePath = FileUtil.getRelativePath(VfsUtilCore.virtualToIoFile(vcsRoot), file);
@@ -67,8 +64,7 @@ public class HgFile {
     return relativePath;
   }
 
-  @NotNull
-  public FilePath toFilePath() {
+  public @NotNull FilePath toFilePath() {
     return VcsUtil.getFilePath(file);
   }
 
@@ -98,9 +94,8 @@ public class HgFile {
     return Objects.hash(vcsRoot, file);
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return MoreObjects.toStringHelper(HgFile.class)
       .add("repo", vcsRoot)
       .add("file", file)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -19,8 +19,8 @@ public interface JvmGroupIntentionAction extends IntentionAction {
   /**
    * Given two actions, <i>Create method 'foo' in 'SomeJavaClass'</i>
    * and <i>Create function 'foo' in 'SomeKotlinClass'</i>,
-   * we want to display them as a single action with ability to choose target class later.
-   * In this case these actions should have {@link #equals equal} action groups.
+   * we want to display them as a single action with the ability to choose target class later.
+   * In this case these actions should have {@link Object#equals equal} action groups.
    */
   @NotNull
   JvmActionGroup getActionGroup();
@@ -32,11 +32,9 @@ public interface JvmGroupIntentionAction extends IntentionAction {
    * e.g. <i>Create method 'foo'</i> for target class in Java
    * and <i>Create function 'foo'</i> for target class in Kotlin
    * <p>
-   * This method is accessed only if {@link #isAvailable)} returned {@code true}.
+   * This method is accessed only if {@link #isAvailable} returned {@code true}.
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  default String getGroupDisplayText() {
+  default @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayText() {
     return getActionGroup().getDisplayText(getRenderData());
   }
 
@@ -47,8 +45,7 @@ public interface JvmGroupIntentionAction extends IntentionAction {
    * <p>
    * This method is accessed only if {@link #isAvailable} returned {@code true}.
    */
-  @Nullable
-  default JvmActionGroup.RenderData getRenderData() {
+  default @Nullable JvmActionGroup.RenderData getRenderData() {
     return null;
   }
 

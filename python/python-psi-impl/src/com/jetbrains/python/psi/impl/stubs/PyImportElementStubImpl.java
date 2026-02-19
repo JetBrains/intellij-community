@@ -9,9 +9,7 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyImportElementStubImpl extends StubBase<PyImportElement> implements PyImportElementStub {
   private final QualifiedName myImportedQName;
   private final String myAsName;
@@ -24,8 +22,7 @@ public class PyImportElementStubImpl extends StubBase<PyImportElement> implement
   }
 
   @Override
-  @Nullable
-  public QualifiedName getImportedQName() {
+  public @Nullable QualifiedName getImportedQName() {
     return myImportedQName;
   }
 
@@ -36,6 +33,9 @@ public class PyImportElementStubImpl extends StubBase<PyImportElement> implement
 
   @Override
   public String toString() {
-    return "PyImportElementStub(importedQName=" + myImportedQName + " asName=" + myAsName + ")";
+    return "PyImportElementStubImpl{" +
+           "myImportedQName=" + myImportedQName +
+           ", myAsName='" + myAsName + '\'' +
+           '}';
   }
 }

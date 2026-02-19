@@ -1,11 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiNameValuePairStub;
@@ -15,13 +33,16 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.util.Objects;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author Dmitry Avdeev
@@ -36,10 +57,15 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
     super(node);
   }
 
-  @NotNull
   @Override
-  public NameValuePairElement getNode() {
-    return (NameValuePairElement)super.getNode();
+  public @NotNull NameValuePairElement getNode() {
+    ASTNode node = super.getNode();
+    if (!(node instanceof NameValuePairElement)) {
+      String parents = String.join("; ", SyntaxTraverser.psiApi().parents(this).takeWhile(Objects::nonNull)
+        .map(psi -> psi.getClass().getName()).toList());
+      throw new IllegalStateException("Node is not NameValuePairElement; node class = " + node.getClass() + "; parents = " + parents);
+    }
+    return (NameValuePairElement)node;
   }
 
   @Override
@@ -68,16 +94,15 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
 
   @Override
   public PsiAnnotationMemberValue getValue() {
-    PsiLiteralExpression child = getStubOrPsiChild(JavaStubElementTypes.LITERAL_EXPRESSION);
+    PsiLiteralExpression child = getStubOrPsiChild(JavaStubElementTypes.LITERAL_EXPRESSION, PsiLiteralExpression.class);
     if (child != null) return child;
 
     ASTNode node = getNode().findChildByRole(ChildRole.ANNOTATION_VALUE);
     return node == null ? null : (PsiAnnotationMemberValue)node.getPsi();
   }
 
-  @NotNull
   @Override
-  public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
+  public @NotNull PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
     getValue().replace(newValue);
     return getValue();
   }
@@ -85,12 +110,11 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   private volatile Reference<PsiAnnotationMemberValue> myDetachedValue;
 
   @Override
-  @Nullable
-  public PsiAnnotationMemberValue getDetachedValue() {
+  public @Nullable PsiAnnotationMemberValue getDetachedValue() {
     PsiNameValuePairStub stub = getStub();
     if (stub != null) {
       String text = stub.getValue();
-      PsiAnnotationMemberValue result = SoftReference.dereference(myDetachedValue);
+      PsiAnnotationMemberValue result = dereference(myDetachedValue);
       if (result == null) {
         PsiAnnotation anno = JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText("@F(" + text + ")", this);
         ((LightVirtualFile)anno.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
@@ -111,8 +135,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   @Override
   public PsiReference getReference() {
     return new PsiReference() {
-      @Nullable
-      private PsiClass getReferencedClass() {
+      private @Nullable PsiClass getReferencedClass() {
         LOG.assertTrue(getParent() instanceof PsiAnnotationParameterList && getParent().getParent() instanceof PsiAnnotation);
         PsiAnnotation annotation = (PsiAnnotation)getParent().getParent();
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
@@ -121,15 +144,13 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
         return target instanceof PsiClass ? (PsiClass)target : null;
       }
 
-      @NotNull
       @Override
-      public PsiElement getElement() {
+      public @NotNull PsiElement getElement() {
         return PsiNameValuePairImpl.this;
       }
 
-      @NotNull
       @Override
-      public TextRange getRangeInElement() {
+      public @NotNull TextRange getRangeInElement() {
         PsiIdentifier id = getNameIdentifier();
         if (id != null) {
           return new TextRange(0, id.getTextLength());
@@ -149,8 +170,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
       }
 
       @Override
-      @NotNull
-      public String getCanonicalText() {
+      public @NotNull String getCanonicalText() {
         String name = getName();
         return name != null ? name : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
       }

@@ -1,0 +1,7 @@
+async def f() -> bool:
+    return True
+
+
+async def main():
+    if await f():
+        print("hi")

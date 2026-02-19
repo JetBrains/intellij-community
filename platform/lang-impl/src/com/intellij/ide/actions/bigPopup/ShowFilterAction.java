@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.bigPopup;
 
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
@@ -15,11 +14,16 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.ui.BadgeIconSupplier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
@@ -27,19 +31,20 @@ import java.awt.event.HierarchyListener;
 
 public abstract class ShowFilterAction extends ToggleAction implements DumbAware {
   private JBPopup myFilterPopup;
+  private static final BadgeIconSupplier FILTER_ICON = new BadgeIconSupplier(AllIcons.General.Filter);
 
   public ShowFilterAction() {
     super(IdeBundle.messagePointer("action.ToggleAction.show.filter.text.filter"),
-          IdeBundle.messagePointer("action.ToggleAction.show.filter.description.show.filters.popup"), AllIcons.General.Filter);
+          IdeBundle.messagePointer("action.ToggleAction.show.filter.description.show.filters.popup"), FILTER_ICON.getOriginalIcon());
   }
 
   @Override
-  public boolean isSelected(@NotNull final AnActionEvent e) {
+  public boolean isSelected(final @NotNull AnActionEvent e) {
     return myFilterPopup != null && !myFilterPopup.isDisposed();
   }
 
   @Override
-  public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
+  public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
     if (state) {
       showPopup(e.getRequiredData(CommonDataKeys.PROJECT), e.getInputEvent().getComponent());
     }
@@ -52,8 +57,7 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Icon icon = getTemplatePresentation().getIcon();
-    e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
+    e.getPresentation().setIcon(FILTER_ICON.getLiveIndicatorIcon(isActive()));
     e.getPresentation().setEnabled(isEnabled());
     Toggleable.setSelected(e.getPresentation(), isSelected(e));
   }
@@ -96,9 +100,7 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
     myFilterPopup.showUnderneathOf(anchor);
   }
 
-  @NotNull
-  @NonNls
-  public String getDimensionServiceKey() {
+  public @NotNull @NonNls String getDimensionServiceKey() {
     return "ShowFilterAction_Filter_Popup";
   }
 

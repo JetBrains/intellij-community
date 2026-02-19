@@ -19,12 +19,28 @@ import com.intellij.ui.JBColor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import java.awt.*
-import java.awt.event.*
+import org.jetbrains.annotations.ApiStatus
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Polygon
+import java.awt.RenderingHints
+import java.awt.event.ActionEvent
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 import kotlin.math.max
+import kotlin.math.min
 
 private val DEFAULT_HORIZONTAL_PADDING = JBUI.scale(5)
 private val DEFAULT_VERTICAL_PADDING = JBUI.scale(5)
@@ -42,15 +58,16 @@ private const val ACTION_SLIDE_LEFT_STEP = "actionSlideLeftStep"
 private const val ACTION_SLIDE_RIGHT = "actionSlideRight"
 private const val ACTION_SLIDE_RIGHT_STEP = "actionSlideRightStep"
 
+@ApiStatus.Internal
 abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
 
-  protected val leftPadding = DEFAULT_HORIZONTAL_PADDING
-  protected val rightPadding = DEFAULT_HORIZONTAL_PADDING
-  protected val topPadding = DEFAULT_VERTICAL_PADDING
-  protected val bottomPadding = DEFAULT_VERTICAL_PADDING
+  protected val leftPadding: Int = DEFAULT_HORIZONTAL_PADDING
+  protected val rightPadding: Int = DEFAULT_HORIZONTAL_PADDING
+  protected val topPadding: Int = DEFAULT_VERTICAL_PADDING
+  protected val bottomPadding: Int = DEFAULT_VERTICAL_PADDING
 
   private var _knobPosition: Int = 0
-  var knobPosition: Int
+  private var knobPosition: Int
     get() = _knobPosition
     set(newPointerValue) {
       _knobPosition = newPointerValue
@@ -72,7 +89,7 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
   /**
    * @return size of slider, must be positive value or zero.
    */
-  val sliderWidth get() = max(0, width - leftPadding - rightPadding)
+  val sliderWidth: Int get() = max(0, width - leftPadding - rightPadding)
 
   init {
     this.addMouseMotionListener(object : MouseAdapter() {
@@ -128,9 +145,9 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
 
     with (getInputMap(WHEN_FOCUSED)) {
       put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), ACTION_SLIDE_LEFT)
-      put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.ALT_DOWN_MASK), ACTION_SLIDE_LEFT_STEP)
+      put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, InputEvent.SHIFT_DOWN_MASK), ACTION_SLIDE_LEFT_STEP)
       put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), ACTION_SLIDE_RIGHT)
-      put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_DOWN_MASK), ACTION_SLIDE_RIGHT_STEP)
+      put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.SHIFT_DOWN_MASK), ACTION_SLIDE_RIGHT_STEP)
     }
   }
 
@@ -147,7 +164,7 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
   }
 
   private fun processMouse(e: MouseEvent) = runAndUpdateIfNeeded {
-    val newKnobPosition = Math.max(0, Math.min(e.x - leftPadding, sliderWidth))
+    val newKnobPosition = max(0, min(e.x - leftPadding, sliderWidth))
     knobPosition = newKnobPosition
   }
 
@@ -176,9 +193,9 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
 
   override fun getMaximumSize(): Dimension = Dimension(Integer.MAX_VALUE, preferredSize.height)
 
-  override fun isFocusable() = true
+  override fun isFocusable(): Boolean = true
 
-  override fun setToolTipText(text: String) = Unit
+  override fun setToolTipText(text: String): Unit = Unit
 
   override fun paintComponent(g: Graphics) {
     val g2d = g as Graphics2D

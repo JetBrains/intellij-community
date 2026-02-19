@@ -1,4 +1,4 @@
-// "Implement methods" "true"
+// "Implement methods" "true-preview"
 package org.jetbrains.annotations;
 
 import java.lang.annotation.*;
@@ -11,7 +11,7 @@ class FooImpl extends Foo<String> {
 
     @Override
     public @Nullable String getSmth() {
-        return null;
+        return "";
     }
 }
 

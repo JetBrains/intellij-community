@@ -1,0 +1,79 @@
+# Error: is not present in stub
+# =============================
+# These are methods and attributes that really should have been
+# prefixed with a `_`, since they should only really be used
+# internally
+fanstatic.Library.init_library_nr
+fanstatic.core.Asset.init_dependency_nr
+fanstatic.core.Library.init_library_nr
+
+# In order to catch errors where DummyNeededResources would be called
+# with clear/library_url/resources these methods were dropped from the
+# stub. We would prefer to use @type_error() once that is an option
+fanstatic.core.DummyNeededResources.clear
+fanstatic.core.DummyNeededResources.library_url
+fanstatic.core.DummyNeededResources.resources
+
+fanstatic.compiler.mtime
+
+# Error: is inconsistent
+# ======================
+# The core API for Dependable is a bit annoying, since the base class
+# should really be abstract and instead defines some attributes as
+# None, even though all subclasses populate them, so these have been
+# made abstract to make defining correct subclasses more easy
+fanstatic.Group.depends
+fanstatic.Group.resources
+fanstatic.Group.supports
+fanstatic.core.Asset.depends
+fanstatic.core.Asset.resources
+fanstatic.core.Asset.supports
+fanstatic.core.Dependable.depends
+fanstatic.core.Dependable.resources
+fanstatic.core.Dependable.supports
+fanstatic.core.Group.depends
+fanstatic.core.Group.resources
+fanstatic.core.Group.supports
+
+# The API for Compiler has very much the same problem, so these are
+# some more attributes/methods that have been made abstract for the
+# purposes of type checking
+fanstatic.Compiler.name
+fanstatic.Compiler.source_extension
+fanstatic.Minifier.name
+fanstatic.Minifier.source_extension
+fanstatic.Minifier.target_extension
+fanstatic.compiler.CommandlineBase.command
+fanstatic.compiler.Compiler.name
+fanstatic.compiler.Compiler.source_extension
+fanstatic.compiler.Minifier.name
+fanstatic.compiler.Minifier.source_extension
+fanstatic.compiler.Minifier.target_extension
+fanstatic.compiler.NullCompiler.name
+fanstatic.registry.Registry.ENTRY_POINT
+
+# This is only inconsistent because the library authors set this
+# attribute to `None` on the class, so they could assign a docstring
+# to it. `__init__` will always populate this attribute with a `str`
+fanstatic.Library.path
+fanstatic.core.Library.path
+
+# Error: variable differs from runtime type
+# ======================
+# These are some sentinel objects which use the NewType pattern to create a
+# distinct type
+fanstatic.compiler.SOURCE
+fanstatic.compiler.TARGET
+fanstatic.core.NOTHING
+fanstatic.core.REQUIRED_DEFAULT_MARKER
+
+# Error: is not present at runtime
+# ================================
+# See above, defining correct subclasses is more easy with abstract
+# properties on the superclass
+fanstatic.injector.InjectorPlugin.name
+
+# Error: failed to find stubs
+# ===========================
+# Tests should not be part of the stubs
+fanstatic.tests.*

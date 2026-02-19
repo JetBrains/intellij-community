@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.ui.RepositoryComboboxListCellRenderer;
@@ -14,8 +14,11 @@ import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListWithDiffPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -29,12 +32,12 @@ import java.util.Map;
  */
 public final class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
 
-  @NotNull private final Map<GitRepository, List<GitCommit>> myCommits;
-  @NotNull private final GitCommitListWithDiffPanel myCommitListWithDiffPanel;
-  @NotNull private final Collection<GitRepository> myRepositories;
-  @NotNull private final String myRemovedBranch;
-  @NotNull private final Map<GitRepository, String> myBaseBranches;
-  @NotNull private final GitRepository myInitialRepository;
+  private final @NotNull Map<GitRepository, List<GitCommit>> myCommits;
+  private final @NotNull GitCommitListWithDiffPanel myCommitListWithDiffPanel;
+  private final @NotNull Collection<GitRepository> myRepositories;
+  private final @NotNull String myRemovedBranch;
+  private final @NotNull Map<GitRepository, String> myBaseBranches;
+  private final @NotNull GitRepository myInitialRepository;
 
   /**
    * Show the dialog and get user's answer, whether he wants to force delete the branch.
@@ -73,8 +76,7 @@ public final class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
   }
 
-  @NotNull
-  private GitRepository calcInitiallySelectedRepository() {
+  private @NotNull GitRepository calcInitiallySelectedRepository() {
     for (GitRepository repository : myRepositories) {
       if (!myCommits.get(repository).isEmpty()) {
         return repository;
@@ -83,9 +85,7 @@ public final class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     throw new AssertionError("The dialog shouldn't be shown. Unmerged commits: " + myCommits);
   }
 
-  @NotNull
-  @NlsContexts.Label
-  private String makeDescription(@NotNull GitRepository repository) {
+  private @NotNull @NlsContexts.Label String makeDescription(@NotNull GitRepository repository) {
     String baseBranch = myBaseBranches.get(repository);
     String description;
     if (baseBranch == null) {

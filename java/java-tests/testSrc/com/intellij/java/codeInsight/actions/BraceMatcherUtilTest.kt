@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight.actions
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.text.StringUtil
@@ -65,9 +64,9 @@ class BraceMatcherUtilTest : LightPlatformCodeInsightTestCase() {
       }
     }
 
-    val offset: Int = getEditor().caretModel.offset
-    val iterator: HighlighterIterator = (getEditor() as EditorEx).highlighter.createIterator(offset)
-    val fileType: FileType = getFile().virtualFile.fileType
+    val offset: Int = editor.caretModel.offset
+    val iterator: HighlighterIterator = editor.highlighter.createIterator(offset)
+    val fileType: FileType = file.virtualFile.fileType
     val actualIndex: Int = f(iterator, document.charsSequence, fileType)
 
     assertEquals(expectedIndex, actualIndex)

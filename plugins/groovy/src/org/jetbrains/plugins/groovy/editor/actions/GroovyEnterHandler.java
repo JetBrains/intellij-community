@@ -1,18 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor.actions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -21,7 +20,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -44,12 +48,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TDQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TSQ;
 
-/**
- * @author ilyas
- */
-public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
+public final class GroovyEnterHandler implements EnterHandlerDelegate {
 
   private static final TokenSet GSTRING_TOKENS = TokenSet.create(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_CONTENT,
                                                                  GroovyTokenTypes.mGSTRING_END, STRING_DQ, STRING_TDQ);
@@ -105,9 +109,9 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                                                       GroovyElementTypes.GSTRING_INJECTION,
                                                                       GroovyElementTypes.GSTRING_CONTENT);
 
-  public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
+  public static void insertSpacesByGroovyContinuationIndent(Editor editor) {
     int indentSize = CodeStyle.getSettings(editor).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
-    EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', indentSize));
+    EditorModificationUtilEx.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', indentSize));
   }
 
 
@@ -132,7 +136,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     final int caret = caretModel.getOffset();
-    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    final EditorHighlighter highlighter = editor.getHighlighter();
     if (caret >= 1 && caret < docLength && CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       HighlighterIterator iterator = highlighter.createIterator(caret);
       iterator.retreat();
@@ -156,7 +160,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         if (element != null &&
             element.getNode().getElementType() == GroovyTokenTypes.mRCURLY &&
             element.getParent() instanceof GrClosableBlock &&
-            docLength > caret && afterArrow) {
+            afterArrow) {
           return Result.DefaultForceIndent;
         }
       }
@@ -172,21 +176,20 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
 
-    if (handleEnter(editor, dataContext, project, originalHandler)) return Result.Stop;
+    if (handleEnter(editor, dataContext, originalHandler)) return Result.Stop;
     return Result.Continue;
   }
 
-  protected static boolean handleEnter(Editor editor,
-                                       DataContext dataContext,
-                                       @NotNull Project project,
-                                       EditorActionHandler originalHandler) {
+  private static boolean handleEnter(Editor editor,
+                                     DataContext dataContext,
+                                     EditorActionHandler originalHandler) {
     if (HandlerUtils.isReadOnly(editor)) {
       return false;
     }
     int caretOffset = editor.getCaretModel().getOffset();
     if (caretOffset < 1) return false;
 
-    if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project, originalHandler)) {
+    if (handleBetweenSquareBraces(editor, caretOffset, dataContext, originalHandler)) {
       return true;
     }
     if (handleInString(editor, caretOffset, dataContext, originalHandler)) {
@@ -240,25 +243,22 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
   private static boolean handleBetweenSquareBraces(Editor editor,
                                                    int caret,
                                                    DataContext context,
-                                                   Project project,
                                                    EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
-    if (text == null || text.isEmpty()) return false;
-    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    if (text.isEmpty()) return false;
+    final EditorHighlighter highlighter = editor.getHighlighter();
     if (caret < 1 || caret > text.length() - 1) {
       return false;
     }
     HighlighterIterator iterator = highlighter.createIterator(caret - 1);
     if (GroovyTokenTypes.mLBRACK == iterator.getTokenType()) {
-      if (text.length() > caret) {
-        iterator = highlighter.createIterator(caret);
-        if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
-          originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
-          originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
-          editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
-          insertSpacesByGroovyContinuationIndent(editor, project);
-          return true;
-        }
+      iterator = highlighter.createIterator(caret);
+      if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
+        originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
+        originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
+        editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
+        insertSpacesByGroovyContinuationIndent(editor);
+        return true;
       }
     }
     return false;
@@ -296,19 +296,19 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
         //the case of print '\<caret>'
         if (isSlashBeforeCaret(caretOffset, fileText)) {
-          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
         }
         else if(stringElement.getParent() instanceof GrReferenceExpression) {
           TextRange range = stringElement.getTextRange();
           convertEndToMultiline(range.getEndOffset(), document, fileText, '\'');
           document.insertString(range.getStartOffset(), "''");
           caretModel.moveToOffset(caretOffset + 2);
-          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
         }
         else {
-          EditorModificationUtil.insertStringAtCaret(editor, "'+");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "'+");
           originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
-          EditorModificationUtil.insertStringAtCaret(editor, "'");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "'");
           PsiDocumentManager.getInstance(project).commitDocument(document);
           CodeStyleManager.getInstance(project).reformatRange(file, caretOffset, caretModel.getOffset());
         }
@@ -341,18 +341,18 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
           convertEndToMultiline(parent.getTextRange().getEndOffset(), document, fileText, '"');
           document.insertString(parentRange.getStartOffset(), "\"\"");
           caretModel.moveToOffset(caretOffset + 2);
-          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
           if (rightFromDollar) {
             caretModel.moveCaretRelatively(1, 0, false, false, true);
           }
         }
         else if (isSlashBeforeCaret(caretOffset, fileText)) {
-          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
         }
         else {
-          EditorModificationUtil.insertStringAtCaret(editor, "\"+");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\"+");
           originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
-          EditorModificationUtil.insertStringAtCaret(editor, "\"");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\"");
           PsiDocumentManager.getInstance(project).commitDocument(document);
           CodeStyleManager.getInstance(project).reformatRange(file, caretOffset, caretModel.getOffset());
         }
@@ -399,8 +399,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     return "'".equals(GrStringUtil.getStartQuote(element.getText()));
   }
 
-  @Nullable
-  private static PsiElement inferStringPair(PsiFile file, int caretOffset) {
+  private static @Nullable PsiElement inferStringPair(PsiFile file, int caretOffset) {
     PsiElement stringElement = file.findElementAt(caretOffset - 1);
     if (stringElement == null) return null;
     ASTNode node = stringElement.getNode();
@@ -427,7 +426,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
     }
     else {
-      EditorModificationUtil.insertStringAtCaret(editor, "\n");
+      EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
     }
   }
 

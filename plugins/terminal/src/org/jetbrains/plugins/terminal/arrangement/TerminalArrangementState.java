@@ -8,7 +8,7 @@ import org.jetbrains.plugins.terminal.TerminalTabState;
 
 import java.util.List;
 
-public class TerminalArrangementState {
+public final class TerminalArrangementState {
 
   @XCollection()
   public List<TerminalTabState> myTabStates = new SmartList<>();

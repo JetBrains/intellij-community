@@ -1,29 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.PsiElementResult;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
-public class TypeOfVariableMacro extends Macro {
+public final class TypeOfVariableMacro extends Macro {
   @Override
   public String getName() {
     return "typeOfVariable";
@@ -35,8 +28,7 @@ public class TypeOfVariableMacro extends Macro {
   }
 
   @Override
-  @NotNull
-  public String getDefaultValue() {
+  public @NotNull String getDefaultValue() {
     return "A";
   }
 
@@ -46,13 +38,14 @@ public class TypeOfVariableMacro extends Macro {
 
     final Project project = context.getProject();
     Result result = params[0].calculateQuickResult(context);
-    if (result instanceof PsiElementResult) {
-      final PsiElement element = ((PsiElementResult)result).getElement();
-      if (element instanceof PsiVariable) {
-        return new PsiTypeResult(((PsiVariable)element).getType(), project);
+    if (result instanceof PsiElementResult elementResult) {
+      final PsiElement element = elementResult.getElement();
+      if (element instanceof PsiVariable variable) {
+        return new PsiTypeResult(variable.getType(), project);
       }
     } else if (result instanceof TextResult) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
+      PsiFile file = context.getPsiFile();
+      if (file == null) return null;
       PsiElement place = file.findElementAt(context.getStartOffset());
       final PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(place, "");
       final String name = result.toString();

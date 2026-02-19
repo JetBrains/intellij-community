@@ -1,7 +1,8 @@
 public class Foo {
-    private int foo;
+
+    private final int arg;
 
     public Foo(int arg) {
-        foo = arg;<caret>
+        this.<caret>arg = arg;
     }
 }

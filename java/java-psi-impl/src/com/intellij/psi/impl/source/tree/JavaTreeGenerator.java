@@ -1,14 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCapturedWildcardType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaParserFacade;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLambdaExpressionType;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -19,19 +44,19 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaTreeGenerator implements TreeGenerator {
+public final class JavaTreeGenerator implements TreeGenerator {
   private static final Logger LOG = Logger.getInstance(JavaTreeGenerator.class);
 
   private static final JavaParserUtil.ParserWrapper MOD_LIST =
-    builder -> JavaParser.INSTANCE.getDeclarationParser().parseModifierList(builder);
+    (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parseModifierList(builder);
 
   @Override
-  @Nullable
-  public TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull final CharTable table, @NotNull final PsiManager manager) {
-    if (original instanceof PsiKeyword || original instanceof PsiIdentifier) {
+  public @Nullable TreeElement generateTreeFor(@NotNull PsiElement original, final @NotNull CharTable table, final @NotNull PsiManager manager) {
+    if (original instanceof PsiJavaToken) {
       final String text = original.getText();
       return createLeafFromText(text, table, manager, original, ((PsiJavaToken)original).getTokenType());
     }
@@ -223,6 +248,8 @@ public class JavaTreeGenerator implements TreeGenerator {
     }
   }
 
-  static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
-  static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
+  @ApiStatus.Internal
+  public static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
+  @ApiStatus.Internal
+  public static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
 }

@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListListener
@@ -28,26 +26,29 @@ private val configurationFilesExtensionsOutsideStoreDirectory =
 internal const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CONFIGURATION_FILES" //NON-NLS
 internal const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES" //NON-NLS
 
-class ProjectConfigurationFilesProcessorImpl(project: Project,
-                                             private val parentDisposable: Disposable,
-                                             private val vcsName: String,
-                                             private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
-  : FilesProcessorWithNotificationImpl(project, parentDisposable), ChangeListListener {
+/**
+ * Component for managing project configuration files: add/propose to add potentially shared project configuration files to VCS.
+ *
+ * Overrides behavior of [VcsConfiguration.StandardConfirmation.ADD] flag for project configuration files (ex: .idea/misc.xml).
+ */
+internal class ProjectConfigurationFilesProcessorImpl(
+  project: Project,
+  private val parentDisposable: Disposable,
+  private val vcs: AbstractVcs,
+  private val addChosenFiles: (Collection<VirtualFile>) -> Unit,
+) : FilesProcessorWithNotificationImpl(project, parentDisposable), ChangeListListener {
 
   private val foundProjectConfigurationFiles = AtomicBoolean()
-
-  private val fileSystem = LocalFileSystem.getInstance()
-
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install() {
-    runReadAction {
-      if (!project.isDisposed) {
-        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
-      }
-    }
+    project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
   }
 
+  /**
+   * Remove project configuration files from "Add to VCS" dialog.
+   * Schedule notification or silent addition instead.
+   */
   fun filterNotProjectConfigurationFiles(files: List<VirtualFile>): List<VirtualFile> {
     val projectConfigurationFiles = doFilterFiles(files)
 
@@ -60,18 +61,18 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
     return files - projectConfigurationFiles
   }
 
-  override fun changeListUpdateDone() {
-    if (foundProjectConfigurationFiles.compareAndSet(true, false)) {
+  override fun unchangedFileStatusChanged(upToDate: Boolean) {
+    if (upToDate && foundProjectConfigurationFiles.compareAndSet(true, false)) {
       val unversionedProjectConfigurationFiles = doFilterFiles(ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles)
       if (unversionedProjectConfigurationFiles.isNotEmpty()) {
-        PropertiesComponent.getInstance(project).setValue(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, VcsImplUtil.isProjectSharedInVcs(project))
+        setForCurrentProject(VcsImplUtil.isProjectSharedInVcs(project))
         processFiles(unversionedProjectConfigurationFiles.toList())
       }
     }
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
-    val projectConfigDir = project.getProjectConfigDir()
+    val projectConfigDir = getProjectConfigDir(project)
 
     return files
       .asSequence()
@@ -86,7 +87,7 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
     addChosenFiles(files)
   }
 
-  override val notificationDisplayId: String = "project.configuration.files.added.notification"
+  override val notificationDisplayId: String = VcsNotificationIdsHolder.PROJECT_CONFIGURATION_FILES_ADDED
 
   override val askedBeforeProperty = ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
 
@@ -94,28 +95,27 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   override fun notificationTitle() = ""
 
-  override fun notificationMessage(): String = VcsBundle.message("project.configuration.files.add.notification.message", vcsName)
+  override fun notificationMessage(): String = VcsBundle.message("project.configuration.files.add.notification.message", vcs.displayName)
 
-  override val showActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.view")
-  override val forCurrentProjectActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.add")
+  override val showActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.view")
+  override val forCurrentProjectActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.add")
 
+  override val muteActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.mute")
+  override val viewFilesDialogTitle: String = VcsBundle.message("project.configuration.files.view.dialog.title", vcs.displayName)
+}
 
-  override val forAllProjectsActionText: String? = null
-  override val muteActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.mute")
-  override val viewFilesDialogTitle: String? = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
+private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile): Boolean {
+  return configDir != null && VfsUtilCore.isAncestor(configDir, file, true)
+}
 
-  override fun rememberForAllProjects() {}
-
-  private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile) =
-    configDir != null && VfsUtilCore.isAncestor(configDir, file, true)
-
-  private fun Project.getProjectConfigDir(): VirtualFile? {
-    if (!isDirectoryBased || isDefault) return null
-
-    val projectConfigDir = stateStore.directoryStorePath?.let(fileSystem::findFileByNioFile)
-    if (projectConfigDir == null) {
-      LOG.warn("Cannot find project config directory for non-default and non-directory based project ${name}")
-    }
-    return projectConfigDir
+private fun getProjectConfigDir(project: Project): VirtualFile? {
+  if (!project.isDirectoryBased || project.isDefault) {
+    return null
   }
+
+  val projectConfigDir = project.stateStore.directoryStorePath?.let(LocalFileSystem.getInstance()::findFileByNioFile)
+  if (projectConfigDir == null) {
+    LOG.warn("Cannot find project config directory for non-default and non-directory based project ${project.name}")
+  }
+  return projectConfigDir
 }

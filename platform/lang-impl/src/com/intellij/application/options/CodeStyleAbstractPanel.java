@@ -1,23 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
+import com.intellij.formatting.service.AbstractDocumentFormattingService;
 import com.intellij.ide.ui.search.ComponentHighlightingListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -43,13 +56,25 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.PresentableEnumUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JTabbedPane;
 import javax.swing.border.AbstractBorder;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -62,7 +87,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighlightingListener {
-
   private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
   private static final Logger LOG = Logger.getInstance(CodeStyleAbstractPanel.class);
@@ -70,21 +94,23 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   private final List<TextRange>       myPreviewRangesToHighlight = new ArrayList<>();
 
   private final EditorEx myEditor;
-  private final CodeStyleSettings mySettings;
+  private final @NotNull CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
   private long myLastDocumentModificationStamp;
   private String myTextToReformat;
   private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
 
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateAlarm;
 
-  @Nullable private CodeStyleSchemesModel myModel;
+  private @Nullable CodeStyleSchemesModel myModel;
   private boolean mySomethingChanged;
   private long myEndHighlightPreviewChangesTimeMillis = -1;
   private boolean myShowsPreviewHighlighters;
   private final CodeStyleSettings myCurrentSettings;
   private final Language myDefaultLanguage;
   private Document myDocumentBeforeChanges;
+
+  private @Nullable String myLastSearchString;
 
   protected CodeStyleAbstractPanel(@NotNull CodeStyleSettings settings) {
     this(null, null, settings);
@@ -98,9 +124,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     myDefaultLanguage = defaultLanguage;
     myEditor = createEditor();
 
-    if (myEditor != null) {
-      myUpdateAlarm.setActivationComponent(myEditor.getComponent());
-    }
+    myUpdateAlarm = myEditor == null ? new Alarm() : new Alarm(myEditor.getComponent(), this);
+
     myUserActivityWatcher.addUserActivityListener(() -> somethingChanged());
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighlightingListener.TOPIC, this);
@@ -134,8 +159,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     myUserActivityWatcher.register(component);
   }
 
-  @Nullable
-  private EditorEx createEditor() {
+  private @Nullable EditorEx createEditor() {
     if (StringUtil.isEmpty(getPreviewText())) return null;
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument("");
@@ -203,7 +227,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   protected abstract int getRightMargin();
 
-  private void replaceText(final Project project, boolean collectChanges) {
+  private void replaceText(@NotNull Project project, boolean collectChanges) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         Document beforeReformat = null;
@@ -215,9 +239,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
+        Document document = myEditor.getDocument();
+        AbstractDocumentFormattingService.setDocument(psiFile, document);
+
         applySettingsToModel();
         final Ref<PsiFile> formatted = Ref.create();
-        CodeStyle.doWithTemporarySettings(
+        CodeStyle.runWithLocalSettings(
           project,
           mySettings,
           settings -> {
@@ -225,8 +252,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
             myEditor.getSettings().setTabSize(settings.getTabSize(getFileType()));
             formatted.set(doReformat(project, psiFile));
           });
-        Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), formatted.get().getText());
+        DocumentReference docRef = DocumentReferenceManager.getInstance().create(document);
+        UndoManager.getInstance(project).nonundoableActionPerformed(docRef, false);
         if (beforeReformat != null) {
           highlightChanges(beforeReformat);
         }
@@ -237,7 +265,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     });
   }
 
-  private void applySettingsToModel() {
+  protected void applySettingsToModel() {
     if (mySettings instanceof CodeStyleSchemesModel.ModelSettings && ((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {
@@ -257,11 +285,10 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * @return          list of changes applied to the {@link #myTextToReformat target text} during reformatting. It is sorted
    *                  by change start offset in ascending order
    */
-  @Nullable
-  private Document collectChangesBeforeCurrentSettingsAppliance(Project project) {
+  private @Nullable Document collectChangesBeforeCurrentSettingsAppliance(@NotNull Project project) {
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
-    CodeStyle.doWithTemporarySettings(
+    CodeStyle.runWithLocalSettings(
       project,
       mySettings,
       settings -> {
@@ -286,19 +313,20 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return myDocumentBeforeChanges;
   }
 
-  protected void prepareForReformat(PsiFile psiFile) {
+  private void prepareForReformat(PsiFile psiFile) {
   }
 
-  protected String getFileExt() {
-    return getFileTypeExtension(getFileType());
+  protected @NotNull String getFileExt() {
+    return getFileType().getDefaultExtension();
   }
 
   /**
    * @deprecated Do not override this method. Use LanguageCodeStyleSettingsProvider.createFileFromText() instead.
    * @see LanguageCodeStyleSettingsProvider#createFileFromText(Project, String)
    */
-  @Deprecated
-  protected PsiFile createFileFromText(Project project, String text) {
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  protected PsiFile createFileFromText(@NotNull Project project, @NotNull String text) {
     Language language = getDefaultLanguage();
     if (language != null) {
       LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
@@ -317,12 +345,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     );
   }
 
-  protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
+  protected @NotNull PsiFile doReformat(final Project project, @NotNull PsiFile psiFile) {
     CodeStyleManager.getInstance(project).reformat(psiFile);
     return psiFile;
   }
 
-  private void highlightChanges(Document beforeReformat) {
+  private void highlightChanges(@NotNull Document beforeReformat) {
     myPreviewRangesToHighlight.clear();
     MarkupModel markupModel = myEditor.getMarkupModel();
     markupModel.removeAllHighlighters();
@@ -345,12 +373,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * @return                  {@code true} if given visual position belongs to the target visual rectangle;
    *                          {@code false} otherwise
    */
-  private static boolean isWithinBounds(VisualPosition targetPosition, VisualPosition startPosition, VisualPosition endPosition) {
+  private static boolean isWithinBounds(@NotNull VisualPosition targetPosition, @NotNull VisualPosition startPosition, VisualPosition endPosition) {
     return targetPosition.line >= startPosition.line && targetPosition.line <= endPosition.line
            && targetPosition.column >= startPosition.column && targetPosition.column <= endPosition.column;
   }
 
-  private void updatePreviewHighlighter(final EditorEx editor) {
+  private void updatePreviewHighlighter(@NotNull EditorEx editor) {
     EditorColorsScheme scheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
     EditorHighlighter highlighter = createHighlighter(scheme);
@@ -362,19 +390,15 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
   }
 
-  @Nullable
-  protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
+  protected abstract @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme);
 
-  @NotNull
-  protected abstract FileType getFileType();
+  protected abstract @NotNull FileType getFileType();
 
-  @NonNls
-  @Nullable
-  protected abstract String getPreviewText();
+  protected abstract @NonNls @Nullable String getPreviewText();
 
-  public abstract void apply(CodeStyleSettings settings) throws ConfigurationException;
+  public abstract void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException;
 
-  public final void reset(final CodeStyleSettings settings) {
+  public final void reset(@NotNull CodeStyleSettings settings) {
     myShouldUpdatePreview = false;
     try {
       resetImpl(settings);
@@ -389,8 +413,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
   public abstract boolean isModified(CodeStyleSettings settings);
 
-  @Nullable
-  public abstract JComponent getPanel();
+  public abstract @Nullable JComponent getPanel();
 
   @Override
   public void dispose() {
@@ -400,13 +423,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
   }
 
-  protected abstract void resetImpl(final CodeStyleSettings settings);
+  protected abstract void resetImpl(@NotNull CodeStyleSettings settings);
 
   protected static void fillWrappingCombo(@NotNull JComboBox<CodeStyleSettings.WrapStyle> wrapCombo) {
     PresentableEnumUtil.fill(wrapCombo, CodeStyleSettings.WrapStyle.class);
   }
 
-  public static String readFromFile(@NotNull Class<?> resourceContainerClass, @NonNls @NotNull String fileName) {
+  public static @NotNull String readFromFile(@NotNull Class<?> resourceContainerClass, @NonNls @NotNull String fileName) {
     try (InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
          LineNumberReader lineNumberReader = stream == null ? null : new LineNumberReader(new InputStreamReader(stream,
                                                                                                                 StandardCharsets.UTF_8))) {
@@ -426,7 +449,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
   }
 
-  protected void installPreviewPanel(final JPanel previewPanel) {
+  protected void installPreviewPanel(@NotNull JPanel previewPanel) {
     previewPanel.setLayout(new BorderLayout());
     previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
     previewPanel.setBorder(new AbstractBorder() {
@@ -449,12 +472,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
         return insets;
       }
     });
-  }
-
-  @NonNls
-  @NotNull
-  protected String getFileTypeExtension(@NotNull FileType fileType) {
-    return fileType.getDefaultExtension();
   }
 
   /**
@@ -573,22 +590,24 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return myEditor;
   }
 
-  @NotNull
-  protected CodeStyleSettings getSettings() {
+  protected @NotNull CodeStyleSettings getSettings() {
     return mySettings;
   }
 
-  @NotNull
-  public Set<String> processListOptions() {
+  public @NotNull Set<String> processListOptions() {
     return Collections.emptySet();
   }
 
-  @NotNull
-  public OptionsContainingConfigurable getOptionIndexer() {
-    return () -> this.processListOptions();
+  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
+    return new OptionsContainingConfigurable() {
+      @Override
+      public @NotNull Set<String> processListOptions() {
+        return CodeStyleAbstractPanel.this.processListOptions();
+      }
+    };
   }
 
-  public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
+  final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     codeStyle.apply(mySettings, myDefaultLanguage);
     ((CodeStyleSchemesModel.ModelSettings) mySettings).doWithLockedSettings(()->resetImpl(mySettings));
     if (myModel != null) {
@@ -600,8 +619,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * Override this method if the panel is linked to a specific language.
    * @return The language this panel is associated with.
    */
-  @Nullable
-  public Language getDefaultLanguage()  {
+  public @Nullable Language getDefaultLanguage()  {
     return myDefaultLanguage;
   }
 
@@ -613,24 +631,18 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return myCurrentSettings;
   }
 
-@Nullable
-  protected CodeStyleSettings getModelSettings() {
+  protected @Nullable CodeStyleSettings getModelSettings() {
     CodeStyleSchemesModel model = myModel;
     return model != null ? model.getCloneSettings(model.getSelectedScheme()) : null;
   }
 
-  public void setupCopyFromMenu(JPopupMenu copyMenu) {
+  public void setupCopyFromMenu(@NotNull JPopupMenu copyMenu) {
     copyMenu.removeAll();
-  }
-
-  @Deprecated
-  public boolean isCopyFromMenuAvailable() {
-    return false;
   }
 
   @Override
   public final void highlight(@NotNull JComponent component, @NotNull String searchString) {
-    if (isInsideThisPanel(component)) {
+    if (isNewSearchString(searchString) && isInsideThisPanel(component)) {
       if (component instanceof TabLabel) {
         Container parent = component.getParent();
         if (parent instanceof JBTabs) {
@@ -650,11 +662,16 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     }
   }
 
+  private boolean isNewSearchString(@NotNull String searchString) {
+    if (searchString.equals(myLastSearchString)) return false;
+    myLastSearchString = searchString;
+    return true;
+  }
+
   public void highlightOptions(@NotNull String searchString) {
   }
 
-  @Nullable
-  private static JPanel findTabbedPaneChild(@NotNull JComponent component) {
+  private static @Nullable JPanel findTabbedPaneChild(@NotNull JComponent component) {
     Container parent = component.getParent();
     while (parent != null && !(parent instanceof NewCodeStyleSettingsPanel)) {
       Container nextParent = parent.getParent();

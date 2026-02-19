@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
   private static final TokenSet VALUE_BIT_SET = TokenSet
     .create(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN, GroovyDocElementTypes.GDOC_METHOD_REF, GroovyDocElementTypes.GDOC_FIELD_REF,
@@ -45,14 +42,12 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getNameElement().getText().substring(1);
   }
 
   @Override
-  @NotNull
-  public PsiElement getNameElement() {
+  public @NotNull PsiElement getNameElement() {
     PsiElement element = findChildByType(GroovyDocTokenTypes.mGDOC_TAG_NAME);
     assert element != null;
     return element;
@@ -65,14 +60,12 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
   }
 
   @Override
-  @Nullable
-  public GrDocTagValueToken getValueElement() {
+  public @Nullable GrDocTagValueToken getValueElement() {
     return findChildByClass(GrDocTagValueToken.class);
   }
 
   @Override
-  @Nullable
-  public GrDocParameterReference getDocParameterReference() {
+  public @Nullable GrDocParameterReference getDocParameterReference() {
     return findChildByClass(GrDocParameterReference.class);
   }
 

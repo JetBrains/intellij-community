@@ -20,7 +20,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-import org.apache.tools.ant.Task;
 
 import java.util.List;
 
@@ -64,20 +63,20 @@ public abstract class AntDomTypeDef extends AntDomCustomClasspathComponent{
 
     final String adaptto = getAdaptto().getStringValue();
     if (adaptto != null && isAssignableFrom(adaptto, clazz)) {
-      return isAssignableFrom(Task.class.getName(), clazz);
+      return isAssignableFrom("org.apache.tools.ant.Task", clazz);
     }
 
     final String adapter = getAdapter().getStringValue();
     if (adapter != null) {
       try {
         final Class adapterClass = clazz.getClassLoader().loadClass(adapter);
-        return isAssignableFrom(Task.class.getName(), adapterClass);
+        return isAssignableFrom("org.apache.tools.ant.Task", adapterClass);
       }
       catch (ClassNotFoundException | UnsupportedClassVersionError | NoClassDefFoundError ignored) {
       }
     }
 
-    return isAssignableFrom(Task.class.getName(), clazz);
+    return isAssignableFrom("org.apache.tools.ant.Task", clazz);
   }
 
   private static boolean isAssignableFrom(final String baseClassName, final Class clazz) {

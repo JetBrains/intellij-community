@@ -3,7 +3,12 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jdom.*;
+import com.intellij.openapi.util.text.Strings;
+import org.jdom.Attribute;
+import org.jdom.Content;
+import org.jdom.Element;
+import org.jdom.Text;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,12 +43,12 @@ public abstract class PathMacroMap {
         Text t = (Text)child;
         String oldText = t.getText();
         String newText = recursively ? substituteRecursively(oldText, caseSensitive).toString() : substitute(oldText, caseSensitive);
-        if (oldText != newText) {
+        if (!Strings.areSameInstance(oldText, newText)) {
           // it is faster to call 'setText' right away than perform additional 'equals' check
           t.setText(newText);
         }
       }
-      else if (!(child instanceof Comment)) {
+      else {
         LOG.error("Wrong content: " + child.getClass());
       }
     }
@@ -55,7 +60,7 @@ public abstract class PathMacroMap {
     for (Attribute attribute : element.getAttributes()) {
       if (filter == null || !filter.skipPathMacros(attribute)) {
         String newValue = getAttributeValue(attribute, filter, caseSensitive, recursively);
-        if (attribute.getValue() != newValue) {
+        if (!Strings.areSameInstance(attribute.getValue(), newValue)) {
           // it is faster to call 'setValue' right away than perform additional 'equals' check
           attribute.setValue(newValue);
         }
@@ -63,6 +68,7 @@ public abstract class PathMacroMap {
     }
   }
 
+  @ApiStatus.Internal
   public @NotNull String getAttributeValue(@NotNull Attribute attribute, @Nullable PathMacroFilter filter, boolean caseSensitive, boolean recursively) {
     String oldValue = attribute.getValue();
     if (recursively || (filter != null && filter.recursePathMacros(attribute))) {
@@ -81,5 +87,7 @@ public abstract class PathMacroMap {
     return substitute(text, caseSensitive);
   }
 
+  @Override
+  @ApiStatus.Internal
   public abstract int hashCode();
 }

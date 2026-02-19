@@ -1,15 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.CheckedDisposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-public abstract class AbstractTreeModel implements Disposable, TreeModel {
+public abstract class AbstractTreeModel implements CheckedDisposable, TreeModel {
   protected final TreeModelListenerList listeners = new TreeModelListenerList();
   protected volatile boolean disposed;
 
@@ -17,6 +20,11 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
   public void dispose() {
     disposed = true;
     listeners.clear();
+  }
+
+  @Override
+  public boolean isDisposed() {
+    return disposed;
   }
 
   /**
@@ -28,7 +36,7 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
    * @see TreeModelListener#treeStructureChanged(TreeModelEvent)
    */
   protected void treeStructureChanged(TreePath path, int[] indices, Object[] children) {
-    if (!listeners.isEmpty()) listeners.treeStructureChanged(new TreeModelEvent(this, path, indices, children));
+    if (!listeners.isEmpty()) listeners.treeStructureChanged(createTreeModelEvent(path, indices, children));
   }
 
   /**
@@ -40,7 +48,7 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
    * @see TreeModelListener#treeNodesChanged(TreeModelEvent)
    */
   protected void treeNodesChanged(TreePath path, int[] indices, Object[] children) {
-    if (!listeners.isEmpty()) listeners.treeNodesChanged(new TreeModelEvent(this, path, indices, children));
+    if (!listeners.isEmpty()) listeners.treeNodesChanged(createTreeModelEvent(path, indices, children));
   }
 
   /**
@@ -52,7 +60,7 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
    * @see TreeModelListener#treeNodesInserted(TreeModelEvent)
    */
   protected void treeNodesInserted(TreePath path, int[] indices, Object[] children) {
-    if (!listeners.isEmpty()) listeners.treeNodesInserted(new TreeModelEvent(this, path, indices, children));
+    if (!listeners.isEmpty()) listeners.treeNodesInserted(createTreeModelEvent(path, indices, children));
   }
 
   /**
@@ -65,7 +73,12 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
    * @see TreeModelListener#treeNodesRemoved(TreeModelEvent)
    */
   protected void treeNodesRemoved(TreePath path, int[] indices, Object[] children) {
-    if (!listeners.isEmpty()) listeners.treeNodesRemoved(new TreeModelEvent(this, path, indices, children));
+    if (!listeners.isEmpty()) listeners.treeNodesRemoved(createTreeModelEvent(path, indices, children));
+  }
+
+  @ApiStatus.Internal
+  protected @NonNull TreeModelEvent createTreeModelEvent(@Nullable TreePath path, int @Nullable [] indices, Object @Nullable [] children) {
+    return new TreeModelEvent(this, path, indices, children);
   }
 
   /**

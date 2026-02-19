@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,7 @@ import java.util.List;
 final class TestDataHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(JavaFileType.INSTANCE.getDefaultExtension());
   public static final List<@NonNls String> SUPPORTED_IN_TEST_DATA_FILE_TYPES =
-    ContainerUtil.immutableList("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj");
+    List.of("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj", "go", "mod", "work", "sum");
   private static final int MAX_HOPES = 3;
   private static final @NonNls String TEST_DATA = "testdata";
 
@@ -35,12 +34,11 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
   }
 
   @Override
-  @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    final VirtualFile virtualFile = file.getVirtualFile();
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, final @NotNull Editor editor) {
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null) {
-      Project project = file.getProject();
-      Document document = file.getViewProvider().getDocument();
+      Project project = psiFile.getProject();
+      Document document = psiFile.getViewProvider().getDocument();
       if (isSupported(virtualFile, project) && document != null) {
         return new TestDataHighlightingPass(project, document);
       }
@@ -57,7 +55,7 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
       return ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(file) == null;
     }
 
-    if (SUPPORTED_IN_TEST_DATA_FILE_TYPES.contains(ext)) {
+    if (ext != null && SUPPORTED_IN_TEST_DATA_FILE_TYPES.contains(ext)) {
       int i = 0;
       VirtualFile parent = file.getParent();
       while (parent != null && i < MAX_HOPES) {

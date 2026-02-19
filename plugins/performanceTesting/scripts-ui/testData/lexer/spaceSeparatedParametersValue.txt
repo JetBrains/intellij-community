@@ -1,0 +1,7 @@
+PerformanceTestTokenType.COMMAND ('%startProfile')
+WHITE_SPACE (' ')
+PerformanceTestTokenType.IDENTIFIER ('wordpress_inspection')
+PerformanceTestTokenType.OPTIONS_SEPARATOR (' ')
+PerformanceTestTokenType.IDENTIFIER ('event')
+PerformanceTestTokenType.ASSIGNMENT_OPERATOR ('=')
+PerformanceTestTokenType.IDENTIFIER ('alloc')

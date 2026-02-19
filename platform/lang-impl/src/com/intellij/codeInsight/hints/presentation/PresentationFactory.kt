@@ -1,23 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.InlayPresentationFactory.*
+import com.intellij.codeInsight.hints.InlayPresentationFactory.ClickListener
+import com.intellij.codeInsight.hints.InlayPresentationFactory.HoverListener
+import com.intellij.codeInsight.hints.InlayPresentationFactory.Padding
+import com.intellij.codeInsight.hints.InlayPresentationFactory.RoundedCorners
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -27,16 +34,12 @@ import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
-import java.util.*
+import java.util.EnumSet
 import javax.swing.Icon
 import kotlin.math.max
 
-/**
- * Contains non-stable and not well-designed API. Will be changed in 2020.2
- */
-@ApiStatus.Experimental
-class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFactory {
-  private val textMetricsStorage = InlayTextMetricsStorage(editor)
+class PresentationFactory(private val editor: Editor) : InlayPresentationFactory {
+  internal val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
   private val offsetFromTopProvider = object : InsetValueProvider {
     override val top: Int
       get() = textMetricsStorage.getFontMetrics(true).offsetFromTop()
@@ -46,6 +49,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
   override fun smallText(text: String): InlayPresentation {
     val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
     return withInlayAttributes(textWithoutBox)
+  }
+
+  fun smallTextWithoutBackground(text: String): InlayPresentation {
+    val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
+    return WithAttributesPresentation(textWithoutBox, DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND, editor,
+                                      WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 
   override fun container(
@@ -62,30 +71,9 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return MouseHandlingPresentation(base, clickListener, hoverListener)
   }
 
-  @ApiStatus.Experimental
   @Contract(pure = true)
   fun textSpacePlaceholder(length: Int, isSmall: Boolean) : InlayPresentation {
     return TextPlaceholderPresentation(length, textMetricsStorage, isSmall)
-  }
-
-  @Contract(pure = true)
-  @Deprecated(message = "Bad API for Java, use mouseHandling with ClickListener")
-  fun mouseHandling(
-    base: InlayPresentation,
-    clickListener: ((MouseEvent, Point) -> Unit)?,
-    hoverListener: HoverListener?
-  ): InlayPresentation {
-    val adapter = if (clickListener != null) {
-      object : ClickListener {
-        override fun onClick(event: MouseEvent, translated: Point) {
-          clickListener.invoke(event, translated)
-        }
-      }
-    }
-    else {
-      null
-    }
-    return mouseHandling(base, adapter, hoverListener)
   }
 
   @Contract(pure = true)
@@ -114,14 +102,70 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
   }
 
   @Contract(pure = true)
+  fun roundWithBackgroundAndSmallInset(base: InlayPresentation): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundPresentation(
+      InsetPresentation(
+        base,
+        left = 3,
+        right = 3,
+        top = 0,
+        down = 0
+      ),
+      8,
+      8
+    ))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun opaqueBorderedRoundWithBackgroundAndSmallInset(base: InlayPresentation, borderColor: Color): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundBorderedPresentation(
+      RoundWithBackgroundPresentation(
+        InsetPresentation(
+          base,
+          left = base.height / 2,
+          right = base.height / 2,
+          top = 0,
+          down = 0
+        ), base.height, base.height, editor.colorsScheme.defaultBackground, 1f
+      ), borderColor
+    ))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun roundWithBackgroundAndNoInset(base: InlayPresentation): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundPresentation(base, 8, 8))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun offsetFromTopForSmallText(base: InlayPresentation) = DynamicInsetPresentation(base, offsetFromTopProvider)
+
+  @Contract(pure = true)
   override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun scaledIcon(icon: Icon, scaleFactor: Float): InlayPresentation
+  {
+    return ScaledIconWithCustomFactorPresentation(textMetricsStorage, false, icon, editor.component, scaleFactor)
+  }
+
+  @Contract(pure = true)
+  override fun smallScaledIcon(icon: Icon): InlayPresentation
+  {
+    val iconWithoutBox = InsetPresentation(ScaledIconPresentation(textMetricsStorage, true, icon, editor.component), top = 1, down = 1)
+    return withInlayAttributes(iconWithoutBox)
+  }
 
   @Contract(pure = true)
   fun folding(placeholder: InlayPresentation, unwrapAction: () -> InlayPresentation): InlayPresentation {
     return ChangeOnClickPresentation(changeOnHover(placeholder, onHover = {
-      attributes(placeholder) {
-        it.with(attributesOf(EditorColors.FOLDED_TEXT_ATTRIBUTES))
-      }
+      attributes(placeholder, EditorColors.FOLDED_TEXT_ATTRIBUTES)
     }), onClick = unwrapAction)
   }
 
@@ -132,7 +176,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   /**
    * Creates node, that can be collapsed/expanded by clicking on prefix/suffix.
-   * If presentation is collapsed, clicking to content will expand it.
+   * If presentation is collapsed, clicking on content will expand it.
    */
   @Contract(pure = true)
   fun collapsible(
@@ -152,14 +196,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     }, second = { expanded() }, initiallyFirstEnabled = startWithPlaceholder)
     presentationToChange = content
 
-    class ContentFlippingPresentation(base: InlayPresentation) : StaticDelegatePresentation(base) {
-      override fun mouseClicked(event: MouseEvent, translated: Point) {
-        content.flipState()
-      }
+    val prefixExposed = OnClickPresentation(matchingPrefix) { _: MouseEvent, _: Point ->
+      content.flipState()
     }
-
-    val prefixExposed = ContentFlippingPresentation(matchingPrefix)
-    val suffixExposed = ContentFlippingPresentation(matchingSuffix)
+    val suffixExposed = OnClickPresentation(matchingSuffix) { _: MouseEvent, _: Point ->
+      content.flipState()
+    }
     return seq(prefixExposed, content, suffixExposed)
   }
 
@@ -171,13 +213,11 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   @Contract(pure = true)
   fun matching(presentations: List<InlayPresentation>): List<InlayPresentation> = synchronousOnHover(presentations) { presentation ->
-    attributes(presentation) { base ->
-      base.with(attributesOf(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES))
-    }
+    attributes(presentation, CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
   }
 
   /**
-   * On hover of any of [presentations] changes all the presentations with a given decorator.
+   * On hover of [presentations] changes all the presentations with a given decorator.
    * This presentation is stateless.
    */
   @Contract(pure = true)
@@ -244,18 +284,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
 
   @Contract(pure = true)
   fun reference(base: InlayPresentation, onClickAction: () -> Unit): InlayPresentation {
-    return reference(
-      base = base,
-      onClickAction = Runnable { onClickAction() },
-      clickButtonsWithoutHover = EnumSet.of(MouseButton.Middle),
-      clickButtonsWithHover = EnumSet.of(MouseButton.Left, MouseButton.Middle),
-      hoverPredicate = { isControlDown(it) }
-    )
+    return referenceInternal(base, onClickAction)
   }
+
 
   @Contract(pure = true)
   fun referenceOnHover(base: InlayPresentation, clickListener: ClickListener): InlayPresentation {
-    val delegate = DynamicDelegatePresentation(base)
     val hovered = onClick(
       base = withReferenceAttributes(base),
       buttons = EnumSet.of(MouseButton.Left, MouseButton.Middle),
@@ -263,19 +297,20 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
         clickListener.onClick(e, p)
       }
     )
-    return OnHoverPresentation(delegate, object : HoverListener {
-      override fun onHover(event: MouseEvent, translated: Point) {
-        val handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        editor.setCustomCursor(this@PresentationFactory, handCursor)
-        delegate.delegate = hovered
-      }
-
-      override fun onHoverFinished() {
-        delegate.delegate = base
-        editor.setCustomCursor(this@PresentationFactory, null)
-      }
-    })
+    val delegate = ChangeOnHoverPresentation(base, { hovered })
+    return WithCursorOnHoverPresentation(delegate, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR), editor)
   }
+
+  private fun referenceInternal(base: InlayPresentation,
+                                onClickAction: () -> Unit,
+                                toStringProvider: (() -> String)? = null) = reference(
+    base = base,
+    onClickAction = Runnable { onClickAction() },
+    clickButtonsWithoutHover = EnumSet.of(MouseButton.Middle),
+    clickButtonsWithHover = EnumSet.of(MouseButton.Left, MouseButton.Middle),
+    hoverPredicate = { isControlDown(it) },
+    toStringProvider = toStringProvider
+  )
 
   @Contract(pure = true)
   private fun reference(
@@ -283,29 +318,60 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     onClickAction: Runnable,
     clickButtonsWithoutHover: EnumSet<MouseButton>,
     clickButtonsWithHover: EnumSet<MouseButton>,
-    hoverPredicate: (MouseEvent) -> Boolean
+    hoverPredicate: (MouseEvent) -> Boolean,
+    toStringProvider: (() -> String)? = null
   ): InlayPresentation {
     val noHighlightReference = onClick(base, clickButtonsWithoutHover) { _, _ ->
       onClickAction.run()
     }
-    return changeOnHover(noHighlightReference, {
-      return@changeOnHover onClick(withReferenceAttributes(noHighlightReference), clickButtonsWithHover) { _, _ ->
+    return object : ChangeOnHoverPresentation(noHighlightReference, hover@{
+      return@hover onClick(withReferenceAttributes(noHighlightReference), clickButtonsWithHover) { _, _ ->
         onClickAction.run()
       }
-    }, hoverPredicate)
-  }
-
-  private fun withReferenceAttributes(noHighlightReference: InlayPresentation): AttributesTransformerPresentation {
-    return attributes(noHighlightReference) {
-      val attributes = attributesOf(EditorColors.REFERENCE_HYPERLINK_COLOR)
-      attributes.effectType = null // With underlined looks weird
-      it.with(attributes)
+    }, hoverPredicate) {
+      override fun toString(): String {
+        if (toStringProvider != null) {
+          return "[${toStringProvider()}]${super.toString()}"
+        }
+        return super.toString()
+      }
     }
   }
 
   @Contract(pure = true)
-  fun psiSingleReference(base: InlayPresentation, resolve: () -> PsiElement?): InlayPresentation =
-    reference(base) { navigateInternal(resolve) }
+  fun withCursorOnHover(base: InlayPresentation, cursor: Cursor): InlayPresentation {
+    return WithCursorOnHoverPresentation(base, cursor, editor)
+  }
+
+  @Contract(pure = true)
+  fun withCursorOnHoverWhenControlDown (base: InlayPresentation, cursor: Cursor): InlayPresentation {
+    return WithCursorOnHoverPresentation(base, cursor, editor) { isControlDown(it) }
+  }
+
+  @Contract(pure = true)
+  fun withReferenceAttributes(noHighlightReference: InlayPresentation): WithAttributesPresentation {
+    return attributes(noHighlightReference, REFERENCE_HYPERLINK_COLOR,
+                      WithAttributesPresentation.AttributesFlags().withSkipEffects(true))
+  }
+
+  @Contract(pure = true)
+  fun psiSingleReference(base: InlayPresentation, withDebugToString: Boolean = true, resolve: () -> PsiElement?): InlayPresentation {
+    return if (withDebugToString) {
+      referenceInternal(
+        base,
+        onClickAction = { navigateInternal(resolve) },
+        toStringProvider = {
+          resolve()?.let(toStringProvider) ?: ""
+        })
+    } else {
+      reference(base) { navigateInternal(resolve) }
+    }
+  }
+
+  @Contract(pure = true)
+  fun psiSingleReference(base: InlayPresentation, resolve: () -> PsiElement?): InlayPresentation {
+    return reference(base) { navigateInternal(resolve) }
+  }
 
   @Contract(pure = true)
   fun seq(vararg presentations: InlayPresentation): InlayPresentation {
@@ -329,8 +395,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return SequencePresentation(seq)
   }
 
-  fun button(default: InlayPresentation, clicked: InlayPresentation, clickListener: ClickListener?, hoverListener: HoverListener?) : InlayPresentation {
-    val defaultOrClicked: BiStatePresentation = object : BiStatePresentation({ default }, { clicked }, false) {
+  fun button(default: InlayPresentation,
+             clicked: InlayPresentation,
+             clickListener: ClickListener?,
+             hoverListener: HoverListener?,
+             initialState: Boolean = false): Pair<InlayPresentation, BiStatePresentation> {
+    val defaultOrClicked: BiStatePresentation = object : BiStatePresentation({ default }, { clicked }, initialState) {
       override val width: Int
         get() = max(default.width, clicked.width)
 
@@ -350,29 +420,36 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
       override fun mouseExited() {
         hoverListener?.onHoverFinished()
       }
-    }
+    } to defaultOrClicked
   }
 
-  private fun attributes(base: InlayPresentation, transformer: (TextAttributes) -> TextAttributes): AttributesTransformerPresentation =
-    AttributesTransformerPresentation(base, transformer)
+  private fun attributes(base: InlayPresentation,
+                         textAttributesKey: TextAttributesKey,
+                         flags: WithAttributesPresentation.AttributesFlags = WithAttributesPresentation.AttributesFlags()): WithAttributesPresentation =
+    WithAttributesPresentation(base, textAttributesKey, editor, flags)
 
   private fun withInlayAttributes(base: InlayPresentation): InlayPresentation {
-    return AttributesTransformerPresentation(base) {
-      it.withDefault(attributesOf(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT))
-    }
+    return WithAttributesPresentation(base, DefaultLanguageHighlighterColors.INLAY_DEFAULT, editor,
+                                      WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 
-  private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown
+  private fun isControlDown(e: MouseEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown
 
   @Contract(pure = true)
-  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation): InlayPresentation = when {
+  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation): InlayPresentation =
+    withTooltip(tooltip, base, showAbove = true)
+
+
+
+  @ApiStatus.Internal
+  fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation, showAbove: Boolean): InlayPresentation = when {
     tooltip.isEmpty() -> base
     else -> {
       var hint: LightweightHint? = null
       onHover(base, object : HoverListener {
         override fun onHover(event: MouseEvent, translated: Point) {
-          if (hint?.isVisible != true) {
-            hint = showTooltip(editor, event, tooltip)
+          if (hint?.isVisible != true && editor.contentComponent.isShowing) {
+            hint = showTooltip(event, tooltip, showAbove)
           }
         }
 
@@ -383,14 +460,20 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
       })
     }
   }
-  private fun showTooltip(editor: Editor, e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
+
+
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint =
+    showTooltip(e, text, showAbove = true)
+
+  @ApiStatus.Internal
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String, showAbove: Boolean): LightweightHint {
     val hint = run {
       val label = HintUtil.createInformationLabel(text)
       label.border = JBUI.Borders.empty(6, 6, 5, 6)
       LightweightHint(label)
     }
 
-    val constraint = HintManager.ABOVE
+    val constraint = if (showAbove) HintManager.ABOVE else HintManager.UNDER
 
     val point = run {
       val pointOnEditor = locationAt(e, editor.contentComponent)
@@ -411,12 +494,32 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return hint
   }
 
+  @ApiStatus.Internal
+  fun highlighted(text: String, smallText: Boolean, highlighter: SyntaxHighlighter): InlayPresentation {
+    val lexer = highlighter.highlightingLexer
+    lexer.start(text)
+    val tokenPresentations = mutableListOf<InlayPresentation>()
+    while (lexer.tokenType != null) {
+      val tokenText = lexer.tokenText
+      val tokenType = lexer.tokenType
+      val textKeys = highlighter.getTokenHighlights(tokenType)
+      if (textKeys.isEmpty() || textKeys.firstOrNull()?.defaultAttributes == null || textKeys.firstOrNull()?.defaultAttributes?.fontType == 0) {
+        tokenPresentations.add(if (smallText) smallText(tokenText) else text(tokenText))
+      }
+      else {
+        val textKey = textKeys.first()
+        val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, smallText, tokenText), top = 1, down = 1)
+        tokenPresentations.add(attributes(textWithoutBox, textKey))
+      }
+      lexer.advance()
+    }
+    return SequencePresentation(tokenPresentations)
+  }
+
   private fun locationAt(e: MouseEvent, component: Component): Point {
     val pointOnScreen = component.locationOnScreen
     return Point(e.xOnScreen - pointOnScreen.x, e.yOnScreen - pointOnScreen.y)
   }
-
-  private fun attributesOf(key: TextAttributesKey) = editor.colorsScheme.getAttributes(key) ?: TextAttributes()
 
   private fun navigateInternal(resolve: () -> PsiElement?) {
     val target = resolve()
@@ -424,31 +527,20 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
       CommandProcessor.getInstance().executeCommand(target.project, { target.navigate(true) }, null, null)
     }
   }
-}
 
-private fun TextAttributes.with(other: TextAttributes): TextAttributes {
-  val result = this.clone()
-  other.foregroundColor?.let { result.foregroundColor = it }
-  other.backgroundColor?.let { result.backgroundColor = it }
-  other.fontType.let { result.fontType = it }
-  other.effectType?.let { result.effectType = it }
-  other.effectColor?.let { result.effectColor = it }
-  return result
-}
+  companion object {
+    var customToStringProvider: ((PsiElement) -> String)? = null
 
-private fun TextAttributes.withDefault(other: TextAttributes): TextAttributes {
-  val result = this.clone()
-  if (result.foregroundColor == null) {
-    result.foregroundColor = other.foregroundColor
+    private val defaultStringProvider: (PsiElement) -> String = { element ->
+      val virtualFile = element.containingFile.virtualFile
+      val path = (virtualFile.fileSystem as? JarFileSystem)?.let {
+        val root = VfsUtilCore.getRootFile(virtualFile)
+        "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
+      } ?: virtualFile.toString()
+      "$path:${element.startOffset}"
+    }
+
+    private val toStringProvider: (PsiElement) -> String
+      get() = customToStringProvider ?: defaultStringProvider
   }
-  if (result.backgroundColor == null) {
-    result.backgroundColor = other.backgroundColor
-  }
-  if (result.effectType == null) {
-    result.effectType = other.effectType
-  }
-  if (result.effectColor == null) {
-    result.effectColor = other.effectColor
-  }
-  return result
 }

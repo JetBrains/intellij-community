@@ -1,13 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated V2 implementation doesn't allow customization of the tool window in plugins.
+ */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public abstract class AbstractDocToolWindowManager implements DocToolWindowManager {
 
   @Override
@@ -31,15 +37,13 @@ public abstract class AbstractDocToolWindowManager implements DocToolWindowManag
   }
 
   @Override
-  @Nullable
-  public Content getDocumentationContent(@NotNull ToolWindow toolWindow, @NotNull DocumentationManager documentationManager) {
+  public @Nullable Content getDocumentationContent(@NotNull ToolWindow toolWindow, @NotNull DocumentationManager documentationManager) {
     return toolWindow.getContentManager().getSelectedContent();
   }
 
   @Override
-  @Nullable
-  public DocumentationComponent getDocumentationComponent(@NotNull ToolWindow toolWindow,
-                                                          @NotNull DocumentationManager documentationManager) {
+  public @Nullable DocumentationComponent getDocumentationComponent(@NotNull ToolWindow toolWindow,
+                                                                    @NotNull DocumentationManager documentationManager) {
     Content content = getDocumentationContent(toolWindow, documentationManager);
     if (content == null) return null;
     return (DocumentationComponent)content.getComponent();

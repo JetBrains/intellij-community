@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.mlcompletion
 
 import com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
@@ -10,7 +10,18 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportElement
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.PyTargetExpression
+import java.util.Locale
 
 object PyNamesMatchingMlCompletionFeatures {
   private val scopeNamesKey = Key<Map<String, Int>>("py.ml.completion.scope.names")
@@ -19,13 +30,13 @@ object PyNamesMatchingMlCompletionFeatures {
   private val lineLeftTokensKey = Key<Map<String, Int>>("py.ml.completion.line.left.tokens")
 
   val importNamesKey = Key<Map<String, Int>>("py.ml.completion.import.names")
-  val importTokensKey = Key<Map<String, Int>>("py.ml.completion.import.tokens")
+  private val importTokensKey = Key<Map<String, Int>>("py.ml.completion.import.tokens")
 
   val namedArgumentsNamesKey = Key<Map<String, Int>>("py.ml.completion.arguments.names")
-  val namedArgumentsTokensKey = Key<Map<String, Int>>("py.ml.completion.arguments.tokens")
+  private val namedArgumentsTokensKey = Key<Map<String, Int>>("py.ml.completion.arguments.tokens")
 
   val statementListOrFileNamesKey = Key<Map<String, Int>>("py.ml.completion.statement.list.names")
-  val statementListOrFileTokensKey = Key<Map<String, Int>>("py.ml.completion.statement.list.tokens")
+  private val statementListOrFileTokensKey = Key<Map<String, Int>>("py.ml.completion.statement.list.tokens")
 
   private val enclosingMethodName = Key<String>("py.ml.completion.enclosing.method.name")
 
@@ -54,7 +65,7 @@ object PyNamesMatchingMlCompletionFeatures {
     val names = contextFeatures.getUserData(PyReceiverMlCompletionFeatures.receiverNamesKey) ?: return null
     if (names.isEmpty()) return null
     val matchesWithReceiver = names.any { it == element.lookupString }
-    val maxMatchedToken = names.maxBy { tokensMatched(element.lookupString, it) } ?: ""
+    val maxMatchedToken = names.maxByOrNull { tokensMatched(element.lookupString, it) } ?: ""
     val numMatchedTokens = tokensMatched(maxMatchedToken, element.lookupString)
     val receiverTokensNum = getNumTokensFeature(maxMatchedToken)
     return MatchingWithReceiverFeatures(matchesWithReceiver, receiverTokensNum, numMatchedTokens)
@@ -145,10 +156,10 @@ object PyNamesMatchingMlCompletionFeatures {
 
   private fun getPyScopeMatchingFeatures(names: Map<String, Int>,
                                          tokens: Map<String, Int>,
-                                         lookupString: String): PyScopeMatchingFeatures? {
+                                         lookupString: String): PyScopeMatchingFeatures {
     val sumMatches = names[lookupString] ?: 0
     val sumTokensMatches = tokensMatched(lookupString, tokens)
-    val total = names.toList().sumBy { it.second }
+    val total = names.toList().sumOf { it.second }
     return PyScopeMatchingFeatures(sumMatches, sumTokensMatches, total, names.size)
   }
 
@@ -197,15 +208,15 @@ object PyNamesMatchingMlCompletionFeatures {
     return variables.toMap().filter { !it.key.contains(DUMMY_IDENTIFIER_TRIMMED) }
   }
 
-  fun tokensMatched(firstName: String, secondName: String): Int {
+  private fun tokensMatched(firstName: String, secondName: String): Int {
     val nameTokens = getTokens(firstName)
     val elementNameTokens = getTokens(secondName)
-    return nameTokens.sumBy { token1 -> elementNameTokens.count { token2 -> token1 == token2 } }
+    return nameTokens.sumOf { token1 -> elementNameTokens.count { token2 -> token1 == token2 } }
   }
 
-  fun tokensMatched(name: String, tokens: Map<String, Int>): Int {
+  private fun tokensMatched(name: String, tokens: Map<String, Int>): Int {
     val nameTokens = getTokens(name)
-    return nameTokens.sumBy { tokens[it] ?: 0 }
+    return nameTokens.sumOf { tokens[it] ?: 0 }
   }
 
   private fun getTokensCounterMap(names: Map<String, Int>): Counter<String> {
@@ -240,7 +251,7 @@ object PyNamesMatchingMlCompletionFeatures {
   }
 
   private fun splitByCamelCase(name: String): List<String> {
-    if (isAllLettersUpper(name)) return arrayListOf(processToken(name.toLowerCase()))
+    if (isAllLettersUpper(name)) return arrayListOf(processToken(name.lowercase(Locale.getDefault())))
     val result = ArrayList<String>()
     var curToken = ""
     for (ch in name) {
@@ -249,7 +260,7 @@ object PyNamesMatchingMlCompletionFeatures {
           result.add(processToken(curToken))
           curToken = ""
         }
-        curToken += ch.toLowerCase()
+        curToken += ch.lowercaseChar()
       }
       else {
         curToken += ch

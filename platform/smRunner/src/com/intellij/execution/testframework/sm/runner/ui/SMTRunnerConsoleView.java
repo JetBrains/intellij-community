@@ -1,22 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.runners.RunContentActionsContributor;
+import com.intellij.execution.testframework.HyperLink;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
+public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView implements RunContentActionsContributor {
   private SMTestRunnerResultsForm myResultsViewer;
-  @Nullable private final String mySplitterProperty;
+  private final @Nullable String mySplitterProperty;
   private final List<AttachToProcessListener> myAttachToProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public SMTRunnerConsoleView(TestConsoleProperties consoleProperties) {
@@ -35,10 +42,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   @Override
   protected TestResultsPanel createTestResultsPanel() {
     // Results View
-    myResultsViewer = new SMTestRunnerResultsForm(getConsole().getComponent(),
-                                                  getConsole().createConsoleActions(),
-                                                  myProperties,
-                                                  mySplitterProperty);
+    myResultsViewer = new SMTestRunnerResultsForm(getConsole(), myProperties, mySplitterProperty);
     return myResultsViewer;
   }
 
@@ -71,7 +75,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * Note: it's a permanent printing, as opposed to calling the same method on {@link #getConsole()} instance.
    */
   @Override
-  public void print(@NotNull final String s, @NotNull final ConsoleViewContentType contentType) {
+  public void print(final @NotNull String s, final @NotNull ConsoleViewContentType contentType) {
     myResultsViewer.getRoot().addLast(new Printable() {
       @Override
       public void printOn(final Printer printer) {
@@ -105,5 +109,24 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   public void dispose() {
     myAttachToProcessListeners.clear();
     super.dispose();
+  }
+
+  @Override
+  public AnAction @NotNull [] getActions() {
+    if (!ExperimentalUI.isNewUI()) return AnAction.EMPTY_ARRAY;
+    return myResultsViewer.getToolbarActions();
+  }
+
+  @Override
+  public AnAction @NotNull [] getAdditionalActions() {
+    if (!ExperimentalUI.isNewUI()) return AnAction.EMPTY_ARRAY;
+    return myResultsViewer.getAdditionalToolbarActions();
+  }
+
+  @Override
+  public void hideOriginalActions() {
+    if (ExperimentalUI.isNewUI()) {
+      myResultsViewer.hideToolbar();
+    }
   }
 }

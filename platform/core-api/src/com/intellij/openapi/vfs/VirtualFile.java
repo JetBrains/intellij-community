@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -8,13 +8,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.text.CharArrayUtil;
+import kotlin.coroutines.Continuation;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -27,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -40,7 +49,9 @@ import java.util.function.Supplier;
  *
  * <p>If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile} can be used.</p>
  *
- * <p>Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a>
+ * <p>VirtualFile is also a {@link ModificationTracker} whose stamp is incremented whenever the file's content changes.</p>
+ *
+ * <p>Please see <a href="https://plugins.jetbrains.com/docs/intellij/virtual-file-system.html">Virtual File System</a>
  * for a high-level overview.</p>
  *
  * @see VirtualFileSystem
@@ -49,6 +60,7 @@ import java.util.function.Supplier;
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
+  public static final ArrayFactory<VirtualFile> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new VirtualFile[count];
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the name of a {@link VirtualFile} changes.
@@ -189,7 +201,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the presentable URL.
    * @see VirtualFileSystem#extractPresentableUrl
    */
-  public final @NotNull @NlsSafe String getPresentableUrl() {
+  @ApiStatus.NonExtendable
+  public @NotNull @NlsSafe String getPresentableUrl() {
     return getFileSystem().extractPresentableUrl(getPath());
   }
 
@@ -311,19 +324,32 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract VirtualFile getParent();
 
   /**
-   * Gets the child files. The returned files are guaranteed to be valid, if the method is called in a read action.
+   * Gets the child files.
+   * The returned files are guaranteed to be valid if the method is called in a read action.
    *
-   * @return array of the child files or {@code null} if this file is not a directory
-   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
+   * @return array of the child files.
+   *         If the file is not {@link #isDirectory()}, the method could return either {@code null}, or an empty array.
+   *         New implementations should prefer an empty array, but {@code null} is still legit for backward compatibility.
+   * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
-  public abstract VirtualFile[] getChildren();
+  public abstract VirtualFile /*@Nullable*/ [] getChildren();
+
+  /**
+   * While {@link #getChildren()} is not formally required to return a sorted result, still many use-cases _rely_ on stable sorting
+   * provided by it. But the sorting is not cheap; hence this method exists for scenarios there order of children doesn't matter,
+   * for implementations that may skip it.
+   */
+  @ApiStatus.Internal
+  public VirtualFile @Nullable [] getChildren(boolean requireSorting){
+    return getChildren();
+  }
 
   /**
    * Finds child of this file with the given name. The returned file is guaranteed to be valid, if the method is called in a read action.
    *
    * @param name the file name to search by
    * @return the file if found any, {@code null} otherwise
-   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
+   * @throws InvalidVirtualFileAccessException if this method is called inside read action on an invalid file
    */
   public @Nullable VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
@@ -528,10 +554,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     setCharset(charset, whenChanged, true);
   }
 
-  public void setCharset(final Charset charset, @Nullable Runnable whenChanged, boolean fireEventsWhenChanged) {
-    final Charset old = getStoredCharset();
+  public void setCharset(Charset charset, @Nullable Runnable whenChanged, boolean fireEventsWhenChanged) {
+    Charset oldCharset = getStoredCharset();
     storeCharset(charset);
-    if (Comparing.equal(charset, old)) return;
+    if (Comparing.equal(charset, oldCharset)) return;
+
+
     byte[] bom = charset == null ? null : CharsetToolkit.getMandatoryBom(charset);
     byte[] existingBOM = getBOM();
     if (bom == null && charset != null && existingBOM != null) {
@@ -539,10 +567,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     }
     setBOM(bom);
 
-    if (old != null) { //do not send on detect
+    if (oldCharset != null) { //do not send on detect
       if (whenChanged != null) whenChanged.run();
       if (fireEventsWhenChanged) {
-        VirtualFileManager.getInstance().notifyPropertyChanged(this, PROP_ENCODING, old, charset);
+        VirtualFileManager.getInstance().notifyPropertyChanged(this, PROP_ENCODING, oldCharset, charset);
       }
     }
   }
@@ -559,6 +587,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     setBinaryContent(content, newModificationStamp, newTimeStamp, this);
   }
 
+  /**
+   * Sets contents of the virtual file to {@code content}.
+   * The BOM, if present, should be included in the {@code content} buffer.
+   */
+  @RequiresWriteLock(generateAssertion = false)
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
@@ -568,14 +601,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Creates the {@code OutputStream} for this file.
    * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
-   *
+   * This method requires WA around it (and all the operations with OutputStream returned, until its closing): currently the indexes pipeline relies on file content being changed under WA
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor} and {@link SafeWriteRequestor}.
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
-  public final OutputStream getOutputStream(Object requestor) throws IOException {
+  @RequiresWriteLock(generateAssertion = false)
+  public final @NotNull OutputStream getOutputStream(Object requestor) throws IOException {
     return getOutputStream(requestor, -1, -1);
   }
 
@@ -596,11 +630,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #getModificationStamp()
    */
+  @RequiresWriteLock(generateAssertion = false)
   public abstract @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException;
 
   /**
    * Returns file content as an array of bytes.
-   * Has the same effect as contentsToByteArray(true).
+   * Has the same effect as {@link #contentsToByteArray(boolean) contentsToByteArray(true)}.
    *
    * @return file content
    * @throws IOException if an I/O error occurs
@@ -610,7 +645,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract byte @NotNull [] contentsToByteArray() throws IOException;
 
   /**
-   * Returns file content as an array of bytes.
+   * Returns file content as an array of bytes, including BOM, if present.
    *
    * @param cacheContent set true to
    * @return file content
@@ -657,6 +692,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * <p>When invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
    * NOT be in a read action, otherwise a deadlock may occur.</p>
    *
+   * For suspend function of VFS refresh, use {@link com.intellij.openapi.vfs.newvfs.RefreshQueue#refresh(boolean, List, Continuation)}
+   *
    * @param asynchronous if {@code true}, the method will return immediately and the refresh will be processed
    *                     in the background. If {@code false}, the method will return only after the refresh
    *                     is done and the VFS change events caused by the refresh have been fired and processed
@@ -674,7 +711,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
-  public @NlsSafe String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     return getName();
   }
 
@@ -699,7 +736,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray
    */
-  public abstract InputStream getInputStream() throws IOException;
+  public abstract @NotNull InputStream getInputStream() throws IOException;
 
   public byte @Nullable [] getBOM() {
     return getUserData(BOM_KEY);
@@ -718,15 +755,19 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return isValid();
   }
 
+  /**
+   * BEWARE: method name may be quite misleading: the definition of 'local' relies on "being subclass of {@link LocalFileSystem}"
+   * This definition leads to quite counterintuitive behavior: the 'file://...' filesystem is 'local' -- which is intuitive.
+   * But 'temp://...' i.e., in-memory filesystem is also considered 'local' -- which is not very intuitive.
+   * Moreover, archive ('jar://...', 'zip://...', etc.) filesystems are considered NOT local, even if the actual archive
+   * is a local file -- also quite counterintuitive.
+   * It is too late to change this behavior -- method is very widely used.
+   * So the only choice is: constant vigilance while using it.
+   *
+   * @return true if filesystem inherits {@link LocalFileSystem} (<b>including temporary!</b>)
+   */
   public boolean isInLocalFileSystem() {
     return false;
-  }
-
-  /** @deprecated use {@link VirtualFileSystem#isValidName(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isValidName(@NotNull String name) {
-    return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");

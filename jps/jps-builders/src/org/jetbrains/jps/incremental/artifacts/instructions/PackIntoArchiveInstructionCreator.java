@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
+@ApiStatus.Internal
+public final class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructionCreatorBase {
   private final DestinationInfo myJarDestination;
   private final JarInfo myJarInfo;
   private final String myPathInJar;
@@ -20,9 +22,8 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
     myJarDestination = jarDestination;
   }
 
-  @Nullable
   @Override
-  protected DestinationInfo createDirectoryDestination() {
+  protected @NotNull DestinationInfo createDirectoryDestination() {
     return new JarDestinationInfo(myPathInJar, myJarInfo, myJarDestination);
   }
 
@@ -37,7 +38,7 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
   }
 
   private String childPathInJar(String fileName) {
-    return myPathInJar.length() == 0 ? fileName : myPathInJar + "/" + fileName;
+    return myPathInJar.isEmpty() ? fileName : myPathInJar + "/" + fileName;
   }
 
   @Override
@@ -57,9 +58,8 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
     return new PackIntoArchiveInstructionCreator(myInstructionsBuilder, jarInfo, "", destination);
   }
 
-  @Nullable
   @Override
-  public File getTargetDirectory() {
+  public @Nullable File getTargetDirectory() {
     return null;
   }
 }

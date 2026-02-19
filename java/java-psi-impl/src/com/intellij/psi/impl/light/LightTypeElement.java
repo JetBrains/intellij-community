@@ -1,8 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +50,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return myType;
   }
 
@@ -69,8 +75,7 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
 

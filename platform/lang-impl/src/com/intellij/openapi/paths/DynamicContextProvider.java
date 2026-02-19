@@ -29,9 +29,7 @@ public interface DynamicContextProvider {
   /**
    * Returns starting position for file references
    *
-   * @param element
    * @param offset initial offset
-   * @param elementText
    * @return -1 to suppress file references generation
    */
   int getOffset(final PsiElement element, final int offset, final String elementText);

@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run
 
-import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
+import com.intellij.execution.target.value.joinToStringFunction
+import com.intellij.execution.target.value.targetPath
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.nio.file.Path
 
 /**
  * This is a temporary interface for smoother transition to Targets API. Its
@@ -34,6 +37,8 @@ interface EnvironmentController {
    */
   fun putTargetPathsValue(name: String, localPaths: Collection<String>)
 
+  fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence)
+
   /**
    * Composes the value based on [targetPaths] by joining them using the path
    * separator on the target OS and puts the value to the environment variable
@@ -46,6 +51,13 @@ interface EnvironmentController {
    * of the environment variable with the provided [name].
    */
   fun appendTargetPathToPathsValue(name: String, localPath: String)
+
+  /**
+   * Adds the provided path entries to `PYTHONPATH` environment variable. The path entries **must** be located within PyCharm helpers.
+   *
+   * @throws IllegalStateException if some of the provided path are located outside PyCharm helpers
+   */
+  fun addHelperEntriesToPythonPath(pythonPathEntries: List<String>)
 
   /**
    * Returns whether the value of the environment variable with the provided
@@ -65,7 +77,11 @@ class PlainEnvironmentController(private val envs: MutableMap<String, String>) :
   }
 
   override fun putTargetPathsValue(name: String, localPaths: Collection<String>) {
-    envs[name] = localPaths.joinToString(separator = File.pathSeparator)
+    putTargetPathsValue(name, localPaths, File.pathSeparator)
+  }
+
+  override fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence) {
+    envs[name] = localPaths.joinToString(separator = separator)
   }
 
   override fun putResolvedTargetPathsValue(name: String, targetPaths: Collection<String>) {
@@ -78,6 +94,13 @@ class PlainEnvironmentController(private val envs: MutableMap<String, String>) :
     }
   }
 
+  override fun addHelperEntriesToPythonPath(pythonPathEntries: List<String>) {
+    val helperPackagePath = pythonPathEntries.joinToString(separator = File.pathSeparator)
+    envs.merge("PYTHONPATH", helperPackagePath) { originalValue, additionalPath ->
+      listOf(originalValue, additionalPath).joinToString(separator = File.pathSeparator)
+    }
+  }
+
   override fun isEnvSet(name: String): Boolean {
     return envs.containsKey(name)
   }
@@ -85,32 +108,51 @@ class PlainEnvironmentController(private val envs: MutableMap<String, String>) :
 
 @ApiStatus.Internal
 class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnvironmentFunction<String>>,
-                                  private val targetEnvironmentRequest: TargetEnvironmentRequest) : EnvironmentController {
+                                  private val request: HelpersAwareTargetEnvironmentRequest) : EnvironmentController {
+  private val targetPlatform: TargetPlatform
+    get() = request.targetEnvironmentRequest.targetPlatform
+
   override fun putFixedValue(name: String, value: String) {
     envs[name] = constant(value)
   }
 
   override fun putTargetPathValue(name: String, localPath: String) {
-    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
+    val targetValue = targetPath(Path.of(localPath))
     envs[name] = targetValue
   }
 
   override fun putTargetPathsValue(name: String, localPaths: Collection<String>) {
+    val pathSeparator = targetPlatform.platform.pathSeparator.toString()
+    putTargetPathsValue(name, localPaths, pathSeparator)
+  }
+
+  override fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence) {
     envs[name] = localPaths
-      .map { localPath -> targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath) }
-      .joinToPathValue(targetEnvironmentRequest.targetPlatform)
+      .map { localPath -> targetPath(Path.of(localPath)) }
+      .joinToStringFunction(separator)
   }
 
   override fun putResolvedTargetPathsValue(name: String, targetPaths: Collection<String>) {
-    val pathSeparatorOnTarget = targetEnvironmentRequest.targetPlatform.platform.pathSeparator
+    val pathSeparatorOnTarget = targetPlatform.platform.pathSeparator
     envs[name] = constant(targetPaths.joinToString(separator = pathSeparatorOnTarget.toString()))
   }
 
   override fun appendTargetPathToPathsValue(name: String, localPath: String) {
-    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
+    val targetValue = targetPath(Path.of(localPath))
     envs.merge(name, targetValue) { originalValue, additionalValue ->
-      listOf(originalValue, additionalValue).joinToPathValue(targetEnvironmentRequest.targetPlatform)
+      listOf(originalValue, additionalValue).joinToPathValue(targetPlatform)
     }
+  }
+
+  /**
+   * This implementation effectively assures that PyCharm helpers are uploaded to the target using
+   * [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers].
+   *
+   * @see com.jetbrains.python.run.addHelperEntriesToPythonPath
+   * @see HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers
+   */
+  override fun addHelperEntriesToPythonPath(pythonPathEntries: List<String>) {
+    addHelperEntriesToPythonPath(envs, pythonPathEntries, request, failOnError = false)
   }
 
   override fun isEnvSet(name: String): Boolean {

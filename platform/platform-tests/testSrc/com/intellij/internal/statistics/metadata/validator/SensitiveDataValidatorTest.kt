@@ -1,49 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.validator
 
+import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
+import com.intellij.internal.statistic.eventLog.validator.IGroupValidators
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.emptyGroupValidators
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory.parseSimpleExpression
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RecorderDataValidationRule
+import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.fus.reporting.FileHandle
+import com.jetbrains.fus.reporting.FileStorage
+import com.jetbrains.fus.reporting.FileStorageMode
+import com.jetbrains.fus.reporting.MetadataStorage
 import junit.framework.TestCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.junit.Assert
 import org.junit.Test
-import java.util.*
-import java.util.regex.Pattern
+import java.util.Collections
 
 @Suppress("SameParameterValue")
 class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
-
-  @Test
-  fun test_regex_escapes() {
-    val foo = "[aa] \\ \\p{Lower} (a|b|c) [a-zA-Z_0-9] X?+ X*+ X?? [\\p{L}&&[^\\p{Lu}]] "
-    val pattern = Pattern.compile(RegexpValidationRule.escapeText(foo))
-    assertTrue(pattern.matcher(foo).matches())
-    assert(true)
-  }
-
-  @Test
-  fun test_parse_simple_expression() {
-    assertOrderedEquals(parseSimpleExpression("aa"), "aa")
-    assertOrderedEquals(parseSimpleExpression("aa{bb}cc"), "aa", "{bb}", "cc")
-    assertOrderedEquals(parseSimpleExpression("{bb}{cc}"), "{bb}", "{cc}")
-    assertOrderedEquals(parseSimpleExpression("a{bb}v{cc}d"), "a", "{bb}", "v", "{cc}", "d")
-    assertOrderedEquals(parseSimpleExpression("ccc}ddd"), "ccc}ddd")
-
-    // incorrect
-    assertSize(0, parseSimpleExpression(""))
-    assertSize(0, parseSimpleExpression("{aaaa"))
-    assertSize(0, parseSimpleExpression("{bb}{cc"))
-    assertSize(0, parseSimpleExpression("{bb{vv}vv}"))
-    assertSize(0, parseSimpleExpression("{{v}"))
-  }
 
   @Test
   fun test_empty_rule() {
@@ -54,7 +37,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertTrue(validator.getEventDataRules(eventLogGroup).isEmpty())
 
     assertUndefinedRule(validator, eventLogGroup, "<any-string-accepted>")
-    assertEventDataNotAccepted(validator, eventLogGroup, ValidationResultType.UNDEFINED_RULE, "<any-key-accepted>", "<any-string-accepted>")
+    assertEventDataNotAccepted(validator, eventLogGroup, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "<any-string-accepted>")
   }
 
   @Test
@@ -84,6 +67,21 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertEventAccepted(validator, elg, "NODE_REF_BBB")
     assertEventAccepted(validator, elg, "NODE_REF_CCC")
     assertEventRejected(validator, elg, "NODE_REF_ABC")
+  }
+
+  fun test_simple_dictionary_rules() {
+    val validator = newValidatorByFileWithDictionary(
+      "test_simple_dictionary_rules.json",
+      "test_simple_dictionary.ndjson"
+    )
+
+    val elg = EventLogGroup("dictionary.test.group", 1)
+
+    assertEventDataAccepted(validator, elg, "dictionary_value", "value1")
+    assertEventDataAccepted(validator, elg, "dictionary_value", "value2")
+    assertEventDataAccepted(validator, elg, "dictionary_value", "value3")
+    assertEventDataAccepted(validator, elg, "dictionary_value", "value4")
+    assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "dictionary_value", "value5")
   }
 
   @Test
@@ -257,7 +255,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertEventDataAccepted(validator, elg, "ed_2", "REF_BB")
     assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "ed_1", "CC")
     assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "ed_2", "REF_XX")
-    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, "undefined", "<unknown>")
+    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "<unknown>")
   }
 
   @Test
@@ -269,7 +267,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     assertEventDataAccepted(validator, elg, "ed 2", "REF_BB")
     assertEventDataAccepted(validator, elg, "ed_1", "AA")
     assertEventDataAccepted(validator, elg, "ed_2", "REF_BB")
-    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, "ed+2", "REF_BB")
+    assertEventDataNotAccepted(validator, elg, ValidationResultType.UNDEFINED_RULE, ValidationResultType.UNDEFINED_RULE.description, "REF_BB")
   }
 
   @Test
@@ -283,6 +281,25 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("FORTH", EventContext.create("FIRST", emptyMap())))
     Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("", EventContext.create("FIRST", emptyMap())))
     Assert.assertEquals(ValidationResultType.REJECTED, rule.validate("UNKNOWN", EventContext.create("FIRST", emptyMap())))
+  }
+
+  @Test
+  fun test_joined_string_validation() {
+    val validator = newValidatorByFile("test_join_string_regexp_rule.json")
+    val group = EventLogGroup("my.test.rule.with.long.string", 1)
+
+    val toAccept =
+      arrayOf("r50", "q50", "p", "p45", "p451", "k50", "l", "l50", "m11", "m40", "m403", "m5.0", "t", "t45", "t451",
+              "g1.0", "g1.1", "g2.0", "g2.2", "g3.0", "g3.1", "f", "e1.0", "e1.3", "e1.6", "e2.0", "e2.1",
+              "h-m5.0", "h-b12", "h-m40+d4", "h-m4.5+a8", "h-m4.5+y8.2", "h-m40+d5+a8", "h-a81+y81+w81",
+              "h-m40+d5+a8+w81", "h-m40+d5+a8+w81+y8", "h-m40+a8+d4+y7", "h-m45+d5+a8+w81+y8",
+              "d4", "d5", "c3", "c4", "b", "b10.0", "a", "a10", "a81", "x", "y", "y75", "y8", "w81")
+
+    for (value in toAccept) {
+      assertEventAccepted(validator, group, value)
+    }
+    assertEventRejected(validator, group, "8")
+    assertEventRejected(validator, group, "h-")
   }
 
   fun test_validate_event_id_with_enum_and_existing_rule() {
@@ -335,7 +352,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     doTestWithRuleList("test_rules_list_event_id.json") { validator ->
       val elg = EventLogGroup("existing.util.rule.and.enum", 1)
 
-      assertSize(2, validator.getEventRules(elg))
+      assertSize(4, validator.getEventRules(elg))
 
       assertEventAccepted(validator, elg, "AAA")
       assertEventAccepted(validator, elg, "BBB")
@@ -350,7 +367,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     doTestWithRuleList("test_rules_list_event_id.json") { validator ->
       val elg = EventLogGroup("not.existing.util.rule.and.enum", 1)
 
-      assertSize(2, validator.getEventRules(elg))
+      assertSize(4, validator.getEventRules(elg))
 
       assertEventAccepted(validator, elg, "AAA")
       assertEventAccepted(validator, elg, "BBB")
@@ -365,15 +382,15 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     doTestWithRuleList("test_rules_list_event_id.json") { validator ->
       val elg = EventLogGroup("third.party.util.rule.and.enum", 1)
 
-      assertSize(2, validator.getEventRules(elg))
+      assertSize(4, validator.getEventRules(elg))
 
       assertEventAccepted(validator, elg, "AAA")
       assertEventAccepted(validator, elg, "BBB")
       assertEventAccepted(validator, elg, "CCC")
 
-      assertEventRejected(validator, elg, "DDD")
+      assertThirdPartyRule(validator, elg, "DDD")
       assertEventAccepted(validator, elg, "FIRST")
-      assertEventRejected(validator, elg, "SECOND")
+      assertThirdPartyRule(validator, elg, "SECOND")
     }
   }
 
@@ -431,7 +448,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       val elg = EventLogGroup("existing.util.rule.and.enum", 1)
 
       val dataRules = validator.getEventDataRules(elg)
-      assertSize(2, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
+      assertSize(4, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
 
       assertEventDataAccepted(validator, elg, "data_1", "AAA")
       assertEventDataAccepted(validator, elg, "data_1", "BBB")
@@ -447,7 +464,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       val elg = EventLogGroup("not.existing.util.rule.and.enum", 1)
 
       val dataRules = validator.getEventDataRules(elg)
-      assertSize(2, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
+      assertSize(4, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
 
       assertEventDataAccepted(validator, elg, "data_1", "AAA")
       assertEventDataAccepted(validator, elg, "data_1", "BBB")
@@ -463,15 +480,15 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
       val elg = EventLogGroup("third.party.util.rule.and.enum", 1)
 
       val dataRules = validator.getEventDataRules(elg)
-      assertSize(2, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
+      assertSize(4, dataRules["data_1"] ?: error("Cannot find rules for 'data_1' field"))
 
       assertEventDataAccepted(validator, elg, "data_1", "AAA")
       assertEventDataAccepted(validator, elg, "data_1", "BBB")
       assertEventDataAccepted(validator, elg, "data_1", "CCC")
 
-      assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "data_1", "DDD")
+      assertEventDataNotAccepted(validator, elg, ValidationResultType.THIRD_PARTY, "data_1", "DDD")
       assertEventDataAccepted(validator, elg, "data_1", "FIRST")
-      assertEventDataNotAccepted(validator, elg, ValidationResultType.REJECTED, "data_1", "SECOND")
+      assertEventDataNotAccepted(validator, elg, ValidationResultType.THIRD_PARTY, "data_1", "SECOND")
     }
   }
 
@@ -482,7 +499,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
     val data = hashMapOf<String, Any>("obj" to listOf(hashMapOf("name" to "AAA"), hashMapOf("name" to "NOT_DEFINED")))
 
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
     val objData = validatedEventData["obj"] as List<*>
     TestCase.assertEquals(2, objData.size)
     val elements = objData.map { it as Map<*, *> }
@@ -497,7 +514,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
     val data = hashMapOf<String, Any>("obj" to hashMapOf("nested_obj" to hashMapOf("name" to "NOT_DEFINED", "count" to "1")))
 
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
     val objData = validatedEventData["obj"] as Map<*, *>
     val nestedObj = objData["nested_obj"] as Map<*, *>
     TestCase.assertEquals(ValidationResultType.REJECTED.description, nestedObj["name"])
@@ -511,7 +528,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
     val data = hashMapOf<String, Any>("elements" to listOf("NOT_DEFINED", "AAA"))
 
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
     val elements = validatedEventData["elements"] as List<*>
     TestCase.assertEquals(2, elements.size)
     TestCase.assertEquals(ValidationResultType.REJECTED.description, elements[0])
@@ -525,11 +542,58 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
       val data = hashMapOf<String, Any>("obj" to hashMapOf("id_1" to TestCustomActionId.FIRST.name, "id_2" to "NOT_DEFINED"))
 
-      val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+      val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
       val objData = validatedEventData["obj"] as Map<*, *>
       TestCase.assertEquals(TestCustomActionId.FIRST.name, objData["id_1"])
       TestCase.assertEquals(ValidationResultType.REJECTED.description, objData["id_2"])
     }
+  }
+
+  @Test
+  fun test_validate_if_metadata_unreachable() {
+    val validator = createUnreachableValidator()
+    val eventLogGroup = EventLogGroup("object.group", 1)
+    val data: HashMap<String, Any> = hashMapOf( "count" to 1)
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
+
+    TestCase.assertEquals(ValidationResultType.UNREACHABLE_METADATA.description, validatedEventData[ValidationResultType.UNREACHABLE_METADATA.description])
+  }
+
+  @Test
+  fun test_validate_rule_undefined() {
+    val validator = newValidatorByFile("test_empty_rule.json")
+    val eventLogGroup = EventLogGroup("build.gradle.actions", 1)
+    val data: HashMap<String, Any> = hashMapOf("count" to 1)
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
+
+    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE.description, validatedEventData[ValidationResultType.UNDEFINED_RULE.description])
+  }
+
+  internal fun createUnreachableValidator(): TestSensitiveDataValidator {
+    val unreachableStorage = object : MetadataStorage<EventLogBuild> {
+      override fun getClientDataRulesRevisions(): RecorderDataValidationRule = throw NotImplementedError()
+      override fun getFieldsToAnonymize(groupId: String, eventId: String): Set<String> = throw NotImplementedError()
+      override fun getGroupValidators(groupId: String): IGroupValidators<EventLogBuild> = emptyGroupValidators()
+      override fun getIdsRulesRevisions(): RecorderDataValidationRule = throw NotImplementedError()
+      override fun getSkipAnonymizationIds(): Set<String> = throw NotImplementedError()
+      override fun getSystemDataRulesRevisions(): RecorderDataValidationRule = throw NotImplementedError()
+      override fun isUnreachable(): Boolean = true
+      override fun reload() = Unit
+      override fun update(): Boolean = false
+      override suspend fun update(scope: CoroutineScope): Job = throw NotImplementedError()
+    }
+
+    val components = createFusComponents(object : FileStorage {
+      override fun exists(path: String): Boolean = false
+      override fun openFileHandle(path: String, mode: FileStorageMode): FileHandle = throw NotImplementedError()
+      override fun read(path: String): ByteArray = ByteArray(0)
+      override fun write(path: String, content: ByteArray) = throw NotImplementedError()
+    })
+
+    return TestSensitiveDataValidator(
+      FusComponentProvider.FusComponents(unreachableStorage, components.messageBus, components.remoteConfig),
+      "TEST"
+    )
   }
 
   private fun doTestWithRuleList(fileName: String, func: (TestSensitiveDataValidator) -> Unit) {
@@ -547,32 +611,35 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     }
   }
 
-  private fun assertEventAccepted(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, eventId: String) {
+  private fun assertEventAccepted(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, eventId: String) {
     val context = EventContext.create(eventId, Collections.emptyMap())
-    val actual = validator.validateEvent(eventLogGroup, context)
+    val actual = validator.validateEvent(context, eventLogGroup.id)
     TestCase.assertEquals("Validation failed for $eventId", ValidationResultType.ACCEPTED, actual)
   }
 
-  private fun assertUndefinedRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+  private fun assertUndefinedRule(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+    TestCase.assertEquals(ValidationResultType.UNDEFINED_RULE, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
+                                                                                       eventLogGroup.id))
   }
 
-  private fun assertIncorrectRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.INCORRECT_RULE, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+  private fun assertIncorrectRule(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+    TestCase.assertEquals(ValidationResultType.INCORRECT_RULE, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
+                                                                                       eventLogGroup.id))
   }
 
-  private fun assertThirdPartyRule(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.THIRD_PARTY, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+  private fun assertThirdPartyRule(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+    TestCase.assertEquals(ValidationResultType.THIRD_PARTY, validator.validateEvent(EventContext.create(s, Collections.emptyMap()),
+                                                                                    eventLogGroup.id))
   }
 
-  private fun assertEventRejected(validator: SensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
-    TestCase.assertEquals(ValidationResultType.REJECTED, validator.validateEvent(eventLogGroup, EventContext.create(s, Collections.emptyMap())))
+  private fun assertEventRejected(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, s: String) {
+    TestCase.assertEquals(ValidationResultType.REJECTED, validator.validateEvent(EventContext.create(s, Collections.emptyMap()), eventLogGroup.id))
   }
 
   private fun assertEventDataAccepted(validator: TestSensitiveDataValidator, eventLogGroup: EventLogGroup, key: String, dataValue: String) {
     val data = FeatureUsageData().addData(key, dataValue).build()
     val (preparedKey, preparedValue) = data.entries.iterator().next()
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, EventContext.create("test_event", data))
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, EventContext.create("test_event", data))
     TestCase.assertEquals(preparedValue, validatedEventData[preparedKey])
   }
 
@@ -582,7 +649,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
                                          key: String,
                                          dataValue: String) {
     val eventContext = EventContext.create("test_event", FeatureUsageData().addData(key, dataValue).build())
-    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup, eventContext)
+    val validatedEventData = validator.guaranteeCorrectEventData(eventLogGroup.id, eventContext)
     TestCase.assertEquals(resultType.description, validatedEventData[key])
   }
 
@@ -594,7 +661,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
   internal inner class TestExistingValidationRule : LocalEnumCustomValidationRule("existing_rule", TestCustomActionId::class.java)
 
   internal inner class TestThirdPartyValidationRule : CustomValidationRule() {
-    override fun acceptRuleId(ruleId: String?): Boolean = "third_party_rule" == ruleId
+    override fun getRuleId(): String = "third_party_rule"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
       return if (data == "FIRST") ValidationResultType.ACCEPTED else ValidationResultType.THIRD_PARTY

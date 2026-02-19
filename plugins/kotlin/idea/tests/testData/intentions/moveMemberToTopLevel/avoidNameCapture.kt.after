@@ -1,0 +1,14 @@
+// IGNORE_K1
+
+val test1 = Test()
+fun foo(a: Test) {}
+
+class Test {
+}
+
+fun test(test3: Test) {
+    val test: Int = 5
+    foo(test1)
+    foo(test3)
+    class test2
+}

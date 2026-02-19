@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.formatter;
 
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 
-public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
+public final class GroovyFormattingModelBuilder implements FormattingModelBuilder {
   @Override
   public @NotNull FormattingModel createModel(com.intellij.formatting.@NotNull FormattingContext formattingContext) {
     PsiFile containingFile = formattingContext.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
@@ -59,7 +59,7 @@ public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
       astNode,
       Indent.getAbsoluteNoneIndent(),
       null,
-      new FormattingContext(groovySettings, alignments, customSettings, false, false)
+      new FormattingContext(groovySettings, alignments, customSettings, false, false, GroovyBlockProducer.DEFAULT)
     );
 
     if (Registry.is("groovy.document.based.formatting")) {

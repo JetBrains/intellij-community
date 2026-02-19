@@ -1,41 +1,36 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Properties;
 
 public abstract class DelegateColorScheme implements EditorColorsScheme {
-
   private EditorColorsScheme myDelegate;
 
-  public DelegateColorScheme(@NotNull final EditorColorsScheme delegate) {
+  public DelegateColorScheme(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;
   }
 
-  public EditorColorsScheme getDelegate() {
+  public @NotNull EditorColorsScheme getDelegate() {
     return myDelegate;
   }
-  
+
+  @Override
+  public final boolean isReadOnly() {
+    return myDelegate.isReadOnly();
+  }
+
   public void setDelegate(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;
   }
@@ -51,25 +46,27 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
+  public TextAttributes getAttributes(TextAttributesKey key, boolean useDefaults) {
+    return myDelegate.getAttributes(key, useDefaults);
+  }
+
+  @Override
   public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
     myDelegate.setAttributes(key, attributes);
   }
 
-  @NotNull
   @Override
-  public Color getDefaultBackground() {
+  public @NotNull Color getDefaultBackground() {
     return myDelegate.getDefaultBackground();
   }
 
-  @NotNull
   @Override
-  public Color getDefaultForeground() {
+  public @NotNull Color getDefaultForeground() {
     return myDelegate.getDefaultForeground();
   }
 
-  @Nullable
   @Override
-  public Color getColor(ColorKey key) {
+  public @Nullable Color getColor(ColorKey key) {
     return myDelegate.getColor(key);
   }
 
@@ -78,9 +75,8 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setColor(key, color);
   }
 
-  @NotNull
   @Override
-  public FontPreferences getFontPreferences() {
+  public @NotNull FontPreferences getFontPreferences() {
     return myDelegate.getFontPreferences();
   }
 
@@ -95,7 +91,17 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
+  public float getEditorFontSize2D() {
+    return myDelegate.getEditorFontSize2D();
+  }
+
+  @Override
   public void setEditorFontSize(int fontSize) {
+    myDelegate.setEditorFontSize(fontSize);
+  }
+
+  @Override
+  public void setEditorFontSize(float fontSize) {
     myDelegate.setEditorFontSize(fontSize);
   }
 
@@ -109,15 +115,9 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setEditorFontName(fontName);
   }
 
-  @NotNull
   @Override
-  public Font getFont(EditorFontType key) {
+  public @NotNull Font getFont(EditorFontType key) {
     return myDelegate.getFont(key);
-  }
-
-  @Override
-  public void setFont(EditorFontType key, Font font) {
-    myDelegate.setFont(key, font);
   }
 
   @Override
@@ -131,12 +131,21 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
+  public boolean isUseLigatures() {
+    return myDelegate.isUseLigatures();
+  }
+
+  @Override
+  public void setUseLigatures(boolean useLigatures) {
+    myDelegate.setUseLigatures(useLigatures);
+  }
+
+  @Override
   public void readExternal(Element element) {
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myDelegate.getName();
   }
 
@@ -145,9 +154,8 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     return myDelegate.clone();
   }
 
-  @NotNull
   @Override
-  public FontPreferences getConsoleFontPreferences() {
+  public @NotNull FontPreferences getConsoleFontPreferences() {
     return myDelegate.getConsoleFontPreferences();
   }
 
@@ -172,7 +180,17 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
+  public float getConsoleFontSize2D() {
+    return myDelegate.getConsoleFontSize2D();
+  }
+
+  @Override
   public void setConsoleFontSize(int fontSize) {
+    myDelegate.setConsoleFontSize(fontSize);
+  }
+
+  @Override
+  public void setConsoleFontSize(float fontSize) {
     myDelegate.setConsoleFontSize(fontSize);
   }
 
@@ -186,15 +204,13 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setConsoleLineSpacing(lineSpacing);
   }
 
-  @NotNull
   @Override
-  public Properties getMetaProperties()  {
+  public @NotNull Properties getMetaProperties()  {
     return myDelegate.getMetaProperties();
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return myDelegate.getDisplayName();
   }
 }

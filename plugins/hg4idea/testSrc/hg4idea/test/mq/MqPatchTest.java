@@ -38,7 +38,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.*;
+import static com.intellij.openapi.vcs.Executor.append;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 public class MqPatchTest extends HgPlatformTest {
@@ -54,8 +56,10 @@ public class MqPatchTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    appendToHgrc(myRepository, "[extensions]\n" +
-                                "mq=\n");
+    appendToHgrc(myRepository, """
+      [extensions]
+      mq=
+      """);
     HgTestUtil.updateDirectoryMappings(myProject, myRepository);
     updateRepoConfig(myProject, myRepository);
 

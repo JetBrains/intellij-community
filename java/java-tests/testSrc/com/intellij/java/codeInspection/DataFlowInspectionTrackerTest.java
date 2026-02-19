@@ -4,19 +4,28 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiForeachStatement;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -53,7 +62,7 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
     assertTrue("Selected element is not an expression: " + selectedText, element instanceof PsiExpression);
     PsiExpression expression = (PsiExpression)element;
     TrackingRunner.DfaProblemType problemType = getProblemType(selectedText, expression);
-    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(true, false, expression, problemType);
+    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(false, expression, problemType);
     assertNotNull(item);
     String dump = item.dump(getEditor().getDocument());
     PsiComment firstComment = PsiTreeUtil.findChildOfType(file, PsiComment.class);
@@ -78,12 +87,12 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
                    actualFile.substring(end + diff);
       String expectedFile;
       try {
-        expectedFile = new String(Files.readAllBytes(Paths.get(origPath)), StandardCharsets.UTF_8);
+        expectedFile = Files.readString(Paths.get(origPath));
       }
       catch (IOException e) {
         throw new UncheckedIOException(e);
       }
-      throw new FileComparisonFailure("Dump differs", expectedFile, actualFile, origPath);
+      throw new FileComparisonFailedError("Dump differs", expectedFile, actualFile, origPath);
     }
     assertEquals(text, actual);
   }
@@ -94,6 +103,10 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
       return new TrackingRunner.CastDfaProblemType();
     }
     PsiElement parent = expression.getParent();
+    if (parent instanceof PsiForeachStatement) {
+      return new TrackingRunner.ZeroSizeDfaProblemType(
+        expression.getType() instanceof PsiArrayType ? SpecialField.ARRAY_LENGTH : SpecialField.COLLECTION_SIZE);
+    }
     if (parent instanceof PsiReferenceExpression) {
       // Test possible NPE in qualifiers only
       return new TrackingRunner.NullableDfaProblemType();
@@ -188,4 +201,10 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
   public void testParameterTernary2() { doTest(); }
   public void testMaxParameter() { doTest(); }
   public void testReturnThis() { doTest(); }
+  public void testComplexDisjunction() { doTest(); }
+  public void testSubStringEqualsIgnoreCase() { doTest(); }
+  public void testSubStringEqualsIgnoreCase2() { doTest(); }
+  public void testArrayBlockingQueueContract() { doTest(); }
+  public void testEmptyCollectionSimple() { doTest(); }
+  public void testReboxing() { doTest(); }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 
 abstract class ExternalSystemModulePropertyManager {
   abstract fun getExternalSystemId(): String?
@@ -18,11 +19,14 @@ abstract class ExternalSystemModulePropertyManager {
 
   abstract fun isMavenized(): Boolean
   abstract fun setMavenized(mavenized: Boolean)
+  @ApiStatus.Internal
+  abstract fun setMavenized(mavenized: Boolean, moduleVersion: String?)
 
   abstract fun swapStore()
   abstract fun unlinkExternalOptions()
   abstract fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?)
   abstract fun setExternalId(id: ProjectSystemId)
+  abstract fun setLinkedProjectId(id: String?)
   abstract fun setLinkedProjectPath(path: String?)
   abstract fun setRootProjectPath(path: String?)
   abstract fun setExternalModuleType(type: String?)

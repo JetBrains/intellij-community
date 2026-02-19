@@ -5,14 +5,18 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 /**
  * @deprecated left for API compatibility
  * @author Konstantin Bulenkov
  */
-@Deprecated
+@Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public abstract class JBEditorTabsPainter {
   protected Color myDefaultTabColor;
   protected final JBEditorTabs myTabs;
@@ -40,14 +44,6 @@ public abstract class JBEditorTabsPainter {
                        boolean vertical);
 
   public abstract void doPaintBackground(Graphics2D g, Rectangle clip, boolean vertical, Rectangle rectangle);
-  public abstract void fillSelectionAndBorder(Graphics2D g, JBTabsImpl.ShapeInfo selectedShape, Color tabColor, int x, int y, int height);
-
-  public void paintSelectionAndBorder(Graphics2D g2d,
-                                      Rectangle rect,
-                                      JBTabsImpl.ShapeInfo selectedShape,
-                                      Insets insets,
-                                      Color tabColor) {
-  }
 
 
   public abstract Color getBackgroundColor();

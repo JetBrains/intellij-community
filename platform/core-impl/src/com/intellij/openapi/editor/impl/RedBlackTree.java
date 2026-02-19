@@ -1,36 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.VarHandleWrapper;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.concurrent.atomic.AtomicInteger;
 
-
-public abstract class RedBlackTree<K> extends AtomicInteger {
-  // this "extends AtomicInteger" thing is for supporting modCounter.
-  // I couldn't make it "volatile int" field because Unsafe.getAndAddInt is since jdk8 only, and "final AtomicInteger" field would be too many indirections
-
-  public static boolean VERIFY;
-  private static final int INDENT_STEP = 4;
+@ApiStatus.Internal
+public abstract class RedBlackTree<K> {
+  static boolean VERIFY;
   private int nodeSize; // number of nodes
   protected Node<K> root;
+  @SuppressWarnings("unused") private volatile int modCount;
+  private static final VarHandleWrapper MOD_COUNT_HANDLE = VarHandleWrapper.getFactory().create(RedBlackTree.class, "modCount", int.class);
 
   RedBlackTree() {
     root = null;
@@ -38,10 +26,10 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
   }
 
   void incModCount() {
-    incrementAndGet();
+    MOD_COUNT_HANDLE.getAndAdd(this, 1);
   }
   int getModCount() {
-    return get();
+    return modCount;
   }
 
   protected void rotateLeft(@NotNull Node<K> n) {
@@ -66,25 +54,22 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     n.setParent(l);
   }
 
-  protected void replaceNode(@NotNull Node<K> oldn, Node<K> newn) {
-    Node<K> parent = oldn.getParent();
+  protected void replaceNode(@NotNull Node<K> oldN, Node<K> newN) {
+    Node<K> parent = oldN.getParent();
     if (parent == null) {
-      root = newn;
+      root = newN;
     }
     else {
-      if (oldn == parent.getLeft()) {
-        parent.setLeft(newn);
+      if (oldN == parent.getLeft()) {
+        parent.setLeft(newN);
       }
       else {
-        parent.setRight(newn);
+        parent.setRight(newN);
       }
     }
-    if (newn != null) {
-      newn.setParent(parent);
+    if (newN != null) {
+      newN.setParent(parent);
     }
-    //oldn.parent = null;
-    //oldn.left = null;
-    //oldn.right = null;
   }
 
   void onInsertNode() {
@@ -157,15 +142,8 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
 
     if (n.getLeft() != null && n.getRight() != null) {
       // Copy key/value from predecessor and then delete it instead
-      Node<K> pred = maximumNode(n.getLeft());
-
-      //Color c = pred.color;
-      //swap(n, pred);
-      //assert pred.color == c;
-      //pred.color = n.color;
-      //n.color = c;
-
-      n = swapWithMaxPred(n, pred);
+      Node<K> predNode = maximumNode(n.getLeft());
+      n = swapWithMaxPred(n, predNode);
     }
 
     assert n.getLeft() == null || n.getRight() == null;
@@ -185,11 +163,9 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     verifyProperties();
   }
 
-  @NotNull
-  protected abstract Node<K> swapWithMaxPred(@NotNull Node<K> nowAscendant, @NotNull Node<K> nowDescendant);
+  protected abstract @NotNull Node<K> swapWithMaxPred(@NotNull Node<K> nowAscendant, @NotNull Node<K> nowDescendant);
 
-  @NotNull
-  protected Node<K> maximumNode(@NotNull Node<K> n) {
+  protected @NotNull Node<K> maximumNode(@NotNull Node<K> n) {
     while (n.getRight() != null) {
       n = n.getRight();
     }
@@ -277,55 +253,50 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     }
   }
 
-  public void print() {
-    printHelper(root, 0);
-  }
-
-  private static void printHelper(Node<?> n, int indent) {
-    if (n == null) {
-      System.err.print("<empty tree>");
-      return;
+  @TestOnly
+  @ApiStatus.Internal
+  public static void runAssertingInternalInvariants(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    boolean old = VERIFY;
+    VERIFY = true;
+    try {
+      runnable.run();
     }
-    if (n.getRight() != null) {
-      printHelper(n.getRight(), indent + INDENT_STEP);
-    }
-    for (int i = 0; i < indent; i++) {
-      System.err.print(" ");
-    }
-    if (n.isBlack()) {
-      System.err.println(n);
-    }
-    else {
-      System.err.println("<" + n + ">");
-    }
-    if (n.getLeft() != null) {
-      printHelper(n.getLeft(), indent + INDENT_STEP);
+    finally {
+      VERIFY = old;
     }
   }
 
-  public abstract static class Node<K> {
+  protected abstract static class Node<K> {
     protected Node<K> left;
     protected Node<K> right;
     protected Node<K> parent;
 
+    @SuppressWarnings("unused")
     private volatile byte myFlags;
+    private static final VarHandleWrapper MY_FLAGS_HANDLER = VarHandleWrapper.getFactory().create(Node.class, "myFlags", byte.class);
     static final byte COLOR_MASK = 1;
 
-    boolean isFlagSet(byte mask) {
+    @Contract(pure = true)
+    @ApiStatus.Internal
+    protected boolean isFlagSet(byte mask) {
       return BitUtil.isSet(myFlags, mask);
     }
 
-    void setFlag(byte mask, boolean value) {
-      myFlags = BitUtil.set(myFlags, mask, value);
+    protected void setFlag(byte mask, boolean value) {
+      byte flags;
+      do {
+        flags = myFlags;
+      }
+      while (!MY_FLAGS_HANDLER.compareAndSetByte(this, flags, BitUtil.set(flags, mask, value)));
     }
 
-    public Node<K> grandparent() {
+    private Node<K> grandparent() {
       assert getParent() != null; // Not the root node
       assert getParent().getParent() != null; // Not child of root
       return getParent().getParent();
     }
 
-    public Node<K> sibling() {
+    private Node<K> sibling() {
       Node<K> parent = getParent();
       assert parent != null; // Root node has no sibling
       return this == parent.getLeft() ? parent.getRight() : parent.getLeft();
@@ -337,35 +308,36 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
       return getParent().sibling();
     }
 
-    public Node<K> getLeft() {
+    protected Node<K> getLeft() {
       return left;
     }
 
-    public void setLeft(Node<K> left) {
+    protected void setLeft(Node<K> left) {
       this.left = left;
     }
 
-    public Node<K> getRight() {
+    protected Node<K> getRight() {
       return right;
     }
 
-    public void setRight(Node<K> right) {
+    protected void setRight(Node<K> right) {
       this.right = right;
     }
 
-    public Node<K> getParent() {
+    protected Node<K> getParent() {
       return parent;
     }
 
-    public void setParent(Node<K> parent) {
+    protected void setParent(Node<K> parent) {
       this.parent = parent;
     }
 
-    public abstract boolean processAliveKeys(@NotNull Processor<? super K> processor);
+    protected abstract boolean processAliveKeys(@NotNull Processor<? super K> processor);
 
-    public abstract boolean hasAliveKey(boolean purgeDead);
+    protected abstract boolean hasAliveKey(boolean purgeDead);
 
-    public boolean isBlack() {
+    @Contract(pure = true)
+    protected boolean isBlack() {
       return isFlagSet(COLOR_MASK);
     }
     private void setBlack() {
@@ -374,19 +346,19 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     void setRed() {
       setFlag(COLOR_MASK, false);
     }
-    public void setColor(boolean isBlack) {
+    protected void setColor(boolean isBlack) {
       setFlag(COLOR_MASK, isBlack);
     }
   }
 
-  public int size() {
+  protected int size() {
     return nodeSize;
   }
   int nodeSize() {
     return nodeSize;
   }
 
-  void verifyProperties() {
+  protected void verifyProperties() {
     //if (true) return;
     if (VERIFY) {
       verifyProperty1(root);
@@ -398,7 +370,6 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
   }
 
   private static void verifyProperty1(Node<?> n) {
-    assert !isBlack(n) || isBlack(n);
     if (n == null) return;
     assert n.getParent() != n;
     assert n.getLeft() != n;
@@ -413,6 +384,7 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     assert isBlack(root);
   }
 
+  @Contract(pure = true)
   private static boolean isBlack(@Nullable Node<?> n) {
     return n == null || n.isBlack();
   }
@@ -451,7 +423,7 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     return pathBlackCount;
   }
 
-  public void clear() {
+  protected void clear() {
     incModCount();
 
     root = null;

@@ -1,0 +1,19 @@
+// "Replace with 'newFun(this, s)'" "true"
+// WITH_STDLIB
+
+interface I {
+    @Deprecated("", ReplaceWith("newFun(this, s)"))
+    fun oldFun(s: String)
+}
+
+fun newFun(i: I, s: String){}
+
+fun I.foo() {
+    with("a") {
+        <caret>newFun(this@foo, this)
+    }
+}
+
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

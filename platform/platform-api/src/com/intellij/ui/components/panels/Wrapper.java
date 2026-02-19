@@ -1,28 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
 
 public class Wrapper extends JPanel implements NullableComponent {
-
   private JComponent myVerticalSizeReferent;
   private JComponent myHorizontalSizeReferent;
 
@@ -31,15 +20,22 @@ public class Wrapper extends JPanel implements NullableComponent {
     setOpaque(false);
   }
 
-  public Wrapper(JComponent wrapped) {
+  public Wrapper(@Nullable JComponent wrapped) {
     setLayout(new BorderLayout());
-    add(wrapped, BorderLayout.CENTER);
+    if (wrapped != null) {
+      add(wrapped, BorderLayout.CENTER);
+    }
     setOpaque(false);
   }
 
-  public Wrapper(LayoutManager layout, JComponent wrapped) {
+  /**
+   * WARNING: the layout will be overwritten by {@link #setContent}
+   */
+  public Wrapper(LayoutManager layout, @Nullable JComponent wrapped) {
     super(layout);
-    add(wrapped);
+    if (wrapped != null) {
+      add(wrapped);
+    }
     setOpaque(false);
   }
 
@@ -48,27 +44,34 @@ public class Wrapper extends JPanel implements NullableComponent {
     setOpaque(false);
   }
 
+  /**
+   * WARNING: the layout will be overwritten by {@link #setContent}
+   */
   public Wrapper(LayoutManager layout) {
     super(layout);
     setOpaque(false);
   }
 
+  /**
+   * WARNING: the layout will be overwritten by {@link #setContent}
+   */
   public Wrapper(LayoutManager layout, boolean isDoubleBuffered) {
     super(layout, isDoubleBuffered);
     setOpaque(false);
   }
 
-  public void setContent(JComponent wrapped) {
+  public void setContent(@Nullable JComponent wrapped) {
     if (wrapped == getTargetComponent()) {
       return;
     }
-    
+
     removeAll();
     setLayout(new BorderLayout());
     if (wrapped != null) {
       add(wrapped, BorderLayout.CENTER);
     }
-    validate();
+    revalidate();
+    repaint();
   }
 
   @Override
@@ -113,12 +116,12 @@ public class Wrapper extends JPanel implements NullableComponent {
     }
   }
 
-  public final Wrapper setVerticalSizeReferent(JComponent verticalSizeReferent) {
+  public final Wrapper setVerticalSizeReferent(@Nullable JComponent verticalSizeReferent) {
     myVerticalSizeReferent = verticalSizeReferent;
     return this;
   }
 
-  public final Wrapper setHorizontalSizeReferent(JComponent horizontalSizeReferent) {
+  public final Wrapper setHorizontalSizeReferent(@Nullable JComponent horizontalSizeReferent) {
     myHorizontalSizeReferent = horizontalSizeReferent;
     return this;
   }
@@ -135,7 +138,10 @@ public class Wrapper extends JPanel implements NullableComponent {
     return size;
   }
 
-  public static class North extends Wrapper {
+  /**
+   * WARNING: the layout will be overwritten by {@link #setContent}
+   */
+  public static final class North extends Wrapper {
     public North(JComponent wrapped) {
       super(new BorderLayout());
       add(wrapped, BorderLayout.NORTH);

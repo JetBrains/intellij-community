@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,9 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
-  @NotNull
   @Override
-  protected String getVcsName() {
+  protected @NotNull String getVcsName() {
     return GitVcs.NAME;
   }
 
@@ -25,8 +26,36 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
 
+    actions.add(Separator.getInstance());
+    add("Git.CreateNewWorkingTree", manager, actions);
+    add("Git.Show.WorkingTrees", manager, actions);
+    actions.add(Separator.getInstance());
+
     add("ChangesView.AddUnversioned", manager, actions);
+    add("Vcs.CopyCurrentBranchName", manager, actions);
     add("Git.ResolveConflicts", manager, actions);
+
+    add("Git.Unshallow", manager, actions);
     return actions;
+  }
+
+  @Override
+  protected void customizeActions(@NotNull ActionManager manager, @NotNull List<? super AnAction> actions) {
+    String commitStageActionName = "Git.Commit.Stage";
+    String stageAllActionName = "Git.Stage.Add.Tracked";
+    addAfter(commitStageActionName, IdeActions.ACTION_CHECKIN_PROJECT, manager, actions);
+    addAfter(stageAllActionName, commitStageActionName, manager, actions);
+    super.customizeActions(manager, actions);
+  }
+
+  protected static void addAfter(String actionName, String anchorActionName, ActionManager manager, List<? super AnAction> actions) {
+    AnAction action = manager.getAction(actionName);
+    assert action != null : "Can not find action " + actionName;
+
+    AnAction anchorAction = manager.getAction(anchorActionName);
+    assert anchorAction != null : "Can not find action " + anchorActionName;
+
+    int index = actions.indexOf(anchorAction);
+    actions.add(index >= 0 ? index + 1 : actions.size(), action);
   }
 }

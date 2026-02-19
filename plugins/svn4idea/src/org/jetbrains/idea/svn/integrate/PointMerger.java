@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -23,16 +23,16 @@ import java.util.List;
 
 public class PointMerger extends Merger {
 
-  @NotNull private final List<Change> mySelectedChanges;
+  private final @NotNull List<Change> mySelectedChanges;
 
   public PointMerger(final SvnVcs vcs,
-                     CommittedChangeList selectedChangeList,
+                     @NotNull CommittedChangeList selectedChangeList,
                      final File target,
                      final UpdateEventHandler handler,
                      final Url currentBranchUrl,
                      @NotNull List<Change> selectedChanges,
                      String branchName) {
-    super(vcs, ContainerUtil.newArrayList(selectedChangeList), target, handler, currentBranchUrl, branchName);
+    super(vcs, List.of(selectedChangeList), target, handler, currentBranchUrl, branchName);
 
     mySelectedChanges = ContainerUtil.sorted(selectedChanges, ChangesComparator.getInstance());
   }
@@ -81,13 +81,12 @@ public class PointMerger extends Merger {
     client.copy(revision.toTarget(), localPath, revision.getRevisionNumber().getRevision(), true, myHandler);
   }
 
-  @NotNull
-  private File getLocalPath(@NotNull String fullUrl) {
+  private @NotNull File getLocalPath(@NotNull String fullUrl) {
     return SvnUtil.fileFromUrl(myTarget, myCurrentBranchUrl.toString(), fullUrl);
   }
 
   private static class ChangesComparator implements Comparator<Change> {
-    private final static ChangesComparator ourInstance = new ChangesComparator();
+    private static final ChangesComparator ourInstance = new ChangesComparator();
 
     public static ChangesComparator getInstance() {
       return ourInstance;
@@ -114,9 +113,8 @@ public class PointMerger extends Merger {
     }
   }
 
-  @Nullable
   @Override
-  public File getMergeInfoHolder() {
+  public @Nullable File getMergeInfoHolder() {
     return null;
   }
 }

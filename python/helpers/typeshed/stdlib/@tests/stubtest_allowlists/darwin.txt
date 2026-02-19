@@ -1,0 +1,58 @@
+# ============================================
+# TODO: Allowlist entries that should be fixed
+# ============================================
+
+(os|posix).sched_param  # system dependent. Unclear if macos has it.
+
+# Sometimes these seem to exist on darwin, sometimes not
+(_?curses.A_ITALIC)?  # ncurses extension
+(fcntl.F_GETLEASE)?  # GNU extension
+(fcntl.F_SETLEASE)?  # GNU extension
+
+
+# ==========================================
+# Modules that do not exist on MacOS systems
+# ==========================================
+
+_winapi
+asyncio.windows_events
+asyncio.windows_utils
+encodings.oem
+encodings.mbcs
+msvcrt
+nt
+winreg
+winsound
+
+
+# ==========================================================
+# Other allowlist entries that cannot or should not be fixed
+# ==========================================================
+
+_gdbm  # Only available if compiled with libgdbm
+
+# Not available on python distributions compiled without sqlite3 loadable extension support
+_sqlite3.Connection.load_extension
+_sqlite3.Connection.enable_load_extension
+
+_?curses.ACS_.*  # ACS codes are initialized only after initscr call
+curses.COLORS  # Initialized after start_color
+curses.COLOR_PAIRS  # Initialized after start_color
+curses.COLS  # Initialized only after initscr call
+curses.LINES  # Initialized only after initscr call
+curses.has_key  # stubtest gets confused because this is both a module and a function in curses
+multiprocessing.popen_spawn_win32  # exists on Darwin but fails to import
+readline.append_history_file  # Only available if compiled with GNU readline, not editline
+select.poll  # Actually a function; we have a class so it can be used as a type
+
+tkinter.Tk.createfilehandler  # Methods that come from __getattr__() at runtime
+tkinter.Tk.deletefilehandler  # Methods that come from __getattr__() at runtime
+
+# These entries looks like a `setup-python` bug:
+(dbm.gnu)?
+(_?locale.bind_textdomain_codeset)?
+(_?locale.bindtextdomain)?
+(_?locale.dcgettext)?
+(_?locale.dgettext)?
+(_?locale.gettext)?
+(_?locale.textdomain)?

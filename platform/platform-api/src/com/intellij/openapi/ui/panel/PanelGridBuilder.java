@@ -1,14 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated Provides incorrect spacing between components and out-dated. Fully covered by Kotlin UI DSL, which should be used instead.
+ * PanelGridBuilder will be removed after moving Kotlin UI DSL into platform API package
+ */
+@Deprecated
 public class PanelGridBuilder implements PanelBuilder {
   private boolean expand;
   private boolean splitColumns;
@@ -52,13 +59,13 @@ public class PanelGridBuilder implements PanelBuilder {
   }
 
   @Override
-  @NotNull
-  public JPanel createPanel() {
+  public @NotNull JPanel createPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
 
     addToPanel(panel, gc);
+    UIUtil.applyDeprecatedBackground(panel);
     return panel;
   }
 

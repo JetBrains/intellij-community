@@ -16,32 +16,21 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyDoubleStarExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyInstantTypeProvider;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
-public class PyDoubleStarExpressionImpl extends PyElementImpl implements PyDoubleStarExpression {
+public class PyDoubleStarExpressionImpl extends PyElementImpl implements PyDoubleStarExpression, PyInstantTypeProvider {
   public PyDoubleStarExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
 
-  @Nullable
   @Override
-  public PyExpression getExpression() {
-    return PsiTreeUtil.getChildOfType(this, PyExpression.class);
-  }
-
-  @Nullable
-  @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return null;
   }
 

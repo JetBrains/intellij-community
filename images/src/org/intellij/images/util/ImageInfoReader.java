@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.util;
 
-import com.intellij.util.ImageLoader;
-import com.intellij.util.SVGLoader;
+import com.intellij.ui.svg.SvgKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,26 +9,22 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.stream.ImageInputStream;
+import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 
-/**
- * @author spleaner
- */
-public class ImageInfoReader {
-  @Nullable
-  public static Info getInfo(byte @NotNull [] data) {
+public final class ImageInfoReader {
+  public static @Nullable Info getInfo(byte @NotNull [] data) {
     Info info = getSvgInfo(data);
     if (info != null) return info;
 
     return read(new ByteArrayInputStream(data));
   }
 
-  @Nullable
-  private static Info getSvgInfo(byte @NotNull [] data) {
+  private static @Nullable Info getSvgInfo(byte @NotNull [] data) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {
@@ -47,7 +42,7 @@ public class ImageInfoReader {
 
   private static Info getSvgSize(byte[] data) {
     try {
-      ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(new ByteArrayInputStream(data), 1.0f);
+      Rectangle2D.Float size = SvgKt.getSvgDocumentSize(data);
       return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32, true);
     }
     catch (Throwable e) {
@@ -55,8 +50,7 @@ public class ImageInfoReader {
     }
   }
 
-  @Nullable
-  private static Info read(@NotNull Object input) {
+  private static @Nullable Info read(@NotNull Object input) {
     ImageIO.setUseCache(false);
     try (ImageInputStream iis = ImageIO.createImageInputStream(input)) {
       if (isAppleOptimizedPNG(iis)) {

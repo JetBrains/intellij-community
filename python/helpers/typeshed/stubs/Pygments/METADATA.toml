@@ -1,0 +1,8 @@
+version = "2.19.*"
+upstream_repository = "https://github.com/pygments/pygments"
+requires = ["types-docutils"]
+partial_stub = true
+
+[tool.stubtest]
+stubtest_requirements = ["sphinx"]
+ignore_missing_stub = true

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.structure;
 
@@ -21,11 +7,17 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.Function;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomElementNavigationProvider;
+import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 
 /**
@@ -36,9 +28,9 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   private final Function<DomElement, DomService.StructureViewMode> myDescriptor;
   private final DomElementNavigationProvider myNavigationProvider;
 
-  public DomStructureTreeElement(@NotNull final DomElement element,
-                                 @NotNull final Function<DomElement,DomService.StructureViewMode> descriptor,
-                                 @Nullable final DomElementNavigationProvider navigationProvider) {
+  public DomStructureTreeElement(final @NotNull DomElement element,
+                                 final @NotNull Function<DomElement,DomService.StructureViewMode> descriptor,
+                                 final @Nullable DomElementNavigationProvider navigationProvider) {
     myElement = element;
     myDescriptor = descriptor;
     myNavigationProvider = navigationProvider;
@@ -49,14 +41,12 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   }
 
   @Override
-  @Nullable
-  public Object getValue() {
+  public @Nullable Object getValue() {
     return myElement.isValid() ? myElement.getXmlElement() : null;
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return this;
   }
 
@@ -70,14 +60,9 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
         if (element instanceof GenericDomValue) return;
         final DomService.StructureViewMode viewMode = myDescriptor.fun(element);
         switch (viewMode) {
-          case SHOW:
-            result.add(createChildElement(element));
-            break;
-          case SHOW_CHILDREN:
-            DomUtil.acceptAvailableChildren(element, this);
-            break;
-          case SKIP:
-            break;
+          case SHOW -> result.add(createChildElement(element));
+          case SHOW_CHILDREN -> DomUtil.acceptAvailableChildren(element, this);
+          case SKIP -> {}
         }
       }
     };
@@ -118,14 +103,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   }
 
   @Override
-  @Nullable
-  public String getLocationString() {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public Icon getIcon(boolean open) {
+  public @Nullable Icon getIcon(boolean open) {
     if (!myElement.isValid()) return null;
     return myElement.getPresentation().getIcon();
   }

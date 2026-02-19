@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased
 
+import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
 import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.codeInsight.javadoc.JavaDocUtil
+import com.intellij.idea.IgnoreJUnit3
+import com.intellij.java.syntax.parser.JavaKeywords
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -17,7 +20,28 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiKeyword
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceList
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiTypeElement
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.psi.search.GlobalSearchScope
@@ -28,35 +52,41 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.SkipSlowTestLocally
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.propertyBased.MadTestingUtil
 import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.psiutils.TypeUtils
-import junit.framework.TestCase
-import one.util.streamex.StreamEx
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
 import kotlin.math.absoluteValue
 
 @SkipSlowTestLocally
+@IgnoreJUnit3
 class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
-
-  fun testAllFilesWithMemberNameReported() {
-    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-    PropertyChecker.customized()
-      .withIterationCount(50)
-      .checkScenarios { ImperativeCommand(this::doTestAllFilesWithMemberNameReported) }
+  override fun setUp() {
+    TestModeFlags.set(ProjectProblemUtils.ourTestingProjectProblems, true, testRootDisposable)
+    super.setUp()
   }
 
-  private fun doTestAllFilesWithMemberNameReported(env: ImperativeCommand.Environment) {
+  fun testStressAllFilesWithMemberNameReported() {
+    TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+    val filesGenerator = psiJavaFiles()
+    PropertyChecker.customized()
+      .withIterationCount(30)
+      .checkScenarios { ImperativeCommand { this.doTestAllFilesWithMemberNameReported(it, filesGenerator) } }
+  }
+
+  private fun doTestAllFilesWithMemberNameReported(env: ImperativeCommand.Environment, filesGenerator: Generator<PsiJavaFile>) {
     val changedFiles = mutableMapOf<VirtualFile, Set<VirtualFile>>()
 
     MadTestingUtil.changeAndRevert(myProject) {
       val nFilesToChange = env.generateValue(Generator.integers(1, 3), "Files to change: %s")
       var i = 0
       while (i < nFilesToChange) {
-        val fileToChange = env.generateValue(psiJavaFiles(), null)
+        val fileToChange = env.generateValue(filesGenerator, null)
         val relatedFiles = findRelatedFiles(fileToChange)
         if (relatedFiles.isEmpty()) continue
 
@@ -91,7 +121,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       if (problems.isNotEmpty()) {
         val relatedProblems = findRelatedProblems(problems, relatedFiles)
         if (relatedProblems.isNotEmpty()) {
-          TestCase.fail("""
+          fail("""
           Problems are still reported even after the fix.
           File: ${changedFile.name}, 
           ${relatedProblems.map { (member, memberProblems) -> extractMemberProblems(member, memberProblems) }}
@@ -103,6 +133,9 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
   private data class ScopedMember(val psiMember: PsiMember, var scope: SearchScope)
 
+  /**
+   * @return set of files reported for the element after the change
+   */
   private fun changeSelectedFile(env: ImperativeCommand.Environment,
                                  members: List<ScopedMember>,
                                  fileToChange: PsiJavaFile): Set<VirtualFile>? {
@@ -115,7 +148,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val prevScope = psiMember.useScope
       env.logMessage("Changing member: ${JavaDocUtil.getReferenceText(myProject, psiMember)}")
       val usages = findUsages(psiMember)
-      if (usages == null || usages.isEmpty()) {
+      if (usages.isNullOrEmpty()) {
         env.logMessage("Member has no usages (or too many). Skipping.")
         continue
       }
@@ -157,7 +190,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
   private fun rehighlight(psiFile: PsiFile, editor: Editor): List<HighlightInfo> {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments()
-    return CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
+    return CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, true)
   }
 
   private fun openEditor(virtualFile: VirtualFile) =
@@ -201,9 +234,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
           else -> null
         }
       }
-      val collector = MemberUsageCollector(name, member.containingFile, usageExtractor)
-      PsiSearchHelper.getInstance(myProject).processAllFilesWithWord(name, scope, collector, true)
-      val memberUsages = collector.collectedUsages ?: return null
+      val memberUsages = MemberUsageCollector.collect(name, member.containingFile, scope, usageExtractor) ?: return null
       usages.addAll(memberUsages)
     }
     return usages
@@ -214,7 +245,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val module = ModuleUtilCore.findModuleForPsiElement(member) ?: return false
     val scope = GlobalSearchScope.moduleScope(module)
     val memberFile = member.containingFile
-    return PsiSearchHelper.getInstance(myProject).isCheapEnoughToSearch(name, scope, memberFile, null) != TOO_MANY_OCCURRENCES
+    return PsiSearchHelper.getInstance(myProject).isCheapEnoughToSearch(name, scope, memberFile) != TOO_MANY_OCCURRENCES
   }
 
   private fun isOverride(possibleOverride: PsiMethod, target: PsiMember): Boolean {
@@ -248,8 +279,8 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
                                                          PsiStatement::class.java, PsiClass::class.java,
                                                          PsiMethod::class.java, PsiField::class.java,
                                                          PsiReferenceList::class.java) ?: return@any false
-      return@any StreamEx.ofTree(context, { StreamEx.of(*it.children) })
-        .anyMatch { el -> el is PsiReference && members.any { m -> el.isReferenceTo(m.psiMember) && inScope(el.containingFile, m.scope) } }
+      return@any PsiTreeUtil.collectElements(context, { r -> true })
+        .any { el -> el is PsiReference && members.any { m -> el.isReferenceTo(m.psiMember) && inScope(el.containingFile, m.scope) } }
     }
   }
 
@@ -373,7 +404,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     private class ChangeType(member: PsiMember, env: ImperativeCommand.Environment) : Modification(member, env) {
 
       private val typeElement = env.generateValue(Generator.sampledFrom(findTypeElements(member)), null)
-      private val newType = if (typeElement.type == PsiPrimitiveType.INT) TypeUtils.getStringType(typeElement) else PsiPrimitiveType.INT
+      private val newType = if (typeElement.type == PsiTypes.intType()) TypeUtils.getStringType(typeElement) else PsiTypes.intType()
 
       override fun apply(project: Project) {
         val factory = JavaPsiFacade.getElementFactory(project)
@@ -381,10 +412,8 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       }
 
       private fun findTypeElements(member: PsiMember): List<PsiTypeElement> {
-        return StreamEx.ofTree(member as PsiElement) { el ->
-          if (el is PsiCodeBlock || el is PsiComment) StreamEx.empty()
-          else StreamEx.of(*el.children)
-        }.filterIsInstance<PsiTypeElement>()
+        val elements: Collection<PsiTypeElement> = PsiTreeUtil.findChildrenOfAnyType(member, false, PsiTypeElement::class.java)
+        return elements.toMutableList()
       }
 
       override fun toString(): String =
@@ -402,7 +431,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
       override fun apply(project: Project) {
         val factory = JavaPsiFacade.getElementFactory(project)
-        val param = factory.createParameter(paramName, PsiType.INT)
+        val param = factory.createParameter(paramName, PsiTypes.intType())
         (member as PsiMethod).parameterList.add(param)
       }
 
@@ -437,7 +466,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
         if (psiClass.isEnum || psiClass.isInterface || psiClass.isAnnotationType) return
         val classKeyword = PsiTreeUtil.getPrevSiblingOfType(psiClass.nameIdentifier!!, PsiKeyword::class.java) ?: return
         val factory = JavaPsiFacade.getElementFactory(project)
-        val newTypeKeyword = factory.createKeyword(PsiKeyword.INTERFACE)
+        val newTypeKeyword = factory.createKeyword(JavaKeywords.INTERFACE)
         PsiUtil.setModifierProperty(psiClass, PsiModifier.ABSTRACT, false)
         PsiUtil.setModifierProperty(psiClass, PsiModifier.FINAL, false)
         classKeyword.replace(newTypeKeyword)

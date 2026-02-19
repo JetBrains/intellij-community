@@ -29,7 +29,13 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 class IdeaSuite extends Suite {
   private final String myName;
@@ -77,7 +83,7 @@ class IdeaSuite extends Suite {
 
   @Override
   protected List<Runner> getChildren() {
-    final List<Runner> children = new ArrayList<Runner>(super.getChildren());
+    final List<Runner> children = new ArrayList<>(super.getChildren());
     boolean containsSuiteInside = false;
     for (Runner child : children) {
       if (isSuite(child)) {
@@ -87,7 +93,7 @@ class IdeaSuite extends Suite {
     }
     if (!containsSuiteInside) return children;
     try {
-      final Set<String> allNames = new HashSet<String>();
+      final Set<String> allNames = new HashSet<>();
       for (Runner child : children) {
         allNames.add(describeChild(child).getDisplayName());
       }

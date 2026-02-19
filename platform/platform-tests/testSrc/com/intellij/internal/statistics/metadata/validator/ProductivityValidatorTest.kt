@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.validator
 
-import com.intellij.featureStatistics.*
+import com.intellij.featureStatistics.FeatureDescriptor
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl
+import com.intellij.featureStatistics.GroupDescriptor
+import com.intellij.featureStatistics.ProductivityFeaturesProvider
+import com.intellij.featureStatistics.ProductivityFeaturesTest
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
@@ -58,16 +62,12 @@ class ProductivityValidatorTest : ProductivityFeaturesTest() {
 
 class TestProductivityFeatureProvider : ProductivityFeaturesProvider() {
   override fun getFeatureDescriptors(): Array<FeatureDescriptor> {
-    val withGroup = FeatureDescriptor("testFeatureId", "testFeatureGroup", "TestTip.html", "test", 0, 0, null, 0, this)
-    val noGroup = FeatureDescriptor("secondTestFeatureId", null, "TestTip.html", "test", 0, 0, null, 0, this)
+    val withGroup = FeatureDescriptor("testFeatureId", "testFeatureGroup", "TestTip", "test", 0, 0, null, 0, this)
+    val noGroup = FeatureDescriptor("secondTestFeatureId", null, "TestTip", "test", 0, 0, null, 0, this)
     return arrayOf(withGroup, noGroup)
   }
 
   override fun getGroupDescriptors(): Array<GroupDescriptor> {
     return arrayOf(GroupDescriptor("testFeatureGroup", "test"))
-  }
-
-  override fun getApplicabilityFilters(): Array<ApplicabilityFilter?> {
-    return arrayOfNulls(0)
   }
 }

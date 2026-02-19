@@ -1,24 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.AnnotationSessionImpl;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xml.DomElement;
@@ -26,10 +29,12 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManager {
   static final Object LOCK = new Object();
@@ -38,8 +43,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   private static final DomElementsProblemsHolder EMPTY_PROBLEMS_HOLDER = new DomElementsProblemsHolder() {
     @Override
-    @NotNull
-    public List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
+    public @NotNull List<DomElementProblemDescriptor> getProblems(DomElement domElement) {
       return Collections.emptyList();
     }
 
@@ -66,13 +70,13 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
 
     @Override
-    public boolean isInspectionCompleted(@NotNull final DomElementsInspection inspectionClass) {
+    public boolean isInspectionCompleted(final @NotNull DomElementsInspection inspectionClass) {
       return false;
     }
 
   };
 
-  private final Map<XmlTag, DomElementsProblemsHolderImpl> myHolders = CollectionFactory.createWeakMap();
+  private final Map<XmlTag, DomElementsProblemsHolderImpl> myHolders = new WeakHashMap<>();
 
   public DomElementAnnotationsManagerImpl(@NotNull Project project) {
     MessageBusConnection connection = project.getMessageBus().connect();
@@ -83,7 +87,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       }
 
       @Override
-      public void profileChanged(InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         dropAnnotationsCache();
       }
     });
@@ -97,7 +101,9 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
   }
 
-  public final List<DomElementProblemDescriptor> appendProblems(@NotNull DomFileElement element, @NotNull DomElementAnnotationHolder annotationHolder, Class<? extends DomElementsInspection> inspectionClass) {
+  public final <T extends DomElement> List<DomElementProblemDescriptor> appendProblems(@NotNull DomFileElement<T> element,
+                                                                                       @NotNull DomElementAnnotationHolder annotationHolder,
+                                                                                       Class<? extends DomElementsInspection<?>> inspectionClass) {
     final DomElementAnnotationHolderImpl holderImpl = (DomElementAnnotationHolderImpl)annotationHolder;
     synchronized (LOCK) {
       final DomElementsProblemsHolderImpl holder = _getOrCreateProblemsHolder(element);
@@ -107,8 +113,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return Collections.unmodifiableList(holderImpl);
   }
 
-  @NotNull
-  private DomElementsProblemsHolderImpl _getOrCreateProblemsHolder(final DomFileElement element) {
+  private @NotNull DomElementsProblemsHolderImpl _getOrCreateProblemsHolder(DomFileElement<?> element) {
     XmlTag rootTag = element.getRootElement().getXmlTag();
     if (rootTag == null) return new DomElementsProblemsHolderImpl(element);
 
@@ -135,14 +140,12 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
   }
 
-  @Nullable
-  private static XmlTag getRootTagIfParsed(@NotNull XmlFile file) {
+  private static @Nullable XmlTag getRootTagIfParsed(@NotNull XmlFile file) {
     return ((XmlFileImpl)file).isContentsLoaded() ? file.getRootTag() : null;
   }
 
   @Override
-  @NotNull
-  public DomElementsProblemsHolder getProblemHolder(DomElement element) {
+  public @NotNull DomElementsProblemsHolder getProblemHolder(DomElement element) {
     if (element == null || !element.isValid()) return EMPTY_PROBLEMS_HOLDER;
     final DomFileElement<DomElement> fileElement = DomUtil.getFileElement(element);
 
@@ -159,13 +162,12 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   @Override
-  @NotNull
-  public DomElementsProblemsHolder getCachedProblemHolder(DomElement element) {
+  public @NotNull DomElementsProblemsHolder getCachedProblemHolder(DomElement element) {
     return getProblemHolder(element);
   }
 
   @Override
-  public List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
+  public @Unmodifiable List<ProblemDescriptor> createProblemDescriptors(final InspectionManager manager, DomElementProblemDescriptor problemDescriptor) {
     return ContainerUtil.createMaybeSingletonList(DomElementsHighlightingUtil.createProblemDescriptors(manager, problemDescriptor));
   }
 
@@ -190,41 +192,51 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
   }
 
   @Override
-  @NotNull
-  public <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull final DomFileElement<T> domFileElement,
-                                                                                   @NotNull final DomElementsInspection<T> inspection,
-                                                                                   boolean onTheFly) {
+  public @Unmodifiable @NotNull <T extends DomElement> List<DomElementProblemDescriptor> checkFileElement(@NotNull DomFileElement<T> domFileElement,
+                                                                                                          @NotNull DomElementsInspection<T> inspection,
+                                                                                                          boolean onTheFly) {
     final DomElementsProblemsHolder problemHolder = getProblemHolder(domFileElement);
     if (isHolderUpToDate(domFileElement) && problemHolder.isInspectionCompleted(inspection)) {
       return problemHolder.getAllProblems(inspection);
     }
 
-    DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly, domFileElement);
-    inspection.checkFileElement(domFileElement, holder);
-    return appendProblems(domFileElement, holder, inspection.getClass());
+    return AnnotationSessionImpl.computeWithSession(domFileElement.getFile(), false, MyDomElementFakeAnnotator.INSTANCE, annotationHolder -> {
+      DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly, domFileElement, annotationHolder);
+      inspection.checkFileElement(domFileElement, holder);
+      //noinspection unchecked
+      return appendProblems(domFileElement, holder, (Class<? extends DomElementsInspection<?>>)inspection.getClass());
+    });
   }
 
-  public List<DomElementsInspection> getSuitableDomInspections(final DomFileElement fileElement, boolean enabledOnly) {
+  private static class MyDomElementFakeAnnotator implements Annotator {
+    private static final MyDomElementFakeAnnotator INSTANCE = new MyDomElementFakeAnnotator();
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+
+    }
+  }
+
+  public List<DomElementsInspection<?>> getSuitableDomInspections(final DomFileElement<?> fileElement, boolean enabledOnly) {
     Class<?> rootType = fileElement.getRootElementClass();
     final InspectionProfile profile = getInspectionProfile(fileElement);
-    final List<DomElementsInspection> inspections = new SmartList<>();
-    for (final InspectionToolWrapper toolWrapper : profile.getInspectionTools(fileElement.getFile())) {
+    final List<DomElementsInspection<?>> inspections = new SmartList<>();
+    for (final InspectionToolWrapper<?, ?> toolWrapper : profile.getInspectionTools(fileElement.getFile())) {
       if (!enabledOnly || profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), fileElement.getFile())) {
         InspectionProfileEntry entry = toolWrapper.getTool();
         if (entry instanceof DomElementsInspection &&
             ContainerUtil.exists(((DomElementsInspection<?>)entry).getDomClasses(), cls -> cls.isAssignableFrom(rootType))) {
-          inspections.add((DomElementsInspection)entry);
+          inspections.add((DomElementsInspection<?>)entry);
         }
       }
     }
     return inspections;
   }
 
-  protected InspectionProfile getInspectionProfile(final DomFileElement fileElement) {
+  protected InspectionProfile getInspectionProfile(final DomFileElement<?> fileElement) {
     return InspectionProjectProfileManager.getInstance(fileElement.getManager().getProject()).getCurrentProfile();
   }
 
-  @Nullable public <T extends DomElement>  DomElementsInspection<T> getMockInspection(DomFileElement<? extends T> root) {
+  public @Nullable <T extends DomElement>  DomElementsInspection<T> getMockInspection(DomFileElement<? extends T> root) {
     if (root.getFileDescription().isAutomaticHighlightingEnabled()) {
       return new MockAnnotatingDomInspection<>(root.getRootElementClass());
     }
@@ -235,8 +247,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return null;
   }
 
-  private static boolean areInspectionsFinished(DomElementsProblemsHolderImpl holder, final List<? extends DomElementsInspection> suitableInspections) {
-    for (final DomElementsInspection inspection : suitableInspections) {
+  private static boolean areInspectionsFinished(DomElementsProblemsHolderImpl holder, final List<? extends DomElementsInspection<?>> suitableInspections) {
+    for (final DomElementsInspection<?> inspection : suitableInspections) {
       if (!holder.isInspectionCompleted(inspection)) {
         return false;
       }
@@ -244,16 +256,14 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return true;
   }
 
-  @NotNull
-  public DomHighlightStatus getHighlightStatus(final DomElement element) {
+  public @NotNull DomHighlightStatus getHighlightStatus(final DomElement element) {
     synchronized (LOCK) {
       final DomFileElement<DomElement> root = DomUtil.getFileElement(element);
       if (!isHolderOutdated(root.getFile())) {
         final DomElementsProblemsHolder holder = getProblemHolder(element);
-        if (holder instanceof DomElementsProblemsHolderImpl) {
-          DomElementsProblemsHolderImpl holderImpl = (DomElementsProblemsHolderImpl)holder;
-          final List<DomElementsInspection> suitableInspections = getSuitableDomInspections(root, true);
-          final DomElementsInspection mockInspection = getMockInspection(root);
+        if (holder instanceof DomElementsProblemsHolderImpl holderImpl) {
+          final List<DomElementsInspection<?>> suitableInspections = getSuitableDomInspections(root, true);
+          final DomElementsInspection<?> mockInspection = getMockInspection(root);
           final boolean annotatorsFinished = mockInspection == null || holderImpl.isInspectionCompleted(mockInspection);
           final boolean inspectionsFinished = areInspectionsFinished(holderImpl, suitableInspections);
           if (annotatorsFinished) {

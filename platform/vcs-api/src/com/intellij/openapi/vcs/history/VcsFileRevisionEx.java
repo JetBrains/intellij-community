@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -10,23 +10,18 @@ import java.util.Date;
 
 public abstract class VcsFileRevisionEx implements VcsFileRevision {
 
-  @Nullable
-  public abstract @NlsSafe String getAuthorEmail();
+  public abstract @Nullable @NlsSafe String getAuthorEmail();
 
-  @Nullable
-  public abstract @NlsSafe String getCommitterName();
+  public abstract @Nullable @NlsSafe String getCommitterName();
 
-  @Nullable
-  public abstract @NlsSafe String getCommitterEmail();
+  public abstract @Nullable @NlsSafe String getCommitterEmail();
 
   /**
    * Returns the path of the file as it were in this revision
    */
-  @NotNull
-  public abstract FilePath getPath();
+  public abstract @NotNull FilePath getPath();
 
-  @Nullable
-  public abstract Date getAuthorDate();
+  public abstract @Nullable Date getAuthorDate();
 
   public abstract boolean isDeleted();
 }

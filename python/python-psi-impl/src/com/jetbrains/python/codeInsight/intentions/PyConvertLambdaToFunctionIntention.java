@@ -17,7 +17,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyLambdaExpression;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
@@ -29,33 +35,32 @@ import java.util.List;
  * User: catherine
  * Intention to convert lambda to function
  */
-public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
+public final class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.lambda.to.function");
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.convert.lambda.to.function");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
 
-    PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
+    PyLambdaExpression lambdaExpression =
+      PsiTreeUtil.getParentOfType(psiFile.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       if (lambdaExpression.getBody() != null) {
         final ControlFlow flow = ControlFlowCache.getControlFlow(lambdaExpression);
         final List<Instruction> graph = Arrays.asList(flow.getInstructions());
         final List<PsiElement> elements = PyCodeFragmentUtil.getInputElements(graph, graph);
-        if (elements.size() > 0) return false;
+        if (!elements.isEmpty()) return false;
         return true;
       }
     }
@@ -64,7 +69,8 @@ public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
+    PyLambdaExpression lambdaExpression =
+      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       String name = "function";
       while (IntroduceValidator.isDefinedInScope(name, lambdaExpression)) {
@@ -86,11 +92,12 @@ public class PyConvertLambdaToFunctionIntention extends PyBaseIntentionAction {
       PyFunction function = functionBuilder.buildFunction();
 
       final PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression,
-                                                                 PyStatement.class);
+                                                                PyStatement.class);
       if (statement != null) {
         final PsiElement statementParent = statement.getParent();
-        if (statementParent != null)
+        if (statementParent != null) {
           function = (PyFunction)statementParent.addBefore(function, statement);
+        }
       }
 
       function = CodeInsightUtilCore

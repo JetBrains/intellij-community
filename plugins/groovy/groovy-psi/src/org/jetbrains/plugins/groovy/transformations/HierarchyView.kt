@@ -1,13 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiTypeParameter
+import com.intellij.psi.PsiTypeParameterList
 import com.intellij.psi.impl.InheritanceImplUtil
 import com.intellij.psi.impl.light.AbstractLightClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ArrayUtil.mergeArrays
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasCodeModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil
 
 internal class HierarchyView(
@@ -29,7 +37,7 @@ internal class HierarchyView(
   override fun isInterface(): Boolean = myCodeClass.isInterface
   override fun isEnum(): Boolean = myCodeClass.isEnum
   override fun getModifierList(): PsiModifierList? = myCodeClass.modifierList
-  override fun hasModifierProperty(name: String): Boolean = myCodeClass.hasModifierProperty(name)
+  override fun hasModifierProperty(name: String): Boolean = hasCodeModifierProperty(myCodeClass, name)
   override fun getTypeParameterList(): PsiTypeParameterList? = myCodeClass.typeParameterList
   override fun getTypeParameters(): Array<PsiTypeParameter> = myCodeClass.typeParameters
 

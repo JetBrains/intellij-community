@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public abstract class UndoTestCase extends JavaCodeInsightTestCase {
-  private CurrentEditorProvider myOldEditorProvider;
-
   protected UndoManagerImpl myManager;
   protected VirtualFile myRoot;
 
@@ -37,7 +35,10 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
-    myOldEditorProvider = myManager.getEditorProvider();
+
+    var productionLikeEditorProvider = new FocusBasedCurrentEditorProvider.TestProvider(() -> getEditor());
+    myManager.setOverriddenEditorProvider(productionLikeEditorProvider);
+    getGlobalUndoManager().setOverriddenEditorProvider(productionLikeEditorProvider);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -52,9 +53,9 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myManager.setEditorProvider(myOldEditorProvider);
+      getGlobalUndoManager().setOverriddenEditorProvider(null);
+      myManager.setOverriddenEditorProvider(null);
       myManager = null;
-      myOldEditorProvider = null;
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -74,27 +75,23 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     myRoot = createTestProjectStructure();
   }
 
-  protected void typeInChar(Editor e, char c) {
-    getActionManager();
+  void typeInChar(@NotNull Editor e, char c) {
+    EditorActionManager.getInstance();
     TypedAction.getInstance().actionPerformed(e, c, createDataContextFor(e));
   }
 
-  private static EditorActionManager getActionManager() {
-    return EditorActionManager.getInstance();
-  }
-
-  protected void typeInText(Editor editor, String text) {
+  protected void typeInText(@NotNull Editor editor, String text) {
     char[] chars = text.toCharArray();
     for (char aChar : chars) {
       typeInChar(editor, aChar);
     }
   }
 
-  protected void moveCaret(final Editor e, final String dir, final boolean selection) {
+  protected static void moveCaret(@NotNull Editor e, final String dir, final boolean selection) {
     executeEditorAction(e, "Editor" + dir + (selection ? "WithSelection" : ""));
   }
 
-  protected void enter(final Editor e) {
+  protected static void enter(@NotNull Editor e) {
     executeEditorAction(e, IdeActions.ACTION_EDITOR_ENTER);
   }
 
@@ -108,11 +105,11 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     executeEditorAction(e, IdeActions.ACTION_EDITOR_DELETE);
   }
 
-  protected void executeEditorAction(@NotNull Editor editor, @NotNull String actionId) {
+  static void executeEditorAction(@NotNull Editor editor, @NotNull String actionId) {
     EditorTestUtil.executeAction(editor, actionId);
   }
 
-  protected VirtualFile createFileInCommand(final String name) {
+  VirtualFile createFileInCommand(@NotNull String name) {
     try {
       return WriteCommandAction
         .runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> myRoot.createChildData(this, name));
@@ -132,13 +129,13 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
 
   private DataContext createDataContextFor(final Editor editor) {
     return dataId -> {
-      if (dataId.equals(CommonDataKeys.EDITOR.getName())) return editor;
-      if (dataId.equals(CommonDataKeys.PROJECT.getName())) return getProject();
+      if (CommonDataKeys.EDITOR.is(dataId)) return editor;
+      if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
       return null;
     };
   }
 
-  protected boolean isUndoAvailable(Editor e) {
+  boolean isUndoAvailable(Editor e) {
     return myManager.isUndoAvailable(getFileEditor(e));
   }
 
@@ -148,21 +145,21 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     myManager.undo(fe);
   }
 
-  protected boolean isRedoAvailable(Editor e) {
+  boolean isRedoAvailable(Editor e) {
     return myManager.isRedoAvailable(getFileEditor(e));
   }
 
-  protected void redo(Editor e) {
+  void redo(Editor e) {
     FileEditor fe = getFileEditor(e);
     assertTrue("redo is not available", myManager.isRedoAvailable(fe));
     myManager.redo(fe);
   }
 
-  protected void globalUndo() {
+  void globalUndo() {
     undo(null);
   }
 
-  protected void globalRedo() {
+  void globalRedo() {
     redo(null);
   }
 
@@ -170,55 +167,55 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     return FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
   }
 
-  public void assertStartsWith(String prefix, String text) {
+  static void assertStartsWith(String prefix, String text) {
     assertTrue(text, text.startsWith(prefix));
   }
 
-  protected void assertGlobalUndoIsAvailable() {
+  void assertGlobalUndoIsAvailable() {
     assertUndoIsAvailable(null);
   }
 
-  protected void assertGlobalUndoNotAvailable() {
+  void assertGlobalUndoNotAvailable() {
     assertUndoNotAvailable(null);
   }
 
-  protected void assertGlobalRedoIsAvailable() {
+  void assertGlobalRedoIsAvailable() {
     assertRedoIsAvailable(null);
   }
 
-  protected void assertGlobalRedoNotAvailable() {
+  void assertGlobalRedoNotAvailable() {
     assertRedoNotAvailable(null);
   }
 
-  protected void assertRedoNotAvailable(Editor e) {
+  void assertRedoNotAvailable(Editor e) {
     assertFalse(myManager.isRedoAvailable(getFileEditor(e)));
   }
 
-  protected void assertUndoIsAvailable(Editor e) {
+  void assertUndoIsAvailable(Editor e) {
     assertTrue(myManager.isUndoAvailable(getFileEditor(e)));
   }
 
-  protected void assertUndoNotAvailable(Editor e) {
+  void assertUndoNotAvailable(Editor e) {
     assertFalse(myManager.isUndoAvailable(getFileEditor(e)));
   }
 
-  protected void assertRedoIsAvailable(Editor e) {
+  void assertRedoIsAvailable(Editor e) {
     assertTrue(myManager.isRedoAvailable(getFileEditor(e)));
   }
 
-  protected FileEditor getFileEditor(Editor e) {
+  protected static FileEditor getFileEditor(Editor e) {
     return e == null ? null : TextEditorProvider.getInstance().getTextEditor(e);
   }
 
   protected void executeCommand(Command c) {
-    executeCommand(c, "");
+    executeCommand("", c);
   }
 
-  protected void executeCommand(Command command, String name) {
-    executeCommand(command, name, null);
+  protected void executeCommand(String name, Command command) {
+    executeCommand(name, null, command);
   }
 
-  protected void executeCommand(final Command command, final String name, final Object groupId) {
+  protected void executeCommand(final String name, final Object groupId, final Command command) {
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       try {
         command.run();
@@ -229,7 +226,7 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     }, name, groupId);
   }
 
-  protected void executeTransparently(final Command r) {
+  static void executeTransparently(final Command r) {
     DocumentUtil.writeInRunUndoTransparentAction(() -> {
       try {
         r.run();
@@ -243,5 +240,9 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   @FunctionalInterface
   protected interface Command {
     void run() throws Exception;
+  }
+
+  private static UndoManagerImpl getGlobalUndoManager() {
+    return (UndoManagerImpl) UndoManager.getGlobalInstance();
   }
 }

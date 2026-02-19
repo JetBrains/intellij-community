@@ -1,11 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.stateProperties
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.JsonSchemaType
+import com.intellij.openapi.components.ScalarProperty
+import com.intellij.openapi.components.StoredProperty
+import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.ClassUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.OBJECT
@@ -14,13 +20,19 @@ abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : Stored
 
   override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
     if (value != newValue) {
-      thisRef.intIncrementModificationCount()
+      // new value mod count can lead to a combination when resulting mod count equals to old, so, add old value mod count to fix this issue
+      val v = value
+      if (v is BaseState) {
+        thisRef.addModificationCount(v.modificationCount + 1)
+      }
+      else {
+        thisRef.intIncrementModificationCount()
+      }
       value = newValue
     }
   }
 
   override fun setValue(other: StoredProperty<T>): Boolean {
-    @Suppress("UNCHECKED_CAST")
     val newValue = (other as ObjectStateStoredPropertyBase<T>).value
     return if (newValue == value) {
       false
@@ -55,6 +67,7 @@ internal open class ObjectStoredProperty<T>(private val defaultValue: T) : Objec
   }
 }
 
+@ApiStatus.Internal
 class EnumStoredProperty<T : Enum<*>>(private val defaultValue: T?, val clazz: Class<T>) : ObjectStateStoredPropertyBase<T?>(defaultValue), ScalarProperty {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.STRING
@@ -63,7 +76,7 @@ class EnumStoredProperty<T : Enum<*>>(private val defaultValue: T?, val clazz: C
 
   override fun getModificationCount() = 0L
 
-  override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T?) {
+  override fun setValue(thisRef: BaseState, newValue: T?) {
     val v = newValue ?: defaultValue
     if (value !== v) {
       thisRef.intIncrementModificationCount()

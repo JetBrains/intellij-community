@@ -1,23 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.JavaClassSupers;
-import gnu.trove.THashSet;
+import com.intellij.util.ObjectUtils;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public final class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance(InheritanceImplUtil.class);
 
-  public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
+  public static boolean isInheritor(final @NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
     if (baseClass instanceof PsiAnonymousClass || baseClass.getManager().areElementsEquivalent(baseClass, candidateClass)) return false;
     if (!checkDeep) {
       return isInheritor(candidateClass.getManager(), candidateClass, baseClass, false, null);
@@ -102,8 +117,8 @@ public final class InheritanceImplUtil {
     return isInheritorWithoutCaching(manager, candidateClass, baseClass, checkedClasses);
   }
 
-  private static boolean checkReferenceListWithQualifiedNamesInClsClass(@NotNull final String baseQName,
-                                                                        @Nullable final PsiReferenceList extList,
+  private static boolean checkReferenceListWithQualifiedNamesInClsClass(final @NotNull String baseQName,
+                                                                        final @Nullable PsiReferenceList extList,
                                                                         @NotNull JavaPsiFacade facade) {
     if (extList != null) {
       // in Cls class it's fast
@@ -131,7 +146,7 @@ public final class InheritanceImplUtil {
     }
 
     if (checkedClasses == null) {
-      checkedClasses = new THashSet<>();
+      checkedClasses = new HashSet<>();
     }
     checkedClasses.add(aClass);
 
@@ -166,16 +181,29 @@ public final class InheritanceImplUtil {
     return isInheritor(manager, aClass, baseClass, true, checkedClasses);
   }
 
-  public static boolean isInheritorDeep(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, @Nullable final PsiClass classToByPass) {
+  public static boolean isInheritorDeep(@NotNull PsiClass candidateClass,
+                                        @NotNull PsiClass baseClass,
+                                        final @Nullable PsiClass classToByPass) {
     if (baseClass instanceof PsiAnonymousClass) {
       return false;
     }
 
+    PsiManager manager = candidateClass.getManager();
     Set<PsiClass> checkedClasses = null;
     if (classToByPass != null) {
-      checkedClasses = new THashSet<>();
-      checkedClasses.add(classToByPass);
+      checkedClasses = new ObjectOpenCustomHashSet<>(new PsiClass[]{classToByPass}, new Hash.Strategy<PsiClass>() {
+        @Override
+        public int hashCode(@Nullable PsiClass o) {
+          return o == null ? 0 : ObjectUtils.notNull(o.getName(), o.getContainingFile().getName()).hashCode();
+        }
+
+        @Override
+        public boolean equals(@Nullable PsiClass a, @Nullable PsiClass b) {
+          return manager.areElementsEquivalent(a, b);
+        }
+      });
     }
-    return isInheritor(candidateClass.getManager(), candidateClass, baseClass, true, checkedClasses);
+    
+    return isInheritor(manager, candidateClass, baseClass, true, checkedClasses);
   }
 }

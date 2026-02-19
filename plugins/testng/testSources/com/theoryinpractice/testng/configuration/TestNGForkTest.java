@@ -47,15 +47,17 @@ public class TestNGForkTest {
           Assert.assertEquals(moduleExpectedOptions, moduleOptions);
           Assert.assertEquals(1, args.size());
           final String generatedSuite = FileUtil.loadFile(new File(args.get(0)));
-          Assert.assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                              "<!DOCTYPE suite SYSTEM \"https://testng.org/testng-1.0.dtd\">\n" +
-                              "<suite name=\"Default Suite\">\n" +
-                              "  <test thread-count=\"5\" name=\"mod1\">\n" +
-                              "    <classes>\n" +
-                              "      <class name=\"p.T1\"/>\n" +
-                              "    </classes>\n" +
-                              "  </test> <!-- mod1 -->\n" +
-                              "</suite> <!-- Default Suite -->\n", StringUtil.convertLineSeparators(generatedSuite));
+          Assert.assertEquals("""
+                                <?xml version="1.0" encoding="UTF-8"?>
+                                <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+                                <suite name="Default Suite">
+                                  <test thread-count="5" name="mod1">
+                                    <classes>
+                                      <class name="p.T1"/>
+                                    </classes>
+                                  </test> <!-- mod1 -->
+                                </suite> <!-- Default Suite -->
+                                """, StringUtil.convertLineSeparators(generatedSuite));
           Assert.assertFalse(myStarted);
           myStarted = true;
           return 0;

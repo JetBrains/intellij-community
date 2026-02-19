@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.util.Key;
@@ -8,25 +8,14 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 public final class UsedColors {
   private static final Key<Object/*UsedColor or UsedColor[]*/> USED_COLOR = Key.create("USED_COLOR");
 
-  public static final AtomicInteger counter = new AtomicInteger();
-  private static class UsedColor {
-    @NotNull final String name;
-    final int index;
-
-    UsedColor(@NotNull String name, int index) {
-      this.name = name;
-      this.index = index;
-      counter.incrementAndGet();
-    }
+  private record UsedColor(@NotNull String name, int index) {
   }
 
-  public static int getOrAddColorIndex(@NotNull final UserDataHolderEx context,
-                                       @NotNull final String name,
+  public static int getOrAddColorIndex(final @NotNull UserDataHolderEx context,
+                                       final @NotNull String name,
                                        int colorsCount) {
     int colorIndex;
     while (true) {
@@ -36,8 +25,7 @@ public final class UsedColors {
         colorIndex = hashColor(name, colorsCount);
         newColors = new UsedColor(name, colorIndex); // put an object instead of array to save space
       }
-      else if (data instanceof UsedColor) {
-        UsedColor usedColor = (UsedColor)data;
+      else if (data instanceof UsedColor usedColor) {
         if (usedColor.name.equals(name)) {
           colorIndex = usedColor.index;
           newColors = null; // found, no need to create new

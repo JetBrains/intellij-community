@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -28,16 +28,26 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
-import static java.util.Arrays.asList;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
-import static org.jetbrains.idea.svn.status.StatusType.*;
-import static org.junit.Assert.*;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_ADDED;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_DELETED;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_MODIFIED;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_NORMAL;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_REPLACED;
+import static org.jetbrains.idea.svn.status.StatusType.STATUS_UNVERSIONED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
@@ -113,10 +123,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       File workingFile = new File(myWorkingCopyDir.getPath(), relative);
       boolean exists = workingFile.exists();
       if (!exists) {
-        String[] excluded = conflictData.getExcludeFromToTheirsCheck();
-        if (excluded != null && asList(excluded).contains(relative)) {
-          return true;
-        }
+        if (conflictData.isExcludedFromToTheirsCheck(toSystemIndependentName(relative))) return true;
+
         fail(createTestFailedComment(relative));
       }
       final File theirsFile = virtualToIoFile(file);

@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -22,6 +25,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -29,8 +33,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@State(name = "CodeInsightSettings", storages = @Storage("editor.xml"))
-public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
+@State(name = "CodeInsightSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
+public final class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance(CodeInsightSettings.class);
   private final List<PropertyChangeListener> myListeners = new CopyOnWriteArrayList<>();
 
@@ -44,8 +48,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   }
 
   @Override
-  @Nullable
-  public CodeInsightSettings clone() {
+  public @Nullable CodeInsightSettings clone() {
     try {
       return (CodeInsightSettings)super.clone();
     }
@@ -54,14 +57,14 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
-  public boolean SHOW_EXTERNAL_ANNOTATIONS_INLINE = true;
-  public boolean SHOW_INFERRED_ANNOTATIONS_INLINE;
+  public static final UINumericRange JAVADOC_INFO_DELAY_RANGE = new UINumericRange(500, 0, 5000);
+  public static final UINumericRange PARAMETER_INFO_DELAY_RANGE = new UINumericRange(1000, 0, 5000);
 
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
-  public int PARAMETER_INFO_DELAY = 1000;
+  public int PARAMETER_INFO_DELAY = PARAMETER_INFO_DELAY_RANGE.initial;
   public boolean AUTO_POPUP_JAVADOC_INFO;
-  public int JAVADOC_INFO_DELAY = 1000;
+  public int JAVADOC_INFO_DELAY = JAVADOC_INFO_DELAY_RANGE.initial;
   public boolean AUTO_POPUP_COMPLETION_LOOKUP = true;
 
   /**
@@ -71,11 +74,12 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   @Deprecated
   public int COMPLETION_CASE_SENSITIVE = FIRST_LETTER;
 
+  @MagicConstant(intValues = {ALL, NONE, FIRST_LETTER})
   public int getCompletionCaseSensitive() {
     return COMPLETION_CASE_SENSITIVE;
   }
 
-  public void setCompletionCaseSensitive(int value) {
+  public void setCompletionCaseSensitive(@MagicConstant(intValues = {ALL, NONE, FIRST_LETTER}) int value) {
     COMPLETION_CASE_SENSITIVE = value;
   }
 
@@ -86,7 +90,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   /**
    * @deprecated use accessors instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS;
 
   public boolean isSelectAutopopupSuggestionsByChars() {
@@ -106,20 +110,13 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
-  public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
-
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
 
   @OptionTag("SMART_BACKSPACE") // explicit name makes it work also for obfuscated private field's name
   private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
 
   @Transient
-  @NotNull
-  public SmartBackspaceMode getBackspaceMode() {
+  public @NotNull SmartBackspaceMode getBackspaceMode() {
     SmartBackspaceMode[] values = SmartBackspaceMode.values();
     return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF;
   }
@@ -132,6 +129,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean SMART_INDENT_ON_ENTER = true;
   public boolean INSERT_BRACE_ON_ENTER = true;
   public boolean INSERT_SCRIPTLET_END_ON_ENTER = true;
+  public boolean CLOSE_COMMENT_ON_ENTER = true;
   public boolean JAVADOC_STUB_ON_ENTER = true;
   public boolean SMART_END_ACTION = true;
   public boolean JAVADOC_GENERATE_CLOSING_TAG = true;
@@ -148,6 +146,8 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int INDENT_BLOCK = 2;
   public static final int INDENT_EACH_LINE = 3;
   public static final int REFORMAT_BLOCK = 4;
+
+  public boolean ENABLE_SECOND_REFORMAT;
 
   public boolean INDENT_TO_CARET_ON_PASTE;
 
@@ -199,12 +199,17 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
+  @Override
+  public void noStateLoaded() {
+    setDefaults();
+  }
+
   private void setDefaults() {
     try {
       ReflectionUtil.copyFields(CodeInsightSettings.class.getDeclaredFields(), new CodeInsightSettings(), this,
-                                new DifferenceFilter<Object>(null, null) {
+                                new DifferenceFilter<>(null, null) {
                                   @Override
-                                  public boolean isAccept(@NotNull Field field) {
+                                  public boolean test(@NotNull Field field) {
                                     return !field.getName().equals("EXCLUDED_PACKAGES");
                                   }
                                 });
@@ -217,6 +222,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   }
 
   @Override
+  @NotNull
   public Element getState() {
     Element element = new Element("state");
     writeExternal(element);
@@ -237,5 +243,29 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     return ReflectionUtil.comparePublicNonFinalFields(this, o);
+  }
+
+  /**
+   * Run the {@code consumer} with the current {@link CodeInsightSettings} and then restore them to the state before this method call.
+   * Useful for running the tests with custom code insight settings, like this:
+   * <pre>
+   *  runWithTemporarySettings(settings -> {
+   *    settings.MY_SETTING_TO_TEST = newValue;
+   *    settings.OTHER_SETTING_TO_TEST = newValue2;
+   *    doTest();
+   *  });
+   * </pre>
+   * This will run {@code doTest()} with some settings changed, and then restore them automatically when the test finished.
+   */
+  @TestOnly
+  public static <T, E extends Throwable> T runWithTemporarySettings(@NotNull ThrowableConvertor<? super CodeInsightSettings, ? extends T, E> consumer) throws E {
+    CodeInsightSettings settings = getInstance();
+    Element temp = settings.getState();
+    try {
+      return consumer.convert(settings);
+    }
+    finally {
+      settings.loadState(temp);
+    }
   }
 }

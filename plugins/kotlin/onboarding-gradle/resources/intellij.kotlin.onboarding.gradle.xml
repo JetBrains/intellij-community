@@ -1,0 +1,24 @@
+<idea-plugin package="org.jetbrains.kotlin.onboarding.gradle">
+  <dependencies>
+    <module name="intellij.kotlin.gradle.tooling"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.kotlin.onboarding"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <resource-bundle>messages.GradleFeedbackBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurveyStore"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionSurvey"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.onboarding.gradle.BuildProcessSatisfactionExternalSystemListener"/>
+  </extensions>
+  <actions>
+    <group id="BuildProcessSatisfaction" internal="true">
+      <action id="org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction"
+              class="org.jetbrains.kotlin.onboarding.gradle.ShowBuildProcessSatisfactionDialogAction" internal="true"/>
+      <add-to-group group-id="FeedbackDialogGroup" anchor="last"/>
+    </group>
+  </actions>
+</idea-plugin>

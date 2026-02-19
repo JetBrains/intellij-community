@@ -1,20 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Function
 
-class MavenParsingContext(private val myTaskId: ExternalSystemTaskId,
+class MavenParsingContext(val runConfiguration : MavenRunConfiguration,
+                          val myTaskId: ExternalSystemTaskId,
                           val targetFileMapper: Function<String, String>) {
 
   lateinit var projectsInReactor: List<String>
   val startedProjects = CopyOnWriteArrayList<String>()
+  val ideaProject = runConfiguration.project
+  @Volatile var sessionEnded = false
+  @Volatile var projectFailure = false
 
-  private val context = ContainerUtil.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
+  private val context = ConcurrentCollectionFactory.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
   private var lastAddedThreadId: Int = 0
 
   val lastId: Any
@@ -62,7 +66,7 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId,
     return getMojo(threadId, parameters, parameters["goal"], create)
   }
 
-  fun getMojo(threadId: Int, parameters: Map<String, String>, name: String?, create: Boolean): MojoExecutionEntry? {
+  private fun getMojo(threadId: Int, parameters: Map<String, String>, name: String?, create: Boolean): MojoExecutionEntry? {
     if (name == null) {
       return null
     }

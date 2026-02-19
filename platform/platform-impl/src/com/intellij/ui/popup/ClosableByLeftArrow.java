@@ -15,8 +15,5 @@
  */
 package com.intellij.ui.popup;
 
-/**
- * @author peter
- */
 public interface ClosableByLeftArrow {
 }

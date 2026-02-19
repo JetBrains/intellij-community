@@ -8,25 +8,33 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
  */
 public interface ExternalSourceSet extends Serializable {
-  Collection<File> getArtifacts();
 
   @NotNull
   String getName();
 
   @Nullable
-  String getSourceCompatibility();
+  File getJavaToolchainHome();
 
-  boolean isPreview();
+  @Nullable
+  String getSourceCompatibility();
 
   @Nullable
   String getTargetCompatibility();
 
+  @NotNull
+  List<String> getCompilerArguments();
+
+  @NotNull
+  Collection<File> getArtifacts();
+
+  @NotNull
   Collection<ExternalDependency> getDependencies();
 
   @NotNull

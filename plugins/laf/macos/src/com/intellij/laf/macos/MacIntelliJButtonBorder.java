@@ -7,10 +7,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
@@ -20,7 +24,7 @@ import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isTag;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJButtonBorder implements Border, UIResource {
+public final class MacIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (!c.hasFocus() || c instanceof JComponent && UIUtil.isHelpButton(c)) return;
@@ -47,7 +51,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
         g2.fill(border);
       }
       else if (isTag(c)) {
-        DarculaUIUtil.paintFocusTag(g2, width, height);
+        DarculaUIUtil.paintTag(g2, width, height, c.hasFocus(), DarculaUIUtil.computeOutlineFor(c));
       }
       else {
         DarculaUIUtil.paintFocusBorder(g2, width, height, arc, true);

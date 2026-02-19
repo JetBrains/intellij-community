@@ -17,8 +17,14 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.psi.*;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiResourceList;
+import com.intellij.psi.PsiResourceListElement;
+import com.intellij.psi.PsiResourceVariable;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +54,7 @@ public class JavaTryUnwrapper extends JavaUnwrapper {
         }
       }
     }
-    if (RefactoringUtil.isLoopOrIf(trySt.getParent())) {
+    if (CommonJavaRefactoringUtil.isLoopOrIf(trySt.getParent())) {
       trySt = BlockUtils.expandSingleStatementToBlockStatement(trySt);
     }
 

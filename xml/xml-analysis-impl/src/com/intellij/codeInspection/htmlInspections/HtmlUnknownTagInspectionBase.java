@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
@@ -22,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.polySymbols.html.elements.HtmlElementSymbolDescriptor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
@@ -31,6 +18,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.impl.XmlElementDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -41,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.xml.util.XmlUtil.isNotInjectedOrCustomHtmlFile;
 
 public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   public static final Key<HtmlUnknownElementInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
@@ -59,31 +49,17 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return TAG_SHORT_NAME;
   }
 
   @Override
-  @NotNull
-  protected Logger getLogger() {
+  protected @NotNull Logger getLogger() {
     return LOG;
   }
 
   @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.checkbox.title");
-  }
-
-  @Override
-  @NotNull
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.title");
-  }
-
-  @Override
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkTag(final @NotNull XmlTag tag, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag)) {
       return;
     }
@@ -97,8 +73,19 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
                                          ? tag.getDescriptor()
                                          : descriptorFromContext;
 
+    if (ownDescriptor instanceof XmlElementDescriptorEx) {
+      ((XmlElementDescriptorEx)ownDescriptor).validateTagName(tag, holder, isOnTheFly);
+      return;
+    }
+    if (descriptorFromContext instanceof XmlElementDescriptorEx) {
+      ((XmlElementDescriptorEx)descriptorFromContext).validateTagName(tag, holder, isOnTheFly);
+      return;
+    }
+
     if (isAbstractDescriptor(ownDescriptor) ||
-        (parentDescriptor instanceof HtmlElementDescriptorImpl &&
+        ((parentDescriptor instanceof HtmlElementDescriptorImpl
+          || parentDescriptor instanceof HtmlElementSymbolDescriptor htmlElementSymbolDescriptor
+             && !htmlElementSymbolDescriptor.isCustomElement()) &&
          ownDescriptor instanceof HtmlElementDescriptorImpl &&
          isAbstractDescriptor(descriptorFromContext))) {
 
@@ -134,22 +121,23 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
           quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
         }
-        ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ?
-                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
-                                             ProblemHighlightType.INFORMATION;
-        if (startTagName.getTextLength() > 0) {
-          holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-        }
+        ProblemHighlightType highlightType = isNotInjectedOrCustomHtmlFile(tag.getContainingFile())
+                                             ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                             : ProblemHighlightType.INFORMATION;
+        if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
+          if (startTagName.getTextLength() > 0) {
+            holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
 
-        if (endTagName != null) {
-          holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          if (endTagName != null) {
+            holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
         }
       }
     }
   }
 
-  @Nullable
-  protected LocalQuickFix createChangeTemplateDataFix(PsiFile file) {
+  protected @Nullable LocalQuickFix createChangeTemplateDataFix(PsiFile file) {
     return null;
   }
 }

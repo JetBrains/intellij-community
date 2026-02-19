@@ -15,23 +15,28 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ArtifactEditorFindUsagesActionBase;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.*;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ArtifactSourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemNode;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.packaging.ui.PackagingSourceItem;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBase {
   private final SourceItemsTree myTree;
 
-  public SourceItemFindUsagesAction(SourceItemsTree tree, Project project, ArtifactsStructureConfigurableContext artifactContext) {
-    super(tree, project, artifactContext);
+  public SourceItemFindUsagesAction(SourceItemsTree tree, ArtifactsStructureConfigurableContext artifactContext) {
+    super(tree, artifactContext);
     myTree = tree;
   }
 
@@ -48,15 +53,16 @@ public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBa
     if (sourceItem == null) return null;
 
     final StructureConfigurableContext context = getContext();
-    if (sourceItem instanceof ModuleOutputSourceItem) {
-      return new ModuleProjectStructureElement(context, ((ModuleOutputSourceItem)sourceItem).getModule());
-    }
-    else if (sourceItem instanceof LibrarySourceItem) {
-      return new LibraryProjectStructureElement(context, ((LibrarySourceItem)sourceItem).getLibrary());
-    }
-    else if (sourceItem instanceof ArtifactSourceItem) {
-      return myArtifactContext.getOrCreateArtifactElement(((ArtifactSourceItem)sourceItem).getArtifact());
-    }
-    return null;
+    return switch (sourceItem) {
+      case ModuleOutputSourceItem item -> new ModuleProjectStructureElement(context, item.getModule());
+      case LibrarySourceItem item -> new LibraryProjectStructureElement(context, item.getLibrary());
+      case ArtifactSourceItem item -> myArtifactContext.getOrCreateArtifactElement(item.getArtifact());
+      default -> null;
+    };
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

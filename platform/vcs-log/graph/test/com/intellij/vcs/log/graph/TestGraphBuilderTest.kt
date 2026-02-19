@@ -23,7 +23,7 @@ internal class TestGraphBuilderTest : AbstractTestWithTextFile("testGraphBuilder
 
   fun runTest(testName: String, builder: TestGraphBuilder.() -> Unit) {
     val actual = graph(builder).asString()
-    assertEquals(loadText(testName + ".txt"), actual)
+    assertEquals(loadText("$testName.txt"), actual)
   }
 
   @Test fun simple() = runTest("simple") {

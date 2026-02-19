@@ -1,0 +1,2 @@
+[tool.poetry.dependencies]
+mypy-extensions = <caret>

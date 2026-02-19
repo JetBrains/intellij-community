@@ -1,36 +1,45 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   private static final Logger LOG = Logger.getInstance(CreateAnnotationMethodFromUsageFix.class);
@@ -46,10 +55,11 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     final PsiNameValuePair call = getNameValuePair();
     if (call == null || !call.isValid()) return false;
     String name = call.getName();
+    if (name == null) name = PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
 
-    if (name == null || !PsiNameHelper.getInstance(call.getProject()).isIdentifier(name)) return false;
+    if (!PsiNameHelper.getInstance(call.getProject()).isIdentifier(name)) return false;
     if (getAnnotationValueType(call.getValue()) == null) return false;
-    setText(QuickFixBundle.message("create.method.from.usage.text", name));
+    setText(JavaBundle.message("intention.create.annotation.method.from.usage", name));
     return true;
   }
 
@@ -61,8 +71,20 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     chooseTargetClass(project, editor, this::invokeImpl);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiNameValuePair nameValuePair = getNameValuePair();
+    List<PsiClass> classes = filterTargetClasses(nameValuePair, project);
+    if (nameValuePair == null || classes.isEmpty()) return IntentionPreviewInfo.EMPTY;
+    final PsiType type = getAnnotationValueType(nameValuePair.getValue());
+    PsiClass targetClass = classes.get(0);
+    String methodName = ObjectUtils.notNull(nameValuePair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, targetClass.getName(), "",
+                                               Objects.requireNonNull(type).getPresentableText() + " " + methodName + "();");
   }
 
   private void invokeImpl(@NotNull PsiClass targetClass) {
@@ -71,10 +93,10 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(nameValuePair.getProject());
 
-    final String methodName = nameValuePair.getName();
+    final String methodName = ObjectUtils.notNull(nameValuePair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
     LOG.assertTrue(methodName != null);
 
-    PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
+    PsiMethod method = factory.createMethod(methodName, PsiTypes.voidType());
 
     method = (PsiMethod)targetClass.add(method);
 
@@ -87,13 +109,12 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     final PsiType type = getAnnotationValueType(nameValuePair.getValue());
     LOG.assertTrue(type != null);
     final ExpectedTypeInfo[] expectedTypes =
-      new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
-    CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map2List(PsiExpression.EMPTY_ARRAY, Pair.createFunction(null)),
+      new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType())};
+    CreateMethodFromUsageFix.doCreate(targetClass, method, true, Collections.emptyList(), 
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }
 
-  @Nullable
-  public static PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
+  public static @Nullable PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
     PsiType type = null;
     if (value instanceof PsiExpression) {
       type = ((PsiExpression)value).getType();
@@ -122,7 +143,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
         type = currentType.createArrayType();
       }
     }
-    if (type != null && type.accept(AnnotationsHighlightUtil.AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
+    if (type != null && PsiTypesUtil.isValidAnnotationMethodType(type)) {
       return type;
     }
     return null;
@@ -136,13 +157,11 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
 
-  @Nullable
-  protected PsiNameValuePair getNameValuePair() {
+  protected @Nullable PsiNameValuePair getNameValuePair() {
     return myNameValuePair.getElement();
   }
 }

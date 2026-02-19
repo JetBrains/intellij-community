@@ -5,7 +5,7 @@ interface ToStringBug {
     class Inner implements ToStringBug {
        
         {
-           toString<error descr="'toString()' in 'java.lang.Object' cannot be applied to '(java.lang.String)'">( "x")</error>;
+           toString<error descr="Expected no arguments but found 1">( "x")</error>;
         }
     }
 }

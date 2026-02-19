@@ -1,0 +1,21 @@
+# environment.yml - Comprehensive test file for dependency parsing
+name: test-environment
+
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+  - pytorch
+  - nvidia
+  - anaconda
+  - https://conda.anaconda.org/pyviz
+
+# Environment variables
+variables:
+  CUDA_HOME: /usr/local/cuda
+  PYTHONPATH: /custom/python/path
+  API_KEY: your-api-key-here
+  DEBUG: "1"
+
+# Prefix for installation (optional)
+prefix: /path/to/conda/envs/test-environment

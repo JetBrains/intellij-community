@@ -1,20 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
-import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.EventDispatcher
-import com.intellij.util.TimeoutUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.Update
@@ -22,14 +23,15 @@ import com.intellij.vcsUtil.VcsFileUtilKt.isUnder
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
-import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<VcsRepositoryIgnoredFilesHolderBase<*>>()
 
@@ -52,14 +54,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     listeners.addListener(listener, this)
   }
 
-  override fun addFiles(files: Collection<FilePath>) {
-    SET_LOCK.write { ignoredSet.addAll(files) }
-  }
-
-  override fun addFile(file: FilePath) {
-    SET_LOCK.write { ignoredSet.add(file) }
-  }
-
   override fun isInUpdateMode() = inUpdateMode.get()
 
   override fun getIgnoredFilePaths(): Set<FilePath> = SET_LOCK.read { ignoredSet.toHashSet() }
@@ -67,8 +61,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   override fun containsFile(file: FilePath): Boolean {
     return SET_LOCK.read { isUnder(repositoryRootPath, ignoredSet, file) }
   }
-
-  override fun getSize() = SET_LOCK.read { ignoredSet.size }
 
   override fun dispose() {
     SET_LOCK.write {
@@ -86,7 +78,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
     //if the files already unversioned, there is no need to check it for ignore
     val unversioned = ChangeListManager.getInstance(repository.project).unversionedFilesPaths
-    filesToCheck.removeAll(unversioned)
+    unversioned.forEach(filesToCheck::remove)
 
     if (filesToCheck.isNotEmpty()) {
       removeIgnoredFiles(filesToCheck)
@@ -94,8 +86,10 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    if (scanTurnedOff()) return
+  override suspend fun filesChanged(events: List<VFileEvent>) {
+    if (scanTurnedOff()) {
+      return
+    }
 
     val affectedFiles = events
       .flatMap(::getAffectedFilePaths)
@@ -103,15 +97,20 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
       .toList()
 
+    coroutineContext.ensureActive()
+
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.addAll(affectedFiles)
     }
   }
 
-  fun setupListeners() {
-    runReadAction {
-      if (repository.project.isDisposed) return@runReadAction
-      AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
+  fun setupListeners(coroutineScope: CoroutineScope) {
+    ApplicationManager.getApplication().runReadAction {
+      if (repository.project.isDisposed) {
+        return@runReadAction
+      }
+
+      AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
       repository.project.messageBus.connect(this).subscribe(ChangeListListener.TOPIC, this)
     }
   }
@@ -184,7 +183,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private class MyUpdate(val repository: Repository,
                          val isFullRescan: Boolean,
                          val action: () -> Unit)
-    : DisposableUpdate(repository, ComparableObject.Impl(repository, isFullRescan)) {
+    : DisposableUpdate(repository, ComparableObject.Impl(MyUpdate::class.java, repository, isFullRescan)) {
 
     override fun canEat(update: Update): Boolean {
       return update is MyUpdate &&
@@ -251,28 +250,8 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  @TestOnly
-  fun startRescanAndWait() {
-    assert(ApplicationManager.getApplication().isUnitTestMode)
-    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
-    updateQueue.flush()
-    while (updateQueue.isFlushing) {
-      TimeoutUtil.sleep(100)
-    }
-    val waiter = createWaiter()
-    AppExecutorUtil.getAppScheduledExecutorService().schedule({ startRescan() }, 1, TimeUnit.SECONDS)
-    waiter.waitFor()
-  }
-
-  @TestOnly
-  fun createWaiter(): Waiter {
-    assert(ApplicationManager.getApplication().isUnitTestMode)
-    return Waiter()
-  }
-
   companion object {
-    @JvmStatic
-    fun getAffectedFilePaths(event: VFileEvent): Set<FilePath> {
+    internal fun getAffectedFilePaths(event: VFileEvent): Set<FilePath> {
       if (event is VFileContentChangeEvent) return emptySet()
 
       val affectedFilePaths = HashSet<FilePath>(2)

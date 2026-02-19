@@ -1,0 +1,12 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.python.psi"/>
+    <module name="intellij.python.syntax.core"/>
+    <module name="intellij.libraries.xml.rpc"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.additionalHyperlinkProvider"
+                    interface="com.jetbrains.python.debugger.PyDebugValueAdditionalHyperlinkProvider" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

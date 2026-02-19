@@ -7,13 +7,13 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiMethodUtil;
 
 public final class ConfigurationUtil {
-  public static final Condition<PsiClass> PUBLIC_INSTANTIATABLE_CLASS = new Condition<>() {
-    @Override
-    public boolean value(final PsiClass psiClass) {
-      return MAIN_CLASS.value(psiClass) &&
-             psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
-             !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
-    }
+  public static final Condition<PsiClass> PUBLIC_INSTANTIATABLE_CLASS = psiClass -> {
+    return PsiMethodUtil.MAIN_CLASS.value(psiClass) &&
+           psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+           !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
   };
+
+  /// @deprecated Use {@link PsiMethodUtil#MAIN_CLASS} directly instead.
+  @Deprecated
   public static final Condition<PsiClass> MAIN_CLASS = PsiMethodUtil.MAIN_CLASS;
 }

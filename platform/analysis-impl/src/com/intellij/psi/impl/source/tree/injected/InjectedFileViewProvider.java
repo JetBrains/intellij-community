@@ -10,7 +10,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
@@ -21,7 +27,7 @@ import java.util.List;
 /**
  * @deprecated Use methods from {@link InjectedLanguageManager} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface InjectedFileViewProvider extends FileViewProvider, FreeThreadedFileViewProvider {
   default void rootChangedImpl(@NotNull PsiFile psiFile) {
     if (!isPhysical()) return; // injected PSI change happened inside reparse; ignore
@@ -46,21 +52,21 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
   }
 
   default FileViewProvider cloneImpl() {
-    final DocumentWindow oldDocumentWindow = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
+    DocumentWindow oldDocumentWindow = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
     Document hostDocument = oldDocumentWindow.getDelegate();
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
     PsiFile hostFile = documentManager.getPsiFile(hostDocument);
     Language language = getBaseLanguage();
     PsiFile file = getPsi(language);
-    final Language hostFileLanguage = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file).getLanguage();
+    Language hostFileLanguage = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file).getLanguage();
     PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
     Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
     PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
     assert hostElementCopy != null;
-    final Ref<FileViewProvider> provider = new Ref<>();
+    Ref<FileViewProvider> provider = new Ref<>();
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
       Document document = documentManager.getCachedDocument(injectedPsi);
-      if (document instanceof DocumentWindowImpl && oldDocumentWindow.areRangesEqual((DocumentWindowImpl)document)) {
+      if (document instanceof DocumentWindowImpl window && oldDocumentWindow.areRangesEqual(window)) {
         provider.set(injectedPsi.getViewProvider());
       }
     };
@@ -105,7 +111,7 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
     return isEventSystemEnabled();
   }
 
-  default void performNonPhysically(Runnable runnable) {
+  default void performNonPhysically(@NotNull Runnable runnable) {
     synchronized (getLock()) {
       SingleRootInjectedFileViewProvider.disabledTemporarily.set(true);
       try {
@@ -141,10 +147,10 @@ public interface InjectedFileViewProvider extends FileViewProvider, FreeThreaded
   @NotNull
   DocumentWindowImpl getDocument();
 
-  static InjectedFileViewProvider create(@NotNull PsiManagerEx manager,
-                                         @NotNull VirtualFileWindowImpl file,
-                                         @NotNull DocumentWindowImpl window,
-                                         @NotNull Language language) {
+  static @NotNull InjectedFileViewProvider create(@NotNull PsiManagerEx manager,
+                                                  @NotNull VirtualFileWindowImpl file,
+                                                  @NotNull DocumentWindowImpl window,
+                                                  @NotNull Language language) {
     AbstractFileViewProvider original = (AbstractFileViewProvider)manager.getFileManager().createFileViewProvider(file, false);
     return original instanceof TemplateLanguageFileViewProvider ?
              new MultipleRootsInjectedFileViewProvider.Template(manager, file, window, language, original) :

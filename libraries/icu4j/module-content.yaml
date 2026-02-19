@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.icu4j.jar
+  modules:
+  - name: intellij.libraries.icu4j
+  library: icu4j
+  files:
+  - name: $MAVEN_REPOSITORY$/com/ibm/icu/icu4j/77/icu4j-77.jar

@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JBIterableClassTraverser;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,11 +17,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import static com.intellij.util.ReflectionStartupUtil.classTraverser;
-
-/**
- * @author peter
- */
 public final class JavaMethodSignature {
   private static final Set<String> OBJECT_METHOD_NAMES = ContainerUtil.map2Set(Object.class.getDeclaredMethods(), Method::getName);
   private final String myMethodName;
@@ -39,8 +36,7 @@ public final class JavaMethodSignature {
     return myMethodName;
   }
 
-  @Nullable
-  public final Method findMethod(@NotNull Class<?> aClass) {
+  public @Nullable Method findMethod(@NotNull Class<?> aClass) {
     Method method = getDeclaredMethod(aClass);
     if (method == null && aClass.isInterface() && OBJECT_METHOD_NAMES.contains(myMethodName)) {
       method = ReflectionUtil.getDeclaredMethod(Object.class, myMethodName, myMethodParameters);
@@ -48,8 +44,7 @@ public final class JavaMethodSignature {
     return method;
   }
 
-  @Nullable
-  private Method getDeclaredMethod(@NotNull Class<?> aClass) {
+  private @Nullable Method getDeclaredMethod(@NotNull Class<?> aClass) {
     Method method = ReflectionUtil.getMethod(aClass, myMethodName, myMethodParameters);
     return method == null ? ReflectionUtil.getDeclaredMethod(aClass, myMethodName, myMethodParameters) : method;
   }
@@ -57,7 +52,7 @@ public final class JavaMethodSignature {
   @NotNull
   List<Method> getAllMethods(@NotNull Class<?> startFrom) {
     List<Method> result = new ArrayList<>();
-    for (Class<?> superClass : JBIterable.from(classTraverser(startFrom)).append(Object.class).unique()) {
+    for (Class<?> superClass : JBIterable.from(JBIterableClassTraverser.classTraverser(startFrom)).append(Object.class).unique()) {
       for (Method method : superClass.getDeclaredMethods()) {
         if (myMethodName.equals(method.getName()) &&
             method.getParameterCount() == myMethodParameters.length &&
@@ -69,12 +64,12 @@ public final class JavaMethodSignature {
     return result;
   }
 
-  @Nullable
-  static Method findMethod(@NotNull Method sampleMethod, @NotNull Class<?> startFrom, @NotNull Predicate<Method> checker) {
+  @ApiStatus.Internal
+  public static @Nullable Method findMethod(@NotNull Method sampleMethod, @NotNull Class<?> startFrom, @NotNull Predicate<Method> checker) {
     String sampleMethodName = sampleMethod.getName();
     Class<?>[] sampleMethodParameters = sampleMethod.getParameterCount() == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : sampleMethod.getParameterTypes();
 
-    for (Class<?> superClass : JBIterable.from(classTraverser(startFrom)).append(Object.class).unique()) {
+    for (Class<?> superClass : JBIterable.from(JBIterableClassTraverser.classTraverser(startFrom)).append(Object.class).unique()) {
       for (Method method : superClass.getDeclaredMethods()) {
         if (sampleMethodName.equals(method.getName()) &&
             method.getParameterCount() == sampleMethodParameters.length &&
@@ -89,6 +84,7 @@ public final class JavaMethodSignature {
     return null;
   }
 
+  @Override
   public String toString() {
     return myMethodName + Arrays.asList(myMethodParameters);
   }

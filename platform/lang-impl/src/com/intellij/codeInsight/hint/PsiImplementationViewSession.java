@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -10,16 +10,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -27,21 +29,24 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author yole
- */
-public class PsiImplementationViewSession implements ImplementationViewSession {
+
+public final class PsiImplementationViewSession implements ImplementationViewSession {
   private static final Logger LOG = Logger.getInstance(PsiImplementationViewSession.class);
 
-  @NotNull private final Project myProject;
-  @Nullable private final PsiElement myElement;
+  private final @NotNull Project myProject;
+  private final @Nullable PsiElement myElement;
   private final PsiElement[] myImpls;
   private final String myText;
-  @Nullable private final Editor myEditor;
-  @Nullable private final VirtualFile myFile;
+  private final @Nullable Editor myEditor;
+  private final @Nullable VirtualFile myFile;
   private final boolean myIsSearchDeep;
   private final boolean myAlwaysIncludeSelf;
 
@@ -60,27 +65,25 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     myAlwaysIncludeSelf = alwaysIncludeSelf;
   }
 
-  @NotNull
   @Override
-  public ImplementationViewSessionFactory getFactory() {
+  public @NotNull ImplementationViewSessionFactory getFactory() {
     return ImplementationViewSessionFactory.EP_NAME.findExtensionOrFail(PsiImplementationSessionViewFactory.class);
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
-  public PsiElement getElement() {
+  public @Nullable PsiElement getElement() {
     return myElement;
   }
 
   @Override
-  @NotNull
-  public List<ImplementationViewElement> getImplementationElements() {
-    return ContainerUtil.map(myImpls, PsiImplementationViewElement::new);
+  public @NotNull List<ImplementationViewElement> getImplementationElements() {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      return ReadAction.compute(() -> ContainerUtil.map(myImpls, PsiImplementationViewElement::new));
+    }, ImplementationSearcher.getSearchingForImplementations(), true, myProject);
   }
 
   @Override
@@ -89,14 +92,12 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
   }
 
   @Override
-  @Nullable
-  public Editor getEditor() {
+  public @Nullable Editor getEditor() {
     return myEditor;
   }
 
   @Override
-  @Nullable
-  public VirtualFile getFile() {
+  public @Nullable VirtualFile getFile() {
     return myFile;
   }
 
@@ -136,8 +137,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     return PsiUtilCore.toPsiElementArray(unique);
   }
 
-  @NotNull
-  public static ImplementationSearcher createImplementationsSearcher(final boolean searchDeep) {
+  public static @NotNull ImplementationSearcher createImplementationsSearcher(final boolean searchDeep) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
         @Override
@@ -190,10 +190,9 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     });
   }
 
-  @NotNull
   @Override
-  public List<ImplementationViewElement> searchImplementationsInBackground(@NotNull ProgressIndicator indicator,
-                                                                           @NotNull final Processor<? super ImplementationViewElement> processor) {
+  public @Unmodifiable @NotNull List<ImplementationViewElement> searchImplementationsInBackground(@NotNull ProgressIndicator indicator,
+                                                                                                  final @NotNull Processor<? super ImplementationViewElement> processor) {
     final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =
       new ImplementationSearcher.BackgroundableImplementationSearcher() {
         @Override
@@ -203,7 +202,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
 
         @Override
         protected void processElement(PsiElement element) {
-          if (!processor.process(new PsiImplementationViewElement(element))) {
+          if (!processor.process(ReadAction.compute(() -> new PsiImplementationViewElement(element)))) {
             indicator.cancel();
           }
           indicator.checkCanceled();
@@ -221,33 +220,17 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     else {
       psiElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher);
     }
-    return ContainerUtil.map(psiElements, PsiImplementationViewElement::new);
+    return ContainerUtil.map(psiElements, psiElement -> ReadAction.compute(() -> new PsiImplementationViewElement(psiElement)));
   }
 
-  @Nullable
-  public static Editor getEditor(@NotNull DataContext dataContext) {
-    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-
-    if (editor == null) {
-      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-      if (file != null) {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile != null) {
-          final FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(virtualFile);
-          if (fileEditor instanceof TextEditor) {
-            editor = ((TextEditor)fileEditor).getEditor();
-          }
-        }
-      }
-    }
-    return editor;
+  public static @Nullable Editor getEditor(@NotNull DataContext dataContext) {
+    return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
-  @Nullable
-  public static PsiImplementationViewSession create(@NotNull DataContext dataContext,
-                                                    @NotNull Project project,
-                                                    boolean searchDeep,
-                                                    boolean alwaysIncludeSelf) {
+  public static @Nullable PsiImplementationViewSession create(@NotNull DataContext dataContext,
+                                                              @NotNull Project project,
+                                                              boolean searchDeep,
+                                                              boolean alwaysIncludeSelf) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     Editor editor = getEditor(dataContext);
     Pair<PsiElement, PsiReference> pair = getElementAndReference(dataContext, project, file, editor);
@@ -262,8 +245,7 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
-    if (impls.length == 0 && ref instanceof PsiPolyVariantReference) {
-      final PsiPolyVariantReference polyReference = (PsiPolyVariantReference)ref;
+    if (impls.length == 0 && ref instanceof PsiPolyVariantReference polyReference) {
       PsiElement refElement = polyReference.getElement();
       TextRange rangeInElement = polyReference.getRangeInElement();
       String refElementText = refElement.getText();
@@ -291,11 +273,10 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
                                             searchDeep, alwaysIncludeSelf);
   }
 
-  @Nullable
-  public static Pair<PsiElement, PsiReference> getElementAndReference(@NotNull DataContext dataContext,
-                                                                      @NotNull Project project,
-                                                                      @Nullable PsiFile file,
-                                                                      @Nullable Editor editor) {
+  public static @Nullable Pair<PsiElement, PsiReference> getElementAndReference(@NotNull DataContext dataContext,
+                                                                                @NotNull Project project,
+                                                                                @Nullable PsiFile file,
+                                                                                @Nullable Editor editor) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     element = getElement(project, file, editor, element);
 
@@ -312,10 +293,15 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
       }
     }
 
-    //check attached sources if any
-    if (element instanceof PsiCompiledElement) {
-      element = element.getNavigationElement();
+    if (element != null) {
+      //1. get element from sources if target is located in library class file
+      //2. get original element if the element is synthetic (e.g. IDEA-224198)
+      PsiElement navigationElement = element.getNavigationElement();
+      if (navigationElement != null) {
+        element = navigationElement;
+      }
     }
+
     return Pair.pair(element, ref);
   }
 

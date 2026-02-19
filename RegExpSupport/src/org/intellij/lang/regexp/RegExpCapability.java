@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import java.util.EnumSet;
 
-/**
- * @author yole
- */
+
 public enum RegExpCapability {
   XML_SCHEMA_MODE,
 
@@ -49,6 +47,7 @@ public enum RegExpCapability {
    * '\h'
    */
   ALLOW_HEX_DIGIT_CLASS,
+
   /**
    * supports [] to be valid character class
    */
@@ -119,10 +118,32 @@ public enum RegExpCapability {
    * \g{[integer]} \g[unsigned integer]
    */
   PCRE_BACK_REFERENCES,
+
+  /**
+   * (?group_id)
+   */
+  PCRE_NUMBERED_GROUP_REF,
+
+  /**
+   * Allow PCRE conditions DEFINE and VERSION[>]?=n.m in conditional groups
+   */
+  PCRE_CONDITIONS,
+
+  /**
+   * Consider a char range starting with a shorthand character class an error. For example: {@code [\w-z]}.
+   * Otherwise, this is not considered a range but separate characters.
+   */
+  SHORTHAND_CLASS_RANGE_START_ERROR,
+  /**
+   * Consider a char range ending with a shorthand character class an error. For example: {@code [a-\w]}.
+   * Otherwise, this is not considered a range but separate characters.
+   */
+  SHORTHAND_CLASS_RANGE_END_ERROR,
   ;
   static final EnumSet<RegExpCapability> DEFAULT_CAPABILITIES = EnumSet.of(NESTED_CHARACTER_CLASSES,
                                                                            ALLOW_HORIZONTAL_WHITESPACE_CLASS,
                                                                            UNICODE_CATEGORY_SHORTHAND,
                                                                            EXTENDED_UNICODE_CHARACTER,
-                                                                           PROPERTY_VALUES);
+                                                                           PROPERTY_VALUES,
+                                                                           SHORTHAND_CLASS_RANGE_END_ERROR);
 }

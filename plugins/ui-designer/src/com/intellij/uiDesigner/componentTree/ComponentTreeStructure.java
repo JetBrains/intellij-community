@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -17,29 +17,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ComponentTreeStructure extends AbstractTreeStructure {
-  private static final Logger LOG = Logger.getInstance(ComponentPtr.class);
+  private static final Logger LOG = Logger.getInstance(ComponentTreeStructure.class);
 
   private final Object myRootElement;
   private final GuiEditor myEditor;
 
-  ComponentTreeStructure(@NotNull final GuiEditor editor) {
+  ComponentTreeStructure(final @NotNull GuiEditor editor) {
     myRootElement = new ComponentTreeStructureRoot();
     myEditor = editor;
   }
 
-  @NotNull
   @Override
-  public Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRootElement;
   }
 
   @Override
-  public Object @NotNull [] getChildElements(@NotNull final Object element) {
+  public Object @NotNull [] getChildElements(final @NotNull Object element) {
     if (element == myRootElement) {
       ArrayList<Object> elements = new ArrayList<>();
       final RadRootContainer rootContainer = myEditor.getRootContainer();
@@ -54,12 +49,10 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
       }
       return elements.toArray();
     }
-    else if (element instanceof ComponentPtr) {
-      final ComponentPtr ptr = (ComponentPtr)element;
+    else if (element instanceof ComponentPtr ptr) {
       LOG.assertTrue(ptr.isValid()); // pointer must be valid
       final RadComponent component = ptr.getComponent();
-      if (component instanceof RadContainer) {
-        final RadContainer container = (RadContainer)component;
+      if (component instanceof RadContainer container) {
         final ComponentPtr[] ptrs = new ComponentPtr[container.getComponentCount()];
         for (int i = 0; i < ptrs.length; i++) {
           ptrs[i] = new ComponentPtr(myEditor, container.getComponent(i));
@@ -92,7 +85,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getParentElement(@NotNull final Object element) {
+  public Object getParentElement(final @NotNull Object element) {
     if (element instanceof ComponentTreeStructureRoot) {
       return null;
     }
@@ -105,8 +98,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
     else if (element instanceof RadButtonGroup) {
       return myEditor.getRootContainer().getButtonGroups();
     }
-    else if (element instanceof ComponentPtr) { // RadContainer is also RadComponent
-      final ComponentPtr ptr = (ComponentPtr)element;
+    else if (element instanceof ComponentPtr ptr) { // RadContainer is also RadComponent
       if (!ptr.isValid()) return myRootElement;
       final RadComponent component = ptr.getComponent();
       if (component instanceof RadRootContainer) {
@@ -122,8 +114,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor<?> createDescriptor(final @NotNull Object element, final NodeDescriptor parentDescriptor) {
     if (element == myRootElement) {
       return new RootDescriptor(parentDescriptor, myRootElement);
     }
@@ -133,8 +124,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure {
     else if (element instanceof LwInspectionSuppression[]) {
       return new SuppressionGroupDescriptor(parentDescriptor, (LwInspectionSuppression[])element);
     }
-    else if (element instanceof LwInspectionSuppression) {
-      final LwInspectionSuppression suppression = (LwInspectionSuppression)element;
+    else if (element instanceof LwInspectionSuppression suppression) {
       RadComponent target = (RadComponent)(suppression.getComponentId() == null
                                            ? null
                                            : FormEditingUtil.findComponent(myEditor.getRootContainer(), suppression.getComponentId()));

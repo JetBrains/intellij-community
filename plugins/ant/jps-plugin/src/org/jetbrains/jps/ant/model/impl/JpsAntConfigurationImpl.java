@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.ant.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +13,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationImpl> implements JpsAntConfiguration {
+public final class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationImpl> implements JpsAntConfiguration {
   public static final JpsElementChildRole<JpsAntConfiguration> ROLE = JpsElementChildRoleBase.create("ant configuration");
   private String myProjectDefaultAntName;
   private final Map<String, JpsAntBuildFileOptions> myOptionsMap = new HashMap<>();
@@ -37,9 +23,8 @@ public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationI
     myOptionsMap.putAll(options);
   }
 
-  @NotNull
   @Override
-  public JpsAntConfigurationImpl createCopy() {
+  public @NotNull JpsAntConfigurationImpl createCopy() {
     return new JpsAntConfigurationImpl(myOptionsMap, myProjectDefaultAntName);
   }
 
@@ -49,24 +34,17 @@ public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationI
   }
 
   @Override
-  @Nullable
-  public String getProjectDefaultAntName() {
+  public @Nullable String getProjectDefaultAntName() {
     return myProjectDefaultAntName;
   }
 
   @Override
-  public void applyChanges(@NotNull JpsAntConfigurationImpl modified) {
-  }
-
-  @Override
-  @NotNull
-  public Collection<JpsAntBuildFileOptions> getOptionsForAllBuildFiles() {
+  public @NotNull Collection<JpsAntBuildFileOptions> getOptionsForAllBuildFiles() {
     return myOptionsMap.values();
   }
 
-  @NotNull
   @Override
-  public JpsAntBuildFileOptions getOptions(@NotNull String buildFileUrl) {
+  public @NotNull JpsAntBuildFileOptions getOptions(@NotNull String buildFileUrl) {
     JpsAntBuildFileOptions options = myOptionsMap.get(buildFileUrl);
     if (options != null) {
       return options;

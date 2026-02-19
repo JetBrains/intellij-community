@@ -1,23 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.copy.CopyClassesHandler;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.TestIndexingModeSupporter;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class CopyClassTest extends LightMultiFileTestCase {
 
   @Override
@@ -41,6 +48,10 @@ public class CopyClassTest extends LightMultiFileTestCase {
     doTest("Foo", "Bar");
   }
 
+  public void testConflictInSameFolder() throws Exception {
+    assertThrows(RuntimeException.class, "already exist", () -> doTest("Foo", "Foo"));
+  }
+
   public void testLibraryClass() throws Exception {  // IDEADEV-28791
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
@@ -58,7 +69,7 @@ public class CopyClassTest extends LightMultiFileTestCase {
   }
 
   private void performAction(final String oldName, final String copyName) throws Exception {
-    final PsiClass oldClass = myFixture.findClass(oldName);
+    final PsiClass oldClass = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(() -> myFixture.findClass(oldName));
 
     WriteCommandAction.writeCommandAction(getProject()).run(
                                              () -> {
@@ -117,5 +128,12 @@ public class CopyClassTest extends LightMultiFileTestCase {
       final PsiDirectory targetP2Dir = getPsiManager().findDirectory(myFixture.findFileInTempDir("p2"));
       new CopyClassesHandler().doCopy(new PsiElement[]{sourceP1Dir}, targetP2Dir);
     }, "multifile/" + getTestName(true));
+  }
+
+  public static Test suite() {
+    TestSuite suite = new TestSuite();
+    suite.addTestSuite(CopyClassTest.class);
+    TestIndexingModeSupporter.addAllTests(CopyClassTest.class, suite);
+    return TestFrameworkUtil.flattenSuite(suite);
   }
 }

@@ -1,27 +1,43 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.util.containers.UnsignedShortArrayList;
-import gnu.trove.TIntIntHashMap;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.function.IntUnaryOperator;
 
-/** An int list where most values are in range 0..2^16 */
-class MostlyUShortIntList implements IntUnaryOperator {
+/** An int list where most values are in the range 0..2^16 */
+@ApiStatus.Internal
+public final class MostlyUShortIntList implements IntUnaryOperator {
   private static final int IN_MAP = Character.MAX_VALUE;
-  private final UnsignedShortArrayList myList;
-  private TIntIntHashMap myMap;
+  private char[] myData; // use char as an unsigned short
+  private int mySize;
+  private StrippedIntOpenHashMap myMap;
 
-  MostlyUShortIntList(int initialCapacity) {
-    myList = new UnsignedShortArrayList(initialCapacity);
+  public MostlyUShortIntList(int initialCapacity) {
+    myData = new char[initialCapacity];
   }
 
-  void add(int value) {
+  private void ensureCapacity(int minCapacity) {
+    int oldCapacity = myData.length;
+    if (minCapacity > oldCapacity){
+      char[] oldData = myData;
+      int newCapacity = oldCapacity * 3 / 2 + 1;
+      if (newCapacity < minCapacity){
+        newCapacity = minCapacity;
+      }
+      myData = new char[newCapacity];
+      System.arraycopy(oldData, 0, myData, 0, mySize);
+    }
+  }
+
+  public void add(int value) {
     if (value < 0 || value >= IN_MAP) {
-      initMap().put(myList.size(), value);
+      initMap().put(mySize, value);
       value = IN_MAP;
     }
-    myList.add(value);
+    ensureCapacity(mySize + 1);
+    myData[mySize++] = (char)value;
   }
 
   void set(int index, int value) {
@@ -29,11 +45,13 @@ class MostlyUShortIntList implements IntUnaryOperator {
       initMap().put(index, value);
       value = IN_MAP;
     }
-    myList.setQuick(index, value);
+    myData[index] = (char)value;
   }
 
-  private TIntIntHashMap initMap() {
-    if (myMap == null) myMap = new TIntIntHashMap();
+  private StrippedIntOpenHashMap initMap() {
+    if (myMap == null) {
+      myMap = new StrippedIntOpenHashMap();
+    }
     return myMap;
   }
 
@@ -43,18 +61,17 @@ class MostlyUShortIntList implements IntUnaryOperator {
   }
 
   public int get(int index) {
-    int value = myList.getQuick(index);
-    return value == IN_MAP ? myMap.get(index) : value;
+    int value = myData[index];
+    return value == IN_MAP ? myMap.get(index, 0) : value;
   }
 
   int size() {
-    return myList.size();
+    return mySize;
   }
 
   void trimToSize() {
-    myList.trimToSize();
-    if (myMap != null) {
-      myMap.trimToSize();
+    if (mySize < myData.length){
+      myData = ArrayUtil.realloc(myData, mySize);
     }
   }
 }

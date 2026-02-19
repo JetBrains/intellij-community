@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jackson-jr-objects" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.jr:jackson-jr-objects:2.19.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.19.0/jackson-jr-objects-2.19.0.jar">
+              <sha256sum>1fbd56f47b0a35031585fa0444b81f1f284ebe4a8752a86f42d0c092c4d693e7</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.19.0/jackson-jr-objects-2.19.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.19.0/jackson-jr-objects-2.19.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

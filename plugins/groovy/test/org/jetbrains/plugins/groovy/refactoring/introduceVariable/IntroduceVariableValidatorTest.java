@@ -36,9 +36,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class IntroduceVariableValidatorTest extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
@@ -62,7 +59,6 @@ public class IntroduceVariableValidatorTest extends LightJavaCodeInsightFixtureT
   protected boolean replaceAllOccurences = false;
 
   private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException {
-    String result = "";
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     if (startOffset < 0) {
       startOffset = fileText.indexOf(ALL_MARKER);
@@ -91,8 +87,7 @@ public class IntroduceVariableValidatorTest extends LightJavaCodeInsightFixtureT
     String varName = "preved";
     GroovyVariableValidator validator =
       new GroovyVariableValidator(new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, null, occurences, tempContainer));
-    result = validator.isOKTest(varName, replaceAllOccurences);
-    return result;
+    return validator.isOKTest(varName, replaceAllOccurences);
   }
 
 

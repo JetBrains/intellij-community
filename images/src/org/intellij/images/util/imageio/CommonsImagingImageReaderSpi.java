@@ -4,7 +4,11 @@ package org.intellij.images.util.imageio;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import org.apache.commons.imaging.*;
+import org.apache.commons.imaging.ImageFormat;
+import org.apache.commons.imaging.ImageFormats;
+import org.apache.commons.imaging.ImageInfo;
+import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.bytesource.ByteSource;
 
 import javax.imageio.ImageReadParam;
@@ -16,7 +20,12 @@ import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
 public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
 
@@ -28,15 +37,18 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
     vendorName = "JetBrains, s.r.o.";
     version = "1.0";
 
-    // todo standard GIF/BMP formats can be optionally skipped as well
     // JPEG is skipped due to Exception: cannot read or write JPEG images. (JpegImageParser.java:92)
     // tiff reader seems to be broken
     // PNG reader has bugs with well-compressed PNG images, use standard one instead
+    // GIF has OOM issues IJPL-175323
+    // Skip BMP as a precaution
     myFormats = new ArrayList<>(Arrays.asList(ImageFormats.values()));
     myFormats.removeAll(Arrays.asList(ImageFormats.UNKNOWN,
-                                         ImageFormats.JPEG,
-                                         ImageFormats.TIFF,
-                                         ImageFormats.PNG));
+                                      ImageFormats.JPEG,
+                                      ImageFormats.TIFF,
+                                      ImageFormats.GIF,
+                                      ImageFormats.BMP,
+                                      ImageFormats.PNG));
 
     names = new String[myFormats.size() * 2];
     suffixes = new String[myFormats.size()];
@@ -59,10 +71,9 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
 
   @Override
   public boolean canDecodeInput(Object input) throws IOException {
-    if (!(input instanceof ImageInputStream)) {
+    if (!(input instanceof ImageInputStream stream)) {
       return false;
     }
-    final ImageInputStream stream = (ImageInputStream)input;
     try {
       final ImageFormat imageFormat = Imaging.guessFormat(new MyByteSource(stream));
       if (myFormats.contains(imageFormat)) {

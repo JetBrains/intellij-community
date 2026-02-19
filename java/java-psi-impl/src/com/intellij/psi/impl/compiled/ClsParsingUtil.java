@@ -1,14 +1,34 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.lang.java.lexer.JavaLexer;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationOwner;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiConstantEvaluationHelper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaParserFacade;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPrefixExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyElement;
@@ -19,14 +39,11 @@ import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public final class ClsParsingUtil {
   private static final Logger LOG = Logger.getInstance(ClsParsingUtil.class);
 
   private static final JavaParserUtil.ParserWrapper ANNOTATION_VALUE =
-    builder -> JavaParser.INSTANCE.getDeclarationParser().parseAnnotationValue(builder);
+    (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parseAnnotationValue(builder);
 
   private ClsParsingUtil() { }
 
@@ -103,7 +120,7 @@ public final class ClsParsingUtil {
     if (expr instanceof PsiLiteralExpression) {
       PsiFile file = parent.getContainingFile();
       boolean forDecompiling = file instanceof ClsFileImpl && ((ClsFileImpl)file).isForDecompiling();
-      PsiType type = forDecompiling ? PsiType.NULL : expr.getType();
+      PsiType type = forDecompiling ? (PsiPrimitiveType)PsiTypes.nullType() : expr.getType();
       Object value = forDecompiling ? null : ((PsiLiteralExpression)expr).getValue();
       return new ClsLiteralExpressionImpl(parent, expr.getText(), type, value);
     }
@@ -143,7 +160,7 @@ public final class ClsParsingUtil {
 
     PsiFile file = parent.getContainingFile();
     if (file instanceof ClsFileImpl && ((ClsFileImpl)file).isForDecompiling()) {
-      return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiType.NULL, null);
+      return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiTypes.nullType(), null);
     }
 
     PsiConstantEvaluationHelper evaluator = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper();
@@ -157,7 +174,7 @@ public final class ClsParsingUtil {
   }
 
   public static boolean isJavaIdentifier(@NotNull String identifier, @NotNull LanguageLevel level) {
-    return StringUtil.isJavaIdentifier(identifier) && !JavaLexer.isKeyword(identifier, level);
+    return StringUtil.isJavaIdentifier(identifier) && !PsiUtil.isKeyword(identifier, level);
   }
 
   // expecting the parameter in the "unsigned short" format

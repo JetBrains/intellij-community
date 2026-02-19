@@ -1,24 +1,52 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiDiamondTypeImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public final class PsiDiamondTypeUtil {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
@@ -28,7 +56,7 @@ public final class PsiDiamondTypeUtil {
 
   public static boolean canCollapseToDiamond(final PsiNewExpression expression,
                                              final PsiNewExpression context,
-                                             @Nullable final PsiType expectedType) {
+                                             final @Nullable PsiType expectedType) {
     return canCollapseToDiamond(expression, context, expectedType, false);
   }
 
@@ -38,10 +66,10 @@ public final class PsiDiamondTypeUtil {
   }
 
   private static boolean canCollapseToDiamond(final PsiNewExpression expression,
-                                             final PsiNewExpression context,
-                                             @Nullable final PsiType expectedType,
-                                             boolean skipDiamonds) {
-    if (PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7)) {
+                                              final PsiNewExpression context,
+                                              final @Nullable PsiType expectedType,
+                                              boolean skipDiamonds) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();
@@ -79,17 +107,6 @@ public final class PsiDiamondTypeUtil {
       }
     }
     return false;
-  }
-
-  /**
-   * @deprecated please use {@link com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil#replaceExplicitWithDiamond(PsiElement)}
-   * To be deleted in 2019.3
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
-    PsiElement replacement = createExplicitReplacement(psiElement);
-    return replacement == null ? psiElement : psiElement.replace(replacement);
   }
 
   public static PsiElement createExplicitReplacement(PsiElement psiElement) {
@@ -147,7 +164,7 @@ public final class PsiDiamondTypeUtil {
 
   public static String getCollapsedType(PsiType type, PsiElement context) {
     String typeText = type.getCanonicalText();
-    if (PsiUtil.isLanguageLevel7OrHigher(context)) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final int idx = typeText.indexOf('<');
       if (idx >= 0) {
         return typeText.substring(0, idx) + "<>";
@@ -213,6 +230,10 @@ public final class PsiDiamondTypeUtil {
           }
         }
       }
+
+      if (copy != null && copy.getContainingFile() != null) {
+        GlobalSearchScope.markFileForWeakScope(copy.getContainingFile().getViewProvider().getVirtualFile());
+      }
       final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
       if (context instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRefCopy = PsiTreeUtil.getParentOfType(copy, PsiMethodReferenceExpression.class, false);
@@ -245,7 +266,8 @@ public final class PsiDiamondTypeUtil {
       if (newParentCall != null && oldParentCall != null) {
         JavaResolveResult newResult = newParentCall.resolveMethodGenerics();
         JavaResolveResult oldResult = oldParentCall.resolveMethodGenerics();
-        if (!Objects.equals(newResult.getElement(), oldResult.getElement()) ||
+        if (newResult.getElement() == null ||
+            !newResult.getElement().isEquivalentTo(oldResult.getElement()) ||
             !new RecaptureTypeMapper().recapture(newResult.getSubstitutor()).equals(oldResult.getSubstitutor())) {
           return false;
         }
@@ -302,7 +324,7 @@ public final class PsiDiamondTypeUtil {
     exprCopy.getTypeArgumentList().replace(list);
 
     final JavaResolveResult copyResult = exprCopy.resolveMethodGenerics();
-    if (method != copyResult.getElement()) return false;
+    if (!method.isEquivalentTo(copyResult.getElement())) return false;
     final PsiSubstitutor psiSubstitutor = copyResult.getSubstitutor();
     for (int i = 0, length = typeParameters.length; i < length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];

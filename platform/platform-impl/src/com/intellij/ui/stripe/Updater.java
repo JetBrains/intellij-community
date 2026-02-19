@@ -10,15 +10,18 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
+@ApiStatus.Internal
 public abstract class Updater<Painter extends ErrorStripePainter> implements Disposable {
   private final Painter myPainter;
   private final JScrollBar myScrollBar;
@@ -49,8 +52,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
       myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.getErrorStripeMarkMinHeight(), JBUIScale.scale(4)));
       myPainter.setErrorStripeGap(Registry.intValue("error.stripe.gap", 0));
-      if (myPainter instanceof ExtraErrorStripePainter) {
-        ExtraErrorStripePainter extra = (ExtraErrorStripePainter)myPainter;
+      if (myPainter instanceof ExtraErrorStripePainter extra) {
         extra.setGroupSwap(!myScrollBar.getComponentOrientation().isLeftToRight());
       }
       myPainter.paint(g, x, y, width, height, object);

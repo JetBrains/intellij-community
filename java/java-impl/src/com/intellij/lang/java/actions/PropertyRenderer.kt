@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.CodeInsightUtil.positionCursor
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
 import com.intellij.codeInsight.ExpectedTypeInfo
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.positionCursor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.ParameterNameExpression
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.template.TemplateBuilderImpl
@@ -16,7 +16,12 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 
@@ -32,22 +37,30 @@ internal abstract class PropertyRenderer(
   private val javaUsage = request as? CreateMethodFromJavaUsageRequest
   private val isStatic = JvmModifier.STATIC in request.modifiers
   private val propertyName = nameKind.first
-  protected val propertyKind = nameKind.second
+  internal val propertyKind: PropertyKind = nameKind.second
 
   private val suggestedFieldName = run {
     val kind = if (isStatic) VariableKind.STATIC_FIELD else VariableKind.FIELD
     codeStyleManager.propertyNameToVariableName(propertyName, kind)
   }
 
-  protected fun generatePrototypeField(): PsiField {
-    val prototypeType = if (propertyKind == PropertyKind.BOOLEAN_GETTER) PsiType.BOOLEAN else PsiType.VOID
+  fun generatePrototypeField(): PsiField {
+    val prototypeType = if (propertyKind == PropertyKind.BOOLEAN_GETTER || isBooleanSetter()) PsiTypes.booleanType() else PsiTypes.voidType()
     return factory.createField(suggestedFieldName, prototypeType).setStatic(isStatic)
   }
-
+  
+  private fun isBooleanSetter(): Boolean {
+    if (propertyKind == PropertyKind.SETTER) {
+      val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
+      return expectedType != null && PsiTypes.booleanType() == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)
+    }
+    return false
+  }
+  
   private val expectedTypes: List<ExpectedTypeInfo> = when (propertyKind) {
-    PropertyKind.GETTER -> extractExpectedTypes(project, request.returnType).orObject(target)
-    PropertyKind.BOOLEAN_GETTER -> listOf(PsiType.BOOLEAN.toExpectedType())
-    PropertyKind.SETTER -> extractExpectedTypes(project, request.expectedParameters.single().expectedTypes).orObject(target)
+    PropertyKind.GETTER -> extractExpectedTypes(project, request.returnType, target).orObject(target)
+    PropertyKind.BOOLEAN_GETTER -> listOf(PsiTypes.booleanType().toExpectedType())
+    PropertyKind.SETTER -> extractExpectedTypes(project, request.expectedParameters.single().expectedTypes, target).orObject(target)
   }
 
   private lateinit var targetDocument: Document
@@ -64,6 +77,7 @@ internal abstract class PropertyRenderer(
     if (!navigate()) return
     val builder = TemplateBuilderImpl(target)
     builder.setGreedyToRight(true)
+    builder.setScrollToTemplate(request.isStartTemplate)
     val typeExpression = fillTemplate(builder) ?: return
     val template = builder.buildInlineTemplate().apply {
       isToShortenLongNames = true

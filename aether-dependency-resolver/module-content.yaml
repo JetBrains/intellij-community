@@ -1,0 +1,10 @@
+- name: dist.all/lib/intellij.java.aetherDependencyResolver.jar
+  modules:
+  - name: intellij.java.aetherDependencyResolver
+    libraries:
+      org.apache.maven.resolver:maven-resolver-transport-file:
+      - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1/maven-resolver-transport-file-1.jar
+      org.apache.maven.resolver:maven-resolver-transport-http:
+      - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1/maven-resolver-transport-http-1.jar
+      org.apache.maven.resolver:maven-resolver-connector-basic:
+      - name: $MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1/maven-resolver-connector-basic-1.jar

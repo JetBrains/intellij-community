@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.execution.ui.ConsoleView;
@@ -14,9 +14,9 @@ import java.util.Collections;
 import java.util.List;
 
 public final class VcsConsoleLine {
-  private final List<Pair<String, ConsoleViewContentType>> myChunks;
+  private final @NotNull List<? extends Pair<String, ConsoleViewContentType>> myChunks;
 
-  private VcsConsoleLine(@NotNull List<Pair<String, ConsoleViewContentType>> chunks) {
+  private VcsConsoleLine(@NotNull List<? extends Pair<String, ConsoleViewContentType>> chunks) {
     myChunks = chunks;
   }
 
@@ -29,13 +29,11 @@ public final class VcsConsoleLine {
     console.print("\n", lastType);
   }
 
-  @Nullable
-  public static VcsConsoleLine create(@Nls @Nullable String message, @NotNull ConsoleViewContentType contentType) {
+  public static @Nullable VcsConsoleLine create(@Nls @Nullable String message, @NotNull ConsoleViewContentType contentType) {
     return create(Collections.singletonList(Pair.create(message, contentType)));
   }
 
-  @Nullable
-  public static VcsConsoleLine create(@NotNull List<Pair<@Nls String, ConsoleViewContentType>> lineChunks) {
+  public static @Nullable VcsConsoleLine create(@NotNull List<? extends Pair<@Nls String, ConsoleViewContentType>> lineChunks) {
     List<Pair<String, ConsoleViewContentType>> chunks = ContainerUtil.filter(lineChunks, it -> !StringUtil.isEmptyOrSpaces(it.first));
     if (chunks.isEmpty()) return null;
     return new VcsConsoleLine(chunks);

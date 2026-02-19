@@ -1,14 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExternalizablePath;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.JavaRunConfigurationBase;
+import com.intellij.execution.ShortenCommandLine;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ScriptFileUtil;
@@ -38,11 +49,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.JdomKt;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,36 +63,50 @@ import org.jetbrains.plugins.groovy.runner.util.CommonProgramRunConfigurationPar
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.intellij.execution.util.ProgramParametersUtil.configureConfiguration;
 
-/**
- * @author peter
- */
-public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element>
+public final class GroovyScriptRunConfiguration extends JavaRunConfigurationBase
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
 
   private String vmParams;
   private String workDir;
   private boolean isDebugEnabled;
-  private boolean isAddClasspathToTheRunner;
-  @Nullable private String scriptParams;
-  @Nullable private String scriptPath;
+  private boolean isAddClasspathToTheRunner = true;
+  private @Nullable String scriptParams;
+  private @Nullable String scriptPath;
   private final Map<String, String> envs = new LinkedHashMap<>();
   public boolean passParentEnv = true;
 
   private boolean myAlternativeJrePathEnabled;
   private @Nullable String myAlternativeJrePath;
+  private @Nullable ShortenCommandLine shortenClasspathMode;
 
   public GroovyScriptRunConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
-    super(name, new RunConfigurationModule(project), factory);
+    super(name, new JavaRunConfigurationModule(project, true), factory);
     workDir = PathUtil.getLocalPath(project.getBaseDir());
   }
 
-  @Nullable
-  public Module getModule() {
-    return ObjectUtils.chooseNotNull(getConfigurationModule().getModule(), ContainerUtil.getFirstItem(getValidModules()));
+  public @Nullable Module getModule() {
+    Module module = getConfigurationModule().getModule();
+    if (module != null) return module;
+    return getFirstValidModule();
+  }
+
+  private @Nullable Module getFirstValidModule() {
+    final GroovyScriptRunner scriptRunner = getScriptRunner();
+    Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+    if (scriptRunner == null) {
+      return modules[0];
+    }
+    for (Module module : modules) {
+      if (scriptRunner.isValidModule(module)) {
+        return module;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -105,15 +127,13 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     return res;
   }
 
-  @Nullable
-  private GroovyScriptRunner getScriptRunner() {
+  public @Nullable GroovyScriptRunner getScriptRunner() {
     final VirtualFile scriptFile = ScriptFileUtil.findScriptFileByPath(getScriptPath());
     if (scriptFile == null) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (!(psiFile instanceof GroovyFile)) return null;
+    if (!(psiFile instanceof GroovyFile groovyFile)) return null;
 
-    final GroovyFile groovyFile = (GroovyFile)psiFile;
     if (groovyFile.isScript()) {
       return GroovyScriptUtil.getScriptType(groovyFile).getRunner();
     }
@@ -134,6 +154,12 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     }
     isDebugEnabled = Boolean.parseBoolean(JDOMExternalizer.readString(element, "debug"));
     isAddClasspathToTheRunner = Boolean.parseBoolean(JDOMExternalizer.readString(element, "addClasspath"));
+
+    String shortenClasspath = JDOMExternalizer.readString(element, "shortenClasspath");
+    if (shortenClasspath != null) {
+      shortenClasspathMode = ShortenCommandLine.valueOf(shortenClasspath);
+    }
+
     envs.clear();
     JDOMExternalizer.readMap(element, envs, null, "env");
 
@@ -151,6 +177,9 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     JdomKt.addOptionTag(element, "debug", Boolean.toString(isDebugEnabled), "setting");
     if (isAddClasspathToTheRunner) {
       JdomKt.addOptionTag(element, "addClasspath", Boolean.toString(true), "setting");
+    }
+    if (shortenClasspathMode != null) {
+        JDOMExternalizer.write(element, "shortenClasspath", shortenClasspathMode.name());
     }
     JDOMExternalizer.writeMap(element, envs, null, "env");
 
@@ -171,17 +200,16 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     if (scriptRunner == null) return null;
 
     return new JavaCommandLineState(environment) {
-      @NotNull
       @Override
-      protected OSProcessHandler startProcess() throws ExecutionException {
+      protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
         final OSProcessHandler handler = super.startProcess();
         handler.setShouldDestroyProcessRecursively(true);
         if (scriptRunner.shouldRefreshAfterFinish()) {
-          handler.addProcessListener(new ProcessAdapter() {
+          handler.addProcessListener(new ProcessListener() {
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
               if (!ApplicationManager.getApplication().isDisposed()) {
-                VirtualFileManager.getInstance().asyncRefresh(null);
+                VirtualFileManager.getInstance().asyncRefresh();
               }
             }
           });
@@ -192,28 +220,34 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
 
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        final Module module = getModule();
-        final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(scriptFile);
-        String jrePath = isAlternativeJrePathEnabled() ? getAlternativeJrePath() : null;
-        JavaParameters params = new JavaParameters();
-        params.setUseClasspathJar(true);
-        params.setDefaultCharset(getProject());
-        params.setJdk(
-          module == null ? JavaParametersUtil.createProjectJdk(getProject(), jrePath)
-                         : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
-        );
-        configureConfiguration(params, new CommonProgramRunConfigurationParametersDelegate(GroovyScriptRunConfiguration.this) {
-          @Nullable
-          @Override
-          public String getProgramParameters() {
-            return null;
-          }
-        });
-        scriptRunner.configureCommandLine(params, module, tests, scriptFile, GroovyScriptRunConfiguration.this);
-
-        return params;
+        return GroovyScriptRunConfiguration.this.createJavaParameters(scriptFile, scriptRunner);
       }
     };
+  }
+
+  public @NotNull JavaParameters createJavaParameters(VirtualFile scriptFile, GroovyScriptRunner scriptRunner) throws CantRunException {
+    final Module module = getModule();
+    final boolean tests = ProjectRootManager.getInstance(getProject()).getFileIndex().isInTestSourceContent(scriptFile);
+    String jrePath = isAlternativeJrePathEnabled() ? getAlternativeJrePath() : null;
+    JavaParameters params = new JavaParameters();
+    params.setUseClasspathJar(true);
+    params.setDefaultCharset(getProject());
+    params.setJdk(
+      module == null ? JavaParametersUtil.createProjectJdk(getProject(), jrePath)
+                     : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
+    );
+    if (shortenClasspathMode != null) {
+      params.setShortenCommandLine(shortenClasspathMode);
+    }
+    configureConfiguration(params, new CommonProgramRunConfigurationParametersDelegate(this) {
+      @Override
+      public @Nullable String getProgramParameters() {
+        return null;
+      }
+    });
+    scriptRunner.configureCommandLine(params, module, tests, scriptFile, this);
+
+    return params;
   }
 
   @Override
@@ -228,8 +262,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
       return new RefactoringElementAdapter() {
         @Override
         protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-          if (newElement instanceof GroovyFile) {
-            GroovyFile file = (GroovyFile)newElement;
+          if (newElement instanceof GroovyFile file) {
             setScriptPath(ScriptFileUtil.getScriptFilePath(file.getVirtualFile()));
           }
         }
@@ -256,8 +289,17 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     return null;
   }
 
-  @Nullable
-  private static String getPathByElement(@NotNull PsiElement element) {
+  @Override
+  public @Nullable ShortenCommandLine getShortenCommandLine() {
+    return shortenClasspathMode;
+  }
+
+  @Override
+  public void setShortenCommandLine(@Nullable ShortenCommandLine mode) {
+    shortenClasspathMode = mode;
+  }
+
+  private static @Nullable String getPathByElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     VirtualFile vfile = file.getVirtualFile();
@@ -282,8 +324,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
   }
 
   @Override
-  @NotNull
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new GroovyRunConfigurationEditor(getProject());
   }
 
@@ -341,9 +382,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     myAlternativeJrePathEnabled = alternativeJrePathEnabled;
   }
 
-  @Nullable
   @Override
-  public String getAlternativeJrePath() {
+  public @Nullable String getAlternativeJrePath() {
     return myAlternativeJrePath;
   }
 
@@ -388,9 +428,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     this.envs.putAll(envs);
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return envs;
   }
 
@@ -420,8 +459,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     isAddClasspathToTheRunner = addClasspathToTheRunner;
   }
 
-  @Nullable
-  public @NlsSafe String getScriptPath() {
+  public @Nullable @NlsSafe String getScriptPath() {
     return scriptPath;
   }
 

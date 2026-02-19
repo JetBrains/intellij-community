@@ -1,0 +1,1 @@
+public class My<caret>ActionGroup extends com.intellij.openapi.actionSystem.ActionGroup {}

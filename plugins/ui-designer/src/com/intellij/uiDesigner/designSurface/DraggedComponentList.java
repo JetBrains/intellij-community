@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,8 +9,11 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -19,9 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author yole
- */
+
 public final class DraggedComponentList implements Transferable, ComponentDragObject {
   private static final Logger LOG = Logger.getInstance(DraggedComponentList.class);
 
@@ -68,7 +69,7 @@ public final class DraggedComponentList implements Transferable, ComponentDragOb
     });
 
     RadComponent componentUnderMouse = null;
-    int componentUnderMouseIndex = mySelection.size() == 0 ? -1 : 0;
+    int componentUnderMouseIndex = mySelection.isEmpty() ? -1 : 0;
     if (pnt != null) {
       for(int i=0; i<mySelection.size(); i++) {
         RadComponent c = mySelection.get(i);
@@ -138,8 +139,7 @@ public final class DraggedComponentList implements Transferable, ComponentDragOb
     return new DraggedComponentList(list);
   }
 
-  @Nullable
-  public static DraggedComponentList fromTransferable(final Transferable transferable) {
+  public static @Nullable DraggedComponentList fromTransferable(final Transferable transferable) {
     if (transferable.isDataFlavorSupported(ourDataFlavor)) {
       Object data;
       try {
@@ -252,8 +252,7 @@ public final class DraggedComponentList implements Transferable, ComponentDragOb
   }
 
   @Override
-  @NotNull
-  public Dimension getInitialSize(final RadContainer targetContainer) {
+  public @NotNull Dimension getInitialSize(final RadContainer targetContainer) {
     if (myOriginalBounds.length == 1) {
       return myOriginalBounds [0].getSize();
     }

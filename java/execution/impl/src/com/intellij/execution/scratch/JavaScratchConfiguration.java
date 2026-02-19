@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.scratch;
 
 import com.intellij.debugger.DebuggerManager;
@@ -10,10 +10,19 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.DebuggingRunnerData;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -22,9 +31,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +48,8 @@ import java.io.File;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchConfiguration extends ApplicationConfiguration {
-  protected JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
+public final class JavaScratchConfiguration extends ApplicationConfiguration {
+  JavaScratchConfiguration(String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(name, project, factory);
   }
 
@@ -47,7 +62,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final String className = getMainClassName();
-    if (className == null || className.length() == 0) {
+    if (className == null || className.isEmpty()) {
       throw new RuntimeConfigurationError(ExecutionBundle.message("no.main.class.specified.error.text"));
     }
     if (getScratchFileUrl() == null) {
@@ -90,9 +105,8 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
         }
       }
 
-      @NotNull
       @Override
-      protected OSProcessHandler startProcess() throws ExecutionException {
+      protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
         final OSProcessHandler handler = super.startProcess();
         if (getRunnerSettings() instanceof DebuggingRunnerData) {
           final VirtualFile vFile = getConfiguration().getScratchVirtualFile();
@@ -115,9 +129,37 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     return state;
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @Nullable PsiClass getMainClass() {
+    // The class present in the scratch file is not part of the Project,
+    // so the default implementation of this method from superclass won't do here.
+    String mainClassName = getMainClassName();
+    if (mainClassName == null) {
+      throw new IllegalStateException("Main class name is not set");
+    }
+    VirtualFile scratchVirtualFile = getScratchVirtualFile();
+    if (scratchVirtualFile == null) {
+      throw new IllegalArgumentException("VirtualFile of the scratch file doesn't exist");
+    }
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scratchVirtualFile);
+    if (!(psiFile instanceof PsiJavaFile psiJavaFile)) {
+      throw new IllegalArgumentException("PsiJavaFile expected");
+    }
+    Ref<PsiClass> psiClassRef = Ref.create(null);
+    psiJavaFile.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitClass(@NotNull PsiClass aClass) {
+        if (mainClassName.equals(aClass.getQualifiedName())) {
+          psiClassRef.set(aClass);
+        }
+        super.visitClass(aClass);
+      }
+    });
+    return psiClassRef.get();
+  }
+
+  @Override
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new JavaScratchConfigurable(getProject());
   }
 
@@ -125,20 +167,27 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     getOptions().setScratchFileUrl(url);
   }
 
-  @Nullable
-  public String getScratchFileUrl() {
+  public @Nullable String getScratchFileUrl() {
     return getOptions().getScratchFileUrl();
   }
 
-  @Nullable
-  public VirtualFile getScratchVirtualFile() {
+  public @Nullable VirtualFile getScratchVirtualFile() {
     final String url = getScratchFileUrl();
-    return url == null? null : VirtualFileManager.getInstance().findFileByUrl(url);
+    return url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
-  @NotNull
   @Override
-  protected JavaScratchConfigurationOptions getOptions() {
+  protected @NotNull JavaScratchConfigurationOptions getOptions() {
     return (JavaScratchConfigurationOptions)super.getOptions();
+  }
+
+  @Override
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+    return null;
+  }
+
+  @Override
+  public @Nullable String getDefaultTargetName() {
+    return null;
   }
 }

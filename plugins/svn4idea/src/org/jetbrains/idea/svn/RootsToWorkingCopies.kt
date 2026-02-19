@@ -11,8 +11,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ZipperUpdater
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
-import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.Companion.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -23,8 +23,8 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier
 
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
-@Service
-class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposable {
+@Service(Service.Level.PROJECT)
+class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, Disposable {
   private val myLock = Any()
   private val myRootMapping = mutableMapOf<VirtualFile, WorkingCopy>()
   private val myUnversioned = mutableSetOf<VirtualFile>()
@@ -54,7 +54,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposab
 
   @RequiresBackgroundThread
   fun getMatchingCopy(url: Url?): WorkingCopy? {
-    assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (url == null) return null
 
     val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)
@@ -71,7 +71,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposab
 
   @RequiresBackgroundThread
   fun getWcRoot(root: VirtualFile): WorkingCopy? {
-    assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     synchronized(myLock) {
       if (myUnversioned.contains(root)) return null
@@ -127,7 +127,12 @@ class RootsToWorkingCopies(private val project: Project) : VcsListener, Disposab
     // todo +- here... shouldnt be
     SvnAuthenticationNotifier.getInstance(project).clear()
 
-    myZipperUpdater.queue(myRechecker)
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      myRechecker.run()
+    }
+    else {
+      myZipperUpdater.queue(myRechecker)
+    }
   }
 
   companion object {

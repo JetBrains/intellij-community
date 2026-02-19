@@ -16,13 +16,12 @@
 
 package com.intellij.ide.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
-/**
- * @author dsl
- */
+@ApiStatus.Internal
 public interface DirectoryChooserView {
   JComponent getComponent();
 

@@ -1,16 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author dsl
- */
 public final class CachingSemiGraph<Node> implements InboundSemiGraph<Node> {
-  @NotNull
-  public static <T> InboundSemiGraph<T> cache(@NotNull InboundSemiGraph<T> original) {
+  public static @NotNull <T> InboundSemiGraph<T> cache(@NotNull InboundSemiGraph<T> original) {
     return new CachingSemiGraph<>(original);
   }
 
@@ -32,15 +36,13 @@ public final class CachingSemiGraph<Node> implements InboundSemiGraph<Node> {
     }
   }
 
-  @NotNull
   @Override
-  public Collection<Node> getNodes() {
+  public @NotNull Collection<Node> getNodes() {
     return myNodes;
   }
 
-  @NotNull
   @Override
-  public Iterator<Node> getIn(Node n) {
+  public @NotNull Iterator<Node> getIn(Node n) {
     final List<Node> inNodes = myIn.get(n);
     return inNodes != null
            ? inNodes.iterator()

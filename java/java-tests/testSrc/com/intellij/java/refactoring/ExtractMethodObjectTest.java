@@ -22,9 +22,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectHandler;
 import com.intellij.refactoring.extractMethodObject.ExtractMethodObjectProcessor;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractMethodObjectTest extends LightRefactoringTestCase {
+public class ExtractMethodObjectTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

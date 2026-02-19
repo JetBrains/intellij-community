@@ -1,0 +1,6 @@
+class JavaClass implements T<String> {
+    @Override
+    public String foo(String s) {
+        return "";
+    }
+}

@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.kotlinx.serialization.protobuf.jar
+  modules:
+  - name: intellij.libraries.kotlinx.serialization.protobuf
+    libraries:
+      kotlinx-serialization-protobuf:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1/kotlinx-serialization-protobuf-jvm-1.jar

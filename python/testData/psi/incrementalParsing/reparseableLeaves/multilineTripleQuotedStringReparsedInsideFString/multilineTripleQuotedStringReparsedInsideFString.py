@@ -1,0 +1,2 @@
+fstring = f"""test sting: {'''te-
+                              -st'''}"""

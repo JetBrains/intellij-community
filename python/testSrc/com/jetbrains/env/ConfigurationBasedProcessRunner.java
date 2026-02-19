@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -9,10 +10,10 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
@@ -21,12 +22,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,6 +77,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
 
   @Override
   final void runProcess(@NotNull final String sdkPath,
+                        @Nullable final Sdk sdk,
                         @NotNull final Project project,
                         @NotNull final ProcessListener processListener,
                         @NotNull final String tempWorkingPath)
@@ -86,14 +88,13 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     final ExecutionEnvironment executionEnvironment =
       // TODO: RENAME
       (myRerunExecutionEnvironment != null ? myRerunExecutionEnvironment : createExecutionEnvironment
-        (sdkPath, project, tempWorkingPath));
+        (sdkPath, sdk, project, tempWorkingPath));
 
     // Engine to be run after process end to post process console
-    ProcessListener consolePostprocessor = new ProcessAdapter() {
+    ProcessListener consolePostprocessor = new ProcessListener() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
-        super.processTerminated(event);
-        ApplicationManager.getApplication().invokeAndWait(() -> prepareConsoleAfterProcessEnd(), ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeAndWait(() -> prepareConsoleAfterProcessEnd(), ModalityState.nonModal());
       }
     };
 
@@ -106,23 +107,21 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
         }
       }
     }
+    ExecutionResult executionResult =
+      executionEnvironment.getState().execute(executionEnvironment.getExecutor(), executionEnvironment.getRunner());
+    ProcessHandler handler = executionResult.getProcessHandler();
 
-    executionEnvironment.setCallback(new ProgramRunner.Callback() {
-      @Override
-      public void processStarted(final RunContentDescriptor descriptor) {
-        final ProcessHandler handler = descriptor.getProcessHandler();
-        assert handler != null : "No process handler";
-        handler.addProcessListener(consolePostprocessor);
-        handler.addProcessListener(processListener);
-        myConsole = null;
-        fetchConsoleAndSetToField(descriptor);
-        assert myConsole != null : "fetchConsoleAndSetToField did not set console!";
-        final JComponent component = myConsole.getComponent(); // Console does not work with out of this method
-        assert component != null;
-        myLastProcessDescriptor = descriptor;
-      }
+    handler.addProcessListener(new ProcessListener() {
     });
-    executionEnvironment.getRunner().execute(executionEnvironment);
+    RunContentDescriptor descriptor = DefaultProgramRunnerKt.showRunContent(executionResult, executionEnvironment);
+    handler.addProcessListener(processListener, project);
+    handler.addProcessListener(consolePostprocessor, project);
+    fetchConsoleAndSetToField(descriptor);
+    assert myConsole != null : "fetchConsoleAndSetToField did not set console!";
+    final var component = myConsole.getComponent(); // Console does not work without of this method
+    assert component != null;
+    myLastProcessDescriptor = descriptor;
+    handler.startNotify();
   }
 
   /**
@@ -150,6 +149,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
 
   @NotNull
   private ExecutionEnvironment createExecutionEnvironment(@NotNull final String sdkPath,
+                                                          @Nullable final Sdk sdk,
                                                           @NotNull final Project project,
                                                           @NotNull final String workingDir)
     throws ExecutionException {
@@ -161,6 +161,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
       String.format("Expected configuration %s, but got %s", myExpectedConfigurationType, configuration.getClass());
 
     configuration.setSdkHome(sdkPath);
+    configuration.setSdk(sdk);
     configuration.setWorkingDirectory(workingDir);
 
     try {

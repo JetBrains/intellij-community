@@ -1,13 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.stubs.StubBuildCachedValuesManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -19,12 +22,14 @@ import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
-  private final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
+  private static final Collection<?> myDependencies = Collections.singletonList(PsiModificationTracker.MODIFICATION_COUNT);
 
   public GrTypeDefinitionMembersCache(@NotNull T definition) {
     this(definition, BodyCodeMembersProvider.INSTANCE);
@@ -42,9 +47,11 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
   }
 
   public GrMethod[] getCodeMethods() {
-    return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
-      myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies
-    )).clone();
+    return StubBuildCachedValuesManager.getCachedValueStubBuildOptimized(
+      myDefinition,
+      GET_CODE_METHODS_STUB_BUILDING_KEY,
+      () -> CachedValueProvider.Result.create(myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies)
+    ).clone();
   }
 
   public GrMethod[] getCodeConstructors() {
@@ -97,10 +104,20 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     }).clone();
   }
 
-  @NotNull
-  private TransformationResult getTransformationResult() {
+  @NotNull List<String> getSyntheticModifiers(@NotNull GrModifierList modifierList) {
+    var modifierMap =  CachedValuesManager.getCachedValue(myDefinition, () -> {
+      Map<GrModifierList, List<String>> modifiers = getTransformationResult().getModifiers();
+      return CachedValueProvider.Result.create(modifiers, myDependencies);
+    });
+    return modifierMap.getOrDefault(modifierList, List.of());
+  }
+
+  private @NotNull TransformationResult getTransformationResult() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       TransformationUtilKt.transformDefinition(myDefinition), myDependencies
     ));
   }
+
+  private static final Key<StubBuildCachedValuesManager.StubBuildCachedValue<GrMethod[]>>
+    GET_CODE_METHODS_STUB_BUILDING_KEY = Key.create("groovy.codeMethods.stub.building");
 }

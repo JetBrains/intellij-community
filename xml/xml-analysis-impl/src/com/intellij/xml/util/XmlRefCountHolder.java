@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
@@ -6,7 +6,11 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
 import com.intellij.psi.impl.source.xml.PossiblePrefixReference;
@@ -17,7 +21,12 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -25,18 +34,20 @@ import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author spleaner
- */
 public final class XmlRefCountHolder {
   private static final Key<CachedValue<XmlRefCountHolder>> xmlRefCountHolderKey = Key.create("xml ref count holder");
 
   private static final UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object> CACHE =
-    new UserDataCache<CachedValue<XmlRefCountHolder>, XmlFile, Object>() {
+    new UserDataCache<>() {
       @Override
       protected CachedValue<XmlRefCountHolder> compute(final XmlFile file, final Object p) {
         return CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
@@ -60,8 +71,7 @@ public final class XmlRefCountHolder {
 
   private static final Pattern PREFIX_PATTERN = Pattern.compile("[\\w_][\\w_.]*:");
 
-  @Nullable
-  public static XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
+  public static @Nullable XmlRefCountHolder getRefCountHolder(@NotNull XmlFile file) {
     return CACHE.get(xmlRefCountHolderKey, file, null).getValue();
   }
 
@@ -69,23 +79,23 @@ public final class XmlRefCountHolder {
   }
 
 
-  public boolean isDuplicateIdAttributeValue(@NotNull final XmlAttributeValue value) {
+  public boolean isDuplicateIdAttributeValue(final @NotNull XmlAttributeValue value) {
     return myPossiblyDuplicateIds.contains(value);
   }
 
-  public boolean isValidatable(@Nullable final PsiElement element) {
+  public boolean isValidatable(final @Nullable PsiElement element) {
     return !myDoNotValidateParentsList.contains(element);
   }
 
-  public boolean hasIdDeclaration(@NotNull final String idRef) {
+  public boolean hasIdDeclaration(final @NotNull String idRef) {
     return myId2AttributeListMap.get(idRef) != null || myAdditionallyDeclaredIds.contains(idRef);
   }
 
-  public boolean isIdReferenceValue(@NotNull final XmlAttributeValue value) {
+  public boolean isIdReferenceValue(final @NotNull XmlAttributeValue value) {
     return myIdReferences.contains(value);
   }
 
-  private void registerId(@NotNull final String id, @NotNull final XmlAttributeValue attributeValue, final boolean soft) {
+  private void registerId(final @NotNull String id, final @NotNull XmlAttributeValue attributeValue, final boolean soft) {
     List<Pair<XmlAttributeValue, Boolean>> list = myId2AttributeListMap.get(id);
     if (list == null) {
       list = new ArrayList<>();
@@ -120,15 +130,15 @@ public final class XmlRefCountHolder {
     list.add(new Pair<>(attributeValue, soft));
   }
 
-  private void registerAdditionalId(@NotNull final String id) {
+  private void registerAdditionalId(final @NotNull String id) {
     myAdditionallyDeclaredIds.add(id);
   }
 
-  private void registerIdReference(@NotNull final XmlAttributeValue value) {
+  private void registerIdReference(final @NotNull XmlAttributeValue value) {
     myIdReferences.add(value);
   }
 
-  private void registerOuterLanguageElement(@NotNull final PsiElement element) {
+  private void registerOuterLanguageElement(final @NotNull PsiElement element) {
     PsiElement parent = element.getParent();
 
     if (parent instanceof XmlText) {
@@ -155,7 +165,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitElement(@NotNull final PsiElement element) {
+    public void visitElement(final @NotNull PsiElement element) {
       if (element instanceof OuterLanguageElement) {
         visitOuterLanguageElement(element);
       }
@@ -163,7 +173,7 @@ public final class XmlRefCountHolder {
       super.visitElement(element);
     }
 
-    private void visitOuterLanguageElement(@NotNull final PsiElement element) {
+    private void visitOuterLanguageElement(final @NotNull PsiElement element) {
       myHolder.registerOuterLanguageElement(element);
       PsiReference[] references = element.getReferences();
       for (PsiReference reference : references) {
@@ -177,13 +187,13 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitComment(@NotNull final PsiComment comment) {
+    public void visitComment(final @NotNull PsiComment comment) {
       doVisitAnyComment(comment);
       super.visitComment(comment);
     }
 
     @Override
-    public void visitXmlComment(final XmlComment comment) {
+    public void visitXmlComment(final @NotNull XmlComment comment) {
       doVisitAnyComment(comment);
       super.visitXmlComment(comment);
     }
@@ -196,7 +206,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
       myHolder.addUsedPrefix(tag.getNamespacePrefix());
       myHolder.addUsedNamespace(tag.getNamespace());
       String text = tag.getValue().getTrimmedText();
@@ -205,7 +215,7 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlAttribute(XmlAttribute attribute) {
+    public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
       if (!attribute.isNamespaceDeclaration()) {
         myHolder.addUsedPrefix(attribute.getNamespacePrefix());
       }
@@ -214,11 +224,9 @@ public final class XmlRefCountHolder {
     }
 
     @Override
-    public void visitXmlAttributeValue(final XmlAttributeValue value) {
+    public void visitXmlAttributeValue(final @NotNull XmlAttributeValue value) {
       final PsiElement element = value.getParent();
-      if (!(element instanceof XmlAttribute)) return;
-
-      final XmlAttribute attribute = (XmlAttribute)element;
+      if (!(element instanceof XmlAttribute attribute)) return;
 
       final XmlTag tag = attribute.getParent();
       if (tag == null) return;
@@ -266,10 +274,11 @@ public final class XmlRefCountHolder {
       }
     }
 
-    private void updateMap(@NotNull final XmlAttribute attribute, @NotNull final XmlAttributeValue value, final boolean soft) {
+    private void updateMap(final @NotNull XmlAttribute attribute, final @NotNull XmlAttributeValue value, final boolean soft) {
       final String id = XmlHighlightVisitor.getUnquotedValue(value, attribute.getParent());
       if (XmlUtil.isSimpleValue(id, value) &&
-          PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null) {
+          PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null &&
+          !id.isBlank()) {
         myHolder.registerId(id, value, soft);
       }
     }

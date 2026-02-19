@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Editor;
@@ -20,9 +6,11 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ArrowPainter;
 import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Graphics;
 
 /**
  * {@link SoftWrapPainter} implementation that draws arrows in soft wrap location.
@@ -30,10 +18,9 @@ import java.awt.*;
  * Primary idea is to use dedicated unicode symbols as soft wrap drawings and this class is introduced only as a part
  * of defensive programming - there is unlikely case that local client environment doesn't have a font that is able to
  * represent target unicode symbol. We draw an arrow manually then (platform-independent approach).
- *
- * @author Denis Zhdanov
  */
-public class ArrowSoftWrapPainter implements SoftWrapPainter {
+@ApiStatus.Internal
+public final class ArrowSoftWrapPainter implements SoftWrapPainter {
 
   private final HeightProvider myHeightProvider = new HeightProvider();
   private final Editor myEditor;
@@ -53,17 +40,17 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
     int end;
     int result;
     switch (drawingType) {
-      case BEFORE_SOFT_WRAP_LINE_FEED:
+      case BEFORE_SOFT_WRAP_LINE_FEED -> {
         start = x;
         end = myEditor.getScrollingModel().getVisibleArea().width;
         result = end - start;
-        break;
-      case AFTER_SOFT_WRAP:
+      }
+      case AFTER_SOFT_WRAP -> {
         start = 0;
         end = x;
         result = 0;
-        break;
-      default: throw new IllegalStateException("Soft wrap arrow painting is not set up for drawing type " + drawingType);
+      }
+      default -> throw new IllegalStateException("Soft wrap arrow painting is not set up for drawing type " + drawingType);
     }
     myArrowPainter.paint(g, y + lineHeight - g.getFontMetrics().getDescent(), start, end);
     return result;
@@ -71,11 +58,10 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
 
   @Override
   public int getDrawingHorizontalOffset(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
-    switch (drawingType) {
-      case BEFORE_SOFT_WRAP_LINE_FEED: return myEditor.getScrollingModel().getVisibleArea().width - x;
-      case AFTER_SOFT_WRAP: return 0;
-      default: throw new IllegalStateException("Soft wrap arrow painting is not set up for drawing type " + drawingType);
-    }
+    return switch (drawingType) {
+      case BEFORE_SOFT_WRAP_LINE_FEED -> myEditor.getScrollingModel().getVisibleArea().width - x;
+      case AFTER_SOFT_WRAP -> 0;
+    };
   }
 
   @Override
@@ -97,7 +83,7 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
     myMinWidth = -1;
   }
 
-  private static class HeightProvider implements Computable<Integer> {
+  private static final class HeightProvider implements Computable<Integer> {
 
     public int myHeight;
 
@@ -107,7 +93,7 @@ public class ArrowSoftWrapPainter implements SoftWrapPainter {
     }
   }
 
-  private class WidthProvider implements Computable<Integer> {
+  private final class WidthProvider implements Computable<Integer> {
     @Override
     public Integer compute() {
       return EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);

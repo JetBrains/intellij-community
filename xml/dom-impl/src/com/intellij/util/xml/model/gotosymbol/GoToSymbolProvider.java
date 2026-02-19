@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.model.gotosymbol;
 
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -25,41 +26,39 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Base class for "Go To Symbol" contributors.
  */
 public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   // non-static to store modules accepted by different providers separately
-  private final Key<CachedValue<Collection<Module>>> ACCEPTABLE_MODULES = Key.create("ACCEPTABLE_MODULES_" + toString());
+  private final Key<CachedValue<Collection<Module>>> ACCEPTABLE_MODULES = Key.create("ACCEPTABLE_MODULES_" + this);
 
   protected abstract void addNames(@NotNull Module module, Set<String> result);
 
   protected abstract void addItems(@NotNull Module module, String name, List<NavigationItem> result);
 
-  protected abstract boolean acceptModule(final Module module);
+  protected abstract boolean acceptModule(Module module);
 
-  protected static void addNewNames(@NotNull final List<? extends DomElement> elements, final Set<? super String> existingNames) {
-    for (DomElement name : elements) {
-      existingNames.add(name.getGenericInfo().getElementName(name));
-    }
-  }
-
-  private Collection<Module> getAcceptableModules(final Project project) {
+  private Collection<Module> getAcceptableModules(Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, ACCEPTABLE_MODULES, () ->
       CachedValueProvider.Result.create(calcAcceptableModules(project), PsiModificationTracker.MODIFICATION_COUNT), false);
   }
 
-  @NotNull
-  protected Collection<Module> calcAcceptableModules(@NotNull Project project) {
+  protected @Unmodifiable @NotNull Collection<Module> calcAcceptableModules(@NotNull Project project) {
     return ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), module -> acceptModule(module));
   }
 
   @Override
-  public String @NotNull [] getNames(final Project project, boolean includeNonProjectItems) {
+  public String @NotNull [] getNames(Project project, boolean includeNonProjectItems) {
     Set<String> result = new HashSet<>();
     for (Module module : getAcceptableModules(project)) {
       addNames(module, result);
@@ -68,7 +67,10 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   }
 
   @Override
-  public NavigationItem @NotNull [] getItemsByName(final String name, final String pattern, final Project project, boolean includeNonProjectItems) {
+  public NavigationItem @NotNull [] getItemsByName(String name,
+                                                   String pattern,
+                                                   Project project,
+                                                   boolean includeNonProjectItems) {
     List<NavigationItem> result = new ArrayList<>();
     for (Module module : getAcceptableModules(project)) {
       addItems(module, name, result);
@@ -76,23 +78,21 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
-  @Nullable
-  protected static NavigationItem createNavigationItem(final DomElement domElement) {
-    final GenericDomValue name = domElement.getGenericInfo().getNameDomElement(domElement);
+  protected static @Nullable NavigationItem createNavigationItem(DomElement domElement) {
+    GenericDomValue name = domElement.getGenericInfo().getNameDomElement(domElement);
     assert name != null;
-    final XmlElement psiElement = name.getXmlElement();
-    final String value = name.getStringValue();
+    XmlElement psiElement = name.getXmlElement();
+    String value = name.getStringValue();
     if (psiElement == null || value == null) {
       return null;
     }
-    final Icon icon = ElementPresentationManager.getIcon(domElement);
+    Icon icon = ElementPresentationManager.getIcon(domElement);
     return createNavigationItem(psiElement, value, icon);
   }
 
-  @NotNull
-  protected static NavigationItem createNavigationItem(@NotNull final PsiElement element,
-                                                       @NotNull @NonNls final String text,
-                                                       @Nullable final Icon icon) {
+  public static @NotNull NavigationItem createNavigationItem(@NotNull PsiElement element,
+                                                             @NotNull @NonNls String text,
+                                                             @Nullable Icon icon) {
     return new BaseNavigationItem(element, text, icon);
   }
 
@@ -120,8 +120,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     }
 
     @Override
-    @NotNull
-    public PsiElement getNavigationElement() {
+    public @NotNull PsiElement getNavigationElement() {
       return myPsiElement;
     }
 
@@ -146,12 +145,11 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
 
         @Override
         public String getLocationString() {
-          return '(' + myPsiElement.getContainingFile().getName() + ')';
+          return ReadAction.nonBlocking(() -> '(' + myPsiElement.getContainingFile().getName() + ')').executeSynchronously();
         }
 
         @Override
-        @Nullable
-        public Icon getIcon(boolean open) {
+        public @Nullable Icon getIcon(boolean open) {
           return myIcon;
         }
       };
@@ -162,9 +160,8 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return myPsiElement.getParent();
     }
 
-    @NotNull
     @Override
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myPsiElement.getProject();
     }
 
@@ -178,11 +175,12 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return myPsiElement.isValid();
     }
 
-    public boolean equals(final Object o) {
+    @Override
+    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final BaseNavigationItem that = (BaseNavigationItem)o;
+      BaseNavigationItem that = (BaseNavigationItem)o;
 
       if (!myPsiElement.equals(that.myPsiElement)) return false;
       if (!myText.equals(that.myText)) return false;
@@ -190,6 +188,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result;
       result = myPsiElement.hashCode();
@@ -197,5 +196,4 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return result;
     }
   }
-
 }

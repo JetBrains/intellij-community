@@ -1,0 +1,12 @@
+// "Import extension function 'let'" "true"
+// WITH_STDLIB
+
+import kotlin.let as let1
+
+fun main() {
+    1.<caret>let {
+        println(it)
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+// IGNORE_K2

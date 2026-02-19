@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ReadAction;
@@ -7,8 +7,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.CompactVirtualFileSet;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -21,9 +22,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class FileRecursiveIterator {
-  @NotNull private final Project myProject;
-  @NotNull private final Collection<? extends VirtualFile> myRoots;
+final class FileRecursiveIterator {
+  private final @NotNull Project myProject;
+  private final @NotNull Collection<? extends VirtualFile> myRoots;
 
   FileRecursiveIterator(@NotNull Project project, @NotNull List<? extends PsiFile> roots) {
     this(project, ContainerUtil.<PsiFile, VirtualFile>map(roots, psiDir -> psiDir.getVirtualFile()));
@@ -46,8 +47,7 @@ class FileRecursiveIterator {
     myRoots = roots;
   }
 
-  @NotNull
-  static List<PsiDirectory> collectProjectDirectories(@NotNull Project project) {
+  static @NotNull List<PsiDirectory> collectProjectDirectories(@NotNull Project project) {
     Module[] modules = ModuleManager.getInstance(project).getModules();
     List<PsiDirectory> directories = new ArrayList<>(modules.length*3);
     for (Module module : modules) {
@@ -58,7 +58,7 @@ class FileRecursiveIterator {
   }
 
   boolean processAll(@NotNull Processor<? super PsiFile> processor) {
-    CompactVirtualFileSet visited = new CompactVirtualFileSet();
+    VirtualFileSet visited = VfsUtilCore.createCompactVirtualFileSet();
     for (VirtualFile root : myRoots) {
       if (!ProjectRootManager.getInstance(myProject).getFileIndex().iterateContentUnderDirectory(root, fileOrDir -> {
         if (fileOrDir.isDirectory() || !visited.add(fileOrDir)) {
@@ -71,8 +71,7 @@ class FileRecursiveIterator {
     return true;
   }
 
-  @NotNull
-  static List<PsiDirectory> collectModuleDirectories(Module module) {
+  static @NotNull List<PsiDirectory> collectModuleDirectories(Module module) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     return ReadAction.compute(() -> ContainerUtil.mapNotNull(contentRoots, root -> PsiManager.getInstance(module.getProject()).findDirectory(root)));
   }

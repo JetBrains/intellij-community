@@ -1,7 +1,7 @@
 package com.intellij.configurationScript
 
-import com.intellij.configurationScript.providers.PluginsConfiguration
 import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
+import com.intellij.openapi.updateSettings.impl.PluginsConfiguration
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.intellij.lang.annotations.Language
@@ -49,6 +49,6 @@ private fun readYaml(@Language("YAML") data: String): MappingNode {
   return doRead(data.trimIndent().reader())!!
 }
 
-private fun doReadPluginsConfiguration(@Suppress("SameParameterValue") @Language("YAML") data: String): PluginsConfiguration? {
+private fun doReadPluginsConfiguration(@Suppress("SameParameterValue") @Language("YAML") data: String): PluginsConfiguration {
   return readIntoObject(PluginsConfiguration(), findValueNodeByPath(PluginJsonSchemaGenerator.plugins, readYaml(data).value)!!)
 }

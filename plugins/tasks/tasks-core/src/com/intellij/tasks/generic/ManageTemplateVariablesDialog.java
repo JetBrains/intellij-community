@@ -1,7 +1,9 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -10,16 +12,18 @@ import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPasswordField;
+import javax.swing.JTable;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 
 public class ManageTemplateVariablesDialog extends DialogWrapper {
   private final TemplateVariablesTable myTemplateVariableTable;
 
-  protected ManageTemplateVariablesDialog(@NotNull final Component parent) {
+  protected ManageTemplateVariablesDialog(final @NotNull Component parent) {
     super(parent, true);
     myTemplateVariableTable = new TemplateVariablesTable();
     setTitle(TaskBundle.message("dialog.title.template.variables"));
@@ -34,9 +38,8 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
     return myTemplateVariableTable.getTemplateVariables();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myTemplateVariableTable.getComponent();
   }
 
@@ -46,8 +49,8 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
     }
 
     @Override
-    protected ListTableModel createListModel() {
-      final ColumnInfo name = new ElementsColumnInfoBase<TemplateVariable>(TaskBundle.message("column.name.name")) {
+    protected ListTableModel<TemplateVariable> createListModel() {
+      final ColumnInfo<TemplateVariable, @NlsContexts.ListItem String> name = new ElementsColumnInfoBase<>(TaskBundle.message("column.name.name")) {
         @Override
         protected @NotNull String getDescription(final TemplateVariable templateVariable) {
           return templateVariable.getDescription();
@@ -73,7 +76,8 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         }
       };
 
-      final ColumnInfo value = new ElementsColumnInfoBase<TemplateVariable>(TaskBundle.message("column.name.value")) {
+      final ColumnInfo<TemplateVariable, @NlsContexts.ListItem String> value = 
+        new ElementsColumnInfoBase<>(TaskBundle.message("column.name.value")) {
         @Override
         public @NotNull String valueOf(TemplateVariable templateVariable) {
           return templateVariable.getValue();
@@ -93,24 +97,15 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         @Override
         public TableCellRenderer getRenderer(TemplateVariable variable) {
           if (variable.isHidden()) {
-            return new TableCellRenderer() {
-              @Override
-              public Component getTableCellRendererComponent(JTable table,
-                                                             Object value,
-                                                             boolean isSelected,
-                                                             boolean hasFocus,
-                                                             int row,
-                                                             int column) {
-                return new JPasswordField(value.toString()); //NON-NLS
-              }
+            return (table, value1, isSelected, hasFocus, row, column) -> {
+              return new JPasswordField(value1.toString()); //NON-NLS
             };
           }
           return super.getRenderer(variable);
         }
 
-        @Nullable
         @Override
-        public TableCellEditor getEditor(final TemplateVariable variable) {
+        public @Nullable TableCellEditor getEditor(final TemplateVariable variable) {
           if (variable.isHidden()) {
             return new AbstractTableCellEditor() {
               private JPasswordField myPasswordField;
@@ -135,7 +130,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         }
       };
 
-      final ColumnInfo isShownOnFirstTab = new ColumnInfo<TemplateVariable, Boolean>(TaskBundle.message("column.name.show.on.first.tab")) {
+      final ColumnInfo<TemplateVariable, Boolean> isShownOnFirstTab = new ColumnInfo<>(TaskBundle.message("column.name.show.on.first.tab")) {
         @Override
         public @NotNull Boolean valueOf(TemplateVariable o) {
           return o.isShownOnFirstTab();
@@ -148,7 +143,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         }
 
         @Override
-        public Class getColumnClass() {
+        public Class<?> getColumnClass() {
           return Boolean.class;
         }
 
@@ -163,7 +158,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         }
       };
 
-      final ColumnInfo isHidden = new ColumnInfo<TemplateVariable, Boolean>(TaskBundle.message("column.name.hide")) {
+      final ColumnInfo<TemplateVariable, Boolean> isHidden = new ColumnInfo<>(TaskBundle.message("column.name.hide")) {
         @Override
         public @NotNull Boolean valueOf(TemplateVariable o) {
           return o.isHidden();
@@ -178,7 +173,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
         }
 
         @Override
-        public Class getColumnClass() {
+        public Class<?> getColumnClass() {
           return Boolean.class;
         }
 
@@ -192,7 +187,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
           return TaskBundle.message("tooltip.whether.this.template.variable.will.be.hidden.like.password.field");
         }
       };
-      return new ListTableModel(name, value, isShownOnFirstTab, isHidden);
+      return new ListTableModel<>(name, value, isShownOnFirstTab, isHidden);
     }
 
     @Override

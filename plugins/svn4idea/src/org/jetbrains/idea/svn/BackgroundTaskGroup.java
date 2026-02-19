@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ModalityState;
@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,13 +26,14 @@ import static com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWri
  *
  * @deprecated use {@link BackgroundTaskQueue}
  */
+@ApiStatus.Internal
 @Deprecated
 public class BackgroundTaskGroup extends BackgroundTaskQueue {
 
   private static final Logger LOG = Logger.getInstance(BackgroundTaskGroup.class);
 
-  @NotNull protected final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
-  @NotNull private final Project myProject;
+  protected final @NotNull List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
+  private final @NotNull Project myProject;
 
   public BackgroundTaskGroup(@NotNull Project project, @ProgressTitle @NotNull String title) {
     super(project, title);
@@ -39,7 +41,9 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
   }
 
   @Override
-  public void run(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
+  public void run(@NotNull Task.Backgroundable task,
+                  @NotNull ModalityState modalityState,
+                  @Nullable ProgressIndicator indicator) {
     throw new UnsupportedOperationException();
   }
 

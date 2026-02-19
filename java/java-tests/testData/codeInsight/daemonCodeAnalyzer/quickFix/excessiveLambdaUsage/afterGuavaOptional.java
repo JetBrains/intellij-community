@@ -1,4 +1,4 @@
-// "Use 'or' method without lambda" "true"
+// "Use 'or' method without lambda" "true-preview"
 package com.google.common.base;
 
 interface Supplier<T> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.ant.execution;
 
 import org.apache.tools.ant.BuildException;
@@ -7,9 +7,10 @@ import org.apache.tools.ant.input.InputRequest;
 import org.apache.tools.ant.input.MultipleChoiceInputRequest;
 
 import java.io.IOException;
-import java.util.Vector;
+import java.util.List;
 
 public class IdeaInputHandler implements InputHandler {
+  @Override
   public void handleInput(InputRequest request) throws BuildException {
     final String prompt = request.getPrompt();
     if (prompt == null) {
@@ -19,16 +20,17 @@ public class IdeaInputHandler implements InputHandler {
     if (err == null) {
       throw new BuildException("Selected InputHandler should be used by Intellij IDEA");
     }
-    final PacketWriter packet = PacketFactory.ourInstance.createPacket(IdeaAntLogger2.INPUT_REQUEST);
+    final PacketWriter packet = PacketFactory.ourInstance.createPacket(AntLoggerConstants.INPUT_REQUEST);
     packet.appendLimitedString(prompt);
     packet.appendLimitedString(request.getDefaultValue());
     if (request instanceof MultipleChoiceInputRequest) {
-      Vector choices = ((MultipleChoiceInputRequest)request).getChoices();
-      if (choices != null && choices.size() > 0) {
+      @SuppressWarnings("unchecked") 
+      List<String> choices = ((MultipleChoiceInputRequest)request).getChoices();
+      if (choices != null && !choices.isEmpty()) {
         int count = choices.size();
         packet.appendLong(count);
-        for (int i = 0; i < count; i++) {
-          packet.appendLimitedString((String)choices.elementAt(i));
+        for (String choice : choices) {
+          packet.appendLimitedString(choice);
         }
       }
       else {
@@ -41,7 +43,7 @@ public class IdeaInputHandler implements InputHandler {
     packet.sendThrough(err);
     try {
       final byte[] lengthValue = readBytes(4);
-      final int length = (toUnsignedInt(lengthValue[0]) << 24) | ((toUnsignedInt(lengthValue[1])) << 16) | ((toUnsignedInt(lengthValue[2])) << 8) | toUnsignedInt(lengthValue[3]);
+      final int length = (toUnsignedInt(lengthValue[0]) << 24) | (toUnsignedInt(lengthValue[1]) << 16) | (toUnsignedInt(lengthValue[2]) << 8) | toUnsignedInt(lengthValue[3]);
       final String input = new String(readBytes(length));
       request.setInput(input);
       if (!request.isInputValid()) {

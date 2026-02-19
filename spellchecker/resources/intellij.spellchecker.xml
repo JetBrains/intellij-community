@@ -1,0 +1,48 @@
+<idea-plugin visibility="public">
+  <module value="com.intellij.modules.spellchecker"/>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.libraries.lucene.common"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
+    </extensionPoint>
+    <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.dictionary.customDictionaryProvider" interface="com.intellij.spellchecker.dictionary.CustomDictionaryProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.dictionary.runtimeDictionaryProvider" interface="com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.dictionary.checker" interface="com.intellij.spellchecker.dictionary.DictionaryChecker" dynamic="true"/>
+    <extensionPoint name="spellchecker.builtInDictionariesProvider" interface="com.intellij.spellchecker.settings.BuiltInDictionariesProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.dictionaryLayersProvider" interface="com.intellij.spellchecker.DictionaryLayersProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.quickFixFactory" interface="com.intellij.spellchecker.quickfixes.SpellCheckerQuickFixFactory" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"
+                        serviceImplementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomizationProviderImpl"
+                        overrides="true"/>
+    <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
+    <severitiesProvider implementation="com.intellij.spellchecker.SpellCheckerSeveritiesProvider"/>
+
+    <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.VmOptionsSpellcheckingStrategy"/>
+    <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.PlainTextSpellcheckingStrategy"/>
+    <spellchecker.support language="TEXT" implementationClass="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
+
+    <spellchecker.bundledDictionaryProvider implementation="com.intellij.spellchecker.DefaultBundledDictionariesProvider"/>
+    <spellchecker.dictionaryLayersProvider implementation="com.intellij.spellchecker.PlatformSettingsDictionaryLayersProvider" order="first"/>
+
+    <registryKey key="spellchecker.corrections.limit" defaultValue="3" description="Spellchecker corrections limit" restartRequired="false"/>
+    <registryKey key="spellchecker.use.standard.project.dictionary.name" defaultValue="true" description="Enables single project dictionary file"
+                 restartRequired="false"/>
+
+    <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
+    <lookup.usageDetails implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor"/>
+    <statistics.collectorExtension implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor$SpellcheckerCompletionCollectorExtension"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.spellchecker.statistics.SpellcheckerActionStatistics"/>
+
+    <notificationGroup id="Spellchecker" displayType="BALLOON" bundle="messages.SpellCheckerBundle" key="notification.group.spellchecker"/>
+
+    <spellchecker.dictionary.checker implementation="com.intellij.spellchecker.dictionary.ProjectNameDictionaryChecker"/>
+  </extensions>
+</idea-plugin>

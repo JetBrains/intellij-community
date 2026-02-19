@@ -1,53 +1,57 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
-import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.systemIndependentPath
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
+import kotlin.io.path.invariantSeparatorsPathString
 
-@NonNls const val NOTIFICATION_GROUP_ID = "Load Error"
+const val NOTIFICATION_GROUP_ID: String = "Load Error"
 
 @TestOnly
-@NonNls
 var DEBUG_LOG: String? = null
 
-@ApiStatus.Internal
-fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
-  val joinedMacros = HtmlChunk.text(macros.joinToString(", ")).italic().toString()
-  val mainMessage =
-    if (macros.size == 1) {
-      IdeBundle.message("notification.content.unknown.macros.error.one.macros.undefined", joinedMacros)
-    }
-    else {
-      IdeBundle.message("notification.content.unknown.macros.error.many.macroses.undefined", joinedMacros)
-    }
+@Internal
+fun doNotify(macros: MutableSet<@NlsSafe String>, project: Project, substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
+  @Suppress("HardCodedStringLiteral") val joinedMacros = HtmlChunk.text(macros.joinToString(", ")).italic().toString()
+  val mainMessage = if (macros.size == 1) IdeBundle.message("notification.content.unknown.macro.error", joinedMacros)
+    else IdeBundle.message("notification.content.unknown.macros.error", joinedMacros)
 
   val description = IdeBundle.message("notification.content.unknown.macros.error.description",
                                       ApplicationNamesInfo.getInstance().productName)
@@ -55,48 +59,59 @@ fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: M
   val title = IdeBundle.message("notification.title.unknown.macros.error")
   UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR, null, macros).apply {
     addAction(NotificationAction.createSimple(IdeBundle.message("notification.action.unknown.macros.error.fix")) {
-      checkUnknownMacros(project, true, macros, substitutorToStore)
+      project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+        checkUnknownMacros(project = project, showDialog = true, unknownMacros = macros, substitutorToStore = substitutorToStore)
+      }
     })
   }.notify(project)
 }
 
-@ApiStatus.Internal
-fun checkUnknownMacros(project: Project, notify: Boolean) {
+// for poor clients in java
+@Deprecated("Use checkUnknownMacros")
+internal fun scheduleCheckUnknownMacros() {
+  service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+    for (project in ProjectUtil.getOpenProjects()) {
+      project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+        checkUnknownMacros(project = project, notify = false)
+      }.join()
+    }
+  }
+}
+
+internal suspend fun checkUnknownMacros(project: Project, notify: Boolean) {
   // use linked set/map to get stable results
   val unknownMacros = LinkedHashSet<String>()
   val substitutorToStore = LinkedHashMap<TrackingPathMacroSubstitutor, IComponentStore>()
-  collect(project, unknownMacros, substitutorToStore)
-  for (module in ModuleManager.getInstance(project).modules) {
-    collect(module, unknownMacros, substitutorToStore)
-  }
-
+  collect(componentManager = project, unknownMacros = unknownMacros, substitutorToStore = substitutorToStore)
   if (unknownMacros.isEmpty()) {
     return
   }
 
   if (notify) {
-    doNotify(unknownMacros, project, substitutorToStore)
+    doNotify(macros = unknownMacros, project = project, substitutorToStore = substitutorToStore)
     return
   }
 
-  checkUnknownMacros(project, false, unknownMacros, substitutorToStore)
+  checkUnknownMacros(project = project, showDialog = false, unknownMacros = unknownMacros, substitutorToStore = substitutorToStore)
 }
 
-private fun checkUnknownMacros(project: Project,
-                               showDialog: Boolean,
-                               unknownMacros: MutableSet<String>,
-                               substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
+private suspend fun checkUnknownMacros(
+  project: Project,
+  showDialog: Boolean,
+  unknownMacros: MutableSet<String>,
+  substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>,
+) {
   if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, HashSet(unknownMacros)))) {
     return
   }
 
-  val pathMacros = PathMacros.getInstance()
+  val pathMacros = serviceAsync<PathMacros>()
   unknownMacros.removeAll { pathMacros.getValue(it).isNullOrBlank() && !pathMacros.isIgnoredMacroName(it) }
   if (unknownMacros.isEmpty()) {
     return
   }
 
-  val notificationManager = NotificationsManager.getNotificationsManager()
+  val notificationManager = serviceAsync<NotificationsManager>()
   for ((substitutor, store) in substitutorToStore) {
     val components = substitutor.getComponents(unknownMacros)
     if (store.isReloadPossible(components)) {
@@ -108,19 +123,26 @@ private fun checkUnknownMacros(project: Project,
         }
       }
 
-      store.reloadStates(components, project.messageBus)
+      store.reloadStates(components)
     }
-    else if (Messages.showYesNoDialog(project, IdeBundle.message("dialog.message.component.could.not.be.reloaded"),
-                                      IdeBundle.message("dialog.title.configuration.changed"),
-                                      Messages.getQuestionIcon()) == Messages.YES) {
-      StoreReloadManager.getInstance().reloadProject(project)
+    else {
+      val answer = withContext(Dispatchers.EDT) {
+        Messages.showYesNoDialog(project, IdeBundle.message("dialog.message.component.could.not.be.reloaded"),
+                                 IdeBundle.message("dialog.title.configuration.changed"),
+                                 Messages.getQuestionIcon())
+      }
+      if (answer == Messages.YES) {
+        project.serviceAsync<StoreReloadManager>().reloadProject()
+      }
     }
   }
 }
 
-private fun collect(componentManager: ComponentManager,
-                    unknownMacros: MutableSet<String>,
-                    substitutorToStore: MutableMap<TrackingPathMacroSubstitutor, IComponentStore>) {
+private fun collect(
+  componentManager: ComponentManager,
+  unknownMacros: MutableSet<String>,
+  substitutorToStore: MutableMap<TrackingPathMacroSubstitutor, IComponentStore>,
+) {
   val store = componentManager.stateStore
   val substitutor = store.storageManager.macroSubstitutor as? TrackingPathMacroSubstitutor ?: return
   val macros = substitutor.getUnknownMacros(null)
@@ -132,15 +154,15 @@ private fun collect(componentManager: ComponentManager,
   substitutorToStore.put(substitutor, store)
 }
 
-@ApiStatus.Internal
+@Internal
 fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
-  var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
+  var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.invariantSeparatorsPathString)
   if (virtualFile == null) {
     val parentFile = file.parent
     parentFile.createDirectories()
 
     // need refresh if the directory has just been created
-    val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
+    val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.invariantSeparatorsPathString)
                             ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
 
     virtualFile = runAsWriteActionIfNeeded {
@@ -148,19 +170,39 @@ fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequest
     }
   }
   // internal .xml files written with BOM can cause problems, see IDEA-219913
-  // (e.g. unable to backport them to 191/unwanted changed files when someone checks File Encodings|create new files with BOM)
-  // so we forcibly remove BOM from storage .xmls
+  // (e.g., unable to backport them to 191/unwanted changed files when someone checks File Encodings|create new files with BOM)
+  // so we forcibly remove BOM from storage XMLs
   if (virtualFile.bom != null) {
     virtualFile.bom = null
   }
   return virtualFile
 }
 
-// runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
-@ApiStatus.Internal
-inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
-  return when {
-    ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
-    else -> runWriteAction(runnable)
+@Internal
+fun <T> runAsWriteActionIfNeeded(runnable: () -> T): T =
+  ApplicationManager.getApplication().let { app ->
+    if (app.isWriteAccessAllowed) runnable()
+    else app.runWriteAction(Computable(runnable))
+  }
+
+@Internal
+class UnknownMacroNotification(
+  groupId: String,
+  title: @NlsContexts.NotificationTitle String,
+  content: @NlsContexts.NotificationContent String,
+  type: NotificationType,
+  listener: NotificationListener?,
+  val macros: Collection<String>,
+) : Notification(groupId, title, content, type) {
+  init {
+    listener?.let {
+      @Suppress("DEPRECATION")
+      setListener(it)
+    }
   }
 }
+
+/** Used in constructed configuration store events to trigger VFS content reloading for files updated via NIO. */
+@Internal
+@JvmField
+val RELOADING_STORAGE_WRITE_REQUESTOR: StorageManagerFileWriteRequestor = object : StorageManagerFileWriteRequestor { }

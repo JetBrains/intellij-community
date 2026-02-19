@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
-import sun.swing.SwingUtilities2
+import com.intellij.util.ui.UIUtil
 import java.awt.FontMetrics
 import javax.swing.JComponent
 
-open class DefaultPartTitle(open var prefix: String = " ", open var suffix: String = ""): BaseTitlePart {
+internal open class DefaultPartTitle(open var prefix: String = " ", open var suffix: String = ""): BaseTitlePart {
   private var shortTextWidth: Int = 0
   private var longTextWidth: Int = 0
 
@@ -40,7 +40,7 @@ open class DefaultPartTitle(open var prefix: String = " ", open var suffix: Stri
     get() = if (longText.isEmpty()) "" else "$prefix$longText$suffix"
 
   override fun refresh(label: JComponent, fm: FontMetrics) {
-    longTextWidth = if (longText.isEmpty() || !active) 0 else SwingUtilities2.stringWidth(label, fm, "$prefix$longText$suffix")
-    shortTextWidth = if (shortText.isEmpty() || !active) 0 else SwingUtilities2.stringWidth(label, fm, "$prefix$shortText$suffix")
+    longTextWidth = if (longText.isEmpty() || !active) 0 else UIUtil.computeStringWidth(label, fm, "$prefix$longText$suffix")
+    shortTextWidth = if (shortText.isEmpty() || !active) 0 else UIUtil.computeStringWidth(label, fm, "$prefix$shortText$suffix")
   }
 }

@@ -28,7 +28,7 @@ class MyTest {
       System.out.println(i);
     }
 
-    public static void main(String[] args) {
+    public static void main() {
         foo<error descr="Ambiguous method call: both 'MyTest.foo(I1)' and 'MyTest.foo(I2)' match">(Foo::m)</error>;
     }
 }
@@ -66,7 +66,7 @@ class MyTest1 {
         System.out.println(i);
     }
 
-    public static void main(String[] args) {
+    public static void main() {
         m<error descr="Ambiguous method call: both 'MyTest1.m(I1)' and 'MyTest1.m(I2)' match">(Foo::new)</error>;
     }
 }
@@ -103,7 +103,7 @@ class MyTest2 {
         System.out.println(i);
     }
 
-    public static void main(String[] args) {
+    public static void main() {
         m<error descr="Ambiguous method call: both 'MyTest2.m(I1)' and 'MyTest2.m(I2)' match">(Foo::new)</error>;
     }
 }

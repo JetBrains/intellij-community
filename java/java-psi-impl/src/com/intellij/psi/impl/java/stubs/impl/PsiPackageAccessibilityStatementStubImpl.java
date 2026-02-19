@@ -17,9 +17,9 @@ package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.java.IJavaElementType;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +31,7 @@ public class PsiPackageAccessibilityStatementStubImpl extends StubBase<PsiPackag
   private final String myPackageName;
   private final List<String> myTargets;
 
-  public PsiPackageAccessibilityStatementStubImpl(StubElement parent, IStubElementType type, String packageName, List<String> targets) {
+  public PsiPackageAccessibilityStatementStubImpl(StubElement parent, IJavaElementType type, String packageName, List<String> targets) {
     super(parent, type);
     myPackageName = notNull(packageName, "");
     myTargets = targets == null || targets.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(targets);
@@ -50,7 +50,7 @@ public class PsiPackageAccessibilityStatementStubImpl extends StubBase<PsiPackag
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("PsiPackageAccessibilityStatementStub[").append(typeToRole(getStubType())).append("]:").append(myPackageName);
+    sb.append("PsiPackageAccessibilityStatementStub[").append(typeToRole(getElementType())).append("]:").append(myPackageName);
     for (String target : myTargets) sb.append(':').append(target);
     return sb.toString();
   }

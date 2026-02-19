@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.function.Function;
 
 public final class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> {
@@ -31,9 +31,8 @@ public final class SettingsEditorWrapper <Src, Dst> extends SettingsEditor<Src> 
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
-    return myWrapped.createEditor();
+  public @NotNull JComponent createEditor() {
+    return createEditorComponent(myWrapped);
   }
 
   @Override

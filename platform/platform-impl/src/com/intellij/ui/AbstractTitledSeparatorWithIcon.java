@@ -1,17 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+/**
+ * @deprecated Use Kotlin UI DSL and {@link com.intellij.ui.dsl.builder.Panel#collapsibleGroup} instead
+ */
+@Deprecated(forRemoval = true)
+@ApiStatus.Internal
 public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
   protected RefreshablePanel myDetailsComponent;
   protected final JLabel myLabel;
@@ -21,9 +37,10 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
   protected final Icon myIconOpen;
   protected final JSeparator mySeparator;
 
-  public AbstractTitledSeparatorWithIcon(@NotNull final Icon icon,
-                                         @NotNull final Icon iconOpen,
-                                         @NlsContexts.Separator @NotNull final String text) {
+  public AbstractTitledSeparatorWithIcon(final @NotNull Icon icon,
+                                         final @NotNull Icon iconOpen,
+                                         final @NlsContexts.Separator @NotNull String text) {
+    UIUtil.applyDeprecatedBackground(this);
     myIcon = icon;
     myIconOpen = iconOpen;
     setLayout(new GridBagLayout());
@@ -71,7 +88,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
       }
     });
   }
-  
+
   public void setText(@NlsContexts.Separator String text) {
     myLabel.setText(UIUtil.replaceMnemonicAmpersand(text));
   }

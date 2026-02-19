@@ -1,69 +1,85 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.envTest.config
 
+import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT
+import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_SALT_REVISION
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
-import com.intellij.internal.statistic.envTest.upload.RECORDER_ID
-import com.intellij.internal.statistic.envTest.upload.TestEventLogApplicationInfo
-import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
-import junit.framework.TestCase
+import com.intellij.internal.statistic.envTest.upload.TestEventLogUploadSettingsClient
+import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClient
 import java.util.concurrent.TimeUnit
 
-internal class EventLogExternalSettingsServiceTest : StatisticsServiceBaseTest() {
+internal class EventLogExternalSettingsServiceTest: StatisticsServiceBaseTest() {
   fun `test load and cache external settings`() {
-    val settings = configureDynamicConfig(TimeUnit.HOURS.toMillis(1))
+    val settingsClient = configureDynamicConfig(TimeUnit.HOURS.toMillis(1))
 
-    val metadata = loadMetadata(settings.metadataProductUrl)
+    val metadataProductUrl = loadMetadata(settingsClient.provideMetadataProductUrl())
     Thread.sleep(1000)
-    assertMetadata(settings.metadataProductUrl, metadata)
+    assertMetadata(settingsClient.provideMetadataProductUrl(), metadataProductUrl)
     Thread.sleep(1000)
-    assertMetadata(settings.metadataProductUrl, metadata)
+    assertMetadata(settingsClient.provideMetadataProductUrl(), metadataProductUrl)
   }
 
   fun `test cached external settings are invalidated`() {
-    val settings = configureDynamicConfig(10)
+    val settingsClient = configureDynamicConfig(10)
 
-    var metadata = loadMetadata(settings.metadataProductUrl)
+    var metadataProductUrl = loadMetadata(settingsClient.provideMetadataProductUrl())
     Thread.sleep(1000)
-    metadata = assertNewMetadata(settings.metadataProductUrl, metadata)
+    metadataProductUrl = assertNewMetadata(settingsClient.provideMetadataProductUrl(), metadataProductUrl)
     Thread.sleep(1000)
-    assertNewMetadata(settings.metadataProductUrl, metadata)
+    assertNewMetadata(settingsClient.provideMetadataProductUrl(), metadataProductUrl)
   }
 
-  private fun configureDynamicConfig(configCacheTimeoutMs: Long): EventLogUploadSettingsService {
-    val applicationInfo = TestEventLogApplicationInfo(RECORDER_ID, container.getBaseUrl("config/dynamic_config.php").toString())
-    return EventLogUploadSettingsService(RECORDER_ID, applicationInfo, configCacheTimeoutMs)
+  fun `test load options from external settings`() {
+    val settingsClient = configureDynamicConfig(TimeUnit.HOURS.toMillis(1))
+
+    val options = settingsClient.provideOptions()
+    assertEquals(options["dataThreshold"], "16000")
+    assertEquals(options["groupDataThreshold"], "8000")
+    assertEquals(options["groupAlertThreshold"], "4000")
+  }
+
+  fun `test load salt and id revisions from external settings`() {
+    val settingsClient = configureDynamicConfig(TimeUnit.HOURS.toMillis(1))
+
+    val options = settingsClient.provideOptions()
+    assertEquals(options[MACHINE_ID_SALT], "test_salt")
+    assertEquals(options[MACHINE_ID_SALT_REVISION], "1")
+  }
+
+  private fun configureDynamicConfig(configCacheTimeoutMs: Long): EventLogSettingsClient {
+    return TestEventLogUploadSettingsClient(container.getBaseUrl("config/dynamic_config.php").toString(), configCacheTimeoutMs)
   }
 
   private fun loadMetadata(metadata: String?): String {
-    TestCase.assertNotNull("Cannot retrieve metadata url", metadata)
+    assertNotNull("Cannot retrieve metadata url", metadata)
     return metadata!!
   }
 
   private fun assertNewMetadata(metadata: String?, previous: String?): String {
-    TestCase.assertNotNull("Cannot retrieve metadata url", metadata)
+    assertNotNull("Cannot retrieve metadata url", metadata)
     previous?.let {
       val newMetadata = parseMetadata(metadata)
       val oldMetadata = parseMetadata(previous)
-      TestCase.assertTrue("Metadata did not change: $it", newMetadata != oldMetadata)
+      assertTrue("Metadata did not change: $it", newMetadata != oldMetadata)
     }
     return metadata!!
   }
 
   private fun assertMetadata(metadata: String?, previous: String?) {
-    TestCase.assertNotNull("Cannot retrieve metadata url", metadata)
+    assertNotNull("Cannot retrieve metadata url", metadata)
     previous?.let {
       val newMetadata = parseMetadata(metadata)
       val oldMetadata = parseMetadata(previous)
-      TestCase.assertEquals("Metadata changed but should stay the same", oldMetadata, newMetadata)
+      assertEquals("Metadata changed but should stay the same", oldMetadata, newMetadata)
     }
   }
 
   private fun parseMetadata(metadataUrl: String?): String {
-    TestCase.assertTrue("Wrong format of the metadata url: $metadataUrl", metadataUrl!!.contains("metadata/"))
+    assertTrue("Wrong format of the metadata url: $metadataUrl", metadataUrl!!.contains("metadata/"))
 
     val start = metadataUrl.indexOf("metadata/") + "metadata/".length
     val end = metadataUrl.lastIndexOf("/")
-    TestCase.assertTrue("Wrong format of the metadata url: $metadataUrl", end >= 0 && start >= 0 && end > start)
+    assertTrue("Wrong format of the metadata url: $metadataUrl", end >= 0 && start >= 0 && end > start)
     return metadataUrl.substring(start, end)
   }
 }

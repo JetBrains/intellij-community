@@ -24,41 +24,36 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+import static com.intellij.rt.ant.execution.AntLoggerConstants.BUILD;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.BUILD_END;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.ERROR;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.EXCEPTION;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.EXCEPTION_CONTENT;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.MESSAGE;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.MESSAGE_CONTENT;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.TARGET;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.TARGET_END;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.TASK;
+import static com.intellij.rt.ant.execution.AntLoggerConstants.TASK_END;
 
 public final class IdeaAntLogger2 extends DefaultLogger {
   static SegmentedOutputStream ourErr;
-  public static final char MESSAGE_CONTENT = 'M';
-  public static final char EXCEPTION_CONTENT = 'X';
-  public static final char INPUT_REQUEST = 'I';
-  public static final char BUILD_END = 'b';
-  public static final char BUILD = 'B';
-  public static final char TARGET = 'G';
-  public static final char TARGET_END = 'g';
-  public static final char TASK = 'T';
-  public static final char TASK_END = 't';
-  public static final char MESSAGE = 'M';
-  public static final char ERROR = 'E';
-  public static final char EXCEPTION = 'X';
-  public static final char EXCEPTION_LINE_SEPARATOR = 0;
 
-  /**
-   * @noinspection HardCodedStringLiteral
-   */
   public static final String OUTPUT_PREFIX = "IDEA_ANT_INTEGRATION";
 
-  private final ThreadLocal myCallingTasks = new ThreadLocal() {
-    protected Object initialValue() {
-      return new Stack();
-    }
-  };
+  private final ThreadLocal<Deque<String>> myCallingTasks = ThreadLocal.withInitial(() -> new ArrayDeque<>());
 
   private final Priority myMessagePriority = new MessagePriority();
   private final Priority myTargetPriority = new StatePriority(Project.MSG_INFO);
   private final Priority myTaskPriority = new StatePriority(Project.MSG_VERBOSE);
   private final Priority myAlwaysSend = new Priority() {
+    @Override
     public void setPriority(int level) {}
 
+    @Override
     protected boolean shouldSend(int priority) {
       return true;
     }
@@ -68,6 +63,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     guardStreams();
   }
 
+  @Override
   public synchronized void setMessageOutputLevel(int level) {
     super.setMessageOutputLevel(level);
     myMessagePriority.setPriority(level);
@@ -76,29 +72,39 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     myAlwaysSend.setPriority(level);
   }
 
+  @Override
   public synchronized void buildStarted(BuildEvent event) {
     myAlwaysSend.sendMessage(BUILD, event.getPriority(), "");
   }
 
+  @Override
   public synchronized void buildFinished(BuildEvent event) {
     myAlwaysSend.sendMessage(BUILD_END, event.getPriority(), event.getException());
   }
 
+  @Override
   public synchronized void targetStarted(BuildEvent event) {
     myTargetPriority.sendMessage(TARGET, event.getPriority(), event.getTarget().getName());
   }
 
+  @Override
   public synchronized void targetFinished(BuildEvent event) {
     sendException(event, true);
     myTargetPriority.sendMessage(TARGET_END, event.getPriority(), event.getException());
   }
 
+  @Override
   public synchronized void taskStarted(BuildEvent event) {
-    final String taskName = event.getTask().getTaskName();
+    final Task task = event.getTask();
+    String taskName = task.getTaskName();
+    if (taskName == null) {
+      taskName = task.getClass().getSimpleName();
+    }
     getTaskCallStack().push(taskName);
     myTaskPriority.sendMessage(TASK, event.getPriority(), taskName);
   }
 
+  @Override
   public synchronized void taskFinished(BuildEvent event) {
     try {
       sendException(event, true);
@@ -109,6 +115,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     }
   }
 
+  @Override
   public synchronized void messageLogged(BuildEvent event) {
     final boolean failOnError = isFailOnError(event);
     if (sendException(event, failOnError)) {
@@ -170,29 +177,29 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     ourErr.sendStart();
   }
 
-  private void send(PacketWriter packet) {
+  private static void send(PacketWriter packet) {
     packet.sendThrough(ourErr);
   }
 
-  private PacketWriter createPacket(char id, int priority) {
+  private static PacketWriter createPacket(char id, int priority) {
     PacketWriter packet = PacketFactory.ourInstance.createPacket(id);
     packet.appendLong(priority);
     return packet;
   }
 
-  private Stack getTaskCallStack() {
-    return (Stack)myCallingTasks.get();
+  private Deque<String> getTaskCallStack() {
+    return myCallingTasks.get();
   }
 
-  private abstract class Priority {
-    protected void peformSendMessage(char id, int priority, String text) {
+  private abstract static class Priority {
+    protected void performSendMessage(char id, int priority, String text) {
       PacketWriter packet = createPacket(id, priority);
       packet.appendChar(MESSAGE_CONTENT);
       packet.appendLimitedString(text);
       send(packet);
     }
 
-    protected void peformSendMessage(char id, int priority, Throwable throwable) {
+    protected void performSendMessage(char id, int priority, Throwable throwable) {
       if (throwable != null) {
         PacketWriter packet = createPacket(id, priority);
         StringWriter stackTrace = new StringWriter();
@@ -201,35 +208,37 @@ public final class IdeaAntLogger2 extends DefaultLogger {
         packet.appendLimitedString(stackTrace.toString());
         send(packet);
       } else {
-        peformSendMessage(id, priority, "");
+        performSendMessage(id, priority, "");
       }
     }
 
     public void sendMessage(char id, int priority, String text) {
-      if (shouldSend(priority)) peformSendMessage(id, priority, text);
+      if (shouldSend(priority)) performSendMessage(id, priority, text);
     }
 
     public void sendMessage(char id, int priority, Throwable throwable) {
-      if (shouldSend(priority)) peformSendMessage(id, priority, throwable);
+      if (shouldSend(priority)) performSendMessage(id, priority, throwable);
     }
 
     public abstract void setPriority(int level);
     protected abstract boolean shouldSend(int priority);
   }
 
-  private class MessagePriority extends Priority {
+  private static class MessagePriority extends Priority {
     private int myPriority = Project.MSG_ERR;
 
+    @Override
     public void setPriority(int level) {
       myPriority = level;
     }
 
+    @Override
     protected boolean shouldSend(int priority) {
       return priority <= myPriority;
     }
   }
 
-  private class StatePriority extends Priority {
+  private static class StatePriority extends Priority {
     private boolean myEnabled = true;
     private final int myMinLevel;
 
@@ -237,10 +246,12 @@ public final class IdeaAntLogger2 extends DefaultLogger {
       myMinLevel = minLevel;
     }
 
+    @Override
     public void setPriority(int level) {
       myEnabled = myMinLevel <= level;
     }
 
+    @Override
     protected boolean shouldSend(int priority) {
       return myEnabled;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -9,11 +9,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class SimpleMethodCallLookupElement extends LookupElement {
   private final PsiMethod myMethod;
 
@@ -22,8 +20,7 @@ public class SimpleMethodCallLookupElement extends LookupElement {
   }
 
   @Override
-  @NotNull
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myMethod.getName();
   }
 
@@ -37,13 +34,13 @@ public class SimpleMethodCallLookupElement extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     presentation.setItemText(myMethod.getName());
     presentation.setTailText(PsiFormatUtil.formatMethod(myMethod,
                                                         PsiSubstitutor.EMPTY,
-                                                        PsiFormatUtil.SHOW_PARAMETERS,
-                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE));
+                                                        PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
     final PsiType returnType = myMethod.getReturnType();
     if (returnType != null) {
       presentation.setTypeText(returnType.getCanonicalText());

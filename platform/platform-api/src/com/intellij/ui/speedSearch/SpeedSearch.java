@@ -1,23 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
-import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchedFragment;
+import com.intellij.util.text.matching.MatchingMode;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.JComponent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.List;
 
-public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
+public class SpeedSearch extends SpeedSearchSupply implements KeyListener, SpeedSearchActivator {
   public static final String PUNCTUATION_MARKS = "*_-+\"'/.#$>: ,;?!@%^&";
 
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
@@ -26,6 +30,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   private String myString = "";
   private boolean myEnabled;
   private Matcher myMatcher;
+  private boolean myJustActivated = false;
 
   public SpeedSearch() {
     this(false);
@@ -40,14 +45,14 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   public void backspace() {
-    if (myString.length() > 0) {
+    if (!myString.isEmpty()) {
       updatePattern(myString.substring(0, myString.length() - 1));
     }
   }
 
   public boolean shouldBeShowing(String string) {
     return string == null ||
-           myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
+           myString.isEmpty() || (myMatcher != null && myMatcher.matches(string));
   }
 
   public void processKeyEvent(KeyEvent e) {
@@ -72,6 +77,12 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
           updatePattern("");
           e.consume();
         }
+        else if (myJustActivated) {
+          // Special case: speed search was activated through the API without typing anything, should be cancelled on Esc.
+          myJustActivated = false;
+          update();
+          e.consume();
+        }
       }
     }
     else if (e.getID() == KeyEvent.KEY_TYPED) {
@@ -87,7 +98,9 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     }
 
     if (!old.equalsIgnoreCase(myString)) {
-      update();
+      WriteIntentReadAction.run(() -> {
+        update();
+      });
     }
   }
 
@@ -103,7 +116,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   public boolean isHoldingFilter() {
-    return myEnabled && myString.length() > 0;
+    return myEnabled && !myString.isEmpty();
   }
 
   public void setEnabled(boolean enabled) {
@@ -124,15 +137,15 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     return myString;
   }
 
-  public void updatePattern(final String string) {
+  public void updatePattern(final String searchText) {
+    if (myString.equals(searchText)) return;
+
+    myJustActivated = false;
+
     String prevString = myString;
-    myString = string;
+    myString = searchText;
     try {
-      String pattern = "*" + string;
-      NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
-      String separators = "";
-      myMatcher = myMatchAllOccurrences ? AllOccurrencesMatcher.create(pattern, caseSensitivity, separators)
-                                        : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      myMatcher = createNewMatcher(searchText);
     }
     catch (Exception e) {
       myMatcher = null;
@@ -140,16 +153,30 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     fireStateChanged(prevString);
   }
 
-  @Nullable
-  public Matcher getMatcher() {
+  protected @NotNull Matcher createNewMatcher(String searchText) {
+    String pattern = "*" + searchText;
+    MatchingMode matchingMode = MatchingMode.IGNORE_CASE;
+    String separators = SpeedSearchUtil.getDefaultHardSeparators();
+    NameUtil.MatcherBuilder builder =
+      new NameUtil.MatcherBuilder(pattern)
+        .withMatchingMode(matchingMode)
+        .withSeparators(separators);
+    if (myMatchAllOccurrences) {
+      builder = builder.allOccurrences();
+    }
+    return builder.build();
+  }
+
+  public @Nullable Matcher getMatcher() {
     return myMatcher;
   }
 
-  @Nullable
   @Override
-  public Iterable<TextRange> matchingFragments(@NotNull String text) {
-    if (myMatcher instanceof MinusculeMatcher) {
-      return ((MinusculeMatcher)myMatcher).matchingFragments(text);
+  public @Nullable Iterable<TextRange> matchingFragments(@NotNull String text) {
+    if (getMatcher() instanceof MinusculeMatcher matcher) {
+      List<@NotNull MatchedFragment> fragments = matcher.match(text);
+      return fragments != null ? ContainerUtil.map(fragments, f -> TextRange.create(f.getStartOffset(), f.getEndOffset()))
+                               : null;
     }
     return null;
   }
@@ -163,10 +190,42 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     return isHoldingFilter();
   }
 
-  @Nullable
   @Override
-  public String getEnteredPrefix() {
+  public @Nullable String getEnteredPrefix() {
     return myString;
+  }
+
+  @Override
+  public boolean isSupported() {
+    return false; // Disabled by default because has to be implemented differently for every subclass.
+  }
+
+  @Override
+  public boolean isAvailable() {
+    return true; // Convenient default for implementations, is ignored anyway when isSupported() == false.
+  }
+
+  @Override
+  public boolean isActive() {
+    return isPopupActive();
+  }
+
+  protected boolean shouldBeActive() {
+    return myJustActivated || isHoldingFilter();
+  }
+
+  @Override
+  public @Nullable JComponent getTextField() {
+    return null;
+  }
+
+  @Override
+  public void activate() {
+    myJustActivated = true;
+    doActivate();
+  }
+
+  protected void doActivate() {
   }
 
   @Override
@@ -180,7 +239,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   private void fireStateChanged(String prevString) {
-    myChangeSupport.firePropertyChange(SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME, prevString, getEnteredPrefix());
+    myChangeSupport.firePropertyChange(ENTERED_PREFIX_PROPERTY_NAME, prevString, getEnteredPrefix());
   }
 
   @Override

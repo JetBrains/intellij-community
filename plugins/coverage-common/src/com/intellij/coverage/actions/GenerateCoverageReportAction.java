@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.coverage.actions;
 
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,10 +14,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class GenerateCoverageReportAction extends AnAction {
+class GenerateCoverageReportAction extends AnAction {
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
     assert project != null;
@@ -36,7 +37,12 @@ public class GenerateCoverageReportAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);

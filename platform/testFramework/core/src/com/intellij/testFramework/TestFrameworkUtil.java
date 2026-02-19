@@ -1,48 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Test;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.TestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 
-import java.awt.*;
+import java.awt.GraphicsEnvironment;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class TestFrameworkUtil {
-  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  public static boolean shouldSkipHeadless() { return GraphicsEnvironment.isHeadless(); }  // lazy to avoid caching GraphicsEnvironment.isHeadless() on class initialization
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
-  private static Date raidDate(Bombed bombed) {
-    final Calendar instance = Calendar.getInstance();
-    instance.set(Calendar.YEAR, bombed.year());
-    instance.set(Calendar.MONTH, bombed.month());
-    instance.set(Calendar.DAY_OF_MONTH, bombed.day());
-    instance.set(Calendar.HOUR_OF_DAY, bombed.time());
-    instance.set(Calendar.MINUTE, 0);
-
-    return instance.getTime();
-  }
-
-  public static boolean bombExplodes(@NotNull Bombed bombedAnnotation) {
-    Date now = new Date();
-    return now.after(raidDate(bombedAnnotation));
-  }
-
   public static boolean canRunTest(@NotNull Class<?> testCaseClass) {
-    if (!SKIP_SLOW && !SKIP_HEADLESS) {
+    if (!SKIP_SLOW && !shouldSkipHeadless()) {
       return true;
     }
 
     for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
-      if (SKIP_HEADLESS && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
+      if (shouldSkipHeadless() && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
         System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
         return false;
       }
@@ -58,8 +47,8 @@ public final class TestFrameworkUtil {
   @TestOnly
   public static boolean isJUnit4TestClass(@NotNull Class<?> aClass, boolean allowAbstract) {
     int modifiers = aClass.getModifiers();
-    if (!allowAbstract && (modifiers & Modifier.ABSTRACT) != 0) return false;
-    if ((modifiers & Modifier.PUBLIC) == 0) return false;
+    if (!allowAbstract && Modifier.isAbstract(modifiers)) return false;
+    if (!Modifier.isPublic(modifiers)) return false;
     if (aClass.getAnnotation(RunWith.class) != null) return true;
     for (Method method : aClass.getMethods()) {
       if (method.getAnnotation(Test.class) != null) return true;
@@ -67,8 +56,75 @@ public final class TestFrameworkUtil {
     return false;
   }
 
-  public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return testName != null && StringUtil.containsIgnoreCase(testName, "performance") ||
-           className != null && StringUtil.containsIgnoreCase(className, "performance");
+  @TestOnly
+  public static boolean isJUnit5TestClass(@NotNull Class<?> aClass, boolean allowAbstract) {
+    int modifiers = aClass.getModifiers();
+    if (!allowAbstract && Modifier.isAbstract(modifiers)) return false;
+    if (!Modifier.isPublic(modifiers)) return false;
+
+    if (aClass.getAnnotation(ExtendWith.class) != null) return true;
+    for (Method method : aClass.getMethods()) {
+      if (method.getAnnotation(org.junit.jupiter.api.Test.class) != null) return true;
+      if (method.getAnnotation(TestFactory.class) != null) return true;
+      if (method.getAnnotation(TestTemplate.class) != null) return true;
+      if (method.getAnnotation(RepeatedTest.class) != null) return true;
+      for (Annotation annotation : method.getAnnotations()) {
+        String name = annotation.annotationType().getCanonicalName();
+        if ("org.junit.jupiter.params.ParameterizedTest".equals(name)) return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isPerformanceTest(@Nullable String testName, @NotNull Class<?> aClass) {
+    if (aClass.isAnnotationPresent(PerformanceUnitTest.class)) {
+      return true;
+    }
+
+    if (testName != null) {
+      List<Method> methods = ContainerUtil.findAll(aClass.getMethods(), method -> method.getName().equals(testName));
+      if (methods.isEmpty()) {
+        return false;  // not supported, e.g. org.angular2.lang.html.Angular2HtmlLexerSpecTest#`HtmlLexer, line/column numbers, it should work without newlines`
+      }
+
+      if (ContainerUtil.all(methods, method -> method.isAnnotationPresent(PerformanceUnitTest.class))) {
+        return true;
+      }
+      else if (ContainerUtil.exists(methods, method -> method.isAnnotationPresent(PerformanceUnitTest.class))) {
+        throw new IllegalStateException("Overloaded methods with inconsistent @PerformanceUnitTest annotations are not supported: " + aClass.getName() + "#" + testName);  // not supported
+      }
+    }
+
+    return false;
+  }
+
+  public static boolean isStressTest(@Nullable String testName, @NotNull Class<?> aClass) {
+    return isPerformanceTest(testName, aClass) ||
+           containsWord(testName, aClass.getSimpleName(), "stress") ||
+           containsWord(testName, aClass.getSimpleName(), "slow");
+  }
+
+  private static boolean containsWord(@Nullable String testName, @Nullable String className, @NotNull String word) {
+    return testName != null && StringUtil.containsIgnoreCase(testName, word) ||
+           className != null && StringUtil.containsIgnoreCase(className, word);
+  }
+
+  public static TestSuite flattenSuite(TestSuite suite) {
+    TestSuite result = new TestSuite();
+    result.setName(suite.getName());
+    return flattenSuite(suite, result);
+  }
+
+  private static TestSuite flattenSuite(TestSuite suite, TestSuite result) {
+    for (int i = 0; i < suite.testCount(); i++) {
+      junit.framework.Test test = suite.testAt(i);
+      if (test instanceof TestSuite) {
+        flattenSuite((TestSuite)test, result);
+      }
+      else {
+        result.addTest(test);
+      }
+    }
+    return result;
   }
 }

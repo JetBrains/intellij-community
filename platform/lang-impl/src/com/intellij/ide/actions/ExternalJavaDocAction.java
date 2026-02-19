@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -12,7 +11,14 @@ import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -30,14 +36,19 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalJavaDocAction extends AnAction {
+public final class ExternalJavaDocAction extends AnAction {
 
   public ExternalJavaDocAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -70,9 +81,8 @@ public class ExternalJavaDocAction extends AnAction {
         ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
       return;
     }
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
-    final Component contextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Component contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<String> urls;
       if (StringUtil.isEmptyOrSpaces(docUrl)) {
@@ -94,8 +104,7 @@ public class ExternalJavaDocAction extends AnAction {
       final List<String> finalUrls = urls;
       ApplicationManager.getApplication().invokeLater(() -> {
         if (ContainerUtil.isEmpty(finalUrls)) {
-          if (element != null && provider instanceof ExternalDocumentationProvider) {
-            ExternalDocumentationProvider externalDocumentationProvider = (ExternalDocumentationProvider)provider;
+          if (element != null && provider instanceof ExternalDocumentationProvider externalDocumentationProvider) {
             if (externalDocumentationProvider.canPromptToConfigureDocumentation(element)) {
               externalDocumentationProvider.promptToConfigureDocumentation(element);
             }
@@ -105,32 +114,30 @@ public class ExternalJavaDocAction extends AnAction {
           BrowserUtil.browse(finalUrls.get(0));
         }
         else {
-          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
             LangBundle.message("popup.title.choose.external.documentation.root"),
             ArrayUtilRt.toStringArray(finalUrls)) {
             @Override
-            public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
+            public PopupStep<?> onChosen(final String selectedValue, final boolean finalChoice) {
               BrowserUtil.browse(selectedValue);
               return FINAL_CHOICE;
             }
           }).showInBestPositionFor(DataManager.getInstance().getDataContext(contextComponent));
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     });
 
   }
 
-  @Nullable
-  private static PsiElement getOriginalElement(@NotNull DataContext dataContext, @Nullable Editor editor) {
+  private static @Nullable PsiElement getOriginalElement(@NotNull DataContext dataContext, @Nullable Editor editor) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     return (file != null && editor != null) ? file.findElementAt(editor.getCaretModel().getOffset())
                                             : null;
   }
 
-  @Nullable
-  private static PsiElement getElement(@NotNull DataContext dataContext,
-                                       @Nullable Editor editor,
-                                       @Nullable PsiElement originalElement) {
+  private static @Nullable PsiElement getElement(@NotNull DataContext dataContext,
+                                                 @Nullable Editor editor,
+                                                 @Nullable PsiElement originalElement) {
     return editor == null || originalElement == null
                      ? CommonDataKeys.PSI_ELEMENT.getData(dataContext)
                      : DocumentationManager.getInstance(originalElement.getProject())
@@ -148,8 +155,7 @@ public class ExternalJavaDocAction extends AnAction {
 
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
-    if (provider instanceof ExternalDocumentationProvider) {
-      final ExternalDocumentationProvider edProvider = (ExternalDocumentationProvider)provider;
+    if (provider instanceof ExternalDocumentationProvider edProvider) {
       enabled = CompositeDocumentationProvider.hasUrlsFor(provider, element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
     }
     else {

@@ -1,9 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -15,6 +22,7 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,12 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
-/**
- * @author ven
- */
-public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
+public class ChangeSignaturePropagationTest extends LightJavaCodeInsightTestCase {
   public void testParamSimple() {
     parameterPropagationTest();
   }
@@ -43,7 +46,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   public void testParamTypeSubst() {
     final PsiMethod method = getPrimaryMethod();
     final HashSet<PsiMethod> methods = new HashSet<>();
-    for (PsiReference reference : ReferencesSearch.search(method)) {
+    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
       if (psiMethod != null) {
         methods.add(psiMethod);
@@ -55,7 +58,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   public void testConflictingParameterName() {
     final PsiMethod method = getPrimaryMethod();
     final HashSet<PsiMethod> methods = new HashSet<>();
-    for (PsiReference reference : ReferencesSearch.search(method)) {
+    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
       if (psiMethod != null) {
         methods.add(psiMethod);
@@ -114,7 +117,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
 
   private static HashSet<PsiMethod> collectDefaultConstructorsToPropagate(PsiMethod method) {
     final HashSet<PsiMethod> methodsToPropagate = new HashSet<>();
-    for (PsiClass inheritor : ClassInheritorsSearch.search(method.getContainingClass())) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(method.getContainingClass()).asIterable()) {
       methodsToPropagate.add(inheritor.getConstructors()[0]);
     }
     return methodsToPropagate;

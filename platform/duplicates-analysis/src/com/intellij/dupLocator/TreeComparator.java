@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public final class TreeComparator {
+final class TreeComparator {
   private TreeComparator() {
   }
 

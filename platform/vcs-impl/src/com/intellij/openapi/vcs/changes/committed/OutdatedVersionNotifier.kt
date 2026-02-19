@@ -1,34 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider.Companion.isIncomingChangesAvailable
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.text.DateFormatUtil.formatPrettyDateTime
+import org.jetbrains.annotations.Nls
+import java.util.function.Function
+import javax.swing.JComponent
 
-private val KEY = Key<EditorNotificationPanel>("OutdatedVersionNotifier")
-
-class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationPanel>() {
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    val cache = CommittedChangesCache.getInstance(project)
+internal class OutdatedVersionNotifier : EditorNotificationProvider, DumbAware {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    val cache = CommittedChangesCache.getInstanceIfCreated(project) ?: return null
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null
     if (!isIncomingChangesAvailable(incomingChangeList.vcs)) return null
 
-    return createOutdatedVersionPanel(incomingChangeList, incomingChange)
+    return Function {
+      createOutdatedVersionPanel(incomingChangeList, incomingChange, it)
+    }
   }
 
-  class IncomingChangesListener(private val project: Project) : CommittedChangesListener {
+  internal class IncomingChangesListener(private val project: Project) : CommittedChangesListener {
     override fun incomingChangesUpdated(receivedChanges: List<CommittedChangeList>?) {
       val cache = CommittedChangesCache.getInstance(project)
 
@@ -49,14 +50,14 @@ class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationP
   }
 }
 
-private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: Change): EditorNotificationPanel =
-  EditorNotificationPanel().apply {
+private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: Change, fileEditor: FileEditor): EditorNotificationPanel =
+  EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info).apply {
     createActionLabel(message("outdated.version.show.diff.action"), "Compare.LastVersion")
     createActionLabel(message("outdated.version.update.project.action"), "Vcs.UpdateProject")
-    setText(getOutdatedVersionText(changeList, change))
+    text = getOutdatedVersionText(changeList, change)
   }
 
-private fun getOutdatedVersionText(changeList: CommittedChangeList, change: Change): String {
+private fun getOutdatedVersionText(changeList: CommittedChangeList, change: Change): @Nls String {
   val formattedDate = formatPrettyDateTime(changeList.commitDate)
   return message("outdated.version.text", changeList.committerName, formattedDate, changeList.comment.getSubject(),
                  if (change.type == Change.Type.DELETED) 1 else 0)

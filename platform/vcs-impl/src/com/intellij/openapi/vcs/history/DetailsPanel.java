@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,21 +18,21 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
 import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
 
-class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
-  @NotNull private final Project myProject;
-  @NotNull private final StatusText myStatusText;
-  @Nullable private List<? extends TreeNodeOnVcsRevision> mySelection;
+class DetailsPanel extends HtmlPanel implements UiDataProvider, CopyProvider {
+  private final @NotNull Project myProject;
+  private final @NotNull StatusText myStatusText;
+  private @Nullable List<? extends TreeNodeOnVcsRevision> mySelection;
 
   DetailsPanel(@NotNull Project project) {
     myProject = project;
@@ -71,9 +59,8 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     update();
   }
 
-  @NotNull
   @Override
-  protected String getBody() {
+  protected @NotNull String getBody() {
     if (mySelection == null || mySelection.isEmpty()) {
       return "";
     }
@@ -83,7 +70,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     for (TreeNodeOnVcsRevision revision : mySelection) {
       String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
-      if (html.length() > 0) {
+      if (!html.isEmpty()) {
         html.append("<br/><br/>"); //NON-NLS
       }
       if (addRevisionInfo) {
@@ -99,6 +86,11 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
   @Override
   public Color getBackground() {
     return UIUtil.getEditorPaneBackground();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -118,12 +110,8 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     return true;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
   }
 }

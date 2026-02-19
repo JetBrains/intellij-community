@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.javaFX.sceneBuilder` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "sceneBuilder",
+  module_name = "intellij.javaFX.sceneBuilder",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/java-psi-api:psi",
+    "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
+    "//plugins/javaFX",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/nanoxml",
+    "@lib//:java_f_x-scene_builder-_scene_builder_kit11-provided",
+    "//platform/indexing-impl",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+  ]
+)
+
+jvm_library(
+  name = "sceneBuilder_test_lib",
+  module_name = "intellij.javaFX.sceneBuilder",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":sceneBuilder",
+    "//java/java-psi-api:psi_test_lib",
+    "//java/java-indexing-api:indexing_test_lib",
+    "//java/openapi:java_test_lib",
+    "//plugins/javaFX:javaFX_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util/nanoxml:nanoxml_test_lib",
+    "@lib//:java_f_x-scene_builder-_scene_builder_kit11-provided",
+    "//platform/indexing-impl:indexing-impl_test_lib",
+    "//platform/workspace/jps:jps_test_lib",
+    "//platform/workspace/storage:storage_test_lib",
+  ]
+)
+### auto-generated section `build intellij.javaFX.sceneBuilder` end

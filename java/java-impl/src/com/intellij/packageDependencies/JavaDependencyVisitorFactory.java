@@ -1,33 +1,30 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
-  @NotNull
+public final class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
   @Override
-  public PsiElementVisitor getVisitor(@NotNull DependenciesBuilder.DependencyProcessor processor, @NotNull VisitorOptions options) {
+  public @NotNull PsiElementVisitor getVisitor(@NotNull DependenciesBuilder.DependencyProcessor processor, @NotNull VisitorOptions options) {
     return new MyVisitor(processor, options);
   }
 
-  private static class MyVisitor extends JavaRecursiveElementVisitor {
+  private static class MyVisitor extends JavaRecursiveElementWalkingVisitor {
     private final DependenciesBuilder.DependencyProcessor myProcessor;
     private final VisitorOptions myOptions;
 
@@ -37,37 +34,48 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      if (expression.getParent() instanceof PsiReferenceExpression expr && expr.isQualified()) return;
       visitReferenceElement(expression);
     }
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
+      processElement(element);
       super.visitElement(element);
+    }
 
+    private void processElement(@NotNull PsiElement element) {
       for (PsiReference ref : element.getReferences()) {
         PsiElement resolved = ref.resolve();
-        if (resolved != null) {
-          myProcessor.process(ref.getElement(), resolved);
-        }
+        if (resolved != null) myProcessor.process(ref.getElement(), resolved);
       }
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) { }
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) { }
 
     @Override
-    public void visitDocComment(PsiDocComment comment) { }
+    public void visitDocComment(@NotNull PsiDocComment comment) { }
 
-    @Override
-    public void visitImportStatement(PsiImportStatement statement) {
+    private void visitImport(@NotNull PsiElement element) {
       if (!myOptions.skipImports()) {
-        visitElement(statement);
+        visitElement(element);
       }
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitImportStatement(@NotNull PsiImportStatement statement) {
+      visitImport(statement);
+    }
+
+    @Override
+    public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
+      visitImport(statement);
+    }
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
 
       PsiMethod psiMethod = expression.resolveMethod();

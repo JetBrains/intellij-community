@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.library.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -21,12 +21,11 @@ public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<Framework
   }
 
   @Override
-  protected FrameworkLibraryVersion createVersion(Artifact version, List<DownloadableLibraryFileDescription> files) {
+  protected FrameworkLibraryVersion createVersion(Artifact version, List<? extends DownloadableLibraryFileDescription> files) {
     return new FrameworkLibraryVersionImpl(version.getName(), version.getVersion(), createAvailabilityCondition(version), files, myGroupId);
   }
 
-  @NotNull
-  protected FrameworkAvailabilityCondition createAvailabilityCondition(Artifact version) {
+  protected @NotNull FrameworkAvailabilityCondition createAvailabilityCondition(Artifact version) {
     return FrameworkAvailabilityCondition.ALWAYS_TRUE;
   }
 

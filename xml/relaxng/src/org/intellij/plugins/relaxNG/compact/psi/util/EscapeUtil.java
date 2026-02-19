@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
-public class EscapeUtil {
+public final class EscapeUtil {
   public static String unescapeText(@NotNull PsiElement element) {
     final ASTNode node = element.getNode();
     if (node != null) {

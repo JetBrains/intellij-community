@@ -25,7 +25,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
@@ -37,8 +41,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.parameter");
   }
 
@@ -51,7 +54,7 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
     final PyFunction function = PsiTreeUtil.getParentOfType(psi, PyFunction.class);
     if (function != null) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(ctx);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(ctx);
 
       StreamEx
         .of(PyPsiIndexUtil.findUsages(function, false))

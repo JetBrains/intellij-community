@@ -18,7 +18,11 @@ package com.intellij.psi.filters.position;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDoctype;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlProlog;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -36,8 +40,7 @@ public class NamespaceFilter implements ElementFilter {
 
   @Override
   public boolean isAcceptable(Object element, PsiElement context){
-    if(element instanceof XmlTag){
-      final XmlTag psiElement = (XmlTag)element;
+    if(element instanceof XmlTag psiElement){
       if (!psiElement.isValid()) return false;
       final String ns = psiElement.getNamespace();
 

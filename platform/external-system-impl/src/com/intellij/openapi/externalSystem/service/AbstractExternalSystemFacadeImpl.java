@@ -1,24 +1,40 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.service.remote.*;
+import com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolverImpl;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolverImpl;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManagerImpl;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author Denis Zhdanov
- */
+@ApiStatus.Internal
 public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends RemoteServer
   implements RemoteExternalSystemFacade<S>
 {
@@ -27,18 +43,21 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
 
   private final AtomicReference<S> mySettings              = new AtomicReference<>();
   private final AtomicReference<ExternalSystemTaskNotificationListener> myNotificationListener =
-    new AtomicReference<>(new ExternalSystemTaskNotificationListenerAdapter() {
-    });
+    new AtomicReference<>(ExternalSystemTaskNotificationListener.NULL_OBJECT);
 
   private final @NotNull RemoteExternalSystemProjectResolverImpl<S> myProjectResolver;
   private final @NotNull RemoteExternalSystemTaskManagerImpl<S>     myTaskManager;
 
   public AbstractExternalSystemFacadeImpl(@NotNull Class<ExternalSystemProjectResolver<S>> projectResolverClass,
                                           @NotNull Class<ExternalSystemTaskManager<S>> buildManagerClass)
-    throws IllegalAccessException, InstantiationException
-  {
-    myProjectResolver = new RemoteExternalSystemProjectResolverImpl<>(projectResolverClass.newInstance());
-    myTaskManager = new RemoteExternalSystemTaskManagerImpl<>(buildManagerClass.newInstance());
+    throws IllegalAccessException, InstantiationException {
+    try {
+      myProjectResolver = new RemoteExternalSystemProjectResolverImpl<>(projectResolverClass.getConstructor().newInstance());
+      myTaskManager = new RemoteExternalSystemTaskManagerImpl<>(buildManagerClass.getConstructor().newInstance());
+    }
+    catch (InvocationTargetException | NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void init() throws RemoteException {
@@ -60,19 +79,18 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
       return getService(RemoteExternalSystemProjectResolver.class, myProjectResolver);
     }
     catch (Exception e) {
-      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()),
-                                      e);
+      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()), e);
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public @NotNull RawExternalSystemProjectResolver<S> getRawProjectResolver() throws IllegalStateException {
     try {
       return getService(RawExternalSystemProjectResolver.class, new RawExternalSystemProjectResolverImpl<>(myProjectResolver));
     }
     catch (Exception e) {
-      throw new IllegalStateException(String.format("Can't create '%s' service", RawExternalSystemProjectResolverImpl.class.getName()),
-                                      e);
+      throw new IllegalStateException(String.format("Can't create '%s' service", RawExternalSystemProjectResolverImpl.class.getName()), e);
     }
   }
 
@@ -87,7 +105,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
   }
 
-  @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings("unchecked")
   private <I extends RemoteExternalSystemService<S>, C extends I> I getService(@NotNull Class<I> interfaceClass,
                                                                                final @NotNull C impl)
     throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
@@ -135,16 +153,14 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
    * @throws IllegalAccessException   in case of incorrect assumptions about server class interface
    * @throws InstantiationException   in case of incorrect assumptions about server class interface
    * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
-   * @throws RemoteException
    */
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "UseOfSystemOutOrSystemErr"})
   protected abstract  <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass,
                                                                                               final @NotNull C impl)
   throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException;
 
   @Override
   public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
-    for (RemoteExternalSystemService service : myRemotes.values()) {
+    for (RemoteExternalSystemService<?> service : myRemotes.values()) {
       if (service.isTaskInProgress(id)) {
         return true;
       }
@@ -155,7 +171,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
   @Override
   public @NotNull Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
     Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> result = null;
-    for (RemoteExternalSystemService service : myRemotes.values()) {
+    for (RemoteExternalSystemService<?> service : myRemotes.values()) {
       final Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> tasks = service.getTasksInProgress();
       if (tasks.isEmpty()) {
         continue;
@@ -213,15 +229,17 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+    public synchronized void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+      try {
+        myManager.onEnvironmentPrepared(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
     }
 
     @Override
-    public void onStart(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+    public synchronized void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
       try {
         myManager.onStatusChange(event);
       }
@@ -231,33 +249,15 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+    public synchronized void onTaskOutput(@NotNull ExternalSystemTaskId id,
+                                          @NotNull String text,
+                                          @NotNull ProcessOutputType processOutputType) {
       try {
-        myManager.onTaskOutput(id, text, stdOut);
+        myManager.onTaskOutput(id, text, processOutputType);
       }
       catch (RemoteException e) {
         // Ignore
       }
-    }
-
-    @Override
-    public void onEnd(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onSuccess(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception ex) {
-    }
-
-    @Override
-    public void beforeCancel(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public void onCancel(@NotNull ExternalSystemTaskId id) {
     }
   }
 }

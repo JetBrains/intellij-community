@@ -1,4 +1,4 @@
-// "Add exception to class default constructor signature" "true"
+// "Add exception to constructor signature" "true"
 import java.io.FileWriter;
 import java.io.IOException;
 

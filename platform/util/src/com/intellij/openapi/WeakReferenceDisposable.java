@@ -2,6 +2,7 @@
 package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
@@ -13,6 +14,7 @@ import java.lang.ref.WeakReference;
  *
  * @author eldar
  */
+@ApiStatus.Internal
 public abstract class WeakReferenceDisposable<T> extends WeakReference<T> implements Disposable {
   private static final ReferenceQueue<Object> ourRefQueue = new ReferenceQueue<>();
 

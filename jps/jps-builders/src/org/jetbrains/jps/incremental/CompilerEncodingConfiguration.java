@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -34,9 +19,14 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
-public class CompilerEncodingConfiguration {
+public final class CompilerEncodingConfiguration {
   private final JpsModel myJpsModel;
   private final Map<String, String> myUrlToCharset;
   private final String myProjectCharset;
@@ -59,7 +49,7 @@ public class CompilerEncodingConfiguration {
   }
 
   private Map<JpsModule, Set<String>> computeModuleCharsetMap() {
-    final Map<JpsModule, Set<String>> map = new THashMap<>();
+    final Map<JpsModule, Set<String>> map = new HashMap<>();
     final Iterable<JavaBuilderExtension> builderExtensions = JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class);
     for (Map.Entry<String, String> entry : myUrlToCharset.entrySet()) {
       final String fileUrl = entry.getKey();
@@ -120,8 +110,7 @@ public class CompilerEncodingConfiguration {
     return map;
   }
 
-  @Nullable
-  public String getEncoding(@Nullable File file) {
+  public @Nullable String getEncoding(@Nullable File file) {
     while (file != null) {
       final String charset = lookupCharsetMap(file);
       if (charset != null) {
@@ -132,8 +121,7 @@ public class CompilerEncodingConfiguration {
     return myProjectCharset;
   }
 
-  @Nullable
-  private String lookupCharsetMap(File file) {
+  private @Nullable String lookupCharsetMap(File file) {
     return myUrlToCharset.get(JpsPathUtil.pathToUrl(FileUtilRt.toSystemIndependentName(file.getAbsolutePath())));
   }
 
@@ -146,8 +134,7 @@ public class CompilerEncodingConfiguration {
     return false;
   }
 
-  @Nullable
-  public String getPreferredModuleChunkEncoding(@NotNull ModuleChunk moduleChunk) {
+  public @Nullable String getPreferredModuleChunkEncoding(@NotNull ModuleChunk moduleChunk) {
     for (JpsModule module : moduleChunk.getModules()) {
       final String encoding = getPreferredModuleEncoding(module);
       if (encoding != null) {
@@ -162,8 +149,7 @@ public class CompilerEncodingConfiguration {
     return ContainerUtil.getFirstItem(encodings, null);
   }
 
-  @NotNull
-  public Set<String> getAllModuleChunkEncodings(@NotNull ModuleChunk moduleChunk) {
+  public @NotNull Set<String> getAllModuleChunkEncodings(@NotNull ModuleChunk moduleChunk) {
     final Map<JpsModule, Set<String>> map = getModuleCharsetMap();
     Set<String> encodings = new HashSet<>();
     for (JpsModule module : moduleChunk.getModules()) {

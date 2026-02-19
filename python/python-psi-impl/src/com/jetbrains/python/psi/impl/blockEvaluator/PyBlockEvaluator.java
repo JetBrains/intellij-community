@@ -19,23 +19,41 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyIfStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyReturnStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPathEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class PyBlockEvaluator {
-  @NotNull
-  private final PyEvaluationResult myEvaluationResult = new PyEvaluationResult();
-  @NotNull
-  private final PyEvaluationContext myContext;
+  private final @NotNull PyEvaluationResult myEvaluationResult = new PyEvaluationResult();
+  private final @NotNull PyEvaluationContext myContext;
   private final Set<PyFile> myVisitedFiles;
   private final Set<String> myDeclarationsToTrack = new HashSet<>();
   private String myCurrentFilePath;
@@ -47,8 +65,8 @@ public class PyBlockEvaluator {
    *                          for more info
    * @see PyEvaluationContext
    */
-  public PyBlockEvaluator(@NotNull final PyEvaluationContext evaluationContext) {
-    this(new HashSet<PyFile>(), evaluationContext);
+  public PyBlockEvaluator(final @NotNull PyEvaluationContext evaluationContext) {
+    this(new HashSet<>(), evaluationContext);
   }
 
   /**
@@ -58,7 +76,7 @@ public class PyBlockEvaluator {
     this(new PyEvaluationContext());
   }
 
-  private PyBlockEvaluator(@NotNull final Set<PyFile> visitedFiles, @NotNull final PyEvaluationContext evaluationContext) {
+  private PyBlockEvaluator(final @NotNull Set<PyFile> visitedFiles, final @NotNull PyEvaluationContext evaluationContext) {
     myVisitedFiles = visitedFiles;
     myContext = evaluationContext;
   }
@@ -84,7 +102,9 @@ public class PyBlockEvaluator {
     Object value = myEvaluationResult.myNamespace.get(nameBeingExtended);
     if (value instanceof List) {
       Object argValue = prepareEvaluator().evaluate(arg);
-      myEvaluationResult.myNamespace.put(nameBeingExtended, prepareEvaluator().applyPlus(value, argValue));
+      if (argValue != null) {
+        myEvaluationResult.myNamespace.put(nameBeingExtended, prepareEvaluator().applyPlus(value, argValue));
+      }
     }
 
     if (myDeclarationsToTrack.contains(nameBeingExtended)) {
@@ -120,23 +140,19 @@ public class PyBlockEvaluator {
     return myEvaluationResult.myNamespace.get(name);
   }
 
-  @Nullable
-  public String getValueAsString(String name) {
+  public @Nullable String getValueAsString(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
     return value instanceof String ? (String)value : null;
   }
 
-  @Nullable
-  public List getValueAsList(String name) {
+  public @Nullable List getValueAsList(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
     return value instanceof List ? (List)value : null;
   }
 
-  @NotNull
-  public List<String> getValueAsStringList(String name) {
+  public @NotNull List<String> getValueAsStringList(String name) {
     Object value = myEvaluationResult.myNamespace.get(name);
-    if (value instanceof List) {
-      List valueList = (List)value;
+    if (value instanceof List valueList) {
       for (Object o : valueList) {
         if (o != null && !(o instanceof String)) {
           return Collections.emptyList();
@@ -163,8 +179,7 @@ public class PyBlockEvaluator {
     myEvaluateCollectionItems = evaluateCollectionItems;
   }
 
-  @NotNull
-  public List<PyExpression> getDeclarations(@NotNull final String name) {
+  public @NotNull List<PyExpression> getDeclarations(final @NotNull String name) {
     return myEvaluationResult.getDeclarations(name);
   }
 
@@ -172,8 +187,7 @@ public class PyBlockEvaluator {
    * @return so-called context. You may pass it to any instance of {@link PyBlockEvaluator}
    * to make instances share their cache
    */
-  @NotNull
-  public PyEvaluationContext getContext() {
+  public @NotNull PyEvaluationContext getContext() {
     return myContext;
   }
 
@@ -234,11 +248,9 @@ public class PyBlockEvaluator {
     @Override
     public void visitPyCallExpression(@NotNull PyCallExpression node) {
       PyExpression callee = node.getCallee();
-      if (callee instanceof PyReferenceExpression) {
-        PyReferenceExpression calleeRef = (PyReferenceExpression)callee;
+      if (callee instanceof PyReferenceExpression calleeRef) {
         PyExpression qualifier = calleeRef.getQualifier();
-        if (qualifier instanceof PyReferenceExpression) {
-          PyReferenceExpression qualifierRef = (PyReferenceExpression)qualifier;
+        if (qualifier instanceof PyReferenceExpression qualifierRef) {
           if (!qualifierRef.isQualified()) {
             if (PyNames.EXTEND.equals(calleeRef.getReferencedName()) && node.getArguments().length == 1) {
               processExtendCall(node, qualifierRef.getReferencedName());
@@ -255,8 +267,7 @@ public class PyBlockEvaluator {
     public void visitPyFromImportStatement(final @NotNull PyFromImportStatement node) {
       if (node.isFromFuture()) return;
       final PsiElement source = PyUtil.turnDirIntoInit(node.resolveImportSource());
-      if (source instanceof PyFile) {
-        final PyFile pyFile = (PyFile)source;
+      if (source instanceof PyFile pyFile) {
         PyEvaluationResult newlyEvaluatedResult = myContext.getCachedResult(pyFile);
 
         if (newlyEvaluatedResult == null) {

@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public final class VirtualFilePresentation {
   public static Icon getIcon(@NotNull VirtualFile vFile) {

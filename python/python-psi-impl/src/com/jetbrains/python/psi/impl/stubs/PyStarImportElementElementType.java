@@ -14,38 +14,33 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author vlan
- */
 public class PyStarImportElementElementType extends PyStubElementType<PyStarImportElementStub, PyStarImportElement> {
   public PyStarImportElementElementType() {
     super("STAR_IMPORT_ELEMENT");
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyStarImportElementImpl(node);
   }
 
   @Override
-  public PyStarImportElement createPsi(@NotNull final PyStarImportElementStub stub) {
+  public PyStarImportElement createPsi(final @NotNull PyStarImportElementStub stub) {
     return new PyStarImportElementImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyStarImportElementStub createStub(@NotNull final PyStarImportElement psi, final StubElement parentStub) {
+  public @NotNull PyStarImportElementStub createStub(final @NotNull PyStarImportElement psi, final StubElement parentStub) {
     return new PyStarImportElementStubImpl(parentStub);
   }
 
   @Override
-  public void serialize(@NotNull final PyStarImportElementStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(final @NotNull PyStarImportElementStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
   }
 
   @Override
-  @NotNull
-  public PyStarImportElementStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PyStarImportElementStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub)
+    throws IOException {
     return new PyStarImportElementStubImpl(parentStub);
   }
 }

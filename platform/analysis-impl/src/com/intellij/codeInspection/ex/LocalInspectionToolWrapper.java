@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -11,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   /** This should be used in tests primarily */
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-    super(tool, LocalInspectionEP.LOCAL_INSPECTION.getByKey(tool.getShortName(), LocalInspectionToolWrapper.class, InspectionEP::getShortName));
+    super(tool, InspectionToolRegistrar.getInstance().findInspectionEP(tool));
   }
 
   public LocalInspectionToolWrapper(@NotNull LocalInspectionEP ep) {
@@ -36,12 +39,12 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool() instanceof UnfairLocalInspectionTool : myEP.unfair;
   }
 
-  public boolean isDynamicGroup() {
+  boolean isDynamicGroup() {
     return myEP == null ? getTool() instanceof DynamicGroupTool : myEP.dynamicGroup;
   }
 
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
   }
 
@@ -67,10 +70,10 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
                                                                           @Nullable PsiElement element,
                                                                           @NotNull InspectionProfile inspectionProfile,
                                                                           @Nullable InspectionToolWrapper<?, ?> toolWrapper) {
-    if (toolWrapper instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
-      LocalInspectionTool inspectionTool = ((LocalInspectionToolWrapper)toolWrapper).getTool();
-      if (inspectionTool instanceof PairedUnfairLocalInspectionTool) {
-        String oppositeShortName = ((PairedUnfairLocalInspectionTool)inspectionTool).getInspectionForBatchShortName();
+    if (toolWrapper instanceof LocalInspectionToolWrapper local && local.isUnfair()) {
+      LocalInspectionTool inspectionTool = local.getTool();
+      if (inspectionTool instanceof PairedUnfairLocalInspectionTool unfair) {
+        String oppositeShortName = unfair.getInspectionForBatchShortName();
         return element == null ? inspectionProfile.getInspectionTool(oppositeShortName, project)
                                : inspectionProfile.getInspectionTool(oppositeShortName, element);
       }

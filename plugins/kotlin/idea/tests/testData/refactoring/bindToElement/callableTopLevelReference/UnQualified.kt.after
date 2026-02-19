@@ -1,0 +1,12 @@
+// BIND_TO test.B
+package test
+
+import test.B
+
+class A { }
+
+class B { }
+
+fun foo() {
+    val x = ::<caret>B
+}

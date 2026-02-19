@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.Key;
@@ -21,9 +21,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class IdRefReference extends BasicAttributeValueReference {
   private final boolean myIdAttrsOnly;
 
@@ -37,10 +34,8 @@ public class IdRefReference extends BasicAttributeValueReference {
     myIdAttrsOnly = false;
   }
 
-  @Nullable
-  protected PsiElement getIdValueElement(PsiElement element) {
-    if (element instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)element;
+  protected @Nullable PsiElement getIdValueElement(PsiElement element) {
+    if (element instanceof XmlTag tag) {
       XmlAttribute attribute = tag.getAttribute(IdReferenceProvider.ID_ATTR_NAME, null);
       if (!myIdAttrsOnly) {
         if (attribute == null) {
@@ -57,10 +52,8 @@ public class IdRefReference extends BasicAttributeValueReference {
     }
   }
 
-  @Nullable
-  protected String getIdValue(final PsiElement element) {
-    if (element instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)element;
+  protected @Nullable String getIdValue(final PsiElement element) {
+    if (element instanceof XmlTag tag) {
       String s = tag.getAttributeValue(IdReferenceProvider.ID_ATTR_NAME);
       if (!myIdAttrsOnly) {
         if (s == null) s = tag.getAttributeValue(IdReferenceProvider.NAME_ATTR_NAME);
@@ -74,8 +67,7 @@ public class IdRefReference extends BasicAttributeValueReference {
     return null;
   }
 
-  @Nullable
-  public static XmlAttribute getImplicitIdRefAttr(@NotNull XmlTag tag) {
+  public static @Nullable XmlAttribute getImplicitIdRefAttr(@NotNull XmlTag tag) {
     for (ImplicitIdRefProvider idRefProvider : ImplicitIdRefProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       XmlAttribute value = idRefProvider.getIdRefAttribute(tag);
       if (value != null) return value;
@@ -84,8 +76,7 @@ public class IdRefReference extends BasicAttributeValueReference {
     return null;
   }
 
-  @Nullable
-  public static XmlAttributeValue getImplicitIdRefValueElement(@NotNull XmlTag tag) {
+  public static @Nullable XmlAttributeValue getImplicitIdRefValueElement(@NotNull XmlTag tag) {
     for (ImplicitIdRefProvider idRefProvider : ImplicitIdRefProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       XmlAttribute value = idRefProvider.getIdRefAttribute(tag);
       if (value != null) return value.getValueElement();
@@ -94,8 +85,7 @@ public class IdRefReference extends BasicAttributeValueReference {
     return null;
   }
 
-  @Nullable
-  public static String getImplicitIdRefValue(@NotNull XmlTag tag) {
+  public static @Nullable String getImplicitIdRefValue(@NotNull XmlTag tag) {
     XmlAttributeValue attribute = getImplicitIdRefValueElement(tag);
 
     return attribute != null ? attribute.getValue() : null;
@@ -108,7 +98,7 @@ public class IdRefReference extends BasicAttributeValueReference {
             !subTag.getName().contains(".directive"));
   }
 
-  private static final FileBasedUserDataCache<List<PsiElement>> ourCachedIdsCache = new FileBasedUserDataCache<List<PsiElement>>() {
+  private static final FileBasedUserDataCache<List<PsiElement>> ourCachedIdsCache = new FileBasedUserDataCache<>() {
     private final Key<CachedValue<List<PsiElement>>> ourCachedIdsValueKey = Key.create("my.ids.cached.value");
 
     @Override
@@ -117,20 +107,20 @@ public class IdRefReference extends BasicAttributeValueReference {
 
       file.accept(new XmlRecursiveElementVisitor(true) {
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
           if (isAcceptableTagType(tag)) result.add(tag);
           super.visitXmlTag(tag);
         }
 
         @Override
-        public void visitComment(@NotNull final PsiComment comment) {
+        public void visitComment(final @NotNull PsiComment comment) {
           if (isDeclarationComment(comment)) result.add(comment);
 
           super.visitComment(comment);
         }
 
         @Override
-        public void visitXmlComment(final XmlComment comment) {
+        public void visitXmlComment(final @NotNull XmlComment comment) {
           if (isDeclarationComment(comment)) result.add(comment);
 
           super.visitComment(comment);
@@ -145,12 +135,11 @@ public class IdRefReference extends BasicAttributeValueReference {
     }
   };
 
-  private static boolean isDeclarationComment(@NotNull final PsiComment comment) {
+  private static boolean isDeclarationComment(final @NotNull PsiComment comment) {
     return comment.getText().contains("@declare id=");
   }
 
-  @Nullable
-  private static String getImplicitIdValue(@NotNull final PsiComment comment) {
+  private static @Nullable String getImplicitIdValue(final @NotNull PsiComment comment) {
     return XmlDeclareIdInCommentAction.getImplicitlyDeclaredId(comment);
   }
 
@@ -166,14 +155,13 @@ public class IdRefReference extends BasicAttributeValueReference {
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final PsiElement[] result = new PsiElement[1];
-    process(new PsiElementProcessor<PsiElement>() {
+    process(new PsiElementProcessor<>() {
       final String canonicalText = getCanonicalText();
 
       @Override
-      public boolean execute(@NotNull final PsiElement element) {
+      public boolean execute(final @NotNull PsiElement element) {
         final String idValue = getIdValue(element);
         if (idValue != null && idValue.equals(canonicalText)) {
           result[0] = getIdValueElement(element);
@@ -190,9 +178,9 @@ public class IdRefReference extends BasicAttributeValueReference {
   public Object @NotNull [] getVariants() {
     final List<String> result = new LinkedList<>();
 
-    process(new PsiElementProcessor<PsiElement>() {
+    process(new PsiElementProcessor<>() {
       @Override
-      public boolean execute(@NotNull final PsiElement element) {
+      public boolean execute(final @NotNull PsiElement element) {
         String value = getIdValue(element);
         if (value != null) {
           result.add(value);

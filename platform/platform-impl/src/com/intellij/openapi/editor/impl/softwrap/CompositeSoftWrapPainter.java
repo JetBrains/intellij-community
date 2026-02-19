@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,12 +6,16 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.AFTER_SOFT_WRAP;
 import static com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED;
@@ -22,16 +26,15 @@ import static java.util.Arrays.asList;
  * processing to it.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
-public class CompositeSoftWrapPainter implements SoftWrapPainter {
+public final class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   /**
    * Defines a key to use for checking for code of the custom unicode symbol to use for {@code 'before soft wrap'} representation.
    * <p/>
    * Target value (if any) is assumed to be in hex format.
    */
+  @ApiStatus.Internal
   public static final String CUSTOM_BEFORE_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.before.code";
 
   /**
@@ -39,6 +42,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
    * <p/>
    * Target value (if any) is assumed to be in hex format.
    */
+  @ApiStatus.Internal
   public static final String CUSTOM_AFTER_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.after.code";
 
   private static final Logger LOG = Logger.getInstance(CompositeSoftWrapPainter.class);
@@ -96,8 +100,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     myEditor = editor;
   }
 
-  @Nullable
-  private static Character parse(String key) {
+  private static @Nullable Character parse(String key) {
     String value = System.getProperty(key);
     if (value == null) {
       return null;

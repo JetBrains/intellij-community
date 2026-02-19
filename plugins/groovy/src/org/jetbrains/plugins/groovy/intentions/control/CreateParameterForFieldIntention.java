@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.google.common.collect.Lists;
@@ -13,10 +13,19 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.usageView.UsageInfo;
@@ -53,12 +62,12 @@ import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMET
 /**
  * @author Maxim.Medvedev
  */
-public class CreateParameterForFieldIntention extends Intention {
+public final class CreateParameterForFieldIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(CreateParameterForFieldIntention.class);
   private static final Key<CachedValue<List<GrField>>> FIELD_CANDIDATES = Key.create("Fields.candidates");
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor)
+  protected void processIntention(@NotNull PsiElement element, final @NotNull Project project, final Editor editor)
     throws IncorrectOperationException {
     final List<GrField> candidates = findFieldCandidates(element);
     if (candidates != null) {
@@ -142,7 +151,7 @@ public class CreateParameterForFieldIntention extends Intention {
     PsiClassType[] exceptionTypes = constructor.getThrowsList().getReferencedTypes();
     ThrownExceptionInfo[] thrownExceptionInfos = new ThrownExceptionInfo[exceptionTypes.length];
     for (int i = 0; i < exceptionTypes.length; i++) {
-      new JavaThrownExceptionInfo(i, exceptionTypes[i]);
+      thrownExceptionInfos[i] = new JavaThrownExceptionInfo(i, exceptionTypes[i]);
     }
 
     final GrChangeInfoImpl grChangeInfo = new GrChangeInfoImpl(constructor, null, null, constructor.getName(), parameters, thrownExceptionInfos, false);
@@ -183,9 +192,8 @@ public class CreateParameterForFieldIntention extends Intention {
     return false;
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new MyPredicate();
   }
 
@@ -199,8 +207,7 @@ public class CreateParameterForFieldIntention extends Intention {
     }
   }
 
-  @Nullable
-  private static List<GrField> findFieldCandidates(PsiElement element) {
+  private static @Nullable List<GrField> findFieldCandidates(PsiElement element) {
     final GrMethod constructor = PsiTreeUtil.getParentOfType(element, GrMethod.class);
     if (constructor == null || !constructor.isConstructor()) return null;
     if (constructor.getBlock() == null) return null;
@@ -264,8 +271,7 @@ public class CreateParameterForFieldIntention extends Intention {
   }
 
 
-  @Nullable
-  private static List<GrMethod> findConstructorCandidates(PsiElement element) {
+  private static @Nullable List<GrMethod> findConstructorCandidates(PsiElement element) {
     final GrField field = PsiTreeUtil.getParentOfType(element, GrField.class);
     if (field == null) return null;
     PsiClass containingClass = field.getContainingClass();
@@ -273,7 +279,7 @@ public class CreateParameterForFieldIntention extends Intention {
     return findConstructorCandidates(field, (GrTypeDefinition)containingClass);
   }
 
-  private static List<GrMethod> findConstructorCandidates(@NotNull final GrField field, @NotNull GrTypeDefinition psiClass) {
+  private static List<GrMethod> findConstructorCandidates(final @NotNull GrField field, @NotNull GrTypeDefinition psiClass) {
     final List<GrMethod> result = new ArrayList<>();
     final PsiMethod[] constructors = psiClass.getConstructors();
     final PsiManager manager = field.getManager();

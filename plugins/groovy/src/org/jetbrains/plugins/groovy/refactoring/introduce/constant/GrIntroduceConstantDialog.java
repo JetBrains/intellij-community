@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
-import com.intellij.ide.util.*;
+import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -14,7 +17,16 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,10 +37,11 @@ import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,14 +63,28 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrFieldNameSugge
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
+import java.util.ResourceBundle;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -68,17 +95,17 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private static final Logger LOG = Logger.getInstance(GrIntroduceConstantDialog.class);
 
   private final GrIntroduceContext myContext;
-  private JLabel myNameLabel;
-  private JCheckBox myReplaceAllOccurrences;
-  private JPanel myPanel;
-  private GrTypeComboBox myTypeCombo;
+  private final JLabel myNameLabel;
+  private final JCheckBox myReplaceAllOccurrences;
+  private final JPanel myPanel;
+  private final GrTypeComboBox myTypeCombo;
   private ReferenceEditorComboWithBrowseButton myTargetClassEditor;
-  private NameSuggestionsField myNameField;
-  private JavaVisibilityPanel myJavaVisibilityPanel;
-  private JPanel myTargetClassPanel;
-  private JLabel myTargetClassLabel;
-  @Nullable private PsiClass myTargetClass;
-  @Nullable private final PsiClass myDefaultTargetClass;
+  private final NameSuggestionsField myNameField;
+  private final JavaVisibilityPanel myJavaVisibilityPanel;
+  private final JPanel myTargetClassPanel;
+  private final JLabel myTargetClassLabel;
+  private @Nullable PsiClass myTargetClass;
+  private final @Nullable PsiClass myDefaultTargetClass;
 
   private TargetClassInfo myTargetClassInfo;
 
@@ -87,6 +114,91 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myContext = context;
     myTargetClass = defaultTargetClass;
     myDefaultTargetClass = defaultTargetClass;
+    {
+      myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
+
+      final GrVariable var = myContext.getVar();
+      final GrExpression expression = myContext.getExpression();
+      final StringPartInfo stringPart = myContext.getStringPart();
+      if (expression != null) {
+        myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(expression);
+      }
+      else if (stringPart != null) {
+        myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(stringPart.getLiteral());
+      }
+      else {
+        assert var != null;
+        myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType(), var);
+      }
+
+      List<String> names = new ArrayList<>();
+      if (var != null) {
+        names.add(var.getName());
+      }
+      if (expression != null) {
+        names.addAll(suggestNames());
+      }
+
+      myNameField = new NameSuggestionsField(ArrayUtilRt.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
+
+      GrTypeComboBox.registerUpDownHint(myNameField, myTypeCombo);
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JLabel label1 = new JLabel();
+      this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle", "type.label"));
+      panel1.add(label1,
+                 new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      panel1.add(myTypeCombo, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                  GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null,
+                                                  0, false));
+      myNameLabel = new JLabel();
+      this.$$$loadLabelText$$$(myNameLabel, this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle", "name.label"));
+      panel1.add(myNameLabel,
+                 new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(35, 49), null, 0, false));
+      panel1.add(myNameField, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel2, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      panel2.add(myJavaVisibilityPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                            null, null, null, 0, false));
+      myReplaceAllOccurrences = new JCheckBox();
+      this.$$$loadButtonText$$$(myReplaceAllOccurrences,
+                                this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle", "replace.all.occurrences.checkbox"));
+      myPanel.add(myReplaceAllOccurrences, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTargetClassPanel = new JPanel();
+      myTargetClassPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(myTargetClassPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                          GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                          null, null, 0, false));
+      myTargetClassLabel = new JLabel();
+      this.$$$loadLabelText$$$(myTargetClassLabel,
+                               this.$$$getMessageFromBundle$$$("messages/GroovyRefactoringBundle", "introduce.constant.class.label"));
+      myTargetClassPanel.add(myTargetClassLabel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                     GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED,
+                                                                     null, null, null, 0, false));
+      label1.setLabelFor(myTypeCombo);
+    }
 
     setTitle(GroovyBundle.message("introduce.constant.title"));
 
@@ -97,8 +209,79 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     init();
   }
 
-  @Nullable
-  public static PsiClass getParentClass(PsiElement occurrence) {
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
+
+  public static @Nullable PsiClass getParentClass(PsiElement occurrence) {
     PsiElement cur = occurrence;
     while (true) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(cur, PsiClass.class, true);
@@ -140,12 +323,9 @@ public class GrIntroduceConstantDialog extends DialogWrapper
         public void actionPerformed(ActionEvent e) {
           TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myContext.getProject())
             .createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"),
-                                                GlobalSearchScope.projectScope(myContext.getProject()), new ClassFilter() {
-                @Override
-                public boolean isAccepted(PsiClass aClass) {
-                  return aClass.getParent() instanceof GroovyFile || aClass.hasModifierProperty(PsiModifier.STATIC);
-                }
-              }, null);
+                                                GlobalSearchScope.projectScope(myContext.getProject()),
+                                                aClass -> aClass.getParent() instanceof GroovyFile ||
+                                                          aClass.hasModifierProperty(PsiModifier.STATIC), null);
           if (myTargetClass != null) {
             chooser.selectDirectory(myTargetClass.getContainingFile().getContainingDirectory());
           }
@@ -154,7 +334,6 @@ public class GrIntroduceConstantDialog extends DialogWrapper
           if (aClass != null) {
             myTargetClassEditor.setText(aClass.getQualifiedName());
           }
-
         }
       }, "", myContext.getProject(), true, RECENTS_KEY);
     myTargetClassPanel.setLayout(new BorderLayout());
@@ -181,7 +360,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       public void documentChanged(@NotNull DocumentEvent e) {
         targetClassChanged();
         updateOkStatus();
-       // enableEnumDependant(introduceEnumConstant());
+        // enableEnumDependant(introduceEnumConstant());
       }
     });
   }
@@ -192,7 +371,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myPanel.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameField, true));
+        IdeFocusManager.getGlobalInstance()
+          .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameField, true));
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
@@ -204,14 +384,12 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     return myJavaVisibilityPanel.getVisibility();
   }
 
-  @Nullable
   @Override
-  public PsiClass getTargetClass() {
+  public @Nullable PsiClass getTargetClass() {
     return myTargetClassInfo.getTargetClass();
   }
 
-  @NotNull
-  public String getTargetClassName() {
+  public @NotNull String getTargetClassName() {
     return myTargetClassEditor.getText();
   }
 
@@ -220,15 +398,13 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     return this;
   }
 
-  @NotNull
   @Override
-  public LinkedHashSet<String> suggestNames() {
+  public @NotNull LinkedHashSet<String> suggestNames() {
     return new GrFieldNameSuggester(myContext, new GroovyVariableValidator(myContext), true).suggestNames();
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myNameField.getEnteredName();
   }
 
@@ -242,44 +418,14 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     return myTypeCombo.getSelectedType();
   }
 
-  @NonNls private static final String RECENTS_KEY = "GrIntroduceConstantDialog.RECENTS_KEY";
-
-  private void createUIComponents() {
-    myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
-
-    final GrVariable var = myContext.getVar();
-    final GrExpression expression = myContext.getExpression();
-    final StringPartInfo stringPart = myContext.getStringPart();
-    if (expression != null) {
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(expression);
-    }
-    else if (stringPart != null) {
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(stringPart.getLiteral());
-    }
-    else {
-      assert var != null;
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType(), var);
-    }
-
-    List<String> names = new ArrayList<>();
-    if (var != null) {
-      names.add(var.getName());
-    }
-    if (expression != null) {
-      names.addAll(suggestNames());
-    }
-
-    myNameField = new NameSuggestionsField(ArrayUtilRt.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
-
-    GrTypeComboBox.registerUpDownHint(myNameField, myTypeCombo);
-  }
+  private static final @NonNls String RECENTS_KEY = "GrIntroduceConstantDialog.RECENTS_KEY";
 
   private void targetClassChanged() {
     final String targetClassName = getTargetClassName();
     myTargetClass =
       JavaPsiFacade.getInstance(myContext.getProject()).findClass(targetClassName, GlobalSearchScope.projectScope(myContext.getProject()));
     updateVisibilityPanel();
-//    myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClassEditor));
+    //    myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClassEditor));
   }
 
   private void updateVisibilityPanel() {
@@ -289,19 +435,20 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     else {
       UIUtil.setEnabled(myJavaVisibilityPanel, true, true);
       // exclude all modifiers not visible from all occurrences
-      final Set<String> visible = new THashSet<>();
+      final Set<String> visible = new HashSet<>();
       visible.add(PsiModifier.PRIVATE);
       visible.add(PsiModifier.PROTECTED);
       visible.add(PsiModifier.PACKAGE_LOCAL);
       visible.add(PsiModifier.PUBLIC);
       for (PsiElement occurrence : myContext.getOccurrences()) {
         final PsiManager psiManager = PsiManager.getInstance(myContext.getProject());
-        for (Iterator<String> iterator = visible.iterator(); iterator.hasNext();) {
+        for (Iterator<String> iterator = visible.iterator(); iterator.hasNext(); ) {
           String modifier = iterator.next();
 
           try {
             final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier + " ";
-            final PsiField field = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createFieldFromText(modifierText + "int xxx;", myTargetClass);
+            final PsiField field = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory()
+              .createFieldFromText(modifierText + "int xxx;", myTargetClass);
             if (!JavaResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass, null)) {
               iterator.remove();
             }
@@ -346,7 +493,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   protected void doOKAction() {
     final String targetClassName = getTargetClassName();
 
-    if (myDefaultTargetClass == null || !targetClassName.isEmpty() && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
+    if (myDefaultTargetClass == null ||
+        !targetClassName.isEmpty() && !Comparing.strEqual(targetClassName, myDefaultTargetClass.getQualifiedName())) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(myContext.getPlace());
       JavaPsiFacade facade = JavaPsiFacade.getInstance(myContext.getProject());
       PsiClass newClass = facade.findClass(targetClassName, GlobalSearchScope.projectScope(myContext.getProject()));
@@ -356,7 +504,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
                                       IntroduceConstantHandler.getRefactoringNameText(), Messages.getErrorIcon()) != Messages.OK) {
         return;
       }
-      myTargetClassInfo = new TargetClassInfo(targetClassName, myContext.getPlace().getContainingFile().getContainingDirectory(), module, myContext.getProject());
+      myTargetClassInfo = new TargetClassInfo(targetClassName, myContext.getPlace().getContainingFile().getContainingDirectory(), module,
+                                              myContext.getProject());
     }
     else {
       myTargetClassInfo = new TargetClassInfo(myDefaultTargetClass);
@@ -389,16 +538,14 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       myProject = project;
     }
 
-    @Nullable
-    public PsiClass getTargetClass() {
+    public @Nullable PsiClass getTargetClass() {
       if (myTargetClass == null) {
         myTargetClass = getTargetClass(myQualifiedName, myBaseDirectory, myProject, myModule);
       }
       return myTargetClass;
     }
 
-    @Nullable
-    private static PsiClass getTargetClass(String qualifiedName, PsiDirectory baseDirectory, Project project, Module module) {
+    private static @Nullable PsiClass getTargetClass(String qualifiedName, PsiDirectory baseDirectory, Project project, Module module) {
       GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
 
       PsiClass targetClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
@@ -410,7 +557,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       if (psiPackage != null) {
         final PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.allScope(project));
         psiDirectory = directories.length > 1 ? DirectoryChooserUtil
-          .chooseDirectory(directories, null, project, new HashMap<>()) : directories[0];
+                                                .chooseDirectory(directories, null, project, new HashMap<>()) : directories[0];
       }
       else {
         psiDirectory = PackageUtil.findOrCreateDirectoryForPackage(module, packageName, baseDirectory, false);

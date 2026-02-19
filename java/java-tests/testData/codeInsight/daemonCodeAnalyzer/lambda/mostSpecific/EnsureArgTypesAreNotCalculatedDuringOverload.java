@@ -11,6 +11,6 @@ class Resource<<warning descr="Type parameter 'K' is never used">K</warning>> {
 
   static {
     final Optional<String> empty = Optional.empty();
-    Resource.of(empty.flatMap(s -> empty));
+    Resource.of(empty.flatMap(<warning descr="Parameter 's' is never used">s</warning> -> empty));
   }
 }

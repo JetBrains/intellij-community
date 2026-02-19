@@ -1,44 +1,48 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-public class GenericType {
+public class GenericType extends VarType implements Type {
 
   public static final int WILDCARD_EXTENDS = 1;
   public static final int WILDCARD_SUPER = 2;
   public static final int WILDCARD_UNBOUND = 3;
   public static final int WILDCARD_NO = 4;
 
-  public final int type;
-  public final int arrayDim;
-  public final String value;
+  private final VarType parent;
+  private final List<VarType> arguments;
+  private final int wildcard;
 
-  private final List<GenericType> enclosingClasses = new ArrayList<>();
-  private final List<GenericType> arguments = new ArrayList<>();
-  private final List<Integer> wildcards = new ArrayList<>();
-
-  public GenericType(int type, int arrayDim, String value) {
-    this.type = type;
-    this.arrayDim = arrayDim;
-    this.value = value;
+  public GenericType(int type, int arrayDim, String value, VarType parent, List<VarType> arguments, int wildcard) {
+    super(type, arrayDim, value, getFamily(type, arrayDim), getStackSize(type, arrayDim), false);
+    this.parent = parent;
+    this.arguments = arguments == null ? Collections.emptyList() : arguments;
+    this.wildcard = wildcard;
   }
 
-  private GenericType(GenericType other, int arrayDim) {
-    this(other.type, arrayDim, other.value);
-    enclosingClasses.addAll(other.enclosingClasses);
-    arguments.addAll(other.arguments);
-    wildcards.addAll(other.wildcards);
+  public static VarType parse(String signature) {
+    return parse(signature, WILDCARD_NO);
   }
 
-  public GenericType(String signature) {
+  public static VarType parse(String signature, int wildcard) {
     int type = 0;
     int arrayDim = 0;
     String value = null;
+    List<VarType> params = null;
+    VarType parent = null;
 
     int index = 0;
     loop:
@@ -56,45 +60,78 @@ public class GenericType {
         case 'L':
           type = CodeConstants.TYPE_OBJECT;
           signature = signature.substring(index + 1, signature.length() - 1);
+          String cl = getNextClassSignature(signature);
 
-          while (true) {
-            String cl = getNextClassSignature(signature);
-
-            String name = cl;
-            String args = null;
-
-            int argStart = cl.indexOf("<");
+          if (cl.length() == signature.length()) {
+            int argStart = cl.indexOf('<');
             if (argStart >= 0) {
-              name = cl.substring(0, argStart);
-              args = cl.substring(argStart + 1, cl.length() - 1);
-            }
-
-            if (cl.length() < signature.length()) {
-              signature = signature.substring(cl.length() + 1); // skip '.'
-              GenericType type11 = new GenericType(CodeConstants.TYPE_OBJECT, 0, name);
-              parseArgumentsList(args, type11);
-              enclosingClasses.add(type11);
+              value = cl.substring(0, argStart);
+              params = parseArgumentsList(cl.substring(argStart + 1, cl.length() - 1));
             }
             else {
-              value = name;
-              parseArgumentsList(args, this);
-              break;
+              value = cl;
             }
           }
+          else {
+            StringBuilder name_buff = new StringBuilder();
+            while (!signature.isEmpty()) {
+              String name = cl;
+              String args = null;
 
+              int argStart = cl.indexOf('<');
+              if (argStart >= 0) {
+                name = cl.substring(0, argStart);
+                args = cl.substring(argStart + 1, cl.length() - 1);
+              }
+
+              if (!name_buff.isEmpty()) {
+                name_buff.append('$');
+              }
+              name_buff.append(name);
+
+              value = name_buff.toString();
+              params = args == null ? null : parseArgumentsList(args);
+
+              if (cl.length() == signature.length()) {
+                break;
+              }
+              else {
+                if (parent == null && params == null) {
+                  parent = parse("L" + value + ";");
+                }
+                else {
+                  parent = new GenericType(CodeConstants.TYPE_OBJECT, 0, value, parent, params, wildcard);
+                }
+
+                signature = signature.substring(cl.length() + 1);
+              }
+              cl = getNextClassSignature(signature);
+            }
+          }
           break loop;
 
         default:
           value = signature.substring(index, index + 1);
-          type = VarType.getType(value.charAt(0));
+          type = getType(value.charAt(0));
       }
 
       index++;
     }
 
-    this.type = type;
-    this.arrayDim = arrayDim;
-    this.value = value;
+    if (type == CodeConstants.TYPE_GENVAR) {
+      return new GenericType(type, arrayDim, value, null, null, wildcard);
+    }
+    else if (type == CodeConstants.TYPE_OBJECT) {
+      if (parent == null && params == null && wildcard == WILDCARD_NO) {
+        return new VarType(type, arrayDim, value);
+      }
+      else {
+        return new GenericType(type, arrayDim, value, parent, params, wildcard);
+      }
+    }
+    else {
+      return new VarType(type, arrayDim, value);
+    }
   }
 
   private static String getNextClassSignature(String value) {
@@ -104,16 +141,13 @@ public class GenericType {
     loop:
     while (index < value.length()) {
       switch (value.charAt(index)) {
-        case '<':
-          counter++;
-          break;
-        case '>':
-          counter--;
-          break;
-        case '.':
+        case '<' -> counter++;
+        case '>' -> counter--;
+        case '.' -> {
           if (counter == 0) {
             break loop;
           }
+        }
       }
 
       index++;
@@ -122,38 +156,33 @@ public class GenericType {
     return value.substring(0, index);
   }
 
-  private static void parseArgumentsList(String value, GenericType type) {
+  private static List<VarType> parseArgumentsList(String value) {
     if (value == null) {
-      return;
+      return null;
     }
 
-    while (value.length() > 0) {
+    List<VarType> args = new ArrayList<>();
+
+    while (!value.isEmpty()) {
       String typeStr = getNextType(value);
       int len = typeStr.length();
-      int wildcard = WILDCARD_NO;
-
-      switch (typeStr.charAt(0)) {
-        case '*':
-          wildcard = WILDCARD_UNBOUND;
-          break;
-        case '+':
-          wildcard = WILDCARD_EXTENDS;
-          break;
-        case '-':
-          wildcard = WILDCARD_SUPER;
-          break;
-      }
-
-      type.getWildcards().add(wildcard);
+      int wildcard = switch (typeStr.charAt(0)) {
+        case '*' -> WILDCARD_UNBOUND;
+        case '+' -> WILDCARD_EXTENDS;
+        case '-' -> WILDCARD_SUPER;
+        default -> WILDCARD_NO;
+      };
 
       if (wildcard != WILDCARD_NO) {
         typeStr = typeStr.substring(1);
       }
 
-      type.getArguments().add(typeStr.length() == 0 ? null : new GenericType(typeStr));
+      args.add(typeStr.isEmpty() ? null : parse(typeStr, wildcard));
 
       value = value.substring(len);
     }
+
+    return args;
   }
 
   public static String getNextType(String value) {
@@ -179,11 +208,6 @@ public class GenericType {
         case '+':
         case '-':
           break;
-        default:
-          if (!contMode) {
-            break loop;
-          }
-          break;
         case '<':
           counter++;
           break;
@@ -194,6 +218,12 @@ public class GenericType {
           if (counter == 0) {
             break loop;
           }
+          break;
+        default:
+          if (!contMode) {
+            break loop;
+          }
+          break;
       }
 
       index++;
@@ -202,20 +232,137 @@ public class GenericType {
     return value.substring(0, index + 1);
   }
 
-  public GenericType decreaseArrayDim() {
-    assert arrayDim > 0 : this;
-    return new GenericType(this, arrayDim - 1);
+  @Override
+  public @NotNull GenericType decreaseArrayDim() {
+    assert getArrayDim() > 0 : this;
+    return new GenericType(getType(), getArrayDim() - 1, getValue(), parent, arguments, wildcard);
   }
 
-  public List<GenericType> getArguments() {
+  @Override
+  public VarType resizeArrayDim(int newArrayDim) {
+    return new GenericType(getType(), newArrayDim, getValue(), parent, arguments, wildcard);
+  }
+
+  public VarType getParent() {
+    return parent;
+  }
+
+  public List<VarType> getArguments() {
     return arguments;
   }
 
-  public List<GenericType> getEnclosingClasses() {
-    return enclosingClasses;
+  @Override
+  public boolean isGeneric() {
+    return true;
   }
 
-  public List<Integer> getWildcards() {
-    return wildcards;
+  public int getWildcard() {
+    return wildcard;
+  }
+
+  public List<TypeAnnotationWriteHelper> appendCastName(final StringBuilder clsName, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    if (parent != null && parent.isGeneric()) {
+      typeAnnWriteHelpers = ((GenericType) parent).appendCastName(clsName, typeAnnWriteHelpers);
+      clsName.append(".");
+      typeAnnWriteHelpers = ExprProcessor.writeNestedTypeAnnotations(clsName, typeAnnWriteHelpers);
+      clsName.append(getValue().substring(parent.getValue().length() + 1));
+      return appendTypeArguments(clsName, typeAnnWriteHelpers);
+    }
+    else {
+      String stringTypes = DecompilerContext.getImportCollector().getNestedName(getValue().replace('/', '.'));
+      List<String> nestedTypes = Arrays.asList(stringTypes.split("\\."));
+      typeAnnWriteHelpers = ExprProcessor.writeNestedClass(clsName, this, nestedTypes, typeAnnWriteHelpers);
+      appendTypeArguments(clsName, typeAnnWriteHelpers);
+      ExprProcessor.popNestedTypeAnnotation(typeAnnWriteHelpers);
+      return typeAnnWriteHelpers;
+    }
+  }
+
+  private List<TypeAnnotationWriteHelper> appendTypeArguments(final StringBuilder buffer, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
+    if (!arguments.isEmpty()) {
+      buffer.append('<');
+
+      for (int i = 0; i < arguments.size(); i++) {
+        if (i > 0) {
+          buffer.append(", ");
+        }
+
+        VarType par = arguments.get(i);
+        // only take type paths that are in the generic
+        List<TypeAnnotationWriteHelper> locTypeAnnWriteHelpers = GenericMain.getGenericTypeAnnotations(i, typeAnnWriteHelpers);
+        typeAnnWriteHelpers.removeAll(locTypeAnnWriteHelpers);
+        locTypeAnnWriteHelpers = GenericMain.writeTypeAnnotationBeforeWildCard(buffer, par, locTypeAnnWriteHelpers);
+        if (par == null) { // Wildcard unbound
+          buffer.append('?');
+        }
+        else if (par.isGeneric()) {
+          GenericType gen = (GenericType)par;
+          switch (gen.getWildcard()) {
+            case WILDCARD_EXTENDS:
+              buffer.append("? extends ");
+              break;
+            case WILDCARD_SUPER:
+              buffer.append("? super ");
+              break;
+          }
+          locTypeAnnWriteHelpers = GenericMain.writeTypeAnnotationAfterWildCard(buffer, par, locTypeAnnWriteHelpers);
+          buffer.append(GenericMain.getGenericCastTypeName(gen, locTypeAnnWriteHelpers));
+        }
+        else {
+          buffer.append(ExprProcessor.getCastTypeName(par, locTypeAnnWriteHelpers));
+        }
+      }
+
+      buffer.append(">");
+    }
+    return typeAnnWriteHelpers;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder buf = new StringBuilder();
+    switch(getWildcard()) {
+      case WILDCARD_EXTENDS:
+        buf.append("? extends ");
+        break;
+      case WILDCARD_SUPER:
+        buf.append("? super ");
+      break;
+    }
+    buf.append(super.toString());
+    appendTypeArguments(buf, Collections.emptyList());
+    return buf.toString();
+  }
+
+
+  @Override
+  public VarType remap(Map<VarType, VarType> map) {
+    VarType main = super.remap(map);
+    if (main != this) {
+      return main;
+    }
+    boolean changed = false;
+    VarType parent = getParent();
+    if (map.containsKey(parent)) {
+      parent = map.get(parent);
+      changed = true;
+    }
+    List<VarType> newArgs = new ArrayList<>();
+    for (VarType arg : getArguments()) {
+      VarType newArg = null;
+      if (arg != null) {
+        newArg = arg.remap(map);
+      }
+      if (newArg != arg) {
+        newArgs.add(newArg);
+        changed = true;
+      } else {
+        newArgs.add(arg);
+      }
+    }
+    if (changed) {
+      return new GenericType(main.getType(), main.getArrayDim(), main.getValue(), parent, newArgs, getWildcard());
+    }
+    return this;
   }
 }

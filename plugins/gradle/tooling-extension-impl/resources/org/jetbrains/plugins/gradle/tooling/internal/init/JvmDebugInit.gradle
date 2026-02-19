@@ -1,0 +1,19 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleJvmForkedDebuggerHelper
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionUtil
+
+GradleLifecycleUtil.afterProject(gradle) { Project project ->
+  def projectDirectory = project.projectDir.path
+  def tasks = GradleJvmForkedDebuggerHelper.getTasksToDebug(project)
+  GradleCollectionUtil.configureEach(tasks) { Task task ->
+    task.doFirst {
+      GradleJvmForkedDebuggerHelper.setupDebugger(delegate, projectDirectory)
+    }
+    task.doLast {
+      GradleJvmForkedDebuggerHelper.signalizeFinish(delegate)
+    }
+  }
+}

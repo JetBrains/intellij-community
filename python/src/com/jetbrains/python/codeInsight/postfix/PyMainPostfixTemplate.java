@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.postfix;
 
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -30,23 +18,20 @@ import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.refactoring.surround.surrounders.statements.PyStatementSurrounder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class PyMainPostfixTemplate extends SurroundPostfixTemplateBase {
+public class PyMainPostfixTemplate extends SurroundPostfixTemplateBase implements DumbAware {
 
   public static final @NlsSafe String DESCR = "if __name__ == '__main__': expr";
 
-  protected PyMainPostfixTemplate() {
-    super("main", DESCR, PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.currentStatementSelector());
+  protected PyMainPostfixTemplate(PostfixTemplateProvider provider) {
+    super("main", DESCR, PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.currentStatementSelector(), provider);
   }
 
-  @NotNull
   @Override
-  protected Surrounder getSurrounder() {
+  protected @NotNull Surrounder getSurrounder() {
     return new PyStatementSurrounder() {
-      @Nullable
       @Override
-      protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
+      protected @NotNull TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
         throws IncorrectOperationException {
         PyIfStatement ifStatement = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.forElement(elements[0]), PyIfStatement.class, "if __name__ == '__main__':\n expr");
         ifStatement = (PyIfStatement)CodeStyleManager.getInstance(project).reformat(ifStatement);
@@ -61,7 +46,6 @@ public class PyMainPostfixTemplate extends SurroundPostfixTemplateBase {
 
       @Override
       public String getTemplateDescription() {
-        //noinspection DialogTitleCapitalization
         return DESCR;
       }
     };

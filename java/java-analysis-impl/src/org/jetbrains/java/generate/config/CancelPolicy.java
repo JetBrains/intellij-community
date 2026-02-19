@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * This policy is to cancel.
  */
 public final class CancelPolicy implements ConflictResolutionPolicy {
-
     private static final CancelPolicy instance = new CancelPolicy();
 
     private CancelPolicy() {}
@@ -43,6 +42,7 @@ public final class CancelPolicy implements ConflictResolutionPolicy {
         return null;
     }
 
+    @Override
     public String toString() {
         return "Cancel";
     }

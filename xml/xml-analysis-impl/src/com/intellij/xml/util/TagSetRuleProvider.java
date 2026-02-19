@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.psi.xml.XmlTag;
@@ -9,15 +9,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class TagSetRuleProvider extends XmlTagRuleProviderBase {
 
   private final Map<String, TagsRuleMap> map = Collections.synchronizedMap(new HashMap<>());
 
-  @Nullable
-  protected abstract String getNamespace(@NotNull XmlTag tag);
+  protected abstract @Nullable String getNamespace(@NotNull XmlTag tag);
 
   protected abstract void initMap(TagsRuleMap map, @NotNull String version);
 

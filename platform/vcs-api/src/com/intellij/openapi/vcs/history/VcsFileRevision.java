@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -12,8 +12,7 @@ import java.util.Date;
 public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription {
   VcsFileRevision NULL = new VcsFileRevision() {
     @Override
-    @NotNull
-    public VcsRevisionNumber getRevisionNumber() {
+    public @NotNull VcsRevisionNumber getRevisionNumber() {
       return VcsRevisionNumber.NULL;
     }
 
@@ -23,26 +22,22 @@ public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription 
     }
 
     @Override
-    @NlsSafe
-    public String getAuthor() {
+    public @NlsSafe String getAuthor() {
       return "";
     }
 
     @Override
-    @NlsSafe
-    public String getCommitMessage() {
+    public @NlsSafe String getCommitMessage() {
       return "";
     }
 
     @Override
-    @NlsSafe
-    public String getBranchName() {
+    public @NlsSafe String getBranchName() {
       return null;
     }
 
-    @Nullable
     @Override
-    public RepositoryLocation getChangedRepositoryPath() {
+    public @Nullable RepositoryLocation getChangedRepositoryPath() {
       return null;
     }
 

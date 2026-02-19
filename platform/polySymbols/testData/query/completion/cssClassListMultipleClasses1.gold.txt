@@ -1,0 +1,100 @@
+[
+ {
+  name: "bar",
+  priority: NORMAL,
+  completeAfterChars: [ ],
+  source: {
+   matchedName: "css/classes/bar",
+   origin: "css-class-list@1.0 (<none>)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: "bar",
+     symbol: <self>,
+    },
+   ],
+  },
+ },
+ {
+  name: "bar ",
+  priority: NORMAL,
+  displayName: "bar …",
+  completeAfterInsert: true,
+  source: {
+   matchedName: "css/classes/bar ",
+   origin: "css-class-list@1.0 (<none>)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: "bar",
+     symbol: {
+      matchedName: "css/classes/bar",
+      origin: "css-class-list@1.0 (<none>)",
+      complete: true,
+      priority: NORMAL,
+      segments: [
+       {
+        name-part: "bar",
+        symbol: <self>,
+       },
+      ],
+     },
+    },
+    {
+     name-part: " ",
+    },
+   ],
+  },
+ },
+ {
+  name: "foo",
+  priority: NORMAL,
+  completeAfterChars: [ ],
+  source: {
+   matchedName: "css/classes/foo",
+   origin: "css-class-list@1.0 (<none>)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: "foo",
+     symbol: <self>,
+    },
+   ],
+  },
+ },
+ {
+  name: "foo ",
+  priority: NORMAL,
+  displayName: "foo …",
+  completeAfterInsert: true,
+  source: {
+   matchedName: "css/classes/foo ",
+   origin: "css-class-list@1.0 (<none>)",
+   complete: true,
+   priority: NORMAL,
+   segments: [
+    {
+     name-part: "foo",
+     symbol: {
+      matchedName: "css/classes/foo",
+      origin: "css-class-list@1.0 (<none>)",
+      complete: true,
+      priority: NORMAL,
+      segments: [
+       {
+        name-part: "foo",
+        symbol: <self>,
+       },
+      ],
+     },
+    },
+    {
+     name-part: " ",
+    },
+   ],
+  },
+ },
+]

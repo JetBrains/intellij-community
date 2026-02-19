@@ -1,7 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -156,8 +167,7 @@ public final class GrStaticChecker {
     return false;
   }
 
-  @Nullable
-  private static PsiClass getContainingClass(PsiMember member) {
+  private static @Nullable PsiClass getContainingClass(PsiMember member) {
     PsiClass aClass = member.getContainingClass();
 
     if (aClass != null) return aClass;
@@ -174,9 +184,9 @@ public final class GrStaticChecker {
   public static boolean isInStaticContext(@NotNull PsiElement place) {
     PsiClass targetClass = null;
     if (place instanceof GrReferenceExpression) {
-      PsiElement qualifier = ((GrQualifiedReference)place).getQualifier();
+      PsiElement qualifier = ((GrQualifiedReference<?>)place).getQualifier();
       if (PsiUtil.isThisReference(place) && qualifier instanceof GrQualifiedReference) {
-        targetClass = (PsiClass)((GrQualifiedReference)qualifier).resolve();
+        targetClass = (PsiClass)((GrQualifiedReference<?>)qualifier).resolve();
       }
     }
     return isInStaticContext(place, targetClass);

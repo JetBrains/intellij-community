@@ -1,20 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionProblemConsumer;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.util.Predicates;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DelegatedInspectionToolPresentation extends DefaultInspectionToolPresentation {
+@ApiStatus.Internal
+public final class DelegatedInspectionToolPresentation extends DefaultInspectionToolPresentation {
 
-  @NotNull
-  private final InspectionProblemConsumer myDelegate;
+  private final @NotNull InspectionProblemConsumer myDelegate;
 
-  public DelegatedInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper,
+  public DelegatedInspectionToolPresentation(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                                              @NotNull GlobalInspectionContextImpl context,
                                              @NotNull InspectionProblemConsumer delegate) {
     super(toolWrapper, context);
@@ -28,6 +31,16 @@ public class DelegatedInspectionToolPresentation extends DefaultInspectionToolPr
     if (refElement == null || descriptors.length == 0) {
       return;
     }
-    exportResults(descriptors, refElement, (element) -> myDelegate.consume(element));
+    ReportedProblemFilter filter = myContext.getReportedProblemFilter();
+    if (filter != null && !filter.shouldReportProblem(refElement, descriptors)) {
+      return;
+    }
+
+    if (myToolWrapper instanceof LocalInspectionToolWrapper) {
+      exportResults(descriptors, refElement, (element, problem) -> myDelegate.consume(element, problem, myToolWrapper),
+                    Predicates.alwaysFalse());
+    } else {
+      myProblemElements.put(refElement, descriptors);
+    }
   }
 }

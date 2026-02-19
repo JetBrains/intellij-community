@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
@@ -21,13 +21,11 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
  * Utility class to solve name conflicts related to local variable names of method to be inlined
- * @author ilyas
  */
 public final class InlineMethodConflictSolver {
   private InlineMethodConflictSolver() {}
 
-  @NotNull
-  public static String suggestNewName(@NotNull String startName, @Nullable GrMethod method, @NotNull PsiElement call, String... otherNames) {
+  public static @NotNull String suggestNewName(@NotNull String startName, @Nullable GrMethod method, @NotNull PsiElement call, String... otherNames) {
     String newName;
     int i = 1;
     PsiElement parent = call.getParent();
@@ -91,8 +89,7 @@ public final class InlineMethodConflictSolver {
       }
       if (child instanceof GrAssignmentExpression) {
         GrExpression lValue = ((GrAssignmentExpression) child).getLValue();
-        if (lValue instanceof GrReferenceExpression) {
-          GrReferenceExpression expr = (GrReferenceExpression) lValue;
+        if (lValue instanceof GrReferenceExpression expr) {
           if (expr.getQualifierExpression() == null && name.equals(expr.getReferenceName())) {
             return false;
           }

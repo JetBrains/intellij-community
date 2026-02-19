@@ -1,62 +1,38 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.DataMap;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ModuleRule implements GetDataRule {
-  @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
-    Object moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
+import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
+import static com.intellij.openapi.actionSystem.LangDataKeys.MODULE_CONTEXT;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PROJECT;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY;
+import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_FILE;
+import static com.intellij.openapi.actionSystem.LangDataKeys.VIRTUAL_FILE_ARRAY;
+
+final class ModuleRule {
+  static @Nullable Module getData(@NotNull DataMap dataProvider) {
+    Module moduleContext = dataProvider.get(MODULE_CONTEXT);
     if (moduleContext != null) {
       return moduleContext;
     }
-    Project project = CommonDataKeys.PROJECT.getData(dataProvider);
-    if (project == null) {
-      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
-      if (element == null) {
-        PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
-        if (psiElements != null && psiElements.length > 0) {
-          element = psiElements[0];
-        }
-      }
-      if (element == null || !element.isValid()) return null;
-      project = element.getProject();
-    }
+    Project project = extractProject(dataProvider);
+    if (project == null) return null;
 
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
+    VirtualFile[] files = dataProvider.get(VIRTUAL_FILE_ARRAY);
     if (files == null) {
-      GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
-      if (dataRule != null) {
-        files = (VirtualFile[])dataRule.getData(dataProvider);
-      }
+      files = VirtualFileArrayRule.getData(dataProvider);
     }
 
     if (files == null) {
@@ -78,5 +54,27 @@ public class ModuleRule implements GetDataRule {
     }
 
     return singleModule;
+  }
+
+  private static @Nullable Project extractProject(@NotNull DataMap dataProvider) {
+    Project project = dataProvider.get(PROJECT);
+    if (project != null) return project;
+    
+    Editor editor = dataProvider.get(EDITOR);
+    project = editor != null ? editor.getProject() : null;
+    if (project != null) return project;
+    PsiFile file = dataProvider.get(PSI_FILE);
+    if (file != null && file.isValid()) return file.getProject();
+
+    //todo remove this part, it can be too slow for such simple rule
+    PsiElement element = dataProvider.get(PSI_ELEMENT);
+    if (element == null) {
+      PsiElement[] psiElements = dataProvider.get(PSI_ELEMENT_ARRAY);
+      if (psiElements != null && psiElements.length > 0) {
+        element = psiElements[0];
+      }
+    }
+    if (element == null || !element.isValid()) return null;
+    return element.getProject();
   }
 }

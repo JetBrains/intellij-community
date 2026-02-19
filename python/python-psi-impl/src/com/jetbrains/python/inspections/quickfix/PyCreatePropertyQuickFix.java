@@ -1,19 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PyCreatePropertyQuickFix implements LocalQuickFix {
+public class PyCreatePropertyQuickFix extends PsiUpdateModCommandQuickFix {
   private final AccessDirection myAccessDirection;
 
   public PyCreatePropertyQuickFix(AccessDirection dir) {
@@ -21,14 +28,12 @@ public class PyCreatePropertyQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.create.property");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (element instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
       if (qualifier != null) {
@@ -40,7 +45,8 @@ public class PyCreatePropertyQuickFix implements LocalQuickFix {
           final String fieldName = "_" + propertyName;
           final PyElementGenerator generator = PyElementGenerator.getInstance(project);
           final PyFunction property = generator.createProperty(LanguageLevel.forElement(cls), propertyName, fieldName, myAccessDirection);
-          PyPsiRefactoringUtil.addElementToStatementList(property, cls.getStatementList(), myAccessDirection == AccessDirection.READ);
+          final PyStatementList statementsList = updater.getWritable(cls.getStatementList());
+          PyPsiRefactoringUtil.addElementToStatementList(property, statementsList, myAccessDirection == AccessDirection.READ);
         }
       }
     }

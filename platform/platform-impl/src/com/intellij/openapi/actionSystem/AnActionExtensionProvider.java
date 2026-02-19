@@ -18,22 +18,20 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to override AnAction behavior in some context,
- * not affecting the others.
- *
+ * Allows overriding AnAction behavior in some context, not affecting the other contexts.
+ * <p>
  * Note, that various flags cannot be overridden. Ex:
- * {@link AnAction#isEnabledInModalContext()}
  * {@link AnAction#isDumbAware()}
- * {@link AnAction#isTransparentUpdate()}
  *
  * @see ExtendableAction
  */
-public interface AnActionExtensionProvider {
+public interface AnActionExtensionProvider extends ActionUpdateThreadAware {
   /**
    * @return whether current provider should be used in given context
    * <p>
    * Provider should not modify presentation in this method.
    * Only the first active provider will be used.
+   * Method is called as {@link ActionUpdateThread#BGT}.
    */
   boolean isActive(@NotNull AnActionEvent e);
 

@@ -10,11 +10,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
 
 import java.util.Collection;
 
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertEquals;
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static com.intellij.testFramework.UsefulTestCase.assertNotNull;
+import static com.intellij.testFramework.UsefulTestCase.assertNull;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo;
 
@@ -85,5 +91,13 @@ public interface ResolveTest extends BaseTest {
       assertNotNull(containingClass);
       assertEquals(fqn, containingClass.getQualifiedName());
     }
+  }
+
+  default void setterMethodTest(String name, String originalName, String containingClass) {
+    var result = elementUnderCaret(GrMethodCall.class).advancedResolve();
+    var method = assertInstanceOf(result.getElement(), PsiMethod.class);
+    methodTest(method, name, containingClass);
+    var original = assertInstanceOf(method.getNavigationElement(), PsiMethod.class);
+    methodTest(original, originalName, containingClass);
   }
 }

@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.dom.PropertyResolver.PropertyData;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
@@ -12,14 +12,13 @@ import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class AntRenameProcessor extends RenamePsiElementProcessor{
+public final class AntRenameProcessor extends RenamePsiElementProcessor{
 
   @Override
   public void prepareRenaming(@NotNull PsiElement element, @NotNull @NlsSafe String newName, @NotNull Map<PsiElement, String> allRenames) {
@@ -38,9 +37,9 @@ public class AntRenameProcessor extends RenamePsiElementProcessor{
         allRenames.put(psiElement, newName);
       }
       if (antElement instanceof AntDomAntCallParam) {
-        final Trinity<PsiElement, Collection<String>, PropertiesProvider> result = PropertyResolver.resolve(contextProject, propName, null);
-        if (result.getFirst() != null) {
-          allRenames.put(result.getFirst(), newName);
+        final @NotNull PropertyData result = PropertyResolver.resolve(contextProject, propName, null);
+        if (result.element() != null) {
+          allRenames.put(result.element(), newName);
         }
       }
     }
@@ -55,8 +54,7 @@ public class AntRenameProcessor extends RenamePsiElementProcessor{
     return false;
   }
 
-  @Nullable
-  private static AntDomElement convertToAntDomElement(PsiElement element) {
+  private static @Nullable AntDomElement convertToAntDomElement(PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)element).getTarget();
       if (target instanceof DomTarget) {

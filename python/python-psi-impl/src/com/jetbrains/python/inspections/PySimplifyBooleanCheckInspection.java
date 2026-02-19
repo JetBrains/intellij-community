@@ -18,8 +18,10 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.ImmutableList;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.SimplifyBooleanCheckQuickFix;
@@ -27,42 +29,43 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.types.PyNoneTypeKt;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PySimplifyBooleanCheckInspection extends PyInspection {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public final class PySimplifyBooleanCheckInspection extends PyInspection {
   private static final List<String> COMPARISON_LITERALS = ImmutableList.of("True", "False", "[]");
 
   public boolean ignoreComparisonToZero = true;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session, ignoreComparisonToZero);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, ignoreComparisonToZero, PyInspectionVisitor.getContext(session));
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero"), "ignoreComparisonToZero");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(checkbox("ignoreComparisonToZero", PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero")));
   }
 
   private static class Visitor extends PyInspectionVisitor {
     private final boolean myIgnoreComparisonToZero;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, boolean ignoreComparisonToZero) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            boolean ignoreComparisonToZero,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
       myIgnoreComparisonToZero = ignoreComparisonToZero;
     }
 
@@ -71,7 +74,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
       super.visitPyConditionalStatementPart(node);
       final PyExpression condition = node.getCondition();
       if (condition != null) {
-        condition.accept(new PyBinaryExpressionVisitor(getHolder(), getSession(), myIgnoreComparisonToZero));
+        condition.accept(new PyBinaryExpressionVisitor(getHolder(), myTypeEvalContext, myIgnoreComparisonToZero));
       }
     }
   }
@@ -80,9 +83,9 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     private final boolean myIgnoreComparisonToZero;
 
     PyBinaryExpressionVisitor(@Nullable ProblemsHolder holder,
-                                     @NotNull LocalInspectionToolSession session,
-                                     boolean ignoreComparisonToZero) {
-      super(holder, session);
+                              @NotNull TypeEvalContext context,
+                              boolean ignoreComparisonToZero) {
+      super(holder, context);
       myIgnoreComparisonToZero = ignoreComparisonToZero;
     }
 
@@ -90,16 +93,53 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
       super.visitPyBinaryExpression(node);
       final PyElementType operator = node.getOperator();
+      final var leftExpression = node.getLeftExpression();
       final PyExpression rightExpression = node.getRightExpression();
       if (rightExpression == null || rightExpression instanceof PyBinaryExpression ||
-          node.getLeftExpression() instanceof PyBinaryExpression) {
+          leftExpression instanceof PyBinaryExpression) {
         return;
       }
-      if (PyTokenTypes.EQUALITY_OPERATIONS.contains(operator)) {
-        if (operandsEqualTo(node, COMPARISON_LITERALS) ||
-            (!myIgnoreComparisonToZero && operandsEqualTo(node, Collections.singleton("0")))) {
-          registerProblem(node);
-        }
+
+      final var leftType = myTypeEvalContext.getType(leftExpression);
+      final var rightType = myTypeEvalContext.getType(rightExpression);
+
+      final var isIdentity = node.isOperator(PyNames.IS) || node.isOperator("isnot");
+
+      // if no type and `is`, then it's unsafe
+      if ((leftType == null || rightType == null) && isIdentity) {
+        return;
+      }
+
+      // because we are comparing to literal values, there will only ever be a union on one side
+      final var unionMembers = (leftType instanceof PyUnionType unionType)
+                               ? unionType.getMembers()
+                               : (rightType instanceof PyUnionType unionType)
+                                 ? unionType.getMembers()
+                                 : null;
+
+      final var isOptional = unionMembers != null && ContainerUtil.exists(unionMembers, PyNoneTypeKt::isNoneType);
+
+      // if the union is `X | Y | None` or just `X | Y` then it is unsafe to simplify
+      if (isOptional && unionMembers.size() > 2 || !isOptional && unionMembers != null) {
+        return;
+      }
+
+      if (!isIdentity
+          && !PyTokenTypes.EQUALITY_OPERATIONS.contains(operator)) {
+        return;
+      }
+
+      final var compareWithZero = !myIgnoreComparisonToZero && operandsEqualTo(node, Collections.singleton("0"));
+      boolean compareWithFalsey = operandsEqualTo(node, ImmutableList.of(PyNames.FALSE, "[]"));
+
+      // 'x is falsey' where `x` is `T | None`, then it is unsafe to simplify
+      //  because the falsey value will evaluate to `False` which will be ambiguous with `None`
+      if (isOptional && (compareWithFalsey || compareWithZero)) {
+        return;
+      }
+
+      if (operandsEqualTo(node, COMPARISON_LITERALS) || compareWithZero) {
+        registerProblem(node);
       }
     }
 
@@ -116,7 +156,8 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     }
 
     private void registerProblem(PyBinaryExpression binaryExpression) {
-      registerProblem(binaryExpression, PyPsiBundle.message("INSP.expression.can.be.simplified"), new SimplifyBooleanCheckQuickFix(binaryExpression));
+      registerProblem(binaryExpression, PyPsiBundle.message("INSP.expression.can.be.simplified"),
+                      new SimplifyBooleanCheckQuickFix(binaryExpression));
     }
   }
 }

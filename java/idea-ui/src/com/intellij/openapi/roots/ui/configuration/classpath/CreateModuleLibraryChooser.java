@@ -1,28 +1,17 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
@@ -30,42 +19,56 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.DefaultLibraryRootsComponentDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.JComponent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ArrayUtil.contains;
-
-public class CreateModuleLibraryChooser implements ClasspathElementChooser<Library> {
+public final class CreateModuleLibraryChooser implements ClasspathElementChooser<Library> {
   private final JComponent myParentComponent;
   private final Module myModule;
   private final LibraryTable.ModifiableModel myModuleLibrariesModel;
-  @Nullable private final Function<? super LibraryType, ? extends LibraryProperties> myDefaultPropertiesFactory;
-  private final HashMap<LibraryRootsComponentDescriptor,LibraryType> myLibraryTypes;
+  private final @Nullable Function<? super LibraryType<?>, ? extends LibraryProperties<?>> myDefaultPropertiesFactory;
+  private final Map<LibraryRootsComponentDescriptor, LibraryType<?>> myLibraryTypes;
   private final DefaultLibraryRootsComponentDescriptor myDefaultDescriptor;
 
   public CreateModuleLibraryChooser(ClasspathPanel classpathPanel, LibraryTable.ModifiableModel moduleLibraryModel) {
-    this(LibraryEditingUtil.getSuitableTypes(classpathPanel), classpathPanel.getComponent(), classpathPanel.getRootModel().getModule(),
-         moduleLibraryModel, null);
+    this(
+      ContainerUtil.map(LibraryEditingUtil.getSuitableTypes(classpathPanel), LibraryEditingUtil.TypeForNewLibrary::getType),
+      classpathPanel.getComponent(),
+      classpathPanel.getRootModel().getModule(),
+      moduleLibraryModel,
+      null
+    );
   }
 
-  public CreateModuleLibraryChooser(List<? extends LibraryType> libraryTypes, JComponent parentComponent,
-                                    Module module,
-                                    final LibraryTable.ModifiableModel moduleLibrariesModel,
-                                    @Nullable final Function<? super LibraryType, ? extends LibraryProperties> defaultPropertiesFactory) {
+  public CreateModuleLibraryChooser(
+    List<? extends LibraryType<?>> libraryTypes,
+    JComponent parentComponent,
+    Module module,
+    LibraryTable.ModifiableModel moduleLibrariesModel,
+    @Nullable Function<? super LibraryType<?>, ? extends LibraryProperties<?>> defaultPropertiesFactory
+  ) {
     myParentComponent = parentComponent;
     myModule = module;
     myModuleLibrariesModel = moduleLibrariesModel;
     myDefaultPropertiesFactory = defaultPropertiesFactory;
     myLibraryTypes = new HashMap<>();
     myDefaultDescriptor = new DefaultLibraryRootsComponentDescriptor();
-    for (LibraryType<?> libraryType : libraryTypes) {
+    for (var libraryType : libraryTypes) {
       LibraryRootsComponentDescriptor descriptor = null;
       if (libraryType != null) {
         descriptor = libraryType.createLibraryRootsComponentDescriptor();
@@ -73,24 +76,27 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
       if (descriptor == null) {
         descriptor = myDefaultDescriptor;
       }
-      boolean acceptsClasses = descriptor.getRootDetectors().stream().anyMatch(detector -> detector.getRootType().equals(OrderRootType.CLASSES));
+      @SuppressWarnings("SSBasedInspection") var acceptsClasses =
+        descriptor.getRootDetectors().stream().anyMatch(detector -> detector.getRootType().equals(OrderRootType.CLASSES));
       if (acceptsClasses && !myLibraryTypes.containsKey(descriptor)) {
         myLibraryTypes.put(descriptor, libraryType);
       }
     }
   }
 
-  private static Library createLibraryFromRoots(@NotNull List<? extends OrderRoot> roots,
-                                                @Nullable final LibraryType libraryType,
-                                                @NotNull LibraryTable.ModifiableModel moduleLibrariesModel,
-                                                @Nullable Function<? super LibraryType, ? extends LibraryProperties> defaultPropertiesFactory) {
-    final PersistentLibraryKind kind = libraryType == null ? null : libraryType.getKind();
-    final Library library = moduleLibrariesModel.createLibrary(null, kind);
-    final LibraryEx.ModifiableModelEx libModel = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
+  private static Library createLibraryFromRoots(
+    List<OrderRoot> roots,
+    @Nullable LibraryType<?> libraryType,
+    LibraryTable.ModifiableModel moduleLibrariesModel,
+    @Nullable Function<? super LibraryType<?>, ? extends LibraryProperties<?>> defaultPropertiesFactory
+  ) {
+    var kind = libraryType == null ? null : libraryType.getKind();
+    var library = moduleLibrariesModel.createLibrary(null, kind);
+    var libModel = (LibraryEx.ModifiableModelEx)library.getModifiableModel();
     if (defaultPropertiesFactory != null) {
-      libModel.setProperties(defaultPropertiesFactory.fun(libraryType));
+      libModel.setProperties(defaultPropertiesFactory.apply(libraryType));
     }
-    for (OrderRoot root : roots) {
+    for (var root : roots) {
       if (root.isJarDirectory()) {
         libModel.addJarDirectory(root.getFile(), false, root.getType());
       }
@@ -102,48 +108,39 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     return library;
   }
 
-  private static List<OrderRoot> filterAlreadyAdded(final List<? extends OrderRoot> roots, LibraryTable.ModifiableModel moduleLibrariesModel) {
+  @SuppressWarnings("SSBasedInspection")
+  private static @NotNull List<OrderRoot> filterAlreadyAdded(List<OrderRoot> roots, LibraryTable.ModifiableModel moduleLibrariesModel) {
     if (roots == null || roots.isEmpty()) {
       return Collections.emptyList();
     }
 
-    final List<OrderRoot> result = new ArrayList<>();
-    final Library[] libraries = moduleLibrariesModel.getLibraries();
-    for (OrderRoot root : roots) {
-      if (Arrays.stream(libraries).noneMatch(library -> contains(root.getFile(), library.getFiles(root.getType())))) {
-        result.add(root);
-      }
+    var libraries = moduleLibrariesModel.getLibraries();
+    if (libraries.length == 0) {
+      return roots;
     }
-    return result;
+
+    return roots.stream()
+      .filter(root -> Arrays.stream(libraries).noneMatch(library -> ArrayUtil.contains(root.getFile(), library.getFiles(root.getType()))))
+      .collect(Collectors.toList());
   }
 
   @Override
-  @NotNull
-  public List<Library> chooseElements() {
-    final FileChooserDescriptor chooserDescriptor;
-    final List<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>> descriptors = new ArrayList<>();
-    for (LibraryRootsComponentDescriptor componentDescriptor : myLibraryTypes.keySet()) {
+  public @NotNull List<Library> chooseElements() {
+    var descriptors = new ArrayList<Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor>>();
+    for (var componentDescriptor : myLibraryTypes.keySet()) {
       descriptors.add(Pair.create(componentDescriptor, componentDescriptor.createAttachFilesChooserDescriptor(null)));
     }
+
+    FileChooserDescriptor chooserDescriptor;
     if (descriptors.size() == 1) {
       chooserDescriptor = descriptors.get(0).getSecond();
     }
     else {
       chooserDescriptor = new FileChooserDescriptor(true, true, true, false, true, false) {
         @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
+        public boolean isFileSelectable(@Nullable VirtualFile file) {
+          for (var pair : descriptors) {
             if (pair.getSecond().isFileSelectable(file)) {
-              return true;
-            }
-          }
-          return false;
-        }
-
-        @Override
-        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
-            if (pair.getSecond().isFileVisible(file, showHiddenFiles)) {
               return true;
             }
           }
@@ -153,19 +150,21 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     }
     chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModule);
 
-    final Project project = myModule.getProject();
-    final VirtualFile[] files = FileChooser.chooseFiles(chooserDescriptor, myParentComponent, project, project.getBaseDir());
-    if (files.length == 0) return Collections.emptyList();
+    var project = myModule.getProject();
+    var files = FileChooser.chooseFiles(chooserDescriptor, myParentComponent, project, ProjectUtil.guessProjectDir(project));
+    if (files.length == 0) {
+      return Collections.emptyList();
+    }
 
-    List<LibraryRootsComponentDescriptor> suitableDescriptors = new ArrayList<>();
-    for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
+    var suitableDescriptors = new ArrayList<LibraryRootsComponentDescriptor>();
+    for (var pair : descriptors) {
       if (acceptAll(pair.getSecond(), files)) {
         suitableDescriptors.add(pair.getFirst());
       }
     }
 
-    final LibraryRootsComponentDescriptor rootsComponentDescriptor;
-    LibraryType libraryType = null;
+    LibraryRootsComponentDescriptor rootsComponentDescriptor;
+    LibraryType<?> libraryType = null;
     if (suitableDescriptors.size() == 1) {
       rootsComponentDescriptor = suitableDescriptors.get(0);
       libraryType = myLibraryTypes.get(rootsComponentDescriptor);
@@ -173,44 +172,45 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     else {
       rootsComponentDescriptor = myDefaultDescriptor;
     }
-    List<OrderRoot> chosenRoots = RootDetectionUtil.detectRoots(Arrays.asList(files), myParentComponent, project, rootsComponentDescriptor);
+    var chosenRoots = RootDetectionUtil.detectRoots(Arrays.asList(files), myParentComponent, project, rootsComponentDescriptor);
 
     return createLibrariesFromRoots(chosenRoots, libraryType, myModuleLibrariesModel, myDefaultPropertiesFactory);
   }
 
   @TestOnly
-  @NotNull
-  public static List<Library> createLibrariesFromRoots(List<? extends OrderRoot> chosenRoots, LibraryTable.ModifiableModel moduleLibrariesModel) {
+  public static @NotNull List<Library> createLibrariesFromRoots(List<OrderRoot> chosenRoots, LibraryTable.ModifiableModel moduleLibrariesModel) {
     return createLibrariesFromRoots(chosenRoots, null, moduleLibrariesModel, null);
   }
 
-  @NotNull
-  private static List<Library> createLibrariesFromRoots(@NotNull List<? extends OrderRoot> chosenRoots,
-                                                        @Nullable LibraryType libraryType,
-                                                        @NotNull LibraryTable.ModifiableModel moduleLibrariesModel,
-                                                        @Nullable Function<? super LibraryType, ? extends LibraryProperties> defaultPropertiesFactory) {
-    final List<OrderRoot> roots = filterAlreadyAdded(chosenRoots, moduleLibrariesModel);
+  private static List<Library> createLibrariesFromRoots(
+    List<OrderRoot> chosenRoots,
+    LibraryType<?> libraryType,
+    LibraryTable.ModifiableModel moduleLibrariesModel,
+    @Nullable Function<? super LibraryType<?>, ? extends LibraryProperties<?>> defaultPropertiesFactory
+  ) {
+    var roots = filterAlreadyAdded(chosenRoots, moduleLibrariesModel);
     if (roots.isEmpty()) {
       return Collections.emptyList();
     }
 
-    final List<Library> addedLibraries = new ArrayList<>();
     Map<VirtualFile, List<OrderRoot>> byFile = roots.stream().collect(Collectors.groupingBy(OrderRoot::getFile, LinkedHashMap::new, Collectors.toList()));
-    Predicate<List<OrderRoot>> containsClasses = it -> it.stream().anyMatch(root -> root.getType().equals(OrderRootType.CLASSES));
+    @SuppressWarnings("SSBasedInspection") Predicate<List<OrderRoot>> containsClasses = it -> it.stream().anyMatch(root -> root.getType().equals(OrderRootType.CLASSES));
+    //noinspection SSBasedInspection
     if (byFile.values().stream().allMatch(containsClasses)) {
-      for (List<OrderRoot> rootsForFile : byFile.values()) {
+      var addedLibraries = new ArrayList<Library>();
+      for (var rootsForFile : byFile.values()) {
         addedLibraries.add(createLibraryFromRoots(rootsForFile, libraryType, moduleLibrariesModel, defaultPropertiesFactory));
       }
+      return addedLibraries;
     }
     else {
-      addedLibraries.add(createLibraryFromRoots(roots, libraryType, moduleLibrariesModel, defaultPropertiesFactory));
+      return List.of(createLibraryFromRoots(roots, libraryType, moduleLibrariesModel, defaultPropertiesFactory));
     }
-    return addedLibraries;
   }
 
   private static boolean acceptAll(FileChooserDescriptor descriptor, VirtualFile[] files) {
-    for (VirtualFile file : files) {
-      if (!descriptor.isFileSelectable(file) || !descriptor.isFileVisible(file, true)) {
+    for (var file : files) {
+      if (!descriptor.isFileSelectable(file)) {
         return false;
       }
     }

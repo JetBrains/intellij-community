@@ -4,27 +4,43 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiClassInitializer
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UClassInitializerEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.UastEmptyExpression
+import org.jetbrains.uast.UastFacade
+import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
+@ApiStatus.Internal
 class JavaUClassInitializer(
   override val sourcePsi: PsiClassInitializer,
   uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UClassInitializerEx, JavaUElementWithComments, UAnchorOwner, PsiClassInitializer by sourcePsi {
 
+  private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
+  private val uastBodyPart = UastLazyPart<UExpression>()
+
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = sourcePsi
+  override val psi: PsiClassInitializer get() = sourcePsi
 
   override val javaPsi: PsiClassInitializer = sourcePsi
 
   override val uastAnchor: UIdentifier?
     get() = null
 
-  override val uastBody: UExpression by lz {
-    UastFacade.findPlugin(sourcePsi.body)?.convertElement(sourcePsi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
-  }
+  override val uastBody: UExpression
+    get() = uastBodyPart.getOrBuild {
+      UastFacade.findPlugin(sourcePsi.body)?.convertElement(sourcePsi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
+    }
 
-  override val uAnnotations: List<JavaUAnnotation> by lz { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uAnnotations: List<UAnnotation>
+    get() = uAnnotationsPart.getOrBuild { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
 
   override fun equals(other: Any?): Boolean = this === other
   override fun hashCode(): Int = sourcePsi.hashCode()

@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="lucene-sandbox" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-sandbox:10.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/10.3.0/lucene-sandbox-10.3.0.jar">
+          <sha256sum>00aa7be5c214bff31d62b489fbb5f0c389545e9f455324b2b92681956d37c94f</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/10.3.0/lucene-sandbox-10.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/10.3.0/lucene-sandbox-10.3.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/10.3.0/lucene-sandbox-10.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

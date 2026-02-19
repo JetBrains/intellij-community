@@ -1,0 +1,14 @@
+<idea-plugin visibility="public" package="com.intellij.platform.navbar.backend">
+  <dependencies>
+    <module name="intellij.platform.navbar"/>
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint name="navbar.item.provider" interface="com.intellij.platform.navbar.backend.NavBarItemProvider" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <uiDataRule implementation="com.intellij.platform.navbar.backend.impl.DefaultNavBarItemDataRule" order="last"/>
+    <uiDataRule implementation="com.intellij.platform.navbar.backend.impl.NavBarBgtDataRule"/>
+    <navbar.item.provider order="last"
+                          implementation="com.intellij.platform.navbar.backend.impl.DefaultNavBarItemProvider"/>
+  </extensions>
+</idea-plugin>

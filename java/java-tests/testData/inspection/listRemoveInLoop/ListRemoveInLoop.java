@@ -4,7 +4,7 @@ class Test {
   void processList(List<String> list, int start) {
     for(int i=start; i<list.size(); i++) {
       if(list.get(i).isEmpty()) {
-        list.<warning descr="Suspicious 'List.remove()' in the loop">remove</warning>(i);
+        list.<warning descr="Suspicious 'List.remove()' in loop">remove</warning>(i);
       }
     }
   }
@@ -30,7 +30,7 @@ class Test {
   void processContinue(List<String> list, int start) {
     for(int i=start; i<list.size(); i++) {
       if(list.get(i).isEmpty()) {
-        list.<warning descr="Suspicious 'List.remove()' in the loop">remove</warning>(i);
+        list.<warning descr="Suspicious 'List.remove()' in loop">remove</warning>(i);
         continue;
       }
       System.out.println(list.get(i));
@@ -52,7 +52,7 @@ class Test {
 
   void deleteTail(List<String> list, int from) {
     for(int i=from; i<list.size(); i++) {
-      list.<warning descr="Suspicious 'List.remove()' in the loop">remove</warning>(i);
+      list.<warning descr="Suspicious 'List.remove()' in loop">remove</warning>(i);
     }
   }
 }

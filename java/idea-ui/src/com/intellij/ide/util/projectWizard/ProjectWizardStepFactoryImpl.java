@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
@@ -12,12 +12,12 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
+public final class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   private static final Key<ProjectJdkStep> PROJECT_JDK_STEP_KEY = Key.create("ProjectJdkStep");
 
   @Override
@@ -26,7 +26,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public ModuleWizardStep createSourcePathsStep(final WizardContext context, final SourcePathsBuilder builder, final Icon icon, @NonNls final String helpId) {
+  public ModuleWizardStep createSourcePathsStep(final WizardContext context, final SourcePathsBuilder builder, final Icon icon, final @NonNls String helpId) {
     return new SourcePathsStep(builder, icon, helpId);
   }
 
@@ -36,7 +36,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
                                                final JavaModuleBuilder builder,
                                                final Computable<Boolean> isVisible,
                                                final Icon icon,
-                                               @NonNls final String helpId) {
+                                               final @NonNls String helpId) {
     return new ProjectJdkForModuleStep(context, type, helpId) {
       @Override
       public void updateDataModel() {
@@ -73,7 +73,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         final Sdk newProjectJdk = AbstractProjectWizard.getProjectSdkByDefault(wizardContext);
         if (newProjectJdk == null) return true;
         final ProjectBuilder projectBuilder = wizardContext.getProjectBuilder();
-        return projectBuilder != null && !projectBuilder.isSuitableSdk(newProjectJdk);
+        return projectBuilder != null && !projectBuilder.isSuitableSdkType(newProjectJdk.getSdkType());
       }
     };
     wizardContext.putUserData(PROJECT_JDK_STEP_KEY, projectSdkStep);

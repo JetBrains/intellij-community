@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.projectWizard;
 
@@ -21,17 +21,28 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.CardLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
-import static java.awt.GridBagConstraints.*;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.NONE;
+import static java.awt.GridBagConstraints.NORTHWEST;
+import static java.awt.GridBagConstraints.RELATIVE;
 
 public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep {
   private static final Logger LOG = Logger.getInstance(AbstractStepWithProgress.class);
-  @NonNls private static final String PROGRESS_PANEL = "progress_panel";
-  @NonNls private static final String RESULTS_PANEL = "results_panel";
+  private static final @NonNls String PROGRESS_PANEL = "progress_panel";
+  private static final @NonNls String RESULTS_PANEL = "results_panel";
   private JPanel myPanel;
 
   private JLabel myTitleLabel;
@@ -64,7 +75,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected abstract Result calculate();
 
-  protected abstract void onFinished(Result result, boolean canceled);
+  protected abstract void onFinished(@Nullable Result result, boolean canceled);
 
   private JPanel createProgressPanel() {
     final JPanel progressPanel = new JPanel(new GridBagLayout());
@@ -202,7 +213,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
       super.setText2(text);
     }
 
-    private void updateLabel(final JLabel label, @NlsContexts.Label final String text) {
+    private static void updateLabel(final JLabel label, final @NlsContexts.Label String text) {
       UIUtil.invokeLaterIfNeeded(() -> label.setText(text));
     }
   }

@@ -1,36 +1,65 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiWildcardType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.FileTypeInspectionDisablerKt;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrCastFix;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrChangeVariableType;
-import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.*;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.BinaryExpressionHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.CallReferenceHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrConstructorInvocationHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrEnumConstantHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.GrNewExpressionHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.LiteralConstructorReferenceHighlighter;
+import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.MethodCallReferenceHighlighter;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -43,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
@@ -50,6 +80,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.typing.MultiAssignmentTypes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,9 +88,13 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
-import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
+import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.getExpressionPartToHighlight;
+import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.getLValueVarName;
+import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.hasErrorElements;
+import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.hasTupleInitializer;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
+import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentTypes;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
@@ -68,7 +103,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     public void registerProblem(@NotNull PsiElement highlightElement,
                                 @NotNull ProblemHighlightType highlightType,
                                 @NotNull String message,
-                                LocalQuickFix @NotNull ... fixes) {
+                                @NotNull LocalQuickFix @NotNull ... fixes) {
       GroovyTypeCheckVisitor.this.registerError(highlightElement, message, fixes, highlightType);
     }
   };
@@ -269,16 +304,21 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       }
     }
     else {
-      PsiType type = initializer.getType();
-      PsiType rType = extractIterableTypeParameter(type, false);
-
-      for (GrExpression lValue : lValues) {
-        PsiType lType = lValue.getNominalType();
+      MultiAssignmentTypes multiAssignmentTypes = getMultiAssignmentTypes(initializer);
+      if (multiAssignmentTypes == null) {
+        return;
+      }
+      for (int position = 0; position < lValues.length; position++) {
+        PsiType rType = multiAssignmentTypes.getComponentType(position);
+        GrExpression lValue = lValues[position];
         // For assignments with spread dot
         if (PsiImplUtil.isSpreadAssignment(lValue)) {
-          final PsiType argType = extractIterableTypeParameter(lType, false);
-          if (argType != null && rType != null) {
-            processAssignment(argType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
+          if (rType != null) {
+            PsiType lType = lValue.getNominalType();
+            final PsiType argType = extractIterableTypeParameter(lType, false);
+            if (argType != null) {
+              processAssignment(argType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
+            }
           }
           return;
         }
@@ -287,8 +327,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           return;
         }
 
-        if (lType != null && rType != null) {
-          processAssignment(lType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
+        if (rType != null) {
+          PsiType lType = lValue.getNominalType();
+          if (lType != null) {
+            processAssignment(lType, rType, tupleExpression, getExpressionPartToHighlight(lValue));
+          }
         }
       }
     }
@@ -313,16 +356,19 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                     @NotNull PsiElement elementToHighlight) {
     if (hasTupleInitializer(expression)) return;
     final PsiType returnType = PsiImplUtil.inferReturnType(expression);
-    if (returnType == null || PsiType.VOID.equals(returnType)) return;
+    if (returnType == null || PsiTypes.voidType().equals(returnType)) return;
     processAssignment(returnType, expression, elementToHighlight, "cannot.return.type", context, Position.RETURN_VALUE);
   }
 
   @Override
   protected void registerError(@NotNull PsiElement location,
                                @InspectionMessage @NotNull String description,
-                               LocalQuickFix @Nullable [] fixes,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
-    if (PsiUtil.isCompileStatic(location)) {
+    if (FileTypeInspectionDisablerKt.isTypecheckingDisabled(location.getContainingFile())) {
+      return;
+    }
+    if (CompileStaticUtil.isCompileStatic(location)) {
       // filter all errors here, error will be highlighted by annotator
       if (highlightType != ProblemHighlightType.GENERIC_ERROR) {
         super.registerError(location, description, fixes, highlightType);
@@ -368,6 +414,41 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   public void visitExpression(@NotNull GrExpression expression) {
     if (isImplicitReturnStatement(expression)) {
       processReturnValue(expression, expression, expression);
+    } else {
+      processExpressionInsideArrayInitializer(expression);
+    }
+  }
+
+  @Override
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    super.visitArrayInitializer(arrayInitializer);
+    if (!GroovyConfigUtils.isAtLeastGroovy50(arrayInitializer)) return;
+    processExpressionInsideArrayInitializer(arrayInitializer);
+  }
+
+  private void processExpressionInsideArrayInitializer(@NotNull GrExpression expression) {
+    PsiElement parent = expression.getParent();
+    if (!(parent instanceof GrArrayInitializer arrayInitializer)) return;
+
+    PsiType initializerType = expression.getType();
+    PsiType arrayInitializerType = arrayInitializer.getType();
+
+
+    if (!(arrayInitializerType instanceof PsiArrayType arrayType)) return;
+
+    PsiType componentType = arrayType.getComponentType();
+
+    if (initializerType == null) {
+      registerError(
+        expression,
+        GroovyBundle.message("illegal.array.initializer", componentType.getPresentableText()),
+        LocalQuickFix.EMPTY_ARRAY,
+        ProblemHighlightType.GENERIC_ERROR
+      );
+    }
+    else {
+      ConversionResult result = TypesUtil.canAssign(componentType, initializerType, expression, Position.ASSIGNMENT);
+      processResult(result, expression, componentType, initializerType, LocalQuickFix.EMPTY_ARRAY);
     }
   }
 
@@ -429,6 +510,19 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                                                       : lValueNominalType;
     if (targetType == null) return;
     processAssignment(targetType, rValue, lValue, assignment);
+  }
+
+  @Override
+  public void visitArrayDeclaration(@NotNull GrArrayDeclaration arrayDeclaration) {
+    super.visitArrayDeclaration(arrayDeclaration);
+    if (!GroovyConfigUtils.getInstance().isVersionAtLeast(arrayDeclaration, GroovyConfigUtils.GROOVY3_0)) return;
+
+    for (GrExpression expr : arrayDeclaration.getBoundExpressions()) {
+      PsiType type = expr.getType();
+      if (type == null) continue;
+      ConversionResult conversionResult = TypesUtil.isIntegralNumberType(type) ? ConversionResult.OK : ConversionResult.ERROR;
+      processResult(conversionResult, expr, type, PsiTypes.intType(), new LocalQuickFix[]{new GrCastFix(PsiTypes.intType(), expr)});
+    }
   }
 
   void checkPossibleLooseOfPrecision(@NotNull PsiType targetType, @NotNull GrExpression expression, @NotNull PsiElement toHighlight) {
@@ -530,7 +624,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   @Override
-  public void visitParameterList(@NotNull final GrParameterList parameterList) {
+  public void visitParameterList(final @NotNull GrParameterList parameterList) {
     PsiElement parent = parameterList.getParent();
     if (!(parent instanceof GrFunctionalExpression)) return;
 
@@ -601,24 +695,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         parent instanceof GrForInClause) {
       return;
     }
-    else if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).isTuple()) {
-      //check tuple assignment:  def (int x, int y) = foo()
-      final GrVariableDeclaration tuple = (GrVariableDeclaration)parent;
-      final GrExpression initializer = tuple.getTupleInitializer();
-      if (initializer == null) return;
-      if (!(initializer instanceof GrListOrMap) && !PsiUtil.isCompileStatic(variable)) {
-        PsiType type = initializer.getType();
-        if (type == null) return;
-        PsiType valueType = extractIterableTypeParameter(type, false);
-        processAssignment(varType, valueType, tuple, variable.getNameIdentifierGroovy());
-        return;
-      }
-    }
-
     GrExpression initializer = variable.getInitializerGroovy();
-    if (initializer == null) return;
-
-    processAssignment(varType, initializer, variable.getNameIdentifierGroovy(), variable);
+    if (initializer != null) {
+      processAssignment(varType, initializer, variable.getNameIdentifierGroovy(), variable);
+    }
+    else {
+      PsiType initializerType = variable.getInitializerType();
+      processAssignment(varType, initializerType, variable, variable.getNameIdentifierGroovy());
+    }
   }
 
   @Override

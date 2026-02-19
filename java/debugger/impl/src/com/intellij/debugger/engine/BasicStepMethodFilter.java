@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -8,10 +8,23 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Range;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +37,9 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   private static final Logger LOG = Logger.getInstance(BasicStepMethodFilter.class);
   private static final String PROXY_CALL_SIGNATURE_POSTFIX = "Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
 
-  @NotNull
-  protected final JVMName myDeclaringClassName;
-  @NotNull
-  private final String myTargetMethodName;
-  @Nullable
-  protected final JVMName myTargetMethodSignature;
+  protected final @NotNull JVMName myDeclaringClassName;
+  private final @NotNull String myTargetMethodName;
+  protected final @Nullable JVMName myTargetMethodSignature;
   private final Range<Integer> myCallingExpressionLines;
   private final int myOrdinal;
   private final boolean myCheckCaller;
@@ -67,8 +77,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
   }
 
   @Override
-  @NotNull
-  public String getMethodName() {
+  public @NotNull String getMethodName() {
     return myTargetMethodName;
   }
 
@@ -106,11 +115,11 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       return false;
     }
     String declaringClassNameName = myDeclaringClassName.getName(process);
-    boolean res = DebuggerUtilsEx.isAssignableFrom(declaringClassNameName, location.declaringType());
+    boolean res = DebuggerUtils.instanceOf(location.declaringType(), declaringClassNameName);
     if (!res && !method.isStatic() && stackFrame != null) {
       ObjectReference thisObject = stackFrame.thisObject();
       if (thisObject != null) {
-        res = DebuggerUtilsEx.isAssignableFrom(declaringClassNameName, thisObject.referenceType());
+        res = DebuggerUtils.instanceOf(thisObject.referenceType(), declaringClassNameName);
       }
     }
     return res;
@@ -191,13 +200,13 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
             if (proxyValue != null) {
               Type proxyType = proxyValue.type();
               if (proxyType instanceof ReferenceType &&
-                  DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), proxyType)) {
+                  DebuggerUtils.instanceOf(proxyType, myDeclaringClassName.getName(process))) {
                 Value methodValue = argumentValues.get(size - 2);
                 if (methodValue instanceof ObjectReference) {
                   // TODO: no signature check for now
                   ReferenceType methodType = ((ObjectReference)methodValue).referenceType();
                   return myTargetMethodName.equals(
-                    ((StringReference)((ObjectReference)methodValue).getValue(methodType.fieldByName("name"))).value());
+                    ((StringReference)((ObjectReference)methodValue).getValue(DebuggerUtils.findField(methodType, "name"))).value());
                 }
               }
             }
@@ -216,6 +225,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
       return true;
     }
     // check if there are any bridge methods that match
+    //noinspection SSBasedInspection
     for (Method candidate : method.declaringType().methodsByName(method.name())) {
       if (candidate != method && candidate.isBridge() && expectedSignature.equals(candidate.signature())) {
         return true;
@@ -224,14 +234,25 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     return false;
   }
 
-  @Nullable
   @Override
-  public Range<Integer> getCallingExpressionLines() {
+  public @Nullable Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;
   }
 
   @Override
   public int getSkipCount() {
     return myOrdinal;
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{" +
+           "myDeclaringClassName=" + myDeclaringClassName +
+           ", myTargetMethodName='" + myTargetMethodName + '\'' +
+           ", myTargetMethodSignature=" + myTargetMethodSignature +
+           ", myCallingExpressionLines=" + myCallingExpressionLines +
+           ", myOrdinal=" + myOrdinal +
+           ", myCheckCaller=" + myCheckCaller +
+           '}';
   }
 }

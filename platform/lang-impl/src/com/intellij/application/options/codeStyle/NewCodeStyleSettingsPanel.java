@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -14,10 +13,14 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.Container;
 
-public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
+public final class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
+  private static final OptionsContainingConfigurable EMPTY_OPTIONS_CONTAINING_CONFIGURABLE = new OptionsContainingConfigurable() {};
+
   private static final Logger LOG = Logger.getInstance(NewCodeStyleSettingsPanel.class);
 
   private final Configurable myTab;
@@ -25,6 +28,7 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
 
   public NewCodeStyleSettingsPanel(@NotNull Configurable tab, @NotNull CodeStyleSchemesModel model) {
     super(new BorderLayout());
+
     myTab = tab;
     myModel = model;
     JComponent component = myTab.createComponent();
@@ -52,12 +56,17 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     }
   }
 
-  @Nullable
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return myTab.getHelpTopic();
   }
 
   public void dispose() {
+    if (isValid()) {
+      Container parent = getParent();
+      if (parent != null && parent.isValid()) {
+        parent.remove(this);
+      }
+    }
     myTab.disposeUIResources();
   }
 
@@ -98,15 +107,11 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     }
   }
 
-  @NotNull
-  public OptionsContainingConfigurable getOptionIndexer() {
-    return myTab instanceof OptionsContainingConfigurable
-           ? (OptionsContainingConfigurable)myTab
-           : OptionsContainingConfigurable.EMPTY;
+  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
+    return myTab instanceof OptionsContainingConfigurable ? (OptionsContainingConfigurable)myTab : EMPTY_OPTIONS_CONTAINING_CONFIGURABLE;
   }
 
-  @Nullable
-  public CodeStyleAbstractPanel getSelectedPanel() {
+  public @Nullable CodeStyleAbstractPanel getSelectedPanel() {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       return ((CodeStyleAbstractConfigurable)myTab).getPanel();
     }

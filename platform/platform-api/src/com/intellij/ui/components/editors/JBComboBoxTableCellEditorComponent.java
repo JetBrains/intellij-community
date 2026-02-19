@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBComboBoxLabel;
@@ -25,9 +24,17 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.accessibility.AccessibleState;
 import javax.accessibility.AccessibleStateSet;
-import javax.swing.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JTable;
+import javax.swing.ListCellRenderer;
 import javax.swing.event.TableModelEvent;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -56,7 +63,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private Object[] myOptions = {};
   private Object myValue;
   public boolean myWide = false;
-  private Function<Object, @NlsContexts.ListItem String> myToString = StringUtil.createToStringFunction(Object.class);
+  private Function<Object, @NlsContexts.ListItem String> myToString = Object::toString;
   private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
@@ -72,7 +79,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
       } else {
         label.setIcon(getEmptyIcon());
       }
-      GraphicsUtil.setAntialiasingType(label, AntialiasingType.getAAHintForSwingComponent());
+      GraphicsUtil.setAntialiasingType(label, AntialiasingType.getAATextInfoForSwingComponent());
       return label;
     }
 
@@ -165,7 +172,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     final boolean surrendersFocusOnKeystrokeOldValue = myTable instanceof JBTable ? ((JBTable)myTable).surrendersFocusOnKeyStroke() : myTable.getSurrendersFocusOnKeystroke();
     final JBPopup popup = JBPopupFactory.getInstance()
       .createListPopupBuilder(myList)
-      .setItemChoosenCallback(() -> {
+      .setItemChosenCallback(() -> {
         myValue = myList.getSelectedValue();
         final ActionEvent event = new ActionEvent(myList, ActionEvent.ACTION_PERFORMED, "elementChosen");
         for (ActionListener listener : myListeners) {

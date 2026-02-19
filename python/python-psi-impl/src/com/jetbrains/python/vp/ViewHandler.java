@@ -43,7 +43,14 @@ class ViewHandler<C> implements InvocationHandler {
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     Preconditions.checkState(realView != null, "Real view not set");
     Invoker invoker = new Invoker(realView, method, args);
-    ApplicationManager.getApplication().invokeAndWait(invoker);
+    // PY-59217
+    // TODO: rewrite to UI DSL and model
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      invoker.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(invoker);
+    }
     if (invoker.exception != null) {
       throw invoker.exception;
     }
@@ -54,11 +61,9 @@ class ViewHandler<C> implements InvocationHandler {
    * Class that invokes view methods in appropriate thread
    */
   private static final class Invoker implements Runnable {
-    @NotNull
-    private final Method method;
+    private final @NotNull Method method;
     private final Object @Nullable [] args;
-    @NotNull
-    private final Object target;
+    private final @NotNull Object target;
 
     private InvocationTargetException exception;
     private Object result;

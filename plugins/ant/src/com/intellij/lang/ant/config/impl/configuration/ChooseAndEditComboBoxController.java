@@ -20,7 +20,9 @@ import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.ListCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Comparator;

@@ -7,8 +7,7 @@ class C {
         return null;
     }
 
-    @Nullable
-    private Object newMethod() {
+    private @Nullable Object newMethod() {
         for (Object o : new ArrayList<Object>()) {
             if (o != null) {
                 return o;

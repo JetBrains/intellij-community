@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
@@ -18,10 +17,11 @@ import java.nio.file.Path;
 @ApiStatus.NonExtendable
 public abstract class ProjectManager {
   @Topic.AppLevel
-  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class);
+  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   /**
-   * @return {@code ProjectManager} instance
+   * @return {@code ProjectManager} instance.
+   * For coroutines, see <pre>ProjectManagerEx</pre>
    */
   public static ProjectManager getInstance() {
     return ApplicationManager.getApplication().getService(ProjectManager.class);
@@ -31,10 +31,14 @@ public abstract class ProjectManager {
     return ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
   }
 
+  @ApiStatus.Internal
+  protected ProjectManager() {
+  }
+
   /**
    * @deprecated Use {@link #TOPIC} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
 
   public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
@@ -42,13 +46,7 @@ public abstract class ProjectManager {
   /**
    * @deprecated Use {@link #TOPIC} instead
    */
-  @Deprecated
-  public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable);
-
-  /**
-   * @deprecated Use {@link #TOPIC} instead
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeProjectManagerListener(@NotNull ProjectManagerListener listener);
 
   public abstract void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
@@ -90,6 +88,10 @@ public abstract class ProjectManager {
    * Loads and opens a project with the specified path. If the project file is from an older IDEA
    * version, prompts the user to convert it to the latest version. If the project file is from a
    * newer version, shows a message box telling the user that the load failed.
+   * <p>
+   * This method opens the project as-is.
+   * If the project is new and should be imported, use {@link com.intellij.ide.impl.ProjectUtil#openOrImportAsync} or
+   * {@link com.intellij.ide.impl.ProjectUtil#openOrImport} instead.
    *
    * @param filePath the .ipr file path
    * @return the opened project file, or null if the project failed to load because of version mismatch
@@ -116,12 +118,16 @@ public abstract class ProjectManager {
    *
    * @param project the project to reload.
    */
-  @SuppressWarnings("unused")
   public abstract void reloadProject(@NotNull Project project);
 
   /**
    * @deprecated Use {@link com.intellij.openapi.project.ex.ProjectManagerEx#newProject(Path, com.intellij.ide.impl.OpenProjectTask)}
    */
   @Deprecated
-  public abstract @Nullable Project createProject(@Nullable String name, @NotNull String path);
+  @ApiStatus.Internal
+  public abstract @NotNull Project createProject(@Nullable String name, @NotNull String path);
+
+  public @Nullable Project findOpenProjectByHash(@Nullable String locationHash) {
+    return null;
+  }
 }

@@ -1,4 +1,4 @@
-// "Replace method call on lambda with lambda body" "true"
+// "Replace method call on lambda with lambda body" "true-preview"
 
 public class Main {
   public static void main(String[] args) {

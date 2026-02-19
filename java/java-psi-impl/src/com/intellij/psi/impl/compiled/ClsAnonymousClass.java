@@ -1,7 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -9,8 +17,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClsAnonymousClass extends ClsClassImpl implements PsiAnonymousClass {
-  public ClsAnonymousClass(@NotNull PsiClassStub stub) {
+  public ClsAnonymousClass(@NotNull PsiClassStub<?> stub) {
     super(stub);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnonymousClass(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

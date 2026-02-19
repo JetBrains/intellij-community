@@ -6,9 +6,11 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 /**
  * @author Alexander Lobas
@@ -50,6 +52,7 @@ public class ColorButton extends JButton {
   }
 
   public static void setWidth(@NotNull JButton button, int noScaleWidth) {
+    button.setPreferredSize(null);
     int width = JBUIScale.scale(noScaleWidth);
     if (button instanceof JBOptionButton && button.getComponentCount() == 2) {
       width += button.getComponent(1).getPreferredSize().width;

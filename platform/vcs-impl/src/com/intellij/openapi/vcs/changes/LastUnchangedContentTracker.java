@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,9 +14,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public final class LastUnchangedContentTracker {
   private static final Logger LOG = Logger.getInstance(LastUnchangedContentTracker.class);
   private static final Key<Long> LAST_TS_KEY = Key.create("LAST_TS_KEY");
@@ -90,11 +87,11 @@ public final class LastUnchangedContentTracker {
 
     long stamp = file.getTimeStamp();
     try {
-      try (DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeAttribute(file)) {
+      try (DataOutputStream contentStream = ACQUIRED_CONTENT_ATTR.writeFileAttribute(file)) {
         contentStream.writeInt(contentId);
       }
 
-      try (DataOutputStream tsStream = LAST_TS_ATTR.writeAttribute(file)) {
+      try (DataOutputStream tsStream = LAST_TS_ATTR.writeFileAttribute(file)) {
         tsStream.writeLong(stamp);
       }
 
@@ -113,14 +110,13 @@ public final class LastUnchangedContentTracker {
     saveContentReference(file, getFS().storeUnlinkedContent(content.getBytes(file.getCharset())));
   }
 
-    @Nullable
-  private static Integer getSavedContentId(VirtualFile file) {
+    private static @Nullable Integer getSavedContentId(VirtualFile file) {
     if (!file.isValid()) {
       return null;
     }
 
     Integer oldContentId = null;
-    try(final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readAttribute(file)) {
+    try(final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readFileAttribute(file)) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("getSavedContentId for " + file + "; stream=" + stream);
       }
@@ -138,11 +134,10 @@ public final class LastUnchangedContentTracker {
     return oldContentId;
   }
 
-  @Nullable
-  private static Long getLastSavedStamp(VirtualFile file) {
+  private static @Nullable Long getLastSavedStamp(VirtualFile file) {
     Long l = file.getUserData(LAST_TS_KEY);
     if (l == null) {
-      try (final DataInputStream stream = LAST_TS_ATTR.readAttribute(file)) {
+      try (final DataInputStream stream = LAST_TS_ATTR.readFileAttribute(file)) {
         if (stream != null) {
           l = stream.readLong();
         }

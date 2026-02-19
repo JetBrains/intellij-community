@@ -5,4 +5,12 @@ public class CannotStartServerException extends RuntimeException {
   public CannotStartServerException(Throwable cause) {
     super(cause);
   }
+
+  public CannotStartServerException(String cause) {
+    super(cause);
+  }
+
+  public CannotStartServerException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

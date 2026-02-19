@@ -9,7 +9,9 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import org.junit.Test
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 
 class ViewerEditorTest: LightPlatformTestCase() {
   private lateinit var mockProvider: FileIndentOptionsProvider
@@ -33,6 +35,6 @@ class ViewerEditorTest: LightPlatformTestCase() {
     finally {
       EditorFactory.getInstance().releaseEditor(editor)
     }
-    verify(mockProvider, never()).getIndentOptions(ArgumentMatchers.any(), ArgumentMatchers.any())
+    verify(mockProvider, never()).getIndentOptions(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())
   }
 }

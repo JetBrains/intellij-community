@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Pair;
@@ -6,7 +6,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -14,7 +20,7 @@ import java.util.*;
 public class TargetResolver extends PropertyProviderFinder {
 
   private final List<String> myDeclaredTargetRefs;
-  private @Nullable final AntDomTarget myContextTarget;
+  private final @Nullable AntDomTarget myContextTarget;
 
   private final Result myResult;
 
@@ -39,18 +45,15 @@ public class TargetResolver extends PropertyProviderFinder {
       myRefsString = refsString;
     }
 
-    @NotNull
-    public Collection<String> getTargetReferences() {
+    public @NotNull Collection<String> getTargetReferences() {
       return Collections.unmodifiableSet(myMap.keySet());
     }
 
-    @Nullable
-    public Pair<AntDomTarget, String> getResolvedTarget(String declaredTargetRef) {
+    public @Nullable Pair<AntDomTarget, String> getResolvedTarget(String declaredTargetRef) {
       return myMap.get(declaredTargetRef);
     }
 
-    @NotNull
-    public Map<String, AntDomTarget> getVariants() {
+    public @NotNull Map<String, AntDomTarget> getVariants() {
       return myVariants != null? myVariants : Collections.emptyMap();
     }
   }
@@ -62,8 +65,7 @@ public class TargetResolver extends PropertyProviderFinder {
     myContextTarget = contextElement;
   }
 
-  @NotNull
-  public static Result resolve(@NotNull AntDomProject project, @Nullable AntDomTarget contextTarget, @NotNull String declaredTargetRef) {
+  public static @NotNull Result resolve(@NotNull AntDomProject project, @Nullable AntDomTarget contextTarget, @NotNull String declaredTargetRef) {
     return resolve(project, contextTarget, Collections.singletonList(declaredTargetRef));
   }
 
@@ -98,7 +100,7 @@ public class TargetResolver extends PropertyProviderFinder {
 
   @Override
   protected void targetDefined(AntDomTarget target, String targetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
-    if (myContextTarget != null && myDeclaredTargetRefs.size() > 0 && target.equals(myContextTarget)) {
+    if (myContextTarget != null && !myDeclaredTargetRefs.isEmpty() && target.equals(myContextTarget)) {
       for (Iterator<String> it = myDeclaredTargetRefs.iterator(); it.hasNext();) {
         final String declaredRef = it.next();
         final Pair<AntDomTarget, String> result = dependenciesMap.get(declaredRef);
@@ -114,7 +116,7 @@ public class TargetResolver extends PropertyProviderFinder {
   @Override
   protected void stageCompleted(Stage completedStage, Stage startingStage) {
     if (completedStage == Stage.RESOLVE_MAP_BUILDING_STAGE) {
-      if (myDeclaredTargetRefs.size() > 0) {
+      if (!myDeclaredTargetRefs.isEmpty()) {
         for (Iterator<String> it = myDeclaredTargetRefs.iterator(); it.hasNext();) {
           final String declaredRef = it.next();
           final AntDomTarget result = getTargetByName(declaredRef);
@@ -128,8 +130,7 @@ public class TargetResolver extends PropertyProviderFinder {
     }
   }
 
-  @NotNull
-  public Result getResult() {
+  public @NotNull Result getResult() {
     return myResult;
   }
 

@@ -1,11 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.actions.OpenFileAction;
-import com.intellij.ide.lightEdit.*;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
+import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditServiceImpl;
+import com.intellij.ide.lightEdit.LightEditorInfo;
+import com.intellij.ide.lightEdit.LightEditorManagerImpl;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -22,53 +29,51 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.Open;
 
 public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
-  @IntentionName
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getText() {
     return ApplicationBundle.message("light.edit.open.in.project.intention");
   }
 
-  @IntentionFamilyName
   @Override
-  public @NotNull String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return getText();
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project,
                              Editor editor,
-                             PsiFile file) {
+                             PsiFile psiFile) {
     return LightEdit.owns(project);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    performOn(project, file.getVirtualFile());
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    performOn(project, psiFile.getVirtualFile());
   }
 
   public static void performOn(@NotNull Project project, @NotNull VirtualFile currentFile) throws IncorrectOperationException {
-    LightEditorInfo editorInfo =
-      ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currentFile);
-    if (editorInfo != null) {
-      Project openProject = findOpenProject(currentFile);
-      if (openProject != null) {
-        LightEditFeatureUsagesUtil.logOpenFileInProject(Open);
+    LightEditorInfo editorInfo = ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currentFile);
+    if (editorInfo == null) {
+      return;
+    }
+
+    Project openProject = findOpenProject(currentFile);
+    if (openProject != null) {
+      LightEditFeatureUsagesUtil.logOpenFileInProject(project, Open);
+    }
+    else {
+      VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(project, currentFile);
+      if (projectRoot != null) {
+        openProject = PlatformProjectOpenProcessor.Companion.doOpenProject(projectRoot.toNioPath(), OpenProjectTask.build());
       }
-      else {
-        VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(project, currentFile);
-        if (projectRoot != null) {
-          openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot.toNioPath(), -1, -1, false);
-        }
-      }
-      if (openProject != null) {
-        ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
-        OpenFileAction.openFile(currentFile, openProject);
-      }
+    }
+    if (openProject != null) {
+      ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
+      OpenFileAction.openFile(currentFile, openProject);
     }
   }
 
-  @Nullable
-  private static Project findOpenProject(@NotNull VirtualFile file) {
+  private static @Nullable Project findOpenProject(@NotNull VirtualFile file) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
         return project;

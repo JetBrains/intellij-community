@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -23,6 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -30,9 +17,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class DisableInspectionToolAction extends IntentionAndQuickFixAction implements Iconable {
+public class DisableInspectionToolAction extends IntentionAndQuickFixAction implements Iconable, DumbAware {
   private final String myToolId;
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {
@@ -40,23 +27,21 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
   }
 
   public DisableInspectionToolAction(final HighlightDisplayKey key) {
-    myToolId = key.toString();
+    myToolId = key.getShortName();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return getNameText();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getNameText();
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfile inspectionProfile = profileManager.getCurrentProfile();
     InspectionToolWrapper toolWrapper = inspectionProfile.getInspectionTool(myToolId, project);
@@ -64,8 +49,8 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
   }
 
   @Override
-  public void applyFix(@NotNull Project project, final PsiFile file, @Nullable Editor editor) {
-    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> it.disableTool(myToolId, file));
+  public void applyFix(@NotNull Project project, final PsiFile psiFile, @Nullable Editor editor) {
+    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> it.disableTool(myToolId, psiFile));
   }
 
   @Override

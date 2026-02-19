@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing;
 
@@ -24,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-/**
- * @author ilyas
- */
 public class GroovyDocParsing {
 
 
@@ -34,20 +17,13 @@ public class GroovyDocParsing {
     ERROR, METHOD, FIELD
   }
 
-  @NonNls
-  private static final String SEE_TAG = "@see";
-  @NonNls
-  private static final String LINK_TAG = "@link";
-  @NonNls
-  private static final String LINKPLAIN_TAG = "@linkplain";
-  @NonNls
-  private static final String THROWS_TAG = "@throws";
-  @NonNls
-  private static final String EXCEPTION_TAG = "@exception";
-  @NonNls
-  private static final String PARAM_TAG = "@param";
-  @NonNls
-  private static final String VALUE_TAG = "@value";
+  private static final @NonNls String SEE_TAG = "@see";
+  private static final @NonNls String LINK_TAG = "@link";
+  private static final @NonNls String LINKPLAIN_TAG = "@linkplain";
+  private static final @NonNls String THROWS_TAG = "@throws";
+  private static final @NonNls String EXCEPTION_TAG = "@exception";
+  private static final @NonNls String PARAM_TAG = "@param";
+  private static final @NonNls String VALUE_TAG = "@value";
 
   private static final TokenSet REFERENCE_BEGIN = TokenSet.create(GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN,
                                                                   GroovyDocTokenTypes.mGDOC_TAG_VALUE_SHARP_TOKEN);
@@ -148,19 +124,10 @@ public class GroovyDocParsing {
     return true;
   }
 
-  private boolean parseParamTagReference(PsiBuilder builder) {
+  private static boolean parseParamTagReference(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     if (GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN == builder.getTokenType()) {
       builder.advanceLexer();
-      marker.done(GroovyDocElementTypes.GDOC_PARAM_REF);
-      return true;
-    } else if (ParserUtils.lookAhead(builder, GroovyDocTokenTypes.mGDOC_TAG_VALUE_LT, GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN)) {
-      builder.advanceLexer();
-      builder.getTokenText(); //todo stub for peter
-      builder.advanceLexer();
-      if (GroovyDocTokenTypes.mGDOC_TAG_VALUE_GT == builder.getTokenType()) {
-        builder.advanceLexer();
-      }
       marker.done(GroovyDocElementTypes.GDOC_PARAM_REF);
       return true;
     }
@@ -168,7 +135,7 @@ public class GroovyDocParsing {
     return false;
   }
 
-  private boolean parseSeeOrLinkTagReference(PsiBuilder builder) {
+  private static boolean parseSeeOrLinkTagReference(PsiBuilder builder) {
     IElementType type = builder.getTokenType();
     if (!REFERENCE_BEGIN.contains(type)) return false;
     PsiBuilder.Marker marker = builder.mark();
@@ -193,7 +160,7 @@ public class GroovyDocParsing {
     return true;
   }
 
-  private RESULT parseFieldOrMethod(PsiBuilder builder) {
+  private static RESULT parseFieldOrMethod(PsiBuilder builder) {
     if (builder.getTokenType() != GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN) return RESULT.ERROR;
     builder.advanceLexer();
     PsiBuilder.Marker params = builder.mark();
@@ -219,7 +186,7 @@ public class GroovyDocParsing {
     return RESULT.METHOD;
   }
 
-  private boolean parseMethodParameter(PsiBuilder builder) {
+  private static boolean parseMethodParameter(PsiBuilder builder) {
     PsiBuilder.Marker param = builder.mark();
     if (GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN == builder.getTokenType()) {
       builder.advanceLexer();
@@ -236,7 +203,7 @@ public class GroovyDocParsing {
     return true;
   }
 
-  private boolean parseReferenceOrType(PsiBuilder builder) {
+  private static boolean parseReferenceOrType(PsiBuilder builder) {
     IElementType type = builder.getTokenType();
     if (GroovyDocTokenTypes.mGDOC_TAG_VALUE_TOKEN != type) return false;
     return true;

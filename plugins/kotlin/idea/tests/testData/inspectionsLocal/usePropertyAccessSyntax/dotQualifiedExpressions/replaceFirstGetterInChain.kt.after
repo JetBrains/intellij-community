@@ -1,0 +1,7 @@
+// FIX: Use property access syntax
+
+fun main() {
+    J().x.doSth()
+}
+
+fun Int.doSth() {}

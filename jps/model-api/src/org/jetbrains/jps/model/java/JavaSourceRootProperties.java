@@ -1,47 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
-import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> implements JpsSimpleElement<JavaSourceRootProperties> {
-  private String myPackagePrefix = "";
+import java.util.Objects;
+
+public final class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> {
+  private String myPackagePrefix;
   private boolean myForGeneratedSources;
 
-  /**
-   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String)} instead
-   */
-  @Deprecated
-  public JavaSourceRootProperties() {
-  }
-
-  /**
-   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String)} instead
-   */
-  @Deprecated
-  public JavaSourceRootProperties(@NotNull String packagePrefix) {
-    myPackagePrefix = packagePrefix;
-  }
-
-  /**
-   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String, boolean)} instead
-   */
-  @Deprecated
+  @ApiStatus.Internal
   public JavaSourceRootProperties(@NotNull String packagePrefix, boolean forGeneratedSources) {
     myPackagePrefix = packagePrefix;
     myForGeneratedSources = forGeneratedSources;
   }
 
-  @NotNull
-  public String getPackagePrefix() {
+  public @NotNull String getPackagePrefix() {
     return myPackagePrefix;
   }
 
-  @NotNull
   @Override
-  public JavaSourceRootProperties createCopy() {
+  public @NotNull JavaSourceRootProperties createCopy() {
     return new JavaSourceRootProperties(myPackagePrefix, myForGeneratedSources);
   }
 
@@ -57,39 +38,12 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   public void setPackagePrefix(@NotNull String packagePrefix) {
     if (!Objects.equals(myPackagePrefix, packagePrefix)) {
       myPackagePrefix = packagePrefix;
-      fireElementChanged();
     }
   }
 
   public void setForGeneratedSources(boolean forGeneratedSources) {
     if (myForGeneratedSources != forGeneratedSources) {
       myForGeneratedSources = forGeneratedSources;
-      fireElementChanged();
     }
-  }
-
-  @Override
-  public void applyChanges(@NotNull JavaSourceRootProperties modified) {
-    setPackagePrefix(modified.myPackagePrefix);
-    setForGeneratedSources(modified.myForGeneratedSources);
-  }
-
-  /**
-   * @deprecated use {@link #setPackagePrefix(String)} instead
-   */
-  @Deprecated
-  @Override
-  public void setData(@NotNull JavaSourceRootProperties data) {
-    applyChanges(data);
-  }
-
-  /**
-   * @deprecated use {@link #getPackagePrefix()} instead
-   */
-  @Deprecated
-  @NotNull
-  @Override
-  public JavaSourceRootProperties getData() {
-    return this;
   }
 }

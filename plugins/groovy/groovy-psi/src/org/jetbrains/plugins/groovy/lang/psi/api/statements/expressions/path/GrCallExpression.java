@@ -19,8 +19,5 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @author ven
- */
 public interface GrCallExpression extends GrExpression, GrCall {
 }

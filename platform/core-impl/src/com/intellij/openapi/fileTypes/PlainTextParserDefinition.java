@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -46,53 +32,47 @@ public class PlainTextParserDefinition implements ParserDefinition {
   };
 
   @Override
-  @NotNull
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new EmptyLexer();
   }
 
   @Override
-  @NotNull
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     throw new UnsupportedOperationException("Not supported");
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return PLAIN_FILE_ELEMENT_TYPE;
   }
 
   @Override
-  @NotNull
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return TokenSet.EMPTY;
   }
 
   @Override
-  @NotNull
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.EMPTY;
   }
 
   @Override
-  @NotNull
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     return PsiUtilCore.NULL_PSI_ELEMENT;
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new PsiPlainTextFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

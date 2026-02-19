@@ -29,14 +29,14 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PythonFormattedStringReferenceContributor extends PsiReferenceContributor {
-  static class Holder {
+public final class PythonFormattedStringReferenceContributor extends PsiReferenceContributor {
+  static final class Holder {
     private static final PsiElementPattern.Capture<PyStringLiteralExpression> PERCENT_STRING_PATTERN =
       psiElement(PyStringLiteralExpression.class).beforeLeaf(psiElement().withText("%")).withParent(PyBinaryExpression.class);
     static final PsiElementPattern.Capture<PyStringLiteralExpression> FORMAT_STRING_PATTERN =
       psiElement(PyStringLiteralExpression.class)
         .withParent(psiElement(PyReferenceExpression.class)
-                      .with(new PatternCondition<PyReferenceExpression>("isFormatFunction") {
+                      .with(new PatternCondition<>("isFormatFunction") {
 
                         @Override
                         public boolean accepts(@NotNull PyReferenceExpression expression, ProcessingContext context) {

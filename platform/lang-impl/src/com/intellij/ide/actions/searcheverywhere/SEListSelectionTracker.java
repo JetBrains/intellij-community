@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ListSelectionEvent;
@@ -15,16 +16,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-class SEListSelectionTracker implements ListSelectionListener {
+@ApiStatus.Internal
+public final class SEListSelectionTracker implements ListSelectionListener {
 
   private final JBList<?> myList;
-  private final SearchEverywhereUI.SearchListModel myListModel;
+  private final SearchListModel myListModel;
 
   private int myLockCounter;
   private final List<Object> mySelectedItems = new ArrayList<>();
   private boolean myMoreSelected;
 
-  SEListSelectionTracker(@NotNull JBList<?> list, @NotNull SearchEverywhereUI.SearchListModel model) {
+  SEListSelectionTracker(@NotNull JBList<?> list, @NotNull SearchListModel model) {
     myList = list;
     myListModel = model;
   }
@@ -32,6 +34,7 @@ class SEListSelectionTracker implements ListSelectionListener {
   @Override
   public void valueChanged(ListSelectionEvent e) {
     if (isLocked()) return;
+    if (myList.getSelectedIndices().length == 0) return;
 
     saveSelection();
   }
@@ -104,5 +107,13 @@ class SEListSelectionTracker implements ListSelectionListener {
     return IntStream.range(0, items.size())
       .filter(i -> mySelectedItems.contains(items.get(i)))
       .toArray();
+  }
+
+  public void performAndKeepSelection(@NotNull Runnable action) {
+    lock();
+    action.run();
+    unlock();
+
+    restoreSelection();
   }
 }

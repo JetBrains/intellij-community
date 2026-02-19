@@ -1,25 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.SingleClassConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UastContextKt;
 
 public final class RefactoringListeners {
   public static RefactoringElementListener getListener(final PsiPackage psiPackage, final Accessor<PsiPackage> accessor) {
     final StringBuilder path = new StringBuilder();
     for (PsiPackage parent = accessor.getPsiElement(); parent != null; parent = parent.getParentPackage()) {
       if (parent.equals(psiPackage)) return new RefactorPackage(accessor, path.toString());
-      if (path.length() > 0) path.insert(0, '.');
+      if (!path.isEmpty()) path.insert(0, '.');
       path.insert(0, parent.getName());
     }
     return null;
@@ -31,7 +39,7 @@ public final class RefactoringListeners {
     final StringBuilder path = new StringBuilder();
     for (PsiClass parent = aClass; parent != null; parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class, true)) {
       if (parent.equals(psiClass)) return new RefactorClass(accessor, path.toString());
-      if (path.length() > 0) path.insert(0, '$');
+      if (!path.isEmpty()) path.insert(0, '$');
       path.insert(0, parent.getName());
     }
     return null;
@@ -43,6 +51,16 @@ public final class RefactoringListeners {
       final PsiClass aClass = accessor.getPsiElement();
       if (aClass == null) return null;
       return getListener((PsiPackage)element, new ClassPackageAccessor(accessor));
+    }
+
+    if (element instanceof PsiFile) return null;
+
+    UClass uClass = UastContextKt.toUElement(element, UClass.class);
+    if (uClass != null) {
+      PsiClass aClass = accessor.getPsiElement();
+      if (uClass.equals(UastContextKt.toUElement(aClass, UClass.class))) {
+        return new RefactorClass(accessor, "");
+      }
     }
     return null;
 
@@ -77,7 +95,8 @@ public final class RefactoringListeners {
     }
   }
 
-  private static abstract class RenameElement<T extends PsiElement> extends RefactoringElementAdapter
+  @ApiStatus.Internal
+  public abstract static class RenameElement<T extends PsiElement> extends RefactoringElementAdapter
                                                                     implements UndoRefactoringElementListener{
     private final Accessor<? super T> myAccessor;
     private final String myPath;
@@ -88,10 +107,11 @@ public final class RefactoringListeners {
     }
 
     @Override
-    public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
-      T newElement1 = (T)newElement;
+    public void elementRenamedOrMoved(final @NotNull PsiElement newElement) {
+      T newElement1 = convertNewElement(newElement);
+      if (newElement1 == null) return;
       String qualifiedName = getQualifiedName(newElement1);
-      if (myPath.length() > 0) {
+      if (!myPath.isEmpty()) {
         qualifiedName = qualifiedName + "." + myPath;
         newElement1 = findNewElement(newElement1, qualifiedName);
       }
@@ -103,10 +123,13 @@ public final class RefactoringListeners {
       }
     }
 
-    @Nullable
-    protected abstract T findNewElement(T newParent, String qualifiedName);
+    protected @Nullable T convertNewElement(PsiElement newElement) {
+      return (T)newElement;
+    }
 
-    protected abstract String getQualifiedName(T element);
+    protected abstract @Nullable T findNewElement(T newParent, String qualifiedName);
+
+    protected abstract String getQualifiedName(@NotNull T element);
 
     @Override
     public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
@@ -114,7 +137,7 @@ public final class RefactoringListeners {
     }
   }
 
-  private static class RefactorPackage extends RenameElement<PsiPackage> {
+  private static final class RefactorPackage extends RenameElement<PsiPackage> {
     RefactorPackage(final Accessor<? super PsiPackage> accessor, final String path) {
       super(accessor, path);
     }
@@ -125,41 +148,63 @@ public final class RefactoringListeners {
     }
 
     @Override
-    public String getQualifiedName(final PsiPackage psiPackage) {
+    public String getQualifiedName(final @NotNull PsiPackage psiPackage) {
       return psiPackage.getQualifiedName();
     }
   }
 
-  private static class RefactorClass extends RenameElement<PsiClass> {
+  private static final class RefactorClass extends RenameElement<UClass> {
     RefactorClass(final Accessor<? super PsiClass> accessor, final String path) {
-      super(accessor, path);
+      super(wrap(accessor), path);
+    }
+
+    private static Accessor<? super UClass> wrap(Accessor<? super PsiClass> accessor) {
+      return new Accessor<>() {
+        @Override
+        public void setName(String qualifiedName) {
+          accessor.setName(qualifiedName);
+        }
+
+        @Override
+        public UClass getPsiElement() {
+          return UastContextKt.toUElement(accessor.getPsiElement(), UClass.class);
+        }
+
+        @Override
+        public void setPsiElement(UClass uClass) {
+          accessor.setPsiElement(uClass);
+        }
+      };
     }
 
     @Override
-    @Nullable
-    public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
+    protected UClass convertNewElement(PsiElement newElement) {
+      return UastContextKt.toUElement(newElement, UClass.class);
+    }
+
+    @Override
+    public @Nullable UClass findNewElement(final UClass psiClass, final String qualifiedName) {
       final Module module = JavaExecutionUtil.findModule(psiClass);
       if (module == null) {
         return null;
       }
-      return JavaPsiFacade.getInstance(psiClass.getProject())
-        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(module));
+      return UastContextKt.toUElement(JavaPsiFacade.getInstance(psiClass.getProject())
+        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(module)), UClass.class);
     }
 
     @Override
-    public String getQualifiedName(final PsiClass psiClass) {
+    public String getQualifiedName(final @NotNull UClass psiClass) {
       return psiClass.getQualifiedName();
     }
   }
 
-  public static class RefactorPackageByClass extends RenameElement<PsiClass> {
+  public static final class RefactorPackageByClass extends RenameElement<PsiClass> {
     public RefactorPackageByClass(final Accessor<? super PsiClass> accessor) {
       super(accessor, "*");
     }
 
     @Override
-    @Nullable
-    public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
+    public @Nullable PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
       final Module module = JavaExecutionUtil.findModule(psiClass);
       if (module == null) {
         return null;
@@ -170,7 +215,7 @@ public final class RefactoringListeners {
     }
 
     @Override
-    public String getQualifiedName(final PsiClass psiClass) {
+    public String getQualifiedName(final @NotNull PsiClass psiClass) {
       final String qualifiedName = psiClass.getQualifiedName();
       return qualifiedName != null ? StringUtil.getPackageName(qualifiedName) : null;
     }
@@ -178,7 +223,6 @@ public final class RefactoringListeners {
 
   private static class ClassPackageAccessor implements RefactoringListeners.Accessor<PsiPackage> {
     private final PsiPackage myContainingPackage;
-    private final Module myModule;
     private final RefactoringListeners.Accessor<PsiClass> myAccessor;
     private final String myInpackageName;
 
@@ -187,7 +231,6 @@ public final class RefactoringListeners {
       PsiClass aClass = myAccessor.getPsiElement();
       aClass = (PsiClass)aClass.getOriginalElement();
       myContainingPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
-      myModule = JavaExecutionUtil.findModule(aClass);
       final String classQName = aClass.getQualifiedName();
       final String classPackageQName = myContainingPackage != null ? myContainingPackage.getQualifiedName() : null;
       if (classQName != null && classPackageQName != null && classQName.startsWith(classPackageQName)) {
@@ -211,14 +254,8 @@ public final class RefactoringListeners {
 
     @Override
     public void setPsiElement(final PsiPackage psiPackage) {
-      if (myInpackageName == null) return; //we can do nothing
-      final String classQName = getClassQName(psiPackage.getQualifiedName());
-      final PsiClass newClass = JUnitUtil.findPsiClass(classQName, myModule, psiPackage.getProject());
-      if (newClass != null) {
-        myAccessor.setPsiElement(newClass);
-      }
-      else {
-        myAccessor.setName(classQName);
+      if (myInpackageName != null) {
+        myAccessor.setName(getClassQName(psiPackage.getQualifiedName()));
       }
     }
 
@@ -228,7 +265,7 @@ public final class RefactoringListeners {
     }
 
     private String getClassQName(final String packageQName) {
-      if (packageQName.length() > 0) {
+      if (!packageQName.isEmpty()) {
         return packageQName + '.' + myInpackageName;
       }
       else {

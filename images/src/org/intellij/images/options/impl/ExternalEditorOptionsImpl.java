@@ -67,21 +67,21 @@ final class ExternalEditorOptionsImpl implements ExternalEditorOptions, JDOMExte
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof ExternalEditorOptions)) {
+    if (!(o instanceof ExternalEditorOptions otherOptions)) {
       return false;
     }
-
-    ExternalEditorOptions otherOptions = (ExternalEditorOptions)o;
 
     return executablePath != null ?
            executablePath.equals(otherOptions.getExecutablePath()) :
            otherOptions.getExecutablePath() == null;
   }
 
+  @Override
   public int hashCode() {
     return executablePath != null ? executablePath.hashCode() : 0;
   }

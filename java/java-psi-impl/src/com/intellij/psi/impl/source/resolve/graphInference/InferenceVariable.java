@@ -1,30 +1,28 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.psi.*;
-import com.intellij.psi.augment.TypeAnnotationModifier;
+import com.intellij.codeInsight.TypeNullability;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.BiFunction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class InferenceVariable extends LightTypeParameter {
   private final PsiElement myContext;
@@ -37,7 +35,7 @@ public class InferenceVariable extends LightTypeParameter {
   private final Map<InferenceBound, List<PsiType>> myBounds = new EnumMap<>(InferenceBound.class);
   private final String myName;
 
-  private PsiType myInstantiation = PsiType.NULL;
+  private PsiType myInstantiation = PsiTypes.nullType();
 
   InferenceVariable(PsiElement context, PsiTypeParameter parameter, String name) {
     super(parameter);
@@ -79,15 +77,29 @@ public class InferenceVariable extends LightTypeParameter {
     List<PsiType> bounds = myBounds.computeIfAbsent(inferenceBound, __ -> new ArrayList<>());
 
     if (classType == null) {
-      classType = PsiType.NULL;
+      classType = PsiTypes.nullType();
     }
 
-    if (incorporationPhase == null || !bounds.contains(classType)) {
+    int oldBound = bounds.indexOf(classType);
+    if (incorporationPhase == null || oldBound == -1) {
       bounds.add(classType);
       if (incorporationPhase != null) {
         incorporationPhase.addBound(this, classType, inferenceBound);
       }
       return true;
+    } else {
+      PsiType oldBoundType = bounds.get(oldBound);
+      TypeNullability nullability1 = oldBoundType.getNullability();
+      TypeNullability nullability2 = classType.getNullability();
+      if (!nullability1.equals(nullability2)) {
+        TypeNullability nullability = inferenceBound == InferenceBound.LOWER ? 
+                                      nullability1.join(nullability2) : 
+                                      nullability1.meet(nullability2);
+        PsiType result = oldBoundType.withNullability(nullability);
+        bounds.set(oldBound, result);
+        incorporationPhase.addBound(this, result, inferenceBound);
+        return true;
+      }
     }
     return false;
   }
@@ -183,9 +195,8 @@ public class InferenceVariable extends LightTypeParameter {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 

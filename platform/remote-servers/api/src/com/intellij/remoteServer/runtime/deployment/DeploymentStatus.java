@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.runtime.deployment;
 
 import com.intellij.icons.AllIcons;
@@ -6,7 +6,7 @@ import com.intellij.remoteServer.CloudBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.function.Supplier;
 
 public class DeploymentStatus {
@@ -45,9 +45,7 @@ public class DeploymentStatus {
     return myIcon;
   }
 
-  @NotNull
-  @Nls
-  public String getPresentableText() {
+  public @NotNull @Nls String getPresentableText() {
     return myPresentableText.get();
   }
 

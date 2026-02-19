@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.ReorderableListController;
 
-import javax.swing.*;
+import javax.swing.JList;
 import java.util.ArrayList;
 
 public class ReorderableListToolbar<T> extends ReorderableListController<T> {

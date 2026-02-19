@@ -1,17 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.util.Ref;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyDynamicallyEvaluatedType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-public class PyCallSignatureTypeProvider extends PyTypeProviderBase {
+public final class PyCallSignatureTypeProvider extends PyTypeProviderBase {
   @Override
-  public Ref<PyType> getParameterType(@NotNull final PyNamedParameter param,
-                                      @NotNull final PyFunction func,
+  public Ref<PyType> getParameterType(final @NotNull PyNamedParameter param,
+                                      final @NotNull PyFunction func,
                                       @NotNull TypeEvalContext context) {
     final String name = param.getName();
     if (name != null) {
@@ -27,9 +31,8 @@ public class PyCallSignatureTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public Ref<PyType> getReturnType(@NotNull final PyCallable callable, @NotNull TypeEvalContext context) {
-    if (callable instanceof PyFunction) {
-      PyFunction function = (PyFunction)callable;
+  public Ref<PyType> getReturnType(final @NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    if (callable instanceof PyFunction function) {
       PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
       if (signature != null && signature.getReturnType() != null) {
         final String typeName = signature.getReturnType().getTypeQualifiedName();

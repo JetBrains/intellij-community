@@ -1,20 +1,8 @@
-package org.jetbrains.annotations;
-
 import java.lang.annotation.*;
 import java.util.*;
 import java.util.function.*;
+import org.jetbrains.annotations.*;
 import static java.lang.annotation.ElementType.*;
-
-@Retention(RetentionPolicy.CLASS)
-@Target({METHOD, FIELD, PARAMETER, LOCAL_VARIABLE, TYPE_USE, TYPE, PACKAGE})
-@interface Nls {
-  enum Capitalization {
-    NotSpecified,
-    Title,
-    Sentence
-  }
-  Capitalization capitalization() default Capitalization.NotSpecified;
-}
 
 class X {
   static native String message(@PropertyKey(resourceBundle = "MyBundle") String key, Object... params);
@@ -38,7 +26,7 @@ class X {
   }
 
   void main(int x) {
-    test(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization">message("property.lowercase")</warning>);
+    test(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization"><caret>message("property.lowercase")</warning>);
     test(message("property.titlecase"));
     test(message("property.unknown"));
     test(message("property.parameterized", "World"));
@@ -67,5 +55,10 @@ class X {
     
     testSupplier(<warning descr="String 'Hello World' is not properly capitalized. It should have sentence capitalization">this.messagePointer("property.titlecase")</warning>);
     testSupplier(messagePointer("property.parameterized", "foo"));
+
+    test(message("property.icu4j.title", 10));
+    test2(<warning descr="String 'Generate Code with {0, plural, one {Foo} other {Bar}}' is not properly capitalized. It should have sentence capitalization">message("property.icu4j.title", 10)</warning>);
+
+    test(message("property.with.underscore.mnemonic"));
   }
 }

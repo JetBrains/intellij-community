@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -7,7 +7,19 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightParameter;
@@ -30,9 +42,16 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWith
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
-public class DelegateTransformationSupport implements AstTransformationSupport {
+public final class DelegateTransformationSupport implements AstTransformationSupport {
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
     Map<PsiType, PsiAnnotation> declaredTypes = new LinkedHashMap<>();
@@ -110,9 +129,8 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (!(element instanceof PsiMethod)) return true;
+      if (!(element instanceof PsiMethod method)) return true;
 
-      PsiMethod method = (PsiMethod)element;
       if (!myIgnoreCondition.value(method)) return true;
 
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
@@ -122,8 +140,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
       return true;
     }
 
-    @NotNull
-    protected PsiMethod createDelegationMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    private @NotNull PsiMethod createDelegationMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
       final LightMethodBuilder builder = new LightMethodBuilder(myContext.getManager(), GroovyLanguage.INSTANCE, method.getName());
       builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
       builder.setContainingClass(myContext.getCodeClass());
@@ -173,8 +190,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
       return new DelegatedMethod(builder, method);
     }
 
-    @NotNull
-    private Condition<PsiMethod> buildCondition(@NotNull PsiAnnotation annotation) {
+    private @NotNull Condition<PsiMethod> buildCondition(@NotNull PsiAnnotation annotation) {
       Condition<PsiMethod> result = method -> {
         if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) return false;
 

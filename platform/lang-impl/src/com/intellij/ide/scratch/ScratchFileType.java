@@ -1,60 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
-import com.intellij.lang.LangBundle;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 /**
+ * NOT USED.
+ *
  * @author gregsh
  *
  * @deprecated use {@link ScratchFileService#findRootType(VirtualFile)} or {@link ScratchUtil#isScratch(VirtualFile)}.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-public class ScratchFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
+@Deprecated(forRemoval = true)
+public class ScratchFileType extends LanguageFileType {
 
-  public static final LanguageFileType INSTANCE = new ScratchFileType();
-
-  ScratchFileType() {
+  private ScratchFileType() {
     super(PlainTextLanguage.INSTANCE, true);
   }
 
   @Override
-  public boolean isMyFileType(@NotNull VirtualFile file) {
-    if (ScratchFileService.findRootType(file instanceof FakeVirtualFile ? file.getParent() : file) == null) return false;
-    if (file.getExtension() == null) return true; // old scratches without extensions
-    FileType byName = FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName());
-    if (byName == UnknownFileType.INSTANCE) return true; // e.g. "groovy" in DG
-    return !byName.isBinary(); // not archive or image!
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Scratch";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
-    return LangBundle.message("scratch.file.type.description");
-  }
-
-  @NotNull
-  @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDescription() {
     return "";
   }
 
-  @Nullable
+  @Override
+  public @NotNull String getDefaultExtension() {
+    return "";
+  }
+
   @Override
   public Icon getIcon() {
     return PlainTextFileType.INSTANCE.getIcon();

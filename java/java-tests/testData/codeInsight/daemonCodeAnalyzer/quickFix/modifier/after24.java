@@ -1,4 +1,4 @@
-// "Make 'a.i' public" "true"
+// "Make 'a.i' public" "true-preview"
 import java.io.*;
 
 class a {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl
 
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
@@ -6,6 +6,7 @@ import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
@@ -13,40 +14,65 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
-import java.util.*
+import java.util.TreeMap
 
-@State(name = "DiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
+@State(name = DiffSettingsHolder.SETTINGS_KEY, storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = SettingsCategory.CODE)
 class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
+  enum class IncludeInNavigationHistory {
+    Always,
+    OnlyIfOpen,
+    Never;
+  }
+
   data class SharedSettings(
-    var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true
+    var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true,
+    var IS_INCLUDED_IN_NAVIGATION_HISTORY: IncludeInNavigationHistory = IncludeInNavigationHistory.OnlyIfOpen,
   )
 
   data class PlaceSettings(
     var DIFF_TOOLS_ORDER: List<String> = ArrayList(),
-    var SYNC_BINARY_EDITOR_SETTINGS: Boolean = true
+    var SYNC_BINARY_EDITOR_SETTINGS: Boolean = true,
   )
 
-  class DiffSettings internal constructor(private val SHARED_SETTINGS: SharedSettings,
-                                          private val PLACE_SETTINGS: PlaceSettings) {
+  class DiffSettings internal constructor(
+    private val SHARED_SETTINGS: SharedSettings,
+    private val PLACE_SETTINGS: PlaceSettings,
+  ) {
     constructor() : this(SharedSettings(), PlaceSettings())
 
     var diffToolsOrder: List<String>
-      get()      = PLACE_SETTINGS.DIFF_TOOLS_ORDER
-      set(order) { PLACE_SETTINGS.DIFF_TOOLS_ORDER = order }
+      get() = PLACE_SETTINGS.DIFF_TOOLS_ORDER
+      set(order) {
+        PLACE_SETTINGS.DIFF_TOOLS_ORDER = order
+      }
 
     var isGoToNextFileOnNextDifference: Boolean
-      get()      = SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE
-      set(value) { SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE = value }
+      get() = SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE
+      set(value) {
+        SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE = value
+      }
+
+    // TODO: Trigger IdeDocumentHistoryImpl#removeInvalidFilesFrom on change somehow
+    var isIncludedInNavigationHistory: IncludeInNavigationHistory
+      get() = SHARED_SETTINGS.IS_INCLUDED_IN_NAVIGATION_HISTORY
+      set(value) {
+        SHARED_SETTINGS.IS_INCLUDED_IN_NAVIGATION_HISTORY = value
+      }
 
     var isSyncBinaryEditorSettings: Boolean
-      get()      = PLACE_SETTINGS.SYNC_BINARY_EDITOR_SETTINGS
-      set(value) { PLACE_SETTINGS.SYNC_BINARY_EDITOR_SETTINGS = value }
+      get() = PLACE_SETTINGS.SYNC_BINARY_EDITOR_SETTINGS
+      set(value) {
+        PLACE_SETTINGS.SYNC_BINARY_EDITOR_SETTINGS = value
+      }
 
     companion object {
-      @JvmField val KEY: Key<DiffSettings> = Key.create("DiffSettings")
+      @JvmField
+      val KEY: Key<DiffSettings> = Key.create("DiffSettings")
 
-      @JvmStatic fun getSettings(): DiffSettings = getSettings(null)
-      @JvmStatic fun getSettings(place: String?): DiffSettings = service<DiffSettingsHolder>().getSettings(place)
+      @JvmStatic
+      fun getSettings(): DiffSettings = getSettings(null)
+      @JvmStatic
+      fun getSettings(place: String?): DiffSettings = service<DiffSettingsHolder>().getSettings(place)
       internal fun getDefaultSettings(place: String): DiffSettings =
         DiffSettings(SharedSettings(), service<DiffSettingsHolder>().defaultPlaceSettings(place))
     }
@@ -79,6 +105,9 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
     return settings
   }
 
+  override fun noStateLoaded() {
+    loadState(State())
+  }
 
   class State {
     @OptionTag
@@ -95,5 +124,9 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
 
   override fun loadState(state: State) {
     myState = state
+  }
+
+  internal companion object {
+    internal const val SETTINGS_KEY = "DiffSettings"
   }
 }

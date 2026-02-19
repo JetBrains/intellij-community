@@ -1,10 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -23,9 +31,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public final class GroovyNameSuggestionUtil {
 
   private GroovyNameSuggestionUtil() {
@@ -39,7 +44,7 @@ public final class GroovyNameSuggestionUtil {
     Set<String> possibleNames = new LinkedHashSet<>();
     PsiType type = expr.getType();
     generateNameByExpr(expr, possibleNames, validator, forStaticVariable);
-    if (type != null && !PsiType.VOID.equals(type)) {
+    if (type != null && !PsiTypes.voidType().equals(type)) {
       generateVariableNameByTypeInner(type, possibleNames,validator);
     }
 
@@ -59,15 +64,15 @@ public final class GroovyNameSuggestionUtil {
 
   private static void generateVariableNameByTypeInner(PsiType type, Set<String> possibleNames, NameValidator validator) {
     String unboxed = PsiTypesUtil.unboxIfPossible(type.getCanonicalText());
-    if (unboxed != null && !unboxed.equals(type.getCanonicalText())) {
+    if (!unboxed.equals(type.getCanonicalText())) {
       String name = generateNameForBuiltInType(unboxed);
       name = validator.validateName(name, true);
       if (GroovyNamesUtil.isIdentifier(name)) {
         possibleNames.add(name);
       }
     }
-    else if (type instanceof PsiIntersectionType) {
-      for (PsiType psiType : ((PsiIntersectionType)type).getConjuncts()) {
+    else if (type instanceof PsiIntersectionType intersectionType) {
+      for (PsiType psiType : intersectionType.getConjuncts()) {
         generateByType(psiType, possibleNames, validator);
       }
     }
@@ -77,14 +82,13 @@ public final class GroovyNameSuggestionUtil {
   }
 
   private static void generateNameByExpr(GrExpression expr, Set<String> possibleNames, NameValidator validator, boolean forStaticVariable) {
-    if (expr instanceof GrReferenceExpression && ((GrReferenceExpression) expr).getReferenceName() != null) {
+    if (expr instanceof GrReferenceExpression refExpr && refExpr.getReferenceName() != null) {
       if (PsiUtil.isThisReference(expr)) {
         possibleNames.add(validator.validateName("thisInstance", true));
       }
       if (PsiUtil.isSuperReference(expr)) {
         possibleNames.add(validator.validateName("superInstance", true));
       }
-      GrReferenceExpression refExpr = (GrReferenceExpression) expr;
       String name = refExpr.getReferenceName();
       if (name != null && StringUtil.toUpperCase(name).equals(name)) {
         possibleNames.add(validator.validateName(StringUtil.toLowerCase(name), true));
@@ -196,8 +200,7 @@ public final class GroovyNameSuggestionUtil {
     assert collectionName != null;
 
     String componentName = cleanTypeName(componentType.getPresentableText());
-    if (componentType instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType) componentType;
+    if (componentType instanceof PsiClassType classType) {
       PsiClass psiClass = classType.resolve();
       if (psiClass == null) return;
       componentName = psiClass.getName();
@@ -213,8 +216,7 @@ public final class GroovyNameSuggestionUtil {
     possibleNames.add(validator.validateName(candidateName, true));
   }
 
-  @NotNull
-  private static String cleanTypeName(@NotNull String typeName) {
+  private static @NotNull String cleanTypeName(@NotNull String typeName) {
     if (typeName.contains(".")) {
       typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
     }
@@ -253,10 +255,8 @@ public final class GroovyNameSuggestionUtil {
     return StringUtil.toUpperCase(str.substring(0, 1)) + str.substring(1);
   }
 
-  @Nullable
-  private static PsiType getCollectionComponentType(PsiType type, Project project) {
-    if (!(type instanceof PsiClassType)) return null;
-    PsiClassType classType = (PsiClassType) type;
+  private static @Nullable PsiType getCollectionComponentType(PsiType type, Project project) {
+    if (!(type instanceof PsiClassType classType)) return null;
     PsiClassType.ClassResolveResult result = classType.resolveGenerics();
     PsiClass clazz = result.getElement();
     if (clazz == null) return null;

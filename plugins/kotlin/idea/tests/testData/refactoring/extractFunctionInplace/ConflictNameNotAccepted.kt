@@ -1,0 +1,8 @@
+// CHANGED_NAME: conflict
+// IGNORE_RESULT
+fun sample(){
+    <selection>println("42")</selection>
+}
+
+fun conflict(){
+}

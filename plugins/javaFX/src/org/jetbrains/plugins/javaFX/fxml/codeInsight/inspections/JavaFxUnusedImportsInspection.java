@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -32,9 +22,15 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool {
+public final class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool {
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, final boolean isOnTheFly) {
     if (!JavaFxFileTypeFactory.isFxml(file)) return null;
@@ -74,22 +70,21 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
       if (target.endsWith(".*")) {
         if (!usedNames.contains(StringUtil.trimEnd(target, ".*"))) {
           problems.add(inspectionManager
-                         .createProblemDescriptor(instruction, JavaFXBundle.message("inspection.javafx.unused.imports.problem"), new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
+                         .createProblemDescriptor(instruction, JavaFXBundle.message("inspection.javafx.unused.imports.problem"), new JavaFxOptimizeImportsFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
         }
       }
       else if (!usedNames.contains(target) || targetProcessingInstructions.containsKey(StringUtil.getPackageName(target) + ".*")) {
         problems.add(inspectionManager
-                       .createProblemDescriptor(instruction, JavaFXBundle.message("inspection.javafx.unused.imports.problem"), new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
+                       .createProblemDescriptor(instruction, JavaFXBundle.message("inspection.javafx.unused.imports.problem"), new JavaFxOptimizeImportsFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
       }
     }
     return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static class JavaFxOptimizeImportsFix implements LocalQuickFix {
+  private static final class JavaFxOptimizeImportsFix implements LocalQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return QuickFixBundle.message("optimize.imports.fix");
     }
 

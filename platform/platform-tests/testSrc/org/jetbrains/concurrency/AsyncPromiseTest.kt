@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.DefaultLogger
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
@@ -12,12 +11,13 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertConcurrentPromises
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.ClassRule
 import org.junit.Test
-import java.util.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-@Suppress("UsePropertyAccessSyntax")
 class AsyncPromiseTest {
   companion object {
     @JvmField
@@ -82,7 +81,7 @@ class AsyncPromiseTest {
     assertConcurrentPromises(*array)
 
     if (count.get() != (numThreads / 2)) {
-      fail("count: "+count +" "+ log.toString()+"\n---Array:\n"+ Arrays.toString(array))
+      fail("count: " + count + " " + log.toString() + "\n---Array:\n" + array.contentToString())
     }
     assertThat(count.get()).isEqualTo(numThreads / 2)
     assertThat(promise.get()).isEqualTo("test")
@@ -191,7 +190,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -210,7 +209,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - do not log CancellationException`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -225,7 +224,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - error in handler`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -245,7 +244,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - error2 in handler`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
     try {
       val promise = AsyncPromise<String>()
       val promise2 = promise
@@ -345,7 +344,7 @@ class AsyncPromiseTest {
 
   @Test
   fun `test onProcessed is called even for canceled promise`() {
-    val called = AtomicBoolean();
+    val called = AtomicBoolean()
     val promise = AsyncPromise<String>()
     promise.onProcessed {
       called.set(true)
@@ -357,33 +356,52 @@ class AsyncPromiseTest {
   @Test
   fun testExceptionInsideComputationIsLogged() {
     val loggedError = AtomicBoolean()
-    LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-      override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: org.apache.log4j.Logger) {
+    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
         loggedError.set(true)
+        return Action.NONE
       }
-    })
-
-    try {
+    }) {
+      val latch = CountDownLatch(1)
       val promise = ReadAction.nonBlocking {
+        latch.await() // do not throw before the handler is installed
         throw UnsupportedOperationException()
       }
         .submit(AppExecutorUtil.getAppExecutorService())
 
-      promise.onProcessed { }
+      val exceptPromise = promise.onProcessed { } // add exception handler
+      latch.countDown()
 
       var cause: Throwable? = null
       try {
-        promise.get(10, TimeUnit.SECONDS)
+        exceptPromise.get()
       }
       catch (e: Throwable) {
         cause = ExceptionUtil.getRootCause(e)
       }
 
       assertThat(cause).isInstanceOf(UnsupportedOperationException::class.java)
+
+      TimeoutUtil.sleep(1) // execute all handlers pushed to the future
       assertThat(loggedError.get()).isTrue()
     }
-    finally {
-      LoggedErrorProcessor.restoreDefaultProcessor()
+  }
+
+  @Test
+  fun `processed method should reject the passed promise`() {
+    fun <T> AsyncPromise<T>.onErrorIgnore(): AsyncPromise<T> =
+      onError { /* ignore to not throw as an unobserved exception in tests */ }
+
+    fun doTest(promise: Promise<Any>) {
+      val newPromise = AsyncPromise<Any>().onErrorIgnore()
+      promise.processed(newPromise)
+      assertTrue(promise.isRejected)
+      assertTrue(newPromise.isRejected, "A promise $newPromise should be rejected by a promise $promise")
     }
+
+    doTest(AsyncPromise<Any>().onErrorIgnore().apply {
+      setError("error 1")
+    })
+    doTest(rejectedPromise("error 2"))
   }
 }

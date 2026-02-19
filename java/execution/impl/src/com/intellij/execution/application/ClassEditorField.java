@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.icons.AllIcons;
@@ -14,24 +15,48 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ExtendableEditorSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public final class ClassEditorField extends EditorTextField {
 
-  public static ClassEditorField createClassField(Project project,
-                                                  Computable<? extends Module> moduleSelector,
-                                                  JavaCodeFragment.VisibilityChecker visibilityChecker,
-                                                  @Nullable BrowseModuleValueActionListener<?> classBrowser) {
+  public void setClassName(@Nullable String className) {
+    String qName = getQName(className);
+    setText(qName);
+  }
+
+  /**
+   * Returns the runtime-qualified class name (as opposed to the fully qualified class name returned by {@link #getText()}).
+   *
+   * @deprecated Use {@link #getText()} directly to avoid the slowOp (see IDEA-364759). Keep in mind that it has slightly different semantics.
+   */
+  @Deprecated(forRemoval = true)
+  public String getClassName() {
+    return getJvmName(getText());
+  }
+
+  public static @NotNull ClassEditorField createClassField(Project project,
+                                                          Computable<? extends Module> moduleSelector,
+                                                          JavaCodeFragment.VisibilityChecker visibilityChecker,
+                                                          @Nullable BrowseModuleValueActionListener<?> classBrowser
+  ) {
     if (project.isDefault()) {
       return new ClassEditorField();
     }
@@ -63,7 +88,7 @@ public final class ClassEditorField extends EditorTextField {
     field.addSettingsProvider(editor -> {
       ExtendableTextComponent.Extension extension =
         ExtendableTextComponent.Extension.create(AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover,
-                                                 ComponentWithBrowseButton.getTooltip(), () -> browser.actionPerformed(null));
+                                                 ComponentWithBrowseButton.getTooltip(), true, () -> browser.actionPerformed(null));
       ExtendableEditorSupport.setupExtension(editor, field.getBackground(), extension);
     });
     new DumbAwareAction() {
@@ -81,5 +106,18 @@ public final class ClassEditorField extends EditorTextField {
   }
 
   private ClassEditorField() {
+  }
+
+  private static @NotNull String getQName(@Nullable String className) {
+    if (className == null) return "";
+    return className.replace('$', '.');
+  }
+
+  private @Nullable String getJvmName(@Nullable String className) {
+    if (className == null || className.isEmpty()) return null;
+    return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
+      return aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className;
+    });
   }
 }

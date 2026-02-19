@@ -1,0 +1,109 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compose.ide.plugin.shared
+
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotated
+import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.psiUtil.getAnnotationEntries
+
+/**
+ * Checks whether [this] is inside a Composable control flow.
+ * Examples:
+ * ```kt
+ * fun bar() {
+ *     somePsiElement // <-- Will be false for this element. Because it would be a compiler error to call @Composable functions here.
+ * }
+ *
+ * @Composable fun foo() {
+ *     somePsiElement // <-- Will be true for this element. Because it's legal to call @Composable functions here.
+ * }
+ * ```
+ * For detailed behavior, see: [com.intellij.compose.ide.plugin.shared.ComposableAnnotationToExtractedFunctionAddingAnalyserTest]
+ */
+internal fun PsiElement?.isInsideComposableControlFlow(): Boolean = when (this) {
+  null -> false // Reached root parent
+  is KtPropertyAccessor, is KtNamedFunction -> hasComposableAnnotation()
+  is KtLambdaExpression -> analyze(this) { ownsComposableControlFlow() }
+  is KtLambdaArgument -> analyze(this) { ownsComposableControlFlow() }
+  else -> parent.isInsideComposableControlFlow()
+}
+
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
+private fun KtLambdaExpression.ownsComposableControlFlow(): Boolean =
+  getAnnotationEntries().containsAnnotationNamed(COMPOSABLE_ANNOTATION_FQ_NAME)
+  || expectedType?.isAnnotatedWith(COMPOSABLE_ANNOTATION_FQ_NAME) == true
+  || (parent as? KtValueArgument)?.ownsComposableControlFlow() == true
+
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
+private fun KtValueArgument.ownsComposableControlFlow(): Boolean =
+  parentOfType<KtCallExpression>()
+    ?.resolveToCall()
+    .let { functionCall -> functionCall != null && this.ownsComposableControlFlowWhenArgumentOf(functionCall) }
+
+context(_: KaSession)
+private fun KtValueArgument.ownsComposableControlFlowWhenArgumentOf(functionCall: KaCallInfo): Boolean =
+  this.hasAnnotationIn(functionCall, COMPOSABLE_ANNOTATION_FQ_NAME) || // We are explicitly in Composable flow!
+  (
+    !this.hasAnnotationIn(functionCall, DISALLOW_COMPOSABLE_CALLS_FQ_NAME) // If our flow is not explicitly forbidding Composable calls,
+    && this.isInlinedInside(functionCall) // and we are in an inlined lambda,
+    && parent.isInsideComposableControlFlow() // then check whether the parent is in Composable flow
+  )
+
+private fun KtValueArgument.hasAnnotationIn(function: KaCallInfo, fqName: FqName): Boolean = analyze(this) {
+  function.parameterSymbolOf(this@hasAnnotationIn)
+    ?.returnType
+    ?.isAnnotatedWith(fqName) // Not cached, but doesn't matter for this infrequently triggered extension
+  ?: false
+}
+
+private fun KaAnnotated.isAnnotatedWith(fqName: FqName): Boolean =
+  annotations.any { it.classId?.asSingleFqName() == fqName }
+
+context(_: KaSession)
+private fun KtValueArgument.isInlinedInside(function: KaCallInfo): Boolean =
+  function.isInline() &&
+  function.parameterSymbolOf(this@isInlinedInside)
+    ?.let { !it.isNoinline && !it.isCrossinline }
+  ?: true
+
+private fun KaCallInfo.parameterSymbolOf(argument: KtValueArgument): KaValueParameterSymbol? =
+  argument.getArgumentExpression()?.let { expression ->
+    successfulFunctionCallOrNull()
+      ?.valueArgumentMapping
+      ?.get(expression)
+      ?.symbol
+  }
+
+private fun KaCallInfo.isInline(): Boolean =
+  successfulFunctionCallOrNull()
+    ?.symbol
+    ?.let { it as? KaNamedFunctionSymbol }
+    ?.isInline
+  ?: false
+
+/** Not cached, but doesn't matter for this infrequently triggered extension */
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
+private fun Iterable<KtAnnotationEntry>.containsAnnotationNamed(fqName: FqName): Boolean =
+  any { it.resolveToCall()?.singleConstructorCallOrNull()?.symbol?.containingClassId?.asSingleFqName() == fqName }

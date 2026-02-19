@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.psi.PsiType;
@@ -15,8 +15,10 @@ public interface MixinTypeInstruction extends Instruction {
   @Nullable
   PsiType inferMixinType();
 
-  @Nullable
-  VariableDescriptor getVariableDescriptor();
+  /**
+   * @return 0 if not found
+   */
+  int getVariableDescriptor();
 
   @Nullable
   ConditionInstruction getConditionInstruction();

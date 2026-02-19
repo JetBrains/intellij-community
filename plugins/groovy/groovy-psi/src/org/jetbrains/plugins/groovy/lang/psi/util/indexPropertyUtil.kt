@@ -1,12 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyIndexPropertyUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.util
 
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -29,7 +33,7 @@ fun GrIndexProperty.isSimpleArrayAccess(): Boolean {
 fun GrIndexProperty.getSimpleArrayAccessType(): PsiType? {
   val thisType = invokedExpression.type as? PsiArrayType ?: return null
   val argument = argumentList.allArguments.singleOrNull() as? GrExpression ?: return null
-  if (TypesUtil.isAssignableByMethodCallConversion(PsiType.INT, argument.type, this) || argument.isSingleCharLiteral()) {
+  if (TypesUtil.isAssignableByMethodCallConversion(PsiTypes.intType(), argument.type, this) || argument.isSingleCharLiteral()) {
     return thisType.componentType
   }
   else {
@@ -75,7 +79,7 @@ class ListArgument(
     ListLiteralType(expressions, context)
   }
 
-  fun unwrap(): Arguments? {
+  fun unwrap(): Arguments {
     return expressions.map(::ExpressionArgument)
   }
 }

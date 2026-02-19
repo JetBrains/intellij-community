@@ -1,148 +1,143 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConstructorCall;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
-public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityAction {
+public class ChangeTypeArgumentsFix extends PsiUpdateModCommandAction<PsiNewExpression> {
   private static final Logger LOG = Logger.getInstance(ChangeTypeArgumentsFix.class);
 
-  private final PsiMethod myTargetMethod;
-  private final PsiClass myPsiClass;
-  private final PsiExpression[] myExpressions;
-  private final PsiNewExpression myNewExpression;
+  private final @NotNull PsiMethod myTargetMethod;
+  private final @NotNull PsiClass myPsiClass;
+  private final @NotNull PsiExpression @NotNull [] myExpressions;
 
   ChangeTypeArgumentsFix(@NotNull PsiMethod targetMethod,
-                         PsiClass psiClass,
-                         PsiExpression @NotNull [] expressions,
-                         @NotNull PsiElement context) {
+                         @NotNull PsiClass psiClass,
+                         @NotNull PsiExpression @NotNull [] expressions,
+                         @NotNull PsiNewExpression newExpression) {
+    super(newExpression);
     myTargetMethod = targetMethod;
     myPsiClass = psiClass;
     myExpressions = expressions;
-    myNewExpression = PsiTreeUtil.getParentOfType(context, PsiNewExpression.class);
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    final PsiSubstitutor substitutor = inferTypeArguments();
-    return JavaAnalysisBundle.message("change.type.arguments.to.0", StringUtil.join(myPsiClass.getTypeParameters(), typeParameter -> {
-      final PsiType substituted = substitutor.substitute(typeParameter);
-      return substituted != null ? substituted.getPresentableText() : CommonClassNames.JAVA_LANG_OBJECT;
-    }, ", "));
-  }
-
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("change.type.arguments");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myPsiClass.isValid() || !myTargetMethod.isValid()) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression) {
+    if (!myPsiClass.isValid() || !myTargetMethod.isValid()) return null;
     final PsiTypeParameter[] typeParameters = myPsiClass.getTypeParameters();
-    if (typeParameters.length > 0) {
-      if (myNewExpression != null && myNewExpression.isValid() && myNewExpression.getArgumentList() != null) {
-        final PsiJavaCodeReferenceElement reference = myNewExpression.getClassOrAnonymousClassReference();
-        if (reference != null) {
-          final PsiReferenceParameterList parameterList = reference.getParameterList();
-          if (parameterList != null) {
-            final PsiSubstitutor substitutor = inferTypeArguments();
-            final PsiParameter[] parameters = myTargetMethod.getParameterList().getParameters();
-            if (parameters.length != myExpressions.length) return false;
-            for (int i = 0, length = parameters.length; i < length; i++) {
-              PsiParameter parameter = parameters[i];
-              final PsiType expectedType = substitutor.substitute(parameter.getType());
-              if (!myExpressions[i].isValid()) return false;
-              final PsiType actualType = myExpressions[i].getType();
-              if (expectedType == null || actualType == null || !TypeConversionUtil.isAssignable(expectedType, actualType)) return false;
-            }
-            for (PsiTypeParameter parameter : typeParameters) {
-              if (substitutor.substitute(parameter) == null) return false;
-            }
-            return true;
-          }
-        }
-      }
+    if (typeParameters.length == 0 || newExpression.getArgumentList() == null) return null;
+    final PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
+    if (reference == null) return null;
+    final PsiReferenceParameterList parameterList = reference.getParameterList();
+    if (parameterList == null) return null;
+    final PsiSubstitutor substitutor = inferTypeArguments(newExpression);
+    final PsiParameter[] parameters = myTargetMethod.getParameterList().getParameters();
+    if (parameters.length != myExpressions.length) return null;
+    for (int i = 0, length = parameters.length; i < length; i++) {
+      PsiParameter parameter = parameters[i];
+      final PsiType expectedType = substitutor.substitute(parameter.getType());
+      if (!myExpressions[i].isValid()) return null;
+      final PsiType actualType = myExpressions[i].getType();
+      if (expectedType == null || actualType == null || !TypeConversionUtil.isAssignable(expectedType, actualType)) return null;
     }
-    return false;
+    for (PsiTypeParameter parameter : typeParameters) {
+      if (substitutor.substitute(parameter) == null) return null;
+    }
+    String typeParametersText = StringUtil.join(myPsiClass.getTypeParameters(), typeParameter -> {
+      final PsiType substituted = substitutor.substitute(typeParameter);
+      return substituted != null ? substituted.getPresentableText() : CommonClassNames.JAVA_LANG_OBJECT;
+    }, ", ");
+    return Presentation.of(JavaAnalysisBundle.message("change.type.arguments.to.0", typeParametersText))
+      .withPriority(PriorityAction.Priority.HIGH)
+      .withFixAllOption(this);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression, @NotNull ModPsiUpdater updater) {
     final PsiTypeParameter[] typeParameters = myPsiClass.getTypeParameters();
-    final PsiSubstitutor psiSubstitutor = inferTypeArguments();
-    final PsiJavaCodeReferenceElement reference = myNewExpression.getClassOrAnonymousClassReference();
-    LOG.assertTrue(reference != null, myNewExpression);
+    final PsiSubstitutor psiSubstitutor = inferTypeArguments(newExpression);
+    final PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
+    LOG.assertTrue(reference != null, newExpression);
     final PsiReferenceParameterList parameterList = reference.getParameterList();
-    LOG.assertTrue(parameterList != null, myNewExpression);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    LOG.assertTrue(parameterList != null, newExpression);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     PsiTypeElement[] elements = parameterList.getTypeParameterElements();
     for (int i = elements.length - 1; i >= 0; i--) {
       PsiType typeArg = Objects.requireNonNull(psiSubstitutor.substitute(typeParameters[i]));
       PsiElement replaced = elements[i].replace(factory.createTypeElement(typeArg));
-      JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(replaced);
+      JavaCodeStyleManager.getInstance(context.project()).shortenClassReferences(replaced);
     }
   }
 
-  private PsiSubstitutor inferTypeArguments() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myNewExpression.getProject());
+  private PsiSubstitutor inferTypeArguments(@NotNull PsiNewExpression newExpression) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(newExpression.getProject());
     final PsiResolveHelper resolveHelper = facade.getResolveHelper();
     final PsiParameter[] parameters = myTargetMethod.getParameterList().getParameters();
-    final PsiExpressionList argumentList = myNewExpression.getArgumentList();
+    final PsiExpressionList argumentList = newExpression.getArgumentList();
     LOG.assertTrue(argumentList != null);
     final PsiExpression[] expressions = argumentList.getExpressions();
     return resolveHelper.inferTypeArguments(myPsiClass.getTypeParameters(), parameters, expressions,
                                             PsiSubstitutor.EMPTY,
-                                            myNewExpression.getParent(),
+                                            newExpression.getParent(),
                                             DefaultParameterTypeInferencePolicy.INSTANCE);
   }
 
 
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
-                                        @NotNull PsiExpressionList list,
-                                        @Nullable HighlightInfo highlightInfo,
+                                        @NotNull PsiConstructorCall call,
+                                        @NotNull Consumer<? super CommonIntentionAction> info,
                                         PsiClass psiClass) {
     if (candidates.length == 0) return;
+    if (!(call instanceof PsiNewExpression newExpression)) return;
+    PsiExpressionList list = newExpression.getArgumentList();
+    if (list == null) return;
     PsiExpression[] expressions = list.getExpressions();
     for (JavaResolveResult candidate : candidates) {
-      registerIntention(expressions, highlightInfo, psiClass, candidate, list);
+      if (!candidate.isStaticsScopeCorrect()) continue;
+      PsiMethod method = (PsiMethod)candidate.getElement();
+      if (method != null && BaseIntentionAction.canModify(method)) {
+        info.accept(new ChangeTypeArgumentsFix(method, psiClass, expressions, newExpression));
+      }
     }
-  }
-
-  private static void registerIntention(PsiExpression @NotNull [] expressions,
-                                        @Nullable HighlightInfo highlightInfo,
-                                        PsiClass psiClass,
-                                        @NotNull JavaResolveResult candidate,
-                                        @NotNull PsiElement context) {
-    if (!candidate.isStaticsScopeCorrect()) return;
-    PsiMethod method = (PsiMethod)candidate.getElement();
-    if (method != null && BaseIntentionAction.canModify(method)) {
-      final ChangeTypeArgumentsFix fix = new ChangeTypeArgumentsFix(method, psiClass, expressions, context);
-      QuickFixAction.registerQuickFixAction(highlightInfo, null, fix);
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

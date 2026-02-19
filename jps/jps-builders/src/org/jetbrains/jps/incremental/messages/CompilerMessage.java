@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Eugene Zhuravlev
@@ -23,31 +26,25 @@ public class CompilerMessage extends BuildMessage {
   private final String mySourcePath;
   private final long myLine;
   private final long myColumn;
+  private final Collection<String> myModuleNames = new HashSet<>();
 
   /**
    * @deprecated use either {@link #createInternalCompilationError(String, Throwable)} or {@link #createInternalBuilderError(String, Throwable)} instead
    */
   @Deprecated
-  public CompilerMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName, @NotNull Throwable internalError) {
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, @NotNull Throwable internalError) {
     this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName,
-                         Kind kind,
-                         @Nls(capitalization = Nls.Capitalization.Sentence) String messageText) {
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText) {
     this(compilerName, kind, messageText, null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName,
-                         Kind kind,
-                         @Nls(capitalization = Nls.Capitalization.Sentence) String messageText,
-                         String sourcePath) {
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText, String sourcePath) {
     this(compilerName, kind, messageText, sourcePath, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName,
-                         Kind kind,
-                         @Nls(capitalization = Nls.Capitalization.Sentence) String messageText,
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText,
                          @Nullable String sourcePath,
                          long problemBeginOffset,
                          long problemEndOffset,
@@ -64,13 +61,11 @@ public class CompilerMessage extends BuildMessage {
     myColumn = locationColumn;
   }
 
-  @NotNull
-  public String getCompilerName() {
+  public @NotNull String getCompilerName() {
     return myCompilerName;
   }
 
-  @Nullable
-  public String getSourcePath() {
+  public @Nullable String getSourcePath() {
     return mySourcePath;
   }
 
@@ -94,6 +89,15 @@ public class CompilerMessage extends BuildMessage {
     return myProblemLocationOffset;
   }
 
+  public void addModuleName(String moduleName) {
+    myModuleNames.add(moduleName);
+  }
+
+  public Collection<String> getModuleNames() {
+    return Collections.unmodifiableCollection(myModuleNames);
+  }
+
+  @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(getCompilerName()).append(":").append(getKind().name()).append(":").append(super.toString());

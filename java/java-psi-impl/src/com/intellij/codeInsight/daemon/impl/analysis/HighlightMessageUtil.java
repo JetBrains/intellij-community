@@ -1,8 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.core.JavaPsiBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -11,24 +22,21 @@ import org.jetbrains.annotations.Nullable;
 public final class HighlightMessageUtil {
   private HighlightMessageUtil() { }
 
-  @Nullable
-  public static String getSymbolName(@NotNull PsiElement symbol) {
+  public static @Nullable String getSymbolName(@NotNull PsiElement symbol) {
     return getSymbolName(symbol, PsiSubstitutor.EMPTY);
   }
 
-  @Nullable
-  public static String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor) {
+  public static @Nullable String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor) {
     int options = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.USE_INTERNAL_CANONICAL_TEXT;
     return getSymbolName(symbol, substitutor, options);
   }
 
-  @Nullable
-  public static String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor, int parameterOptions) {
+  public static @Nullable String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor, int parameterOptions) {
     String symbolName = null;
 
     if (symbol instanceof PsiClass) {
       if (symbol instanceof PsiAnonymousClass) {
-        symbolName = JavaPsiBundle.message("java.terms.anonymous.class");
+        symbolName = JavaElementKind.ANONYMOUS_CLASS.subject();
       }
       else {
         symbolName = ((PsiClass)symbol).getQualifiedName();
@@ -57,6 +65,9 @@ public final class HighlightMessageUtil {
     }
     else if (symbol instanceof PsiJavaModule) {
       symbolName = ((PsiJavaModule)symbol).getName();
+    }
+    else if (symbol instanceof PsiNamedElement) {
+      symbolName = ((PsiNamedElement)symbol).getName();
     }
 
     return symbolName;

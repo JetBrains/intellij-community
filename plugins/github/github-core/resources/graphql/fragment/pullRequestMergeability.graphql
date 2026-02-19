@@ -1,0 +1,19 @@
+fragment pullRequestMergeability on PullRequest {
+  mergeable
+  canBeRebased
+  mergeStateStatus
+  baseRef {
+    refUpdateRule {
+      ...refUpdateRule
+    }
+  }
+
+  commits(last: 1) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...pullRequestCommitWithCheckStatuses
+    }
+  }
+}

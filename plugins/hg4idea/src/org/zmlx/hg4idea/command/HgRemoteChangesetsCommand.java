@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.command;
 
 import com.intellij.notification.Notification;
@@ -37,8 +23,11 @@ import org.zmlx.hg4idea.util.HgUtil;
 import javax.swing.event.HyperlinkEvent;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.CHANGESETS_ERROR;
+
 /**
  * Common ancestor for HgIncomingCommand and HgOutgoingCommand - changeset commands which need connection to the server.
+ *
  * @author Kirill Likhodedov
  */
 public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
@@ -59,8 +48,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
     return true;
   }
 
-  @Nullable
-  protected String getRepositoryUrl(VirtualFile root) {
+  protected @Nullable String getRepositoryUrl(VirtualFile root) {
     return HgUtil.getRepositoryDefaultPath(project, root);
   }
 
@@ -78,7 +66,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
       if (vcs == null) {
         return result;
       }
-      new HgCommandResultNotifier(project).notifyError("hg4idea.changesets.error",
+      new HgCommandResultNotifier(project).notifyError(CHANGESETS_ERROR,
                                                        result,
                                                        HgBundle.message("hg4idea.changesets.error"),
                                                        HgBundle.message("hg4idea.changesets.error.msg", repositoryURL),
@@ -87,7 +75,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
                                                          public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                      @NotNull HyperlinkEvent event) {
                                                            ShowSettingsUtil.getInstance()
-                                                             .showSettingsDialog(project, HgProjectConfigurable.getDISPLAY_NAME());
+                                                             .showSettingsDialog(project, HgProjectConfigurable.class);
                                                          }
                                                        });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
@@ -95,5 +83,4 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
     }
     return result;
   }
-
 }

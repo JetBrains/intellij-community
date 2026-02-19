@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author spleaner
- */
 @SuppressWarnings({"ALL"})
 public class XmlSmartEnterTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/smartEnter";

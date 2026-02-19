@@ -15,12 +15,23 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.template.*;
-import com.intellij.java.JavaBundle;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.codeInsight.template.TextResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassNameMacro extends Macro {
+public final class ClassNameMacro extends Macro {
 
   @Override
   public String getName() {
@@ -28,14 +39,10 @@ public class ClassNameMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.classname");
-  }
-
-  @Override
   public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     int templateStartOffset = context.getTemplateStartOffset();
     int offset = templateStartOffset > 0 ? context.getTemplateStartOffset() - 1 : context.getTemplateStartOffset();
+    boolean skipCheckInFile = params.length > 0 && params[0].calculateResult(context).toString().equals("true");
     PsiElement place = context.getPsiElementAtStartOffset();
     PsiClass aClass = null;
 
@@ -49,6 +56,9 @@ public class ClassNameMacro extends Macro {
         }
         break;
       }
+      if (place instanceof PsiFile && skipCheckInFile){
+        return null;
+      }
       if (place instanceof PsiJavaFile){
         PsiClass[] classes = ((PsiJavaFile)place).getClasses();
         aClass = classes.length != 0 ? classes[0] : null;
@@ -58,6 +68,7 @@ public class ClassNameMacro extends Macro {
     }
 
     if (aClass == null) return null;
+    if (aClass instanceof PsiImplicitClass && skipCheckInFile) return null;
     String qname = aClass.getName();
     return qname == null ? null : new TextResult(qname);
   }

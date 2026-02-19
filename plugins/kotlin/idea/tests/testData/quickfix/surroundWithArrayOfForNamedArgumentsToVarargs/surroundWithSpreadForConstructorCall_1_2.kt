@@ -1,0 +1,11 @@
+// "Surround with *arrayOf(...)" "true"
+// LANGUAGE_VERSION: 1.2
+
+class Foo<T>(vararg val p: T)
+
+fun test() {
+    Foo(p = 123<caret>)
+}
+// IGNORE_K2
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithArrayOfWithSpreadOperatorInFunctionFix

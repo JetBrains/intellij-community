@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -6,11 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryParameters;
 import com.intellij.util.UniqueResultsQuery;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,7 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
   public static class SearchParameters implements QueryParameters {
     private final PsiMethod myMethod;
     //null means any class would be matched
-    @Nullable private final PsiClass myClass;
+    private final @Nullable PsiClass myClass;
     private final boolean myCheckBases;
     private final boolean myAllowStaticMethod;
     private final boolean myJlsOnly;
@@ -42,9 +42,8 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
       myJlsOnly = jlsOnly;
     }
 
-    @Nullable
     @Override
-    public Project getProject() {
+    public @Nullable Project getProject() {
       return myMethod.getProject();
     }
 
@@ -57,13 +56,11 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
       return myCheckBases;
     }
 
-    @NotNull
-    public final PsiMethod getMethod() {
+    public final @NotNull PsiMethod getMethod() {
       return myMethod;
     }
 
-    @Nullable
-    public final PsiClass getPsiClass() {
+    public final @Nullable PsiClass getPsiClass() {
       return myClass;
     }
 
@@ -83,15 +80,28 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
   private SuperMethodsSearch() {
   }
 
-  @NotNull
-  public static Query<MethodSignatureBackedByPsiMethod> search(@NotNull PsiMethod derivedMethod,
-                                                               @Nullable final PsiClass psiClass,
-                                                               boolean checkBases,
-                                                               boolean allowStaticMethod) {
+  public static @NotNull Query<MethodSignatureBackedByPsiMethod> search(@NotNull PsiMethod derivedMethod,
+                                                                        final @Nullable PsiClass psiClass,
+                                                                        boolean checkBases,
+                                                                        boolean allowStaticMethod) {
     return search(new SearchParameters(derivedMethod, psiClass, checkBases, allowStaticMethod));
   }
 
   public static @NotNull Query<MethodSignatureBackedByPsiMethod> search(@NotNull SearchParameters parameters) {
-    return new UniqueResultsQuery<>(SUPER_METHODS_SEARCH_INSTANCE.createQuery(parameters), MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
+    return new UniqueResultsQuery<>(SUPER_METHODS_SEARCH_INSTANCE.createQuery(parameters), METHOD_BASED_HASHING_STRATEGY);
   }
+
+  private static final HashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
+    new HashingStrategy<MethodSignatureBackedByPsiMethod>() {
+      @Override
+      public int hashCode(@Nullable MethodSignatureBackedByPsiMethod signature) {
+        return signature == null ? 0 : signature.getMethod().hashCode();
+      }
+
+      @Override
+      public boolean equals(@Nullable MethodSignatureBackedByPsiMethod s1, @Nullable MethodSignatureBackedByPsiMethod s2) {
+        return s1 == s2 || (s1 != null && s2 != null && s1.getMethod().equals(s2.getMethod()));
+      }
+    };
+
 }

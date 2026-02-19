@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.libraries.lucene.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "lucene.common_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "lucene.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":lucene.common_resources"],
+  exports = [
+    "@lib//:lucene-analysis-common",
+    "@lib//:lucene-core",
+  ],
+  runtime_deps = [
+    "@lib//:lucene-analysis-common",
+    "@lib//:lucene-core",
+  ]
+)
+
+jvm_library(
+  name = "lucene.common_test_lib",
+  module_name = "intellij.libraries.lucene.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  exports = [
+    "@lib//:lucene-analysis-common",
+    "@lib//:lucene-core",
+  ],
+  runtime_deps = [":lucene.common"]
+)
+### auto-generated section `build intellij.libraries.lucene.common` end

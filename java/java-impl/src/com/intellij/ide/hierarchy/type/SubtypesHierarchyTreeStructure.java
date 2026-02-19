@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -16,7 +16,11 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   private final String myCurrentScopeType;
@@ -34,8 +38,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   @Override
   protected final Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     Object element = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
-    if (!(element instanceof PsiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-    PsiClass psiClass = (PsiClass)element;
+    if (!(element instanceof PsiClass psiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
       return new Object[]{JavaBundle.message("node.hierarchy.java.lang.object")};
     }
@@ -51,11 +54,10 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
       descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, expression, false));
       return true;
     });
-    return descriptors.toArray(new HierarchyNodeDescriptor[0]);
+    return descriptors.toArray(HierarchyNodeDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static Collection<PsiClass> searchInheritors(@NotNull PsiClass psiClass, @NotNull SearchScope searchScope) {
+  private static @NotNull Collection<PsiClass> searchInheritors(@NotNull PsiClass psiClass, @NotNull SearchScope searchScope) {
     if (psiClass.isAnnotationType()) {
       Set<PsiClass> result = new HashSet<>();
 

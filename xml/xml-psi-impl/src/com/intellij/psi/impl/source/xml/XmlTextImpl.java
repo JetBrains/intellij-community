@@ -1,11 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolderFactory;
@@ -15,9 +23,15 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.XmlTextLiteralEscaper;
+import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
@@ -49,8 +63,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   @Override
-  @Nullable
-  public XmlText split(int displayIndex) {
+  public @Nullable XmlText split(int displayIndex) {
     try {
       return _splitText(displayIndex);
     }
@@ -76,7 +89,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       }
       else if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
         String text = child.getText();
-        buffer.append(XmlUtil.getCharFromEntityRef(text));
+        char ref = XmlUtil.getCharFromEntityRef(text);
+        if (ref == ' ' && text.charAt(1) != '#') {
+          LOG.error("Can't resolve entity ref from " + getParent().getText());
+        }
+        buffer.append(ref);
       }
       else if (elementType == XmlTokenType.XML_WHITE_SPACE ||
                elementType == XmlTokenType.XML_DATA_CHARACTERS ||
@@ -347,9 +364,18 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   @Override
-  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(final @NotNull String text) {
     try {
-      doSetValue(text, new DefaultXmlPsiPolicy());
+      var policy = getPolicy();
+      // CDATAOnAnyEncodedPolicy is a default policy for XML elements.
+      // We should not do any special CDATA encoding by default in `updateText`,
+      // so let's revert to DefaultXmlPsiPolicy in such case.
+      // HTML and other elements however, should use their respective policies as
+      // it affects XmlText parsing and injections can be wrongly parsed.
+      if (policy instanceof CDATAOnAnyEncodedPolicy) {
+        policy = new DefaultXmlPsiPolicy();
+      }
+      doSetValue(text, policy);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -357,8 +383,14 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return this;
   }
 
-  @Nullable
-  private XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
+  @Override
+  public @NotNull Language getLanguage() {
+    PsiElement parent = getParent();
+    return parent != null ? parent.getLanguage()
+                          : super.getLanguage();
+  }
+
+  private @Nullable XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
     final XmlTag xmlTag = (XmlTag)getParent();
     if(displayOffset == 0) return this;
     final int length = getValue().length();
@@ -432,10 +464,9 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   @Override
-  @NotNull
-  public LiteralTextEscaper<XmlTextImpl> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<XmlTextImpl> createLiteralTextEscaper() {
     return getParentTag() instanceof HtmlTag ?
-           LiteralTextEscaper.createSimple(this) :
+           LiteralTextEscaper.createSimple(this, false) :
            new XmlTextLiteralEscaper(this);
   }
 }

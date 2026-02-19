@@ -1,9 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -16,24 +25,23 @@ public final class MethodReturnFixFactory extends ArgumentFixerActionFactory {
 
   private MethodReturnFixFactory() {}
 
-  @Nullable
   @Override
-  protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
+  protected @Nullable PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
     PsiMethodCallExpression call = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
     if (call == null) return null;
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     PsiType type = GenericsUtil.getVariableTypeByExpressionType(toType);
-    if (PsiType.NULL.equals(type)) return null;
+    if (PsiTypes.nullType().equals(type)) return null;
 
     return JavaPsiFacade.getElementFactory(expression.getProject())
       .createExpressionFromText("(" + type.getCanonicalText() + ")null", expression);
   }
 
   @Override
-  public boolean areTypesConvertible(@NotNull final PsiType exprType,
-                                     @NotNull final PsiType parameterType,
-                                     @NotNull final PsiElement context) {
+  public boolean areTypesConvertible(final @NotNull PsiType exprType,
+                                     final @NotNull PsiType parameterType,
+                                     final @NotNull PsiElement context) {
     return true;
   }
 

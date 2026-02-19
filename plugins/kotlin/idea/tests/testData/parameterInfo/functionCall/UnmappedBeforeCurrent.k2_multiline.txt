@@ -1,0 +1,2 @@
+Text: (<highlight>[y: Boolean]</highlight>,
+[x: Int]), Disabled: true, Strikeout: false, Green: true

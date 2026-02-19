@@ -1,49 +1,53 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateThrows;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean ignoreSubclassing;
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "DuplicateThrows";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      JavaAnalysisBundle.message("inspection.duplicate.throws.ignore.subclassing.option"), this, "ignoreSubclassing");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSubclassing", JavaAnalysisBundle.message("inspection.duplicate.throws.ignore.subclassing.option")));
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
-      @Override public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(@NotNull PsiMethod method) {
         PsiReferenceList throwsList = method.getThrowsList();
         PsiJavaCodeReferenceElement[] refs = throwsList.getReferenceElements();
         PsiClassType[] types = throwsList.getReferencedTypes();
@@ -77,7 +81,7 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
               }
             }
             if (problem != null) {
-              holder.registerProblem(ref, problem, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MethodThrowsFix.RemoveFirst(method, type, false));
+              holder.problem(ref, problem).fix(new MethodThrowsFix.RemoveFirst(method, type, false)).register();
             }
           }
         }

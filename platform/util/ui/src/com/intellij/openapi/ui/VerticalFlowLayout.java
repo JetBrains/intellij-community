@@ -1,11 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.io.Serializable;
 
 public class VerticalFlowLayout extends FlowLayout implements Serializable {
@@ -165,13 +169,14 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
     dimension.height += vGap + vGap;
   }
 
+  @Override
   public String toString() {
-    String str = "";
-    switch (getAlignment()) {
-      case TOP:        str = ",align=top"; break;
-      case MIDDLE:     str = ",align=middle"; break;
-      case BOTTOM:     str = ",align=bottom"; break;
-    }
+    String str = switch (getAlignment()) {
+      case TOP -> ",align=top";
+      case MIDDLE -> ",align=middle";
+      case BOTTOM -> ",align=bottom";
+      default -> "";
+    };
     return getClass().getSimpleName() +
            "[hgap=" + hGap +
            ",vgap=" + vGap +

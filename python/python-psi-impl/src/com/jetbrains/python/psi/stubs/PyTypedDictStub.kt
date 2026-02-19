@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.stubs
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub
-import java.util.Optional
 
 interface PyTypedDictStub : CustomTargetExpressionStub {
 
@@ -15,10 +14,13 @@ interface PyTypedDictStub : CustomTargetExpressionStub {
    * @return keys' names and their values' types.
    * Iteration order repeats the declaration order.
    */
-  val fields: Map<String, Optional<String>>
+  val fields: List<PyTypedDictFieldStub>
 
   /**
    * @return value of 'total' keyword argument if exists, True otherwise
    */
   val isRequired: Boolean
 }
+
+
+data class PyTypedDictFieldStub(val name: String, val type: String?, val isReadOnly: Boolean)

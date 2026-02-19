@@ -1,8 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.XmlCommentLiteralEscaper;
@@ -10,18 +17,24 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlElementType, PsiMetaOwner, PsiLanguageInjectionHost {
+import static com.intellij.psi.xml.XmlElementType.XML_COMMENT;
+
+public class XmlCommentImpl extends XmlElementImpl implements XmlComment, PsiMetaOwner, PsiLanguageInjectionHost {
   public XmlCommentImpl() {
     super(XML_COMMENT);
   }
 
-  @NotNull
   @Override
-  public IElementType getTokenType() {
+  public @NotNull IElementType getTokenType() {
     return XML_COMMENT;
   }
 
@@ -42,19 +55,25 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
 
   @Override
   public XmlTag getParentTag() {
-    if(getParent() instanceof XmlTag) return (XmlTag)getParent();
+    if (getParent() instanceof XmlTag) return (XmlTag)getParent();
     return null;
   }
 
   @Override
   public XmlTagChild getNextSiblingInTag() {
-    if(getParent() instanceof XmlTag) return (XmlTagChild)getNextSibling();
+    if (getParent() instanceof XmlTag) {
+      PsiElement sibling = getNextSibling();
+      return sibling instanceof XmlTagChild ? (XmlTagChild)sibling : null;
+    }
     return null;
   }
 
   @Override
   public XmlTagChild getPrevSiblingInTag() {
-    if(getParent() instanceof XmlTag) return (XmlTagChild)getPrevSibling();
+    if (getParent() instanceof XmlTag) {
+      PsiElement sibling = getPrevSibling();
+      return sibling instanceof XmlTagChild ? (XmlTagChild)sibling : null;
+    }
     return null;
   }
 
@@ -64,13 +83,12 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   }
 
   @Override
-  @Nullable
-  public PsiMetaData getMetaData() {
+  public @Nullable PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
 
   @Override
-  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(final @NotNull String text) {
     final PsiFile psiFile = getContainingFile();
 
     final XmlDocument document =
@@ -86,14 +104,12 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   }
 
   @Override
-  @NotNull
-  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new XmlCommentLiteralEscaper(this);
   }
 
-  @NotNull
   @Override
-  public String getCommentText() {
+  public @NotNull String getCommentText() {
     ASTNode node = getNode().findChildByType(XmlTokenType.XML_COMMENT_CHARACTERS);
     return node == null ? "" : node.getText();
   }

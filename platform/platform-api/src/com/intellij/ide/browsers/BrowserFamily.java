@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public enum BrowserFamily implements Iconable {
   CHROME(IdeBundle.message("browsers.chrome"), "chrome", "google-chrome", "Google Chrome", AllIcons.Xml.Browsers.Chrome) {
@@ -26,7 +26,6 @@ public enum BrowserFamily implements Iconable {
     }
   },
   EXPLORER(IdeBundle.message("browsers.explorer"), "iexplore", null, null, AllIcons.Xml.Browsers.Explorer),
-  OPERA(IdeBundle.message("browsers.opera"), "opera", "opera", "Opera", AllIcons.Xml.Browsers.Opera),
   SAFARI(IdeBundle.message("browsers.safari"), "safari", null, "Safari", AllIcons.Xml.Browsers.Safari);
 
   private final String myName;
@@ -47,13 +46,11 @@ public enum BrowserFamily implements Iconable {
     myIcon = icon;
   }
 
-  @Nullable
-  public BrowserSpecificSettings createBrowserSpecificSettings() {
+  public @Nullable BrowserSpecificSettings createBrowserSpecificSettings() {
     return null;
   }
 
-  @Nullable
-  public String getExecutionPath() {
+  public @Nullable String getExecutionPath() {
     if (SystemInfo.isWindows) {
       return myWindowsPath;
     }

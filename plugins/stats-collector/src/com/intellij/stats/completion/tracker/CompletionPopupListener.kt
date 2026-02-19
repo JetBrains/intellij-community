@@ -11,7 +11,8 @@ interface CompletionPopupListener {
     fun afterBackspacePressed()
     fun beforeCharTyped(c: Char)
 
-    class Adapter: CompletionPopupListener {
+    companion object {
+      val DISABLED: CompletionPopupListener = object : CompletionPopupListener {
         override fun beforeDownPressed(): Unit = Unit
         override fun downPressed(): Unit = Unit
         override fun beforeUpPressed(): Unit = Unit
@@ -19,5 +20,6 @@ interface CompletionPopupListener {
         override fun afterBackspacePressed(): Unit = Unit
         override fun beforeBackspacePressed(): Unit = Unit
         override fun beforeCharTyped(c: Char): Unit = Unit
+      }
     }
 }

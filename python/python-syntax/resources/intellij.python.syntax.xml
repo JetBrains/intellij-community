@@ -1,0 +1,32 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.python.syntax.core"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <editor.backspaceModeOverride language="Python" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
+    <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
+    <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
+    <enterBetweenBracesDelegate language="Python"
+                                implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
+    <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
+    <langCodeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyLanguageCodeStyleSettingsProvider"/>
+    <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
+    <editorHighlighterProvider filetype="Python" implementationClass="com.jetbrains.python.PyEditorHighlighterProvider"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyWordSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyLiteralSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyStatementSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyListSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyCommaSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyFStringSelectionHandler"/>
+    <basicWordSelectionFilter implementation="com.jetbrains.python.editor.selectWord.PyBasicWordSelectionFilter"/>
+    <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
+    <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
+    <backspaceHandlerDelegate implementation="com.jetbrains.python.codeInsight.editorActions.PyTripleQuoteBackspaceDelegate"/>
+    <colorSettingsPage implementation="com.jetbrains.python.highlighting.PythonColorsPage"/>
+    <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover" id="pyStatementMover"
+                          order="before line"/>
+    <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
+    <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
+    <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
+  </extensions>
+</idea-plugin>

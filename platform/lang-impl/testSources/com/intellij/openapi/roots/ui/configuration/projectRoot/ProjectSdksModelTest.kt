@@ -17,6 +17,9 @@ import com.intellij.util.Consumer
 import com.intellij.util.ui.UIUtil
 import org.junit.Assert
 import org.junit.Test
+import kotlin.io.path.absolute
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.pathString
 
 class ProjectSdksModelTest : LightPlatformTestCase() {
   private val model = ProjectSdksModel()
@@ -41,21 +44,23 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
     model.addSdk(sdk)
     model.apply()
 
-    disposeOnTearDown(Disposable { runWriteAction { ProjectJdkTable.getInstance().removeJdk(sdk) } })
+    disposeOnTearDown(Disposable { runWriteAction { ProjectJdkTable.getInstance(project).removeJdk(sdk) } })
 
-    val foundSdk = ProjectJdkTable.getInstance().allJdks.find { it.name == sdk.name }
+    val foundSdk = ProjectJdkTable.getInstance(project).allJdks.find { it.name == sdk.name }
 
     //we assume that the added Sdk is added to the ProjectJdkTable
     Assert.assertNotNull(foundSdk)
     Assert.assertSame(foundSdk, sdk)
 
-    sdk.sdkModificator.apply {
-      name = "newName"
-    }.commitChanges()
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.name = "newName"
+    ApplicationManager.getApplication().runWriteAction {
+      sdkModificator.commitChanges()
+    }
 
     model.apply()
 
-    val foundSdk2 = ProjectJdkTable.getInstance().allJdks.find { it.name == sdk.name }
+    val foundSdk2 = ProjectJdkTable.getInstance(project).allJdks.find { it.name == sdk.name }
     Assert.assertNotNull(foundSdk2)
 
     //the ProjectJdkTable should keep the same element as it was
@@ -69,7 +74,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
 
   private inner class DownloadSdkTest {
     val type = SimpleJavaSdkType.getInstance()
-    val plannedDir = createTempDir("planned-dir-")
+    val plannedDir = createTempDirectory("planned-dir-").absolute()
     val sdkName = "test-name"
 
     fun task(action: () -> Unit) {
@@ -79,7 +84,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
     init {
       disposeOnTearDown(Disposable {
         runWriteAction {
-          val jdkTable = ProjectJdkTable.getInstance()
+          val jdkTable = ProjectJdkTable.getInstance(project)
           jdkTable.allJdks.filter { it.name == sdkName }.forEach { jdkTable.removeJdk(it) }
         }
       })
@@ -92,10 +97,10 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
       try {
         model.setupInstallableSdk(type, object : SdkDownloadTask {
           override fun getSuggestedSdkName() = sdkName
-          override fun getPlannedHomeDir() = plannedDir.absolutePath
+          override fun getPlannedHomeDir() = plannedDir.pathString
           override fun getPlannedVersion() = "1.2.3"
           override fun doDownload(indicator: ProgressIndicator) {
-            assertThat(ApplicationManager.getApplication().isDispatchThread).isFalse()
+            ApplicationManager.getApplication().assertIsNonDispatchThread()
 
             //ProgressManager works in the same thread in tests
             assertThat(isSameCallStack).withFailMessage("Is should be in the same call stack!").isTrue()
@@ -157,7 +162,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
         }
 
         runReadAction {
-          assertThat(ProjectJdkTable.getInstance().allJdks).withFailMessage(
+          assertThat(ProjectJdkTable.getInstance(project).allJdks).withFailMessage(
             "Downloading SDK should be visible").anyMatch { it.name == sdkName }
         }
       }
@@ -168,7 +173,7 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
     }
 
     assertThat(model.sdks).withFailMessage("SDK should NOT added to the model after cancellation").noneMatch { it.name == sdkName }
-    assertThat(ProjectJdkTable.getInstance().allJdks).withFailMessage(
+    assertThat(ProjectJdkTable.getInstance(project).allJdks).withFailMessage(
       "Downloading SDK should NOT be visible").noneMatch { it.name == sdkName }
   }
 }

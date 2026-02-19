@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -8,12 +8,11 @@ import com.intellij.lang.ant.config.impl.AntClasspathEntry;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.AntReference;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -25,15 +24,17 @@ import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JList;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public final class AntUIUtil {
-
-  private static final Logger LOG = Logger.getInstance(AntUIUtil.class);
-
   private AntUIUtil() {
   }
 
@@ -45,7 +46,7 @@ public final class AntUIUtil {
     private final PropertiesEditor<AntInstallation> myEditor;
 
     public AntInstallationRenderer(PropertiesEditor<AntInstallation> editor) {
-      myEditor = editor != null ? editor : new PropertiesEditor<AntInstallation>(){
+      myEditor = editor != null ? editor : new PropertiesEditor<>() {
         @Override
         public AbstractProperty.AbstractPropertyContainer getProperties(AntInstallation antInstallation) {
           return antInstallation.getProperties();
@@ -153,13 +154,13 @@ public final class AntUIUtil {
     @Override
     protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       String jdkName = (String)value;
-      if (jdkName == null || jdkName.length() == 0) jdkName = "";
+      if (jdkName == null || jdkName.isEmpty()) jdkName = "";
       Sdk jdk = GlobalAntConfiguration.findJdk(jdkName);
       if (jdk == null) {
-        if (myProjectJdkName.length() > 0) {
+        if (!myProjectJdkName.isEmpty()) {
           setIcon(AllIcons.Nodes.PpJdk);
           append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName),
-                 selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))
+                 selected && !(SystemInfoRt.isWindows && UIManager.getLookAndFeel().getName().contains("Windows"))
                  ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES
                  : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }

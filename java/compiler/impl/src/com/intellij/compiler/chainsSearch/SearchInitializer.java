@@ -17,7 +17,11 @@ package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedSet;
 
 public class SearchInitializer {
   private final ChainCompletionContext myContext;

@@ -1,0 +1,10 @@
+import barFoo
+
+// BIND_TO barFoo
+fun foo() {
+  <caret>barFoo()
+}
+
+fun fooBar() { }
+
+fun barFoo() { }

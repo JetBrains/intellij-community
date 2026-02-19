@@ -1,0 +1,10 @@
+val x = buildSet<Boolean> {
+    add(true)
+    addAll(
+        buildList {
+            addAll(listOf(this@buildSet).flatten())
+            mapTo(this) { !it }
+            addAll(this@buildSet.mapTo(this@buildSet) { !it })
+        }
+    )
+}

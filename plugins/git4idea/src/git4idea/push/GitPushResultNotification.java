@@ -1,13 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
-import static com.intellij.openapi.util.text.HtmlChunk.raw;
-import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static java.util.Collections.singletonList;
-
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.push.VcsPushOptionValue;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
@@ -18,13 +13,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
@@ -33,21 +26,34 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
+import com.intellij.xml.util.XmlStringUtil;
+import git4idea.GitNotificationIdsHolder;
+import git4idea.GitTag;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
 import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-final class GitPushResultNotification extends Notification {
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.text.HtmlChunk.raw;
+import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.Collections.singletonList;
+
+@ApiStatus.Internal
+public final class GitPushResultNotification extends Notification {
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
   private GitPushResultNotification(@NotNull String groupDisplayId,
@@ -55,15 +61,17 @@ final class GitPushResultNotification extends Notification {
                                     @NotNull @Nls String content,
                                     @NotNull NotificationType type) {
     super(groupDisplayId, "", emulateTitle(title, content), type);
+    setDisplayId(GitNotificationIdsHolder.PUSH_RESULT);
   }
 
-  @NotNull
   @RequiresEdt
-  static GitPushResultNotification create(@NotNull Project project,
-                                          @NotNull GitPushResult pushResult,
-                                          @Nullable GitPushOperation pushOperation,
-                                          boolean multiRepoProject,
-                                          @Nullable GitUpdateInfoAsLog.NotificationData notificationData) {
+  @VisibleForTesting
+  public static @NotNull GitPushResultNotification create(@NotNull Project project,
+                                                          @NotNull GitPushResult pushResult,
+                                                          @Nullable GitPushOperation pushOperation,
+                                                          boolean multiRepoProject,
+                                                          @Nullable GitUpdateInfoAsLog.NotificationData notificationData,
+                                                          @NotNull Map<String, VcsPushOptionValue> customParams) {
     GroupedPushResult grouped = GroupedPushResult.group(pushResult.getResults());
 
     String title;
@@ -114,8 +122,8 @@ final class GitPushResultNotification extends Notification {
     }
 
     NotificationGroup group = type == NotificationType.INFORMATION ?
-                              VcsNotifier.STANDARD_NOTIFICATION :
-                              VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+                              VcsNotifier.standardNotification() :
+                              VcsNotifier.importantNotification();
 
     GitPushResultNotification notification = new GitPushResultNotification(group.getDisplayId(), title, description, type);
 
@@ -147,9 +155,11 @@ final class GitPushResultNotification extends Notification {
           notification.addAction(new ViewUpdateInfoNotification(
             project,
             tree,
-            GitBundle.message("push.notification.view.files.action"),
-            notification
+            GitBundle.message("push.notification.view.files.action")
           ));
+          Disposer.register(tree, () -> {
+            notification.expire();
+          });
         }
       }
     }
@@ -171,28 +181,21 @@ final class GitPushResultNotification extends Notification {
         }
       });
       if (pushOperation != null) {
-        notification.addAction(new ForcePushNotificationAction(project, pushOperation, staleInfoRejected));
+        notification.addAction(new ForcePushNotificationAction(project, pushOperation, staleInfoRejected, customParams));
       }
     }
 
-    if (Registry.is("vcs.showConsole")
-        && !grouped.errors.isEmpty()
-        || !grouped.rejected.isEmpty()
-        || !grouped.customRejected.isEmpty()) {
-      notification.addAction(NotificationAction.createSimple(
-        VcsBundle.message("notification.showDetailsInConsole"),
-        () -> {
-          ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-          vcsManager.showConsole(vcsManager::scrollConsoleToTheEnd);
-        }));
+    if (!grouped.errors.isEmpty() ||
+        !grouped.rejected.isEmpty() ||
+        !grouped.customRejected.isEmpty()) {
+      VcsNotifier.addShowDetailsAction(project, notification);
     }
 
     return notification;
   }
 
-  @NlsContexts.NotificationContent
-  @NotNull
-  static String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
+  @VisibleForTesting
+  public static @NlsContexts.NotificationContent @NotNull String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
     return new HtmlBuilder()
       .append(raw(title).bold()).br()
       .appendRaw(content)
@@ -246,88 +249,85 @@ final class GitPushResultNotification extends Notification {
   }
 
   private static @NlsContexts.NotificationContent String formRepoDescription(@NotNull GitPushRepoResult result) {
-    String sourceBranch = GitBranchUtil.stripRefsPrefix(result.getSourceBranch());
-    String targetBranch = GitBranchUtil.stripRefsPrefix(result.getTargetBranch());
+    @NotNull HtmlChunk sourceBranch = HtmlChunk.text(GitBranchUtil.stripRefsPrefix(result.getSourceBranch()));
+    @NotNull HtmlChunk targetBranch = HtmlChunk.text(GitBranchUtil.stripRefsPrefix(result.getTargetBranch()));
+    @NotNull HtmlChunk remoteName = HtmlChunk.text(result.getTargetRemote());
     @NotNull List<String> pushedTags = result.getPushedTags();
-    @NotNull String remoteName = result.getTargetRemote();
 
-    @NlsContexts.NotificationContent String description;
-    switch (result.getType()) {
-      case SUCCESS:
+    boolean sourceIsTag = result.getSourceBranch().startsWith(GitTag.REFS_TAGS_PREFIX);
+    final HtmlChunk tagName = !pushedTags.isEmpty() ? HtmlChunk.text(tagName(pushedTags)) : HtmlChunk.empty();
+    return switch (result.getType()) {
+      case SUCCESS -> {
         int commitNum = result.getNumberOfPushedCommits();
-        description = selectBundleMessageWithTags(
+        yield selectBundleMessageWithTags(
           pushedTags,
           () -> GitBundle.message("push.notification.description.pushed", commitNum, targetBranch),
-          () -> GitBundle.message("push.notification.description.pushed.with.single.tag", commitNum, targetBranch, tagName(pushedTags), remoteName),
-          () -> GitBundle.message("push.notification.description.pushed.with.many.tags", commitNum, targetBranch, pushedTags.size(), remoteName)
+          () -> GitBundle.message("push.notification.description.pushed.with.single.tag", commitNum, targetBranch, tagName,
+                                  remoteName),
+          () -> GitBundle.message("push.notification.description.pushed.with.many.tags", commitNum, targetBranch, pushedTags.size(),
+                                  remoteName)
         );
-        break;
-      case NEW_BRANCH:
-        description = selectBundleMessageWithTags(
+      }
+      case NEW_BRANCH -> {
+        if (sourceIsTag && result.getPushedTags().size() == 1) {
+          yield GitBundle.message("push.notification.description.pushed.single.tag", tagName, remoteName);
+        }
+
+        yield selectBundleMessageWithTags(
           pushedTags,
           () -> GitBundle.message("push.notification.description.new.branch", sourceBranch, targetBranch),
-          () -> GitBundle.message("push.notification.description.new.branch.with.single.tag", sourceBranch, targetBranch, tagName(pushedTags), remoteName),
-          () -> GitBundle.message("push.notification.description.new.branch.with.many.tags", sourceBranch, targetBranch, pushedTags.size(), remoteName)
+          () -> GitBundle.message("push.notification.description.new.branch.with.single.tag", sourceBranch, targetBranch, tagName,
+                                  remoteName),
+          () -> GitBundle.message("push.notification.description.new.branch.with.many.tags", sourceBranch, targetBranch, pushedTags.size(),
+                                  remoteName)
         );
-        break;
-      case UP_TO_DATE:
-        description = selectBundleMessageWithTags(
-          pushedTags,
-          () -> GitBundle.message("push.notification.description.up.to.date"),
-          () -> GitBundle.message("push.notification.description.pushed.single.tag", tagName(pushedTags), remoteName),
-          () -> GitBundle.message("push.notification.description.pushed.many.tags", pushedTags.size(), remoteName)
-        );
-        break;
-      case FORCED:
-        description = GitBundle.message("push.notification.description.force.pushed", sourceBranch, targetBranch);
-        break;
-      case REJECTED_NO_FF:
+      }
+      case UP_TO_DATE -> selectBundleMessageWithTags(
+        pushedTags,
+        () -> GitBundle.message("push.notification.description.up.to.date"),
+        () -> GitBundle.message("push.notification.description.pushed.single.tag", tagName, remoteName),
+        () -> GitBundle.message("push.notification.description.pushed.many.tags", pushedTags.size(), remoteName)
+      );
+      case FORCED -> GitBundle.message("push.notification.description.force.pushed", sourceBranch, targetBranch);
+      case REJECTED_NO_FF -> {
         GitUpdateResult updateResult = result.getUpdateResult();
-        if (updateResult == null || updateResult == GitUpdateResult.SUCCESS || updateResult == GitUpdateResult.NOTHING_TO_UPDATE) {
-          description = GitBundle.message("push.notification.description.rejected", targetBranch);
-        }
-        else if (updateResult == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
-          description = GitBundle.message("push.notification.description.rejected.and.conflicts");
-        }
-        else if (updateResult == GitUpdateResult.INCOMPLETE) {
-          description = GitBundle.message("push.notification.description.rejected.and.incomplete");
-        }
-        else if (updateResult == GitUpdateResult.CANCEL) {
-          description = GitBundle.message("push.notification.description.rejected.and.cancelled");
-        }
-        else {
-          description = GitBundle.message("push.notification.description.rejected.and.failed");
-        }
-        break;
-      case REJECTED_STALE_INFO:
-        description = GitBundle.message("push.notification.description.push.with.lease.rejected", sourceBranch, targetBranch);
-        break;
-      case REJECTED_OTHER:
-        description = GitBundle.message("push.notification.description.rejected.by.remote", sourceBranch, targetBranch);
-        break;
-      case ERROR:
-        description = result.getError();
-        break;
-      default:
+        yield updateResult == null ? GitBundle.message("push.notification.description.rejected", targetBranch) : switch (updateResult) {
+          case SUCCESS, NOTHING_TO_UPDATE -> GitBundle.message("push.notification.description.rejected", targetBranch);
+          case SUCCESS_WITH_RESOLVED_CONFLICTS -> GitBundle.message("push.notification.description.rejected.and.conflicts");
+          case INCOMPLETE -> GitBundle.message("push.notification.description.rejected.and.incomplete");
+          case CANCEL -> GitBundle.message("push.notification.description.rejected.and.cancelled");
+          default -> GitBundle.message("push.notification.description.rejected.and.failed");
+        };
+      }
+      case REJECTED_STALE_INFO -> GitBundle.message("push.notification.description.push.with.lease.rejected", sourceBranch, targetBranch);
+      case REJECTED_OTHER -> {
+        yield sourceIsTag ?
+              GitBundle.message("push.notification.description.rejected.by.remote.without.target", sourceBranch) :
+              GitBundle.message("push.notification.description.rejected.by.remote", sourceBranch, targetBranch);
+      }
+      case ERROR -> XmlStringUtil.escapeString(result.getError());
+      default -> {
         LOG.error("Unexpected push result: " + result);
-        description = "";
-        break;
-    }
-    return description;
+        yield "";
+      }
+    };
   }
 
   private static final class ForcePushNotificationAction extends NotificationAction {
-    @NotNull private final Project myProject;
-    @NotNull private final GitPushOperation myOperation;
-    @NotNull private final List<GitRepository> myRepositories;
+    private final @NotNull Project myProject;
+    private final @NotNull GitPushOperation myOperation;
+    private final @NotNull List<GitRepository> myRepositories;
+    private final @NotNull Map<String, VcsPushOptionValue> customParams;
 
     private ForcePushNotificationAction(@NotNull Project project,
                                         @NotNull GitPushOperation pushOperation,
-                                        @NotNull List<GitRepository> repositories) {
+                                        @NotNull List<GitRepository> repositories,
+                                        @NotNull Map<String, VcsPushOptionValue> params) {
       super(GitBundle.message("push.notification.force.push.anyway.action"));
       myProject = project;
       myOperation = pushOperation;
       myRepositories = repositories;
+      customParams = params;
     }
 
     @Override
@@ -339,7 +339,7 @@ final class GitPushResultNotification extends Notification {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitPushOperation forcePushOperation = myOperation.deriveForceWithoutLease(myRepositories);
-          GitPusher.pushAndNotify(project, forcePushOperation);
+          GitPusher.pushAndNotify(project, forcePushOperation, customParams);
         }
       }.queue();
     }

@@ -1,16 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.IntegrationKey;
 import com.intellij.openapi.project.Project;
@@ -18,8 +15,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -41,6 +40,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p/>
  * Thread-safe.
  */
+@Service
+@ApiStatus.Internal
 public final class ExternalSystemFacadeManager {
   private static final int REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER = 3;
 
@@ -51,14 +52,12 @@ public final class ExternalSystemFacadeManager {
 
   private final @NotNull Lock          myLock                   = new ReentrantLock();
 
-  private final @NotNull RemoteExternalSystemProgressNotificationManager myProgressManager;
   private final @NotNull RemoteExternalSystemCommunicationManager        myRemoteCommunicationManager;
   private final @NotNull InProcessExternalSystemCommunicationManager     myInProcessCommunicationManager;
 
   public ExternalSystemFacadeManager() {
     Application app = ApplicationManager.getApplication();
 
-    myProgressManager = (RemoteExternalSystemProgressNotificationManager)app.getService(ExternalSystemProgressNotificationManager.class);
     myRemoteCommunicationManager = app.getService(RemoteExternalSystemCommunicationManager.class);
     myInProcessCommunicationManager = app.getService(InProcessExternalSystemCommunicationManager.class);
   }
@@ -103,7 +102,6 @@ public final class ExternalSystemFacadeManager {
 
   /**
    * @return external system api facade to use
-   * @throws Exception    in case of inability to return the facade
    */
   public @NotNull RemoteExternalSystemFacade getFacade(@Nullable Project project,
                                               @NotNull String externalProjectPath,
@@ -141,35 +139,36 @@ public final class ExternalSystemFacadeManager {
     }
   }
 
+  @VisibleForTesting
+  @ApiStatus.Internal
   public ExternalSystemCommunicationManager getCommunicationManager(@NotNull ProjectSystemId externalSystemId) {
     final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(externalSystemId);
     return currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
   }
 
   private @NotNull RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
-    final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(key.getExternalSystemId());
-    final ExternalSystemCommunicationManager myCommunicationManager = currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
-
-    ExternalSystemManager manager = ExternalSystemApiUtil.getManager(key.getExternalSystemId());
+    var externalSystemId = key.getExternalSystemId();
+    var communicationManager = getCommunicationManager(externalSystemId);
+    var manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (project.isDisposed() || manager == null) {
       return RemoteExternalSystemFacade.NULL_OBJECT;
     }
     Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> pair = myRemoteFacades.get(key);
-    if (pair != null && prepare(myCommunicationManager, project, key, pair)) {
+    if (pair != null && prepare(communicationManager, project, key, pair)) {
       return pair.first;
     }
 
     myLock.lock();
     try {
       pair = myRemoteFacades.get(key);
-      if (pair != null && prepare(myCommunicationManager, project, key, pair)) {
+      if (pair != null && prepare(communicationManager, project, key, pair)) {
         return pair.first;
       }
       if (pair != null) {
         myFacadeWrappers.clear();
         myRemoteFacades.clear();
       }
-      return doCreateFacade(key, project, myCommunicationManager);
+      return doCreateFacade(key, project, communicationManager);
     }
     finally {
       myLock.unlock();
@@ -190,13 +189,12 @@ public final class ExternalSystemFacadeManager {
         myRemoteFacades.clear();
       }
     });
-    final RemoteExternalSystemFacade result = new ExternalSystemFacadeWrapper(facade, myProgressManager);
     ExternalSystemExecutionSettings settings
       = ExternalSystemApiUtil.getExecutionSettings(project, key.getExternalProjectConfigPath(), key.getExternalSystemId());
-    Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> newPair = Pair.create(result, settings);
+    Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> newPair = Pair.create(facade, settings);
     myRemoteFacades.put(key, newPair);
-    result.applySettings(newPair.second);
-    return result;
+    facade.applySettings(newPair.second);
+    return facade;
   }
 
   @SuppressWarnings("unchecked")
@@ -244,8 +242,7 @@ public final class ExternalSystemFacadeManager {
     return false;
   }
 
-  private class MyHandler implements InvocationHandler {
-
+  private final class MyHandler implements InvocationHandler {
     private final @NotNull AtomicReference<IntegrationKey> myKey = new AtomicReference<>();
 
     MyHandler(@NotNull IntegrationKey key) {
@@ -261,5 +258,9 @@ public final class ExternalSystemFacadeManager {
       Project project = findProject(myKey.get());
       return doInvoke(myKey.get(), project, method, args, REMOTE_FAIL_RECOVERY_ATTEMPTS_NUMBER);
     }
+  }
+
+  public static @NotNull ExternalSystemFacadeManager getInstance() {
+    return ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
   }
 }

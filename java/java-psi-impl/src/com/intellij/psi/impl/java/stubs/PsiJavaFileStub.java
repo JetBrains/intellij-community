@@ -6,11 +6,16 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.stubs.PsiClassHolderFileStub;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
   PsiJavaModule getModule();
 
-  String getPackageName();
+  /**
+   * @return the package name for this file; returns an empty string for missing or malformed package declaration,
+   * which denotes the default package.
+   */
+  @NotNull String getPackageName();
   LanguageLevel getLanguageLevel();
   boolean isCompiled();
 
@@ -18,6 +23,6 @@ public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
 
   /** @deprecated override {@link #getPsiFactory()} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   void setPsiFactory(StubPsiFactory factory);
 }

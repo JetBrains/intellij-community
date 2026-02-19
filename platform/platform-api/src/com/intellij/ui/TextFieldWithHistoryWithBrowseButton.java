@@ -1,55 +1,72 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.util.NlsContexts.Label;
-import static com.intellij.openapi.util.NlsContexts.DialogTitle;
-
 public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseButton<TextFieldWithHistory> {
+  private final Disposable myDisposable = Disposer.newDisposable();
+
   public TextFieldWithHistoryWithBrowseButton() {
     super(new TextFieldWithHistory(), null);
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable @DialogTitle String title,
-                                      @Nullable @Label String description,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<? super TextFieldWithHistory> accessor) {
+  public void addBrowseFolderListener(
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super TextFieldWithHistory> accessor
+  ) {
+    super.addBrowseFolderListener(project, fileChooserDescriptor, accessor);
+    FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, myDisposable);
+  }
+
+  /**
+   * @deprecated use {@link #addBrowseFolderListener(Project, FileChooserDescriptor, TextComponentAccessor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  @Override
+  @SuppressWarnings("removal")
+  public void addBrowseFolderListener(
+    @Nullable String title,
+    @Nullable String description,
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super TextFieldWithHistory> accessor
+  ) {
     super.addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
-    FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, project);
+  }
+
+  /**
+   * @deprecated use {@link #addBrowseFolderListener(Project, FileChooserDescriptor, TextComponentAccessor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  @Override
+  @SuppressWarnings("removal")
+  public void addBrowseFolderListener(
+    @Nullable String title,
+    @Nullable String description,
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor,
+    TextComponentAccessor<? super TextFieldWithHistory> accessor,
+    boolean autoRemoveOnHide
+  ) {
+    super.addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor, autoRemoveOnHide);
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable @DialogTitle String title,
-                                      @Nullable @Label String description,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor,
-                                      TextComponentAccessor<? super TextFieldWithHistory> accessor,
-                                      boolean autoRemoveOnHide) {
-    addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor);
-    FileChooserFactory.getInstance().installFileCompletion(getChildComponent().getTextEditor(), fileChooserDescriptor, false, project);
+  public void removeNotify() {
+    super.removeNotify();
+    Disposer.dispose(myDisposable);
   }
 
   public String getText() {

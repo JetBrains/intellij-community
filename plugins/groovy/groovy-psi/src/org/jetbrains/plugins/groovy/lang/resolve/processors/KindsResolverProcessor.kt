@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.psi.PsiElement
@@ -7,9 +7,15 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.util.containers.enumMapOf
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
-import org.jetbrains.plugins.groovy.lang.resolve.*
+import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.getName
+import org.jetbrains.plugins.groovy.lang.resolve.getResolveKind
+import org.jetbrains.plugins.groovy.lang.resolve.isReferenceResolveTarget
+import org.jetbrains.plugins.groovy.lang.resolve.log
+import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 open class KindsResolverProcessor(
   protected val name: String,
@@ -28,14 +34,14 @@ open class KindsResolverProcessor(
     @Suppress("LeakingThis") hint(GroovyResolveKind.HINT_KEY, this)
   }
 
-  final override fun getName(state: ResolveState): String? = name
+  final override fun getName(state: ResolveState): String = name
 
   override fun shouldProcess(kind: GroovyResolveKind): Boolean = kind in kinds && kind !in candidates
 
   private val candidates = enumMapOf<GroovyResolveKind, GroovyResolveResult>()
 
   private fun executeInner(element: PsiElement, state: ResolveState) {
-    if (element !is PsiNamedElement) return
+    if (element !is PsiNamedElement && !(element is GrReferenceElement<*> && isReferenceResolveTarget(element))) return
     require(element.isValid) {
       "Invalid element. ${elementInfo(element)}"
     }

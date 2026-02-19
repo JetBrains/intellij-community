@@ -1,19 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.JBValue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class PluginListLayout extends AbstractLayoutManager implements PagePluginLayout {
+@ApiStatus.Internal
+public final class PluginListLayout extends AbstractLayoutManager implements PagePluginLayout {
   private final JBValue myGroupGap = new JBValue.Float(10);
   private int myMiddleLineHeight;
 
@@ -60,9 +65,17 @@ public class PluginListLayout extends AbstractLayoutManager implements PagePlugi
 
     for (UIPluginGroup group : groups) {
       Component component = group.panel;
+      if (component == null) continue;
       int height = component.getPreferredSize().height;
       component.setBounds(0, y, width, height);
       y += height;
+
+      // Layout promotion panel if it exists
+      if (Registry.is("ide.plugins.category.promotion.enabled") && group.promotionPanel != null) {
+        int promotionHeight = group.promotionPanel.getPreferredSize().height;
+        group.promotionPanel.setBounds(0, y, width, promotionHeight);
+        y += promotionHeight;
+      }
 
       for (ListPluginComponent plugin : group.plugins) {
         int lineHeight = plugin.getPreferredSize().height;

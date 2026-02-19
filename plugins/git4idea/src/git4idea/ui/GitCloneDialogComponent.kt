@@ -2,28 +2,37 @@
 package git4idea.ui
 
 import com.intellij.application.subscribe
-import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR
+import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_FIND_DESTINATION_DIR
 import git4idea.GitUtil
-import git4idea.checkout.GitCheckoutProvider
-import git4idea.commands.Git
-import git4idea.config.*
+import git4idea.checkout.GitCloneUtils
+import git4idea.config.GitExecutableInlineComponent
+import git4idea.config.GitExecutableManager
+import git4idea.config.InlineErrorNotifier
+import git4idea.config.findGitExecutableProblemHandler
+import git4idea.config.showUnsupportedVersionError
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
+import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.JComponent
 
 class GitCloneDialogComponent(project: Project,
                               private val modalityState: ModalityState,
@@ -31,7 +40,8 @@ class GitCloneDialogComponent(project: Project,
   DvcsCloneDialogComponent(project,
                            GitUtil.DOT_GIT,
                            GitRememberedInputs.getInstance(),
-                           dialogStateListener) {
+                           dialogStateListener,
+                           GitCloneDialogMainPanelCustomizer()) {
   private val LOG = Logger.getInstance(GitCloneDialogComponent::class.java)
 
   private val executableManager get() = GitExecutableManager.getInstance()
@@ -41,31 +51,18 @@ class GitCloneDialogComponent(project: Project,
   private val executableProblemHandler = findGitExecutableProblemHandler(project)
   private val checkVersionAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private var versionCheckState: VersionCheckState = VersionCheckState.NOT_CHECKED // accessed only on EDT
+  private var lastVersionCheckForDirectory: Path? = null // accessed only on EDT
 
-  override fun doClone(project: Project, listener: CheckoutProvider.Listener) {
-    val parent = Paths.get(getDirectory()).toAbsolutePath().parent
-    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
-    if (destinationValidation != null) {
-      LOG.error("Unable to create destination directory", destinationValidation.message)
-      notifyCloneError(project)
-      return
-    }
-
-    val lfs = LocalFileSystem.getInstance()
-    var destinationParent = lfs.findFileByIoFile(parent.toFile())
-    if (destinationParent == null) {
-      destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
-    }
-    if (destinationParent == null) {
-      LOG.error("Clone Failed. Destination doesn't exist")
-      notifyCloneError(project)
-      return
-    }
+  override fun doClone(listener: CheckoutProvider.Listener) {
     val sourceRepositoryURL = getUrl()
-    val directoryName = Paths.get(getDirectory()).fileName.toString()
+    val directoryPath = getDirectory()
+    GitCloneUtils.clone(project, sourceRepositoryURL, directoryPath,
+                        (mainPanelCustomizer as GitCloneDialogMainPanelCustomizer).getShallowCloneOptions(), listener,
+                        CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR, CLONE_ERROR_UNABLE_TO_FIND_DESTINATION_DIR)
+
+    val parent = Paths.get(directoryPath).toAbsolutePath().parent
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    GitCheckoutProvider.clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory)
     val rememberedInputs = GitRememberedInputs.getInstance()
     rememberedInputs.addUrl(sourceRepositoryURL)
     rememberedInputs.cloneParentDir = parentDirectory
@@ -95,27 +92,35 @@ class GitCloneDialogComponent(project: Project,
     }
   }
 
+  override fun checkDirectory(directoryPath: String, component: JComponent, dialogStateListener: VcsCloneDialogComponentStateListener): ValidationInfo? {
+    val directory = runCatching { Paths.get(getDirectory()).toAbsolutePath() }.getOrNull()
+    if (directory?.getEelDescriptor() != lastVersionCheckForDirectory?.getEelDescriptor()) {
+      versionCheckState = VersionCheckState.IN_PROGRESS
+      scheduleCheckVersion(dialogStateListener)
+    }
+    return super.checkDirectory(directoryPath, component, dialogStateListener)
+  }
+
   private fun checkGitVersion(dialogStateListener: VcsCloneDialogComponentStateListener) {
     invokeAndWaitIfNeeded(modalityState) {
       inlineComponent.showProgress(GitBundle.message("clone.dialog.checking.git.version"))
     }
 
+    val directory = runCatching { Paths.get(getDirectory()).toAbsolutePath() }.getOrNull()
+    lastVersionCheckForDirectory = directory
     try {
-      executableManager.dropExecutableCache()
-      val executable = executableManager.getExecutable(null)
-      val gitVersion = executableManager.identifyVersion(executable)
+      val executable = executableManager.getExecutable(null, directory)
+      val gitVersion = executableManager.identifyVersion(project, executable)
 
       invokeAndWaitIfNeeded(modalityState) {
         if (!gitVersion.isSupported) {
           showUnsupportedVersionError(project, gitVersion, errorNotifier)
-          versionCheckState = VersionCheckState.FAILED
-          updateOkActionState(dialogStateListener)
         }
         else {
           inlineComponent.hideProgress()
-          versionCheckState = VersionCheckState.SUCCESS
-          updateOkActionState(dialogStateListener)
         }
+        versionCheckState = VersionCheckState.SUCCESS
+        updateOkActionState(dialogStateListener)
       }
     }
     catch (t: Throwable) {
@@ -134,7 +139,7 @@ class GitCloneDialogComponent(project: Project,
   override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
 
   private fun notifyCloneError(project: Project) {
-    VcsNotifier.getInstance(project).notifyError("git.clone.unable.to.create.destination.dir",
+    VcsNotifier.getInstance(project).notifyError(CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR,
                                                  VcsBundle.message("clone.dialog.clone.button"),
                                                  VcsBundle.message("clone.dialog.unable.create.destination.error"))
   }
@@ -145,4 +150,14 @@ class GitCloneDialogComponent(project: Project,
     IN_PROGRESS,
     FAILED
   }
+}
+
+private class GitCloneDialogMainPanelCustomizer : DvcsCloneDialogComponent.MainPanelCustomizer() {
+  private val vm = GitShallowCloneViewModel()
+
+  override fun configure(panel: Panel) {
+    GitShallowCloneComponentFactory.appendShallowCloneRow(panel, vm).bottomGap(BottomGap.SMALL)
+  }
+
+  fun getShallowCloneOptions() = vm.getShallowCloneOptions()
 }

@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-public class MavenEditorTabTitleProvider implements EditorTabTitleProvider {
+public final class MavenEditorTabTitleProvider implements EditorTabTitleProvider {
   @Override
   public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);

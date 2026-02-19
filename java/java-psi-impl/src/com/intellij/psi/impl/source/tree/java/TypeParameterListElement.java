@@ -1,11 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.JavaSourceUtil;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -21,7 +27,7 @@ public class TypeParameterListElement extends CompositeElement {
   }
 
   @Override
-  public int getChildRole(@NotNull final ASTNode child) {
+  public int getChildRole(final @NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType elType = child.getElementType();
     if (elType == JavaElementType.TYPE_PARAMETER) {
@@ -75,7 +81,7 @@ public class TypeParameterListElement extends CompositeElement {
   }
 
   @Override
-  public void deleteChildInternal(@NotNull final ASTNode child) {
+  public void deleteChildInternal(final @NotNull ASTNode child) {
     if (child.getElementType() == JavaElementType.TYPE_PARAMETER){
       JavaSourceUtil.deleteSeparatingComma(this, child);
     }

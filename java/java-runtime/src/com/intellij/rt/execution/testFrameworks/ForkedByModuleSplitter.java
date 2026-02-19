@@ -1,22 +1,18 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.testFrameworks;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -45,7 +41,7 @@ public abstract class ForkedByModuleSplitter {
                             String repeatCount) throws Exception {
     args = myForkedDebuggerHelper.excludeDebugPortFromArgs(args);
 
-    myVMParameters = new ArrayList<String>();
+    myVMParameters = new ArrayList<>();
     final BufferedReader bufferedReader = new BufferedReader(new FileReader(commandLinePath));
     myDynamicClasspath = bufferedReader.readLine();
     try {
@@ -63,36 +59,38 @@ public abstract class ForkedByModuleSplitter {
     return result;
   }
 
+  protected ProcessBuilder initProcessBuilder() {
+    return new ProcessBuilder();
+  }
+
   //read output from wrappers
   protected int startChildFork(final List<String> args,
                                File workingDir,
                                String classpath,
                                List<String> moduleOptions,
                                String repeatCount) throws IOException, InterruptedException {
-    List<String> vmParameters = new ArrayList<String>(myVMParameters);
+    List<String> vmParameters = new ArrayList<>(myVMParameters);
 
     myForkedDebuggerHelper.setupDebugger(vmParameters);
-    final ProcessBuilder builder = new ProcessBuilder();
+    final ProcessBuilder builder = initProcessBuilder();
     builder.add(vmParameters);
 
-    //copy encoding from first VM, as encoding is added into command line explicitly and vm options do not contain it
+    // copy encoding from the first VM, as encoding is added into the command line explicitly 
+    // and vm options do not contain it
     String encoding = System.getProperty("file.encoding");
     if (encoding != null) {
       builder.add("-Dfile.encoding=" + encoding);
     }
 
     builder.add("-classpath");
-    if (myDynamicClasspath.length() > 0) {
+    if (!myDynamicClasspath.isEmpty()) {
       try {
         if ("ARGS_FILE".equals(myDynamicClasspath)) {
           File argFile = File.createTempFile("arg_file", null);
           argFile.deleteOnExit();
-          FileOutputStream writer = new FileOutputStream(argFile);
-          try {
-            writer.write(classpath.getBytes(Charset.defaultCharset()));
-          }
-          finally {
-            writer.close();
+          try (FileOutputStream writer = new FileOutputStream(argFile)) {
+            String quotedArg = quoteArg(classpath);
+            writer.write(quotedArg.getBytes(Charset.defaultCharset()));
           }
           builder.add("@" + argFile.getAbsolutePath());
         }
@@ -125,44 +123,68 @@ public abstract class ForkedByModuleSplitter {
     return exec.waitFor();
   }
 
+  /**
+   * WARNING: Due to compatibility reasons, this method has duplicate: {@link com.intellij.execution.CommandLineWrapperUtil#quoteArg(String)}
+   * If you modify this method, consider also changing its copy.
+   */
+  private static String quoteArg(String arg) {
+    String specialCharacters = " #'\"\n\r\t\f";
+    boolean containsSpecialCharacter = false;
+
+    for (int i = 0; i < arg.length(); i++ ) {
+      char ch = arg.charAt(i);
+      if (specialCharacters.indexOf(ch) >= 0) {
+        containsSpecialCharacter = true;
+        break;
+      }
+    }
+
+    if (!containsSpecialCharacter) return arg;
+
+    StringBuilder sb = new StringBuilder(arg.length() * 2);
+    for (int i = 0; i < arg.length(); i++) {
+      char c = arg.charAt(i);
+      if (c == ' ' || c == '#' || c == '\'') sb.append('"').append(c).append('"');
+      else if (c == '"') sb.append("\"\\\"\"");
+      else if (c == '\n') sb.append("\"\\n\"");
+      else if (c == '\r') sb.append("\"\\r\"");
+      else if (c == '\t') sb.append("\"\\t\"");
+      else if (c == '\f') sb.append("\"\\f\"");
+      else sb.append(c);
+    }
+    return sb.toString();
+  }
+
   private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-          try {
-            while (true) {
-              String line = inputReader.readLine();
-              if (line == null) break;
-              outputStream.println(line);
-            }
-          }
-          finally {
-            inputReader.close();
+    return () -> {
+      try {
+        try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+          while (true) {
+            String line = inputReader.readLine();
+            if (line == null) break;
+            outputStream.println(line);
           }
         }
-        catch (UnsupportedEncodingException ignored) { }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
+      }
+      catch (UnsupportedEncodingException ignored) { }
+      catch (IOException e) {
+        e.printStackTrace();
       }
     };
   }
 
-  //read file with classes grouped by module
+  //read a file with classes grouped by module
   protected int splitPerModule(String repeatCount) throws IOException {
     int result = 0;
-    final BufferedReader perDirReader = new BufferedReader(new FileReader(myWorkingDirsPath));
-    try {
+    try (BufferedReader perDirReader = new BufferedReader(new FileReader(myWorkingDirsPath))) {
       final String packageName = perDirReader.readLine();
       String workingDir;
       while ((workingDir = perDirReader.readLine()) != null) {
         final String moduleName = perDirReader.readLine();
         final String classpath = perDirReader.readLine();
-        List<String> moduleOptions = new ArrayList<String>();
+        List<String> moduleOptions = new ArrayList<>();
         String modulePath = perDirReader.readLine();
-        if (modulePath != null && modulePath.length() > 0) {
+        if (modulePath != null && !modulePath.isEmpty()) {
           moduleOptions.add("-p");
           moduleOptions.add(modulePath);
         }
@@ -172,7 +194,7 @@ public abstract class ForkedByModuleSplitter {
         }
         try {
 
-          List<String> classNames = new ArrayList<String>();
+          List<String> classNames = new ArrayList<>();
           final int classNamesSize = Integer.parseInt(perDirReader.readLine());
           for (int i = 0; i < classNamesSize; i++) {
             String className = perDirReader.readLine();
@@ -185,16 +207,15 @@ public abstract class ForkedByModuleSplitter {
           }
 
           String filters = perDirReader.readLine();
-          final int childResult = startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, moduleOptions, repeatCount, result, filters != null ? filters : "");
+          final int childResult =
+            startPerModuleFork(moduleName, classNames, packageName, workingDir, classpath, moduleOptions, repeatCount, result,
+                               filters != null ? filters : "");
           result = Math.min(childResult, result);
         }
         catch (Exception e) {
           e.printStackTrace();
         }
       }
-    }
-    finally {
-      perDirReader.close();
     }
     return result;
   }
@@ -227,7 +248,7 @@ public abstract class ForkedByModuleSplitter {
         classpathForManifest.append(" ");
       }
       try {
-        classpathForManifest.append(new File(path).toURI().toURL().toString());
+        classpathForManifest.append(new File(path).toURI().toURL());
       }
       catch (NoSuchMethodError e) {
         classpathForManifest.append(new File(path).toURL().toString());

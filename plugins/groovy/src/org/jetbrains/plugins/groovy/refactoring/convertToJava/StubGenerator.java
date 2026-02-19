@@ -1,17 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -30,7 +44,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -115,7 +135,7 @@ public final class StubGenerator implements ClassItemGenerator {
     // ************* parameters **********/
     GenerationUtil.writeParameterList(text, constructor.getParameterList().getParameters(), classNameProvider, null);
 
-    final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<>());
+    final Set<String> throwsTypes = collectThrowsTypes(constructor, new HashSet<>());
     if (!throwsTypes.isEmpty()) {
       text.append("throws ").append(StringUtil.join(throwsTypes, ", ")).append(' ');
     }
@@ -266,8 +286,7 @@ public final class StubGenerator implements ClassItemGenerator {
     GenerationUtil.writeThrowsList(text, throwsList, exceptions, classNameProvider);
   }
 
-  @Nullable
-  private static GroovyResolveResult resolveChainingConstructor(GrMethod constructor) {
+  private static @Nullable GroovyResolveResult resolveChainingConstructor(GrMethod constructor) {
     LOG.assertTrue(constructor.isConstructor());
 
     final GrConstructorInvocation constructorInvocation = PsiImplUtil.getChainingConstructorInvocation(constructor);
@@ -280,7 +299,7 @@ public final class StubGenerator implements ClassItemGenerator {
       return resolveResult;
     }
 
-    final GroovyResolveResult[] results = constructorInvocation.multiResolve(false);
+    final GroovyResolveResult[] results = constructorInvocation.multiResolveGroovy(false);
     if (results.length > 0) {
       int i = 0;
       while (results.length > i + 1) {
@@ -399,7 +418,7 @@ public final class StubGenerator implements ClassItemGenerator {
     if (declaredType instanceof PsiPrimitiveType) {
       Object eval = GroovyConstantExpressionEvaluator.evaluate(variable.getInitializerGroovy());
       if (eval instanceof Float ||
-          PsiType.FLOAT.equals(TypesUtil.unboxPrimitiveTypeWrapper(variable.getType())) && eval instanceof Number) {
+          PsiTypes.floatType().equals(TypesUtil.unboxPrimitiveTypeWrapper(variable.getType())) && eval instanceof Number) {
         return eval.toString() + "f";
       }
       else if (eval instanceof Character) {
@@ -428,7 +447,7 @@ public final class StubGenerator implements ClassItemGenerator {
       TypeWriter.writeType(text, implementsType, typeDefinition, classNameProvider);
       text.append(", ");
     }
-    if (!implementsTypes.isEmpty()) text.delete(text.length() - 2, text.length());
+    text.delete(text.length() - 2, text.length());
     text.append(' ');
   }
 

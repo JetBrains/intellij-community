@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.diagnostic.StartUpPerformanceService
@@ -14,12 +14,15 @@ internal class StartUpMeasurementService : RestService() {
   override fun getServiceName() = "startUpMeasurement"
 
   override fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
-    return if (request.origin == "https://ij-perf.jetbrains.com") OriginCheckResult.ALLOW else super.isOriginAllowed(request)
+    return when (request.origin) {
+      "https://ij-perf.jetbrains.com", "https://ij-perf.labs.jb.gg" -> OriginCheckResult.ALLOW
+      else -> super.isOriginAllowed(request)
+    }
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val reporter = StartUpPerformanceService.getInstance()
-    val lastReport = reporter.lastReport ?: return """{"error": "Report is not ready yet, start-up in progress"}"""
+    val lastReport = reporter.getLastReport() ?: return """{"error": "Report is not ready yet, start-up in progress"}"""
     val response = response("application/json", Unpooled.wrappedBuffer(lastReport))
     sendResponse(request, context, response)
     return null

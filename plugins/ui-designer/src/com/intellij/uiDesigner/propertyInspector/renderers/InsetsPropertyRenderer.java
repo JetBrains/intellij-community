@@ -1,14 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Insets;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class InsetsPropertyRenderer extends LabelPropertyRenderer<Insets> {
   private final StringBuffer myBuffer;
 
@@ -17,11 +14,11 @@ public final class InsetsPropertyRenderer extends LabelPropertyRenderer<Insets> 
   }
 
   @Override
-  protected void customize(@NotNull final Insets value){
+  protected void customize(final @NotNull Insets value){
     setText(formatText(value));
   }
 
-  public String formatText(final Insets value) {
+  public @NlsSafe String formatText(final Insets value) {
     myBuffer.setLength(0);
     myBuffer.append('[');
     myBuffer.append(value.top).append(", ");

@@ -1,57 +1,111 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.ide.util.projectWizard.*;
-import com.intellij.openapi.Disposable;
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleNameLocationSettings;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import javax.swing.*;
-import java.io.File;
+import javax.swing.Icon;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
-import static org.jetbrains.idea.maven.utils.MavenUtil.MAVEN_NAME;
 
 public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
-  private MavenProject myAggregatorProject;
-  private MavenProject myParentProject;
 
-  private boolean myInheritGroupId;
-  private boolean myInheritVersion;
+  private boolean isCreatingNewProject;
 
-  private MavenId myProjectId;
-  private MavenArchetype myArchetype;
+  protected MavenProject myAggregatorProject;
+  protected MavenProject myParentProject;
 
-  private MavenEnvironmentForm myEnvironmentForm;
+  protected boolean myInheritGroupId;
+  protected boolean myInheritVersion;
 
-  private Map<String, String> myPropertiesToCreateByArtifact;
+  protected MavenId myProjectId;
+  protected MavenArchetype myArchetype;
+
+  protected MavenEnvironmentForm myEnvironmentForm;
+
+  protected Map<String, String> myPropertiesToCreateByArtifact;
+
+  @ApiStatus.Internal
+  public CompletableFuture<Boolean> sdkDownloadedFuture;
+
+  @Override
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, ConfigurationException, JDOMException {
+    var module = super.createModule(moduleModel);
+
+    // handle the case when a maven module was deleted / ignored, and then the same module is created again
+    // we need to remove the module from the ignored list, otherwise it will disappear during the subsequent maven import
+    unignorePom(moduleModel);
+
+    return module;
+  }
+
+  private void unignorePom(@NotNull ModifiableModuleModel moduleModel) {
+    var project = moduleModel.getProject();
+    var contentEntryPath = getContentEntryPath();
+    if (null == contentEntryPath) return;
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (manager.isInitialized()) {
+      manager.removeIgnoredFilesPaths(List.of(contentEntryPath + "/pom.xml"));
+    }
+  }
+
+  @Override
+  protected void setupModule(Module module) throws ConfigurationException {
+    super.setupModule(module);
+    var moduleVersion = WorkspaceModuleImporter.ExternalSystemData.VERSION;
+    ExternalSystemUtil.markModuleAsMaven(module, moduleVersion, true);
+  }
 
   @Override
   public void setupRootModel(@NotNull ModifiableRootModel rootModel) {
@@ -60,22 +114,76 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
-    // todo this should be moved to generic ModuleBuilder
-    if (myJdk != null){
-      rootModel.setSdk(myJdk);
-    } else {
-      rootModel.inheritSdk();
+    inheritOrSetSDK(rootModel);
+
+    if (isCreatingNewProject) {
+      setupNewProject(project);
     }
 
-    MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
-      if (myEnvironmentForm != null) {
-        myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
-      }
+    // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+    // @see com.intellij.ide.util.projectWizard.ProjectBuilder#postCommit for more details
+    StartupManager.getInstance(project).runAfterOpened(
+      () -> postCommit(project, root)
+    );
+  }
 
-      new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
-                                   MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
+  @Override
+  @ApiStatus.Internal
+  public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
+      waitForSdkDownload();
+      configureProject(project, projectDir);
     });
+  }
+
+  private void waitForSdkDownload() {
+    var future = sdkDownloadedFuture;
+    if (future != null) {
+      try {
+        future.get(); // maven sync uses project JDK
+      }
+      catch (Exception e) {
+        MavenLog.LOG.error(e);
+      }
+    }
+  }
+
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    if (myEnvironmentForm != null) {
+      myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
+    }
+
+    new MavenModuleBuilderHelper(
+      myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
+      myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
+      MavenProjectBundle.message("command.name.create.new.maven.module")
+    ).configure(project, projectDir, false);
+  }
+
+  protected static void setupNewProject(Project project) {
+    ExternalProjectsManagerImpl.setupCreatedProject(project);
+    project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
+  }
+
+  protected void inheritOrSetSDK(@NotNull ModifiableRootModel rootModel) {
+    // todo this should be moved to generic ModuleBuilder
+    var projectSdk = ProjectRootManager.getInstance(rootModel.getProject()).getProjectSdk();
+    if (myJdk == null || equalSdks(myJdk, projectSdk)) {
+      rootModel.inheritSdk();
+    }
+    else {
+      rootModel.setSdk(myJdk);
+    }
+  }
+
+  protected static boolean equalSdks(Sdk sdk1, Sdk sdk2) {
+    if (sdk1 == null && sdk2 == null) return true;
+    if (sdk1 == null || sdk2 == null) return false;
+    return sdk1.getSdkType() == sdk2.getSdkType()
+           && StringUtil.equals(sdk1.getName(), sdk2.getName())
+           && StringUtil.equals(sdk1.getVersionString(), sdk2.getVersionString())
+           && StringUtil.equals(sdk1.getHomePath(), sdk2.getHomePath())
+      ;
   }
 
   @Override
@@ -109,8 +217,8 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   }
 
   @Override
-  public ModuleType getModuleType() {
-    return StdModuleTypes.JAVA;
+  public ModuleType<?> getModuleType() {
+    return JavaModuleType.getModuleType();
   }
 
   @Override
@@ -119,11 +227,18 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   }
 
   @Override
-  public abstract ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider);
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
+    return ModuleWizardStep.EMPTY_ARRAY;
+  }
 
-  private VirtualFile createAndGetContentEntry() {
+  protected VirtualFile createAndGetContentEntry() {
     String path = FileUtil.toSystemIndependentName(getContentEntryPath());
-    new File(path).mkdirs();
+    try {
+      Files.createDirectory(Path.of(path));
+    }
+    catch (IOException e) {
+      // ignore
+    }
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
@@ -138,6 +253,14 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public void addSourcePath(Pair<String, String> sourcePathInfo) {
+  }
+
+  public boolean isCreatingNewProject() {
+    return isCreatingNewProject;
+  }
+
+  public void setCreatingNewProject(boolean creatingNewProject) {
+    isCreatingNewProject = creatingNewProject;
   }
 
   public void setAggregatorProject(MavenProject project) {
@@ -165,8 +288,16 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return myInheritGroupId;
   }
 
+  public void setInheritGroupId(boolean inheritGroupId) {
+    myInheritGroupId = inheritGroupId;
+  }
+
   public boolean isInheritVersion() {
     return myInheritVersion;
+  }
+
+  public void setInheritVersion(boolean inheritVersion) {
+    myInheritVersion = inheritVersion;
   }
 
   public void setProjectId(MavenId id) {
@@ -206,17 +337,8 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return "Maven";
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
-    MavenArchetypesStep step = new MavenArchetypesStep(this, null);
-    Disposer.register(parentDisposable, step);
-    return step;
-  }
-
-  @Nullable
-  @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
     if (nameLocationSettings != null && myProjectId != null && myProjectId.getArtifactId() != null) {
       nameLocationSettings.setModuleName(StringUtil.sanitizeJavaIdentifier(myProjectId.getArtifactId()));
@@ -227,9 +349,9 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return super.modifySettingsStep(settingsStep);
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, String path) {
-    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
+  public @Nullable Project createProject(String name, String path) {
+    setCreatingNewProject(true);
+    return super.createProject(name, path);
   }
 }

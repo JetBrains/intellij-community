@@ -1,0 +1,15 @@
+package com.example
+
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE_PARAMETER,
+        AnnotationTarget.VALUE_PARAMETER)
+annotation class MyComposable
+
+@MyComposable
+fun sourceFunction() {
+    __dummyTestFun__()
+}
+
+@MyComposable
+private fun __dummyTestFun__() {
+    print(true)
+}

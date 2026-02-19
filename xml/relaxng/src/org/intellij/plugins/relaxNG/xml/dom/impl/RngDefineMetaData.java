@@ -16,7 +16,8 @@
 
 package org.intellij.plugins.relaxNG.xml.dom.impl;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomMetaData;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -25,13 +26,11 @@ import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class RngDefineMetaData extends DomMetaData<RngDefine> {
-
+public final class RngDefineMetaData extends DomMetaData<RngDefine> {
   @Override
-  @Nullable
-  protected GenericDomValue getNameElement(final RngDefine element) {
+  protected @Nullable GenericDomValue<?> getNameElement(RngDefine element) {
     final GenericAttributeValue<String> id = element.getNameAttr();
     if (id.getXmlElement() != null) {
       return id;
@@ -40,13 +39,13 @@ public class RngDefineMetaData extends DomMetaData<RngDefine> {
   }
 
   @Override
-  public void setName(final String name) throws IncorrectOperationException {
+  public void setName(String name) throws IncorrectOperationException {
     getElement().setName(name);
   }
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.Property;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
   }
 
   @Override

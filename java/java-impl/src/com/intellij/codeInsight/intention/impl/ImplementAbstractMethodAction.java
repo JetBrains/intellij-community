@@ -1,46 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImplementAbstractMethodAction extends BaseIntentionAction {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.implement.abstract.method.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     int offset = editor.getCaretModel().getOffset();
-    final PsiMethod method = findMethod(file, offset);
+    final PsiMethod method = findMethod(psiFile, offset);
 
     if (method == null || !method.isValid() || method.isConstructor()) return false;
     setText(getIntentionName(method));
@@ -51,7 +45,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     if (containingClass == null) return false;
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (isAbstract || !method.hasModifierProperty(PsiModifier.PRIVATE) && !method.hasModifierProperty(PsiModifier.STATIC)) {
-      if (!isAbstract && !isOnIdentifier(file, offset)) return false;
+      if (!isAbstract && !isOnIdentifier(psiFile, offset)) return false;
       MyElementProcessor processor = new MyElementProcessor(method);
       if (containingClass.isEnum()) {
         for (PsiField field : containingClass.getFields()) {
@@ -125,15 +119,12 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     return processor.hasMissingImplementations();
   }
 
-  @Nullable
-  static PsiMethod findExistingImplementation(final PsiClass aClass, PsiMethod method) {
+  static @Nullable PsiMethod findExistingImplementation(final PsiClass aClass, PsiMethod method) {
     final PsiMethod[] methods = aClass.findMethodsByName(method.getName(), false);
     for(PsiMethod candidate: methods) {
       final PsiMethod[] superMethods = candidate.findSuperMethods(false);
-      for(PsiMethod superMethod: superMethods) {
-        if (superMethod.equals(method)) {
-          return candidate;
-        }
+      if (ArrayUtil.contains(method, superMethods)) {
+        return candidate;
       }
     }
     return null;
@@ -152,10 +143,10 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiMethod method = findMethod(psiFile, editor.getCaretModel().getOffset());
     if (method == null) return;
-    if (EditorActivityManager.getInstance().isVisible(editor)) {
+    if (UIUtil.isShowing(editor.getContentComponent())) {
       invokeHandler(project, editor, method);
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools;
 
 import com.intellij.diff.DiffContext;
@@ -21,7 +7,13 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
-import com.intellij.diff.requests.*;
+import com.intellij.diff.requests.ComponentDiffRequest;
+import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.ErrorDiffRequest;
+import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.requests.NoDiffRequest;
+import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -44,8 +36,9 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import java.awt.Color;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
@@ -55,9 +48,8 @@ public class ErrorDiffTool implements FrameDiffTool {
 
   private static final Logger LOG = Logger.getInstance(ErrorDiffTool.class);
 
-  @NotNull
   @Override
-  public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
+  public @NotNull DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
     return new MyViewer(context, request);
   }
 
@@ -66,17 +58,16 @@ public class ErrorDiffTool implements FrameDiffTool {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return DiffBundle.message("error.viewer");
   }
 
   private static class MyViewer implements DiffViewer {
-    @NotNull private final DiffContext myContext;
-    @NotNull private final DiffRequest myRequest;
+    private final @NotNull DiffContext myContext;
+    private final @NotNull DiffRequest myRequest;
 
-    @NotNull private final JComponent myPanel;
+    private final @NotNull JComponent myPanel;
 
     MyViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
       myContext = context;
@@ -86,8 +77,7 @@ public class ErrorDiffTool implements FrameDiffTool {
       myPanel = ScrollPaneFactory.createScrollPane(component, true);
     }
 
-    @NotNull
-    private JComponent createComponent(@NotNull DiffRequest request) {
+    private @NotNull JComponent createComponent(@NotNull DiffRequest request) {
       if (request instanceof ErrorDiffRequest) {
         // TODO: explain some of ErrorDiffRequest exceptions ?
         String message = ((ErrorDiffRequest)request).getMessage();
@@ -125,21 +115,18 @@ public class ErrorDiffTool implements FrameDiffTool {
       return DiffUtil.createMessagePanel(DiffBundle.message("error.message.cannot.show.diff"));
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       return myPanel;
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return null;
     }
 
-    @NotNull
     @Override
-    public ToolbarComponents init() {
+    public @NotNull ToolbarComponents init() {
       if (myRequest instanceof UnknownFileTypeDiffRequest) {
         String fileName = ((UnknownFileTypeDiffRequest)myRequest).getFileName();
         if (fileName != null && FileTypeManager.getInstance().getFileTypeByFileName(fileName) != UnknownFileType.INSTANCE) {
@@ -160,13 +147,12 @@ public class ErrorDiffTool implements FrameDiffTool {
     }
   }
 
-  @NotNull
-  public static JComponent createReloadMessagePanel(@Nullable DiffContext context, @NotNull @NlsContexts.Label String message,
-                                                    @NotNull @NlsContexts.Label String reloadMessage, @Nullable Runnable beforeReload) {
+  public static @NotNull JComponent createReloadMessagePanel(@Nullable DiffContext context, @NotNull @NlsContexts.Label String message,
+                                                             @NotNull @NlsContexts.Label String reloadMessage, @Nullable Runnable beforeReload) {
     if (context instanceof DiffContextEx) {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       Color linkColor = chooseNotNull(scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor(),
-                                      JBUI.CurrentTheme.Link.linkColor());
+                                      JBUI.CurrentTheme.Link.Foreground.ENABLED);
 
       SimpleColoredComponent textLabel = new SimpleColoredComponent();
       textLabel.setTextAlign(SwingConstants.CENTER);

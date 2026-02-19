@@ -31,7 +31,6 @@
 package com.jetbrains.python.psi
 
 import com.intellij.psi.PsiElement
-import java.util.*
 
 /**
  * @param classOnly limit ancestors to this class only

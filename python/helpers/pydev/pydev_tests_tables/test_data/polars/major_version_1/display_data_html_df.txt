@@ -1,0 +1,8 @@
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (3, 13)</small><table border="1" class="dataframe"><thead><tr><th>int_col</th><th>float_col</th><th>bool_col</th><th>bool_col_with_none</th><th>str_col</th><th>date_col</th><th>datetime_col</th><th>time_col</th><th>categorical_col</th><th>binary_col</th><th>struct_col</th><th>list_col</th><th>large_number</th></tr><tr><td>i64</td><td>f64</td><td>bool</td><td>bool</td><td>str</td><td>date</td><td>datetime[μs]</td><td>time</td><td>cat</td><td>binary</td><td>struct[2]</td><td>list[i64]</td><td>u64</td></tr></thead><tbody><tr><td>1</td><td>1.0</td><td>true</td><td>true</td><td>&quot;one&quot;</td><td>2022-01-01</td><td>2022-01-01 12:00:00</td><td>12:00:00</td><td>&quot;A&quot;</td><td>b&quot;abc&quot;</td><td>{30,5.5}</td><td>[1, 2]</td><td>1844674407370955</td></tr><tr><td>2</td><td>2.0</td><td>false</td><td>false</td><td>&quot;two&quot;</td><td>2022-01-02</td><td>2022-01-02 12:00:00</td><td>12:30:00</td><td>&quot;B&quot;</td><td>b&quot;def&quot;</td><td>{25,6.1}</td><td>[3, 4]</td><td>1844674407370955</td></tr><tr><td>3</td><td>3.0</td><td>true</td><td>null</td><td>&quot;three&quot;</td><td>2022-01-03</td><td>2022-01-03 12:00:00</td><td>13:00:00</td><td>&quot;A&quot;</td><td>b&quot;ghi&quot;</td><td>{35,5.9}</td><td>[5, 6]</td><td>1844674407370955</td></tr></tbody></table></div>

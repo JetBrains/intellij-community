@@ -15,36 +15,25 @@
  */
 package com.intellij.spellchecker;
 
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.codeInsight.DumbAwareAnnotationUtil;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
 public class MethodNameTokenizerJava extends NamedElementTokenizer<PsiMethod> {
 
   @Override
-  public void tokenize(@NotNull PsiMethod element, TokenConsumer consumer) {
-    if (element.isConstructor()) return;
-    final PsiMethod[] methods = (element).findDeepestSuperMethods();
-    boolean isInSource = true;
-    for (PsiMethod psiMethod : methods) {
-      isInSource &= isMethodDeclarationInSource(psiMethod);
+  public void tokenize(@NotNull PsiMethod element, @NotNull TokenConsumer consumer) {
+    if (element.isConstructor() ||
+        (!DumbService.isDumb(element.getProject()) && element.findDeepestSuperMethods().length > 0) ||
+        DumbAwareAnnotationUtil.hasAnnotation(element, CommonClassNames.JAVA_LANG_OVERRIDE)) {
+      return;
     }
-    if (isInSource) {
-      super.tokenize(element, consumer);
-    }
-  }
-
-  private static boolean isMethodDeclarationInSource(@NotNull PsiMethod psiMethod) {
-    if (psiMethod.getContainingFile() == null) return false;
-    final VirtualFile virtualFile = psiMethod.getContainingFile().getVirtualFile();
-    if (virtualFile == null) return false;
-    return ProjectRootManager.getInstance(psiMethod.getProject()).getFileIndex().isInSource(virtualFile);
+    super.tokenize(element, consumer);
   }
 }

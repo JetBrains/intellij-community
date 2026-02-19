@@ -1,0 +1,16 @@
+// FILE: before.kt
+// IGNORE_K1
+fun test() {
+    for (i in 1..10) {
+        if (i == 5) <caret>break
+    }
+    println("done")
+}
+// FILE: after.kt
+// IGNORE_K1
+fun test() {
+    for (i in 1..10) {
+        if (i == 5) break
+    }
+    <caret>println("done")
+}

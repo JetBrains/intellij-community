@@ -1,7 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.common;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Spacing;
+import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -10,20 +14,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class DefaultInjectedLanguageBlockBuilder extends InjectedLanguageBlockBuilder {
 
-  @NotNull private final CodeStyleSettings mySettings;
+  private final @NotNull CodeStyleSettings mySettings;
 
   public DefaultInjectedLanguageBlockBuilder(@NotNull CodeStyleSettings settings) {
     mySettings = settings;
   }
 
-  @NotNull
   @Override
-  public CodeStyleSettings getSettings() {
+  public @NotNull CodeStyleSettings getSettings() {
     return mySettings;
   }
 
@@ -44,8 +44,8 @@ public class DefaultInjectedLanguageBlockBuilder extends InjectedLanguageBlockBu
 
   private static final class GlueBlock extends AbstractBlock {
 
-    @NotNull private final Indent    myIndent;
-    @NotNull private final TextRange myRange;
+    private final @NotNull Indent    myIndent;
+    private final @NotNull TextRange myRange;
 
     private GlueBlock(@NotNull ASTNode node,
                       @Nullable Wrap wrap,
@@ -58,9 +58,8 @@ public class DefaultInjectedLanguageBlockBuilder extends InjectedLanguageBlockBu
       myRange = range;
     }
 
-    @NotNull
     @Override
-    public TextRange getTextRange() {
+    public @NotNull TextRange getTextRange() {
       return myRange;
     }
 
@@ -69,15 +68,13 @@ public class DefaultInjectedLanguageBlockBuilder extends InjectedLanguageBlockBu
       return AbstractBlock.EMPTY;
     }
 
-    @NotNull
     @Override
-    public Indent getIndent() {
+    public @NotNull Indent getIndent() {
       return myIndent;
     }
 
-    @Nullable
     @Override
-    public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+    public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
       return null;
     }
 

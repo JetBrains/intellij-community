@@ -1,15 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
+@ApiStatus.Internal
 public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<LocallyDeletedChange>
   implements TreeLinkMouseListener.HaveTooltip {
   public ChangesBrowserLocallyDeletedNode(@NotNull LocallyDeletedChange userObject) {
@@ -50,8 +53,12 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
   }
 
   @Override
-  @Nullable
-  public String getTooltip() {
+  public @Nullable String getTooltip() {
     return getUserObject().getDescription();
+  }
+
+  @Override
+  public @Nls String getTextPresentation() {
+    return getUserObject().toString();
   }
 }

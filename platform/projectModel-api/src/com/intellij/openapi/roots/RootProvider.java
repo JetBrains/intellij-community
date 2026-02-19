@@ -24,7 +24,6 @@ import java.util.EventListener;
 
 /**
  *  Root provider for order entry
- *  @author dsl
  */
 @ApiStatus.NonExtendable
 public interface RootProvider {

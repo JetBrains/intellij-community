@@ -32,7 +32,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.createRanges
-import java.util.*
+import java.util.BitSet
 
 class ComparisonUtilAutoTest : HeavyDiffTestCase() {
   val RUNS = 30
@@ -56,6 +56,10 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
 
   fun testLineTrimSquashed() {
     doTestLineTrimSquashed(System.currentTimeMillis(), RUNS, MAX_LENGTH)
+  }
+
+  fun testWordsFirst() {
+    doTestWordsFirst(System.currentTimeMillis(), RUNS, MAX_LENGTH)
   }
 
   fun testExplicitBlocks() {
@@ -84,7 +88,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       val fragments = MANAGER.compareLinesInner(sequence1, sequence2, lineOffsets1, lineOffsets2, ignorePolicy, fragmentsPolicy, INDICATOR)
       debugData.put("Fragments", fragments)
 
-      checkResultLine(text1, text2, fragments, ignorePolicy, true)
+      checkResultLine(text1, text2, fragments, ignorePolicy, allowNonSquashed = true)
     }
   }
 
@@ -105,7 +109,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       val squashedFragments = MANAGER.squash(fragments)
       debugData.put("Squashed Fragments", squashedFragments)
 
-      checkResultLine(text1, text2, squashedFragments, ignorePolicy, false)
+      checkResultLine(text1, text2, squashedFragments, ignorePolicy, allowNonSquashed = false)
     }
   }
 
@@ -126,7 +130,30 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       val processed = MANAGER.processBlocks(fragments, sequence1, sequence2, ignorePolicy, true, true)
       debugData.put("Processed Fragments", processed)
 
-      checkResultLine(text1, text2, processed, ignorePolicy, false)
+      checkResultLine(text1, text2, processed, ignorePolicy, allowNonSquashed = false)
+    }
+  }
+
+  private fun doTestWordsFirst(seed: Long, runs: Int, maxLength: Int) {
+    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+    val fragmentsPolicies = listOf(InnerFragmentsPolicy.WORDS)
+
+    doTest(seed, runs, maxLength, ignorePolicies, fragmentsPolicies) { text1, text2, ignorePolicy, fragmentsPolicy, debugData ->
+      val sequence1 = text1.charsSequence
+      val sequence2 = text2.charsSequence
+
+      val lineOffsets1 = LineOffsetsUtil.create(sequence1)
+      val lineOffsets2 = LineOffsetsUtil.create(sequence2)
+
+      val fragments = MANAGER.compareLinesWordFirst(sequence1, sequence2, lineOffsets1, lineOffsets2, ignorePolicy, INDICATOR)
+      debugData.put("Fragments", fragments)
+
+      val processed = MANAGER.processBlocks(fragments, sequence1, sequence2, ignorePolicy, true, true)
+      debugData.put("Processed Fragments", processed)
+
+      // we do not consider 'x x' and 'xx' identical lines
+      checkResultLine(text1, text2, processed, ignorePolicy, allowNonSquashed = true,
+                      allowNonTrimed = ignorePolicy == ComparisonPolicy.IGNORE_WHITESPACES)
     }
   }
 
@@ -177,7 +204,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
           val fragments = compareExplicitBlocks(sequence1, sequence2, ranges, highlightPolicy, ignorePolicy)
           debugData.put("Fragments", fragments)
 
-          checkResultLine(text1, text2, fragments, ignorePolicy.comparisonPolicy, !highlightPolicy.isShouldSquash)
+          checkResultLine(text1, text2, fragments, ignorePolicy.comparisonPolicy, allowNonSquashed = !highlightPolicy.isShouldSquash)
         }
       }
     }
@@ -198,7 +225,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
         val chunk2 = DiffUtil.getLinesContent(text2, f.startLine2, f.endLine2)
         val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
 
-        val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, INDICATOR)
+        val wordFragments = ByWordRt.compare(chunk1, chunk2, chunk3, policy, CANCELLATION)
         Pair(f, wordFragments)
       }
       debugData.put("Fragments", fineFragments)
@@ -222,7 +249,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
         val chunk2 = DiffUtil.getLinesContent(text2, f.startLine2, f.endLine2)
         val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
 
-        val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, INDICATOR)
+        val wordFragments = ByWordRt.compare(chunk1, chunk2, chunk3, policy, CANCELLATION)
         Pair(f, wordFragments)
       }
       debugData.put("Fragments", fineFragments)
@@ -297,7 +324,10 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     }
   }
 
-  private fun checkResultLine(text1: Document, text2: Document, fragments: List<LineFragment>, policy: ComparisonPolicy, allowNonSquashed: Boolean) {
+  private fun checkResultLine(
+    text1: Document, text2: Document, fragments: List<LineFragment>, policy: ComparisonPolicy,
+    allowNonSquashed: Boolean, allowNonTrimed: Boolean = false,
+  ) {
     checkLineConsistency(text1, text2, fragments, allowNonSquashed)
 
     for (fragment in fragments) {
@@ -310,7 +340,9 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
     }
 
     checkValidRanges(text1.charsSequence, text2.charsSequence, fragments, policy, true)
-    checkCantTrimLines(text1, text2, fragments, policy, allowNonSquashed)
+    if (!allowNonTrimed) {
+      checkCantTrimLines(text1, text2, fragments, policy, allowNonSquashed)
+    }
   }
 
   private fun checkResultWord(text1: CharSequence, text2: CharSequence, fragments: List<DiffFragment>, policy: ComparisonPolicy) {
@@ -664,11 +696,11 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
       if (countNonWhitespaceCharacters(line2) <= ComparisonUtil.getUnimportantLineCharCount()) return
     }
 
-    assertFalse(MANAGER.isEquals(line1, line2, policy))
+    assertFalse("\"$line1\" vs \"$line2\"", MANAGER.isEquals(line1, line2, policy))
   }
 
   private fun countNonWhitespaceCharacters(line: CharSequence): Int {
-    return (0 until line.length).count { !StringUtil.isWhiteSpace(line[it]) }
+    return line.indices.count { !StringUtil.isWhiteSpace(line[it]) }
   }
 
   private fun getFirstLastLines(text: Document, start: Int, end: Int): Couple<CharSequence>? {

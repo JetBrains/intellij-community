@@ -11,7 +11,6 @@ import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.OpenProjectTaskBuilder;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
-import com.intellij.util.io.PathKt;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,12 +33,12 @@ public class PatchMatcherTest {
 
   @Test
   public void testMatchPathAboveProject() throws IOException {
-    Path dir = tempDir.newPath();
+    Path dir = tempDir.createDir();
     Path projectDir = dir.resolve("project");
     Project project = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(projectDir, new OpenProjectTaskBuilder().runPostStartUpActivities(false).build()));
     try {
       Path file = dir.resolve("file.txt");
-      PathKt.createFile(file);
+      Files.createFile(file);
       TextFilePatch patch = PatchAutoInitTest.create("../file.txt");
 
       // MatchPatchPaths uses deprecated myProject.getBaseDir() - create and refresh it

@@ -1,8 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.execution.*;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -12,39 +16,58 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testIntegration.JavaTestFramework;
+import com.intellij.testIntegration.JvmTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated
-  protected AbstractJavaTestConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
+
+  private static final Logger LOG = Logger.getInstance(AbstractJavaTestConfigurationProducer.class);
 
   protected AbstractJavaTestConfigurationProducer() {
   }
@@ -52,27 +75,33 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   @Contract("null->false")
   protected boolean isTestClass(PsiClass psiClass) {
     if (psiClass != null) {
-      JavaTestFramework framework = getCurrentFramework(psiClass);
+      TestFramework framework = getCurrentFramework(psiClass);
       return framework != null && framework.isTestClass(psiClass);
     }
     return false;
   }
 
   protected boolean isTestMethod(boolean checkAbstract, PsiMethod method) {
-    JavaTestFramework framework = getCurrentFramework(method.getContainingClass());
+    TestFramework framework = getCurrentFramework(method.getContainingClass());
     return framework != null && framework.isTestMethod(method, checkAbstract);
   }
 
-  protected JavaTestFramework getCurrentFramework(PsiClass psiClass) {
+  protected TestFramework getCurrentFramework(PsiClass psiClass) {
     if (psiClass != null) {
       ConfigurationType configurationType = getConfigurationType();
       Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(psiClass);
-      return frameworks.stream().filter(framework -> framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isMyConfigurationType(configurationType))
-        .map(framework -> (JavaTestFramework)framework)
-        .findFirst()
-        .orElse(null);
+      TestFramework testFramework = ContainerUtil.find(frameworks, framework -> isConfigurationType(framework, configurationType));
+      return testFramework;
     }
     return null;
+  }
+
+  protected boolean isConfigurationType(TestFramework framework, ConfigurationType configurationType) {
+    return framework instanceof JvmTestFramework && ((JvmTestFramework)framework).isMyConfigurationType(configurationType);
+  }
+  
+  protected boolean hasDetectedTestFramework(PsiClass psiClass) {
+    return getCurrentFramework(psiClass) != null;
   }
 
   protected boolean isApplicableTestType(String type, ConfigurationContext context) {
@@ -84,16 +113,9 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     if (isMultipleElementsSelected(context)) {
       return false;
     }
+    if (!isApplicableTestType(configuration.getTestType(), context)) return false;
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(getConfigurationType());
-    final Location contextLocation = context.getLocation();
-    if (contextLocation == null) {
-      return false;
-    }
-    Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
-    if (location == null) {
-      return false;
-    }
-    final PsiElement element = location.getPsiElement();
+    
     RunnerAndConfigurationSettings template = context.getRunManager().getConfigurationTemplate(getConfigurationFactory());
     T templateConfiguration = (T)template.getConfiguration();
     final Module predefinedModule = templateConfiguration.getConfigurationModule().getModule();
@@ -107,14 +129,19 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       vmParameters = templateConfiguration.getVMParameters();
     }
     if (!Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
+
+    final Location contextLocation = context.getLocation();
+    if (contextLocation == null) {
+      return false;
+    }
     if (differentParamSet(configuration, contextLocation)) return false;
 
-    if (!isApplicableTestType(configuration.getTestType(), context)) return false;
-
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (psiClass != null && getCurrentFramework(psiClass) == null) return false;
-
-    if (configuration.isConfiguredByElement(element)) {
+    Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    if (location == null) {
+      return false;
+    }
+    
+    if (isConfiguredByElement(configuration, context, location.getPsiElement())) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
       final Module locationModule = location.getModule();
       if (Comparing.equal(locationModule, configurationModule)) return true;
@@ -122,6 +149,17 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     }
 
     return false;
+  }
+
+  protected boolean isConfiguredByElement(@NotNull T configuration,
+                                          @NotNull ConfigurationContext context,
+                                          @NotNull PsiElement element) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (psiClass != null && !hasDetectedTestFramework(psiClass)) {
+      return false;
+    }
+
+    return configuration.isConfiguredByElement(element);
   }
 
   protected boolean differentParamSet(T configuration, Location contextLocation) {
@@ -132,7 +170,13 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
 
 
   public Module findModule(ModuleBasedConfiguration configuration, Module contextModule, Set<String> patterns) {
-    return JavaExecutionUtil.findModule(contextModule, patterns, configuration.getProject(), psiClass -> isTestClass(psiClass));
+    try {
+      return JavaExecutionUtil.findModule(contextModule, patterns, configuration.getProject(), psiClass -> isTestClass(psiClass));
+    }
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public void collectTestMembers(PsiElement[] psiElements,
@@ -140,14 +184,25 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
                                  boolean checkIsTest,
                                  PsiElementProcessor.CollectElements<PsiElement> collectingProcessor) {
     for (PsiElement psiElement : psiElements) {
-      if (psiElement instanceof PsiDirectory) {
-        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
+      if (psiElement instanceof PsiDirectory directory) {
+        Project project = directory.getProject();
+        DumbService dumbService = DumbService.getInstance(project);
+
+        PsiPackage aPackage;
+        try {
+          aPackage = dumbService.computeWithAlternativeResolveEnabled(
+            (ThrowableComputable<PsiPackage, Throwable>)() -> JavaDirectoryService.getInstance().getPackage(directory));
+        }
+        catch (IndexNotReadyException e) {
+          LOG.error(e);
+          aPackage = null;
+        }
         if (aPackage != null && !collectingProcessor.execute(aPackage)) {
           return;
         }
       }
       else {
-        psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class, false);
+        psiElement = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiMember.class, PsiClassOwner.class);
         if (psiElement instanceof PsiClassOwner) {
           final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
           for (PsiClass aClass : classes) {
@@ -190,7 +245,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
                                            boolean checkIsTest,
                                            LinkedHashSet<? super String> classes,
                                            PsiElementProcessor.CollectElements<PsiElement> processor) {
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
       return collectTestMembers(elements, checkAbstract, checkIsTest, processor, classes);
     }
@@ -214,16 +269,14 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
           else {
             element = editorFile.findElementAt(editor.getCaretModel().getOffset());
 
-            SelectionModel selectionModel = editor.getSelectionModel();
-            if (selectionModel.hasSelection()) {
-              int selectionStart = selectionModel.getSelectionStart();
-              PsiClass psiClass = PsiTreeUtil.getParentOfType(editorFile.findElementAt(selectionStart), PsiClass.class);
+            @NotNull TextRange range = editor.getCaretModel().getCurrentCaret().getSelectionRange();
+            if (!range.isEmpty()) {
+              PsiClass psiClass = PsiTreeUtil.getParentOfType(editorFile.findElementAt(range.getStartOffset()), PsiClass.class);
               if (psiClass != null) {
-                TextRange selectionRange = new TextRange(selectionStart, selectionModel.getSelectionEnd());
                 PsiMethod[] methodsInSelection = Arrays.stream(psiClass.getMethods())
                   .filter(method -> {
                     TextRange methodTextRange = method.getTextRange();
-                    return methodTextRange != null && selectionRange.contains(methodTextRange);
+                    return methodTextRange != null && range.contains(methodTextRange);
                   })
                   .toArray(PsiMethod[]::new);
                 if (methodsInSelection.length > 0) {
@@ -248,7 +301,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
             final PsiFile psiFile = psiManager.findFile(file);
             if (psiFile instanceof PsiClassOwner) {
               PsiClass[] psiClasses = ((PsiClassOwner)psiFile).getClasses();
-              if (element != null && psiClasses.length > 0) {
+              if (element != null) {
                 for (PsiClass aClass : psiClasses) {
                   if (PsiTreeUtil.isAncestor(aClass, element, false)) {
                     psiClasses = new PsiClass[]{aClass};
@@ -258,7 +311,10 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
               }
               collectTestMembers(psiClasses, checkAbstract, checkIsTest, processor);
               for (PsiElement psiMember : processor.getCollection()) {
-                classes.add(((PsiClass)psiMember).getQualifiedName());
+                String qName = ((PsiClass)psiMember).getQualifiedName();
+                if (qName != null) {
+                  classes.add(qName);
+                }
               }
             }
           }
@@ -272,10 +328,14 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   private boolean collectTestMembers(PsiElement[] elements,
                                      boolean checkAbstract,
                                      boolean checkIsTest,
-                                     PsiElementProcessor.CollectElements<PsiElement> processor, LinkedHashSet<? super String> classes) {
+                                     PsiElementProcessor.CollectElements<PsiElement> processor,
+                                     LinkedHashSet<? super String> classes) {
     collectTestMembers(elements, checkAbstract, checkIsTest, processor);
     for (PsiElement psiClass : processor.getCollection()) {
-      classes.add(getQName(psiClass));
+      String qName = getQName(psiClass);
+      if (qName != null) {
+        classes.add(qName);
+      }
     }
     return classes.size() > 1;
   }
@@ -299,11 +359,11 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     return null;
   }
 
-  public String getQName(PsiElement psiMember) {
+  public @Nullable String getQName(PsiElement psiMember) {
     return getQName(psiMember, null);
   }
 
-  public String getQName(PsiElement psiMember, Location location) {
+  public @Nullable String getQName(PsiElement psiMember, @Nullable Location location) {
     if (psiMember instanceof PsiClass) {
       return ClassUtil.getJVMClassName((PsiClass)psiMember);
     }
@@ -351,47 +411,54 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     }
   }
 
-  @Nullable
-  public static PsiPackage checkPackage(final PsiElement element) {
+  public static @Nullable PsiPackage checkPackage(final PsiElement element) {
     if (element == null || !element.isValid()) return null;
     final Project project = element.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (element instanceof PsiPackage) {
-      final PsiPackage aPackage = (PsiPackage)element;
-      final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
-      for (final PsiDirectory directory : directories) {
-        if (isSource(directory, fileIndex)) return aPackage;
-      }
-      return null;
-    }
-    else if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)element;
-      if (isSource(directory, fileIndex)) {
-        return JavaDirectoryService.getInstance().getPackage(directory);
-      }
-      else {
-        final VirtualFile virtualFile = directory.getVirtualFile();
-        //choose default package when selection on content root
-        if (virtualFile.equals(fileIndex.getContentRootForFile(virtualFile))) {
-          final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-          if (module != null) {
-            for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-              if (virtualFile.equals(entry.getFile())) {
-                final SourceFolder[] folders = entry.getSourceFolders();
-                Set<String> packagePrefixes = new HashSet<>();
-                for (SourceFolder folder : folders) {
-                  packagePrefixes.add(folder.getPackagePrefix());
+    DumbService dumbService = DumbService.getInstance(project);
+    try {
+      return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<PsiPackage, Throwable>)() -> {
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        if (element instanceof PsiPackage aPackage) {
+          final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
+          for (final PsiDirectory directory : directories) {
+            if (isSource(directory, fileIndex)) return aPackage;
+          }
+          return null;
+        }
+        else if (element instanceof PsiDirectory directory) {
+          if (isSource(directory, fileIndex)) {
+            return JavaDirectoryService.getInstance().getPackage(directory);
+          }
+          else {
+            final VirtualFile virtualFile = directory.getVirtualFile();
+            //choose default package when selection on content root
+            if (virtualFile.equals(fileIndex.getContentRootForFile(virtualFile))) {
+              final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+              if (module != null) {
+                for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+                  if (virtualFile.equals(entry.getFile())) {
+                    final SourceFolder[] folders = entry.getSourceFolders();
+                    Set<String> packagePrefixes = new HashSet<>();
+                    for (SourceFolder folder : folders) {
+                      packagePrefixes.add(folder.getPackagePrefix());
+                    }
+                    if (packagePrefixes.size() > 1) return null;
+                    return JavaPsiFacade.getInstance(project)
+                      .findPackage(packagePrefixes.isEmpty() ? "" : packagePrefixes.iterator().next());
+                  }
                 }
-                if (packagePrefixes.size() > 1) return null;
-                return JavaPsiFacade.getInstance(project).findPackage(packagePrefixes.isEmpty() ? "" : packagePrefixes.iterator().next());
               }
             }
+            return null;
           }
         }
-        return null;
-      }
+        else {
+          return null;
+        }
+      });
     }
-    else {
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
       return null;
     }
   }

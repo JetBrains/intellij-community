@@ -7,35 +7,17 @@ import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.cd
+import git4idea.test.checkout
+import git4idea.test.git
+import git4idea.test.last
+import git4idea.test.tac
+import git4idea.test.tacp
 import org.junit.Assume.assumeTrue
-import java.io.File
-import java.nio.file.Path
 
-class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
-  private lateinit var repository: GitRepository
-  private lateinit var community: GitRepository
-  private lateinit var bro: Path
-  private lateinit var bromunity: Path
-
-  override fun setUp() {
-    super.setUp()
-
-    val mainRepo = setupRepositories(projectPath, "parent", "bro")
-    repository = mainRepo.projectRepo
-    bro = mainRepo.bro
-
-    val communityDir = File(projectPath, "community")
-    assertTrue(communityDir.mkdir())
-    val enclosingRepo = setupRepositories(communityDir.path, "community_parent", "community_bro")
-    community = enclosingRepo.projectRepo
-    bromunity = enclosingRepo.bro
-
-    repository.update()
-    community.update()
-  }
-
+class GitMultiRepoUpdateTest : GitMultiRepoUpdateBaseTest() {
   fun `test update only roots with incoming changes`() {
     cd(bro)
     tacp("file")
@@ -85,7 +67,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
       val result = updateProcess.update(UpdateMethod.MERGE)
 
       assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
-      assertErrorNotification("Can't update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
+      assertErrorNotification("Cannot update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
     }
     finally {
       settings.syncSetting = syncSetting
@@ -119,7 +101,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), null, false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
     assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
-    assertErrorNotification("Can't Update: No Current Branch", GitUpdateProcess.getDetachedHeadErrorNotificationContent(community))
+    assertErrorNotification(GitBundle.message("notification.title.can.t.update.no.current.branch"), GitUpdateProcess.getDetachedHeadErrorNotificationContent(community))
   }
 
   private fun updateWithMerge(): GitUpdateResult {

@@ -1,10 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
@@ -15,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ParameterInfoImpl implements JavaParameterInfo {
   private static final Logger LOG = Logger.getInstance(ParameterInfoImpl.class);
@@ -104,18 +112,17 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     setType(parameter.getType());
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ParameterInfoImpl)) return false;
-
-    ParameterInfoImpl parameterInfo = (ParameterInfoImpl) o;
-
-    if (oldParameterIndex != parameterInfo.oldParameterIndex) return false;
-    if (defaultValue != null ? !defaultValue.equals(parameterInfo.defaultValue) : parameterInfo.defaultValue != null) return false;
-    if (!getName().equals(parameterInfo.getName())) return false;
-    return getTypeText().equals(parameterInfo.getTypeText());
+    return o instanceof ParameterInfoImpl parameterInfo &&
+           oldParameterIndex == parameterInfo.oldParameterIndex &&
+           Objects.equals(defaultValue, parameterInfo.defaultValue) &&
+           getName().equals(parameterInfo.getName()) &&
+           getTypeText().equals(parameterInfo.getTypeText());
   }
 
+  @Override
   public int hashCode() {
     final String name = getName();
     int result = name != null ? name.hashCode() : 0;
@@ -159,12 +166,17 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   }
 
   @Override
-  @Nullable
-  public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
+  public @Nullable PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
     if (StringUtil.isEmpty(defaultValue)) return null;
-    final PsiExpression expression =
-      JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText(defaultValue, expr);
-    return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
+    try {
+      final PsiExpression expression =
+        JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText(defaultValue, expr);
+      return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
+    }
+    catch (IncorrectOperationException e) {
+      //e.g when default value is a kotlin expression
+      return null;
+    }
   }
 
   @Override
@@ -216,49 +228,42 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return result.toArray(new ParameterInfoImpl[0]);
   }
 
-  @NotNull
   @Contract(value = "-> new", pure = true)
-  public static ParameterInfoImpl createNew() {
+  public static @NotNull ParameterInfoImpl createNew() {
     return create(NEW_PARAMETER);
   }
 
-  @NotNull
   @Contract(value = "_ -> new", pure = true)
-  public static ParameterInfoImpl create(int oldParameterIndex) {
+  public static @NotNull ParameterInfoImpl create(int oldParameterIndex) {
     return new ParameterInfoImpl(oldParameterIndex);
   }
 
-  @NotNull
   @Contract(value = "_ -> this")
-  public ParameterInfoImpl withName(@NonNls String name) {
+  public @NotNull ParameterInfoImpl withName(@NonNls String name) {
     setName(name);
     return this;
   }
 
-  @NotNull
   @Contract(value = "_ -> this")
-  public ParameterInfoImpl withType(PsiType aType) {
+  public @NotNull ParameterInfoImpl withType(PsiType aType) {
     setType(aType);
     return this;
   }
 
-  @NotNull
   @Contract(value = "_ -> this")
-  public ParameterInfoImpl withType(CanonicalTypes.Type typeWrapper) {
+  public @NotNull ParameterInfoImpl withType(CanonicalTypes.Type typeWrapper) {
     myType = typeWrapper;
     return this;
   }
 
-  @NotNull
   @Contract(value = "_ -> this")
-  public ParameterInfoImpl withDefaultValue(@NonNls String defaultValue) {
+  public @NotNull ParameterInfoImpl withDefaultValue(@NonNls String defaultValue) {
     this.defaultValue = defaultValue;
     return this;
   }
 
-  @NotNull
   @Contract(value = "-> this")
-  public ParameterInfoImpl useAnySingleVariable() {
+  public @NotNull ParameterInfoImpl useAnySingleVariable() {
     useAnySingleVariable = true;
     return this;
   }

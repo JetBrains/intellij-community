@@ -1,29 +1,37 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.*
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_INTERNAL_JAVA
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_JAVA_HOME
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_PROJECT_JDK
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.getAvailableJdk
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.getJdk
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.isValidJdk
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.resolveJdkName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkAdditionalData
+import com.intellij.openapi.projectRoots.SdkModel
+import com.intellij.openapi.projectRoots.SdkModificator
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.JavaDependentSdkType
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
-import com.intellij.openapi.projectRoots.impl.MockSdk
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.UsefulTestCase.assertThrows
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.lang.JavaVersion
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -61,12 +69,12 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
   fun testGetJdk() {
     assertThat(getJdk(project, null)).isNull()
 
-    assertThat(resolveJdkName(null, USE_INTERNAL_JAVA)?.homePath)
+    assertThat(resolveJdkName(null as Sdk?, USE_INTERNAL_JAVA)?.homePath)
       .isEqualTo(StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()), "/jre"))
 
     val javaHomeEnv = EnvironmentUtil.getValue("JAVA_HOME")?.let { FileUtil.toSystemIndependentName(it) }
     if (javaHomeEnv.isNullOrBlank()) {
-      assertThrows<UndefinedJavaHomeException>(UndefinedJavaHomeException::class.java) { getJdk(project, USE_JAVA_HOME) }
+      assertThrows(UndefinedJavaHomeException::class.java) { getJdk(project, USE_JAVA_HOME) }
     }
     else {
       assertThat(getJdk(project, USE_JAVA_HOME)?.homePath)
@@ -75,7 +83,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
     val sdk = IdeaTestUtil.getMockJdk9()
     WriteAction.run<Throwable> {
-      ProjectJdkTable.getInstance().addJdk(sdk, testFixture.testRootDisposable)
+      ProjectJdkTable.getInstance(project).addJdk(sdk, testFixture.testRootDisposable)
       ProjectRootManager.getInstance(project).projectSdk = sdk
     }
 
@@ -85,22 +93,30 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
   @Test
   fun testResolveJdkName() {
-    assertThat(resolveJdkName(null, null)).isNull()
+    // Kotlin generates private `testResolveJdkName$lambda-6` and `testResolveJdkName$lambda-7` methods,
+    // and JUnit yields a warning about non-public test method.
+    // Separate `doTestResolveJdkName` method makes Kotlin generate the same methods with another names,
+    // which are not considered as tests by JUnit.
+    doTestResolveJdkName()
+  }
 
-    assertThat(resolveJdkName(null, USE_INTERNAL_JAVA)?.homePath)
+  private fun doTestResolveJdkName() {
+    assertThat(resolveJdkName(null as Sdk?, null)).isNull()
+
+    assertThat(resolveJdkName(null as Sdk?, USE_INTERNAL_JAVA)?.homePath)
       .isEqualTo(StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()), "/jre"))
 
     val javaHomeEnv = EnvironmentUtil.getValue("JAVA_HOME")?.let { FileUtil.toSystemIndependentName(it) }
     if (javaHomeEnv.isNullOrBlank()) {
-      assertThrows<UndefinedJavaHomeException>(UndefinedJavaHomeException::class.java) { resolveJdkName(null, USE_JAVA_HOME) }
+      assertThrows(UndefinedJavaHomeException::class.java) { resolveJdkName(null as Sdk?, USE_JAVA_HOME) }
     }
     else {
-      assertThat(resolveJdkName(null, USE_JAVA_HOME)?.homePath)
+      assertThat(resolveJdkName(null as Sdk?, USE_JAVA_HOME)?.homePath)
         .isEqualTo(javaHomeEnv)
     }
 
-    assertThrows<ProjectJdkNotFoundException>(ProjectJdkNotFoundException::class.java) {
-      resolveJdkName(null, USE_PROJECT_JDK)
+    assertThrows(ProjectJdkNotFoundException::class.java) {
+      resolveJdkName(null as Sdk?, USE_PROJECT_JDK)
     }
     val sdk: Sdk = mock(Sdk::class.java)
     assertThat(resolveJdkName(sdk, USE_PROJECT_JDK))
@@ -114,8 +130,9 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
     val sdk9 = createMockJdk(JavaVersion.compose(9))
 
     WriteAction.run<Throwable> {
-      ProjectJdkTable.getInstance().addJdk(sdk8, testFixture.testRootDisposable)
-      ProjectJdkTable.getInstance().addJdk(sdk9, testFixture.testRootDisposable)
+      val jdkTable = ProjectJdkTable.getInstance(project)
+      jdkTable.addJdk(sdk8, testFixture.testRootDisposable)
+      jdkTable.addJdk(sdk9, testFixture.testRootDisposable)
     }
 
     assertThat(getAvailableJdk(project).second).isEqualTo(sdk9)
@@ -123,13 +140,20 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
   @Test
   fun testGetAvailableJdkPrefersProjectSDKDependency() {
+    SdkType.EP_NAME.point.registerExtension(TestJavaDependentSdkType.getInstance(), testFixture.testRootDisposable)
+
     val sdk8 = createMockJdk(JavaVersion.compose(8))
     val sdk9 = createMockJdk(JavaVersion.compose(9))
 
-    val dependentSDK = TestJavaDependentSdk(sdk8)
+    val dependentSDK = ProjectJdkTable.getInstance(project).createSdk("TestJavaDependentSdk", TestJavaDependentSdkType.getInstance())
+    val sdkModificator = dependentSDK.sdkModificator
+    sdkModificator.versionString = "1.0"
+    sdkModificator.homePath = "fake/path"
+    sdkModificator.sdkAdditionalData = TestJavaDependentAdditionalData(sdk8.name)
+    ApplicationManager.getApplication().runWriteAction { sdkModificator.commitChanges() }
 
     WriteAction.run<Throwable> {
-      with(ProjectJdkTable.getInstance()) {
+      with(ProjectJdkTable.getInstance(project)) {
         addJdk(sdk8, testFixture.testRootDisposable)
         addJdk(sdk9, testFixture.testRootDisposable)
         addJdk(dependentSDK, testFixture.testRootDisposable)
@@ -146,7 +170,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
     val jdkDir = FileUtil.createTempDirectory(jdkVersionStr, null)
     listOf("bin/javac",
            "bin/java",
-           "lib/rt.jar")
+           "jre/lib/rt.jar")
       .forEach {
         File(jdkDir, it).apply {
           parentFile.mkdirs()
@@ -162,11 +186,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
   }
 }
 
-class TestJavaDependentSdk(val sdk: Sdk) : MockSdk("TestJavaDependentSdk",
-                                                   "fake/path",
-                                                   "1.0",
-                                                   MultiMap.empty<OrderRootType, VirtualFile>(),
-                                                   TestJavaDependentSdkType.getInstance())
+class TestJavaDependentAdditionalData(val dependentSdkName: String) : SdkAdditionalData
 
 class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName) {
   companion object {
@@ -178,11 +198,11 @@ class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName)
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun isValidSdkHome(path: String?): Boolean {
+  override fun isValidSdkHome(path: String): Boolean {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun suggestSdkName(currentSdkName: String?, sdkHome: String?): String {
+  override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
@@ -195,7 +215,9 @@ class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName)
   }
 
   override fun getBinPath(sdk: Sdk): String {
-    return (sdk as? TestJavaDependentSdk)?.let { JavaSdk.getInstance().getBinPath(it.sdk) }!!
+    val additionalData = sdk.sdkAdditionalData as TestJavaDependentAdditionalData
+    val dependentSdk = ProjectJdkTable.getInstance().findJdk(additionalData.dependentSdkName)!!
+    return JavaSdk.getInstance().getBinPath(dependentSdk)
   }
 
   override fun getToolsPath(sdk: Sdk): String {
@@ -207,7 +229,10 @@ class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName)
   }
 
   override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    additional.setAttribute("dependentSdkName", (additionalData as TestJavaDependentAdditionalData).dependentSdkName)
   }
 
+  override fun loadAdditionalData(additional: Element): SdkAdditionalData {
+    return TestJavaDependentAdditionalData(additional.getAttributeValue("dependentSdkName") ?: "")
+  }
 }

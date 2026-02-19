@@ -5,8 +5,11 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.TabbedContent
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import javax.swing.Icon
 
+@ApiStatus.Internal
 open class SelectContentStep : BaseListPopupStep<Content> {
   constructor(contents: Array<Content>) : super(null, *contents)
   constructor(contents: List<Content>) : super(null, contents)
@@ -18,6 +21,8 @@ open class SelectContentStep : BaseListPopupStep<Content> {
   override fun getTextFor(value: Content): String {
     return value.asMultiTabbed()?.titlePrefix ?: value.displayName ?: super.getTextFor(value)
   }
+
+  override fun getBackgroundFor(value: Content): Color? = value.tabColor
 
   override fun hasSubstep(value: Content): Boolean = value.asMultiTabbed() != null
 

@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +25,11 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
-    enableInspectionTool(new UnusedImportInspection());
+    if (!getTestName(false).startsWith("OnlyUncheckedWarning")) {
+      enableInspectionTool(new UnusedDeclarationInspection());
+      enableInspectionTool(new UnusedImportInspection());
+      enableInspectionTool(new JavacQuirksInspection());
+    }
   }
 
   @Override
@@ -51,7 +43,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   private void doTest(@NotNull LanguageLevel languageLevel, @NotNull JavaSdkVersion sdkVersion, boolean checkWarnings) {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(languageLevel);
+    IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), languageLevel);
     IdeaTestUtil.setTestVersion(sdkVersion, getModule(), getTestRootDisposable());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
@@ -250,21 +242,21 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA107782() { doTest5(false);}
   public void testInheritedWithDifferentArgsInTypeParams() { doTest5(false);}
   public void testInheritedWithDifferentArgsInTypeParams1() { doTest5(false);}
-  public void testIllegalForwardReferenceInTypeParameterDefinition() { doTest5(false);}
+  public void testIllegalForwardReferenceInTypeParameterDefinition() { doTest5(true);}
   public void testIDEA57877() { doTest5(false);}
   public void testIDEA110568() { doTest5(false);}
   public void testTypeParamsCyclicInference() { doTest5(false);}
   public void testCaptureTopLevelWildcardsForConditionalExpression() { doTest5(false);}
   public void testGenericsOverrideMethodInRawInheritor() { doTest5(false);}
   public void testIDEA107654() { doTest5(false); }
-  public void testIDEA55510() { doTest5(false); }
+  public void testIDEA55510() { doTest5(true); }
   public void testIDEA27185(){ doTest6(false); }
   public void testIDEA67571(){ doTest7(false); }
   public void testTypeArgumentsOnRawType(){ doTest6(false); }
   public void testTypeArgumentsOnRawType17(){ doTest7(false); }
   public void testWildcardsOnRawTypes() { doTest5(false); }
   public void testDisableWithinBoundsCheckForSuperWildcards() { doTest7(false); }
-  public void testIDEA108287() { doTest5(false); }
+  public void testIDEA108287() { doTest5(true); }
   public void testIDEA77128() { doTest7(false); }
   public void testDisableCastingToNestedWildcards() { doTest5(false); }
   public void testBooleanInferenceFromIfCondition() { doTest7(false); }
@@ -297,15 +289,15 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA87860() { doTest5(false); }
   public void testIDEA67584() { doTest5(false); }
   public void testIDEA113225() { doTest5(false); }
-  public void testIDEA67518() { doTest5(false); }
+  public void testIDEA67518() { doTest5(true); }
 
   public void testIDEA57252() {
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    doTest5(false);
+    doTest5(true);
   }
 
   public void testIDEA57274() { doTest7(false); }
-  public void testIDEA67591() { doTest5(false); }
+  public void testIDEA67591() { doTest5(true); }
   public void testIDEA114894() { doTest5(false); }
   public void testIDEA60818() { doTest5(false); }
   public void testIDEA63331() { doTest5(false); }
@@ -413,7 +405,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     PsiManager manager = getPsiManager();
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(
-      PsiType.INT.getBoxedType(manager, scope), PsiType.LONG.getBoxedType(manager, scope), manager);
+      PsiTypes.intType().getBoxedType(manager, scope), PsiTypes.longType().getBoxedType(manager, scope), manager);
     assertNotNull(leastUpperBound);
     assertEquals("Number & Comparable<? extends Number & Comparable<?>>", leastUpperBound.getPresentableText());
   }
@@ -443,4 +435,11 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA128159() { doTest6(false); }
   public void testIDEA139214() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
   public void testUnboxingWildcards() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
+  public void testOnlyUncheckedWarningWithCast(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
+  public void testOnlyUncheckedWarningCastWithInnerClasses(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
+  public void testOnlyUncheckedWarningCastWithDuplicatedArguments(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
+  public void testCastUnboxingConversionWithWidening(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
+  public void testVarCaptureForLoop(){doTest(LanguageLevel.JDK_10, JavaSdkVersion.JDK_10, true);}
+
+  public void testInvalidCastWithNestedGeneric(){doTest(LanguageLevel.JDK_1_8, JavaSdkVersion.JDK_1_8, true);}
 }

@@ -11,41 +11,41 @@ import com.intellij.util.ArrayUtilRt;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import java.awt.BorderLayout;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Set;
 
-public class GroupList extends JPanel
-{
-    private final JList list;
+public class GroupList extends JPanel {
+  private final JList<String> list;
 
-    public GroupList(PsiClass[] classes)
-    {
-        super(new BorderLayout());
-        SortedListModel<String> model = new SortedListModel<>((s1, s2) -> s1.compareTo(s2));
-        list = new JBList(model);
-        Set<String> groups = TestNGUtil.getAnnotationValues("groups", classes);
-      String[] array = ArrayUtilRt.toStringArray(groups);
-        Arrays.sort(array);
-        model.addAll(array);
-        add(ScrollPaneFactory.createScrollPane(list));
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        ScrollingUtil.ensureSelectionExists(list);
-    }
+  public GroupList(PsiClass[] classes) {
+    super(new BorderLayout());
+    SortedListModel<String> model = new SortedListModel<>(Comparator.naturalOrder());
+    list = new JBList<>(model);
+    Set<String> groups = TestNGUtil.getAnnotationValues("groups", classes);
+    String[] array = ArrayUtilRt.toStringArray(groups);
+    Arrays.sort(array);
+    model.addAll(array);
+    add(ScrollPaneFactory.createScrollPane(list));
+    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    ScrollingUtil.ensureSelectionExists(list);
+  }
 
-    public String getSelected()
-    {
-        return (String)list.getSelectedValue();
-    }
+  public String getSelected() {
+    return list.getSelectedValue();
+  }
 
-    public static String showDialog(PsiClass[] classes, JComponent component)
-    {
-        GroupList groupList = new GroupList(classes);
-        DialogBuilder builder = new DialogBuilder(component);
-        builder.setCenterPanel(groupList);
-      builder.setPreferredFocusComponent(groupList.list);
-      builder.setTitle(TestngBundle.message("testng.choose.test.group"));
-        return builder.show() != 0 ? null : groupList.getSelected();
-    }
+  public static String showDialog(PsiClass[] classes, JComponent component) {
+    GroupList groupList = new GroupList(classes);
+    DialogBuilder builder = new DialogBuilder(component);
+    builder.setCenterPanel(groupList);
+    builder.setPreferredFocusComponent(groupList.list);
+    builder.setTitle(TestngBundle.message("testng.choose.test.group"));
+    return builder.show() != 0 ? null : groupList.getSelected();
+  }
 }

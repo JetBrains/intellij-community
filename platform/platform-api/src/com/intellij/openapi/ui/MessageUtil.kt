@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("MessageUtil")
 package com.intellij.openapi.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.NlsContexts.Button
+import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import javax.swing.Icon
 
 fun showYesNoDialog(@DialogTitle title: String,
@@ -30,7 +32,19 @@ fun showOkCancelDialog(@DialogTitle title: String,
                        @Button okText: String,
                        @Button cancelText: String = Messages.getCancelButton(),
                        icon: Icon? = null,
-                       doNotAskOption: DialogWrapper.DoNotAskOption? = null,
+                       doNotAskOption: DoNotAskOption? = null,
+                       project: Project? = null): Int {
+  return Messages.showOkCancelDialog(project, message, title, okText, cancelText, icon, doNotAskOption)
+}
+
+@Deprecated(message = "Use showOkCancelDialog overload with com.intellij.openapi.ui.DoNotAskOption parameters")
+@Messages.OkCancelResult
+fun showOkCancelDialog(@DialogTitle title: String,
+                       @DialogMessage message: String,
+                       @Button okText: String,
+                       @Button cancelText: String = Messages.getCancelButton(),
+                       icon: Icon? = null,
+                       doNotAskOption: DialogWrapper.DoNotAskOption?,
                        project: Project? = null): Int {
   return Messages.showOkCancelDialog(project, message, title, okText, cancelText, icon, doNotAskOption)
 }

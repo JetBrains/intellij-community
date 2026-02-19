@@ -8,7 +8,7 @@ class A {
     A(A field) {
       this("", field);
     }
-    A(String s, A field) {
+    A (String s, A field) {
       //here
         this.field = field;<caret>
     }

@@ -1,17 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.JvmDebuggerUtils;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
@@ -23,11 +24,12 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Type;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.Rectangle;
 import java.util.List;
 
 public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
@@ -36,24 +38,36 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
 
   public CustomFieldInplaceEditor(@NotNull XDebuggerTreeNode node,
                                   @Nullable UserExpressionDescriptorImpl descriptor,
-                                  @Nullable EnumerationChildrenRenderer renderer) {
+                                  @Nullable EnumerationChildrenRenderer renderer,
+                                  @NotNull DebuggerContextImpl debuggerContext) {
     super(node, "customField");
     myDescriptor = descriptor;
     myRenderer = renderer;
     myExpressionEditor.setExpression(descriptor != null ? TextWithImportsImpl.toXExpression(descriptor.getEvaluationText()) : null);
 
-    ValueDescriptorImpl parentDescriptor = ((JavaValue)((XValueContainerNode)node.getParent()).getValueContainer()).getDescriptor();
-    Pair<PsiElement, PsiType> pair = DebuggerUtilsImpl.getPsiClassAndType(getTypeName(parentDescriptor), getProject());
-    if (pair.first != null) {
-      myExpressionEditor.setContext(pair.first);
+    ValueDescriptorImpl parentDescriptor = JvmDebuggerUtils.getDescriptorFromNode(((XValueContainerNode<?>)node.getParent()), debuggerContext);
+
+    if (parentDescriptor == null) {
+      // Likely it is a remote mode, and it is not implemented yet
+      return;
     }
+
+    ReadAction.nonBlocking(() -> DebuggerUtilsImpl.getPsiClassAndType(getTypeName(parentDescriptor), getProject()).first)
+      .finishOnUiThread(ModalityState.defaultModalityState(), context -> {
+        if (context != null) {
+          myExpressionEditor.setContext(context);
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  public static void editNew(@NotNull XValueNodeImpl parentNode) {
-    ValueDescriptorImpl descriptor = ((JavaValue)parentNode.getValueContainer()).getDescriptor();
+  @ApiStatus.Internal
+  public static void editNew(@NotNull XValueNodeImpl parentNode, DebuggerContextImpl debuggerContext) {
+    ValueDescriptorImpl descriptor = JvmDebuggerUtils.getDescriptorFromNode(parentNode, debuggerContext);
+    if (descriptor == null) return;
     EnumerationChildrenRenderer renderer = EnumerationChildrenRenderer.getCurrent(descriptor);
     XDebuggerTreeNode newNode = parentNode.addTemporaryEditorNode(AllIcons.Debugger.Db_watch, null);
-    DebuggerUIUtil.invokeLater(() -> new CustomFieldInplaceEditor(newNode, null, renderer) {
+    DebuggerUIUtil.invokeLater(() -> new CustomFieldInplaceEditor(newNode, null, renderer, debuggerContext) {
       @Override
       public void cancelEditing() {
         super.cancelEditing();
@@ -73,7 +87,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
         if (lastRenderer instanceof CompoundReferenceRenderer &&
             NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)lastRenderer) &&
             !(((CompoundReferenceRenderer)lastRenderer).getChildrenRenderer() instanceof ExpressionChildrenRenderer)) {
-            ((CompoundReferenceRenderer)lastRenderer).setChildrenRenderer(enumerationChildrenRenderer);
+          ((CompoundReferenceRenderer)lastRenderer).setChildrenRenderer(enumerationChildrenRenderer);
         }
         else {
           NodeRenderer renderer =
@@ -87,8 +101,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     }.show());
   }
 
-  @Nullable
-  private static String getTypeName(ValueDescriptorImpl descriptor) {
+  private static @Nullable String getTypeName(ValueDescriptorImpl descriptor) {
     Type type = descriptor.getType();
     return type != null ? type.name() : null;
   }
@@ -126,9 +139,8 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
     }).getPath();
   }
 
-  @Nullable
   @Override
-  protected Rectangle getEditorBounds() {
+  protected @Nullable Rectangle getEditorBounds() {
     Rectangle bounds = super.getEditorBounds();
     if (bounds == null) {
       return null;

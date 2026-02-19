@@ -1,21 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.*;
-import com.intellij.structuralsearch.impl.matcher.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
+import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
+import com.intellij.structuralsearch.impl.matcher.XmlCompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.XmlMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.XmlCompilingVisitor;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -23,21 +39,15 @@ import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.parsing.XmlParserBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSearchTemplateInfo;
-
-/**
- * @author Eugene.Kudelevsky
- */
-public class XmlStructuralSearchProfile extends StructuralSearchProfile {
+public final class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public void compile(PsiElement @NotNull [] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
@@ -45,8 +55,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
+  public @NotNull PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new XmlMatchingVisitor(globalVisitor);
   }
 
@@ -55,27 +64,25 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME;
   }
 
-  @NotNull
   @Override
-  public String getTypedVarString(@NotNull PsiElement element) {
+  public @NotNull String getTypedVarString(@NotNull PsiElement element) {
     return element instanceof XmlText ? element.getText().trim() : super.getTypedVarString(element);
   }
 
-  @NotNull
   @Override
-  public NodeFilter getLexicalNodesFilter() {
-    return element -> XmlMatchUtil.isWhiteSpace(element) || element instanceof PsiErrorElement;
+  public boolean isMatchNode(PsiElement element) {
+    return !XmlMatchUtil.isWhiteSpace(element) && !(element instanceof PsiErrorElement);
   }
 
   @Override
-  @NotNull
-  public CompiledPattern createCompiledPattern() {
+  public @NotNull CompiledPattern createCompiledPattern() {
     return new XmlCompiledPattern();
   }
 
   @Override
   public boolean isMyLanguage(@NotNull Language language) {
-    return language instanceof XMLLanguage;
+    return language instanceof XMLLanguage &&
+           (!language.getID().equals("JSP") || ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @Override
@@ -87,7 +94,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
                                                   @NotNull Project project,
                                                   boolean physical) {
     text = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
-    @NonNls final String fileName = "dummy." + fileType.getDefaultExtension();
+    final @NonNls String fileName = "dummy." + fileType.getDefaultExtension();
     final PsiFile fileFromText =
       PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), physical, true);
 
@@ -114,21 +121,20 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return super.extendMatchedByDownUp(node);
   }
 
-  @NotNull
   @Override
-  public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
+  public @NotNull Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return XmlContextType.class;
   }
 
-  @NotNull
   @Override
-  public LanguageFileType detectFileType(@NotNull PsiElement context) {
+  public @NotNull LanguageFileType detectFileType(@NotNull PsiElement context) {
     final PsiFile file = context instanceof PsiFile ? (PsiFile)context : context.getContainingFile();
     final Language contextLanguage = context instanceof PsiFile ? null : context.getLanguage();
-    if (file.getLanguage() == HTMLLanguage.INSTANCE || (file.getFileType() == StdFileTypes.JSP && contextLanguage == HTMLLanguage.INSTANCE)) {
-      return StdFileTypes.HTML;
+    if (file.getLanguage() == HTMLLanguage.INSTANCE ||
+        (file.getFileType().getName().equals("JSP") && contextLanguage == HTMLLanguage.INSTANCE)) {
+      return HtmlFileType.INSTANCE;
     }
-    return StdFileTypes.XML;
+    return XmlFileType.INSTANCE;
   }
 
   @Override
@@ -149,11 +155,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       super.visitErrorElement(element);
       final String errorDescription = element.getErrorDescription();
       final PsiElement parent = element.getParent();
-      if (parent instanceof XmlAttribute && XmlPsiBundle.message("xml.parsing.expected.attribute.eq.sign").equals(errorDescription)) {
+      if (parent instanceof XmlAttribute && XmlParserBundle.message("xml.parsing.expected.attribute.eq.sign").equals(errorDescription)) {
         return;
       }
       else if (parent instanceof XmlTag &&
-               XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", ((XmlTag)parent).getName()).equals(errorDescription)) {
+               XmlParserBundle.message("xml.parsing.named.element.is.not.closed", ((XmlTag)parent).getName()).equals(errorDescription)) {
         return;
       }
       throw new MalformedPatternException(errorDescription);
@@ -171,8 +177,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   private static class XmlReplaceHandler extends StructuralReplaceHandler {
 
-    @NotNull private final Project myProject;
-    @NotNull private final ReplaceOptions myReplaceOptions;
+    private final @NotNull Project myProject;
+    private final @NotNull ReplaceOptions myReplaceOptions;
 
     XmlReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
       myProject = project;
@@ -191,9 +197,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         doReplaceInContext(info, elementToReplace, replacementToMake, elementParent);
       }
       else {
+        final LanguageFileType fileType = myReplaceOptions.getMatchOptions().getFileType();
+        assert fileType != null;
         final PsiElement[] replacements = MatcherImplUtil.createTreeFromText(replacementToMake,
                                                                              PatternTreeContext.Block,
-                                                                             myReplaceOptions.getMatchOptions().getFileType(),
+                                                                             fileType,
                                                                              myProject);
         if (replacements.length > 0) {
           final PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, replacements, replacementToMake, elementParent);
@@ -209,9 +217,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     }
 
     private void doReplaceInContext(ReplacementInfo info, PsiElement elementToReplace, String replacementToMake, PsiElement elementParent) {
+      final LanguageFileType fileType = myReplaceOptions.getMatchOptions().getFileType();
+      assert fileType != null;
       PsiElement[] replacements = MatcherImplUtil.createTreeFromText(replacementToMake,
                                                                      PatternTreeContext.Block,
-                                                                     myReplaceOptions.getMatchOptions().getFileType(),
+                                                                     fileType,
                                                                      myProject);
       if (replacements.length > 0 && !(replacements[0] instanceof XmlAttribute) && !(replacements[0] instanceof XmlTagChild)) {
         replacements = new PsiElement[] { replacements[0].getParent() };
@@ -221,13 +231,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         elementParent.addRangeBefore(replacements[0], replacements[replacements.length - 1], elementToReplace);
       }
       else if (replacements.length == 1) {
-        Replacer.handleComments(elementToReplace, replacements[0], info);
-        try {
-          elementParent.addBefore(replacements[0], elementToReplace);
-        }
-        catch (IncorrectOperationException e) {
-          elementToReplace.replace(replacements[0]);
-        }
+        elementToReplace.replace(replacements[0]);
+        return;
       }
 
       final int matchSize = info.getMatchesCount();
@@ -249,14 +254,26 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   private static final class XmlPredefinedConfigurations {
     static Configuration[] createPredefinedTemplates() {
       return new Configuration[]{
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.tag"), "<'a/>", getHtmlXml(), XmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.attribute"), "<'_tag 'attribute=\"'_value\"/>", getHtmlXml(), XmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.html.attribute"), "<'_tag 'attribute />", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.attribute.value"), "<'_tag '_attribute=\"'value\"/>", getHtmlXml(), XmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.html.attribute.value"), "<'_tag '_attribute='value />", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.html.tag.value"), "<table>'_content*</table>", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.ul.or.ol"), "<'_tag:[regex( ul|ol )] />", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "[!within( <ul> or <ol> (html search template) )]<li />", getHtmlXml(), HtmlFileType.INSTANCE)
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.template.xml.tag"), "Xml tag",
+                                                              "<'a/>", getHtmlXml(), XmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.template.xml.attribute"), "Xml attribute",
+                                                              "<'_tag 'attribute=\"'_value\"/>", getHtmlXml(), XmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.template.html.attribute"), "Html attribute",
+                                                              "<'_tag 'attribute />", getHtmlXml(), HtmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.template.xml.attribute.value"), "Xml attribute value",
+                                                              "<'_tag '_attribute=\"'value\"/>", getHtmlXml(), XmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.template.html.attribute.value"), "Html attribute value",
+                                                              "<'_tag '_attribute='value />", getHtmlXml(), HtmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.template.xml.html.tag.value"), "Xml/html tag value",
+                                                              "<table>'_content*</table>", getHtmlXml(), HtmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.template.ul.or.ol"), "<ul> or <ol>",
+                                                              "<'_tag:[regex( ul|ol )] />", getHtmlXml(), HtmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "<li> not contained in <ul> or <ol>",
+                                                              "[!within( <ul> or <ol> )]<li />", getHtmlXml(), HtmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createLegacyConfiguration(SSRBundle.message("predefined.configuration.xml.attribute.referencing.java.class"), "xml attribute referencing java class",
+                                                              "<'_tag 'attribute=\"'_value:[ref( classes, interfaces \\& enums )]\"/>", getHtmlXml(), XmlFileType.INSTANCE),
+        PredefinedConfigurationUtil.createConfiguration(SSRBundle.message("predefined.template.xml.tag.without.specific.attribute"), "XML tag without a specific attribute",
+                                                        "<'_tag '_attr{0,0}:attributeName />", getHtmlXml(), XmlFileType.INSTANCE),
       };
     }
 

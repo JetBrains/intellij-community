@@ -1,36 +1,50 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.pico.DefaultPicoContainer;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.GlobalScope;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
-import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 public class MockProject extends MockComponentManager implements Project {
   private static final Logger LOG = Logger.getInstance(MockProject.class);
   private VirtualFile myBaseDir;
+  private final CoroutineScope myCoroutineScope;
 
+  @Internal
   public MockProject(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     super(parent, parentDisposable);
+
+    myCoroutineScope = CoroutineScopeKt.childScope(GlobalScope.INSTANCE, "MockProject: " + this,
+                                                   EmptyCoroutineContext.INSTANCE, true);
   }
 
-  @NotNull
   @Override
-  public Condition<?> getDisposed() {
+  public void dispose() {
+    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, new CancellationException());
+
+    super.dispose();
+  }
+
+  @Override
+  public @NotNull Condition<?> getDisposed() {
     return o -> isDisposed();
   }
 
@@ -45,27 +59,27 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
+  }
+
+  @Override
   public VirtualFile getProjectFile() {
     return null;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getLocationHash() {
+  public @NotNull @NonNls String getLocationHash() {
     return "mock";
   }
 
   @Override
-  @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  public @Nullable @SystemIndependent String getProjectFilePath() {
     return null;
   }
 
@@ -79,15 +93,12 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getBaseDir() {
+  public @Nullable VirtualFile getBaseDir() {
     return myBaseDir;
   }
 
-  @Nullable
-  @SystemIndependent
   @Override
-  public String getBasePath() {
+  public @Nullable @SystemIndependent String getBasePath() {
     return null;
   }
 
@@ -95,19 +106,19 @@ public class MockProject extends MockComponentManager implements Project {
   public void save() {
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  @NotNull
-  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType, boolean createIfNotYet) {
+  public @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType) {
     List<T> result = new ArrayList<>();
-    DefaultPicoContainer container = (DefaultPicoContainer)getPicoContainer();
-    for (ComponentAdapter componentAdapter : container.unsafeGetAdapters()) {
-      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
-        // may be null in the case of the "implicit" adapter representing "this".
+    getPicoContainer().getComponentAdapters().forEach(componentAdapter -> {
+      Class<?> descendant = componentAdapter.getComponentImplementation();
+      if (componentType == descendant || componentType.isAssignableFrom(descendant)) {
         //noinspection unchecked
-        ContainerUtil.addIfNotNull(result, (T)componentAdapter.getComponentInstance(container));
+        T instance = (T)componentAdapter.getComponentInstance();
+        // may be null in the case of the "implicit" adapter representing "this"
+        if (instance != null) {
+          result.add(instance);
+        }
       }
-    }
+    });
     return result;
   }
 
@@ -120,5 +131,10 @@ public class MockProject extends MockComponentManager implements Project {
         LOG.error(component.toString(), e);
       }
     }
+  }
+
+  @Override
+  public final @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
+    return isExtension ? ActivityCategory.PROJECT_EXTENSION : ActivityCategory.PROJECT_SERVICE;
   }
 }

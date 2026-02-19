@@ -1,62 +1,118 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
  * Trie data structure for succinct storage and fast retrieval of file pointers.
  * File pointer "a/b/x.txt" is stored in the tree with nodes a->b->x.txt
  */
-class FilePartNode {
+@ApiStatus.Internal
+public class FilePartNode {
   public static final FilePartNode[] EMPTY_ARRAY = new FilePartNode[0];
-  static final int JAR_SEPARATOR_NAME_ID = -2;
-  private final int nameId; // name id of the VirtualFile corresponding to this node
-  FilePartNode @NotNull [] children = EMPTY_ARRAY; // sorted by this.getName(). elements never updated inplace
-  // file pointers for this exact path (i.e. concatenation of all getName() down from the root).
-  // Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g. after file rename onto existing pointer)
-  private Object leaves;
-  @NotNull
-  volatile Object myFileOrUrl;
-  final NewVirtualFileSystem myFS; // the file system of this particular component. E.g. for path "/x.jar!/foo.txt" the node "x.jar" fs is LocalFileSystem, the node "foo.txt" fs is JarFileSystem
 
-  FilePartNode(int nameId, @NotNull Object fileOrUrl, @NotNull NewVirtualFileSystem fs) {
-    myFS = fs;
+  protected static final int JAR_SEPARATOR_NAME_ID = -2;
+
+  private final int nameId; // name id of the VirtualFile corresponding to this node
+  /** Sorted by this.getName(), with case-sensitivity from {@link #fs}. Elements are never updated inplace */
+  FilePartNode @NotNull [] children = EMPTY_ARRAY;
+  /**
+   * file pointers for this exact path (i.e., concatenation of all getName() down from the root).
+   * Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g., after file rename onto existing pointer)
+   */
+  private Object leaves;
+  /** VirtualFile | String (=file url) */
+  volatile @NotNull Object fileOrUrl;
+
+  /** The file system of this particular component. E.g. for path "/x.jar!/foo.txt" the node "x.jar" fs is LocalFileSystem, the node "foo.txt" fs is JarFileSystem */
+  @NotNull
+  final NewVirtualFileSystem fs;
+
+  FilePartNode(int nameId,
+               @NotNull Object fileOrUrl,
+               @NotNull NewVirtualFileSystem fs) {
     assert nameId > 0 || nameId == JAR_SEPARATOR_NAME_ID : nameId + "; " + getClass();
     this.nameId = nameId;
-    myFileOrUrl = fileOrUrl;
-    if (fileOrUrl instanceof VirtualFile) {
-      assert myFile().getFileSystem() == myFS : "myFs=" + myFS + "; myFile().getFileSystem()=" + myFile().getFileSystem() + "; " + fileOrUrl;
-      if (myFile().getParent() == null && fs instanceof ArchiveFileSystem) {
+    this.fs = fs;
+
+    this.fileOrUrl = fileOrUrl;
+    if (fileOrUrl instanceof VirtualFile file) {
+      assert file.getFileSystem() == this.fs : "myFs=" + this.fs + "; myFile().getFileSystem()=" + file.getFileSystem() + "; " + fileOrUrl;
+      if (file.getParent() == null && fs instanceof ArchiveFileSystem) {
         assert nameId == JAR_SEPARATOR_NAME_ID : nameId;
       }
     }
   }
 
-  private VirtualFile myFile() {
-    return myFile(myFileOrUrl);
+  // for subclasses
+  protected FilePartNode(@NotNull NewVirtualFileSystem fs) {
+    nameId = -1;
+    fileOrUrl = "";
+    this.fs = fs;
+  }
+
+  @TestOnly
+  public @NotNull Object getFileOrUrl() {
+    return fileOrUrl;
+  }
+
+  private VirtualFile fileOrNull() {
+    return fileOrNull(fileOrUrl);
+  }
+
+  private @NotNull String url() {
+    return urlOf(fileOrUrl);
+  }
+
+  boolean isUrlBased() {
+    return fileOrUrl instanceof String;
+  }
+
+  /** @return VirtualFile if fileOrUrl is a file, or null, if fileOrUrl is string URL */
+  static @Nullable VirtualFile fileOrNull(@NotNull Object fileOrUrl) {
+    return fileOrUrl instanceof VirtualFile ? (VirtualFile)fileOrUrl : null;
+  }
+
+  /** @return URL from fileOrUrl  */
+  static @NotNull String urlOf(@NotNull Object fileOrUrl) {
+    return fileOrUrl instanceof VirtualFile ? ((VirtualFile)fileOrUrl).getUrl() : (String)fileOrUrl;
   }
 
   void addLeaf(@NotNull VirtualFilePointerImpl pointer) {
@@ -73,7 +129,8 @@ class FilePartNode {
     }
     associate(newLeaves);
   }
-  // return remaining leaves number
+
+  /** return remaining leaves number */
   int removeLeaf(@NotNull VirtualFilePointerImpl pointer) {
     Object leaves = this.leaves;
     if (leaves == null) {
@@ -92,40 +149,18 @@ class FilePartNode {
     return newLeaves == null ? 0 : newLeaves.length;
   }
 
-  static VirtualFile myFile(@NotNull Object fileOrUrl) {
-    return fileOrUrl instanceof VirtualFile ? (VirtualFile)fileOrUrl : null;
+  static @NotNull CharSequence fromNameId(int nameId) {
+    return nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : FSRecords.getInstance().getNameByNameId(nameId);
   }
 
-  @NotNull
-  private String myUrl() {
-    return myUrl(myFileOrUrl);
-  }
-
-  @NotNull
-  static String myUrl(Object fileOrUrl) {
-    return fileOrUrl instanceof VirtualFile ? ((VirtualFile)fileOrUrl).getUrl() : (String)fileOrUrl;
-  }
-
-  // for creating fake root
-  FilePartNode(@NotNull NewVirtualFileSystem fs) {
-    nameId = -1;
-    myFileOrUrl = "";
-    myFS = fs;
-  }
-
-  @NotNull
-  static CharSequence fromNameId(int nameId) {
-    return nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : FileNameCache.getVFileName(nameId);
-  }
-
-  @NotNull
-  CharSequence getName() {
+  @NotNull CharSequence getName() {
     return fromNameId(nameId);
   }
 
   @Override
   public String toString() {
-    return getName() + (children.length == 0 ? "" : " -> "+children.length);
+    return "FilePartNode: '" + getName() + "'; children: " + children.length + "; fs=" +
+           fs + "; myFileOrUrl=" + fileOrUrl + "; " + fileOrUrl.getClass();
   }
 
   static int getNameId(@NotNull VirtualFile file) {
@@ -133,7 +168,7 @@ class FilePartNode {
     if (fs instanceof ArchiveFileSystem && file.getParent() == null) {
       return JAR_SEPARATOR_NAME_ID;
     }
-    
+
     return ((VirtualFileSystemEntry)file).getNameId();
   }
 
@@ -144,28 +179,29 @@ class FilePartNode {
                                  @NotNull NewVirtualFileSystem childFs) {
     if (nameId <= 0 && nameId != JAR_SEPARATOR_NAME_ID) throw new IllegalArgumentException("invalid argument nameId: "+nameId);
     for (FilePartNode child : children) {
-      if (child.nameEqualTo(nameId)) return child;
+      if (child.nameEqualTo(nameId, childFs)) return child;
     }
     if (createIfNotFound) {
       CharSequence name = fromNameId(nameId);
       int index = children.length == 0 ? -1 : binarySearchChildByName(name);
       FilePartNode child;
-      assert index < 0 : index + " : child= '" + (child = children[index]) + "'"
-                         + "; child.nameEqualTo(nameId)=" + child.nameEqualTo(nameId)
+      //@formatter:off
+      if (index >= 0) throw new AssertionError(index + " : child= '" + (child = children[index]) + "'"
+                         + "; child.nameEqualTo(nameId)=" + child.nameEqualTo(nameId, childFs)
                          + "; child.getClass()=" + child.getClass()
                          + "; child.nameId=" + child.nameId
                          + "; child.getName()='" + child.getName() + "'"
                          + "; nameId=" + nameId
                          + "; name='" + name + "'"
                          + "; compare(child) = " + StringUtil.compare(child.getName(), name, !isCaseSensitive()) + ";"
-                         + " UrlPart.nameEquals: " + FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(child.getName(), fromNameId(nameId))
+                         + " UrlPart.nameEquals: " + StringUtilRt.equal(child.getName(), fromNameId(nameId), SystemInfoRt.isFileSystemCaseSensitive)
                          + "; name.equals(child.getName())=" + child.getName().equals(name)
-                         + "; file="+file
-                         + "; this.isCaseSensitive()="+isCaseSensitive()
-        ;
+                         + "; file=" + file
+                         + "; this.isCaseSensitive()=" + isCaseSensitive());
+      //@formatter:on
       Object fileOrUrl = file;
       if (fileOrUrl == null) {
-        fileOrUrl = this.nameId == -1 ? name.toString() : childUrl(myUrl(), name, childFs);
+        fileOrUrl = this.nameId == -1 ? name.toString() : childUrl(url(), name, childFs);
       }
       child = new FilePartNode(nameId, fileOrUrl, childFs);
       children = ArrayUtil.insert(children, -index-1, child);
@@ -174,15 +210,26 @@ class FilePartNode {
     return null;
   }
 
-  boolean nameEqualTo(int nameId) {
-    return this.nameId == nameId;
+  /** @return true if this part's name is equal to the name denoted by nameId, with case-sensitivity from childFs */
+  boolean nameEqualTo(int nameId,
+                      @NotNull NewVirtualFileSystem childFs) {
+    if (this.nameId == nameId) {
+      return true;
+    }
+    boolean caseSensitive = childFs.isCaseSensitive();
+    if (caseSensitive) {
+      return false;
+    }
+
+    return StringUtilRt.equal(getName(), fromNameId(nameId), caseSensitive);
   }
 
   int binarySearchChildByName(@NotNull CharSequence name) {
+    boolean ignoreCase = !isCaseSensitive();
     return ObjectUtils.binarySearch(0, children.length, i -> {
       FilePartNode child = children[i];
       CharSequence childName = child.getName();
-      return StringUtil.compare(childName, name, !child.isCaseSensitive());
+      return StringUtil.compare(childName, name, ignoreCase);
     });
   }
 
@@ -191,40 +238,47 @@ class FilePartNode {
   }
 
   void doCheckConsistency(@Nullable VirtualFile parent, @NotNull String name, @NotNull String urlFromRoot) {
-    VirtualFile myFile = myFile();
+    VirtualFile myFile = fileOrNull();
 
     if (!(this instanceof FilePartNodeRoot)) {
       if (myFile == null) {
-        String myUrl = myUrl();
+        String myUrl = url();
         String expectedUrl = StringUtil.trimEnd(urlFromRoot, '/');
         String actualUrl = StringUtil.trimEnd(myUrl, '/');
-        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
+        assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'; parent="+parent+"; name="+name+"; urlFromParent="+urlFromRoot;
       }
       else {
-        assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) : "parent: " + parent + "; myFile: " + myFile;
+        assert Comparing.equal(getParentThroughJar(myFile, fs), parent) :
+          "parent: " + parent + "\n myFile: " + myFile + "\n getParentThroughJar(myFile, myFS): " + getParentThroughJar(myFile, fs) +
+          "\n myFS: " + fs + "\n myFile.getParent(): " + myFile.getParent() + "\n this: " + this;
       }
     }
     assert !"..".equals(name) && !".".equals(name) : "url must not contain '.' or '..' but got: " + this;
     String prevChildName = "";
+    Set<String> childNames = CollectionFactory.createFilePathSet(children.length, isCaseSensitive());
     for (int i = 0; i < children.length; i++) {
       FilePartNode child = children[i];
       String childName = child.getName().toString();
+      boolean added = childNames.add(childName);
+      assert added : "'" + childName + "' is already in the childNames set (" + childNames + "). isCaseSensitive()=" + isCaseSensitive() + ";\n all children=" + Arrays.toString(children);
+
       boolean needSeparator = !urlFromRoot.isEmpty() && !urlFromRoot.endsWith("/") && !childName.equals(JarFileSystem.JAR_SEPARATOR);
       String childUrlFromRoot = needSeparator ? urlFromRoot + "/" + childName : urlFromRoot + childName;
-      if (child.myFS != myFS) {
+      if (child.fs != fs) {
         // "file:" changed to "jar:"
-        childUrlFromRoot = child.myFS.getProtocol() + StringUtil.trimStart(childUrlFromRoot, myFS.getProtocol());
+        childUrlFromRoot = child.fs.getProtocol() + StringUtil.trimStart(childUrlFromRoot, fs.getProtocol());
       }
       child.doCheckConsistency(myFile, childName, childUrlFromRoot);
       if (i != 0) {
-        assert StringUtil.compare(prevChildName, childName, !child.isCaseSensitive()) < 0: "child[" + i + "] = " + child + "; [-1] = " + children[i - 1];
+        assert StringUtil.compare(prevChildName, childName, !isCaseSensitive()) < 0: "children[" + i + "] = " + child + "; [-1] = " + children[i - 1] +"; isCaseSensitive()="+isCaseSensitive();
       }
       // fs is allowed to change in one direction only: local->jar
-      assert myFS instanceof LocalFileSystem && (child.myFS instanceof ArchiveFileSystem || child.myFS instanceof LocalFileSystem)
-        || myFS instanceof ArchiveFileSystem && child.myFS instanceof ArchiveFileSystem
-        : "this: "+this+"; fs="+myFS+"; child[" + i + "] = " + child + "; fs="+child.myFS;
+      assert fs instanceof LocalFileSystem && (child.fs instanceof ArchiveFileSystem || child.fs instanceof LocalFileSystem)
+             || fs instanceof ArchiveFileSystem && child.fs instanceof ArchiveFileSystem
+        : "this: " + this + "; fs=" + fs + "; child[" + i + "] = " + child + "; fs=" + child.fs;
       // child of UrlPartNode can be only UrlPartNode
-      assert !(this instanceof UrlPartNode) || child instanceof UrlPartNode : "this: "+this+"; fs="+myFS+"; child[" + i + "] = " + child + "; fs="+child.myFS;
+      assert !(this instanceof UrlPartNode) || child instanceof UrlPartNode : "this: " + this + "; fs=" +
+                                                                              fs + "; child[" + i + "] = " + child + "; fs=" + child.fs;
       prevChildName = childName;
     }
     int[] leafNumber = new int[1];
@@ -232,25 +286,31 @@ class FilePartNode {
     int useCount = leafNumber[0];
     assert (useCount == 0) == (leaves == null) : useCount + " - " + (leaves instanceof VirtualFilePointerImpl ? leaves : Arrays.toString((VirtualFilePointerImpl[])leaves));
 
-    if (myFileOrUrl instanceof String) {
-      String myPath = VfsUtilCore.urlToPath(myUrl());
+    if (fileOrUrl instanceof String) {
+      String myPath = VfsUtilCore.urlToPath(url());
       String nameFromPath = nameId == JAR_SEPARATOR_NAME_ID || myPath.endsWith(JarFileSystem.JAR_SEPARATOR) ? JarFileSystem.JAR_SEPARATOR : PathUtil.getFileName(myPath);
       if (!myPath.isEmpty() && nameFromPath.isEmpty()) {
         nameFromPath = "/";
       }
-      assert StringUtilRt.equal(nameFromPath, name, isCaseSensitive()) : "fileAndUrl: " + myFileOrUrl + "; but this: " + this + "; nameFromPath: " + nameFromPath + "; name: " + name + "; myPath: " + myPath + "; url: " + myUrl() + ";";
+      assert StringUtilRt.equal(nameFromPath, name, isCaseSensitive()) : "fileAndUrl: " +
+                                                                         fileOrUrl + "; but this: " + this + "; nameFromPath: " + nameFromPath + "; name: " + name + "; myPath: " + myPath + "; url: " + url() + ";";
       if (myFile != null) {
         String fileName = myFile.getParent() == null && myFile.getFileSystem() instanceof ArchiveFileSystem ? JarFileSystem.JAR_SEPARATOR : myFile.getName();
-        assert fileName.equals(name) : "fileAndUrl: " + myFileOrUrl + "; but this: " + this;
-        assert myFile.getFileSystem() == myFS;
+        assert fileName.equals(name) : "fileAndUrl: " + fileOrUrl + "; but this: " + this;
+        assert myFile.getFileSystem() == fs;
       }
     }
   }
 
-  // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all subnodes
-  void update(@NotNull FilePartNode parent, @NotNull FilePartNodeRoot root, @NotNull String debugSource, @Nullable Object debugInvalidationReason) {
-    Object fileOrUrl = myFileOrUrl;
-    VirtualFile file = myFile(fileOrUrl);
+  // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all sub-nodes
+  @VisibleForTesting
+  public void update(@NotNull FilePartNode parent,
+              @NotNull FilePartNodeRoot root,
+              @NotNull String debugSource,
+              @Nullable Object debugInvalidationReason) {
+    boolean oldCaseSensitive = isCaseSensitive();
+    Object fileOrUrl = this.fileOrUrl;
+    VirtualFile file = fileOrNull(fileOrUrl);
     boolean changed = false;
     boolean nameChanged = false;
     boolean fileIsValid = false;
@@ -267,18 +327,18 @@ class FilePartNode {
     }
 
     Object parentFileOrUrl;
-    parentFileOrUrl = parent.myFileOrUrl;
+    parentFileOrUrl = parent.fileOrUrl;
     String myName = getName().toString();
     String url = null;
     String parentUrl = null;
 
-    VirtualFile parentFile = myFile(parentFileOrUrl);
+    VirtualFile parentFile = fileOrNull(parentFileOrUrl);
     if (file == null) {
-      file = parentFile == null || !parentFile.isValid() ? null : findChildThroughJar(parentFile, myName, myFS);
+      file = parentFile == null || !parentFile.isValid() ? null : findChildThroughJar(parentFile, myName, fs);
       if (file == null) {
-        parentUrl = myUrl(parentFileOrUrl);
-        url = childUrl(parentUrl, myName, myFS);
-        changed |= nameChanged = !Comparing.strEqual(url, myUrl(fileOrUrl));
+        parentUrl = urlOf(parentFileOrUrl);
+        url = childUrl(parentUrl, myName, fs);
+        changed |= nameChanged = !Comparing.strEqual(url, urlOf(fileOrUrl));
       }
       else {
         changed = true;
@@ -286,10 +346,10 @@ class FilePartNode {
       fileIsValid = file != null && file.isValid();
     }
     if (parent.nameId != -1 && !(parentFileOrUrl instanceof VirtualFile) && file != null) {
-      // if parent file can't be found then the child is not valid too
+      // if the parent file can't be found, then the child is not valid either
       file = null;
       fileIsValid = false;
-      url = myUrl(fileOrUrl);
+      url = urlOf(fileOrUrl);
     }
     if (file != null) {
       if (fileIsValid) {
@@ -298,38 +358,37 @@ class FilePartNode {
       else {
         file = null; // can't find, try next time
         changed = true;
-        url = myUrl(fileOrUrl);
+        url = urlOf(fileOrUrl);
       }
     }
     Object result = file == null ? url : file;
     changed |= !Objects.equals(fileOrUrl, result);
     FilePartNode thisNode = this;
     if (changed) {
-      VirtualFile oldFile = myFile(fileOrUrl);
+      VirtualFile oldFile = fileOrNull(fileOrUrl);
       if (oldFile != null && file == null && debugInvalidationReason != null) {
         ((VirtualFileSystemEntry)oldFile).appendInvalidationReason(debugSource, debugInvalidationReason);
       }
-      myFileOrUrl = result;
+      this.fileOrUrl = result;
       if (file != null && (this instanceof UrlPartNode || nameChanged)) {
         // replace with FPPN if the actual file's appeared on disk to save memory with nameIds
         thisNode = replaceWithFPPN(file, parent);
       }
     }
-    if (file != null && !Objects.equals(getParentThroughJar(file, myFS), parentFile)) {
+    if (file != null && !Objects.equals(getParentThroughJar(file, fs), parentFile)) {
       // this node file must be moved to the other dir. remove and re-insert from the root to the correct path, preserving all children
       FilePartNode newNode = root.findOrCreateByFile(file).node;
       processPointers(p -> newNode.addLeaf(p));
       newNode.children = children;
       children = EMPTY_ARRAY;
       changed = true;
-      String myOldPath = VfsUtilCore.urlToPath(childUrl(parentUrl=myUrl(parentFileOrUrl), myName, myFS));
-      root.removeEmptyNodesByPath(FilePartNodeRoot.splitNames(myOldPath));
+      root.removeEmptyNodesByPath(VfsUtilCore.urlToPath(childUrl(parentUrl = urlOf(parentFileOrUrl), myName, fs)));
       thisNode = newNode;
       nameChanged = true;
     }
     if (nameChanged) {
-      String myOldPath = VfsUtilCore.urlToPath(childUrl(parentUrl == null ? myUrl(parentFileOrUrl) : parentUrl, myName, myFS));
-      String myNewPath = VfsUtilCore.urlToPath(myUrl(result));
+      String myOldPath = VfsUtilCore.urlToPath(childUrl(parentUrl == null ? urlOf(parentFileOrUrl) : parentUrl, myName, fs));
+      String myNewPath = VfsUtilCore.urlToPath(urlOf(result));
       // fix UrlPartNodes with (now) wrong url start
       thisNode.fixUrlPartNodes(myOldPath, myNewPath);
     }
@@ -346,29 +405,54 @@ class FilePartNode {
         child = thisNode.children[i];
       }
       if (file == null) {
-        VirtualFile childFile = child.myFile();
+        VirtualFile childFile = child.fileOrNull();
         if (childFile != null) {
           // child found which has a file but this node doesn't, should replace me with FPPN
-          toReplaceParent = getParentThroughJar(childFile, child.myFS);
+          toReplaceParent = getParentThroughJar(childFile, child.fs);
         }
       }
     }
     if (toReplaceParent != null) {
-      replaceWithFPPN(toReplaceParent, parent);
+      thisNode = replaceWithFPPN(toReplaceParent, parent);
+    }
+    // sometimes the case sensitivity of the directory is established only after its children.
+    // when it's changed, we should re-sort children according to the new case sensitivity
+    VirtualFile newFile = thisNode.fileOrNull();
+    boolean newCaseSensitive = thisNode.isCaseSensitive();
+    if (newFile != null && newCaseSensitive != oldCaseSensitive) {
+      Arrays.sort(thisNode.children, (c1, c2) -> StringUtil.compare(c1.getName(), c2.getName(), !newCaseSensitive));
     }
   }
 
   private void fixUrlPartNodes(@NotNull String oldPath, @NotNull String newPath) {
     if (this instanceof UrlPartNode) {
-      String protocol = myFS.getProtocol();
-      String myUrl = myUrl();
+      String protocol = fs.getProtocol();
+      String myUrl = url();
       if (StringUtil.startsWith(myUrl, protocol.length()+URLUtil.SCHEME_SEPARATOR.length(), oldPath)) {
-        myFileOrUrl = protocol + URLUtil.SCHEME_SEPARATOR + newPath + myUrl.substring(protocol.length() + URLUtil.SCHEME_SEPARATOR.length()+oldPath.length());
+        fileOrUrl = protocol + URLUtil.SCHEME_SEPARATOR + newPath + myUrl.substring(protocol.length() + URLUtil.SCHEME_SEPARATOR.length() + oldPath.length());
       }
     }
     for (FilePartNode child : children) {
       child.fixUrlPartNodes(oldPath, newPath);
     }
+  }
+
+  void replaceChildrenWithUPN() {
+    children = ContainerUtil.map(children, n -> n.replaceWithUPN(this), EMPTY_ARRAY);
+  }
+
+  private @NotNull UrlPartNode replaceWithUPN(@NotNull FilePartNode parent) {
+    if (this instanceof UrlPartNode) return (UrlPartNode)this;
+    if (this instanceof FilePartNodeRoot) throw new IllegalArgumentException("invalid argument node: " + this);
+
+    UrlPartNode newNode = new UrlPartNode(getName().toString(), parent.url(), fs);
+    newNode.children = children;
+    newNode.replaceChildrenWithUPN();
+    processPointers(pointer -> newNode.addLeaf(pointer));
+
+    leaves = null;
+
+    return newNode;
   }
 
   @NotNull
@@ -385,8 +469,7 @@ class FilePartNode {
     return newNode;
   }
 
-  @NotNull
-  static String childUrl(@NotNull String parentUrl, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs) {
+  static @NotNull String childUrl(@NotNull String parentUrl, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs) {
     if (childName.equals(JarFileSystem.JAR_SEPARATOR) && fs instanceof ArchiveFileSystem) {
       return VirtualFileManager.constructUrl(fs.getProtocol(), StringUtil.trimEnd(VfsUtilCore.urlToPath(parentUrl), '/')) + childName;
     }
@@ -413,8 +496,7 @@ class FilePartNode {
     if (leaves == null) {
       return null;
     }
-    if (leaves instanceof VirtualFilePointerImpl) {
-      VirtualFilePointerImpl leaf = (VirtualFilePointerImpl)leaves;
+    if (leaves instanceof VirtualFilePointerImpl leaf) {
       return leaf.myListener == listener ? leaf : null;
     }
     VirtualFilePointerImpl[] array = (VirtualFilePointerImpl[])leaves;
@@ -480,7 +562,22 @@ class FilePartNode {
     return false;
   }
 
-  boolean removeEmptyNodesByPath(@NotNull List<String> parts) {
+  void removeEmptyNodesByPath(@NotNull String path) {
+    NewVirtualFileSystem.PathFromRoot pair = NewVirtualFileSystem.extractRootFromPath(fs, path);
+    if (pair != null) {
+      int rootIndex = binarySearchChildByName(pair.root().getNameSequence());
+      if (rootIndex >= 0) {
+        if (children[rootIndex].removeEmptyNodesByPath(FilePartNodeRoot.splitNames(pair.pathFromRoot()))) {
+          children = children.length == 1 ? EMPTY_ARRAY : ArrayUtil.remove(children, rootIndex);
+        }
+      }
+    }
+    else {
+      removeEmptyNodesByPath(FilePartNodeRoot.splitNames(path));
+    }
+  }
+
+  private boolean removeEmptyNodesByPath(@NotNull List<String> parts) {
     if (parts.isEmpty()) {
       return children.length == 0;
     }
@@ -499,7 +596,25 @@ class FilePartNode {
   }
 
   boolean isCaseSensitive() {
-    VirtualFile file = myFile();
-    return file == null ? myFS.isCaseSensitive() : file.isCaseSensitive();
+    VirtualFile file = fileOrNull();
+    return file == null ? fs.isCaseSensitive() : file.isCaseSensitive();
+  }
+
+  private void print(StringBuilder buffer, boolean recheck, String prefix) {
+    buffer.append(prefix).append(" ").append(getName()).append(" isCaseSensitive:").append(isCaseSensitive());
+    VirtualFile file = fileOrNull();
+    if (recheck && file != null && fs instanceof LocalFileSystem) {
+      buffer.append(" really parent sensitive: ").append(FileSystemUtil.readParentCaseSensitivity(new File(file.getPath())));
+    }
+    buffer.append("\n");
+    for (FilePartNode child : children) {
+      child.print(buffer, recheck, prefix + "  ");
+    }
+  }
+
+  StringBuilder print(boolean recheck) {
+    StringBuilder buffer = new StringBuilder();
+    print(buffer, recheck,"");
+    return buffer;
   }
 }

@@ -1,31 +1,38 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionsReportConverter;
 import com.intellij.codeInspection.InspectionsResultUtil;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.URLUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.transform.*;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.*;
-import java.net.URL;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Roman.Chernyatchik
- */
-public class PlainTextFormatter implements InspectionsReportConverter {
+@ApiStatus.Internal
+public final class PlainTextFormatter implements InspectionsReportConverter {
   public static final String NAME = "plain";
   private static final String FILE_ELEMENT = "file";
   private static final String LINE_ELEMENT = "line";
@@ -45,18 +52,23 @@ public class PlainTextFormatter implements InspectionsReportConverter {
   }
 
   @Override
-  public void convert(@NotNull final String rawDataDirectoryPath,
-                      @Nullable final String outputPath,
-                      @NotNull final Map<String, Tools> tools,
-                      @NotNull final List<? extends File> inspectionsResults) throws ConversionException {
-
-    final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
-
-    final URL descrExtractorXsltUrl = getClass().getResource("description-text.xsl");
-    final Source xslSource;
-    final Transformer transformer;
+  public void convert(final @NotNull String rawDataDirectoryPath,
+                      final @Nullable String outputPath,
+                      final @NotNull Map<String, Tools> tools,
+                      final @NotNull List<? extends File> inspectionsResults) throws ConversionException {
+    final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
     try {
-      xslSource = new StreamSource(URLUtil.openStream(descrExtractorXsltUrl));
+      transformerFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+      transformerFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      transformerFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    }
+    catch (TransformerConfigurationException ignored) {
+    }
+
+    Source xslSource;
+    Transformer transformer;
+    try (InputStream descrExtractorXsltStream = getClass().getResourceAsStream("description-text.xsl")) {
+      xslSource = new StreamSource(descrExtractorXsltStream);
       transformer = transformerFactory.newTransformer(xslSource);
     }
     catch (IOException e) {
@@ -104,12 +116,9 @@ public class PlainTextFormatter implements InspectionsReportConverter {
         // separator before file list
         w.append("\n");
 
-        // parse xml and output results
-        final SAXBuilder builder = new SAXBuilder();
-
         try {
-          final Document doc = builder.build(inspectionData);
-          final Element root = doc.getRootElement();
+          // parse xml and output results
+          final Element root = JDOMUtil.load(inspectionData);
 
           final List problems = root.getChildren(PROBLEM_ELEMENT);
 
@@ -152,21 +161,20 @@ public class PlainTextFormatter implements InspectionsReportConverter {
     }
     catch (IOException e) {
       throw new ConversionException("Cannot write inspection results: " + e.getMessage());
-    } finally {
-      if (w != null) {
-        try {
-          w.close();
-        }
-        catch (IOException e) {
-          warn("Cannot save inspection results: " + e.getMessage());
-        }
+    }
+    finally {
+      try {
+        w.close();
+      }
+      catch (IOException e) {
+        warn("Cannot save inspection results: " + e.getMessage());
       }
     }
   }
 
-  private int getMaxFileColonLineNumLength(@NotNull final File inspectionResultData,
-                                           @NotNull final InspectionToolWrapper toolWrapper,
-                                           @NotNull final List problems) {
+  private int getMaxFileColonLineNumLength(final @NotNull File inspectionResultData,
+                                           final @NotNull InspectionToolWrapper toolWrapper,
+                                           final @NotNull List problems) {
     int maxFileColonLineLength = 0;
     for (Object problem : problems) {
       final Element fileElement = ((Element)problem).getChild(FILE_ELEMENT);
@@ -187,20 +195,19 @@ public class PlainTextFormatter implements InspectionsReportConverter {
     System.err.println(msg);
   }
 
-  private boolean resultsIgnored(@NotNull final File file,
-                                 @NotNull final InspectionToolWrapper toolWrapper) {
+  private boolean resultsIgnored(final @NotNull File file,
+                                 final @NotNull InspectionToolWrapper toolWrapper) {
     // TODO: check according to config
     return false;
   }
 
-  @NotNull
-  protected String getPath(@NotNull final Element fileElement) {
+  private @NotNull String getPath(final @NotNull Element fileElement) {
     return fileElement.getText().replace("file://$PROJECT_DIR$", ".");
   }
 
-  protected void writeInspectionDescription(@NotNull final Writer w,
-                                            @NotNull final InspectionToolWrapper toolWrapper,
-                                            @NotNull final Transformer transformer)
+  private void writeInspectionDescription(final @NotNull Writer w,
+                                          final @NotNull InspectionToolWrapper toolWrapper,
+                                          final @NotNull Transformer transformer)
     throws IOException, ConversionException {
 
     final StringWriter descrWriter = new StringWriter();
@@ -223,15 +230,12 @@ public class PlainTextFormatter implements InspectionsReportConverter {
 
     final String trimmedDesc = descrWriter.toString().trim();
     final String[] descLines = StringUtil.splitByLines(trimmedDesc);
-    if (descLines.length > 0) {
-      for (String descLine : descLines) {
-        w.append("  ").append(descLine.trim()).append("\n");
-      }
+    for (String descLine : descLines) {
+      w.append("  ").append(descLine.trim()).append("\n");
     }
   }
 
-  @NotNull
-  protected String getToolPresentableName(@NotNull final InspectionToolWrapper toolWrapper) throws IOException {
+  private @NotNull String getToolPresentableName(final @NotNull InspectionToolWrapper toolWrapper) throws IOException {
     final StringBuilder buff = new StringBuilder();
 
     // inspection name

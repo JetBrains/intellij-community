@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.projectRoots.Sdk
@@ -23,20 +9,24 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
+import java.util.function.Supplier
 import javax.swing.ButtonGroup
 import javax.swing.Icon
 import javax.swing.JPanel
 
-/**
- * @author vlan
- */
-class PyAddSdkGroupPanel(private val nameGetter: java.util.function.Supplier<@Nls String>,
+@Deprecated(
+  "Custom Python SDKs support was removed from python plugin for IDEA because of UI/UX unification with PyCharm",
+  level = DeprecationLevel.ERROR
+)
+class PyAddSdkGroupPanel @Suppress("DEPRECATION_ERROR") constructor(private val nameGetter: Supplier<@Nls String>,
+
                          panelIcon: Icon,
                          val panels: List<PyAddSdkPanel>,
-                         defaultPanel: PyAddSdkPanel) : PyAddSdkPanel() {
-  override val panelName: String get() = nameGetter.get()
+                         defaultPanel: PyAddSdkPanel
+) : @Suppress("DEPRECATION_ERROR") PyAddSdkPanel() {
+  override val panelName: String get() = nameGetter.get() // NON-NLS
   override val icon: Icon = panelIcon
-  var selectedPanel: PyAddSdkPanel = defaultPanel
+  var selectedPanel: @Suppress("DEPRECATION_ERROR") PyAddSdkPanel = defaultPanel
   private val changeListeners: MutableList<Runnable> = mutableListOf()
 
   override var newProjectPath: String?
@@ -69,7 +59,7 @@ class PyAddSdkGroupPanel(private val nameGetter: java.util.function.Supplier<@Nl
       panel.addChangeListener(listener)
     }
   }
-
+  @Suppress("DEPRECATION_ERROR")
   private fun createRadioButtonPanel(panels: List<PyAddSdkPanel>, defaultPanel: PyAddSdkPanel): JPanel {
     val buttonMap = panels.map { JBRadioButton(it.panelName) to it }.toMap(linkedMapOf())
     ButtonGroup().apply {

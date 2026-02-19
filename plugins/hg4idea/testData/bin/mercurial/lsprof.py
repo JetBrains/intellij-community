@@ -1,7 +1,13 @@
+import _lsprof
 import sys
-from _lsprof import Profiler, profiler_entry
 
-__all__ = ['profile', 'Stats']
+Profiler = _lsprof.Profiler
+
+# PyPy doesn't expose profiler_entry from the module.
+profiler_entry = getattr(_lsprof, 'profiler_entry', None)
+
+__all__ = [b'profile', b'Stats']
+
 
 def profile(f, *args, **kwds):
     """XXX docstring"""
@@ -14,7 +20,7 @@ def profile(f, *args, **kwds):
     return Stats(p.getstats())
 
 
-class Stats(object):
+class Stats:
     """XXX docstring"""
 
     def __init__(self, data):
@@ -22,8 +28,13 @@ class Stats(object):
 
     def sort(self, crit="inlinetime"):
         """XXX docstring"""
-        if crit not in profiler_entry.__dict__:
-            raise ValueError("Can't sort by %s" % crit)
+        # profiler_entries isn't defined when running under PyPy.
+        if profiler_entry:
+            if crit not in profiler_entry.__dict__:
+                raise ValueError(b"Can't sort by %s" % crit)
+        elif self.data and not getattr(self.data[0], crit, None):
+            raise ValueError(b"Can't sort by %s" % crit)
+
         self.data.sort(key=lambda x: getattr(x, crit), reverse=True)
         for e in self.data:
             if e.calls:
@@ -36,23 +47,46 @@ class Stats(object):
         d = self.data
         if top is not None:
             d = d[:top]
-        cols = "% 12s %12s %11.4f %11.4f   %s\n"
-        hcols = "% 12s %12s %12s %12s %s\n"
-        file.write(hcols % ("CallCount", "Recursive", "Total(s)",
-                            "Inline(s)", "module:lineno(function)"))
+        cols = b"% 12d %12d %11.4f %11.4f   %s\n"
+        hcols = b"% 12s %12s %12s %12s %s\n"
+        file.write(
+            hcols
+            % (
+                b"CallCount",
+                b"Recursive",
+                b"Total(s)",
+                b"Inline(s)",
+                b"module:lineno(function)",
+            )
+        )
         count = 0
         for e in d:
-            file.write(cols % (e.callcount, e.reccallcount, e.totaltime,
-                               e.inlinetime, label(e.code)))
+            file.write(
+                cols
+                % (
+                    e.callcount,
+                    e.reccallcount,
+                    e.totaltime,
+                    e.inlinetime,
+                    label(e.code),
+                )
+            )
             count += 1
             if limit is not None and count == limit:
                 return
             ccount = 0
             if climit and e.calls:
                 for se in e.calls:
-                    file.write(cols % (se.callcount, se.reccallcount,
-                                       se.totaltime, se.inlinetime,
-                                       "    %s" % label(se.code)))
+                    file.write(
+                        cols
+                        % (
+                            se.callcount,
+                            se.reccallcount,
+                            se.totaltime,
+                            se.inlinetime,
+                            b"    %s" % label(se.code),
+                        )
+                    )
                     count += 1
                     ccount += 1
                     if limit is not None and count == limit:
@@ -75,15 +109,17 @@ class Stats(object):
                     if not isinstance(se.code, str):
                         e.calls[j] = type(se)((label(se.code),) + se[1:])
 
+
 _fn2mod = {}
+
 
 def label(code):
     if isinstance(code, str):
-        return code
+        return code.encode('latin-1')
     try:
         mname = _fn2mod[code.co_filename]
     except KeyError:
-        for k, v in list(sys.modules.iteritems()):
+        for k, v in list(sys.modules.items()):
             if v is None:
                 continue
             if not isinstance(getattr(v, '__file__', None), str):
@@ -94,16 +130,6 @@ def label(code):
         else:
             mname = _fn2mod[code.co_filename] = '<%s>' % code.co_filename
 
-    return '%s:%d(%s)' % (mname, code.co_firstlineno, code.co_name)
+    res = '%s:%d(%s)' % (mname, code.co_firstlineno, code.co_name)
 
-
-if __name__ == '__main__':
-    import os
-    sys.argv = sys.argv[1:]
-    if not sys.argv:
-        print >> sys.stderr, "usage: lsprof.py <script> <arguments...>"
-        sys.exit(2)
-    sys.path.insert(0, os.path.abspath(os.path.dirname(sys.argv[0])))
-    stats = profile(execfile, sys.argv[0], globals(), locals())
-    stats.sort()
-    stats.pprint()
+    return res.encode('latin-1')

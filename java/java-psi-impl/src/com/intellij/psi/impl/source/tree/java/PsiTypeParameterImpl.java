@@ -1,23 +1,28 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -35,14 +40,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author dsl
- */
 public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStub> implements PsiTypeParameter {
   public PsiTypeParameterImpl(final PsiTypeParameterStub stub) {
     super(stub, JavaStubElementTypes.TYPE_PARAMETER);
@@ -83,12 +86,12 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
   @Override
-  public PsiMethod @NotNull [] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
+  public PsiMethod @NotNull [] findMethodsBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
@@ -103,14 +106,12 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
+  public @Unmodifiable @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
   @Override
-  @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+  public @Unmodifiable @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiClassImplUtil.MemberType.METHOD);
   }
 
@@ -136,7 +137,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  public boolean isInheritorDeep(PsiClass baseClass, PsiClass classToByPass) {
+  public boolean isInheritorDeep(@NotNull PsiClass baseClass, PsiClass classToByPass) {
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
@@ -179,8 +180,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  @NotNull
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiIdentifier.class);
   }
 
@@ -224,9 +224,8 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  @NotNull
-  public PsiReferenceList getExtendsList() {
-    return getRequiredStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST);
+  public @NotNull PsiReferenceList getExtendsList() {
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.EXTENDS_BOUND_LIST, PsiReferenceList.class);
   }
 
   @Override
@@ -300,8 +299,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  @NotNull
-  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+  public @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
@@ -336,8 +334,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "PsiTypeParameter:" + getName();
   }
 
@@ -352,8 +349,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);
   }
 
@@ -368,8 +364,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
 

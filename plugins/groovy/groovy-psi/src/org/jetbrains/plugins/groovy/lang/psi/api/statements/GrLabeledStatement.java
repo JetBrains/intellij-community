@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 
-/**
- * @author ilyas
- */
 public interface GrLabeledStatement extends GrStatement, GrNamedElement, PsiNameIdentifierOwner {
   @Nullable
   GrStatement getStatement();

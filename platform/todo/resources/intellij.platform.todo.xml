@@ -1,0 +1,42 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+      key="todo.toolwindow.split"
+      defaultValue="false"
+      description="Enables the `TODO toolwindow` implementation, optimized to support both remote development workflows and monolithic setups."/>
+
+    <highlightVisitor implementation="com.intellij.ide.todo.codeInsight.TodoHighlightVisitor"/>
+
+    <statistics.applicationUsagesCollector implementation="com.intellij.ide.todo.TodoConfigurationCollector"/>
+
+    <!-- T.O.D.O -->
+    <applicationConfigurable groupId="editor" instance="com.intellij.ide.todo.configurable.TodoConfigurable" id="preferences.toDoOptions"
+                             key="title.todo"
+                             bundle="messages.IdeBundle"/>
+
+    <daemon.changeLocalityDetector implementation="com.intellij.ide.todo.MultiLineTodoLocalityDetector"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper" open="true"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoView" open="true" client="all"/>
+
+    <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager" open="true"
+                    serviceImplementation="com.intellij.psi.impl.cache.impl.EmptyTodoCacheManager"/>
+
+    <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
+                factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport" open="true"/>
+  </extensions>
+
+  <actions>
+    <group id="TodoMainGroup">
+      <add-to-group group-id="Other.KeymapGroup"/>
+      <group id="TodoViewGroupByGroup" icon="AllIcons.Actions.GroupBy" popup="true">
+        <separator text="Group By"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>
+        <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
+      </group>
+    </group>
+  </actions>
+</idea-plugin>

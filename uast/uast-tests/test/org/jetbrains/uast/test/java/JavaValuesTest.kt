@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.java
 
+import com.intellij.platform.uast.testFramework.common.ValuesTestBase
 import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.PerformanceUnitTest
+import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.evaluation.SimpleEvaluatorExtension
@@ -9,7 +12,12 @@ import org.jetbrains.uast.values.UBooleanConstant
 import org.jetbrains.uast.values.UValue
 import org.junit.Test
 
-class JavaValuesTest : AbstractJavaValuesTest() {
+class JavaValuesTest : AbstractJavaValuesTest(), ValuesTestBase {
+
+  override fun check(testName: String, file: UFile) {
+    super<ValuesTestBase>.check(testName, file)
+  }
+
   @Test
   fun testAliveThenElse() = doTest("Simple/AliveThenElse.java")
 
@@ -169,6 +177,7 @@ class JavaValuesTest : AbstractJavaValuesTest() {
   @Test
   fun testWhileWithReturn() = doTest("Simple/WhileWithReturn.java")
 
+  @PerformanceUnitTest
   @Test
   fun testPerformanceLoopWithReassignment() = doTest("Performance/LoopWithReassignment.java")
 

@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.completion;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-/**
- * @author ven
- */
 public class ReferenceCompletionTest extends CompletionTestBase {
 
   public void testEscapedReference() { doTest(); }

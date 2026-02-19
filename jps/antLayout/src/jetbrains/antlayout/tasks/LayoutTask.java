@@ -1,7 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package jetbrains.antlayout.tasks;
 
-import jetbrains.antlayout.datatypes.*;
+import jetbrains.antlayout.datatypes.Content;
+import jetbrains.antlayout.datatypes.DirContainer;
+import jetbrains.antlayout.datatypes.ExtractedDirContent;
+import jetbrains.antlayout.datatypes.FileSetContainer;
+import jetbrains.antlayout.datatypes.IdeaModule;
+import jetbrains.antlayout.datatypes.IdeaModuleTests;
+import jetbrains.antlayout.datatypes.JarContainer;
+import jetbrains.antlayout.datatypes.RenamedFileContainer;
+import jetbrains.antlayout.datatypes.RootContainer;
+import jetbrains.antlayout.datatypes.ZipContainer;
 import jetbrains.antlayout.util.TempFileFactory;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
@@ -11,8 +20,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Assembles files and module outputs accordingly to the specified layout. Used by {@link org.jetbrains.intellij.build.impl.LayoutBuilder}. 
+ */
 public class LayoutTask extends Task {
-    private final List<Content> containers = new ArrayList<Content>();
+    private final List<Content> containers = new ArrayList<>();
     private File destDir;
 
     public void addDir(DirContainer container) {
@@ -70,6 +82,7 @@ public class LayoutTask extends Task {
 
         root.build(new TempFileFactory() {
             int counter = 0;
+            @Override
             public File allocateTempFile(String name) {
                 File localTmp = new File(tempDir, "_" + counter + "/");
                 counter++;

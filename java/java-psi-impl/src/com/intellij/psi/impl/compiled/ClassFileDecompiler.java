@@ -9,7 +9,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassFileDecompiler implements BinaryFileDecompiler {
+public final class ClassFileDecompiler implements BinaryFileDecompiler {
   private static final Logger LOG = Logger.getInstance(ClassFileDecompiler.class);
 
   @Override
@@ -30,6 +30,7 @@ public class ClassFileDecompiler implements BinaryFileDecompiler {
       }
       catch (ClassFileDecompilers.Light.CannotDecompileException e) {
         LOG.warn("decompiler: " + decompiler.getClass(), e);
+        return ClsFileImpl.decompile(file);
       }
     }
 

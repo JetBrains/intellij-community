@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.IdeTooltipManager;
@@ -7,10 +7,12 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -19,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,12 +32,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 final class PsiBreadcrumbs extends Breadcrumbs {
-  private final static Logger LOG = Logger.getInstance(PsiBreadcrumbs.class);
+  private static final Logger LOG = Logger.getInstance(PsiBreadcrumbs.class);
   private final Map<Crumb, Promise<String>> scheduledTooltipTasks = new HashMap<>();
   boolean above = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove();
 
   void updateBorder(int offset) {
     // do not use scaling here because this border is used to align breadcrumbs with a gutter
+    //noinspection UseDPIAwareBorders
     setBorder(new EmptyBorder(0, offset, 0, 0));
   }
 
@@ -54,15 +59,15 @@ final class PsiBreadcrumbs extends Breadcrumbs {
   @Override
   public Color getBackground() {
     if (!isBackgroundSet()) {
-      Color background = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      Color background = ExperimentalUI.isNewUI() ? scheme.getDefaultBackground() : scheme.getColor(EditorColors.GUTTER_BACKGROUND);
       if (background != null) return background;
     }
     return super.getBackground();
   }
 
-  @Nullable
   @Override
-  public String getToolTipText(MouseEvent event) {
+  public @Nullable String getToolTipText(MouseEvent event) {
     if (hovered == null) {
       return null;
     }

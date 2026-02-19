@@ -6,11 +6,12 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Couple;
+import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Robot;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
   }
 
   @Override
-  public Promise<Object> _execute(final PlaybackContext context) {
+  public @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
     String text = getText().substring(PREFIX.length()).trim();
 
     int textDelim = text.indexOf(" ");
@@ -71,7 +72,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
           type(robot, code, modifier);
         }
         catch (NumberFormatException e) {
-          dumpError(context, "Invalid code: " + eachPair);
+          dumpError(context, "Invalid code: `" + eachPair + "`. " + e.getMessage());
           result.setRejected();
           return;
         }
@@ -81,7 +82,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
     };
 
 
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     } else {
       runnable.run();

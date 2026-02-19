@@ -1,1 +1,1 @@
-s = rf"f<caret>oo{'bar'}"
+s = rf"f<caret>oo{"bar"}"

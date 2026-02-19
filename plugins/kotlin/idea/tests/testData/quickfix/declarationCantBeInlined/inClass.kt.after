@@ -1,0 +1,6 @@
+// "Make 'foo' not open" "true"
+open class A {
+    inline fun foo() {}
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeModifiersFix

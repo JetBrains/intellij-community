@@ -1,4 +1,4 @@
-<weak_warning descr="This list creation could be rewritten as a list literal">my_list = [m]</weak_warning>
+<weak_warning descr="Multi-step list initialization can be replaced with a list literal">my_list = [m]</weak_warning>
 my_list.append(1)
 my_list.append(var)
 do_something()

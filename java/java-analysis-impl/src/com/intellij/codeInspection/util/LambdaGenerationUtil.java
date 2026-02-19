@@ -2,8 +2,20 @@
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiContinueStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
@@ -77,17 +89,17 @@ public final class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // do not go down the local/anonymous classes
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       // do not go down the nested lambda expressions
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if(!myCanBeLambdaBody) return;
       super.visitReferenceExpression(expression);
       PsiElement element = expression.resolve();
@@ -102,11 +114,11 @@ public final class LambdaGenerationUtil {
       if (variable instanceof PsiField) {
         return !variable.hasModifierProperty(PsiModifier.FINAL) || !PsiUtil.isAccessedForWriting(expression);
       }
-      return !PsiUtil.isAccessedForWriting(expression) && HighlightControlFlowUtil.isEffectivelyFinal(variable, myRoot, null);
+      return !PsiUtil.isAccessedForWriting(expression) && ControlFlowUtil.isEffectivelyFinal(variable, myRoot);
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       PsiStatement exitedStatement = statement.findExitedStatement();
       if(exitedStatement == null || !PsiTreeUtil.isAncestor(myRoot, exitedStatement, false)) {
         myCanBeLambdaBody = false;
@@ -115,7 +127,7 @@ public final class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitContinueStatement(PsiContinueStatement statement) {
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       PsiStatement continuedStatement = statement.findContinuedStatement();
       if(continuedStatement == null || !PsiTreeUtil.isAncestor(myRoot, continuedStatement, false)) {
         myCanBeLambdaBody = false;
@@ -124,7 +136,7 @@ public final class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       myCanBeLambdaBody = false;
     }
 

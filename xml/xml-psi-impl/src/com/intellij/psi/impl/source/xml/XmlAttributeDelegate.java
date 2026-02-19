@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -19,24 +19,35 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
+
 @ApiStatus.Experimental
 public abstract class XmlAttributeDelegate {
-  @NotNull
-  private final XmlAttribute myAttribute;
+  private final @NotNull XmlAttribute myAttribute;
 
   private volatile VolatileState myVolatileState;
 
@@ -55,8 +66,7 @@ public abstract class XmlAttributeDelegate {
     );
   }
 
-  @Nullable
-  private static XmlAttributeDescriptor getDescriptionImpl(@NotNull XmlAttribute attribute) {
+  private static @Nullable XmlAttributeDescriptor getDescriptionImpl(@NotNull XmlAttribute attribute) {
     final XmlTag tag = attribute.getParent();
     // e.g. XmlDecl or PI
     if (tag != null) {
@@ -68,16 +78,22 @@ public abstract class XmlAttributeDelegate {
     return null;
   }
 
-  @NotNull
-  private static ModificationTracker externalResourceModificationTracker(@NotNull XmlAttribute attribute) {
+  private static @NotNull ModificationTracker externalResourceModificationTracker(@NotNull XmlAttribute attribute) {
     Project project = attribute.getProject();
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
     return () -> manager.getModificationCount(project);
   }
 
+  private @Nullable Character getPreferredQuoteStyle() {
+    final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(myAttribute.getNode());
+    String currentValue = notNull(doIfNotNull(value, ASTNode::getText), "");
+    return currentValue.startsWith("'") ? Character.valueOf('\'') : currentValue.startsWith("\"") ? Character.valueOf('"') : null;
+  }
+
   void setValue(@NotNull String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(myAttribute.getNode());
-    final XmlAttribute attribute = createAttribute(StringUtil.defaultIfEmpty(myAttribute.getName(), "a"), valueText);
+    final XmlAttribute attribute = createAttribute(StringUtil.defaultIfEmpty(myAttribute.getName(), "a"), valueText,
+                                                   getPreferredQuoteStyle());
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(attribute.getNode());
     final ASTNode att = myAttribute.getNode();
     if (value != null) {
@@ -96,8 +112,8 @@ public abstract class XmlAttributeDelegate {
     }
   }
 
-  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value) {
-    return XmlElementFactory.getInstance(myAttribute.getProject()).createAttribute(qname, value, myAttribute);
+  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value, @Nullable Character quoteStyle) {
+    return XmlElementFactory.getInstance(myAttribute.getProject()).createAttribute(qname, value, quoteStyle, myAttribute);
   }
 
   @NotNull
@@ -110,12 +126,12 @@ public abstract class XmlAttributeDelegate {
   }
 
   static class VolatileState {
-    @NotNull final String myDisplayText;
+    final @NotNull String myDisplayText;
     final int @NotNull [] myGapDisplayStarts;
     final int @NotNull [] myGapPhysicalStarts;
-    @NotNull final TextRange myValueTextRange; // text inside quotes, if there are any
+    final @NotNull TextRange myValueTextRange; // text inside quotes, if there are any
 
-    VolatileState(@NotNull final String displayText,
+    VolatileState(final @NotNull String displayText,
                   int @NotNull [] gapDisplayStarts,
                   int @NotNull [] gapPhysicalStarts,
                   @NotNull TextRange valueTextRange) {
@@ -140,8 +156,7 @@ public abstract class XmlAttributeDelegate {
     buffer.append(child.getChars());
   }
 
-  @Nullable
-  private XmlAttributeDelegate.VolatileState recalculate() {
+  private @Nullable XmlAttributeDelegate.VolatileState recalculate() {
     XmlAttributeValue value = myAttribute.getValueElement();
     if (value == null) return null;
     PsiElement firstChild = value.getFirstChild();
@@ -152,8 +167,8 @@ public abstract class XmlAttributeDelegate {
       valueTextRange = new TextRange(child.getTextLength(), valueTextRange.getEndOffset());
       child = child.getTreeNext();
     }
-    final IntArrayList gapsStarts = new IntArrayList();
-    final IntArrayList gapsShifts = new IntArrayList();
+    final IntList gapsStarts = new IntArrayList();
+    final IntList gapsShifts = new IntArrayList();
     StringBuilder buffer = new StringBuilder(myAttribute.getTextLength());
     while (child != null) {
       final int start = buffer.length();
@@ -185,8 +200,8 @@ public abstract class XmlAttributeDelegate {
     int[] gapPhysicalStarts = ArrayUtil.newIntArray(gapsShifts.size());
     int currentGapsSum = 0;
     for (int i = 0; i < gapDisplayStarts.length; i++) {
-      currentGapsSum += gapsShifts.get(i);
-      gapDisplayStarts[i] = gapsStarts.get(i);
+      currentGapsSum += gapsShifts.getInt(i);
+      gapDisplayStarts[i] = gapsStarts.getInt(i);
       gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
     }
     final XmlAttributeDelegate.VolatileState
@@ -195,8 +210,7 @@ public abstract class XmlAttributeDelegate {
     return volatileState;
   }
 
-  @NotNull
-  private static String getEntityValue(@NotNull final XmlEntityRef entityRef) {
+  private static @NotNull String getEntityValue(final @NotNull XmlEntityRef entityRef) {
     final XmlEntityDecl decl = entityRef.resolve(entityRef.getContainingFile());
     if (decl != null) {
       final XmlAttributeValue valueElement = decl.getValueElement();
@@ -208,6 +222,9 @@ public abstract class XmlAttributeDelegate {
   }
 
   PsiReference @NotNull [] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
+    //todo can it be moved to reference provider?
+    if (PlatformUtils.isJetBrainsClient()) return PsiReference.EMPTY_ARRAY;
+
     if (hints.offsetInElement != null) {
       XmlElement nameElement = myAttribute.getNameElement();
       if (nameElement == null || hints.offsetInElement > nameElement.getStartOffsetInParent() + nameElement.getTextLength()) {
@@ -268,10 +285,10 @@ public abstract class XmlAttributeDelegate {
   }
 
   @NotNull
-  PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
+  PsiElement setName(final @NotNull String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(myAttribute.getNode());
-    final String oldValue = ObjectUtils.notNull(myAttribute.getValue(), "");
-    final XmlAttribute newAttribute = createAttribute(nameText, oldValue);
+    final String oldValue = notNull(myAttribute.getValue(), "");
+    final XmlAttribute newAttribute = createAttribute(nameText, oldValue, getPreferredQuoteStyle());
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(newAttribute.getNode());
     if (!oldValue.isEmpty() && myAttribute.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
       CodeEditUtil.replaceChild(myAttribute.getNode().getTreeParent(), myAttribute.getNode(), newAttribute.getNode());

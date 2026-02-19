@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -24,32 +25,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProviderKt;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Max Medvedev
  */
-public class GrPackageInspection extends BaseInspection {
+public final class GrPackageInspection extends BaseInspection {
   public boolean myCheckScripts = true;
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.package.name.mismatch");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyBundle.message("gr.package.inspection.check.scripts"), "myCheckScripts");
-    return optionsPanel;
-
+  public @NotNull OptPane getGroovyOptionsPane() {
+    return pane(
+      checkbox("myCheckScripts", GroovyBundle.message("gr.package.inspection.check.scripts")));
   }
 
-  @NotNull
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitFile(@NotNull GroovyFileBase file) {
@@ -74,8 +71,7 @@ public class GrPackageInspection extends BaseInspection {
     };
   }
 
-  @Nullable
-  private static PsiElement getElementToHighlight(GroovyFile file) {
+  private static @Nullable PsiElement getElementToHighlight(GroovyFile file) {
     GrPackageDefinition packageDefinition = file.getPackageDefinition();
     if (packageDefinition != null) return packageDefinition;
 
@@ -97,7 +93,7 @@ public class GrPackageInspection extends BaseInspection {
     return null;
   }
 
-  public static class ChangePackageQuickFix implements LocalQuickFix {
+  public static class ChangePackageQuickFix extends PsiUpdateModCommandQuickFix {
     private final String myNewPackageName;
 
     public ChangePackageQuickFix(String newPackageName) {
@@ -105,14 +101,13 @@ public class GrPackageInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("fix.package.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiFile file = descriptor.getPsiElement().getContainingFile();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiFile file = element.getContainingFile();
       ((GroovyFile)file).setPackageName(myNewPackageName);
     }
   }

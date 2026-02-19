@@ -30,11 +30,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
  *
  * @author Max Medvedev
  */
-public class GrWithWeigher extends CompletionWeigher {
+public final class GrWithWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    final PsiElement position = location.getCompletionParameters().getPosition();
+    final PsiElement position = location.getBaseCompletionParameters().getPosition();
     if (position.getLanguage() == GroovyLanguage.INSTANCE) return null;
 
     if (!(position.getParent() instanceof GrReferenceExpression)) return null;

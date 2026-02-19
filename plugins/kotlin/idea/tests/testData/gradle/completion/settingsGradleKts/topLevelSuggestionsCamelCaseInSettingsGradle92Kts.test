@@ -1,0 +1,15 @@
+// FILE: settings.gradle.kts
+// "EXPECTED-SUGGESTION": "pluginManager"
+// "EXPECTED-SUGGESTION": "getPluginManager"
+// "EXPECTED-SUGGESTION": "getPluginManagement"
+// "EXPECTED-SUGGESTION": "pluginManagement"
+plugM<caret>
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}

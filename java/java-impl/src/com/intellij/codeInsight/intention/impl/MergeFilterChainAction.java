@@ -1,60 +1,59 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
+public final class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(MergeFilterChainAction.class.getName());
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull final PsiElement element) {
-    if (!(element instanceof PsiIdentifier)) return false;
-    final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) return false;
-    final PsiElement gParent = parent.getParent();
-    if (!(gParent instanceof PsiMethodCallExpression)) return false;
-
-    if (!isFilterCall((PsiMethodCallExpression)gParent)) return false;
-
-    return getFilterToMerge((PsiMethodCallExpression)gParent) != null;
+  
+  public MergeFilterChainAction() {
+    super(PsiIdentifier.class);
   }
 
-  @Nullable
-  private static PsiMethodCallExpression getFilterToMerge(PsiMethodCallExpression methodCallExpression) {
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier identifier) {
+    if (!(identifier.getParent() instanceof PsiReferenceExpression ref)) return null;
+    if (!(ref.getParent() instanceof PsiMethodCallExpression call)) return null;
+    if (!isFilterCall(call) || getFilterToMerge(call) == null) return null;
+    return Presentation.of(JavaBundle.message("intention.merge.filter.text"));
+  }
+
+  private static @Nullable PsiMethodCallExpression getFilterToMerge(PsiMethodCallExpression methodCallExpression) {
     final PsiMethodCallExpression prevCall = MethodCallUtils.getQualifierMethodCall(methodCallExpression);
     if (prevCall != null && isFilterCall(prevCall)) {
       return prevCall;
@@ -86,20 +85,12 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
            InheritanceUtil.isInheritor(containingClass, false, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return JavaBundle.message("intention.merge.filter.text");
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.merge.filter.family");
   }
 
-  @Nullable
-  private static PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
+  private static @Nullable PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
     PsiExpression[] expressions = call.getArgumentList().getExpressions();
     if(expressions.length != 1) return null;
     PsiExpression expression = expressions[0];
@@ -112,8 +103,8 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiMethodCallExpression filterCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier identifier, @NotNull ModPsiUpdater updater) {
+    final PsiMethodCallExpression filterCall = PsiTreeUtil.getParentOfType(identifier, PsiMethodCallExpression.class);
     LOG.assertTrue(filterCall != null);
 
     final PsiMethodCallExpression filterToMerge = getFilterToMerge(filterCall);
@@ -135,34 +126,29 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
     if (name != null) {
       final PsiParameter[] sourceLambdaParams = sourceLambda.getParameterList().getParameters();
       if (sourceLambdaParams.length > 0 && !name.equals(sourceLambdaParams[0].getName())) {
-        for (PsiReference reference : ReferencesSearch.search(sourceLambdaParams[0]).findAll()) {
-          final PsiElement referenceElement = reference.getElement();
-          if (referenceElement instanceof PsiReferenceExpression) {
-            ExpressionUtils.bindReferenceTo((PsiReferenceExpression)referenceElement, name);
-          }
+        for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(sourceLambdaParams[0])) {
+          ExpressionUtils.bindReferenceTo(reference, name);
         }
       }
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     PsiElement nameElement = callToStay.getMethodExpression().getReferenceNameElement();
     LOG.assertTrue(nameElement != null);
-    if(!resultingOperation.equals(nameElement.getText())) {
+    if (!resultingOperation.equals(nameElement.getText())) {
       nameElement.replace(factory.createIdentifier(resultingOperation));
     }
 
-    PsiElement targetBody = targetLambda.getBody();
-    LOG.assertTrue(targetBody instanceof PsiExpression);
-    final PsiElement sourceLambdaBody = sourceLambda.getBody();
+    PsiExpression targetBody = LambdaUtil.extractSingleExpressionFromBody(targetLambda.getBody());
+    LOG.assertTrue(targetBody != null);
+    final PsiExpression sourceLambdaBody = LambdaUtil.extractSingleExpressionFromBody(sourceLambda.getBody());
+    LOG.assertTrue(sourceLambdaBody != null);
 
-    LOG.assertTrue(sourceLambdaBody instanceof PsiExpression);
-
-    final PsiExpression compoundExpression = factory
-      .createExpressionFromText(
-        ParenthesesUtils.getText((PsiExpression)targetBody, ParenthesesUtils.OR_PRECEDENCE) + " && " +
-        ParenthesesUtils.getText((PsiExpression)sourceLambdaBody, ParenthesesUtils.OR_PRECEDENCE), sourceLambda);
-    targetBody = targetBody.replace(compoundExpression);
-    CodeStyleManager.getInstance(project).reformat(targetBody);
+    String newFilter = ParenthesesUtils.getText(targetBody, ParenthesesUtils.OR_PRECEDENCE) + " && " +
+                       ParenthesesUtils.getText(sourceLambdaBody, ParenthesesUtils.OR_PRECEDENCE);
+    final PsiExpression compoundExpression = factory.createExpressionFromText(newFilter, sourceLambda);
+    targetBody = (PsiExpression)targetBody.replace(compoundExpression);
+    CodeStyleManager.getInstance(context.project()).reformat(targetBody);
 
     final PsiExpression qualifierExpression = callToEliminate.getMethodExpression().getQualifierExpression();
     LOG.assertTrue(qualifierExpression != null, callToEliminate);

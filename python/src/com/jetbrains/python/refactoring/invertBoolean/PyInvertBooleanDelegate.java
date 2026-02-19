@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.invertBoolean;
 
 import com.intellij.openapi.editor.Editor;
@@ -16,13 +16,22 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
+public final class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   @Override
   public boolean isVisibleOnElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
@@ -58,9 +67,8 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
     return isBooleanLiteral(element.getParent());
   }
 
-  @Nullable
   @Override
-  public PsiElement adjustElement(PsiElement element, Project project, Editor editor) {
+  public @Nullable PsiElement adjustElement(PsiElement element, Project project, Editor editor) {
     final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
     if (assignmentStatement != null) {
       return assignmentStatement.getTargets()[0];
@@ -75,7 +83,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   public void collectRefElements(PsiElement psiElement,
                                  @Nullable RenameProcessor renameProcessor,
                                  @NotNull String newName,
-                                 Collection<PsiElement> elementsToInvert) {
+                                 Collection<? super PsiElement> elementsToInvert) {
     final Collection<PsiReference> refs = ReferencesSearch.search(psiElement).findAll();
 
     for (PsiReference ref : refs) {
@@ -88,8 +96,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
 
   @Override
   public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
-    if (element instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)element;
+    if (element instanceof PyTargetExpression target) {
       final PyAssignmentStatement parent = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
       if (parent != null && parent.getTargets().length == 1) {
         final PyExpression value = parent.getAssignedValue();
@@ -124,17 +131,11 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
     }
   }
 
-  @NotNull
-  private static PyExpression invertExpression(@NotNull final PsiElement expression) {
+  private static @NotNull PyExpression invertExpression(final @NotNull PsiElement expression) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(expression.getProject());
-    if (expression instanceof PyBoolLiteralExpression) {
-      final String value = ((PyBoolLiteralExpression)expression).getValue() ? PyNames.FALSE : PyNames.TRUE;
-      return elementGenerator.createExpressionFromText(LanguageLevel.forElement(expression), value);
-    }
-    if (expression instanceof PyReferenceExpression && (PyNames.FALSE.equals(expression.getText()) ||
-                                                        PyNames.TRUE.equals(expression.getText()))) {
-
-      final String value = PyNames.TRUE.equals(expression.getText()) ? PyNames.FALSE : PyNames.TRUE;
+    Boolean booleanValue = PyEvaluator.getBooleanLiteralValue(expression);
+    if (booleanValue != null) {
+      final String value = booleanValue ? PyNames.FALSE : PyNames.TRUE;
       return elementGenerator.createExpressionFromText(LanguageLevel.forElement(expression), value);
     }
     else if (expression instanceof PyPrefixExpression) {
@@ -148,9 +149,6 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   }
 
   private static boolean isBooleanLiteral(@Nullable PsiElement element) {
-    if (element instanceof PyBoolLiteralExpression) {
-      return true;
-    }
-    return element instanceof PyReferenceExpression && (PyNames.TRUE.equals(element.getText()) || PyNames.FALSE.equals(element.getText()));
+    return element != null && PyEvaluator.getBooleanLiteralValue(element) != null;
   }
 }

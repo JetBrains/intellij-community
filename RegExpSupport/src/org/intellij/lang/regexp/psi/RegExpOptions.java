@@ -16,7 +16,7 @@
 package org.intellij.lang.regexp.psi;
 
 /**
- * Represents an inline options element (?x) or (?-x). Returned from {@link org.intellij.lang.regexp.psi.RegExpSetOptions}
+ * Represents an inline options element (?x) or (?-x). Returned from {@link RegExpSetOptions}
  */
 public interface RegExpOptions extends RegExpElement {
 

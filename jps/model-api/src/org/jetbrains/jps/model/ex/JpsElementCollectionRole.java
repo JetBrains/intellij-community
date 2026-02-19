@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementCollection;
+import org.jetbrains.jps.model.JpsElementCreator;
 
 public final class JpsElementCollectionRole<E extends JpsElement> extends JpsElementChildRoleBase<JpsElementCollection<E>>
                                                             implements JpsElementCreator<JpsElementCollection<E>> {
@@ -13,9 +16,8 @@ public final class JpsElementCollectionRole<E extends JpsElement> extends JpsEle
     myChildRole = role;
   }
 
-  @NotNull
   @Override
-  public JpsElementCollection<E> create() {
+  public @NotNull JpsElementCollection<E> create() {
     return JpsExElementFactory.getInstance().createCollection(myChildRole);
   }
 

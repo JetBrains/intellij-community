@@ -30,6 +30,4 @@ public interface JpsSdkDependency extends JpsDependencyElement {
 
   @Nullable
   JpsSdkReference<?> getSdkReference();
-
-  boolean isInherited();
 }

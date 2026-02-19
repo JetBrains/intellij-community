@@ -1,3 +1,3 @@
 * First line
-  <caret>
+* <caret>
   of item

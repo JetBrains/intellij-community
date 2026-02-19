@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.project.Project;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,27 +13,38 @@ import com.intellij.util.containers.Interner;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomExtender;
+import com.intellij.util.xml.reflect.DomExtenderEP;
+import com.intellij.util.xml.reflect.DomExtensionImpl;
+import com.intellij.util.xml.reflect.DomExtensionsRegistrarImpl;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.lang.ref.SoftReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author peter
- */
+import static com.intellij.reference.SoftReference.dereference;
+
 public final class DynamicGenericInfo extends DomGenericInfoEx {
   private static final Key<SoftReference<Interner<ChildrenDescriptionsHolder<?>>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
   private final StaticGenericInfo myStaticGenericInfo;
-  @NotNull private final DomInvocationHandler myInvocationHandler;
+  private final @NotNull DomInvocationHandler myInvocationHandler;
   private volatile boolean myInitialized;
   private volatile ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private volatile ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
   private volatile ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
   private volatile List<CustomDomChildrenDescriptionImpl> myCustomChildren;
 
-  public DynamicGenericInfo(@NotNull final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo) {
+  public DynamicGenericInfo(final @NotNull DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo) {
     myInvocationHandler = handler;
     myStaticGenericInfo = staticGenericInfo;
 
@@ -44,7 +54,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public final boolean checkInitialized() {
+  public boolean checkInitialized() {
     if (myInitialized) return true;
     myStaticGenericInfo.buildMethodMaps();
 
@@ -107,7 +117,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
 
   private static <T extends DomChildDescriptionImpl> ChildrenDescriptionsHolder<T> internChildrenHolder(XmlFile file, ChildrenDescriptionsHolder<T> holder) {
     SoftReference<Interner<ChildrenDescriptionsHolder<?>>> ref = file.getUserData(HOLDERS_CACHE);
-    Interner<ChildrenDescriptionsHolder<?>> cache = SoftReference.dereference(ref);
+    Interner<ChildrenDescriptionsHolder<?>> cache = dereference(ref);
     if (cache == null) {
       cache = Interner.createWeakInterner();
       file.putUserData(HOLDERS_CACHE, new SoftReference<>(cache));
@@ -116,8 +126,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
     return (ChildrenDescriptionsHolder<T>)cache.intern(holder);
   }
 
-  @Nullable
-  private DomExtensionsRegistrarImpl runDomExtenders() {
+  private @Nullable DomExtensionsRegistrarImpl runDomExtenders() {
     DomExtensionsRegistrarImpl registrar = null;
     Project project = myInvocationHandler.getManager().getProject();
     for (DomExtenderEP extenderEP : DomExtenderEP.EP_NAME.getExtensionList()) {
@@ -145,8 +154,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription() {
+  public @NotNull List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription() {
     checkInitialized();
     if (myCustomChildren != null) return myCustomChildren;
     return myStaticGenericInfo.getCustomNameChildrenDescription();
@@ -158,8 +166,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
+  public @NotNull List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     checkInitialized();
     final List<AbstractDomChildDescriptionImpl> list = new ArrayList<>();
     myAttributes.dumpDescriptions(list);
@@ -170,15 +177,13 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public final List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
+  public @NotNull List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
     checkInitialized();
     return myFixeds.getDescriptions();
   }
 
   @Override
-  @NotNull
-  public final List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
+  public @NotNull List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
     checkInitialized();
     return myCollections.getDescriptions();
   }
@@ -226,8 +231,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
+  public @NotNull List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
     checkInitialized();
     return myAttributes.getDescriptions();
   }

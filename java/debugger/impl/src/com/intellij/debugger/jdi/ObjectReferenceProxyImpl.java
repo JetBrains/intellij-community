@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -8,13 +6,23 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.util.ThreeState;
-import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.Field;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.VMDisconnectedException;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ObjectReferenceProxyImpl extends JdiProxy {
   private final ObjectReference myObjectReference;
@@ -22,7 +30,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   //caches
   private ReferenceType myReferenceType;
   private Type myType;
-  private ThreeState myIsCollected = ThreeState.UNSURE;
+  private final AtomicReference<ThreeState> myIsCollected = new AtomicReference<>(ThreeState.UNSURE);
 
   public ObjectReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, @NotNull ObjectReference objectReference) {
     super(virtualMachineProxy);
@@ -35,7 +43,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
-    return (VirtualMachineProxyImpl) myTimer;
+    return (VirtualMachineProxyImpl)myTimer;
   }
 
   public ReferenceType referenceType() {
@@ -54,11 +62,10 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return myType;
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     final ObjectReference objectReference = getObjectReference();
-    //noinspection HardCodedStringLiteral
-    final String objRefString = objectReference != null? objectReference.toString() : "[referenced object collected]";
+    final String objRefString = objectReference != null ? objectReference.toString() : "[referenced object collected]";
     return "ObjectReferenceProxyImpl: " + objRefString + " " + super.toString();
   }
 
@@ -72,15 +79,22 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   public boolean isCollected() {
     checkValid();
-    if (myIsCollected != ThreeState.YES) {
-      try {
-        myIsCollected = ThreeState.fromBoolean(VirtualMachineProxyImpl.isCollected(myObjectReference));
-      }
-      catch (VMDisconnectedException ignored) {
-        myIsCollected = ThreeState.YES;
-      }
+    switch (myIsCollected.get()) {
+      case YES:
+        return true;
+      case NO:
+        return false;
+      default:
+        try {
+          boolean res = VirtualMachineProxyImpl.isCollected(myObjectReference);
+          myIsCollected.set(ThreeState.fromBoolean(res));
+          return res;
+        }
+        catch (VMDisconnectedException ignored) {
+          myIsCollected.set(ThreeState.YES);
+          return true;
+        }
     }
-    return myIsCollected.toBoolean();
   }
 
   public long uniqueID() {
@@ -89,10 +103,9 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   /**
    * @return a list of waiting ThreadReferenceProxies
-   * @throws IncompatibleThreadStateException
    */
-  public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
-    return StreamEx.of(getObjectReference().waitingThreads()).map(getVirtualMachineProxy()::getThreadReferenceProxy).toList();
+  public @Unmodifiable List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
+    return ContainerUtil.map(getObjectReference().waitingThreads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
 
   public ThreadReferenceProxyImpl owningThread() throws IncompatibleThreadStateException {
@@ -103,16 +116,18 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return getObjectReference().entryCount();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof ObjectReferenceProxyImpl)) {
       return false;
     }
-    if(this == o) return true;
+    if (this == o) return true;
 
     return myObjectReference.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
   }
 
 
+  @Override
   public int hashCode() {
     return myObjectReference.hashCode();
   }
@@ -122,9 +137,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
    */
   @Override
   protected void clearCaches() {
-    if (myIsCollected == ThreeState.NO) {
-      // clearing cache makes sense only if the object has not been collected yet
-      myIsCollected = ThreeState.UNSURE;
-    }
+    // clearing cache makes sense only if the object has not been collected yet
+    myIsCollected.compareAndSet(ThreeState.NO, ThreeState.UNSURE);
   }
 }

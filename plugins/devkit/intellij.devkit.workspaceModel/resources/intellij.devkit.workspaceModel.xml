@@ -1,0 +1,47 @@
+<idea-plugin package="com.intellij.devkit.workspaceModel">
+
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <plugin id="org.jetbrains.kotlin"/>
+    <plugin id="org.editorconfig.editorconfigjetbrains"/>
+    <module name="intellij.devkit.core"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
+
+  <actions>
+    <action id="WorkspaceModelGeneration" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerationAction">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+    <action id="WorkspaceModelGenerateAllModulesAction" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerateAllModulesAction"/>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="devkit.workspaceModel.code.generation" defaultValue="false" restartRequired="false"
+                 description="Enable code generation for workspace model entities"/>
+    <localInspection language="kotlin"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitWorkspaceModelBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
+                     runForWholeFile="true"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.devkit.workspaceModel.inspections.WorkspaceEntityMutableFieldInspection"
+                     key="inspection.workspace.mutable.field.display.name"/>
+    <localInspection language="kotlin"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitWorkspaceModelBundle"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.workspace.model"
+                     runForWholeFile="true"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.devkit.workspaceModel.inspections.WorkspaceInheritanceInspection"
+                     key="inspection.workspace.inheritance.display.name"/>
+    <notificationGroup id="Incompatible codegen api versions"
+                       displayType="BALLOON"
+                       key="notification.workspace.incompatible.codegen.api.versions"/>
+    <notificationGroup id="Workspace code generation not available"
+                       displayType="BALLOON"
+                       key="notification.workspace.code.generation.not.available"/>
+  </extensions>
+</idea-plugin>

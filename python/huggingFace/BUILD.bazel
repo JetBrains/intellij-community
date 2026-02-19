@@ -1,0 +1,67 @@
+### auto-generated section `build intellij.python.community.impl.huggingFace` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "huggingFace_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "huggingFace",
+  module_name = "intellij.python.community.impl.huggingFace",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":huggingFace_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:gradle",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/util/coroutines",
+    "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
+    "//python/python-psi-api:psi",
+    "//python:python-community-impl",
+    "//platform/platform-api:ide",
+    "//platform/markdown-utils",
+    "//platform/statistics",
+    "//json/backend",
+    "//python/python-sdk:sdk",
+  ]
+)
+
+jvm_library(
+  name = "huggingFace_test_lib",
+  module_name = "intellij.python.community.impl.huggingFace",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":huggingFace",
+    "//libraries/jackson/jackson:jackson_test_lib",
+    "//libraries/jackson/databind:databind_test_lib",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util/coroutines:coroutines_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//python/python-psi-api:psi_test_lib",
+    "//python:python-community-impl_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/markdown-utils:markdown-utils_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//json/backend:backend_test_lib",
+    "//python/python-sdk:sdk_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl.huggingFace` end

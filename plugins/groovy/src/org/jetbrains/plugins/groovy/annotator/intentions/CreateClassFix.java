@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
@@ -12,7 +12,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -40,9 +53,6 @@ import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import static org.jetbrains.plugins.groovy.intentions.base.IntentionUtils.createTemplateForMethod;
 
-/**
- * @author ilyas
- */
 public abstract class CreateClassFix {
 
   public static IntentionAction createClassFromNewAction(final GrNewExpression expression) {
@@ -51,8 +61,7 @@ public abstract class CreateClassFix {
       @Override
       protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
         final PsiFile file = element.getContainingFile();
-        if (!(file instanceof GroovyFileBase)) return;
-        GroovyFileBase groovyFile = (GroovyFileBase)file;
+        if (!(file instanceof GroovyFileBase groovyFile)) return;
         final PsiManager manager = myRefElement.getManager();
 
         final String qualifier = ReadAction.compute(() -> groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "");
@@ -116,13 +125,12 @@ public abstract class CreateClassFix {
       @Override
       protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
         final PsiFile file = element.getContainingFile();
-        if (!(file instanceof GroovyFileBase)) return;
-        GroovyFileBase groovyFile = (GroovyFileBase)file;
+        if (!(file instanceof GroovyFileBase groovyFile)) return;
 
         PsiElement qualifier = myRefElement.getQualifier();
 
         if (qualifier == null ||
-            qualifier instanceof GrReferenceElement && ((GrReferenceElement)qualifier).resolve() instanceof PsiPackage) {
+            qualifier instanceof GrReferenceElement && ((GrReferenceElement<?>)qualifier).resolve() instanceof PsiPackage) {
           createTopLevelClass(project, groovyFile);
         }
         else {
@@ -161,8 +169,7 @@ public abstract class CreateClassFix {
         });
       }
 
-      @Nullable
-      private PsiElement resolveQualifier(@NotNull PsiElement qualifier) {
+      private static @Nullable PsiElement resolveQualifier(@NotNull PsiElement qualifier) {
         if (qualifier instanceof GrCodeReferenceElement) {
           return ((GrCodeReferenceElement)qualifier).resolve();
         }
@@ -182,27 +189,25 @@ public abstract class CreateClassFix {
         return null;
       }
 
-      @Nullable
-      private PsiClass createTemplate(JVMElementFactory factory, String name) {
-        switch (getType()) {
-          case ENUM:
-            return factory.createEnum(name);
-          case TRAIT:
-            if (factory instanceof GroovyPsiElementFactory) {
-              return ((GroovyPsiElementFactory)factory).createTrait(name);
+      private @Nullable PsiClass createTemplate(JVMElementFactory factory, String name) {
+        return switch (getType()) {
+          case ENUM -> factory.createEnum(name);
+          case TRAIT -> {
+            if (factory instanceof GroovyPsiElementFactory groovyFactory) {
+              yield groovyFactory.createTrait(name);
             }
-            else {
-              return null;
+            yield null;
+          }
+          case CLASS -> factory.createClass(name);
+          case INTERFACE -> factory.createInterface(name);
+          case ANNOTATION -> factory.createAnnotationType(name);
+          case RECORD -> {
+            if (factory instanceof GroovyPsiElementFactory groovyFactory) {
+              yield groovyFactory.createRecord(name);
             }
-          case CLASS:
-            return factory.createClass(name);
-          case INTERFACE:
-            return factory.createInterface(name);
-          case ANNOTATION:
-            return factory.createAnnotationType(name);
-          default:
-            return null;
-        }
+            yield null;
+          }
+        };
       }
 
       private void createTopLevelClass(@NotNull Project project, @NotNull GroovyFileBase file) {
@@ -222,11 +227,10 @@ public abstract class CreateClassFix {
         IntentionUtils.positionCursor(project, targetClass.getContainingFile(), targetClass);
       }
 
-      @NotNull
-      private String getPackage(@NotNull PsiClassOwner file) {
+      private @NotNull String getPackage(@NotNull PsiClassOwner file) {
         final PsiElement qualifier = myRefElement.getQualifier();
         if (qualifier instanceof GrReferenceElement) {
-          final PsiElement resolved = ((GrReferenceElement)qualifier).resolve();
+          final PsiElement resolved = ((GrReferenceElement<?>)qualifier).resolve();
           if (resolved instanceof PsiPackage) {
             return ((PsiPackage)resolved).getQualifiedName();
           }
@@ -235,8 +239,8 @@ public abstract class CreateClassFix {
       }
 
       @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!super.isAvailable(project, editor, file)) return false;
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+        if (!super.isAvailable(project, editor, psiFile)) return false;
 
         final PsiElement qualifier = myRefElement.getQualifier();
         if (qualifier != null && resolveQualifier(qualifier) == null) {
@@ -248,7 +252,7 @@ public abstract class CreateClassFix {
     };
   }
 
-  private static void bindRef(@NotNull final PsiClass targetClass, @NotNull final GrReferenceElement ref) {
+  private static void bindRef(final @NotNull PsiClass targetClass, final @NotNull GrReferenceElement ref) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final PsiElement newRef = ref.bindToElement(targetClass);
       JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(newRef);
@@ -256,19 +260,13 @@ public abstract class CreateClassFix {
   }
 
   private static String getTemplateName(GrCreateClassKind createClassKind) {
-    switch (createClassKind) {
-      case TRAIT:
-        return GroovyTemplates.GROOVY_TRAIT;
-      case ENUM:
-        return GroovyTemplates.GROOVY_ENUM;
-      case CLASS:
-        return GroovyTemplates.GROOVY_CLASS;
-      case INTERFACE:
-        return GroovyTemplates.GROOVY_INTERFACE;
-      case ANNOTATION:
-        return GroovyTemplates.GROOVY_ANNOTATION;
-      default:
-        return null;
-    }
+    return switch (createClassKind) {
+      case TRAIT -> GroovyTemplates.GROOVY_TRAIT;
+      case ENUM -> GroovyTemplates.GROOVY_ENUM;
+      case CLASS -> GroovyTemplates.GROOVY_CLASS;
+      case INTERFACE -> GroovyTemplates.GROOVY_INTERFACE;
+      case ANNOTATION -> GroovyTemplates.GROOVY_ANNOTATION;
+      case RECORD -> GroovyTemplates.GROOVY_RECORD;
+    };
   }
 }

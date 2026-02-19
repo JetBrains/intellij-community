@@ -1,0 +1,33 @@
+{
+  "language": "Java",
+  "projectPath": "../ml-eval/keycloak",
+  "repository": "https://github.com/keycloak/keycloak",
+  "revision": "a21e95c5aedf755693b97cdc2425dc56b249395f",
+  "outputDir": "bin/ml-eval-prompt-function-calling-output",
+  "strategy": {
+    "collectContextOnly": false,
+    "enableRAG": true
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ],
+    "sourceFile": "config:../../staticdataset/promptFunctionCalling/keycloak.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 31,
+    "filesLimit": 1,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Prompt Function Calling Report",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

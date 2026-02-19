@@ -15,18 +15,17 @@
  */
 package com.jetbrains.python.debugger.containerview;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.debugger.NodeTypes;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
+import java.util.List;
 
 /**
  * @author amarch
@@ -37,56 +36,56 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     Project p = e.getProject();
-    if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
-      PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
+    if (p != null && node != null && node.getValueContainer() instanceof PyDebugValue debugValue && node.isComputed()) {
       showNumericViewer(p, debugValue);
     }
   }
 
   public static void showNumericViewer(Project project, PyDebugValue debugValue) {
-    PyDataView.getInstance(project).show(debugValue);
+    PyDataView.Companion.getInstance(project).show(debugValue);
   }
 
-  private static TreePath @Nullable [] getSelectedPaths(DataContext dataContext) {
-    XDebuggerTree tree = XDebuggerTree.getTree(dataContext);
-    return tree == null ? null : tree.getSelectionPaths();
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setVisible(false);
-    TreePath[] paths = getSelectedPaths(e.getDataContext());
-    if (paths != null) {
-      if (paths.length > 1) {
-        e.getPresentation().setVisible(false);
-        return;
-      }
+    List<XValueNodeImpl> selectedNodes = getSelectedNodes(e.getDataContext());
+    if (selectedNodes.size() != 1) {
+      e.getPresentation().setVisible(false);
+      return;
+    }
 
-      XValueNodeImpl node = getSelectedNode(e.getDataContext());
-      if (node != null && node.getValueContainer() instanceof PyDebugValue && node.isComputed()) {
-        PyDebugValue debugValue = (PyDebugValue)node.getValueContainer();
+    XValueNodeImpl node = selectedNodes.get(0);
+    if (!(node.getValueContainer() instanceof PyDebugValue debugValue) || !node.isComputed()) {
+      e.getPresentation().setVisible(false);
+      return;
+    }
 
-        String nodeType = debugValue.getType();
-        if ("ndarray".equals(nodeType)) {
-          e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
-          e.getPresentation().setVisible(true);
-        }
-        else if ("DataFrame".equals(nodeType) || "GeoDataFrame".equals(nodeType)) {
-          e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.dataframe"));
-          e.getPresentation().setVisible(true);
-        }
-        else if ("Series".equals(nodeType) || "GeoSeries".equals(nodeType)) {
-          e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.series"));
-          e.getPresentation().setVisible(true);
-        }
-        else {
-          e.getPresentation().setVisible(false);
-        }
-      }
-      else
-      {
-        e.getPresentation().setVisible(false);
-      }
+    String nodeType = debugValue.getType();
+    if (NodeTypes.NDARRAY_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.RECARRAY_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.EAGER_TENSOR_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.RESOURCE_VARIABLE_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.SPARSE_TENSOR_NODE_TYPE.equals(nodeType) ||
+        NodeTypes.TENSOR_NODE_TYPE.equals(nodeType)) {
+      e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
+      e.getPresentation().setVisible(true);
+    }
+    else if (NodeTypes.DATA_FRAME_NODE_TYPE.equals(nodeType) ||
+             NodeTypes.GEO_DATA_FRAME_NODE_TYPE.equals(nodeType) ||
+             NodeTypes.DATASET_NODE_TYPE.equals(nodeType)) {
+      e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.dataframe"));
+      e.getPresentation().setVisible(true);
+    }
+    else if (NodeTypes.SERIES_NODE_TYPE.equals(nodeType) || NodeTypes.GEO_SERIES_NODE_TYPE.equals(nodeType)) {
+      e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.series"));
+      e.getPresentation().setVisible(true);
+    }
+    else {
+      e.getPresentation().setVisible(false);
     }
   }
 }

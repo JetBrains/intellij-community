@@ -16,7 +16,7 @@ import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.junit.Assert.assertNotEquals;
 
 public class FrameworkDetectionInWizardTest extends FrameworkDetectionTestCase {
 
@@ -43,10 +45,10 @@ public class FrameworkDetectionInWizardTest extends FrameworkDetectionTestCase {
     doDetect();
     final List<MockFacet> facets = new ArrayList<>(getFacets());
     assertEquals(2, facets.size());
-    assertFalse(facets.get(0).getName().equals(facets.get(1).getName()));
+    assertNotEquals(facets.get(0).getName(), facets.get(1).getName());
 
-    final Facet subFacet = assertOneElement(FacetManager.getInstance(myModule).getFacetsByType(MockSubFacetType.ID));
-    final Facet parentFacet = subFacet.getUnderlyingFacet();
+    final Facet<?> subFacet = assertOneElement(FacetManager.getInstance(myModule).getFacetsByType(MockSubFacetType.ID));
+    final Facet<?> parentFacet = subFacet.getUnderlyingFacet();
     assertNotNull(parentFacet);
     assertTrue(facets.contains(parentFacet));
 
@@ -59,7 +61,7 @@ public class FrameworkDetectionInWizardTest extends FrameworkDetectionTestCase {
     FrameworkDetectionProcessor processor = new FrameworkDetectionProcessor(new MockProgressIndicator(), new FrameworkDetectionInWizardContext() {
       @Override
       protected List<ModuleDescriptor> getModuleDescriptors() {
-        final ModuleDescriptor descriptor = new ModuleDescriptor(root, StdModuleTypes.JAVA, new JavaModuleSourceRoot(root, null, "java"));
+        final ModuleDescriptor descriptor = new ModuleDescriptor(root, JavaModuleType.getModuleType(), new JavaModuleSourceRoot(root, null, "java"));
         descriptor.setName(myModule.getName());
         return Collections.singletonList(descriptor);
       }

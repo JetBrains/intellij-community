@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.impl
 
+import com.intellij.find.usages.api.DynamicUsage
 import com.intellij.icons.AllIcons
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.rename.api.ModifiableRenameUsage
 import com.intellij.refactoring.rename.api.PsiRenameUsage
 import com.intellij.refactoring.rename.api.RenameConflict
 import com.intellij.usageView.UsageInfo
@@ -18,11 +20,17 @@ import javax.swing.Icon
 internal class PsiRenameUsage2UsageInfo(
   renameUsage: PsiRenameUsage,
   private val newName: String
-) : UsageInfo(renameUsage.file, renameUsage.range, renameUsage is TextUsage) {
+) : UsageInfo(renameUsage.file, renameUsage.range, renameUsage is TextRenameUsage) {
 
   private val pointer: Pointer<out PsiRenameUsage> = renameUsage.createPointer()
 
   val renameUsage: PsiRenameUsage get() = requireNotNull(pointer.dereference())
+
+  internal val isReadOnly: Boolean = renameUsage !is ModifiableRenameUsage
+
+  init {
+    isDynamicUsage = renameUsage is DynamicUsage && renameUsage.isDynamic
+  }
 
   override fun getIcon(): Icon? {
     if (renameUsage.conflicts(newName).isEmpty()) {

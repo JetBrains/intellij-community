@@ -19,10 +19,8 @@ import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class DocStringReferenceContributor extends PsiReferenceContributor {
+
+public final class DocStringReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(DocStringTagCompletionContributor.DOCSTRING_PATTERN,

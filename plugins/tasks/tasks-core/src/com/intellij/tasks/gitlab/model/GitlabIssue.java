@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.gitlab.model;
 
 import com.google.gson.annotations.SerializedName;
@@ -11,6 +12,11 @@ import java.util.Date;
  */
 @SuppressWarnings("unused")
 public class GitlabIssue {
+
+  public static class TimeStats {
+    private int total_time_spent;
+  }
+
   private int id;
   @SerializedName("iid")
   private int localId;
@@ -23,19 +29,19 @@ public class GitlabIssue {
   @SerializedName("created_at")
   private Date createdAt;
   private String state;
+  @SerializedName("time_stats")
+  private TimeStats timeStats;
 
 
   public int getId() {
     return id;
   }
 
-  @NotNull
-  public @NlsSafe String getTitle() {
+  public @NotNull @NlsSafe String getTitle() {
     return title;
   }
 
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return description;
   }
 
@@ -43,22 +49,21 @@ public class GitlabIssue {
     return projectId;
   }
 
-  @NotNull
-  public Date getUpdatedAt() {
+  public @NotNull Date getUpdatedAt() {
     return updatedAt;
   }
 
-  @NotNull
-  public Date getCreatedAt() {
+  public @NotNull Date getCreatedAt() {
     return createdAt;
   }
 
-  @NotNull
-  public String getState() {
+  public @NotNull String getState() {
     return state;
   }
 
   public int getLocalId() {
     return localId;
   }
+
+  public int getTimeSpent() { return timeStats.total_time_spent; }
 }

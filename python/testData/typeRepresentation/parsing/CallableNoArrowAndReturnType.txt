@@ -1,0 +1,6 @@
+TypeRepresentation:a.pythonTypeRepresentation
+  PyParenthesizedExpression
+    PsiElement(Py:LPAR)('(')
+    PyReferenceExpression: int
+      PsiElement(Py:IDENTIFIER)('int')
+    PsiElement(Py:RPAR)(')')

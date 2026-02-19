@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class RenameUtil {
-
   private static final Set<String> ourRncKeywords = new HashSet<>();
 
   static {
@@ -45,8 +44,7 @@ public final class RenameUtil {
   private RenameUtil() {
   }
 
-  @NotNull
-  public static ASTNode createIdentifierNode(PsiManager manager, String name) throws IncorrectOperationException {
+  public static @NotNull ASTNode createIdentifierNode(PsiManager manager, String name) throws IncorrectOperationException {
     if (isKeyword(name)) {
       name = "\\" + name;
     } else if (!isIdentifier(name)) {
@@ -99,8 +97,7 @@ public final class RenameUtil {
     return astNode;
   }
 
-  @NotNull
-  private static ASTNode findFirstGrammarNode(RncFile file) {
+  private static @NotNull ASTNode findFirstGrammarNode(RncFile file) {
     final RncGrammar grammar = file.getGrammar();
     assert grammar != null;
     final ASTNode grammarNode = grammar.getNode();

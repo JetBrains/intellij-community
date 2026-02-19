@@ -7,36 +7,52 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="intellij.xml" exported="" />
-    <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.foldings" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="module-library">
-      <library name="XmlBeans" type="repository">
-        <properties maven-id="org.apache.xmlbeans:xmlbeans:2.6.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/2.6.0/xmlbeans-2.6.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/stax/stax-api/1.0.1/stax-api-1.0.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.xml.parser" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
+    <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.ui.common" exported="" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" exported="" />
-    <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="intellij.xml.structureView.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.diff" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
-    <orderEntry type="library" name="NanoXML" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.xml.dom" />
+    <orderEntry type="module" module-name="intellij.platform.polySymbols" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.libraries.aalto.xml" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.polySymbols.backend" />
+    <orderEntry type="module" module-name="intellij.libraries.xerces" />
+    <orderEntry type="module" module-name="intellij.xml.syntax" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
   </component>
   <component name="copyright">
     <Base>

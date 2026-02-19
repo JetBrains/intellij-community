@@ -1,7 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.IndentsModel;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.SoftWrapModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -9,19 +23,21 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Insets;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 
 /**
- * This class is intended to simplify implementation of dummy editors needed only to pass to places which expect {@link Editor}
- * but do nothing complicated with it, only simple things like getting document/project/caret/selection.<p></p>
- *
+ * This class is intended to simplify implementation of dummy editors needed only to pass to place which expect {@link Editor}
+ * but do nothing complicate with it, only simple things like getting document/project/caret/selection.<p></p>
+ * <p>
  * Since Imaginary* classes are intended to be used by multiple parties,
  * they should be as free as possible of simplified versions of any real Editor's logic.
  * Simplification involves making some assumptions what the clients would need, and different clients may disagree on that.
@@ -33,7 +49,8 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   private final ImaginaryCaretModel myCaretModel;
   private final ImaginarySelectionModel mySelectionModel;
   private final Project myProject;
-  @NotNull private final Document myDocument;
+  private final @NotNull Document myDocument;
+  private static final Logger LOG = Logger.getInstance(ImaginaryEditor.class);
 
   public ImaginaryEditor(@NotNull Project project, @NotNull Document document) {
     myProject = project;
@@ -42,21 +59,18 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     mySelectionModel = new ImaginarySelectionModel(this);
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
-  @NotNull
   @Override
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myCaretModel;
   }
 
-  @NotNull
   @Override
-  public SelectionModel getSelectionModel() {
+  public @NotNull SelectionModel getSelectionModel() {
     return mySelectionModel;
   }
 
@@ -70,15 +84,13 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public JComponent getContentComponent() {
+  public @NotNull JComponent getContentComponent() {
     throw notImplemented();
   }
 
@@ -92,39 +104,33 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public MarkupModel getMarkupModel() {
+  public @NotNull MarkupModel getMarkupModel() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public FoldingModel getFoldingModel() {
+  public @NotNull FoldingModel getFoldingModel() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public ScrollingModel getScrollingModel() {
+  public @NotNull ScrollingModel getScrollingModel() {
     return new ImaginaryScrollingModel(this);
   }
 
-  @NotNull
   @Override
-  public SoftWrapModel getSoftWrapModel() {
+  public @NotNull SoftWrapModel getSoftWrapModel() {
+    return new EmptySoftWrapModel();
+  }
+
+  @Override
+  public @NotNull EditorSettings getSettings() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public EditorSettings getSettings() {
-    throw notImplemented();
-  }
-
-  @NotNull
-  @Override
-  public EditorColorsScheme getColorsScheme() {
+  public @NotNull EditorColorsScheme getColorsScheme() {
     throw notImplemented();
   }
 
@@ -133,85 +139,80 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public Point logicalPositionToXY(@NotNull LogicalPosition pos) {
+  public @NotNull Point logicalPositionToXY(@NotNull LogicalPosition pos) {
     throw notImplemented();
   }
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
+    int line = MathUtil.clamp(pos.line, 0, myDocument.getLineCount());
+    int startOffset = myDocument.getLineStartOffset(line);
+    int endOffset = myDocument.getLineEndOffset(line);
+    return MathUtil.clamp(startOffset + pos.column, startOffset, endOffset);
+  }
+
+  @Override
+  public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
+  public @NotNull Point visualPositionToXY(@NotNull VisualPosition visible) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public Point visualPositionToXY(@NotNull VisualPosition visible) {
+  public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+  public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-    throw notImplemented();
+  public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
+    int clamped = MathUtil.clamp(offset, 0, myDocument.getTextLength());
+    int line = myDocument.getLineNumber(clamped);
+    int col = clamped - myDocument.getLineStartOffset(line);
+    return new LogicalPosition(line, col);
   }
 
-  @NotNull
   @Override
-  public LogicalPosition offsetToLogicalPosition(int offset) {
-    throw notImplemented();
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition offsetToVisualPosition(int offset) {
+  public @NotNull VisualPosition offsetToVisualPosition(int offset) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
-  @NotNull
   @Override
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
+  public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
     return offsetToVisualPosition(offset);
   }
 
-  @NotNull
   @Override
-  public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
+  public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public VisualPosition xyToVisualPosition(@NotNull Point p) {
+  public @NotNull VisualPosition xyToVisualPosition(@NotNull Point p) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+  public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     throw notImplemented();
   }
 
   @Override
   public void addEditorMouseListener(@NotNull EditorMouseListener listener) {
-    throw notImplemented();
+    LOG.info("Called ImaginaryEditor#addEditorMouseListener which is stubbed and has no implementation");
   }
 
   @Override
   public void removeEditorMouseListener(@NotNull EditorMouseListener listener) {
-    throw notImplemented();
+    LOG.info("Called ImaginaryEditor#removeEditorMouseListener which is stubbed and has no implementation");
   }
 
   @Override
@@ -229,15 +230,14 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     return false;
   }
 
-  @Nullable
   @Override
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
   @Override
   public boolean isInsertMode() {
-    return false;
+    return true;
   }
 
   @Override
@@ -250,15 +250,13 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public EditorGutter getGutter() {
+  public @NotNull EditorGutter getGutter() {
     throw notImplemented();
   }
 
-  @Nullable
   @Override
-  public EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
+  public @Nullable EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
     throw notImplemented();
   }
 
@@ -272,28 +270,23 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @Nullable
   @Override
-  public JComponent getHeaderComponent() {
+  public @Nullable JComponent getHeaderComponent() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public IndentsModel getIndentsModel() {
+  public @NotNull IndentsModel getIndentsModel() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public InlayModel getInlayModel() {
+  public @NotNull InlayModel getInlayModel() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public EditorKind getEditorKind() {
-    throw notImplemented();
+  public @NotNull EditorKind getEditorKind() {
+    return EditorKind.UNTYPED;
   }
-
 }

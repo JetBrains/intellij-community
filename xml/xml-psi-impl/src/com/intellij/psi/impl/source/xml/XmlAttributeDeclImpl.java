@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -11,48 +10,31 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.tree.ChildRoleBase;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEnumeratedType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl, XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_DECL;
+import static com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE;
+import static com.intellij.psi.xml.XmlElementType.XML_ENUMERATED_TYPE;
+import static com.intellij.psi.xml.XmlTokenType.XML_ATT_FIXED;
+import static com.intellij.psi.xml.XmlTokenType.XML_ATT_IMPLIED;
+import static com.intellij.psi.xml.XmlTokenType.XML_ATT_REQUIRED;
+import static com.intellij.psi.xml.XmlTokenType.XML_NAME;
+
+public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl {
   private static final Logger LOG = Logger.getInstance(XmlAttributeDeclImpl.class);
-  @NonNls private static final String ID_ATT = "ID";
-  @NonNls private static final String IDREF_ATT = "IDREF";
+  private static final @NonNls String ID_ATT = "ID";
+  private static final @NonNls String IDREF_ATT = "IDREF";
 
   public XmlAttributeDeclImpl() {
     super(XML_ATTRIBUTE_DECL);
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else if (i == XML_ATT_REQUIRED) {
-      return XmlChildRole.XML_ATT_REQUIRED;
-    }
-    else if (i == XML_ATT_FIXED) {
-      return XmlChildRole.XML_ATT_FIXED;
-    }
-    else if (i == XML_ATT_IMPLIED) {
-      return XmlChildRole.XML_ATT_IMPLIED;
-    }
-    else if (i == XML_ATTRIBUTE_VALUE) {
-      return XmlChildRole.XML_DEFAULT_VALUE;
-    }
-    else if (i == XML_ENUMERATED_TYPE) {
-      return XmlChildRole.XML_ENUMERATED_TYPE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 
   @Override
@@ -182,8 +164,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return this;
   }
 }

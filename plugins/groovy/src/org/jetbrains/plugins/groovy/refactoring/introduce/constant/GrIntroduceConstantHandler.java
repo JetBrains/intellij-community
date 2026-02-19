@@ -1,9 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
@@ -19,9 +24,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.introduce.*;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntroducer;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceFieldHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
@@ -35,9 +50,8 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
     return GroovyBundle.message("introduce.constant.title");
   }
 
-  @NotNull
   @Override
-  protected String getHelpID() {
+  protected @NotNull String getHelpID() {
     return HelpID.INTRODUCE_CONSTANT;
   }
 
@@ -73,14 +87,12 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
     }
   }
 
-  @Nullable
-  public static PsiClass findContainingClass(GrIntroduceContext context) {
+  public static @Nullable PsiClass findContainingClass(GrIntroduceContext context) {
     return (PsiClass)context.getScope();
   }
 
-  @NotNull
   @Override
-  protected GrIntroduceDialog<GrIntroduceConstantSettings> getDialog(@NotNull GrIntroduceContext context) {
+  protected @NotNull GrIntroduceDialog<GrIntroduceConstantSettings> getDialog(@NotNull GrIntroduceContext context) {
     return new GrIntroduceConstantDialog(context, findContainingClass(context));
   }
 
@@ -100,9 +112,8 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
     return new GrInplaceConstantIntroducer(contextRef.get(), choice);
   }
 
-  @NotNull
   @Override
-  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
+  protected @NotNull Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
     HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = new LinkedHashMap<>();
 
     GrVariable localVar = resolveLocalVar(context);

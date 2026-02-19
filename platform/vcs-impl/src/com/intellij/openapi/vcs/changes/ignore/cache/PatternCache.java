@@ -25,7 +25,6 @@
 package com.intellij.openapi.vcs.changes.ignore.cache;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -205,7 +204,7 @@ public class PatternCache implements Disposable {
           star = false;
         }
         else if (star) {
-          char prev = sb.length() > 0 ? sb.charAt(sb.length() - 1) : '\0';
+          char prev = !sb.isEmpty() ? sb.charAt(sb.length() - 1) : '\0';
           if (prev == '\0' || prev == '^' || prev == '/') {
             doubleStar = true;
           }
@@ -225,8 +224,7 @@ public class PatternCache implements Disposable {
       }
 
       switch (ch) {
-
-        case '\\':
+        case '\\' -> {
           if (escape) {
             sb.append("\\\\");
             escape = false;
@@ -234,9 +232,8 @@ public class PatternCache implements Disposable {
           else {
             escape = true;
           }
-          break;
-
-        case '?':
+        }
+        case '?' -> {
           if (escape) {
             sb.append("\\?");
             escape = false;
@@ -244,9 +241,8 @@ public class PatternCache implements Disposable {
           else {
             sb.append('.');
           }
-          break;
-
-        case '[':
+        }
+        case '[' -> {
           if (escape) {
             sb.append('\\');
             escape = false;
@@ -255,34 +251,24 @@ public class PatternCache implements Disposable {
             bracket = true;
           }
           sb.append(ch);
-          break;
-
-        case ']':
+        }
+        case ']' -> {
           if (!bracket) {
             sb.append('\\');
           }
           sb.append(ch);
           bracket = false;
           escape = false;
-          break;
-
-        case '.':
-        case '(':
-        case ')':
-        case '+':
-        case '|':
-        case '^':
-        case '$':
-        case '@':
-        case '%':
+        }
+        case '.', '(', ')', '+', '|', '^', '$', '@', '%' -> {
           sb.append('\\');
           sb.append(ch);
           escape = false;
-          break;
-
-        default:
+        }
+        default -> {
           escape = false;
           sb.append(ch);
+        }
       }
     }
 
@@ -322,6 +308,6 @@ public class PatternCache implements Disposable {
   }
 
   public static PatternCache getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, PatternCache.class);
+    return project.getService(PatternCache.class);
   }
 }

@@ -1,6 +1,15 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+
 class X {
 
   void simpleIf(Object obj) {
+    if (!(obj instanceof String s)) return;
+    System.out.println(s.trim());
+  }
+
+  void ifParenthesizedPattern(Object obj) {
     if (!(obj instanceof String s)) return;
     System.out.println(s.trim());
   }
@@ -124,5 +133,26 @@ class X {
       return;
     }
     System.out.println(s.length());
+  }
+
+
+  public static void testWithExceptionCall() throws Exception {
+    Object object = new Object();
+    if (!(object instanceof Integer integer)) {
+      test();
+    }
+    System.out.println(<error descr="Cannot resolve symbol 'integer'">integer</error>);
+  }
+
+  public static void testWithExceptionTryWithResource() throws Exception {
+    Object object = new Object();
+    if (!(object instanceof Integer integer)) {
+      try (InputStream inputStream = new FileInputStream(new File("input.txt"))) {
+      }
+    }
+    System.out.println(<error descr="Cannot resolve symbol 'integer'">integer</error>);
+  }
+
+  private static void test() throws Exception {
   }
 }

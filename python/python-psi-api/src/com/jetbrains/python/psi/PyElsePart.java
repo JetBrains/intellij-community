@@ -15,9 +15,10 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstElsePart;
+
 /**
  * The 'else:' part of various compound statements.
- * User: dcheryasov
  */
-public interface PyElsePart extends PyStatementPart {
+public interface PyElsePart extends PyAstElsePart, PyStatementPart {
 }

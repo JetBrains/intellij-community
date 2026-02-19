@@ -34,8 +34,25 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyConditionalExpression;
+import com.jetbrains.python.psi.PyDecoratable;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyForPart;
+import com.jetbrains.python.psi.PyForStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyPattern;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyTryPart;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyEvaluator;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,23 +64,19 @@ import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.
 
 /**
  * Annotates declarations that unconditionally override others without these being used.
- *
- * @author dcheryasov
- * @author vlan
  */
-public class PyRedeclarationInspection extends PyInspection {
+public final class PyRedeclarationInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -102,7 +115,7 @@ public class PyRedeclarationInspection extends PyInspection {
       return isDecorated;
     }
 
-    private void processElement(@NotNull final PsiNameIdentifierOwner element) {
+    private void processElement(final @NotNull PsiNameIdentifierOwner element) {
       final String name = element.getName();
       final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
       if (owner != null && name != null) {
@@ -122,8 +135,7 @@ public class PyRedeclarationInspection extends PyInspection {
         final Ref<PsiElement> writeElementRef = Ref.create(null);
         final Ref<Boolean> underPossiblyFalseCondition = Ref.create(false);
         ControlFlowUtil.iteratePrev(startInstruction, instructions, instruction -> {
-          if (instruction instanceof ReadWriteInstruction && instruction.num() != startInstruction) {
-            final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+          if (instruction instanceof ReadWriteInstruction rwInstruction && instruction.num() != startInstruction) {
             if (name.equals(rwInstruction.getName())) {
               final PsiElement originalElement = rwInstruction.getElement();
               if (originalElement != null) {
@@ -149,6 +161,10 @@ public class PyRedeclarationInspection extends PyInspection {
         });
         final PsiElement writeElement = writeElementRef.get();
         if (writeElement != null && readElementRef.get() == null) {
+          // Repeated patterns are reported as syntactic errors in an annotator
+          if (PsiTreeUtil.findCommonParent(writeElement, element) instanceof PyPattern) {
+            return;
+          }
           final List<LocalQuickFix> quickFixes = new ArrayList<>();
           if (suggestRename(element, writeElement)) {
             LocalQuickFix quickFix = PythonUiService.getInstance().createPyRenameElementQuickFix(element);
@@ -167,6 +183,15 @@ public class PyRedeclarationInspection extends PyInspection {
     }
 
     private static boolean possiblyFalseCondition(@NotNull Instruction instruction) {
+      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
+        if (conditionalInstruction.getCondition() instanceof PyExpression condition) {
+          return conditionalInstruction.getResult()
+                 ? !PyEvaluator.evaluateAsBoolean(condition, false)
+                 : PyEvaluator.evaluateAsBoolean(condition, true);
+        }
+        return false;
+      }
+
       final PsiElement element = instruction.getElement();
       if (element == null) return false;
 
@@ -175,16 +200,6 @@ public class PyRedeclarationInspection extends PyInspection {
       if (element instanceof PyForStatement) {
         final PyForPart forPart = ((PyForStatement)element).getForPart();
         return !PyEvaluator.evaluateAsBoolean(forPart.getSource(), false);
-      }
-
-      if (instruction instanceof ConditionalInstruction) {
-        final ConditionalInstruction conditionalInstruction = (ConditionalInstruction)instruction;
-        final PsiElement condition = conditionalInstruction.getCondition();
-        if (condition instanceof PyExpression) {
-          return conditionalInstruction.getResult()
-                 ? !PyEvaluator.evaluateAsBoolean((PyExpression)condition, false)
-                 : PyEvaluator.evaluateAsBoolean((PyExpression)condition, true);
-        }
       }
 
       return false;

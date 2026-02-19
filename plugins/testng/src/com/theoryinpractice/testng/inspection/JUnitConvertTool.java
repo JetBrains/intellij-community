@@ -1,13 +1,39 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
@@ -40,15 +66,13 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     ANNOTATIONS_MAP.put("org.junit.After", "@org.testng.annotations.AfterMethod");
   }
 
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "JUnitTestNG";
   }
 
@@ -67,14 +91,21 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
   public static class JUnitConverterQuickFix implements LocalQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return TestngBundle.message("intention.family.name.convert.testcase.to.testng");
     }
 
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(previewDescriptor.getPsiElement(), PsiClass.class);
+      if (psiClass == null) return IntentionPreviewInfo.EMPTY;
+      doFix(project, psiClass);
+      return IntentionPreviewInfo.DIFF;
     }
 
     @Override
@@ -207,10 +238,9 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       method.accept(new JavaRecursiveElementWalkingVisitor() {
 
         @Override
-        public void visitExpressionStatement(PsiExpressionStatement statement) {
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
           PsiExpression expression = statement.getExpression();
-          if (expression instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+          if (expression instanceof PsiMethodCallExpression methodCall) {
             if (methodCall.getArgumentList().getExpressionCount() == 1) {
               PsiMethod resolved = methodCall.resolveMethod();
               if (resolved != null && "junit.framework.TestCase".equals(resolved.getContainingClass().getQualifiedName()) &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -15,9 +15,14 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -28,10 +33,16 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.Element;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.ArrayList;
@@ -67,7 +78,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   public ErrorPaneConfigurable(final Project project, StructureConfigurableContext context, Runnable onErrorsChanged) {
     super(new BorderLayout());
     myOnErrorsChanged = onErrorsChanged;
-    myContent.setEditorKit(UIUtil.getHTMLEditorKit());
+    myContent.setEditorKit(HTMLEditorKitBuilder.simple());
     myContent.setEditable(false);
     myContent.setBackground(UIUtil.getListBackground());
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myContent, true);
@@ -78,13 +89,12 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     project.getMessageBus().connect(this).subscribe(ConfigurationErrors.TOPIC, this);
     myContent.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      public void hyperlinkActivated(HyperlinkEvent e) {
+      public void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         final URL url = e.getURL();
         final AWTEvent awtEvent = EventQueue.getCurrentEvent();
-        if (!(awtEvent instanceof MouseEvent)) {
+        if (!(awtEvent instanceof MouseEvent me)) {
           return;
         }
-        final MouseEvent me = (MouseEvent)awtEvent;
 
         if (url != null) {
           ConfigurationError error = null;
@@ -177,15 +187,14 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     private final @NotNull ConfigurationError myError;
     private final int myIdx;
 
-    private ConfigurationErrorWithIndex(@NotNull final ConfigurationError error, final int idx) {
+    private ConfigurationErrorWithIndex(final @NotNull ConfigurationError error, final int idx) {
       myError = error;
       myIdx = idx;
     }
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static HtmlChunk getErrorDescriptionTag(@NotNull final ConfigurationErrorWithIndex errorIndex) {
+  private static @NotNull HtmlChunk getErrorDescriptionTag(final @NotNull ConfigurationErrorWithIndex errorIndex) {
     final int index = errorIndex.myIdx;
     final ConfigurationError error = errorIndex.myError ;
 
@@ -196,20 +205,20 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     final String text = "[" + JavaUiBundle.message("fix.link.text") + "]";
 
     return new HtmlBuilder().append(description)
+      .append(HtmlChunk.nbsp())
       .append(HtmlChunk.link("http://fix/" + index, text))
       .wrapWith("li");
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static HtmlChunk getErrorDescription(final int index, @NotNull final ConfigurationError error) {
-    //todo[nik] pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
+  private static @NotNull HtmlChunk getErrorDescription(final int index, final @NotNull ConfigurationError error) {
+    //todo pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
     if (!(error instanceof ProjectConfigurationProblem)) return error.getDescription();
 
     final ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
-    if (problemDescription.getDescription() != null) return problemDescription.getDescription();
+    if (!problemDescription.getDescription().isEmpty()) return problemDescription.getDescription();
 
-    if (!problemDescription.canShowPlace()) return HtmlChunk.text(problemDescription.getMessage());
+    if (!problemDescription.canShowPlace()) return HtmlChunk.raw(problemDescription.getMessage());
 
     final String message = StringUtil.decapitalize(problemDescription.getMessage());
 
@@ -224,15 +233,13 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
       .toFragment();
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaUiBundle.message("configurable.ErrorPaneConfigurable.display.name");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     return this;
   }
 
@@ -298,7 +305,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     }
 
     @Override
-    public boolean canEat(Update update) {
+    public boolean canEat(@NotNull Update update) {
       return update instanceof ShowErrorsUpdate && myCurrentStamp > ((ShowErrorsUpdate)update).myCurrentStamp;
     }
   }

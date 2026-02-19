@@ -1,8 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffDividerDrawUtil;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffGutterOperation;
+import com.intellij.diff.util.DiffGutterRenderer;
+import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
@@ -15,20 +22,21 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleDiffChangeUi {
-  @NotNull protected final SimpleDiffViewer myViewer;
-  @NotNull protected final SimpleDiffChange myChange;
+  protected final @NotNull SimpleDiffViewer myViewer;
+  protected final @NotNull SimpleDiffChange myChange;
 
-  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  @NotNull protected final List<DiffGutterOperation> myOperations = new ArrayList<>();
+  protected final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  protected final @NotNull List<DiffGutterOperation> myOperations = new ArrayList<>();
 
   public SimpleDiffChangeUi(@NotNull SimpleDiffViewer viewer, @NotNull SimpleDiffChange change) {
     myViewer = viewer;
@@ -72,18 +80,21 @@ public class SimpleDiffChangeUi {
     myOperations.add(createAcceptOperation(Side.RIGHT));
   }
 
-  private void createHighlighter(@NotNull Side side) {
+  @ApiStatus.Internal
+  protected void createHighlighter(@NotNull Side side) {
     Editor editor = myViewer.getEditor(side);
 
     TextDiffType type = myChange.getDiffType();
     int startLine = myChange.getStartLine(side);
     int endLine = myChange.getEndLine(side);
     boolean ignored = myChange.getFragment().getInnerFragments() != null;
+    boolean alignedSides = myViewer.needAlignChanges();
 
     myHighlighters.addAll(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, type)
                             .withIgnored(ignored)
                             .withExcludedInEditor(myChange.isSkipped())
                             .withExcludedInGutter(myChange.isExcluded())
+                            .withAlignedSides(alignedSides)
                             .done());
   }
 
@@ -131,21 +142,35 @@ public class SimpleDiffChangeUi {
     myOperations.clear();
   }
 
+  public boolean drawDivider(@NotNull DiffDividerDrawUtil.DividerPaintable.Handler handler) {
+    int startLine1 = myChange.getStartLine(Side.LEFT);
+    int endLine1 = myChange.getEndLine(Side.LEFT);
+    int startLine2 = myChange.getStartLine(Side.RIGHT);
+    int endLine2 = myChange.getEndLine(Side.RIGHT);
+    TextDiffType type = myChange.getDiffType();
+
+    if (myViewer.needAlignChanges()) {
+      return handler.processAligned(startLine1, endLine1, startLine2, endLine2, type);
+    }
+    else {
+      return handler.processExcludable(startLine1, endLine1, startLine2, endLine2, type,
+                                       myChange.isExcluded(), myChange.isSkipped());
+    }
+  }
+
   //
   // Helpers
   //
 
-  @NotNull
-  protected DiffGutterOperation createOperation(@NotNull Side side,
-                                                @NotNull DiffGutterOperation.ModifiersRendererBuilder builder) {
+  protected @NotNull DiffGutterOperation createOperation(@NotNull Side side,
+                                                         @NotNull DiffGutterOperation.ModifiersRendererBuilder builder) {
     int offset = side.getStartOffset(myChange.getFragment());
     EditorEx editor = myViewer.getEditor(side);
 
     return new DiffGutterOperation.WithModifiers(editor, offset, myViewer.getModifierProvider(), builder);
   }
 
-  @NotNull
-  private DiffGutterOperation createAcceptOperation(@NotNull Side side) {
+  private @NotNull DiffGutterOperation createAcceptOperation(@NotNull Side side) {
     return createOperation(side, (ctrlPressed, shiftPressed, altPressed) -> {
       boolean isOtherEditable = myViewer.isEditable(side.other());
       boolean isAppendable = myChange.getDiffType() == TextDiffType.MODIFIED;
@@ -162,16 +187,22 @@ public class SimpleDiffChangeUi {
     });
   }
 
-  private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    String text;
-    Icon icon = DiffUtil.getArrowIcon(side);
+  static @NotNull @Nls String getApplyActionText(@NotNull SimpleDiffViewer viewer, @NotNull Side sourceSide) {
+    String customValue = DiffUtil.getUserData(viewer.getRequest(), viewer.getContext(),
+                                              sourceSide.select(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT,
+                                                                DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_ACTION_TEXT));
+    if (customValue != null) return customValue;
 
-    if (side == Side.LEFT && myViewer.isDiffForLocalChanges()) {
-      text = DiffBundle.message("action.presentation.diff.revert.text");
+    if (sourceSide == Side.LEFT && viewer.isDiffForLocalChanges()) {
+      return DiffBundle.message("action.presentation.diff.revert.text");
     }
-    else {
-      text = DiffBundle.message("action.presentation.diff.accept.text");
-    }
+
+    return DiffBundle.message("action.presentation.diff.accept.text");
+  }
+
+  private GutterIconRenderer createApplyRenderer(final @NotNull Side side) {
+    String text = getApplyActionText(myViewer, side);
+    Icon icon = DiffUtil.getArrowIcon(side);
 
     String actionId = side.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide");
     Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
@@ -181,15 +212,15 @@ public class SimpleDiffChangeUi {
     return createIconRenderer(side, tooltipText, icon, () -> myViewer.replaceChange(myChange, side));
   }
 
-  private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
+  private GutterIconRenderer createAppendRenderer(final @NotNull Side side) {
     return createIconRenderer(side, DiffBundle.message("action.presentation.diff.append.text"), DiffUtil.getArrowDownIcon(side),
                               () -> myViewer.appendChange(myChange, side));
   }
 
-  private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
-                                                @NotNull @Nls final String tooltipText,
-                                                @NotNull final Icon icon,
-                                                @NotNull final Runnable perform) {
+  private GutterIconRenderer createIconRenderer(final @NotNull Side sourceSide,
+                                                final @NotNull @Nls String tooltipText,
+                                                final @NotNull Icon icon,
+                                                final @NotNull Runnable perform) {
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
       protected void handleMouseClick() {

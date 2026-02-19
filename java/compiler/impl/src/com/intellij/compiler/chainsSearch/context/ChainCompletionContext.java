@@ -1,13 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.chainsSearch.MethodCall;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -16,9 +32,11 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,70 +48,59 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class ChainCompletionContext {
-  private static final String[] WIDELY_USED_CLASS_NAMES = new String [] {CommonClassNames.JAVA_LANG_STRING,
-                                                                  CommonClassNames.JAVA_LANG_OBJECT,
-                                                                  CommonClassNames.JAVA_LANG_CLASS};
-  private static final Set<String> WIDELY_USED_SHORT_NAMES = ContainerUtil.set("String", "Object", "Class");
-
-  @NotNull
-  private final ChainSearchTarget myTarget;
-  @NotNull
-  private final List<PsiNamedElement> myContextElements;
-  @NotNull
-  private final PsiElement myContext;
-  @NotNull
-  private final GlobalSearchScope myResolveScope;
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final PsiResolveHelper myResolveHelper;
-  @NotNull
-  private final Int2ObjectOpenHashMap<PsiClass> myQualifierClassResolver;
-  @NotNull
-  private final Map<MethodCall, PsiMethod[]> myResolver;
-  @NotNull
-  private final CompilerReferenceServiceEx myRefServiceEx;
-
-  private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences = new NotNullLazyValue<>() {
-    @NotNull
-    @Override
-    protected Set<CompilerRef> compute() {
-      Set<CompilerRef> set = new HashSet<>();
-      for (PsiType type : getContextTypes()) {
-        PsiClass c = PsiUtil.resolveClassInType(type);
-        if (c != null) {
-          String name = ClassUtil.getJVMClassName(c);
-          if (name != null) {
-            int n = myRefServiceEx.getNameId(name);
-            if (n != 0) {
-              set.add(new CompilerRef.JavaCompilerClassRef(n));
-            }
-          }
-        }
-      }
-      return set;
-    }
+  private static final String[] WIDELY_USED_CLASS_NAMES = new String[]{
+    CommonClassNames.JAVA_LANG_STRING,
+    CommonClassNames.JAVA_LANG_OBJECT,
+    CommonClassNames.JAVA_LANG_CLASS
   };
+  private static final Set<String> WIDELY_USED_SHORT_NAMES = Set.of("String", "Object", "Class");
+
+  private final @NotNull ChainSearchTarget myTarget;
+  private final @NotNull List<PsiNamedElement> myContextElements;
+  private final @NotNull PsiElement myContext;
+  private final @NotNull GlobalSearchScope myResolveScope;
+  private final @NotNull Project myProject;
+  private final @NotNull PsiResolveHelper myResolveHelper;
+  private final @NotNull Int2ObjectMap<PsiClass> myQualifierClassResolver;
+  private final @NotNull Map<MethodCall, PsiMethod[]> myResolver;
+  private final @NotNull CompilerReferenceServiceEx myRefService;
+
+  private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences;
 
   private ChainCompletionContext(@NotNull ChainSearchTarget target,
-                                @NotNull List<PsiNamedElement> contextElements,
-                                @NotNull PsiElement context) {
+                                 @NotNull List<PsiNamedElement> contextElements,
+                                 @NotNull PsiElement context,
+                                 @NotNull CompilerReferenceServiceEx compilerReferenceService) {
     myTarget = target;
     myContextElements = contextElements;
     myContext = context;
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
-    myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
+    myResolveHelper = PsiResolveHelper.getInstance(myProject);
     myQualifierClassResolver = new Int2ObjectOpenHashMap<>();
     myResolver = FactoryMap.create(sign -> sign.resolve());
-    myRefServiceEx = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(myProject);
+    myRefService = compilerReferenceService;
+    myContextClassReferences = NotNullLazyValue.createValue(() -> {
+        Set<CompilerRef> set = new HashSet<>();
+        for (PsiType type : getContextTypes()) {
+          PsiClass c = PsiUtil.resolveClassInType(type);
+          if (c != null) {
+            String name = ClassUtil.getJVMClassName(c);
+            if (name != null) {
+              int n = myRefService.getNameId(name);
+              if (n != 0) {
+                set.add(new CompilerRef.JavaCompilerClassRef(n));
+              }
+            }
+          }
+        }
+        return set;
+      });
   }
 
-  @NotNull
-  public ChainSearchTarget getTarget() {
+  public @NotNull ChainSearchTarget getTarget() {
     return myTarget;
   }
 
@@ -109,13 +116,11 @@ public final class ChainCompletionContext {
     return false;
   }
 
-  @NotNull
-  public CompilerReferenceServiceEx getRefService() {
-    return myRefServiceEx;
+  public @NotNull CompilerReferenceServiceEx getRefService() {
+    return myRefService;
   }
 
-  @NotNull
-  public PsiElement getContextPsi() {
+  public @NotNull PsiElement getContextPsi() {
     return myContext;
   }
 
@@ -123,40 +128,31 @@ public final class ChainCompletionContext {
     return myContext.getContainingFile();
   }
 
-  @NotNull
-  public Set<PsiType> getContextTypes() {
-    return myContextElements.stream().map(ChainCompletionContext::getType).collect(Collectors.toSet());
+  public @NotNull Set<PsiType> getContextTypes() {
+    return myContextElements.stream().map(PsiUtil::getTypeByPsiElement).collect(Collectors.toSet());
   }
 
-  @NotNull
-  public Set<CompilerRef> getContextClassReferences() {
+  public @NotNull Set<CompilerRef> getContextClassReferences() {
     return myContextClassReferences.getValue();
   }
 
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return myResolveScope;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   public boolean hasQualifier(@Nullable PsiClass targetClass) {
-    return getQualifiers(targetClass).findAny().isPresent();
+    return targetClass != null && getQualifierIfPresent(JavaPsiFacade.getElementFactory(myProject).createType(targetClass)) != null;
   }
-
-  public Stream<PsiNamedElement> getQualifiers(@Nullable PsiClass targetClass) {
-    if (targetClass == null) return Stream.empty();
-    return getQualifiers(JavaPsiFacade.getElementFactory(myProject).createType(targetClass));
-  }
-
-  public Stream<PsiNamedElement> getQualifiers(@NotNull PsiType targetType) {
-    return myContextElements.stream().filter(e -> {
-      PsiType elementType = getType(e);
+  
+  public @Nullable PsiNamedElement getQualifierIfPresent(@NotNull PsiType targetType) {
+    return DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> ContainerUtil.find(myContextElements, e -> {
+      PsiType elementType = PsiUtil.getTypeByPsiElement(e);
       return elementType != null && targetType.isAssignableFrom(elementType);
-    });
+    }));
   }
 
   public @Nullable PsiClass resolvePsiClass(@NotNull CompilerRef.NamedCompilerRef aClass) {
@@ -167,8 +163,9 @@ public final class ChainCompletionContext {
     }
     else {
       PsiClass psiClass = null;
-      String name = myRefServiceEx.getName(nameId);
-      PsiClass resolvedClass = JavaPsiFacade.getInstance(getProject()).findClass(name, myResolveScope);
+      String name = myRefService.getName(nameId);
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      PsiClass resolvedClass = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> facade.findClass(name, myResolveScope));
       if (resolvedClass != null && accessValidator().test(resolvedClass)) {
         psiClass = resolvedClass;
       }
@@ -193,26 +190,31 @@ public final class ChainCompletionContext {
       return null;
     }
 
+    CompilerReferenceServiceEx compilerReferenceService = (CompilerReferenceServiceEx)CompilerReferenceService.getInstanceIfEnabled(containingElement.getProject());
+    if (compilerReferenceService == null) {
+      return null;
+    }
+
     if (suggestIterators) {
       target = target.toIterators();
     }
 
     Set<? extends PsiVariable> excludedVariables = getEnclosingLocalVariables(containingElement);
-    ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement, excludedVariables);
+    Project project = containingElement.getProject();
+    ContextProcessor processor = new ContextProcessor(null, project, containingElement, excludedVariables);
     PsiScopesUtil.treeWalkUp(processor, containingElement, containingElement.getContainingFile());
     List<PsiNamedElement> contextElements = processor.getContextElements();
-    return new ChainCompletionContext(target, contextElements, containingElement);
+    return new ChainCompletionContext(target, contextElements, containingElement, compilerReferenceService);
   }
 
-  @NotNull
-  private static Set<? extends PsiVariable> getEnclosingLocalVariables(@NotNull PsiElement place) {
+  private static @NotNull Set<? extends PsiVariable> getEnclosingLocalVariables(@NotNull PsiElement place) {
     Set<PsiLocalVariable> result = new HashSet<>();
-    if (place instanceof PsiLocalVariable) result.add((PsiLocalVariable)place);
+    if (place instanceof PsiLocalVariable variable) result.add(variable);
     PsiElement parent = place.getParent();
     while (parent != null) {
       if (parent instanceof PsiFileSystemItem) break;
-      if (parent instanceof PsiLocalVariable && PsiTreeUtil.isAncestor(((PsiLocalVariable)parent).getInitializer(), place, false)) {
-        result.add((PsiLocalVariable)parent);
+      if (parent instanceof PsiLocalVariable variable && PsiTreeUtil.isAncestor(variable.getInitializer(), place, false)) {
+        result.add(variable);
       }
       parent = parent.getParent();
     }
@@ -231,7 +233,7 @@ public final class ChainCompletionContext {
                              @NotNull PsiElement place,
                              @NotNull Set<? extends PsiVariable> excludedVariables) {
       myCompletionVariable = variable;
-      myResolveHelper = PsiResolveHelper.SERVICE.getInstance(project);
+      myResolveHelper = PsiResolveHelper.getInstance(project);
       myPlace = place;
       myExcludedVariables = excludedVariables;
     }
@@ -246,10 +248,10 @@ public final class ChainCompletionContext {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if ((!(element instanceof PsiMethod) || PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)element)) &&
+      if ((!(element instanceof PsiMethod method) || PropertyUtilBase.isSimplePropertyAccessor(method)) &&
           (!(element instanceof PsiVariable) || !myExcludedVariables.contains(element)) &&
-          (!(element instanceof PsiMember) || myResolveHelper.isAccessible((PsiMember)element, myPlace, null))) {
-        PsiType type = getType(element);
+          (!(element instanceof PsiMember member) || myResolveHelper.isAccessible(member, myPlace, null))) {
+        PsiType type = PsiUtil.getTypeByPsiElement(element);
         if (type == null) {
           return true;
         }
@@ -263,45 +265,37 @@ public final class ChainCompletionContext {
 
     @Override
     public <T> T getHint(@NotNull Key<T> hintKey) {
-      if (hintKey == ElementClassHint.KEY) {
+      if (hintKey == KEY) {
         //noinspection unchecked
         return (T)this;
       }
       return null;
     }
 
-    @NotNull
-    public List<PsiNamedElement> getContextElements() {
+    public @NotNull List<PsiNamedElement> getContextElements() {
       myContextElements.remove(myCompletionVariable);
       return myContextElements;
     }
   }
 
-  @Nullable
-  private static PsiType getType(PsiElement element) {
-    if (element instanceof PsiVariable) {
-      return ((PsiVariable)element).getType();
-    }
-    if (element instanceof PsiMethod) {
-      return ((PsiMethod)element).getReturnType();
-    }
-    return null;
-  }
-
   public static boolean isWidelyUsed(@NotNull PsiType type) {
     type = type.getDeepComponentType();
-    if (type instanceof PsiPrimitiveType) return true;
-    if (!(type instanceof PsiClassType)) return false;
-    if (WIDELY_USED_SHORT_NAMES.contains(((PsiClassType)type).getClassName())) return false;
-    final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+    if (type instanceof PsiPrimitiveType) {
+      return true;
+    }
+    if (!(type instanceof PsiClassType classType)) {
+      return false;
+    }
+
+    String className = classType.getClassName();
+    if (className != null && WIDELY_USED_SHORT_NAMES.contains(className)) {
+      return false;
+    }
+
+    final PsiClass resolvedClass = classType.resolve();
     if (resolvedClass == null) return false;
     final String qName = resolvedClass.getQualifiedName();
     if (qName == null) return false;
-    for (String name : WIDELY_USED_CLASS_NAMES) {
-      if (name.equals(qName)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(qName, WIDELY_USED_CLASS_NAMES);
   }
 }

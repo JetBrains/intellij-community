@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -12,12 +12,22 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
-import javax.swing.*;
+import javax.swing.JList;
+import javax.swing.ListSelectionModel;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -29,16 +39,15 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     navigate(new RelativePoint(e), fileNames, elt.getProject());
   }
 
-  @NotNull
-  static List<TestDataFile> getFileNames(PsiMethod method) {
+  static @NotNull List<TestDataFile> getFileNames(PsiMethod method) {
     return getFileNames(method, true);
   }
 
-  @NotNull
-  static List<TestDataFile> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
+  static @NotNull List<TestDataFile> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
     List<TestDataFile> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
-    if (testDataPath != null) {
+    if (testDataPath != null
+        && method.getName().length() > 4) {
       fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4)).collectTestDataReferences(method, collectByExistingFiles);
     }
 
@@ -51,11 +60,12 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   }
 
   public static void navigate(@NotNull RelativePoint point,
-                              @NotNull List<TestDataFile> testDataFiles,
+                              @Unmodifiable @NotNull List<TestDataFile> testDataFiles,
                               Project project) {
     if (testDataFiles.isEmpty()) return;
     if (testDataFiles.size() == 1) {
-      TestDataUtil.openOrAskToCreateFile(project, testDataFiles.get(0));
+      TestDataUtil.openOrAskToCreateFile(project, testDataFiles.getFirst());
+      return;
     }
     else if (testDataFiles.size() == 2) {
       TestDataGroupVirtualFile groupFile = TestDataUtil.getTestDataGroup(testDataFiles.get(0), testDataFiles.get(1));
@@ -67,8 +77,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     showNavigationPopup(project, testDataFiles, point);
   }
 
-  @NotNull
-  public static List<String> fastGetTestDataPathsByRelativePath(@NotNull String testDataFileRelativePath, PsiMethod method) {
+  public static @NotNull List<String> fastGetTestDataPathsByRelativePath(@NotNull String testDataFileRelativePath, PsiMethod method) {
     return getFileNames(method, false).stream()
       .map(TestDataFile::getPath)
       .filter(path -> path.endsWith(testDataFileRelativePath.startsWith("/") ? testDataFileRelativePath : "/" + testDataFileRelativePath))
@@ -82,8 +91,8 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
    * @param filePaths paths of testdata files with "/" path separator. This List can be changed.
    * @param point point where the popup will be shown.
    */
-  private static void showNavigationPopup(Project project, List<TestDataFile> filePaths, RelativePoint point) {
-    filePaths.sort(Comparator.comparing(TestDataFile::getName, String.CASE_INSENSITIVE_ORDER));
+  private static void showNavigationPopup(Project project, @Unmodifiable List<TestDataFile> filePaths, RelativePoint point) {
+    filePaths = ContainerUtil.sorted(filePaths, Comparator.comparing(TestDataFile::getName, String.CASE_INSENSITIVE_ORDER));
 
     List<TestDataNavigationElement> elementsToDisplay = new ArrayList<>();
     List<TestDataNavigationElement> nonExistingElementsToDisplay = new ArrayList<>();
@@ -114,7 +123,8 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     });
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
-      .setItemChoosenCallback(() -> {
+      .setNamerForFiltering(element -> Objects.requireNonNull(ContainerUtil.getFirstItem(element.getTitleFragments())).first)
+      .setItemChosenCallback(() -> {
         TestDataNavigationElement selectedElement = list.getSelectedValue();
         if (selectedElement != null) {
           selectedElement.performAction(project);

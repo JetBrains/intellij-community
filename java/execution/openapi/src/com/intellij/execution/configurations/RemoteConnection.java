@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.net.InetAddress;
@@ -48,8 +47,7 @@ public class RemoteConnection {
   /**
    * @deprecated use {@link #getApplicationHostName()} or {@link #getDebuggerHostName()} instead depending on your needs
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated(forRemoval = true)
   public String getHostName() {
     return myApplicationHostName;
   }
@@ -57,30 +55,9 @@ public class RemoteConnection {
   /**
    * @deprecated use {@link #getApplicationAddress()} or {@link #getDebuggerAddress()} instead depending on your needs
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated(forRemoval = true)
   public String getAddress() {
     return myApplicationAddress;
-  }
-
-  /**
-   * @deprecated use {@link #setApplicationHostName(String)} or {@link #setDebuggerHostName(String)} instead depending on your needs
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public void setHostName(String hostName) {
-    myApplicationHostName = hostName;
-    myDebuggerHostName = hostName;
-  }
-
-  /**
-   * @deprecated use {@link #setApplicationAddress(String)} or {@link #setDebuggerAddress(String)} instead depending on your needs
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public void setAddress(String address) {
-    myApplicationAddress = address;
-    myDebuggerAddress = address;
   }
 
   public String getApplicationHostName() {
@@ -124,11 +101,11 @@ public class RemoteConnection {
     if (shmem) {
       if (serverMode) {
         result = "-Xdebug -Xrunjdwp:transport=dt_shmem,server=n,address=" +
-                 ((address.length() > 0) ? address : "...") + ",suspend=y" + ONTHROW + ONUNCAUGHT;
+                 ((!address.isEmpty()) ? address : "...") + ",suspend=y" + ONTHROW + ONUNCAUGHT;
       }
       else {
         result = "-Xdebug -Xrunjdwp:transport=dt_shmem,server=y,suspend=n,address=" +
-                 ((address.length() > 0) ? address : "...");
+                 ((!address.isEmpty()) ? address : "...");
       }
     }
     else { // socket transport
@@ -153,5 +130,17 @@ public class RemoteConnection {
       }
     }
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "RemoteConnection{" +
+           "myUseSockets=" + myUseSockets +
+           ", myServerMode=" + myServerMode +
+           ", myApplicationHostName='" + myApplicationHostName + '\'' +
+           ", myApplicationAddress='" + myApplicationAddress + '\'' +
+           ", myDebuggerHostName='" + myDebuggerHostName + '\'' +
+           ", myDebuggerAddress='" + myDebuggerAddress + '\'' +
+           '}';
   }
 }

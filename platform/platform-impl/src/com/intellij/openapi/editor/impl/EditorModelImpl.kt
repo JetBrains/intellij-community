@@ -1,0 +1,29 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl
+
+import com.intellij.openapi.editor.CaretModel
+import com.intellij.openapi.editor.ScrollingModel
+import com.intellij.openapi.editor.SelectionModel
+import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ex.EditorModel
+import com.intellij.openapi.editor.ex.InlayModelEx
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.SoftWrapModelEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
+
+
+internal class EditorModelImpl(private val editor: EditorImpl) : EditorModel {
+  override fun getDocument(): DocumentEx = editor.uiDocument
+  override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
+  override fun getDocumentMarkupModel(): MarkupModelEx = editor.filteredDocumentMarkupModel
+  override fun getHighlighter(): EditorHighlighter = editor.highlighter
+  override fun getInlayModel(): InlayModelEx = editor.inlayModel
+  override fun getFoldingModel(): FoldingModelInternal = editor.foldingModel
+  override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
+  override fun getCaretModel(): CaretModel = editor.caretModel
+  override fun getSelectionModel(): SelectionModel = editor.selectionModel
+  override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
+  override fun getFocusModel(): FocusModeModel = editor.focusModeModel
+  override fun isAd(): Boolean = false
+  override fun dispose() {}
+}

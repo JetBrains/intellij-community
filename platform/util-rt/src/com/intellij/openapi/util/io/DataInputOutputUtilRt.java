@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -9,9 +9,16 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class DataInputOutputUtilRt {
+
+  private DataInputOutputUtilRt() { }
+
   public static int readINT(@NotNull DataInput record) throws IOException {
     final int val = record.readUnsignedByte();
     if (val < 192) {
@@ -91,7 +98,7 @@ public final class DataInputOutputUtilRt {
                                     @SuppressWarnings("BoundedWildcard")
                                     @NotNull ThrowableComputable<? extends T, IOException> readElement) throws IOException {
     int size = readINT(in);
-    List<T> result = new ArrayList<T>(size);
+    List<T> result = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       result.add(readElement.compute());
     }
@@ -104,8 +111,8 @@ public final class DataInputOutputUtilRt {
    */
   public static <K, V> void writeMap(@NotNull DataOutput out,
                                      @NotNull Map<? extends K, ? extends V> map,
-                                     @NotNull ThrowableConsumer<K, ? extends IOException> writeKey,
-                                     @NotNull ThrowableConsumer<V, ? extends IOException> writeValue) throws IOException {
+                                     @NotNull ThrowableConsumer<? super K, ? extends IOException> writeKey,
+                                     @NotNull ThrowableConsumer<? super V, ? extends IOException> writeValue) throws IOException {
     writeINT(out, map.size());
     for (Map.Entry<? extends K, ? extends V> e : map.entrySet()) {
       writeKey.consume(e.getKey());
@@ -122,7 +129,7 @@ public final class DataInputOutputUtilRt {
                                          @NotNull ThrowableComputable<? extends K, ? extends IOException> readKey,
                                          @NotNull ThrowableComputable<? extends V, ? extends IOException> readValue) throws IOException {
     int size = readINT(in);
-    Map<K, V> result = new HashMap<K, V>();
+    Map<K, V> result = new HashMap<>();
     for (int i = 0; i < size; i++) {
       result.put(readKey.compute(), readValue.compute());
     }

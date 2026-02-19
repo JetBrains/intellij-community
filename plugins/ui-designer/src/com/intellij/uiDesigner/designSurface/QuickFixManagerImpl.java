@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.ErrorAnalyzer;
@@ -9,13 +9,12 @@ import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
-/**
- * @author yole
- */
+
 public class QuickFixManagerImpl extends QuickFixManager<GlassLayer> {
   public QuickFixManagerImpl(final GuiEditor editor, final GlassLayer component, final JViewport viewPort) {
     super(editor, component, viewPort);

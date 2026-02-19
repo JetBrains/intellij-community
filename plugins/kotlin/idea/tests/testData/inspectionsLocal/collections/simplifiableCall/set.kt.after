@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test() {
+    setOf(setOf(1)).flatten()
+}

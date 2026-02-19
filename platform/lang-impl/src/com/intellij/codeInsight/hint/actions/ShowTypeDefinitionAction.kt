@@ -1,11 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.codeInsight.hint.*
+import com.intellij.codeInsight.hint.ImplementationViewElement
+import com.intellij.codeInsight.hint.ImplementationViewSession
+import com.intellij.codeInsight.hint.ImplementationViewSessionFactory
+import com.intellij.codeInsight.hint.PsiImplementationViewElement
+import com.intellij.codeInsight.hint.PsiImplementationViewSession
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ReadAction
@@ -20,11 +25,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
-import kotlin.streams.asSequence
 
+@ApiStatus.Internal
 open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun getSessionFactories(): List<ImplementationViewSessionFactory> = listOf(TypeDefinitionsViewSessionFactory)
 
   override fun getPopupTitle(session: ImplementationViewSession): String {
@@ -32,8 +42,6 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
   }
 
   override fun couldPinPopup(): Boolean = false
-
-  override fun triggerFeatureUsed(project: Project) {}
 
   override fun getIndexNotReadyMessage(): String {
     return CodeInsightBundle.message("show.type.definition.index.not.ready")
@@ -84,19 +92,18 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
     companion object {
 
       private fun searchTypeDefinitions(element: PsiElement): List<PsiImplementationViewElement> {
-        val search = ThrowableComputable<List<PsiElement>, Exception> {
-          TypeDeclarationProvider.EP_NAME.extensions().asSequence()
+        val search = ThrowableComputable<List<PsiImplementationViewElement>, Exception> {
+          TypeDeclarationProvider.EP_NAME.extensionList.asSequence()
             .mapNotNull { provider ->
-              ReadAction.compute<List<PsiElement>?, Throwable> {
-                provider.getSymbolTypeDeclarations(element)?.mapNotNull { it?.navigationElement }
+              ReadAction.compute<List<PsiImplementationViewElement>?, Throwable> {
+                provider.getSymbolTypeDeclarations(element)?.mapNotNull { it?.navigationElement }?.map(::PsiImplementationViewElement)
               }
             }
             .firstOrNull()
           ?: emptyList()
         }
         val message = CodeInsightBundle.message("searching.for.definitions")
-        val definitions = ProgressManager.getInstance().runProcessWithProgressSynchronously(search, message, true, element.project)
-        return definitions.map { PsiImplementationViewElement(it) }
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(search, message, true, element.project)
       }
     }
   }
@@ -106,10 +113,10 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
     fun runForTests(context: Component): List<PsiElement> {
       val showTypeDefinitionAction = ShowTypeDefinitionActionForTest()
       showTypeDefinitionAction.performForContext(DataManager.getInstance().getDataContext(context))
-      return showTypeDefinitionAction.definitions.get().map { element -> (element as PsiImplementationViewElement).psiElement }
+      return showTypeDefinitionAction.definitions.get().map { element -> (element as PsiImplementationViewElement).getPsiElement()!! }
     }
 
-    private class ShowTypeDefinitionActionForTest(val definitions: Ref<List<ImplementationViewElement>> = Ref()) : ShowTypeDefinitionAction() {
+    internal class ShowTypeDefinitionActionForTest(val definitions: Ref<List<ImplementationViewElement>> = Ref()) : ShowTypeDefinitionAction() {
       override fun showImplementations(session: ImplementationViewSession, invokedFromEditor: Boolean, invokedByShortcut: Boolean) =
         definitions.set(session.implementationElements)
     }

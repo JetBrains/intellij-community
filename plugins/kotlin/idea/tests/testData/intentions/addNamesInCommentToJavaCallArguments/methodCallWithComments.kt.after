@@ -1,0 +1,4 @@
+// IS_APPLICABLE: true
+fun test(j: Java) {
+    j.test(/* foo = */ 1, /* comment */ /* bar = */ 2, /* baz = */ 3)
+}

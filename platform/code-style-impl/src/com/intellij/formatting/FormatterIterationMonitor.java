@@ -1,21 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Prevents formatter from endlessly doing some iterations for some specific and probably erroneus models, for e.g. with
- * unrestricted block nesting, wrapping and etc.
+ * Prevents formatter from endlessly doing some iterations for some specific and probably erroneous models, for e.g. with
+ * unrestricted block nesting, wrapping, etc.
  */
-public class FormatterIterationMonitor<T> {
-  private final static Logger LOG = Logger.getInstance(FormatterIterationMonitor.class);
+final class FormatterIterationMonitor<T> {
+  private static final Logger LOG = Logger.getInstance(FormatterIterationMonitor.class);
 
   private int myIterations;
   private final int myMaxIterations;
   private final T myFallbackValue;
 
-  public FormatterIterationMonitor(int maxIterations, @NotNull T fallbackValue) {
+  FormatterIterationMonitor(int maxIterations, @NotNull T fallbackValue) {
     myMaxIterations = maxIterations;
     myFallbackValue = fallbackValue;
   }
@@ -30,8 +30,7 @@ public class FormatterIterationMonitor<T> {
     return true;
   }
 
-  @NotNull
-  public T getFallbackValue() {
+  public @NotNull T getFallbackValue() {
     return myFallbackValue;
   }
 }

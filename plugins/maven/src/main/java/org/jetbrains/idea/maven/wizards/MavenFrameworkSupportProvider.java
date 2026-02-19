@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -20,20 +20,21 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.io.IOException;
 import java.util.Collections;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
+public final class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
   public MavenFrameworkSupportProvider() {
     super(MavenFrameworkSupportProvider.class.getName(), MavenProjectBundle.message("maven.name"));
   }
 
-  @NotNull
   @Override
-  public FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
+  public @NotNull FrameworkSupportConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
     return new FrameworkSupportConfigurable() {
       @Override
       public JComponent getComponent() {
@@ -111,7 +112,7 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
 
   @Override
   public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
-    return moduleType.equals(StdModuleTypes.JAVA);
+    return moduleType.equals(JavaModuleType.getModuleType());
   }
 
   @Override

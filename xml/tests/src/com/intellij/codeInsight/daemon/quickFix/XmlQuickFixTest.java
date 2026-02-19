@@ -20,7 +20,7 @@ public class XmlQuickFixTest extends BasePlatformTestCase {
     PsiElement element = file.getRootTag().getAttribute("b").getValueElement();
     LanguageInjectionSupport support = TemporaryPlacesRegistry.getInstance(getProject()).getLanguageInjectionSupport();
     assertTrue(support.addInjectionInPlace(PlainTextLanguage.INSTANCE, (PsiLanguageInjectionHost)element));
-    IntentionAction intention = myFixture.getAvailableIntention(XmlAnalysisBundle.message("xml.quickfix.escape.ampersand"));
+    IntentionAction intention = myFixture.getAvailableIntention(XmlAnalysisBundle.message("xml.quickfix.escape.character", "&", "&amp;"));
     assertNotNull(intention);
     ShowIntentionActionsHandler.chooseActionAndInvoke(file, myFixture.getEditor(), intention, "");
     myFixture.checkResult("<a b=\" &amp;\"/>");

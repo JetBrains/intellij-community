@@ -18,7 +18,14 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +36,6 @@ import java.util.Objects;
 /**
  * Something that describes a property, with all related accessors.
  * <br/>
- * User: dcheryasov
  */
 public abstract class PropertyBunch<MType> {
 
@@ -39,23 +45,19 @@ public abstract class PropertyBunch<MType> {
   protected String myDoc;
   protected PyTargetExpression mySite;
 
-  @NotNull
-  public Maybe<MType> getGetter() {
+  public @NotNull Maybe<MType> getGetter() {
     return myGetter;
   }
 
-  @NotNull
-  public Maybe<MType> getSetter() {
+  public @NotNull Maybe<MType> getSetter() {
     return mySetter;
   }
 
-  @NotNull
-  public Maybe<MType> getDeleter() {
+  public @NotNull Maybe<MType> getDeleter() {
     return myDeleter;
   }
 
-  @Nullable
-  public String getDoc() {
+  public @Nullable String getDoc() {
     return myDoc;
   }
 
@@ -64,16 +66,12 @@ public abstract class PropertyBunch<MType> {
    * @param ref a reference as an argument in property() call
    * @return value we want to store (resolved callable, name, etc)
    */
-  @NotNull
-  protected abstract Maybe<MType> translate(@Nullable PyExpression ref);
+  protected abstract @NotNull Maybe<MType> translate(@Nullable PyExpression ref);
 
-  @Nullable
-  public static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
-    if (source instanceof PyCallExpression) {
-      final PyCallExpression call = (PyCallExpression)source;
+  public static @Nullable PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
+    if (source instanceof PyCallExpression call) {
       final PyExpression callee = call.getCallee();
-      if (callee instanceof PyReferenceExpression) {
-        final PyReferenceExpression ref = (PyReferenceExpression)callee;
+      if (callee instanceof PyReferenceExpression ref) {
 
         if (!ref.isQualified() &&
             PyNames.PROPERTY.equals(callee.getName()) &&
@@ -89,12 +87,12 @@ public abstract class PropertyBunch<MType> {
   }
 
   private static boolean isBuiltinFile(@NotNull PsiFile file) {
-    final String name = file.getName();
-    return PyBuiltinCache.BUILTIN_FILE.equals(name) || PyBuiltinCache.BUILTIN_FILE_3K.equals(name);
+    return PyNames.BUILTINS_MODULES.contains(file.getName());
   }
 
   /**
    * Tries to form a bunch from data available at a possible property() call site.
+   *
    * @param source should be a PyCallExpression (if not, null is immediately returned).
    * @param target what to fill with data (return type contravariance prevents us from creating it inside).
    * @return true if target was successfully filled.
@@ -107,8 +105,8 @@ public abstract class PropertyBunch<MType> {
         PyExpression[] accessors = new PyExpression[3];
         String doc = null;
         int position = 0;
-        String[] keywords = new String[] { "fget", "fset", "fdel", "doc" };
-        for (PyExpression arg: arglist.getArguments()) {
+        String[] keywords = new String[]{"fget", "fset", "fdel", "doc"};
+        for (PyExpression arg : arglist.getArguments()) {
           int index = -1;
           if (arg instanceof PyKeywordArgument) {
             String keyword = ((PyKeywordArgument)arg).getKeyword();
@@ -126,7 +124,7 @@ public abstract class PropertyBunch<MType> {
           if (index >= 0) {
             arg = PyUtil.peelArgument(arg);
             if (index < 3) {
-              accessors [index] = arg;
+              accessors[index] = arg;
             }
             else if (index == 3 && arg instanceof PyStringLiteralExpression) {
               doc = ((PyStringLiteralExpression)arg).getStringValue();

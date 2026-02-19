@@ -18,8 +18,14 @@ package com.intellij.psi;
 import com.intellij.openapi.project.Project;
 
 /**
+ * A JVM language-specific extension to provide a factory to create common program elements like class, interface, field, etc.
+ *
  * @author Medvedev Max
  */
 public interface JVMElementFactoryProvider {
+  /**
+   * @param project current project
+   * @return a factory capable to create elements in a given project
+   */
   JVMElementFactory getFactory(Project project);
 }

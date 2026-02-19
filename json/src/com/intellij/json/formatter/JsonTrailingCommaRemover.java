@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.application.options.CodeStyle;
@@ -24,7 +10,12 @@ import com.intellij.json.psi.impl.JsonRecursiveElementVisitor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -32,11 +23,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JsonTrailingCommaRemover implements PreFormatProcessor {
-
-  @NotNull
+public final class JsonTrailingCommaRemover implements PreFormatProcessor {
   @Override
-  public TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {
+  public @NotNull TextRange process(@NotNull ASTNode element, @NotNull TextRange range) {
     PsiElement rootPsi = element.getPsi();
     if (rootPsi.getLanguage() != JsonLanguage.INSTANCE) {
       return range;
@@ -50,7 +39,7 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
     if (document == null) {
       return range;
     }
-    DocumentUtil.executeInBulk(document, true, () -> {
+    DocumentUtil.executeInBulk(document, () -> {
       psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
       PsiElementVisitor visitor = new Visitor(document);
       rootPsi.accept(visitor);
@@ -59,7 +48,7 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
     return range;
   }
 
-  private static class Visitor extends JsonRecursiveElementVisitor {
+  private static final class Visitor extends JsonRecursiveElementVisitor {
     private final Document myDocument;
     private int myOffsetDelta;
 

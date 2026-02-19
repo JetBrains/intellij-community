@@ -16,29 +16,49 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.inspections.quickfix.StatementEffectIntroduceVariableQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyConditionalExpression;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyExpressionStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyListCompExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTryPart;
+import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.PyYieldExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
-public class PyStatementEffectInspection extends PyInspection {
+import java.util.List;
 
-  @NotNull
+public final class PyStatementEffectInspection extends PyInspection {
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   @Override
@@ -48,8 +68,8 @@ public class PyStatementEffectInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -59,8 +79,9 @@ public class PyStatementEffectInspection extends PyInspection {
         return;
       }
       final PyExpression expression = node.getExpression();
-      if (PsiTreeUtil.hasErrorElements(expression))
+      if (PsiTreeUtil.hasErrorElements(expression)) {
         return;
+      }
       if (hasEffect(expression)) return;
 
       // https://twitter.com/gvanrossum/status/112670605505077248
@@ -75,13 +96,13 @@ public class PyStatementEffectInspection extends PyInspection {
           return;
         }
       }
-      if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
-        registerProblem(expression, PyPsiBundle.message("INSP.statement.effect.statement.seems.to.have.no.effect"));
+      List<LocalQuickFix> quickFixes = new SmartList<>(getQuickFixesFromExtensions(node));
+      if (!(expression instanceof PyReferenceExpression reference) || reference.isQualified()) {
+        quickFixes.add(new StatementEffectIntroduceVariableQuickFix());
       }
-      else {
-        registerProblem(expression, PyPsiBundle.message("INSP.statement.effect.statement.seems.to.have.no.effect"),
-                        new StatementEffectIntroduceVariableQuickFix());
-      }
+      registerProblem(expression,
+                      PyPsiBundle.message("INSP.statement.effect.statement.seems.to.have.no.effect"),
+                      quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
 
     private boolean hasEffect(@Nullable PyExpression expression) {
@@ -96,8 +117,7 @@ public class PyStatementEffectInspection extends PyInspection {
           return true;
         }
       }
-      else if (expression instanceof PyBinaryExpression) {
-        final PyBinaryExpression binary = (PyBinaryExpression)expression;
+      else if (expression instanceof PyBinaryExpression binary) {
 
         final PyElementType operator = binary.getOperator();
         if (PyTokenTypes.COMPARISON_OPERATIONS.contains(operator)) return false;
@@ -126,16 +146,13 @@ public class PyStatementEffectInspection extends PyInspection {
           }
         }
       }
-      else if (expression instanceof PyConditionalExpression) {
-        PyConditionalExpression conditionalExpression = (PyConditionalExpression)expression;
+      else if (expression instanceof PyConditionalExpression conditionalExpression) {
         return hasEffect(conditionalExpression.getTruePart()) || hasEffect(conditionalExpression.getFalsePart());
       }
-      else if (expression instanceof PyParenthesizedExpression) {
-        PyParenthesizedExpression parenthesizedExpression = (PyParenthesizedExpression)expression;
+      else if (expression instanceof PyParenthesizedExpression parenthesizedExpression) {
         return hasEffect(parenthesizedExpression.getContainedExpression());
       }
-      else if (expression instanceof PyReferenceExpression) {
-        PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
+      else if (expression instanceof PyReferenceExpression referenceExpression) {
         ResolveResult[] results = referenceExpression.getReference(getResolveContext()).multiResolve(true);
         for (ResolveResult res : results) {
           if (res.getElement() instanceof PyFunction) {
@@ -154,14 +171,18 @@ public class PyStatementEffectInspection extends PyInspection {
           }
         }
       }
-      else if (expression instanceof PyPrefixExpression) {
-        final PyPrefixExpression prefixExpr = (PyPrefixExpression)expression;
+      else if (expression instanceof PyPrefixExpression prefixExpr) {
         return prefixExpr.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
       }
-      else if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {
+      else if (expression instanceof PyEllipsisLiteralExpression) {
         return true;
       }
       return false;
     }
+  }
+
+  private static @NotNull List<LocalQuickFix> getQuickFixesFromExtensions(@NotNull PyExpressionStatement expressionStatement) {
+    return ContainerUtil.mapNotNull(PyStatementEffectQuickFixProvider.EP_NAME.getExtensionList(),
+                                    extension -> extension.getQuickFix(expressionStatement));
   }
 }

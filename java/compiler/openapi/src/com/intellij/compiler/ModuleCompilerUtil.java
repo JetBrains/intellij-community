@@ -1,103 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.RootModelProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Couple;
 import com.intellij.util.Chunk;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.graph.*;
-import com.intellij.util.modules.CircularModuleDependenciesDetector;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphAlgorithms;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author dsl
- */
 public final class ModuleCompilerUtil {
-  private static final Logger LOG = Logger.getInstance(ModuleCompilerUtil.class);
   private ModuleCompilerUtil() { }
 
   public static Module @NotNull [] getDependencies(Module module) {
     return ModuleRootManager.getInstance(module).getDependencies();
   }
 
-  @NotNull
-  private static Graph<Module> createModuleGraph(Module @NotNull [] modules) {
-    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
-      @NotNull
-      @Override
-      public Collection<Module> getNodes() {
-        return Arrays.asList(modules);
-      }
-
-      @NotNull
-      @Override
-      public Iterator<Module> getIn(Module module) {
-        return Arrays.asList(getDependencies(module)).iterator();
-      }
-    }));
-  }
-
-  @NotNull
-  public static List<Chunk<Module>> getSortedModuleChunks(@NotNull Project project, @NotNull List<? extends Module> modules) {
-    final Module[] allModules = ModuleManager.getInstance(project).getModules();
-    final List<Chunk<Module>> chunks = getSortedChunks(createModuleGraph(allModules));
-
-    final Set<Module> modulesSet = new HashSet<>(modules);
-    // leave only those chunks that contain at least one module from modules
-    chunks.removeIf(chunk -> !ContainerUtil.intersects(chunk.getNodes(), modulesSet));
-    return chunks;
-  }
-
-  @NotNull
-  private static <Node> List<Chunk<Node>> getSortedChunks(@NotNull Graph<Node> graph) {
-    final Graph<Chunk<Node>> chunkGraph = toChunkGraph(graph);
-    final List<Chunk<Node>> chunks = new ArrayList<>(chunkGraph.getNodes());
-    DFSTBuilder<Chunk<Node>> builder = new DFSTBuilder<>(chunkGraph);
-    if (!builder.isAcyclic()) {
-      LOG.error("Acyclic graph expected");
-      return null;
-    }
-
-    chunks.sort(builder.comparator());
-    return chunks;
-  }
-
-  @NotNull
-  public static <Node> Graph<Chunk<Node>> toChunkGraph(@NotNull Graph<Node> graph) {
-    return GraphAlgorithms.getInstance().computeSCCGraph(graph);
-  }
-
-  public static void sortModules(final Project project, final List<? extends Module> modules) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
-      modules.sort(comparator);
-    });
-  }
-
-  /**
-   * @deprecated Use {@link CircularModuleDependenciesDetector#addingDependencyFormsCircularity(Module, Module)} instead.
-   *             To be removed in IDEA 2018.2.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.2")
-  @Deprecated
-  public static Couple<Module> addingDependencyFormsCircularity(@NotNull Module currentModule, @NotNull Module toDependOn) {
-    return CircularModuleDependenciesDetector.addingDependencyFormsCircularity(currentModule, toDependOn);
-  }
-
-  @NotNull
-  public static List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<? extends Module> modules) {
+  public static @Unmodifiable @NotNull List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<? extends Module> modules) {
     Collection<Chunk<ModuleSourceSet>> chunks = computeSourceSetCycles(new DefaultModulesProvider(project));
     final Set<Module> modulesSet = new HashSet<>(modules);
     return ContainerUtil.filter(chunks, chunk -> {
@@ -110,12 +50,10 @@ public final class ModuleCompilerUtil {
     });
   }
 
-  @NotNull
-  private static Graph<ModuleSourceSet> createModuleSourceDependenciesGraph(@NotNull RootModelProvider provider) {
+  private static @NotNull Graph<ModuleSourceSet> createModuleSourceDependenciesGraph(@NotNull RootModelProvider provider) {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
-      @NotNull
       @Override
-      public Collection<ModuleSourceSet> getNodes() {
+      public @NotNull Collection<ModuleSourceSet> getNodes() {
         Module[] modules = provider.getModules();
         List<ModuleSourceSet> result = new ArrayList<>(modules.length * 2);
         for (Module module : modules) {
@@ -125,9 +63,8 @@ public final class ModuleCompilerUtil {
         return result;
       }
 
-      @NotNull
       @Override
-      public Iterator<ModuleSourceSet> getIn(final ModuleSourceSet n) {
+      public @NotNull Iterator<ModuleSourceSet> getIn(final ModuleSourceSet n) {
         ModuleRootModel model = provider.getRootModel(n.getModule());
         OrderEnumerator enumerator = model.orderEntries().compileOnly();
         if (n.getType() == ModuleSourceSet.Type.PRODUCTION) {
@@ -146,8 +83,7 @@ public final class ModuleCompilerUtil {
     }));
   }
 
-  @NotNull
-  public static List<Chunk<ModuleSourceSet>> computeSourceSetCycles(@NotNull ModulesProvider provider) {
+  public static @Unmodifiable @NotNull List<Chunk<ModuleSourceSet>> computeSourceSetCycles(@NotNull ModulesProvider provider) {
     Graph<ModuleSourceSet> graph = createModuleSourceDependenciesGraph(provider);
     Collection<Chunk<ModuleSourceSet>> chunks = GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph);
     return removeSingleElementChunks(removeDummyNodes(filterDuplicates(removeSingleElementChunks(chunks)), provider));
@@ -168,7 +104,7 @@ public final class ModuleCompilerUtil {
   }
 
   private static boolean isDummy(ModuleSourceSet set, ModulesProvider modulesProvider) {
-    JavaSourceRootType type = set.getType() == ModuleSourceSet.Type.PRODUCTION ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
+    JavaSourceRootType type = set.getType().isTest()? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     ModuleRootModel rootModel = modulesProvider.getRootModel(set.getModule());
     for (ContentEntry entry : rootModel.getContentEntries()) {
       if (!entry.getSourceFolders(type).isEmpty()) {
@@ -178,15 +114,14 @@ public final class ModuleCompilerUtil {
     return true;
   }
 
-  private static List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<? extends Chunk<ModuleSourceSet>> chunks) {
+  private static @Unmodifiable List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<? extends Chunk<ModuleSourceSet>> chunks) {
     return ContainerUtil.filter(chunks, chunk -> chunk.getNodes().size() > 1);
   }
 
   /**
    * Remove cycles in tests included in cycles between production parts
    */
-  @NotNull
-  private static List<Chunk<ModuleSourceSet>> filterDuplicates(@NotNull Collection<? extends Chunk<ModuleSourceSet>> sourceSetCycles) {
+  private static @Unmodifiable @NotNull List<Chunk<ModuleSourceSet>> filterDuplicates(@NotNull Collection<? extends Chunk<ModuleSourceSet>> sourceSetCycles) {
     final List<Set<Module>> productionCycles = new ArrayList<>();
 
     for (Chunk<ModuleSourceSet> cycle : sourceSetCycles) {
@@ -205,8 +140,7 @@ public final class ModuleCompilerUtil {
     });
   }
 
-  @Nullable
-  private static ModuleSourceSet.Type getCommonType(@NotNull Chunk<? extends ModuleSourceSet> cycle) {
+  private static @Nullable ModuleSourceSet.Type getCommonType(@NotNull Chunk<? extends ModuleSourceSet> cycle) {
     ModuleSourceSet.Type type = null;
     for (ModuleSourceSet set : cycle.getNodes()) {
       if (type == null) {

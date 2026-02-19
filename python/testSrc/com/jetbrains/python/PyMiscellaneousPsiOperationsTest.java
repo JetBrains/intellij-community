@@ -15,12 +15,23 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -61,6 +72,61 @@ public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
     checkAddingNameInFromImport("from mod import ()", "bar", null, true, "from mod import (bar)");
   }
 
+  public void testPrecedingImportBlock() {
+    List<List<PsiComment>> blocks;
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+
+                                        # comment
+                                        # comment
+                                        def func():\s
+                                            pass""");
+    assertSize(2, blocks);
+    assertSize(1, blocks.get(0));
+    assertSize(2, blocks.get(1));
+
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+
+                                        # comment
+                                        # comment
+
+                                        def func():\s
+                                            pass""");
+    assertSize(3, blocks);
+    assertSize(1, blocks.get(0));
+    assertSize(2, blocks.get(1));
+    assertSize(0, blocks.get(2));
+
+    blocks = getPrecedingImportBlocks("def func(): \n" +
+                                      "    pass");
+    assertSize(0, blocks);
+
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+                                        x = 42
+
+                                        def func():\s
+                                            pass""");
+    assertSize(0, blocks);
+
+    blocks = getPrecedingImportBlocks("""
+                                        # comment
+                                        x = 42
+
+                                        # comment
+                                        def func():\s
+                                            pass""");
+    assertSize(1, blocks);
+    assertSize(1, blocks.get(0));
+  }
+
+  private List<List<PsiComment>> getPrecedingImportBlocks(@NotNull String text) {
+    PyFile file = assertInstanceOf(myFixture.configureByText("a.py", text), PyFile.class);
+    PyFunction func = file.findTopLevelFunction("func");
+    return PyPsiUtils.getPrecedingCommentBlocks(func);
+  }
+
   private void checkAddingNameInFromImport(@NotNull String fromImport,
                                            @NotNull String newName,
                                            @Nullable String anchorName,
@@ -92,5 +158,58 @@ public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
     final PyElementGenerator generator = PyElementGenerator.getInstance(myFixture.getProject());
     final PyQualifiedExpression expr = (PyQualifiedExpression)generator.createExpressionFromText(LanguageLevel.PYTHON27, expression);
     assertEquals(expectedQualifiedName, expr.asQualifiedName());
+  }
+
+  public void testNamedParameterIsPositionalOnly() {
+    doTestParameterIsPositionalOnly(List.of(false, true, true, false, false), """
+      class C:
+          def func(__self, __a, __b, c, __d):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(true, true), """
+      class C:
+          @staticmethod
+          def func(__self, __a):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true), """
+      class C:
+          @classmethod
+          def func(__self, __a):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(true, true), """
+      def func(__self, __a):
+          pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true, false, false), """
+      class C:
+          def func(self, __a, *__args, __b):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true, false, false), """
+      class C:
+          def func(self, __a, *, __b):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true, false), """
+      class C:
+          def func(self, __a, **__kwargs):
+              pass
+      """);
+    doTestParameterIsPositionalOnly(List.of(false, true, false, false), """
+      class C:
+          def func(self, a, /, __b):
+              pass
+      """);
+  }
+
+  private void doTestParameterIsPositionalOnly(List<Boolean> expected, String testData) {
+    myFixture.configureByText("a.py", testData);
+    PyFunction func = myFixture.findElementByText("func", PyFunction.class);
+    assertNotNull(func);
+    List<Boolean> actual = ContainerUtil.map(func.getParameterList().getParameters(),
+                                             p -> p instanceof PyNamedParameter np && np.isPositionalOnly());
+    assertOrderedEquals(actual, expected);
   }
 }

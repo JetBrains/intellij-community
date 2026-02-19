@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.StackFrameContext;
@@ -21,14 +7,38 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
-import com.intellij.debugger.impl.descriptors.data.*;
-import com.intellij.debugger.jdi.*;
+import com.intellij.debugger.impl.descriptors.data.ArgValueData;
+import com.intellij.debugger.impl.descriptors.data.ArrayItemData;
+import com.intellij.debugger.impl.descriptors.data.DescriptorData;
+import com.intellij.debugger.impl.descriptors.data.DescriptorKey;
+import com.intellij.debugger.impl.descriptors.data.DisplayKey;
+import com.intellij.debugger.impl.descriptors.data.FieldData;
+import com.intellij.debugger.impl.descriptors.data.LocalData;
+import com.intellij.debugger.impl.descriptors.data.MethodReturnValueData;
+import com.intellij.debugger.impl.descriptors.data.StackFrameData;
+import com.intellij.debugger.impl.descriptors.data.StaticData;
+import com.intellij.debugger.impl.descriptors.data.StaticFieldData;
+import com.intellij.debugger.impl.descriptors.data.ThisData;
+import com.intellij.debugger.impl.descriptors.data.ThreadData;
+import com.intellij.debugger.impl.descriptors.data.ThreadGroupData;
+import com.intellij.debugger.impl.descriptors.data.ThrownExceptionValueData;
+import com.intellij.debugger.impl.descriptors.data.WatchItemData;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.jdi.LocalVariableProxyImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.sun.jdi.*;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.Field;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +51,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   private DescriptorTreeSearcher myDescriptorSearcher;
   private DescriptorTreeSearcher myDisplayDescriptorSearcher;
 
-  protected final Project      myProject;
+  protected final Project myProject;
 
   public NodeDescriptorFactoryImpl(Project project) {
     myProject = project;
@@ -55,18 +65,17 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     myDisplayDescriptorSearcher.clear();
   }
 
-  @NotNull
-  public <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> key) {
+  public @NotNull <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> key) {
     final T descriptor = key.createDescriptor(myProject);
 
     final T oldDescriptor = findDescriptor(parent, descriptor, key);
 
-    if(oldDescriptor != null && oldDescriptor.getClass() == descriptor.getClass()) {
+    if (oldDescriptor != null && oldDescriptor.getClass() == descriptor.getClass()) {
       descriptor.setAncestor(oldDescriptor);
     }
     else {
       T displayDescriptor = findDisplayDescriptor(parent, descriptor, key.getDisplayKey());
-      if(displayDescriptor != null) {
+      if (displayDescriptor != null) {
         descriptor.displayAs(displayDescriptor);
       }
     }
@@ -76,13 +85,11 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return descriptor;
   }
 
-  @Nullable
-  protected <T extends NodeDescriptor>T findDisplayDescriptor(NodeDescriptor parent, T descriptor, DisplayKey<T> key) {
+  protected @Nullable <T extends NodeDescriptor> T findDisplayDescriptor(NodeDescriptor parent, T descriptor, DisplayKey<T> key) {
     return myDisplayDescriptorSearcher.search(parent, descriptor, key);
   }
 
-  @Nullable
-  protected <T extends NodeDescriptor> T findDescriptor(NodeDescriptor parent, T descriptor, DescriptorData<T> key) {
+  protected @Nullable <T extends NodeDescriptor> T findDescriptor(NodeDescriptor parent, T descriptor, DescriptorData<T> key) {
     return myDescriptorSearcher.search(parent, descriptor, key);
   }
 
@@ -122,10 +129,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
         final ThreadReferenceProxy threadReferenceProxy = frameProxy.threadProxy();
         frameCount = threadReferenceProxy.frameCount();
         frameIndex = frameProxy.getFrameIndex();
-       }
-       catch (EvaluateException e) {
-         // ignored
-       }
+      }
+      catch (EvaluateException e) {
+        // ignored
+      }
     }
     final boolean isInitial = !fromTree.frameIdEquals(frameCount, frameIndex);
     DescriptorTree descriptorTree = new DescriptorTree(isInitial);
@@ -138,11 +145,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, new ArrayItemData(array, index));
   }
 
-  @NotNull
   @Override
-  public FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {
+  public @NotNull FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {
     final DescriptorData<FieldDescriptorImpl> descriptorData;
-    if (objRef == null ) {
+    if (objRef == null) {
       if (!field.isStatic()) {
         LOG.error("Object reference is null for non-static field: " + field);
       }
@@ -196,10 +202,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, data);
   }
 
-  public WatchItemDescriptor getWatchItemDescriptor(NodeDescriptor parent, TextWithImports text, @Nullable Value value){
+  public WatchItemDescriptor getWatchItemDescriptor(NodeDescriptor parent, TextWithImports text, @Nullable Value value) {
     return getDescriptor(parent, new WatchItemData(text, value));
   }
-  
+
   private static class DescriptorTreeSearcher {
     private final MarkedDescriptorTree myDescriptorTree;
 
@@ -209,17 +215,16 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
       myDescriptorTree = descriptorTree;
     }
 
-    @Nullable
-    public <T extends NodeDescriptor> T search(NodeDescriptor parent, T descriptor, DescriptorKey<T> key) {
+    public @Nullable <T extends NodeDescriptor> T search(NodeDescriptor parent, T descriptor, DescriptorKey<T> key) {
       final T result;
-      if(parent == null) {
+      if (parent == null) {
         result = myDescriptorTree.getChild(null, key);
       }
       else {
         final NodeDescriptor parentDescriptor = getSearched(parent);
         result = parentDescriptor != null ? myDescriptorTree.getChild(parentDescriptor, key) : null;
       }
-      if(result != null) {
+      if (result != null) {
         mySearchedDescriptors.put(descriptor, result);
       }
       return result;
@@ -243,7 +248,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     @Override
     protected NodeDescriptor getSearched(NodeDescriptor parent) {
       NodeDescriptor searched = super.getSearched(parent);
-      if(searched == null) {
+      if (searched == null) {
         return myDescriptorSearcher.getSearched(parent);
       }
       return searched;

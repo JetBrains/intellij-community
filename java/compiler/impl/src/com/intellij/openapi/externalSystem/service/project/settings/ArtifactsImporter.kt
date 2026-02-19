@@ -13,18 +13,29 @@ import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.packaging.artifacts.*
+import com.intellij.packaging.artifacts.ArtifactManager
+import com.intellij.packaging.artifacts.ArtifactPointerManager
+import com.intellij.packaging.artifacts.ArtifactType
+import com.intellij.packaging.artifacts.ModifiableArtifact
+import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
-import com.intellij.packaging.impl.elements.*
+import com.intellij.packaging.impl.elements.ArchivePackagingElement
+import com.intellij.packaging.impl.elements.ArtifactPackagingElement
+import com.intellij.packaging.impl.elements.DirectoryCopyPackagingElement
+import com.intellij.packaging.impl.elements.DirectoryPackagingElement
+import com.intellij.packaging.impl.elements.ExtractedDirectoryPackagingElement
+import com.intellij.packaging.impl.elements.FileCopyPackagingElement
+import com.intellij.packaging.impl.elements.LibraryPackagingElement
+import com.intellij.packaging.impl.elements.ProductionModuleOutputPackagingElement
+import com.intellij.packaging.impl.elements.ProductionModuleSourcePackagingElement
+import com.intellij.packaging.impl.elements.TestModuleOutputPackagingElement
 import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTask
 import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider
 import com.intellij.util.ObjectUtils.consumeIfCast
 
 class ArtifactsImporter: ConfigurationHandler {
-  private val LOG = Logger.getInstance(ArtifactsImporter::class.java)
-
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     val artifacts = configuration.find("ideArtifacts") as? List<*> ?: return
 
@@ -62,7 +73,7 @@ class ArtifactsImporter: ConfigurationHandler {
       return if (module != null) {
         ModulePointerManager.getInstance(project).create(module)
       } else {
-        LOG.warn("Artifact `${element.name}`: unable to find module `$moduleName`");
+        LOG.warn("Artifact `${element.name}`: unable to find module `$moduleName`")
         ModulePointerManager.getInstance(project).create(moduleName)
       }
     }
@@ -167,6 +178,10 @@ class ArtifactsImporter: ConfigurationHandler {
     val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(this@findLibraryByNameSuffix)
     return libraryTable.libraries.find { it.name?.endsWith(nameSuffix) ?: false }
   }
+
+  companion object {
+    private val LOG = Logger.getInstance(ArtifactsImporter::class.java)
+  }
 }
 
 class BuildArtifactsTaskImporter: BeforeRunTaskImporter {
@@ -174,9 +189,9 @@ class BuildArtifactsTaskImporter: BeforeRunTaskImporter {
                        modelsProvider: IdeModifiableModelsProvider,
                        runConfiguration: RunConfiguration,
                        beforeRunTasks: MutableList<BeforeRunTask<*>>,
-                       cfg: MutableMap<String, Any>): MutableList<BeforeRunTask<*>> {
+                       configurationData: MutableMap<String, Any>): MutableList<BeforeRunTask<*>> {
 
-    consumeIfCast(cfg["artifactName"], String::class.java) { artifactName ->
+    consumeIfCast(configurationData["artifactName"], String::class.java) { artifactName ->
       val artifact = ArtifactManager.getInstance(project).findArtifact(artifactName)
       val hasTask = beforeRunTasks
         .filterIsInstance<BuildArtifactsBeforeRunTask>()

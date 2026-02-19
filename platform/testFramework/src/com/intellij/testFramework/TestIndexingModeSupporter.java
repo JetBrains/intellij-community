@@ -1,18 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.testFramework.DumbModeTestUtils.EternalTaskShutdownToken;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
-import junit.framework.*;
+import com.intellij.util.indexing.UnindexedFilesScanner;
+import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl;
+import junit.framework.Protectable;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.internal.MethodSorter;
+import org.junit.runner.Describable;
+import org.junit.runner.Description;
 
-import java.lang.reflect.*;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 import static com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode.DUMB_EMPTY_INDEX;
 import static junit.framework.TestSuite.warning;
@@ -21,73 +36,115 @@ import static junit.framework.TestSuite.warning;
  * To run a test with needed {@link IndexingMode}, it's enough to make getIndexingMode return it and run the test with IDE's gutter action.
  * To run all dumb mode completion tests, check JavaDoc of
  * {@link com.intellij.java.codeInsight.completion.JavaCompletionTestSuite} or
- * {@link com.jetbrains.php.slowTests.PhpDumbCompletionTestSuite}
+ * {@link com.jetbrains.php.PhpDumbCompletionTest}
  */
 public interface TestIndexingModeSupporter {
   enum IndexingMode {
     SMART {
       @Override
-      public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {}
-
-      @Override
-      public void tearDownTest(@NotNull Project project) {}
-    }, DUMB_FULL_INDEX {
-      @Override
-      public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
-        indexEverythingAndBecomeDumb(project);
-        RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+      public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+        return new ShutdownToken(null);
       }
 
       @Override
       public void ensureIndexingStatus(@NotNull Project project) {
-        DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
+        IndexingTestUtil.waitUntilIndexesAreReady(project);
+      }
+    }, DUMB_FULL_INDEX {
+      @Override
+      public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+        EternalTaskShutdownToken dumbTask = indexEverythingAndBecomeDumb(project);
+        onlyAllowOwnTasks(project, testRootDisposable);
+        RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+        // we don't want "waiting-for-non-dumb-mode" to pause tasks submitted from ensureIndexingStatus
+        UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(false);
+        return new ShutdownToken(dumbTask);
+      }
+
+      @Override
+      public void ensureIndexingStatus(@NotNull Project project) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          dumbService.setDumb(false);
-          dumbService.queueTask(new UnindexedFilesUpdater(project));
-          dumbService.setDumb(true);
+          // if not invoked from EDT scanning will be queued asynchronously
+          new UnindexedFilesScanner(project, INDEXING_REASON).queue();
         });
+        IndexingTestUtil.waitUntilIndexesAreReady(project);
       }
     }, DUMB_RUNTIME_ONLY_INDEX {
       @Override
-      public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
-        becomeDumb(project);
+      public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+        EternalTaskShutdownToken dumbTask = becomeDumb(project);
+        onlyAllowOwnTasks(project, testRootDisposable);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+        // we don't want "waiting-for-non-dumb-mode" to pause tasks submitted from ensureIndexingStatus
+        UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(false);
+        return new ShutdownToken(dumbTask);
       }
     }, DUMB_EMPTY_INDEX {
       @Override
-      public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+      public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+        // indexing code does not expect that FileBasedIndex implementation changes during execution
+        IndexingTestUtil.waitUntilIndexesAreReady(project);
+
         ServiceContainerUtil
           .replaceService(ApplicationManager.getApplication(), FileBasedIndex.class, new EmptyFileBasedIndex(), testRootDisposable);
-        becomeDumb(project);
+        EternalTaskShutdownToken dumbTask = becomeDumb(project);
+        onlyAllowOwnTasks(project, testRootDisposable);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+        return new ShutdownToken(dumbTask);
       }
     };
 
-    public abstract void setUpTest(@NotNull Project project,
-                                   @NotNull Disposable testRootDisposable);
+    private static final String INDEXING_REASON = "TestIndexingModeSupporter";
 
-    public void tearDownTest(@NotNull Project project) {
+    private static void onlyAllowOwnTasks(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+      UnindexedFilesScannerExecutorImpl.getInstance(project)
+        .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReasonBlocking(), INDEXING_REASON));
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        DumbServiceImpl.getInstance(project).setDumb(false);
+        UnindexedFilesScannerExecutorImpl.getInstance(project).cancelAllTasksAndWait();
       });
+    }
+
+    public static final class ShutdownToken {
+      private final @Nullable EternalTaskShutdownToken dumbTask;
+
+      private ShutdownToken(@Nullable EternalTaskShutdownToken dumbTask) {
+        this.dumbTask = dumbTask;
+      }
+    }
+
+    protected abstract @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable);
+
+    public final @NotNull ShutdownToken setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+      ShutdownToken shutdownToken = setUpTestInternal(project, testRootDisposable);
+      Disposer.register(testRootDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          tearDownTest(project, shutdownToken);
+        }
+      });
+      return shutdownToken;
+    }
+
+    public void tearDownTest(@Nullable Project project, @NotNull ShutdownToken token) {
+      if (token.dumbTask != null) {
+        DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token.dumbTask);
+        if (project != null) {
+          UnindexedFilesScannerExecutorImpl.getInstance(project).overrideScanningWaitsForNonDumbMode(null /* reset to default */);
+        }
+      }
     }
 
     public void ensureIndexingStatus(@NotNull Project project) {
     }
 
-    private static void becomeDumb(@NotNull Project project) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        DumbServiceImpl.getInstance(project).setDumb(true);
-      });
+    private static EternalTaskShutdownToken becomeDumb(@NotNull Project project) {
+      return DumbModeTestUtils.startEternalDumbModeTask(project);
     }
 
-    private static void indexEverythingAndBecomeDumb(@NotNull Project project) {
-      DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        dumbService.setDumb(false);
-        dumbService.queueTask(new UnindexedFilesUpdater(project));
-        dumbService.setDumb(true);
-      });
+    private static EternalTaskShutdownToken indexEverythingAndBecomeDumb(@NotNull Project project) {
+      new UnindexedFilesScanner(project, INDEXING_REASON).queue();
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
+      return becomeDumb(project);
     }
   }
 
@@ -95,9 +152,19 @@ public interface TestIndexingModeSupporter {
 
   @NotNull IndexingMode getIndexingMode();
 
+  static void addAllTests(@NotNull Class<? extends TestIndexingModeSupporter> aClass, @NotNull TestSuite parentSuite) {
+    addTest(aClass, new FullIndexSuite(), parentSuite);
+    addTest(aClass, new RuntimeOnlyIndexSuite(), parentSuite);
+    if (Registry.is("ide.dumb.mode.check.awareness")) {
+      addTest(aClass, new EmptyIndexSuite(), parentSuite);
+    }
+  }
+
   static void addTest(@NotNull Class<? extends TestIndexingModeSupporter> aClass,
                       @NotNull TestIndexingModeSupporter.IndexingModeTestHandler handler,
                       @NotNull TestSuite parentSuite) {
+    if (handler.getIndexingMode() == DUMB_EMPTY_INDEX &&
+        !Registry.is("ide.dumb.mode.check.awareness")) return;
     if (handler.shouldIgnore(aClass)) return;
     try {
       TestSuite suite = handler.createTestSuite();
@@ -108,12 +175,11 @@ public interface TestIndexingModeSupporter {
         if (!Modifier.isPublic(declaredMethod.getModifiers())) continue;
         String methodName = declaredMethod.getName();
         if (!methodName.startsWith("test")) continue;
-        if (TestFrameworkUtil.isPerformanceTest(methodName, aClass.getName())) continue;
+        if (TestFrameworkUtil.isPerformanceTest(methodName, aClass)) continue;
         if (handler.shouldIgnore(declaredMethod)) continue;
         TestIndexingModeSupporter aCase = constructor.newInstance();
         aCase.setIndexingMode(handler.getIndexingMode());
-        if (aCase instanceof TestCase) {
-          TestCase testCase = (TestCase)aCase;
+        if (aCase instanceof TestCase testCase) {
           testCase.setName(methodName);
           if (UsefulTestCase.IS_UNDER_TEAMCITY) {
             Test wrapper = IndexingModeTestHandler.wrapForTeamCity(testCase, handler.getIndexingMode());
@@ -208,14 +274,14 @@ public interface TestIndexingModeSupporter {
      * with path of buildAgent directory in TeamCity installation. To get it unpack TeamCity archive and start TeamCity with
      * {@code ./bin/runAll.sh start}
      * <p>
-     * Also these properties may be useful for debugging of tests, making them wait for remote debug connection:
+     * Also, these properties may be useful for debugging of tests, making them wait for remote debug connection:
      * {@code
      * -Dintellij.build.test.debug.port=<port>
      * -Dintellij.build.test.debug.suspend=true
      * }
      */
     private static class MyHackyJUnitTaskMirrorImpl {
-      private static class VmExitErrorTest implements Test {
+      private static class VmExitErrorTest implements Test, Describable {
         private final TestCase myTestCase;
         private final IndexingMode myMode;
 
@@ -248,17 +314,23 @@ public interface TestIndexingModeSupporter {
         public String toString() {
           return myTestCase.getClass().getName() + "." + myTestCase.getName() + " with IndexingMode " + myMode.name();
         }
+
+        @Override
+        public Description getDescription() {
+          return Description.createTestDescription(myTestCase.getClass(), myTestCase.getName() + "[" + myMode.name() + "]");
+        }
       }
     }
   }
 
   class FullIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
     public FullIndexSuite() {
-      super("Full index", "Full index: ", IndexingMode.DUMB_FULL_INDEX);
+      super("Full index", "Full index ", IndexingMode.DUMB_FULL_INDEX);
     }
 
     @Override
     public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      //noinspection UnnecessarilyQualifiedStaticUsage
       return IndexingModeTestHandler.shouldIgnoreInFullIndexSuite(aClass);
     }
   }
@@ -266,11 +338,12 @@ public interface TestIndexingModeSupporter {
   class RuntimeOnlyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
 
     public RuntimeOnlyIndexSuite() {
-      super("RuntimeOnlyIndex", "Runtime only index: ", IndexingMode.DUMB_RUNTIME_ONLY_INDEX);
+      super("RuntimeOnlyIndex", "Runtime only index ", IndexingMode.DUMB_RUNTIME_ONLY_INDEX);
     }
 
     @Override
     public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      //noinspection UnnecessarilyQualifiedStaticUsage
       return IndexingModeTestHandler.shouldIgnoreInRuntimeOnlyIndexSuite(aClass);
     }
   }
@@ -278,11 +351,12 @@ public interface TestIndexingModeSupporter {
   class EmptyIndexSuite extends TestIndexingModeSupporter.IndexingModeTestHandler {
 
     public EmptyIndexSuite() {
-      super("Empty index", "Empty index:", DUMB_EMPTY_INDEX);
+      super("Empty index", "Empty index ", DUMB_EMPTY_INDEX);
     }
 
     @Override
     public boolean shouldIgnore(@NotNull AnnotatedElement aClass) {
+      //noinspection UnnecessarilyQualifiedStaticUsage
       return IndexingModeTestHandler.shouldIgnoreInEmptyIndexSuite(aClass);
     }
   }

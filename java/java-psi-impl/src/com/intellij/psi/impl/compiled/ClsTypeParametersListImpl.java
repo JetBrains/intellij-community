@@ -1,7 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
@@ -29,7 +34,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirrors(getTypeParameters(), SourceTreeToPsiMap.<PsiTypeParameterList>treeToPsiNotNull(element).getTypeParameters());
   }
@@ -50,7 +55,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
   }
 
   @Override
-  public int getTypeParameterIndex(PsiTypeParameter typeParameter) {
+  public int getTypeParameterIndex(@NotNull PsiTypeParameter typeParameter) {
     assert typeParameter.getParent() == this;
     return PsiImplUtil.getTypeParameterIndex(typeParameter, this);
   }

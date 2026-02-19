@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle;
 
-import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
@@ -16,10 +16,8 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
   private String group;
   private String name;
   private String version;
-  @NotNull
-  private String packaging = "jar";
-  @Nullable
-  private String classifier;
+  private @NotNull String packaging = "jar";
+  private @Nullable String classifier;
 
   public DefaultExternalDependencyId() {
   }
@@ -63,9 +61,8 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
     this.version = version;
   }
 
-  @NotNull
   @Override
-  public String getPackaging() {
+  public @NotNull String getPackaging() {
     return packaging;
   }
 
@@ -73,9 +70,8 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
     this.packaging = packaging;
   }
 
-  @Nullable
   @Override
-  public String getClassifier() {
+  public @Nullable String getClassifier() {
     return classifier;
   }
 
@@ -84,8 +80,7 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     final StringBuilder buf = new StringBuilder();
     if (group != null) {
       buf.append(group).append(':');
@@ -107,19 +102,18 @@ public final class DefaultExternalDependencyId implements ExternalDependencyId, 
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof DefaultExternalDependencyId)) return false;
-    DefaultExternalDependencyId that = (DefaultExternalDependencyId)o;
-    return Objects.equal(group, that.group) &&
-           Objects.equal(name, that.name) &&
-           Objects.equal(packaging, that.packaging) &&
-           Objects.equal(classifier, that.classifier) &&
-           Objects.equal(version, that.version);
+    if (o == null || getClass() != o.getClass()) return false;
+    DefaultExternalDependencyId id = (DefaultExternalDependencyId)o;
+    return Objects.equals(group, id.group) &&
+           Objects.equals(name, id.name) &&
+           Objects.equals(packaging, id.packaging) &&
+           Objects.equals(classifier, id.classifier) &&
+           Objects.equals(version, id.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(group, name, packaging, classifier, version);
+    return Objects.hash(group, name, packaging, classifier, version);
   }
 
   @Override

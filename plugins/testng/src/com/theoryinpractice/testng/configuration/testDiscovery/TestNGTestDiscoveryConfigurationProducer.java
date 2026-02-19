@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.configuration.testDiscovery;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -21,9 +21,8 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return TestNGConfigurationType.getInstance().getConfigurationFactories()[0];
   }
 
@@ -47,12 +46,11 @@ public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfi
     return TestNGUtil.hasTest(method.getPsiElement());
   }
 
-  @NotNull
   @Override
-  public RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
-                                       Module module,
-                                       RunConfiguration configuration,
-                                       ExecutionEnvironment environment) {
+  public @NotNull RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
+                                                Module module,
+                                                RunConfiguration configuration,
+                                                ExecutionEnvironment environment) {
     TestData data = ((TestNGConfiguration)configuration).getPersistantData();
     data.setPatterns(collectMethodPatterns(testMethods));
     data.TEST_OBJECT = TestType.PATTERN.type;

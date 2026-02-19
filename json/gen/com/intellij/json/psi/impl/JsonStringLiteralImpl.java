@@ -14,10 +14,11 @@ import com.intellij.openapi.util.TextRange;
 
 public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements JsonStringLiteral {
 
-  public JsonStringLiteralImpl(@NotNull ASTNode node) {
+  public JsonStringLiteralImpl(ASTNode node) {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitStringLiteral(this);
   }
@@ -28,16 +29,17 @@ public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements Jso
     else super.accept(visitor);
   }
 
-  @NotNull
-  public List<Pair<TextRange, String>> getTextFragments() {
+  @Override
+  public @NotNull List<Pair<TextRange, String>> getTextFragments() {
     return JsonPsiImplUtils.getTextFragments(this);
   }
 
-  @NotNull
-  public String getValue() {
+  @Override
+  public @NotNull String getValue() {
     return JsonPsiImplUtils.getValue(this);
   }
 
+  @Override
   public boolean isPropertyName() {
     return JsonPsiImplUtils.isPropertyName(this);
   }

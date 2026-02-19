@@ -33,18 +33,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyNotifyWhileNotSynchronizedInspection extends BaseInspection {
+public final class GroovyNotifyWhileNotSynchronizedInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.call.to.ref.outside.synchronized.context");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -53,10 +51,9 @@ public class GroovyNotifyWhileNotSynchronizedInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
-      if (!(methodExpression instanceof GrReferenceExpression)) {
+      if (!(methodExpression instanceof GrReferenceExpression reference)) {
         return;
       }
-      final GrReferenceExpression reference = (GrReferenceExpression) methodExpression;
       final String name = reference.getReferenceName();
       if (!"notify".equals(name) && !"notifyAll".equals(name)) {
         return;

@@ -35,12 +35,12 @@ public abstract class JavaElseUnwrapperBase extends JavaUnwrapper {
     return (PsiUtil.isElseBlock(e) || isElseKeyword(e)) && isValidConstruct(e);
   }
 
-  private boolean isElseKeyword(PsiElement e) {
+  private static boolean isElseKeyword(PsiElement e) {
     PsiElement p = e.getParent();
     return p instanceof PsiIfStatement && e == ((PsiIfStatement)p).getElseElement();
   }
 
-  private boolean isValidConstruct(PsiElement e) {
+  private static boolean isValidConstruct(PsiElement e) {
     return ((PsiIfStatement)e.getParent()).getElseBranch() != null;
   }
 

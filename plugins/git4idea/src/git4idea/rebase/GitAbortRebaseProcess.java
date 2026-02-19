@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.vcs.log.Hash;
 import git4idea.DialogManager;
+import git4idea.GitActivity;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -29,22 +30,25 @@ import java.util.Map;
 import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
-import static com.intellij.openapi.ui.Messages.canShowMacSheetPanel;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static git4idea.GitNotificationIdsHolder.REBASE_ABORT_FAILED;
+import static git4idea.GitNotificationIdsHolder.REBASE_ABORT_SUCCESS;
+import static git4idea.GitNotificationIdsHolder.REBASE_ROLLBACK_FAILED;
+import static git4idea.GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING;
 import static git4idea.rebase.GitRebaseUtils.mentionLocalChangesRemainingInStash;
 
 class GitAbortRebaseProcess {
   private static final Logger LOG = Logger.getInstance(GitAbortRebaseProcess.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
-  @NotNull private final VcsNotifier myNotifier;
+  private final @NotNull Project myProject;
+  private final @NotNull Git myGit;
+  private final @NotNull VcsNotifier myNotifier;
 
-  @Nullable private final GitRepository myRepositoryToAbort;
-  @NotNull private final Map<GitRepository, String> myRepositoriesToRollback;
-  @NotNull private final Map<GitRepository, String> myInitialCurrentBranches;
-  @NotNull private final ProgressIndicator myIndicator;
-  @Nullable private final GitChangesSaver mySaver;
+  private final @Nullable GitRepository myRepositoryToAbort;
+  private final @NotNull Map<GitRepository, String> myRepositoriesToRollback;
+  private final @NotNull Map<GitRepository, String> myInitialCurrentBranches;
+  private final @NotNull ProgressIndicator myIndicator;
+  private final @Nullable GitChangesSaver mySaver;
   private final boolean myNotifySuccess;
 
   GitAbortRebaseProcess(@NotNull Project project,
@@ -81,16 +85,11 @@ class GitAbortRebaseProcess {
     }
   }
 
-  @NotNull
-  private AbortChoice confirmAbort() {
+  private @NotNull AbortChoice confirmAbort() {
     String title = GitBundle.message("rebase.abort.dialog.title");
     if (myRepositoryToAbort != null) {
       if (myRepositoriesToRollback.isEmpty()) {
         String message = GitBundle.message("rebase.abort.dialog.message", getShortRepositoryName(myRepositoryToAbort));
-        if (canShowMacSheetPanel()) {
-          title = message;
-          message = "";
-        }
         int choice = DialogManager.showOkCancelDialog(
           myProject,
           message,
@@ -109,10 +108,6 @@ class GitAbortRebaseProcess {
           getShortRepositoryName(myRepositoryToAbort),
           joinShortNames(myRepositoriesToRollback.keySet(), 5)
         );
-        if (canShowMacSheetPanel()) {
-          title = message;
-          message = "";
-        }
         int choice = DialogManager.showYesNoCancelDialog(
           myProject,
           message,
@@ -163,9 +158,10 @@ class GitAbortRebaseProcess {
 
   private void doAbort(final boolean rollback) {
     boolean[] success = new boolean[1];
-
+    myNotifier.hideAllNotificationsById(REBASE_STOPPED_ON_EDITING);
     new GitFreezingProcess(myProject, GitBundle.message("activity.name.rebase"), () -> {
-      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
+      String activityName = GitBundle.message("activity.name.abort.command", GitBundle.message("abort.operation.rebase.name"));
+      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, activityName, GitActivity.Abort)) {
         if (myRepositoryToAbort != null) {
           myIndicator.setText2(GitBundle.message(
             "rebase.abort.progress.indicator.command.in.repo.title",
@@ -179,7 +175,7 @@ class GitAbortRebaseProcess {
           }
           else {
             myNotifier.notifyError(
-              "git.rebase.abort.failed",
+              REBASE_ABORT_FAILED,
               GitBundle.message("rebase.abort.notification.failed.title"),
               result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver),
               true);
@@ -229,7 +225,7 @@ class GitAbortRebaseProcess {
                 );
               }
               myNotifier.notifyImportantWarning(
-                "git.rebase.rollback.failed",
+                REBASE_ROLLBACK_FAILED,
                 GitBundle.message("rebase.abort.notification.warning.rollback.failed.title"),
                 description
               );
@@ -251,7 +247,7 @@ class GitAbortRebaseProcess {
         mySaver.load();
       }
       if (myNotifySuccess) {
-        myNotifier.notifySuccess("git.rebase.abort.succeeded", "", GitBundle.message("rebase.abort.notification.successful.message"));
+        myNotifier.notifySuccess(REBASE_ABORT_SUCCESS, "", GitBundle.message("rebase.abort.notification.successful.message"));
       }
     }
   }

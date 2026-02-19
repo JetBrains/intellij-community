@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RESTful API Tester</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 20px;
+          line-height: 1.6;
+        }
+        h1,
+        h2 {
+          color: #333;
+        }
+        .endpoint {
+          background-color: #f5f5f5;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+          padding: 15px;
+          margin-bottom: 20px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 10px;
+        }
+        th,
+        td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+        }
+        th {
+          background-color: #f2f2f2;
+        }
+        button {
+          padding: 8px 12px;
+          background-color: #4caf50;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+        button:hover {
+          background-color: #45a049;
+        }
+        textarea {
+          width: 100%;
+          height: 100px;
+          margin: 10px 0;
+        }
+        .response {
+          margin-top: 10px;
+          background-color: #f8f8f8;
+          border: 1px solid #ddd;
+          padding: 10px;
+          border-radius: 4px;
+          white-space: pre-wrap;
+          min-height: 100px;
+        }
+        .method-get {
+          background-color: #61affe;
+        }
+        .method-post {
+          background-color: #49cc90;
+        }
+        .method-put {
+          background-color: #fca130;
+        }
+        .method-delete {
+          background-color: #f93e3e;
+        }
+        .method {
+          color: white;
+          padding: 4px 8px;
+          border-radius: 3px;
+          font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="endpoint">
+    <h1>RESTful API Tester</h1>
+
+    <p>
+        Test the endpoints from
+        <a href="https://restful-api.dev/" target="_blank"
+        >https://restful-api.dev/</a
+        >
+    </p>
+</div>
+
+<div class="endpoint">
+    <h2>Get All Products</h2>
+    <table>
+        <tr>
+            <th>Method</th>
+            <td><span class="method method-get">GET</span></td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>https://api.restful-api.dev/objects</td>
+        </tr>
+    </table>
+    <button
+            onclick="sendRequest('GET', 'https://api.restful-api.dev/objects', null, 'getAllResponse')"
+    >
+        Send Request
+    </button>
+    <div class="response" id="getAllResponse">
+        Response will appear here...
+    </div>
+</div>
+
+<div class="endpoint">
+    <h2>Get Single Product</h2>
+    <table>
+        <tr>
+            <th>Method</th>
+            <td><span class="method method-get">GET</span></td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>https://api.restful-api.dev/objects/{id}</td>
+        </tr>
+        <tr>
+            <th>ID</th>
+            <td>
+                <input
+                        type="text"
+                        id="getSingleId"
+                        value="1"
+                        placeholder="Enter product ID"
+                />
+            </td>
+        </tr>
+    </table>
+    <button onclick="getSingleProduct()">Send Request</button>
+    <div class="response" id="getSingleResponse">
+        Response will appear here...
+    </div>
+</div>
+
+<div class="endpoint">
+    <h2>Create New Product</h2>
+    <table>
+        <tr>
+            <th>Method</th>
+            <td><span class="method method-post">POST</span></td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>https://api.restful-api.dev/objects</td>
+        </tr>
+        <tr>
+            <th>Body</th>
+            <td>
+            <textarea id="createBody">
+{
+  "name": "Apple MacBook Pro 16",
+  "data": {
+    "year": 2019,
+    "price": 1849.99,
+    "CPU model": "Intel Core i9",
+    "Hard disk size": "1 TB"
+  }
+}</textarea
+            >
+            </td>
+        </tr>
+    </table>
+    <button onclick="createProduct()">Send Request</button>
+    <div class="response" id="createResponse">
+        Response will appear here...
+    </div>
+</div>
+
+<div class="endpoint">
+    <h2>Update Product (PUT)</h2>
+    <table>
+        <tr>
+            <th>Method</th>
+            <td><span class="method method-put">PUT</span></td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>https://api.restful-api.dev/objects/{id}</td>
+        </tr>
+        <tr>
+            <th>ID</th>
+            <td>
+                <input
+                        type="text"
+                        id="updatePutId"
+                        placeholder="Enter product ID"
+                />
+            </td>
+        </tr>
+        <tr>
+            <th>Body</th>
+            <td>
+            <textarea id="updatePutBody">
+{
+  "name": "Apple MacBook Pro 16 (Updated)",
+  "data": {
+    "year": 2020,
+    "price": 2049.99,
+    "CPU model": "Intel Core i9",
+    "Hard disk size": "1 TB",
+    "color": "silver"
+  }
+}</textarea
+            >
+            </td>
+        </tr>
+    </table>
+    <button onclick="updateProductPut()">Send Request</button>
+    <div class="response" id="updatePutResponse">
+        Response will appear here...
+    </div>
+</div>
+
+<div class="endpoint">
+    <h2>Update Product (PATCH)</h2>
+    <table>
+        <tr>
+            <th>Method</th>
+            <td><span class="method method-put">PATCH</span></td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>https://api.restful-api.dev/objects/{id}</td>
+        </tr>
+        <tr>
+            <th>ID</th>
+            <td>
+                <input
+                        type="text"
+                        id="updatePatchId"
+                        placeholder="Enter product ID"
+                />
+            </td>
+        </tr>
+        <tr>
+            <th>Body</th>
+            <td>
+            <textarea id="updatePatchBody">
+{
+  "data": {
+    "price": 2099.99,
+    "year": 2021
+  }
+}</textarea
+            >
+            </td>
+        </tr>
+    </table>
+    <button onclick="updateProductPatch()">Send Request</button>
+    <div class="response" id="updatePatchResponse">
+        Response will appear here...
+    </div>
+</div>
+
+<div class="endpoint">
+    <h2>Delete Product</h2>
+    <table>
+        <tr>
+            <th>Method</th>
+            <td><span class="method method-delete">DELETE</span></td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>https://api.restful-api.dev/objects/{id}</td>
+        </tr>
+        <tr>
+            <th>ID</th>
+            <td>
+                <input type="text" id="deleteId" placeholder="Enter product ID" />
+            </td>
+        </tr>
+    </table>
+    <button onclick="deleteProduct()">Send Request</button>
+    <div class="response" id="deleteResponse">
+        Response will appear here...
+    </div>
+</div>
+
+<script>
+    async function sendRequest(method, url, body, responseElementId) {
+      const responseElement = document.getElementById(responseElementId);
+      responseElement.textContent = "Loading...";
+
+      try {
+        const options = {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
+
+        if (body) {
+          options.body = JSON.stringify(JSON.parse(body));
+        }
+
+        const response = await fetch(url, options);
+        const data = await response.json();
+
+        if (!response.ok) {
+          const errorMessage =
+            data.error || data.message || JSON.stringify(data);
+          responseElement.textContent = `Server Error (${response.status}): ${errorMessage}`;
+          return;
+        }
+
+        responseElement.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        responseElement.textContent = `Client Error: ${error.message}`;
+      }
+    }
+
+    function getSingleProduct() {
+      const id = document.getElementById("getSingleId").value;
+      if (!id) {
+        document.getElementById("getSingleResponse").textContent =
+          "Please enter a product ID";
+        return;
+      }
+      sendRequest(
+        "GET",
+        `https://api.restful-api.dev/objects/${id}`,
+        null,
+        "getSingleResponse"
+      );
+    }
+
+    function createProduct() {
+      const body = document.getElementById("createBody").value;
+      sendRequest(
+        "POST",
+        "https://api.restful-api.dev/objects",
+        body,
+        "createResponse"
+      );
+    }
+
+    function updateProductPut() {
+      const id = document.getElementById("updatePutId").value;
+      if (!id) {
+        document.getElementById("updatePutResponse").textContent =
+          "Please enter a product ID";
+        return;
+      }
+      const body = document.getElementById("updatePutBody").value;
+      sendRequest(
+        "PUT",
+        `https://api.restful-api.dev/objects/${id}`,
+        body,
+        "updatePutResponse"
+      );
+    }
+
+    function updateProductPatch() {
+      const id = document.getElementById("updatePatchId").value;
+      if (!id) {
+        document.getElementById("updatePatchResponse").textContent =
+          "Please enter a product ID";
+        return;
+      }
+      const body = document.getElementById("updatePatchBody").value;
+      sendRequest(
+        "PATCH",
+        `https://api.restful-api.dev/objects/${id}`,
+        body,
+        "updatePatchResponse"
+      );
+    }
+
+    function deleteProduct() {
+      const id = document.getElementById("deleteId").value;
+      if (!id) {
+        document.getElementById("deleteResponse").textContent =
+          "Please enter a product ID";
+        return;
+      }
+      sendRequest(
+        "DELETE",
+        `https://api.restful-api.dev/objects/${id}`,
+        null,
+        "deleteResponse"
+      );
+    }
+</script>
+</body>
+</html>

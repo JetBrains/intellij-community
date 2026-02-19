@@ -1,0 +1,9 @@
+fun mmm(str: String) {
+    open class KotlinChangeSignatureProcessor(s: String, ss: String)
+
+    val p = object : KotlinChangeSignatureProcessor(str.substring(1), "") {
+        override fun equals(other: Any?): Boolean {
+            return super.equals(other)
+        }
+    }
+}

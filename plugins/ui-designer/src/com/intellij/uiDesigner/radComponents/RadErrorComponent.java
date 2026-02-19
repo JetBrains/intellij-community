@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.ModuleProvider;
@@ -8,13 +8,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadErrorComponent extends RadAtomicComponent {
 
   private final String myComponentClassName;
@@ -26,7 +24,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
     final String id,
     final String componentClassName,
     final Element properties,
-    @NotNull final @Nls String errorDescription
+    final @NotNull @Nls String errorDescription
   ) {
     return new RadErrorComponent(module, id, componentClassName, properties, errorDescription);
   }
@@ -34,9 +32,9 @@ public final class RadErrorComponent extends RadAtomicComponent {
   private RadErrorComponent(
     final ModuleProvider module,
     final String id,
-    @NotNull final String componentClassName,
-    @Nullable final Element properties,
-    @NotNull final @Nls String errorDescription
+    final @NotNull String componentClassName,
+    final @Nullable Element properties,
+    final @NotNull @Nls String errorDescription
   ) {
     super(module, MyComponent.class, id);
 
@@ -46,8 +44,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
   }
 
   @Override
-  @NotNull
-  public String getComponentClassName() {
+  public @NotNull String getComponentClassName() {
     return myComponentClassName;
   }
 

@@ -1,12 +1,13 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PlainPrefixMatcher extends PrefixMatcher {
+  public static final PrefixMatcher ALWAYS_TRUE = new PlainPrefixMatcher("");
 
   private final boolean myPrefixMatchesOnly;
 
@@ -32,9 +33,13 @@ public class PlainPrefixMatcher extends PrefixMatcher {
     return StringUtil.containsIgnoreCase(name, getPrefix());
   }
 
-  @NotNull
+  @ApiStatus.Internal
+  public boolean isStartMatchOnly() {
+    return myPrefixMatchesOnly;
+  }
+
   @Override
-  public PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+  public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
     return new PlainPrefixMatcher(prefix, myPrefixMatchesOnly);
   }
 }

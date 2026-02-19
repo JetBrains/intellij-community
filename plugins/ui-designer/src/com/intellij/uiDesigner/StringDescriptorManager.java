@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
-import com.intellij.ProjectTopics;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,18 +20,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * @author yole
- */
-public class StringDescriptorManager {
+
+public final class StringDescriptorManager {
   private Module myModule;
   private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = ContainerUtil.createSoftValueMap();
 
   public StringDescriptorManager(@NotNull Module module) {
     myModule = module;
-    module.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    module.getProject().getMessageBus().connect().subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
-      public void rootsChanged(@NotNull final ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         synchronized(myPropertiesFileCache) {
           myPropertiesFileCache.clear();
         }
@@ -47,13 +45,13 @@ public class StringDescriptorManager {
     return service;
   }
 
-  @Nullable public String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {
+  public @Nullable String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {
     RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
     Locale locale = (root != null) ? root.getStringDescriptorLocale() : null;
     return resolve(descriptor, locale);
   }
 
-  @Nullable public String resolve(@Nullable StringDescriptor descriptor, @Nullable Locale locale) {
+  public @Nullable String resolve(@Nullable StringDescriptor descriptor, @Nullable Locale locale) {
     if (descriptor == null) {
       return null;
     }
@@ -81,16 +79,22 @@ public class StringDescriptorManager {
       propertiesFile = myPropertiesFileCache.get(cacheKey);
     }
     if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
-      propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
-      synchronized (myPropertiesFileCache) {
-        myPropertiesFileCache.put(cacheKey, propertiesFile);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-723514")) {
+        propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
+        synchronized (myPropertiesFileCache) {
+          if (propertiesFile != null) {
+            myPropertiesFileCache.put(cacheKey, propertiesFile);
+          }
+        }
       }
     }
 
     if (propertiesFile != null) {
-      final IProperty propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
-      if (propertyByKey != null) {
-        return propertyByKey;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-254373")) {
+        final IProperty propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
+        if (propertyByKey != null) {
+          return propertyByKey;
+        }
       }
     }
     return null;

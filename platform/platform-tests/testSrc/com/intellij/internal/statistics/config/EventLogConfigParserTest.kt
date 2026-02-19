@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.config
 
-import com.intellij.internal.statistic.config.bean.EventLogBucketRange
-import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration
-import com.intellij.internal.statistic.eventLog.EventLogBuildType
-import com.intellij.internal.statistic.eventLog.EventLogBuildType.*
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.EAP
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.RELEASE
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.UNKNOWN
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationBucketRange
 import org.junit.Test
 
 private val BUILD_TYPES = setOf(RELEASE, EAP, UNKNOWN)
@@ -13,7 +14,7 @@ private val ENDPOINTS = setOf("send", "metadata", "dictionary")
 class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
 
   private fun doTestVersions(versions: String,
-                             existingConfig: Map<EventLogBuildType, EventLogSendConfiguration> = emptyMap(),
+                             existingConfig: Map<EventLogBuildType, List<ConfigurationBucketRange>> = emptyMap(),
                              notExistingConfig: Set<EventLogBuildType> = emptySet(),
                              existingEndpoints: Map<String, String> = emptyMap(),
                              notExistingEndpoints: Set<String> = emptySet()) {
@@ -48,13 +49,15 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   }
 
   @Test
-  fun `test parse configuration without type`() {
+  fun `test parse configuration with empty release type`() {
+
     doTestEmptyVersions("""
 {
   "majorBuildVersionBorders": {
     "from": "2019.1"
   },
   "releaseFilters": [{
+    "releaseType": "",
     "from": 0,
     "to": 256
   }]
@@ -79,7 +82,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse configuration with buckets`() {
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(32, 128)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(32, 128))
     )
     doTestVersions("""
 {
@@ -98,8 +101,8 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse configuration with multiple buckets`() {
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(32, 128))),
-      EAP to newConfig(arrayListOf(EventLogBucketRange(0, 64)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(32, 128)),
+      EAP to arrayListOf(ConfigurationBucketRange(0, 64))
     )
     doTestVersions("""
 {
@@ -122,7 +125,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse configuration with multiple buckets for the same type`() {
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange (32, 128), EventLogBucketRange(0, 64)))
+      RELEASE to arrayListOf(ConfigurationBucketRange (32, 128), ConfigurationBucketRange(0, 64))
     )
     doTestVersions("""
 {
@@ -145,9 +148,9 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse configuration with all types`() {
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(32, 128))),
-      EAP to newConfig(arrayListOf(EventLogBucketRange(32, 128))),
-      UNKNOWN to newConfig(arrayListOf(EventLogBucketRange(32, 128)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(32, 128)),
+      EAP to arrayListOf(ConfigurationBucketRange(32, 128)),
+      UNKNOWN to arrayListOf(ConfigurationBucketRange(32, 128))
     )
     doTestVersions("""
 {
@@ -166,8 +169,8 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse multiple filters`() {
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(32, 128))),
-      EAP to newConfig(arrayListOf(EventLogBucketRange(0, 64)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(32, 128)),
+      EAP to arrayListOf(ConfigurationBucketRange(0, 64))
     )
     doTestVersions("""
 {
@@ -195,7 +198,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
       "dictionary" to "https://dictionary/endpoint/"
     )
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(32, 128)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(32, 128))
     )
     doTestVersions("""
 {
@@ -218,7 +221,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse empty endpoints`() {
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(32, 128)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(32, 128))
     )
     doTestVersions("""
 {
@@ -238,7 +241,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse no endpoints`() {
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(32, 128)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(32, 128))
     )
     doTestVersions("""
 {
@@ -256,7 +259,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse first version is applicable`() {
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(0, 64)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(0, 64))
     )
     doTestVersions("""
 {
@@ -284,7 +287,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse second version is applicable`() {
     val configs = hashMapOf(
-      EAP to newConfig(arrayListOf(EventLogBucketRange(128, 256)))
+      EAP to arrayListOf(ConfigurationBucketRange(128, 256))
     )
     doTestVersions("""
 {
@@ -347,7 +350,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   @Test
   fun `test parse action without endpoints`() {
     val configs = hashMapOf(
-      EAP to newConfig(arrayListOf(EventLogBucketRange(128, 256)))
+      EAP to arrayListOf(ConfigurationBucketRange(128, 256))
     )
     doTestVersions("""
 {
@@ -388,7 +391,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
       "dictionary" to "https://dictionary/endpoint/"
     )
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(0, 256)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(0, 256))
     )
     doTest("""
 {
@@ -421,7 +424,7 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
       "dictionary" to "https://dictionary/endpoint/"
     )
     val configs = hashMapOf(
-      RELEASE to newConfig(arrayListOf(EventLogBucketRange(0, 256)))
+      RELEASE to arrayListOf(ConfigurationBucketRange(0, 256))
     )
     doTest("""
 {
@@ -474,31 +477,5 @@ class EventLogConfigParserTest : EventLogConfigBaseParserTest() {
   "productCode": "IU",
   "versions": [{}]
 }""", emptyMap(), emptyMap())
-  }
-
-  @Test
-  fun `test parse duplicate endpoints`() {
-    doTestError("""
-{
-  "productCode": "IU",
-  "versions": [
-    {
-      "majorBuildVersionBorders": {
-        "from": "2019.2"
-      },
-      "releaseFilters": [{
-        "releaseType": "ALL",
-        "from": 0, 
-        "to": 256
-      }],
-      "endpoints": {
-        "send": "https://send/endpoint",
-        "send": "https://send/second/endpoint",
-        "metadata": "https://metadata/endpoint/",
-        "dictionary": "https://dictionary/endpoint/"
-      }
-    }
-  ]
-}""")
   }
 }

@@ -3,20 +3,24 @@ package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsContexts.NotificationContent
-import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.containers.MultiMap
 import com.intellij.vcsUtil.VcsFileUtil
-import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitContentRevision
+import git4idea.GitDisposable
 import git4idea.index.ui.GitFileStatusNode
-import git4idea.index.vfs.GitIndexFileSystemRefresher
+import git4idea.index.ui.stagingAreaActionInvoked
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import kotlinx.coroutines.launch
+
+class GitAddAction : StagingAreaOperationAction(GitAddOperation)
+class GitAddWithoutContent : StagingAreaOperationAction(GitAddWithoutContentOperation)
+class GitResetAction : StagingAreaOperationAction(GitResetOperation)
+class GitRevertAction : StagingAreaOperationAction(GitRevertOperation)
 
 abstract class StagingAreaOperationAction(private val operation: StagingAreaOperation)
   : GitFileStatusNodeAction(operation.actionText, Presentation.NULL_STRING, operation.icon) {
@@ -29,35 +33,54 @@ abstract class StagingAreaOperationAction(private val operation: StagingAreaOper
 fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, operation: StagingAreaOperation) {
   FileDocumentManager.getInstance().saveAllDocuments()
 
-  runProcess(project, operation.progressTitle, true) {
-    val paths = nodes.map { it.filePath }
+  GitDisposable.getInstance(project).coroutineScope.launch {
+    withBackgroundProgress(project, operation.progressTitle) {
+      val repositoryManager = GitRepositoryManager.getInstance(project)
 
-    val exceptions = mutableListOf<VcsException>()
-    VcsUtil.groupByRoots(project, paths) { it }.forEach { (vcsRoot, paths) ->
-      try {
-        operation.processPaths(project, vcsRoot.path, paths)
-        VcsFileUtil.markFilesDirty(project, paths)
+      val submodulesByRoot = mutableMapOf<GitRepository, MutableList<GitFileStatusNode>>()
+      val pathsByRoot = mutableMapOf<GitRepository, MutableList<GitFileStatusNode>>()
+      for (node in nodes) {
+        val filePath = node.filePath
+        val submodule = GitContentRevision.getRepositoryIfSubmodule(project, filePath)
+        if (submodule != null) {
+          val list = submodulesByRoot.computeIfAbsent(submodule.parent) { ArrayList() }
+          list.add(node)
+        }
+        else {
+          val repo = repositoryManager.getRepositoryForFileQuick(filePath)
+          if (repo != null) {
+            val list = pathsByRoot.computeIfAbsent(repo) { ArrayList() }
+            list.add(node)
+          }
+        }
       }
-      catch (ex: VcsException) {
-        exceptions.add(ex)
-      }
-    }
 
-    if (exceptions.isNotEmpty()) {
-      showErrorMessage(project, operation.errorMessage, exceptions)
+      val successfulRoots = linkedSetOf<VirtualFile>()
+      val exceptions = MultiMap<VirtualFile, VcsException>()
+      pathsByRoot.forEach { (repo, nodes) ->
+        try {
+          operation.processPaths(project, repo.root, nodes)
+          successfulRoots.add(repo.root)
+          VcsFileUtil.markFilesDirty(project, nodes.map { it.filePath })
+        }
+        catch (ex: VcsException) {
+          exceptions.putValue(repo.root, ex)
+        }
+      }
+
+      submodulesByRoot.forEach { (repo, submodules) ->
+        try {
+          operation.processPaths(project, repo.root, submodules)
+          successfulRoots.add(repo.root)
+          VcsFileUtil.markFilesDirty(project, submodules.mapNotNull { it.filePath.parentPath })
+        }
+        catch (ex: VcsException) {
+          exceptions.putValue(repo.root, ex)
+        }
+      }
+
+      operation.reportResult(project, nodes, successfulRoots, exceptions)
+      stagingAreaActionInvoked()
     }
   }
-}
-
-fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, canBeCancelled: Boolean, process: () -> T): T {
-  return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(ThrowableComputable { process() },
-                                                                                         title, canBeCancelled, project)
-}
-
-private fun showErrorMessage(project: Project, @NotificationContent messageTitle: String, exceptions: Collection<Exception>) {
-  val message = HtmlBuilder().append(HtmlChunk.text("$messageTitle:").bold())
-    .br()
-    .appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
-
-  VcsBalloonProblemNotifier.showOverVersionControlView(project, message.toString(), MessageType.ERROR)
 }

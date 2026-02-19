@@ -1,47 +1,56 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
 import static com.intellij.codeInsight.completion.JavaCompletionContributor.isInJavaContext;
-import static com.intellij.patterns.PsiJavaPatterns.*;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
+import static com.intellij.patterns.PsiJavaPatterns.or;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiExpression;
+import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getParameterTypesText;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.getReflectiveClass;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.isPublic;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.shortenArgumentsClassReferences;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.withPriority;
 
-/**
- * @author Pavel.Dolgov
- */
-public class JavaReflectionCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaReflectionCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String CONSTRUCTOR = "getConstructor";
   private static final String DECLARED_CONSTRUCTOR = "getDeclaredConstructor";
   private static final String ANNOTATION = "getAnnotation";
@@ -114,15 +123,14 @@ public class JavaReflectionCompletionContributor extends CompletionContributor i
 
   private static void addAnnotationClasses(@NotNull PsiClass psiClass, boolean isDeclared, @NotNull CompletionResultSet result) {
     Set<PsiAnnotation> declaredAnnotations =
-      isDeclared ? ContainerUtil.set(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)) : null;
+      isDeclared ? Collections.unmodifiableSet(new HashSet<>(Arrays.asList(AnnotationUtil.getAllAnnotations(psiClass, false, null, false)))) : null;
 
     PsiAnnotation[] annotations = AnnotationUtil.getAllAnnotations(psiClass, true, null, false);
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
       if (referenceElement != null) {
         PsiElement resolved = referenceElement.resolve();
-        if (resolved instanceof PsiClass) {
-          PsiClass annotationClass = (PsiClass)resolved;
+        if (resolved instanceof PsiClass annotationClass) {
           String className = annotationClass.getName();
           if (className != null) {
             LookupElement lookupElement = LookupElementBuilder.createWithIcon(annotationClass)

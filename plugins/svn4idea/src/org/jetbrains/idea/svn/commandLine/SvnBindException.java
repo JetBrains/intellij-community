@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.Condition;
@@ -20,12 +20,11 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static org.jetbrains.idea.svn.api.ErrorCategory.categoryCodeOf;
 
-public class SvnBindException extends VcsException {
-
+public final class SvnBindException extends VcsException {
   private static final @NlsSafe String ERROR_MESSAGE_FORMAT = "svn: E%d: %s";
 
-  @NotNull private final MultiMap<Integer, String> errors = MultiMap.create();
-  @NotNull private final MultiMap<Integer, String> warnings = MultiMap.create();
+  private final @NotNull MultiMap<Integer, String> errors = MultiMap.create();
+  private final @NotNull MultiMap<Integer, String> warnings = MultiMap.create();
 
   public SvnBindException(@NotNull ErrorCode code, @Nls @NotNull String message) {
     super(String.format(ERROR_MESSAGE_FORMAT, code.getCode(), message));

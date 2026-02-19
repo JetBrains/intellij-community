@@ -1,0 +1,11 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.debugger.streams.shared"/>
+    <module name="intellij.platform.debugger.impl.ui"/>
+    <!-- endregion -->
+  </dependencies>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.platform.debugger.streams.librarySupport" interface="com.intellij.debugger.streams.core.lib.LibrarySupportProvider" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

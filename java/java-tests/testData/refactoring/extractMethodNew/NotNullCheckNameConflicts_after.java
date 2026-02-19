@@ -16,8 +16,7 @@ class X {
         return null;
     }
 
-    @Nullable
-    private X newMethod(boolean b) {
+    private @Nullable X newMethod(boolean b) {
         if (b) {
             int x = 1;
             return fun1(x);

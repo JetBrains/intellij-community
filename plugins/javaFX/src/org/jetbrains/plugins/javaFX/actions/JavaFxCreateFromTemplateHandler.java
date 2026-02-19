@@ -3,12 +3,10 @@ package org.jetbrains.plugins.javaFX.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFxCreateFromTemplateHandler extends JavaCreateFromTemplateHandler {
+final class JavaFxCreateFromTemplateHandler extends JavaCreateFromTemplateHandler {
   @Override
   public boolean handlesTemplate(@NotNull FileTemplate template) {
     return "JavaFXApplication".equals(template.getName());
@@ -16,12 +14,7 @@ public class JavaFxCreateFromTemplateHandler extends JavaCreateFromTemplateHandl
 
   @Override
   public boolean canCreate(PsiDirectory @NotNull [] dirs) {
-    if (dirs.length > 0) {
-      Project project = dirs[0].getProject();
-      if (JavaPsiFacade.getInstance(project).findPackage("javafx") == null) {
-        return false;
-      }
-    }
-    return super.canCreate(dirs);
+    // see CreateJavaFxApplicationAction
+    return false;
   }
 }

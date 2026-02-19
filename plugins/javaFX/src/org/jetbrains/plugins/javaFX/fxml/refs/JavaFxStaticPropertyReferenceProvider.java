@@ -1,8 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -10,15 +14,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
- * @author Pavel.Dolgov
- */
-public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider {
+public final class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    if (!(element instanceof XmlAttribute) || !JavaFxFileTypeFactory.isFxml(element.getContainingFile())) return PsiReference.EMPTY_ARRAY;
+    if (!(element instanceof XmlAttribute xmlAttribute) || !JavaFxFileTypeFactory.isFxml(element.getContainingFile())) return PsiReference.EMPTY_ARRAY;
 
-    final XmlAttribute xmlAttribute = (XmlAttribute)element;
     final String name = xmlAttribute.getName();
     final int dotIndex = name.indexOf('.');
     if (dotIndex <= 0 || name.indexOf('.', dotIndex + 1) >= 0) return PsiReference.EMPTY_ARRAY;
@@ -36,7 +36,7 @@ public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider 
     return new PsiReference[]{classReference, methodReference};
   }
 
-  private static class JavaFxStaticPropertyClassReference extends PsiReferenceBase<XmlAttribute> {
+  private static final class JavaFxStaticPropertyClassReference extends PsiReferenceBase<XmlAttribute> {
     private final PsiClass myPsiClass;
 
     JavaFxStaticPropertyClassReference(@NotNull XmlAttribute xmlAttribute, @NotNull String className) {
@@ -48,9 +48,8 @@ public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider 
       return myPsiClass;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return myPsiClass;
     }
   }

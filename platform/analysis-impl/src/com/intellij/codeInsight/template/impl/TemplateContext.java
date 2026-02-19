@@ -1,142 +1,162 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.intellij.codeInsight.template.LiveTemplateContext;
+import com.intellij.codeInsight.template.LiveTemplateContextService;
+import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
-import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.util.JdomKt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import kotlin.Lazy;
 import kotlin.LazyKt;
-import kotlin.jvm.functions.Function0;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class TemplateContext {
-  private final Map<String, Boolean> myContextStates = new HashMap<>();
+  private volatile Map<String, Boolean> myContextStates = Map.of();
 
-  private static final ClearableLazyValue<Map<String, String>> INTERN_MAP = new ClearableLazyValue<Map<String, String>>() {
-    private final AtomicBoolean isListenerAdded = new AtomicBoolean();
-
-    @NotNull
-    @Override
-    protected Map<String, String> compute() {
-      if (isListenerAdded.compareAndSet(false, true)) {
-        TemplateContextTypes.TEMPLATE_CONTEXT_EP.getValue().addExtensionPointListener(new ExtensionPointAdapter<TemplateContextType>() {
-          @Override
-          public void areaReplaced(@NotNull ExtensionsArea oldArea) {
-            drop();
-          }
-
-          @Override
-          public void extensionListChanged() {
-            drop();
-          }
-        }, false, null);
-      }
-
-      return TemplateContextTypes.getAllContextTypes().stream()
-        .map(TemplateContextType::getContextId)
-        .distinct()
-        .collect(Collectors.toMap(Function.identity(), Function.identity()));
-    }
-  };
-
-  public TemplateContext createCopy() {
+  public @NotNull TemplateContext createCopy() {
     TemplateContext cloneResult = new TemplateContext();
-    cloneResult.myContextStates.putAll(myContextStates);
+    cloneResult.myContextStates = myContextStates;
     return cloneResult;
   }
 
-  @Nullable
-  TemplateContextType getDifference(@NotNull TemplateContext defaultContext) {
-    return ContainerUtil.find(TemplateContextTypes.getAllContextTypes(), type -> isEnabled(type) != defaultContext.isEnabled(type));
+  @ApiStatus.Internal
+  public static boolean contextsEqual(@NotNull LiveTemplateContextsSnapshot allContexts,
+                               @NotNull TemplateImpl thisTemplate,
+                               @NotNull TemplateImpl defaultTemplate) {
+    return getDifference(allContexts, thisTemplate.getTemplateContext(), defaultTemplate.getTemplateContext()) == null;
   }
 
-  public boolean isEnabled(@NotNull TemplateContextType contextType) {
-    synchronized (myContextStates) {
-      Boolean storedValue = getOwnValue(contextType);
-      if (storedValue == null) {
-        TemplateContextType baseContextType = contextType.getBaseContextType();
-        return baseContextType != null && isEnabled(baseContextType);
+  @ApiStatus.Internal
+  public static @Nullable LiveTemplateContext getDifference(@NotNull LiveTemplateContextsSnapshot allContexts,
+                                                     @NotNull TemplateContext thisContext,
+                                                     @NotNull TemplateContext defaultContext) {
+    for (LiveTemplateContext value : allContexts.getLiveTemplateContexts()) {
+      if (thisContext.isEnabled(allContexts, value) != defaultContext.isEnabled(allContexts, value)) {
+        return value;
       }
-      return storedValue.booleanValue();
     }
+    return null;
   }
 
-  @Nullable
-  public Boolean getOwnValue(TemplateContextType contextType) {
-    synchronized (myContextStates) {
-      return myContextStates.get(contextType.getContextId());
+  @ApiStatus.Internal
+  public static @Nullable TemplateContextType getDifferenceType(@NotNull LiveTemplateContextsSnapshot allContexts,
+                                                         @NotNull TemplateContext thisContext,
+                                                         @NotNull TemplateContext defaultContext) {
+    LiveTemplateContext differenceExtension = getDifference(allContexts, thisContext, defaultContext);
+    if (differenceExtension != null) {
+      return differenceExtension.getTemplateContextType();
     }
+    return null;
   }
 
-  public void setEnabled(TemplateContextType contextType, boolean value) {
-    synchronized (myContextStates) {
-      myContextStates.put(contextType.getContextId(), value);
+  public synchronized boolean isEnabled(@NotNull TemplateContextType contextType) {
+    LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
+    return isEnabledNoSync(allContexts, contextType.getContextId());
+  }
+
+  private synchronized boolean isEnabled(@NotNull LiveTemplateContextsSnapshot allContexts,
+                                   @NotNull LiveTemplateContext contextType) {
+    return isEnabledNoSync(allContexts, contextType.getContextId());
+  }
+
+  private boolean isEnabledNoSync(@NotNull LiveTemplateContextsSnapshot allContexts,
+                                  @NotNull String contextTypeId) {
+    Boolean storedValue = getOwnValueNoSync(contextTypeId);
+    if (storedValue == null) {
+      LiveTemplateContext liveTemplateContext = allContexts.getLiveTemplateContext(contextTypeId);
+      String baseContextTypeId = liveTemplateContext != null ? liveTemplateContext.getBaseContextId() : null;
+      return baseContextTypeId != null && !baseContextTypeId.equals(contextTypeId) && isEnabledNoSync(allContexts, baseContextTypeId);
     }
+    return storedValue.booleanValue();
+  }
+
+  public @Nullable Boolean getOwnValue(@NotNull TemplateContextType contextType) {
+    return getOwnValue(contextType.getContextId());
+  }
+
+  private synchronized @Nullable Boolean getOwnValue(String contextTypeId) {
+    return getOwnValueNoSync(contextTypeId);
+  }
+
+  private @Nullable Boolean getOwnValueNoSync(String contextTypeId) {
+    return myContextStates.get(contextTypeId);
+  }
+
+  public synchronized void setEnabled(@NotNull TemplateContextType contextType, boolean value) {
+    Map<String, Boolean> map = new HashMap<>(myContextStates);
+    map.put(contextType.getContextId(), value);
+    myContextStates = Map.copyOf(map);
   }
 
   // used during initialization => no sync
   @VisibleForTesting
-  public void setDefaultContext(@NotNull TemplateContext defContext) {
-    Map<String, Boolean> copy = new HashMap<>(myContextStates);
-    myContextStates.clear();
-    myContextStates.putAll(defContext.myContextStates);
-    myContextStates.putAll(copy);
+  public synchronized void setDefaultContext(@NotNull TemplateContext defContext) {
+    Map<String, Boolean> copy = new HashMap<>(defContext.myContextStates);
+    copy.putAll(myContextStates);
+    myContextStates = Map.copyOf(copy);
   }
 
   // used during initialization => no sync
-  @VisibleForTesting
-  public void readTemplateContext(@NotNull Element element) {
-    Map<String, String> internMap = INTERN_MAP.getValue();
+  @ApiStatus.Internal
+  public void readTemplateContext(@NotNull Element element, @NotNull LiveTemplateContextService ltContextService) {
+    Map<String, Boolean> result = new HashMap<>();
+    Map<String, String> internMap = ltContextService.getInternalIds();
     for (Element option : element.getChildren("option")) {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
       if (name != null && value != null) {
-        myContextStates.put(ContainerUtil.getOrElse(internMap, name, name), Boolean.parseBoolean(value));
+        result.put(internMap.getOrDefault(name, name), Boolean.parseBoolean(value));
       }
     }
+    myContextStates = result; // makeInheritanceExplicit needs this
+    result.putAll(makeInheritanceExplicit(this, ltContextService.getSnapshot()));
+    myContextStates = Map.copyOf(result);
+  }
 
-    myContextStates.putAll(makeInheritanceExplicit());
+  @VisibleForTesting
+  public void readTemplateContext(@NotNull Element element) {
+    readTemplateContext(element, LiveTemplateContextService.getInstance());
   }
 
   /**
    * Mark contexts explicitly as excluded which are excluded because some of their bases is explicitly marked as excluded.
-   * Otherwise that `excluded` status will be forgotten if the base context is enabled.
+   * Otherwise, that `excluded` status will be forgotten if the base context is enabled.
    */
-  @NotNull
-  private Map<String, Boolean> makeInheritanceExplicit() {
+  private @NotNull Map<String, Boolean> makeInheritanceExplicit(TemplateContext context, LiveTemplateContextsSnapshot allContexts) {
     Map<String, Boolean> explicitStates = new HashMap<>();
-    for (TemplateContextType type : TemplateContextTypes.getAllContextTypes()) {
-      if (isDisabledByInheritance(type)) {
+    for (LiveTemplateContext type : allContexts.getLiveTemplateContexts()) {
+      if (isDisabledByInheritance(context, allContexts, type)) {
         explicitStates.put(type.getContextId(), false);
       }
     }
     return explicitStates;
   }
 
-  private boolean isDisabledByInheritance(TemplateContextType type) {
-    return !hasOwnValue(type) &&
-           !isEnabled(type) &&
-           JBIterable.generate(type, TemplateContextType::getBaseContextType).filter(this::hasOwnValue).first() != null;
+  private boolean isDisabledByInheritance(TemplateContext thisContext, LiveTemplateContextsSnapshot allContexts, LiveTemplateContext type) {
+    if (!thisContext.hasOwnValue(type) && !thisContext.isEnabled(allContexts, type)) {
+      LiveTemplateContext context = type;
+      while (context != null) {
+        if (hasOwnValue(context)) {
+          return true;
+        }
+        context = allContexts.getLiveTemplateContext(context.getBaseContextId());
+      }
+    }
+    return false;
   }
 
-  private boolean hasOwnValue(TemplateContextType t) {
-    return getOwnValue(t) != null;
+  private boolean hasOwnValue(LiveTemplateContext t) {
+    return getOwnValue(t.getContextId()) != null;
   }
 
   @TestOnly
@@ -145,8 +165,8 @@ public final class TemplateContext {
   }
 
   @VisibleForTesting
-  @Nullable
-  public Element writeTemplateContext(@Nullable TemplateContext defaultContext, @NotNull Lazy<? extends Map<String, TemplateContextType>> idToType) {
+  public @Nullable Element writeTemplateContext(@Nullable TemplateContext defaultContext,
+                                                @NotNull Lazy<? extends Map<String, TemplateContextType>> idToType) {
     if (myContextStates.isEmpty()) {
       return null;
     }
@@ -172,31 +192,27 @@ public final class TemplateContext {
     return element;
   }
 
-  @NotNull
-  public static Lazy<Map<String, TemplateContextType>> getIdToType() {
-    return LazyKt.lazy(new Function0<Map<String, TemplateContextType>>() {
-      @Override
-      public Map<String, TemplateContextType> invoke() {
-        Map<String, TemplateContextType> idToType = new HashMap<>();
-        for (TemplateContextType type : TemplateContextTypes.getAllContextTypes()) {
-          idToType.put(type.getContextId(), type);
-        }
-        return idToType;
+  public static @NotNull Lazy<Map<String, TemplateContextType>> getIdToType() {
+    return LazyKt.lazy(() -> {
+      Map<String, TemplateContextType> idToType = new HashMap<>();
+      for (LiveTemplateContext type : LiveTemplateContextService.getInstance().getLiveTemplateContexts()) {
+        idToType.put(type.getContextId(), type.getTemplateContextType());
       }
+      return idToType;
     });
   }
 
   /**
-   * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
+   * The default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
    * Base value is `false`.
    * <p>
-   * If default value is defined (as in our example)  we must not take base value in account.
-   * Because on init `setDefaultContext` will be called and we will have own value.
-   * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
+   * If the default value is defined (as in our example), we must not take base value in an account.
+   * Because on init `setDefaultContext` will be called, and we will have own value.
+   * Otherwise, it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
    * See TemplateSchemeTest.
    */
   private boolean isValueChanged(@NotNull Boolean ownValue, @NotNull TemplateContextType type, @Nullable TemplateContext defaultContext) {
-    Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type);
+    Boolean defaultValue = defaultContext == null ? null : defaultContext.getOwnValue(type.getContextId());
     if (defaultValue == null) {
       TemplateContextType base = type.getBaseContextType();
       boolean baseEnabled = base != null && isEnabled(base);

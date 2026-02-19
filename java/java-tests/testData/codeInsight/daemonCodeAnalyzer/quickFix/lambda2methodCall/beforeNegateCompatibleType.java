@@ -1,4 +1,4 @@
-// "Replace lambda expression with 'Pattern.negate()'" "true"
+// "Replace lambda expression with 'Pattern.negate()'" "true-preview"
 import java.util.function.Predicate;
 
 public class Main {

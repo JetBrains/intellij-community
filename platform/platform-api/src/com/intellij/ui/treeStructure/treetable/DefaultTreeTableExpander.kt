@@ -5,5 +5,5 @@ import com.intellij.ide.DefaultTreeExpander
 import javax.swing.JTree
 
 open class DefaultTreeTableExpander(table: TreeTable) : DefaultTreeExpander({ table.tree }) {
-  override fun isShowing(tree: JTree) = (tree as? TreeTableTree)?.treeTable?.isShowing ?: false
+  override fun isShowing(tree: JTree): Boolean = (tree as? TreeTableTree)?.treeTable?.isShowing ?: false
 }

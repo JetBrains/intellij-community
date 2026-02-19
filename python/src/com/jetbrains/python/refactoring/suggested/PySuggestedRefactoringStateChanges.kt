@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring.suggested
 
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -12,24 +13,27 @@ import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.SuggestedRefactoringState
 import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
-import com.intellij.refactoring.suggested.range
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PySingleStarParameter
+import com.jetbrains.python.psi.PySlashParameter
 import com.jetbrains.python.psi.impl.ParamHelper
 
 internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactoringSupport) : SuggestedRefactoringStateChanges(support) {
 
-  override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
-    return findStateChanges(declaration).signature(declaration, prevState)
+  override fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
+    return findStateChanges(anchor).signature(anchor, prevState)
   }
 
-  override fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?> {
-    return findStateChanges(declaration).parameterMarkerRanges(declaration)
+  override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
+    return findStateChanges(anchor).parameterMarkerRanges(anchor)
   }
 
-  override fun updateState(state: SuggestedRefactoringState, declaration: PsiElement): SuggestedRefactoringState {
-    return findStateChanges(declaration).updateNewState(state, declaration, super.updateState(state, declaration))
+  override fun updateState(state: SuggestedRefactoringState, anchor: PsiElement): SuggestedRefactoringState {
+    return findStateChanges(anchor).updateNewState(state, anchor, super.updateState(state, anchor))
   }
 
   override fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
@@ -102,7 +106,7 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
 
     override fun guessParameterIdByMarker(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
       val disappearedRanges = prevState.additionalData[DISAPPEARED_RANGES] ?: return null
-      return disappearedRanges.entries.firstOrNull { it.key.isValid && it.key.range == markerRange }?.value
+      return disappearedRanges.entries.firstOrNull { it.key.isValid && it.key.asTextRange == markerRange }?.value
     }
 
     private fun createSignatureData(function: PyFunction): SuggestedRefactoringSupport.Signature? {

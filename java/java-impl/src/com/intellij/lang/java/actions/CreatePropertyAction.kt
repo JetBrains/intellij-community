@@ -6,13 +6,18 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil.generateSimpleGet
 import com.intellij.codeInsight.generation.GenerateMembersUtil.generateSimpleSetterPrototype
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.impl.VariableNode
-import com.intellij.lang.java.beans.PropertyKind.*
+import com.intellij.lang.java.beans.PropertyKind.BOOLEAN_GETTER
+import com.intellij.lang.java.beans.PropertyKind.GETTER
+import com.intellij.lang.java.beans.PropertyKind.SETTER
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.CreatePropertyActionGroup
 import com.intellij.lang.jvm.actions.JvmActionGroup
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PropertyUtilBase.getAccessorName
 
@@ -23,14 +28,14 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
 
   override fun getActionGroup(): JvmActionGroup = CreatePropertyActionGroup
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (!super.isAvailable(project, editor, file)) return false
+  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
+    if (!super.isAvailable(project, file, target)) return false
     val (propertyName, propertyKind) = propertyInfo
     val counterPart = when (propertyKind) {
       GETTER, BOOLEAN_GETTER -> SETTER
       SETTER -> {
         val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
-        if (expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
+        if (expectedType != null && PsiTypes.booleanType() == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
           BOOLEAN_GETTER
         }
         else {
@@ -43,7 +48,7 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
 
   override fun getText(): String = message("create.property.from.usage.full.text", getPropertyName(), getNameForClass(target, false))
 
-  override fun createRenderer(project: Project): PropertyRenderer = object : PropertyRenderer(project, target, request, propertyInfo) {
+  override fun createRenderer(project: Project, targetClass: PsiClass): PropertyRenderer = object : PropertyRenderer(project, targetClass, request, propertyInfo) {
 
     private fun generatePrototypes(): Pair<PsiMethod, PsiMethod> {
       val prototypeField = generatePrototypeField()

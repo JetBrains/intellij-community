@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public final class ProjectRootUtil {
-  @NotNull
-  public static VirtualFile findSymlinkedFileInContent(@NotNull Project project, @NotNull VirtualFile forFile) {
+  public static @NotNull VirtualFile findSymlinkedFileInContent(@NotNull Project project, @NotNull VirtualFile forFile) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 
     if (scope.contains(forFile)) return forFile;
@@ -20,7 +19,7 @@ public final class ProjectRootUtil {
     if (canonicalForFile == null) canonicalForFile = forFile;
 
     Collection<VirtualFile> projectFiles =
-      FilenameIndex.getVirtualFilesByName(project, canonicalForFile.getName(), scope);
+      FilenameIndex.getVirtualFilesByName(canonicalForFile.getName(), scope);
 
     for (VirtualFile eachContentFile : projectFiles) {
       if (canonicalForFile.equals(eachContentFile.getCanonicalFile())) return eachContentFile;

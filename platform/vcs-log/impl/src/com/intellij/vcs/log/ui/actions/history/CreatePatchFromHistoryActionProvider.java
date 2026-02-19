@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions.history;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -22,16 +9,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogCommitSelection;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class CreatePatchFromHistoryActionProvider implements AnActionExtensionProvider {
   private final boolean mySilentClipboard;
 
@@ -52,6 +42,11 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null;
   }
@@ -60,28 +55,31 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     FileHistoryUi ui = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
-    if (project == null || ui == null) {
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (project == null || ui == null || selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
     e.getPresentation().setVisible(true);
 
-    List<CommitId> selectedCommits = ui.getVcsLog().getSelectedCommits();
     String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
-    e.getPresentation().setEnabled(!selectedCommits.isEmpty() && commitMessage != null);
+    e.getPresentation().setEnabled(VcsLogCommitSelectionUtils.isNotEmpty(selection) && commitMessage != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
-    String commitMessage = e.getRequiredData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
+    String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
+    if (commitMessage == null) return;
 
-    ui.getVcsLog().requestSelectedDetails(detailsList -> {
-      List<Change> changes = VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges);
+    selection.requestFullDetails(detailsList -> {
+      List<Change> changes = VcsLogUtil.collectChanges(detailsList);
       CreatePatchFromChangesAction.createPatch(project, commitMessage, changes, mySilentClipboard);
     });
   }

@@ -13,9 +13,11 @@ public class TestRepository extends BaseRepository {
   private Task[] myTasks;
 
   public TestRepository() {
+    super(TestRepositoryType.INSTANCE);
   }
 
   public TestRepository(Task... tasks) {
+    this();
     myTasks = tasks;
   }
 

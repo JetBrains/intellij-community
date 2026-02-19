@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -6,9 +6,9 @@ import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -20,14 +20,15 @@ import com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class RunAnythingRunProfileState extends CommandLineState {
+@ApiStatus.Internal
+public final class RunAnythingRunProfileState extends CommandLineState {
   public RunAnythingRunProfileState(@NotNull ExecutionEnvironment environment, @NotNull String originalCommand) {
     super(environment);
 
@@ -38,8 +39,7 @@ public class RunAnythingRunProfileState extends CommandLineState {
     }
   }
 
-  @NotNull
-  private RunAnythingRunProfile getRunProfile() {
+  private @NotNull RunAnythingRunProfile getRunProfile() {
     RunProfile runProfile = getEnvironment().getRunProfile();
     if (!(runProfile instanceof RunAnythingRunProfile)) {
       throw new IllegalStateException("Got " + runProfile + " instead of RunAnything profile");
@@ -47,9 +47,8 @@ public class RunAnythingRunProfileState extends CommandLineState {
     return (RunAnythingRunProfile)runProfile;
   }
 
-  @NotNull
   @Override
-  protected ProcessHandler startProcess() throws ExecutionException {
+  protected @NotNull ProcessHandler startProcess() throws ExecutionException {
     RunAnythingRunProfile runProfile = getRunProfile();
     GeneralCommandLine commandLine = runProfile.getCommandLine();
     String originalCommand = runProfile.getOriginalCommand();
@@ -82,7 +81,7 @@ public class RunAnythingRunProfileState extends CommandLineState {
       }
 
       @Override
-      public final boolean shouldKillProcessSoftly() {
+      public boolean shouldKillProcessSoftly() {
         RunAnythingCommandHandler handler = RunAnythingCommandHandler.getMatchedHandler(getEnvironment().getProject(), originalCommand);
         return handler != null ? handler.shouldKillProcessSoftly() : super.shouldKillProcessSoftly();
       }
@@ -92,8 +91,7 @@ public class RunAnythingRunProfileState extends CommandLineState {
         if (console != null) console.print(message, consoleViewContentType);
       }
 
-      @Nullable
-      private ConsoleView getConsoleView() {
+      private @Nullable ConsoleView getConsoleView() {
         RunContentDescriptor contentDescriptor = RunContentManager.getInstance(getEnvironment().getProject())
           .findContentDescriptor(getEnvironment().getExecutor(), this);
 
@@ -105,7 +103,7 @@ public class RunAnythingRunProfileState extends CommandLineState {
       }
     };
 
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       boolean myIsFirstLineAdded;
 
       @Override
@@ -117,7 +115,6 @@ public class RunAnythingRunProfileState extends CommandLineState {
         }
       }
     });
-    processHandler.setHasPty(true);
     return processHandler;
   }
 }

@@ -1,0 +1,25 @@
+package fleet.codepoints
+
+import fleet.util.multiplatform.linkToActual
+
+internal fun codepointsToString(vararg codepoints: Int): String = linkToActual()
+internal fun codepointOf(highSurrogate: Char, lowSurrogate: Char): Codepoint = linkToActual()
+internal fun highSurrogate(codepoint: Int): Char = linkToActual()
+internal fun lowSurrogate(codepoint: Int): Char = linkToActual()
+internal fun isLetter(codepoint: Int): Boolean = linkToActual()
+internal fun isDigit(codepoint: Int): Boolean = linkToActual()
+internal fun isLetterOrDigit(codepoint: Int): Boolean = linkToActual()
+internal fun isUpperCase(codepoint: Int): Boolean = linkToActual()
+internal fun isLowerCase(codepoint: Int): Boolean = linkToActual()
+internal fun toLowerCase(codepoint: Int): Int = linkToActual()
+internal fun toUpperCase(codepoint: Int): Int = linkToActual()
+internal fun isSpaceChar(codepoint: Int): Boolean = linkToActual()
+internal fun isWhitespace(codepoint: Int): Boolean = linkToActual()
+internal fun isIdeographic(codepoint: Int): Boolean = linkToActual()
+internal fun isIdentifierIgnorable(codepoint: Int): Boolean = linkToActual()
+internal fun isUnicodeIdentifierStart(codepoint: Int): Boolean = linkToActual()
+internal fun isUnicodeIdentifierPart(codepoint: Int): Boolean = linkToActual()
+internal fun isJavaIdentifierStart(codepoint: Int): Boolean = linkToActual()
+internal fun isJavaIdentifierPart(codepoint: Int): Boolean = linkToActual()
+internal fun isISOControl(codepoint: Int): Boolean = linkToActual()
+internal fun getUnicodeScript(codepoint: Int): UnicodeScript = linkToActual()

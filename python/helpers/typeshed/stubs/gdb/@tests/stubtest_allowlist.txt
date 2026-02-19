@@ -1,0 +1,83 @@
+# Internal list of packages to auto-load
+gdb.packages
+gdb.GdbSetPythonDirectory
+
+# optional method, only called when present
+gdb.Command.complete
+gdb.FinishBreakpoint.out_of_scope
+gdb.Parameter.get_set_string
+gdb.Parameter.get_show_string
+
+# TODO: abstract/optional methods to be implemented by subclasses
+# gdb.FinishBreakpoint.out_of_scope
+gdb.Breakpoint.stop
+gdb.Command.invoke
+gdb.Function.invoke
+gdb.MICommand.invoke
+
+# TODO: investigate why they are not present at runtime
+gdb.Instruction
+gdb.LazyString
+gdb.Membuf
+gdb.Record
+gdb.RecordFunctionSegment
+gdb.RecordGap
+gdb.RecordInstruction
+gdb.TuiWindow
+
+# python implementation of built-in commands
+gdb.command
+gdb.command.explore
+gdb.command.frame_filters
+gdb.command.missing_debug
+gdb.command.pretty_printers
+gdb.command.prompt
+gdb.command.type_printers
+gdb.command.unwinders
+gdb.command.xmethods
+
+# implementing internal convenience functions
+gdb.function
+gdb.function.as_string
+gdb.function.caller_is
+gdb.function.strfns
+
+# internal workers for frame filters
+gdb.frames
+gdb.FrameDecorator.FrameVars
+
+# function is only called when it's present
+gdb.prompt_hook
+
+# internal methods used in the public gdb.prompt.substitute_prompt
+gdb.prompt.prompt_help
+gdb.prompt.prompt_substitutions
+
+# internal module to register a printer for mpx_bound128 type
+gdb.printer
+gdb.printer.bound_registers
+
+gdb.printing.RegexpCollectionPrettyPrinter.RegexpSubprinter
+gdb.printing.add_builtin_pretty_printer
+
+# internal methods for colorful commandline output
+gdb.styling
+
+# internal worker for SimpleXMethodMatcher
+gdb.xmethod.SimpleXMethodMatcher.SimpleXMethodWorker
+
+# list of registered xmethods to be added by xmethod.register_xmethod_matcher()
+gdb.xmethods
+gdb.Objfile.xmethods
+gdb.Progspace.xmethods
+
+# stubtest thinks this can't be sub-classed at runtime, but it is
+gdb.disassembler.DisassemblerPart
+
+gdb.TuiEnabledEvent
+gdb.events.tui_enabled
+
+gdb.Progspace.missing_debug_handlers
+gdb.missing_debug_handlers
+gdb.missing_files
+gdb.missing_objfile

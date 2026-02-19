@@ -4,6 +4,6 @@ package com.intellij.openapi.editor.event;
 /**
  * @deprecated Use {@link EditorMouseMotionListener} directly.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class EditorMouseMotionAdapter implements EditorMouseMotionListener {
 }

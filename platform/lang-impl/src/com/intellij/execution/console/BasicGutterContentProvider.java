@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.openapi.editor.Document;
@@ -7,7 +8,7 @@ import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Graphics;
 
 public class BasicGutterContentProvider extends GutterContentProvider {
   public static final String EVAL_OUT_MARKER = "\u200C";
@@ -31,15 +32,13 @@ public class BasicGutterContentProvider extends GutterContentProvider {
     return false;
   }
 
-  @Nullable
   @Override
-  public String getText(int line, @NotNull Editor editor) {
+  public @Nullable String getText(int line, @NotNull Editor editor) {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getToolTip(int line, @NotNull Editor editor) {
+  public @Nullable String getToolTip(int line, @NotNull Editor editor) {
     return null;
   }
 

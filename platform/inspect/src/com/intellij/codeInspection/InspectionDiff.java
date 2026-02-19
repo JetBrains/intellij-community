@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -7,71 +7,65 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public final class InspectionDiff {
+final class InspectionDiff {
   private static HashMap<String, ArrayList<Element>> ourFileToProblem;
-    @NonNls
-    private static final String FILE_ELEMENT = "file";
-    @NonNls
-    private static final String CLASS_ELEMENT = "class";
-    @NonNls
-    private static final String FIELD_ELEMENT = "field";
-    @NonNls
-    private static final String METHOD_ELEMENT = "method";
-    @NonNls
-    private static final String CONSTRUCTOR_ELEMENT = "constructor";
-    @NonNls
-    private static final String INTERFACE_ELEMENT = "interface";
-    @NonNls
-    private static final String PROBLEM_CLASS_ELEMENT = "problem_class";
-    @NonNls
-    private static final String DESCRIPTION_ELEMENT = "description";
+  private static final @NonNls String FILE_ELEMENT = "file";
+  private static final @NonNls String CLASS_ELEMENT = "class";
+  private static final @NonNls String FIELD_ELEMENT = "field";
+  private static final @NonNls String METHOD_ELEMENT = "method";
+  private static final @NonNls String CONSTRUCTOR_ELEMENT = "constructor";
+  private static final @NonNls String INTERFACE_ELEMENT = "interface";
+  private static final @NonNls String PROBLEM_CLASS_ELEMENT = "problem_class";
+  private static final @NonNls String DESCRIPTION_ELEMENT = "description";
 
-    public static void main(String[] args) {
-      if (args.length != 3 && args.length != 2) {
-        System.out.println(InspectionsBundle.message("inspection.diff.format.error"));
-      }
+  public static void main(String[] args) {
+    if (args.length != 3 && args.length != 2) {
+      System.out.println(InspectionsBundle.message("inspection.diff.format.error"));
+    }
 
-      String oldPath = args[0];
-      String newPath = args[1];
-      String outPath = args.length == 3 ? args[2] : null;
+    String oldPath = args[0];
+    String newPath = args[1];
+    String outPath = args.length == 3 ? args[2] : null;
 
-      final File oldResults = new File(oldPath);
-      final File newResults = new File(newPath);
-      if (oldResults.isDirectory() && newResults.isDirectory()) {
-        final File[] old = oldResults.listFiles();
-        final File[] results = newResults.listFiles();
-        for (File result : results) {
-          final String inspectionName = result.getName();
-          boolean found = false;
-          for (File oldFile : old) {
-            if (oldFile.getName().equals(inspectionName)) {
-              writeInspectionDiff(oldFile.getPath(), result.getPath(), outPath);
-              found = true;
-              break;
-            }
+    final File oldResults = new File(oldPath);
+    final File newResults = new File(newPath);
+    if (oldResults.isDirectory() && newResults.isDirectory()) {
+      final File[] old = oldResults.listFiles();
+      final File[] results = newResults.listFiles();
+      for (File result : results) {
+        final String inspectionName = result.getName();
+        boolean found = false;
+        for (File oldFile : old) {
+          if (oldFile.getName().equals(inspectionName)) {
+            writeInspectionDiff(oldFile.getPath(), result.getPath(), outPath);
+            found = true;
+            break;
           }
-          if (!found) {
-            writeInspectionDiff(null, result.getPath(), outPath);
-          }
+        }
+        if (!found) {
+          writeInspectionDiff(null, result.getPath(), outPath);
         }
       }
     }
+  }
 
-  private static void writeInspectionDiff(final String oldPath, final String newPath, final String outPath) {
+  private static void writeInspectionDiff(String oldPath, String newPath, final String outPath) {
     try {
-      InputStream oldStream = oldPath != null ? new BufferedInputStream(new FileInputStream(oldPath)) : null;
-      InputStream newStream = new BufferedInputStream(new FileInputStream(newPath));
-
-      Element oldDoc = oldStream != null ? JDOMUtil.load(oldStream) : null;
-      Element newDoc = JDOMUtil.load(newStream);
+      Element oldDoc = oldPath == null ? null : JDOMUtil.load(Path.of(oldPath));
+      Element newDoc = JDOMUtil.load(Path.of(newPath));
 
       OutputStream outStream = System.out;
       if (outPath != null) {
@@ -83,22 +77,21 @@ public final class InspectionDiff {
       if (outStream != System.out) {
         outStream.close();
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Document createDelta(@Nullable Element oldRoot, Element newRoot) {
+  private static @NotNull Document createDelta(@Nullable Element oldRoot, Element newRoot) {
     ourFileToProblem = new HashMap<>();
-    List newProblems = newRoot.getChildren("problem");
-    for (final Object o : newProblems) {
-      Element newProblem = (Element)o;
-      addProblem(newProblem);
+    List<Element> newProblems = newRoot.getChildren("problem");
+    for (Element problem : newProblems) {
+      addProblem(problem);
     }
 
     if (oldRoot != null) {
-      for (final Element oldProblem : oldRoot.getChildren("problem")) {
+      for (Element oldProblem : oldRoot.getChildren("problem")) {
         if (!removeIfEquals(oldProblem)) {
           addProblem(oldProblem);
         }

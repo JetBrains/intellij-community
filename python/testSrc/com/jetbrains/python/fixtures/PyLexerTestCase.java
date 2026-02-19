@@ -1,68 +1,51 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.fixtures;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.testFramework.PlatformLiteFixture;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.TestDisposable;
 import com.jetbrains.python.PythonDialectsTokenSetContributor;
 import com.jetbrains.python.PythonTokenSetContributor;
+import one.util.streamex.StreamEx;
+import org.junit.jupiter.api.BeforeEach;
 
-/**
- * @author yole
- */
-public abstract class PyLexerTestCase extends PlatformLiteFixture {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    initApplication();
-    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+import java.util.List;
+import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+
+@TestApplication
+public abstract class PyLexerTestCase {
+
+  @TestDisposable
+  protected Disposable testDisposable;
+
+  @BeforeEach
+  public void setUp() {
+    PythonDialectsTokenSetContributor.EP_NAME.getPoint().registerExtension(new PythonTokenSetContributor(), testDisposable);
   }
 
   public static void doLexerTest(String text, Lexer lexer, String... expectedTokens) {
     doLexerTest(text, lexer, false, expectedTokens);
   }
 
-  public static void doLexerTest(String text,
-                                 Lexer lexer,
-                                 boolean checkTokenText,
-                                 String... expectedTokens) {
+  public static void doLexerTest(String text, Lexer lexer, boolean checkTokenText, String... expectedTokens) {
     lexer.start(text);
-    int idx = 0;
-    int tokenPos = 0;
-    while (lexer.getTokenType() != null) {
-      if (idx >= expectedTokens.length) {
-        final StringBuilder remainingTokens = new StringBuilder();
-        while (lexer.getTokenType() != null) {
-          if (remainingTokens.length() != 0) {
-            remainingTokens.append(", ");
-          }
-          remainingTokens.append("\"").append(checkTokenText ? lexer.getTokenText() : lexer.getTokenType().toString()).append("\"");
-          lexer.advance();
-        }
-        fail("Too many tokens. Following tokens: " + remainingTokens);
-      }
-      assertEquals("Token offset mismatch at position " + idx, tokenPos, lexer.getTokenStart());
-      String tokenName = checkTokenText ? lexer.getTokenText() : lexer.getTokenType().toString();
-      assertEquals("Token mismatch at position " + idx, expectedTokens[idx], tokenName);
-      idx++;
-      tokenPos = lexer.getTokenEnd();
-      lexer.advance();
-    }
-
-    if (idx < expectedTokens.length) fail("Not enough tokens");
+    List<String> actualTokens = StreamEx.generate(() -> {
+        IElementType nextTokenType = lexer.getTokenType();
+        if (nextTokenType == null) return null;
+        String nextToken = checkTokenText ? lexer.getTokenText() : nextTokenType.toString();
+        lexer.advance();
+        return nextToken;
+      })
+      .takeWhile(Objects::nonNull)
+      .toList();
+    String expectedTokensInCode = StringUtil.join(actualTokens, t -> '"' + t + '"', ", ");
+    assertEquals(List.of(expectedTokens), actualTokens, "Token mismatch. Actual values: " + expectedTokensInCode);
   }
+
 }

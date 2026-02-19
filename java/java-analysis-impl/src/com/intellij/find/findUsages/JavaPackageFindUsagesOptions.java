@@ -21,11 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.List;
 
-/**
- * @author peter
- */
 public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isClassesUsages;
   public boolean isIncludeSubpackages = true;
@@ -56,12 +53,13 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull Set<? super String> to) {
+  protected void addUsageTypes(@NotNull List<? super String> to) {
     if (this.isUsages || this.isClassesUsages) {
       to.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!super.equals(o)) return false;
@@ -76,6 +74,7 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (isClassesUsages ? 1 : 0);

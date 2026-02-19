@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.html.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -219,7 +219,7 @@ final class Html5SectionsProcessor {
     if (HGROUP_ELEMENT.equalsIgnoreCase(header.getLocalName())) {
       for (XmlTag subTag : header.getSubTags()) {
         if (ArrayUtil.contains(StringUtil.toLowerCase(subTag.getLocalName()), HEADER_ELEMENTS)) {
-          if (buf.length() > 0) {
+          if (!buf.isEmpty()) {
             buf.append(" ");
           }
           appendTextRecursively(subTag, buf, HtmlTagTreeElement.MAX_TEXT_LENGTH * 2);

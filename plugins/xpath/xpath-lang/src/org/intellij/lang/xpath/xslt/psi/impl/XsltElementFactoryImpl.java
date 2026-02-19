@@ -28,13 +28,7 @@ import org.jetbrains.annotations.Nullable;
 class XsltElementFactoryImpl extends XsltElementFactory {
     private static final Key<Pair<ASTNode, XsltElement>> WRAPPER = Key.create("WRAPPER");
 
-    @Override
-    @SuppressWarnings({ "unchecked" })
-    public XsltElement wrapElement(XmlTag target) {
-        return wrapElement(target, XsltElement.class);
-    }
-
-    @Override
+  @Override
     public <T extends XsltElement> T wrapElement(XmlTag target, Class<T> clazz) {
         assert target.isValid();
 
@@ -77,14 +71,13 @@ class XsltElementFactoryImpl extends XsltElementFactory {
         return clazz.cast(element);
     }
 
-    private static class DummyElementImpl extends XsltElementImpl {
+    private static final class DummyElementImpl extends XsltElementImpl {
         DummyElementImpl(XmlTag target) {
             super(target);
         }
 
         @Override
-        @Nullable
-        public String toString() {
+        public @Nullable String toString() {
             return "Unrecognized tag: " + getTag().getName();
         }
     }

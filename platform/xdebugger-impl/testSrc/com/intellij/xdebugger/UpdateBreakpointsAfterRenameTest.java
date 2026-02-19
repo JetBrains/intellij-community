@@ -1,18 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.DisableOnDebug;
+import org.junit.rules.TestRule;
+import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@RunWith(JUnit4.class)
 public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
+  @Rule
+  public TestRule timeout = new DisableOnDebug(Timeout.seconds(30));
+
+  @Test
   public void testRenameFile() throws IOException {
     final VirtualFile file = createFile("file.txt");
     XLineBreakpoint<?> b = putBreakpoint(file);
@@ -21,6 +32,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
     assertSame(b, getBreakpointManager().findBreakpointAtLine(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file, 0));
   }
 
+  @Test
   public void testMoveFile() throws IOException {
     final VirtualFile file = createFile("dir/a.txt");
     final VirtualFile targetDir = createFile("dir2/b.txt").getParent();
@@ -29,6 +41,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
     assertTrue(b.getFileUrl().endsWith("dir2/a.txt"));
   }
 
+  @Test
   public void testRenameParentDir() throws IOException {
     final VirtualFile file = createFile("dir/x.txt");
     final XLineBreakpoint<?> b = putBreakpoint(file);
@@ -37,8 +50,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
   }
 
   private XLineBreakpoint<?> putBreakpoint(final VirtualFile file) {
-    return WriteAction.compute(() -> getBreakpointManager()
-      .addLineBreakpoint(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null, false));
+    return getBreakpointManager().addLineBreakpoint(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null, false);
   }
 
   private VirtualFile createFile(@NotNull String path) throws IOException {

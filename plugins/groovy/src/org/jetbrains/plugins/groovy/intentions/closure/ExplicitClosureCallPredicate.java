@@ -27,35 +27,30 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 class ExplicitClosureCallPredicate implements PsiElementPredicate {
 
-    @Override
-    public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrMethodCallExpression)) {
-            return false;
-        }
-        final GrMethodCallExpression call = (GrMethodCallExpression) element;
-        final GrExpression invokedExpression = call.getInvokedExpression();
-        if (invokedExpression == null) {
-            return false;
-        }
-        if (!(invokedExpression instanceof GrReferenceExpression)) {
-            return false;
-        }
-        final GrReferenceExpression referenceExpression = (GrReferenceExpression) invokedExpression;
-        final String name = referenceExpression.getReferenceName();
-        if (!"call".equals(name)) {
-            return false;
-        }
-        final GrExpression qualifier = referenceExpression.getQualifierExpression();
-        if (qualifier == null) {
-            return false;
-        }
-        final PsiType qualifierType = qualifier.getType();
-        if (qualifierType == null) {
-            return false;
-        }
-        if (!qualifierType.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
-            return false;
-        }
-        return !ErrorUtil.containsError(element);
+  @Override
+  public boolean satisfiedBy(@NotNull PsiElement element) {
+    if (!(element instanceof final GrMethodCallExpression call)) {
+      return false;
     }
+    final GrExpression invokedExpression = call.getInvokedExpression();
+    if (!(invokedExpression instanceof final GrReferenceExpression referenceExpression)) {
+      return false;
+    }
+    final String name = referenceExpression.getReferenceName();
+    if (!"call".equals(name)) {
+      return false;
+    }
+    final GrExpression qualifier = referenceExpression.getQualifierExpression();
+    if (qualifier == null) {
+      return false;
+    }
+    final PsiType qualifierType = qualifier.getType();
+    if (qualifierType == null) {
+      return false;
+    }
+    if (!qualifierType.equalsToText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+      return false;
+    }
+    return !ErrorUtil.containsError(element);
+  }
 }

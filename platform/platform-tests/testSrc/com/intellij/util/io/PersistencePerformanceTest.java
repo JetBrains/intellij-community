@@ -1,19 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
+import com.intellij.util.indexing.contentQueue.IndexingProgressReporter2;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
+import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
+import com.intellij.util.indexing.events.FileIndexingRequest;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -21,12 +28,17 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Future;
 
 /**
  * @author Dmitry Avdeev
  */
+@PerformanceUnitTest
 public class PersistencePerformanceTest extends BasePlatformTestCase {
   private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<>();
   private final List<String> myKeys = new ArrayList<>();
@@ -58,7 +70,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile(tempDirectory, "persistent", "map" + i));
       myMaps.add(map);
     }
-    StorageLockContext storageLockContext = new StorageLockContext(false);
+    StorageLockContext storageLockContext = new StorageLockContext();
     myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum").toPath(), storageLockContext);
   }
 
@@ -93,20 +105,34 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       }
     });
 
-    List<VirtualFile> files = new ArrayList<>();
+    List<FileIndexingRequest> files = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       File file = FileUtil.createTempFile("", ".txt");
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       assertNotNull(virtualFile);
       HeavyPlatformTestCase.setFileText(virtualFile, "foo bar");
-      files.add(virtualFile);
+      files.add(FileIndexingRequest.updateRequest(virtualFile));
     }
 
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
-      new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, UnindexedFilesUpdater.getNumberOfIndexingThreads())
-        .indexFiles(getProject(), "test files", files, new EmptyProgressIndicator());
+      IndexingRequestToken indexingRequest =
+        getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+      ProgressManager.getInstance().runProcess(() -> {
+        try {
+          new IndexUpdateRunner(index, indexingRequest)
+            .indexFiles(getProject(),
+                        new IndexUpdateRunner.FileSet(getProject(), "test files",
+                                                      QueuedFiles.fromRequestsCollection(files, Collections.emptyList())),
+                        new ProjectDumbIndexingHistoryImpl(getProject()),
+                        IndexingProgressReporter2.Companion.createEmpty());
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }, new EmptyProgressIndicator());
+
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());
@@ -146,7 +172,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
 
   @NotNull
   private static PersistentHashMap<String, Record> createMap(File file) throws IOException {
-    return new PersistentHashMap<>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
+    return new PersistentHashMap<>(file, new EnumeratorStringDescriptor(), new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Record value) throws IOException {
         out.writeInt(value.magnitude);

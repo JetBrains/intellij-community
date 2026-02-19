@@ -1,0 +1,2 @@
+Function call 12 a.set(2, B(2))
+Implicit 'set' 13 a[1] = B(2)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search;
 
@@ -6,11 +6,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,17 +33,9 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
-  /**
-   * @deprecated use {@link #ProjectAndLibrariesScope(Project)}
-   */
-  @Deprecated
-  public ProjectAndLibrariesScope(Project project, boolean searchOutsideRootModel) {
-    this(project);
-  }
-
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return myProjectFileIndex.isInContent(file) || myProjectFileIndex.isInLibrary(file);
+    return myProjectFileIndex.isInProject(file);
   }
 
   @Override
@@ -80,16 +77,14 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     Project project = getProject();
     return project != null ? ModuleManager.getInstance(project).getUnloadedModuleDescriptions() : Collections.emptySet();
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return myDisplayName == null ? getNameText() : myDisplayName;
   }
 

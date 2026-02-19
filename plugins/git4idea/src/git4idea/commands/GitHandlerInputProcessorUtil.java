@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -22,19 +21,30 @@ public final class GitHandlerInputProcessorUtil {
   private GitHandlerInputProcessorUtil() {
   }
 
-  @NotNull
-  public static ThrowableConsumer<OutputStream, IOException> writeLines(@NotNull Collection<String> lines, @NotNull Charset charset) {
+  public static @NotNull ThrowableConsumer<OutputStream, IOException> writeLines(@NotNull Collection<String> lines, @NotNull Charset charset) {
     return writeLines(lines, DEFAULT_SEPARATOR, charset, false);
   }
 
-  @NotNull
-  public static ThrowableConsumer<OutputStream, IOException> writeLines(@NotNull Collection<String> lines,
-                                                                        @NotNull String separator,
-                                                                        @NotNull Charset charset,
-                                                                        boolean endWithSecondSeparator) {
+  /**
+   * Creates an input processor for {@link GitHandler} which sends provided lines to the process input stream.
+   *
+   * @see GitHandler#setInputProcessor(ThrowableConsumer)
+   *
+   * @param lines data to send to the stream
+   * @param separator string to separate lines with
+   * @param charset charset to use
+   * @param endWithSecondSeparator send an additional separator to the output to indicate the end of data.
+   *                               On Windows, the output stream won't be closed when this parameter is set to {@code true}.
+   * @return an input processor (a {@link ThrowableConsumer} instance) that writes provided lines to the {@link OutputStream} passed to it.
+   */
+  public static @NotNull ThrowableConsumer<OutputStream, IOException> writeLines(
+    @NotNull Collection<String> lines,
+    @NotNull String separator,
+    @NotNull Charset charset,
+    boolean endWithSecondSeparator
+  ) {
     return stream -> {
-      OutputStreamWriter writer = new OutputStreamWriter(stream, charset);
-      try {
+      try (OutputStreamWriter writer = new OutputStreamWriter(stream, charset)) {
         for (String line : lines) {
           writer.write(line);
           writer.write(separator);
@@ -42,21 +52,20 @@ public final class GitHandlerInputProcessorUtil {
         if (endWithSecondSeparator) writer.write(separator);
         writer.flush();
       }
-      finally {
-        if (!SystemInfo.isWindows || !endWithSecondSeparator) writer.close();
+    };
+  }
+
+  public static @NotNull ThrowableConsumer<OutputStream, IOException> redirectStream(@NotNull InputStream stream) {
+    return outputStream -> {
+      try (outputStream) {
+        FileUtil.copy(stream, outputStream);
       }
     };
   }
 
-  @NotNull
-  public static ThrowableConsumer<OutputStream, IOException> redirectStream(@NotNull InputStream stream) {
+  public static @NotNull ThrowableConsumer<OutputStream, IOException> empty() {
     return outputStream -> {
-      try {
-        FileUtil.copy(stream, outputStream);
-      }
-      finally {
-        outputStream.close();
-      }
+      outputStream.close();
     };
   }
 }

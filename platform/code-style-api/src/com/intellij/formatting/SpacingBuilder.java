@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.lang.Language;
@@ -15,9 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class SpacingBuilder {
   private static final Logger LOG = Logger.getInstance(SpacingBuilder.class);
 
@@ -60,14 +58,6 @@ public class SpacingBuilder {
     Spacing createSpacing(@NotNull TextRange parentRange) {
       return Spacing.createSpacing(myMinSpaces, myMaxSpaces, myMinLF, myKeepLineBreaks, myKeepBlankLines);
     }
-
-    /**
-     * @deprecated use #createSpacing(com.intellij.openapi.util.TextRange) instead
-     */
-    @Deprecated
-    Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
-      return this.createSpacing(parentBlock.getTextRange());
-    }
   }
 
   private static class DependentLFSpacingRule extends SpacingRule {
@@ -83,12 +73,6 @@ public class SpacingBuilder {
     @Override
     Spacing createSpacing(@NotNull TextRange parentRange) {
       return Spacing.createDependentLFSpacing(myMinSpaces, myMaxSpaces, parentRange, myKeepLineBreaks, myKeepBlankLines);
-    }
-
-
-    @Override @Deprecated @SuppressWarnings("deprecation")
-    Spacing createSpacing(@NotNull ASTBlock parentBlock, @NotNull ASTBlock childBlock1, @NotNull ASTBlock childBlock2) {
-      return this.createSpacing(parentBlock.getTextRange());
     }
   }
 
@@ -208,18 +192,6 @@ public class SpacingBuilder {
   private final List<SpacingRule> myRules = new ArrayList<>();
 
   /**
-   * @param codeStyleSettings
-   * @deprecated Use {@link #SpacingBuilder(CodeStyleSettings, Language)} or {@link #SpacingBuilder(CommonCodeStyleSettings)} instead
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public SpacingBuilder(CodeStyleSettings codeStyleSettings) {
-    // TODO: remove deprecated method (v.14)
-    myCodeStyleSettings = new CommonCodeStyleSettings(Language.ANY);
-    LOG.error("The plugin calling this method uses deprecated API and must be updated.");
-  }
-
-  /**
    * Creates SpacingBuilder with given code style settings and language whose settings must be used.
    * @param codeStyleSettings The root code style settings.
    * @param language          The language to obtain settings for.
@@ -234,7 +206,7 @@ public class SpacingBuilder {
    *                                  return null!
    */
   public SpacingBuilder(@NotNull CommonCodeStyleSettings languageCodeStyleSettings) {
-    assert languageCodeStyleSettings.getLanguage() != null : "Only language code style settings are accepted (getLanguage() != null)";
+    assert !Language.ANY.equals(languageCodeStyleSettings.getLanguage()) : "Only language code style settings are accepted (getLanguage() != null)";
     myCodeStyleSettings = languageCodeStyleSettings;
   }
 
@@ -256,6 +228,10 @@ public class SpacingBuilder {
 
   public RuleBuilder afterInside(TokenSet tokenSet, IElementType parentType) {
     return new RuleBuilder(new RuleCondition(TokenSet.create(parentType), tokenSet, null));
+  }
+
+  public RuleBuilder afterInside(TokenSet tokenSet, TokenSet parentType) {
+    return new RuleBuilder(new RuleCondition(parentType, tokenSet, null));
   }
 
   public RuleBuilder before(IElementType elementType) {
@@ -360,8 +336,7 @@ public class SpacingBuilder {
    * @see #getSpacing(Block, Block, Block)
    */
   @Contract("_,null,_,_->null; _,_,null,_->null; _,_,_,null->null")
-  @Nullable
-  public Spacing getSpacing(@NotNull Block parentBlock,
+  public @Nullable Spacing getSpacing(@NotNull Block parentBlock,
                             @Nullable IElementType parentType,
                             @Nullable IElementType child1Type,
                             @Nullable IElementType child2Type) {
@@ -381,8 +356,7 @@ public class SpacingBuilder {
    * @see #getSpacing(Block, IElementType, IElementType, IElementType)
    */
   @Contract("null,_,_->null; _,null,_->null; _,_,null->null")
-  @Nullable
-  public Spacing getSpacing(@Nullable Block parent, @Nullable Block child1, @Nullable Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block parent, @Nullable Block child1, @Nullable Block child2) {
     if (!(parent instanceof ASTBlock) || !(child1 instanceof ASTBlock) || !(child2 instanceof ASTBlock)) {
       return null;
     }

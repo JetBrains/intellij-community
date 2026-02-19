@@ -1,0 +1,10 @@
+Original text:
+---------------
+def foo(self): ...
+def bar(self): ...
+---------------
+Subtree: Language: Python
+---------------
+<reparse>def async(self): ...
+def bar(self): ...</reparse>
+---------------

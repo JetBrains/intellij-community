@@ -60,7 +60,6 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectMo
    * @return the value of the modelVersion child.
    */
   @NotNull
-  @Required
   @Convert(MavenModelVersionConverter.class)
   GenericDomValue<String> getModelVersion();
 

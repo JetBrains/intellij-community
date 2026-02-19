@@ -1,4 +1,4 @@
-// "Remove field 'x'" "true"
+// "Remove field 'x'" "true-preview"
 public class Main {
   private int <caret>x;
 

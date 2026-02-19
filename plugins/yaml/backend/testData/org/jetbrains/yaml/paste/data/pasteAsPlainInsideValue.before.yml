@@ -1,0 +1,2 @@
+top:
+  someKey: some<caret>value

@@ -15,7 +15,9 @@
  */
 package com.intellij.uiDesigner.core;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -55,7 +57,7 @@ public abstract class DimensionInfo {
     Arrays.fill(myStretches, 1);
     //TODO[anton,vova] handle stretches
 
-    final ArrayList<Integer> eliminated = new ArrayList<Integer>();
+    final ArrayList<Integer> eliminated = new ArrayList<>();
     mySpansAfterElimination = mySpan.clone();
     Util.eliminate(myCell.clone(), mySpansAfterElimination, eliminated);
 

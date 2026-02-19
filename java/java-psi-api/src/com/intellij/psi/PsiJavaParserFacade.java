@@ -99,14 +99,16 @@ public interface PsiJavaParserFacade {
   PsiParameter createParameterFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
-   * Creates a Java record from the specified text.
+   * Creates an implicit class from the specified body text.
    *
-   * @param text    the text of the record to create.
-   * @param context the PSI element used as context for resolving references from the record.
-   * @return the created record instance.
-   * @throws IncorrectOperationException if the text is not a valid record text.
+   * @param body    the body text of the class to create.
+   * @param context the PSI element used as context for resolving references which cannot be resolved
+   *                within the class.
+   * @return created class instance.
+   * @throws IncorrectOperationException if the text is not a valid class body.
    */
-  PsiClass createRecordFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
+  @NotNull
+  PsiImplicitClass createImplicitClassFromText(@NotNull String body, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
    * Creates a Java record header from the specified text (excluding parentheses).
@@ -244,12 +246,6 @@ public interface PsiJavaParserFacade {
    */
   @NotNull
   PsiType createPrimitiveTypeFromText(@NotNull @NonNls String text) throws IncorrectOperationException;
-
-  /** @deprecated use {@link #createModuleFromText(String, PsiElement)} */
-  @Deprecated
-  default PsiJavaModule createModuleFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
-    return createModuleFromText(text, null);
-  }
 
   /**
    * Creates a Java module declaration from the specified text.

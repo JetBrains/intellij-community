@@ -10,8 +10,8 @@ angle brackets around the file name::
     .. include:: <isonum.txt>
 
 See the documentation for the `"include" directive`__ and
-`reStructuredText Standard Substitution Definition Sets`__ for
+`reStructuredText Standard Definition Files`__ for
 details.
 
-__ http://docutils.sf.net/docs/ref/rst/directives.html#include
-__ http://docutils.sf.net/docs/ref/rst/substitutions.html
+__ https://docutils.sourceforge.io/docs/ref/rst/directives.html#include
+__ https://docutils.sourceforge.io/docs/ref/rst/definitions.html

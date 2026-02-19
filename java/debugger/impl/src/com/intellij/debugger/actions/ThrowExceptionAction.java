@@ -1,9 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
@@ -15,7 +14,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -27,22 +26,23 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.XExpressionDialog;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Objects;
 
 public class ThrowExceptionAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    final JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
+    final JavaStackFrame stackFrame = getStackFrame(e);
     if (stackFrame == null || project == null) {
       return;
     }
-    final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
     if (debugProcess == null) {
       return;
@@ -51,7 +51,7 @@ public class ThrowExceptionAction extends DebuggerAction {
     final StackFrameProxyImpl proxy = stackFrame.getStackFrameProxy();
     final ThreadReferenceProxyImpl thread = proxy.threadProxy();
 
-    debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
+    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         ApplicationManager.getApplication().invokeLater(
@@ -69,7 +69,7 @@ public class ThrowExceptionAction extends DebuggerAction {
   private static void throwException(final Value value,
                                      final ThreadReferenceProxyImpl thread,
                                      final DebugProcessImpl debugProcess,
-                                     @Nullable final DialogWrapper dialog) {
+                                     final @Nullable DialogWrapper dialog) {
     debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() {
@@ -80,8 +80,7 @@ public class ThrowExceptionAction extends DebuggerAction {
           showError(debugProcess.getProject(), JavaDebuggerBundle.message("error.throw.exception", e.getLocalizedMessage()));
           return;
         }
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
@@ -92,7 +91,7 @@ public class ThrowExceptionAction extends DebuggerAction {
   }
 
   private static void showError(Project project, @NlsContexts.DialogMessage String message) {
-    PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ThrowException")));
+    JvmDropFrameActionHandler.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ThrowException")));
   }
 
   private static void evaluateAndReturn(final Project project,
@@ -113,7 +112,7 @@ public class ThrowExceptionAction extends DebuggerAction {
                            }
 
                            @Override
-                           public void errorOccurred(@NotNull final String errorMessage) {
+                           public void errorOccurred(final @NotNull String errorMessage) {
                              showError(project, JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + ": " + errorMessage);
                            }
                          }, stackFrame.getSourcePosition());
@@ -125,14 +124,12 @@ public class ThrowExceptionAction extends DebuggerAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
-    boolean enable = stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0;
+    JavaStackFrame stackFrame = getStackFrame(e);
+    DebuggerUIUtil.setActionEnabled(e, stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0);
+  }
 
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(enable);
-    }
-    else {
-      e.getPresentation().setVisible(enable);
-    }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

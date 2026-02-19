@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -10,19 +10,17 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class VcsScopeItem implements ModelScopeItem {
+public final class VcsScopeItem implements ModelScopeItem {
   private final ChangeListManager myChangeListManager;
   private final DefaultComboBoxModel<LocalChangeList> myModel;
   private final Project myProject;
 
-  @Nullable
-  public static VcsScopeItem createIfHasVCS(Project project) {
+  public static @Nullable VcsScopeItem createIfHasVCS(Project project) {
     if (ChangeListManager.getInstance(project).getAffectedFiles().isEmpty()) {
       return null;
     }
@@ -35,7 +33,7 @@ public class VcsScopeItem implements ModelScopeItem {
     myChangeListManager = ChangeListManager.getInstance(project);
     assert !myChangeListManager.getAffectedFiles().isEmpty();
 
-    if (myChangeListManager.areChangeListsEnabled()) {
+    if (ChangesUtil.hasMeaningfulChangelists(myProject)) {
       myModel = new DefaultComboBoxModel<>();
       myModel.addElement(null);
       List<LocalChangeList> changeLists = myChangeListManager.getChangeLists();
@@ -59,8 +57,7 @@ public class VcsScopeItem implements ModelScopeItem {
     else {
       LocalChangeList list = myChangeListManager.findChangeList(changeList.getName());
       if (list != null) {
-        files = ChangesUtil.getAfterRevisionsFiles(list.getChanges().stream())
-          .collect(Collectors.toList());
+        files = ChangesUtil.iterateAfterRevisionFiles(list.getChanges()).toList();
       }
       else {
         files = Collections.emptyList();
@@ -69,8 +66,7 @@ public class VcsScopeItem implements ModelScopeItem {
     return new AnalysisScope(myProject, new HashSet<>(files));
   }
 
-  @Nullable
-  public DefaultComboBoxModel<LocalChangeList> getChangeListsModel() {
+  public @Nullable DefaultComboBoxModel<LocalChangeList> getChangeListsModel() {
     return myModel;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ChangeLibraryLevelDialog;
@@ -30,8 +31,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -56,8 +58,7 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
 
   protected abstract JComponent getParentComponent();
 
-  @Nullable
-  protected Library doCopy(LibraryEx library) {
+  protected @Nullable Library doCopy(LibraryEx library) {
     final VirtualFile baseDir = getBaseDir();
     final String libPath = baseDir != null ? baseDir.getPath() + "/lib" : "";
     final VirtualFile[] classesRoots = library.getFiles(OrderRootType.CLASSES);
@@ -90,13 +91,22 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     final Library copied = provider.getModifiableModel().createLibrary(StringUtil.nullize(dialog.getLibraryName()), library.getKind());
     final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)copied.getModifiableModel();
     LibraryEditingUtil.copyLibrary(library, copiedFiles, model);
+
+    /* Verification and bind JAR repositories are prohibited for global libraries */
+    if (isConvertingToApplicationLibrary() && model.getProperties() instanceof RepositoryLibraryProperties repositoryLibraryProperties) {
+      model.setProperties(repositoryLibraryProperties.cloneAndChange(properties -> {
+        properties.disableVerification();
+        properties.unbindRemoteRepository();
+      }));
+    }
+
     WriteAction.run(() -> model.commit());
     return copied;
   }
 
   private boolean copyOrMoveFiles(final Set<File> filesToProcess,
-                                    @NotNull final String targetDirPath,
-                                    final Map<String, String> copiedFiles) {
+                                  final @NotNull String targetDirPath,
+                                  final Map<String, String> copiedFiles) {
     final Ref<Boolean> finished = Ref.create(false);
     new Task.Modal(myProject, JavaUiBundle.message("progress.title.0.library.files", myCopy ? "Copying" : "Moving"), true) {
       @Override
@@ -166,13 +176,16 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
     presentation.setEnabledAndVisible(enabled);
   }
 
-  @Nullable
-  protected VirtualFile getBaseDir() {
+  protected @Nullable VirtualFile getBaseDir() {
     return myProject.getBaseDir();
   }
 
   protected boolean isConvertingToModuleLibrary() {
     return myTargetTableLevel.equals(LibraryTableImplUtil.MODULE_LEVEL);
+  }
+
+  private boolean isConvertingToApplicationLibrary() {
+    return myTargetTableLevel.equals(LibraryTablesRegistrar.APPLICATION_LEVEL);
   }
 
   protected abstract boolean isEnabled();

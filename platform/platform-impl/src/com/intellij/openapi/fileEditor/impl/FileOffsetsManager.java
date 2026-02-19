@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,22 +15,32 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class allows to convert offsets in a file stored on disk to offsets in the same file that IDE uses in its model
+ * ({@link com.intellij.openapi.editor.Document}, {@link com.intellij.psi.PsiFile}). Offsets may be different because IDE model works with
+ * normalized line separators, which are always 1 character - '\n', (see {@link LoadTextUtil#convertLineSeparatorsToSlashN(CharBuffer)}.
+ * But a file stored on disk may have 2-character line breaks "\r\n".
+ * <br/><br/>
+ * In this class, "original offset" means offset in a file as it is stored on disk, "converted offset" - offset in a file as it is used in
+ * the IDE model.
+ */
+@Service
 public final class FileOffsetsManager {
-  @NotNull
-  public static FileOffsetsManager getInstance() {
-    return ServiceManager.getService(FileOffsetsManager.class);
+  public static @NotNull FileOffsetsManager getInstance() {
+    return ApplicationManager.getApplication().getService(FileOffsetsManager.class);
   }
 
-  private final Map<VirtualFile, LineOffsets> myLineOffsetsMap = new HashMap<>();
+  private final Map<VirtualFile, LineOffsets> myLineOffsetsMap = Collections.synchronizedMap(new HashMap<>());
 
-  private static class LineOffsets {
-    private final long myFileModificationStamp;
-    private final int[] myOriginalLineOffsets;
-    private final int[] myConvertedLineOffsets;
-    private final boolean myLineOffsetsAreTheSame;
+  public static final class LineOffsets {
+    public final long myFileModificationStamp;
+    public final int[] myOriginalLineOffsets;
+    public final int[] myConvertedLineOffsets;
+    public final boolean myLineOffsetsAreTheSame;
 
     LineOffsets(final long modificationStamp, final int @NotNull [] originalLineOffsets, final int @NotNull [] convertedLineOffsets) {
       assert convertedLineOffsets.length > 0 && originalLineOffsets.length == convertedLineOffsets.length
@@ -42,21 +54,29 @@ public final class FileOffsetsManager {
     }
   }
 
-  public int getConvertedOffset(@NotNull final VirtualFile file, final int originalOffset) {
+  /**
+   * @param originalOffset offset in a file as it is stored on disk
+   * @return offset in the same file as it is used in IDE model (with normalized line separators)
+   */
+  public int getConvertedOffset(final @NotNull VirtualFile file, final int originalOffset) {
     final LineOffsets offsets = getLineOffsets(file);
     if (offsets.myLineOffsetsAreTheSame) return originalOffset;
 
     return getCorrespondingOffset(offsets.myOriginalLineOffsets, offsets.myConvertedLineOffsets, originalOffset);
   }
 
-  public int getOriginalOffset(@NotNull final VirtualFile file, final int convertedOffset) {
+  /**
+   * @param convertedOffset offset in a file as it is used in IDE model (with normalized line separators)
+   * @return offset in the same file as it is stored on disk
+   */
+  public int getOriginalOffset(final @NotNull VirtualFile file, final int convertedOffset) {
     final LineOffsets offsets = getLineOffsets(file);
     if (offsets.myLineOffsetsAreTheSame) return convertedOffset;
 
     return getCorrespondingOffset(offsets.myConvertedLineOffsets, offsets.myOriginalLineOffsets, convertedOffset);
   }
 
-  private static int getCorrespondingOffset(int[] offsets1, int[] offsets2, int offset1) {
+  public static int getCorrespondingOffset(int[] offsets1, int[] offsets2, int offset1) {
     int line = Arrays.binarySearch(offsets1, offset1);
     if (line < 0) line = -line - 2;
     try {
@@ -67,8 +87,7 @@ public final class FileOffsetsManager {
     }
   }
 
-  @NotNull
-  private synchronized LineOffsets getLineOffsets(@NotNull final VirtualFile file) {
+  private @NotNull LineOffsets getLineOffsets(final @NotNull VirtualFile file) {
     LineOffsets offsets = myLineOffsetsMap.get(file);
     if (offsets != null && file.getModificationStamp() == offsets.myFileModificationStamp) {
       return offsets;
@@ -79,10 +98,9 @@ public final class FileOffsetsManager {
     return offsets;
   }
 
-  @NotNull
   // similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.loadText()
-  private static LineOffsets loadLineOffsets(@NotNull final VirtualFile file) {
-    assert !file.getFileType().isBinary();
+  private static @NotNull LineOffsets loadLineOffsets(final @NotNull VirtualFile file) {
+    assert !file.getFileType().isBinary() : "Cannot load line offsets for binary file: " + file.getPath() + " (" + file.getFileType() + ")";
 
     try {
       byte[] bytes = file.contentsToByteArray();
@@ -96,12 +114,11 @@ public final class FileOffsetsManager {
     }
   }
 
-  @NotNull
   // similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.convertBytes()
-  private static LineOffsets loadLineOffsets(final byte @NotNull [] bytes,
-                                             @NotNull final Charset charset,
-                                             final int startOffset,
-                                             final long modificationStamp) {
+  private static @NotNull LineOffsets loadLineOffsets(final byte @NotNull [] bytes,
+                                                      final @NotNull Charset charset,
+                                                      final int startOffset,
+                                                      final long modificationStamp) {
     ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, startOffset, bytes.length - startOffset);
 
     CharBuffer charBuffer;
@@ -115,15 +132,19 @@ public final class FileOffsetsManager {
     return loadLineOffsets(charBuffer, modificationStamp);
   }
 
-  @NotNull
-  // similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.convertLineSeparators()
-  private static LineOffsets loadLineOffsets(@NotNull final CharBuffer buffer, final long modificationStamp) {
+  /**
+   * Similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.convertLineSeparatorsToSlashN()
+   *
+   * @param buffer            NB This buffer can be modified
+   * @param modificationStamp The timestamp
+   */
+  public static @NotNull LineOffsets loadLineOffsets(final @NotNull CharBuffer buffer, final long modificationStamp) {
     int dst = 0;
     char prev = ' ';
     int crlfCount = 0;
 
-    final IntArrayList originalLineOffsets = new IntArrayList();
-    final IntArrayList convertedLineOffsets = new IntArrayList();
+    final IntList originalLineOffsets = new IntArrayList();
+    final IntList convertedLineOffsets = new IntArrayList();
     // first line
     originalLineOffsets.add(0);
     convertedLineOffsets.add(0);
@@ -134,7 +155,7 @@ public final class FileOffsetsManager {
     for (int src = 0; src < length; src++) {
       char c = bufferArray != null ? bufferArray[src] : buffer.charAt(src);
       switch (c) {
-        case '\r':
+        case '\r' -> {
           if (bufferArray != null) {
             bufferArray[dst++] = '\n';
           }
@@ -144,8 +165,8 @@ public final class FileOffsetsManager {
           //crCount++;
           originalLineOffsets.add(dst + crlfCount);
           convertedLineOffsets.add(dst);
-          break;
-        case '\n':
+        }
+        case '\n' -> {
           if (prev == '\r') {
             //crCount--;
             crlfCount++;
@@ -162,15 +183,15 @@ public final class FileOffsetsManager {
             originalLineOffsets.add(dst + crlfCount);
             convertedLineOffsets.add(dst);
           }
-          break;
-        default:
+        }
+        default -> {
           if (bufferArray != null) {
             bufferArray[dst++] = c;
           }
           else {
             buffer.put(dst++, c);
           }
-          break;
+        }
       }
       prev = c;
     }

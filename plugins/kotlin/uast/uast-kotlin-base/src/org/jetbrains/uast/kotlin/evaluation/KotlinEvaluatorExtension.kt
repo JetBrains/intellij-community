@@ -1,0 +1,64 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.uast.kotlin.evaluation
+
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.uast.UBinaryExpression
+import org.jetbrains.uast.UastPostfixOperator
+import org.jetbrains.uast.evaluation.AbstractEvaluatorExtension
+import org.jetbrains.uast.evaluation.UEvaluationInfo
+import org.jetbrains.uast.evaluation.UEvaluationState
+import org.jetbrains.uast.evaluation.to
+import org.jetbrains.uast.kotlin.KotlinBinaryOperators
+import org.jetbrains.uast.kotlin.KotlinPostfixOperators
+import org.jetbrains.uast.values.UAbstractConstant
+import org.jetbrains.uast.values.UConstant
+import org.jetbrains.uast.values.UNullConstant
+import org.jetbrains.uast.values.UUndeterminedValue
+import org.jetbrains.uast.values.UValue
+
+@InternalIgnoreDependencyViolation
+class KotlinEvaluatorExtension : AbstractEvaluatorExtension(KotlinLanguage.INSTANCE) {
+
+    private data class Range(val from: UValue, val to: UValue) {
+        override fun toString() = "$from..$to"
+    }
+
+    private class UClosedRangeConstant(override val value: Range, override val source: UBinaryExpression?) : UAbstractConstant() {
+        constructor(from: UValue, to: UValue, source: UBinaryExpression): this(Range(from, to), source)
+    }
+
+    override fun evaluatePostfix(
+        operator: UastPostfixOperator,
+        operandValue: UValue,
+        state: UEvaluationState
+    ): UEvaluationInfo {
+        return when (operator) {
+            KotlinPostfixOperators.EXCLEXCL -> when (operandValue.toConstant()) {
+                UNullConstant -> UValue.UNREACHABLE
+                is UConstant -> operandValue
+                else -> UUndeterminedValue
+            } to state
+            else -> return super.evaluatePostfix(operator, operandValue, state)
+        }
+    }
+
+    private fun UValue.contains(value: UValue): UValue {
+        val range = (this as? UClosedRangeConstant)?.value ?: return UUndeterminedValue
+        return (value greaterOrEquals range.from) and (value lessOrEquals range.to)
+    }
+
+    override fun evaluateBinary(
+        binaryExpression: UBinaryExpression,
+        leftValue: UValue,
+        rightValue: UValue,
+        state: UEvaluationState
+    ): UEvaluationInfo {
+        return when (binaryExpression.operator) {
+            KotlinBinaryOperators.IN -> rightValue.contains(leftValue)
+            KotlinBinaryOperators.NOT_IN -> !rightValue.contains(leftValue)
+            KotlinBinaryOperators.RANGE_TO -> UClosedRangeConstant(leftValue, rightValue, binaryExpression)
+            else -> UUndeterminedValue
+        } to state
+    }
+}

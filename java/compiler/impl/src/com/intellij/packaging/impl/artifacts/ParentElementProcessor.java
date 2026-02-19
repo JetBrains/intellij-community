@@ -15,9 +15,9 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

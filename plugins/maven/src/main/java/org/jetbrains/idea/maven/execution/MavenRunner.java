@@ -1,31 +1,42 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.text.MessageFormat;
 import java.util.List;
 
-@State(name = "MavenRunner", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "MavenRunner", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@Service(Service.Level.PROJECT)
 public final class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
-
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
   private final Project myProject;
 
   public static MavenRunner getInstance(Project project) {
-    return ServiceManager.getService(project, MavenRunner.class);
+    return project.getService(MavenRunner.class);
+  }
+
+  public static @Nullable MavenRunner getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(MavenRunner.class);
   }
 
   public MavenRunner(final Project project) {
@@ -37,8 +48,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   }
 
   @Override
-  @NotNull
-  public MavenRunnerSettings getState() {
+  public @NotNull MavenRunnerSettings getState() {
     return mySettings;
   }
 
@@ -48,12 +58,25 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   }
 
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
-    FileDocumentManager.getInstance().saveAllDocuments();
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
 
     ProgramRunner.Callback callback = descriptor -> {
       ProcessHandler handler = descriptor.getProcessHandler();
       if (handler == null) return;
-      handler.addProcessListener(new ProcessAdapter() {
+      handler.addProcessListener(new ProcessListener() {
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          String eventText = event.getText();
+          if (outputType == ProcessOutputTypes.STDERR || eventText.contains("[ERROR]")) {
+            MavenLog.LOG.warn(eventText);
+          }
+          else if (outputType == ProcessOutputTypes.SYSTEM) {
+            MavenLog.LOG.info(eventText);
+          }
+          else if (outputType == ProcessOutputTypes.STDOUT) {
+            MavenLog.LOG.trace(eventText);
+          }
+        }
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (event.getExitCode() == 0 && onComplete != null) {
@@ -69,7 +92,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action,
+                          final @Nullable String action,
                           @Nullable ProgressIndicator indicator) {
     return runBatch(commands, coreSettings, runnerSettings, action, indicator, null);
   }
@@ -77,7 +100,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action,
+                          final @Nullable String action,
                           @Nullable ProgressIndicator indicator,
                           @Nullable Consumer<? super ProcessHandler> onAttach) {
     return runBatch(commands, coreSettings, runnerSettings, action, indicator, onAttach, false);
@@ -86,7 +109,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action,
+                          final @Nullable String action,
                           @Nullable ProgressIndicator indicator,
                           @Nullable Consumer<? super ProcessHandler> onAttach,
                           boolean isDelegateBuild) {
@@ -102,7 +125,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
       ProgramRunner.Callback callback = descriptor -> {
         ProcessHandler handler = descriptor.getProcessHandler();
         if (handler != null) {
-          handler.addProcessListener(new ProcessAdapter() {
+          handler.addProcessListener(new ProcessListener() {
             @Override
             public void startNotified(@NotNull ProcessEvent event) {
               if (onAttach != null) {

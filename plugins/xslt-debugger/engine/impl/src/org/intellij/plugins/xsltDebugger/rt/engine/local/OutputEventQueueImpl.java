@@ -25,7 +25,7 @@ import java.util.List;
 public class OutputEventQueueImpl implements OutputEventQueue {
   private final Debugger myDebugger;
 
-  private final List<NodeEvent> myEvents = new ArrayList<NodeEvent>();
+  private final List<NodeEvent> myEvents = new ArrayList<>();
 
   private boolean myEnabled = true;
 
@@ -73,6 +73,7 @@ public class OutputEventQueueImpl implements OutputEventQueue {
     addEvent(new NodeEvent(TRACE_POINT, null, text));
   }
 
+  @Override
   public void setEnabled(boolean b) {
     myEnabled = b;
   }
@@ -91,9 +92,10 @@ public class OutputEventQueueImpl implements OutputEventQueue {
     }
   }
 
+  @Override
   public List<NodeEvent> getEvents() {
     try {
-      return new ArrayList<NodeEvent>(myEvents);
+      return new ArrayList<>(myEvents);
     } finally {
       myEvents.clear();
     }

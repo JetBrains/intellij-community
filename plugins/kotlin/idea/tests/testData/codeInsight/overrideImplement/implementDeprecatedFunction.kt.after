@@ -1,0 +1,14 @@
+// FIR_IDENTICAL
+// ERROR: [NO_VALUE_FOR_PARAMETER] No value passed for parameter 'message'.
+interface I {
+    @Deprecated
+    fun foo()
+}
+
+class C : I {
+    override fun foo() {
+        TODO("Not yet implemented")
+    }
+}
+
+// MEMBER: "~foo(): Unit~"

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -8,7 +8,27 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayInitializerExpression;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterListOwner;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Maxim.Medvedev
  */
-public class JavaEditorTextProviderImpl implements EditorTextProvider {
+public final class JavaEditorTextProviderImpl implements EditorTextProvider {
   private static final Logger LOG = Logger.getInstance(JavaEditorTextProviderImpl.class);
 
   @Override
@@ -30,18 +50,16 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     else if (element instanceof PsiMethod) {
       result = ((PsiMethod)element).getName() + "()";
     }
-    else if (element instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression)element;
+    else if (element instanceof PsiReferenceExpression reference) {
       result = qualifyEnumConstant(reference.resolve(), element.getText());
     }
     else {
       result = element.getText();
     }
-    return result != null? new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, result) : null;
+    return result != null ? new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, result) : null;
   }
 
-  @Nullable
-  private static PsiElement findExpression(PsiElement element) {
+  private static @Nullable PsiElement findExpression(PsiElement element) {
     PsiElement e = PsiTreeUtil.getParentOfType(element, PsiVariable.class, PsiExpression.class, PsiMethod.class);
     if (e instanceof PsiVariable) {
       // return e;
@@ -69,11 +87,17 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
   }
 
   @Override
-  @Nullable
-  public Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
+  public @Nullable Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
     PsiElement expression = null;
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiLiteralExpression || parent instanceof PsiLambdaExpression) {
+    if (parent instanceof PsiLiteralExpression) {
+      if (((PsiLiteralExpression)parent).isTextBlock() && !allowMethodCalls) {
+        return null;
+      }
+      element = parent;
+      parent = parent.getParent();
+    }
+    else if (parent instanceof PsiLambdaExpression) {
       element = parent;
       parent = parent.getParent();
     }
@@ -138,7 +162,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     if (expression != null) {
       try {
         PsiElement context = element;
-        if(parent instanceof PsiParameter) {
+        if (parent instanceof PsiParameter) {
           try {
             context = ((PsiMethod)((PsiParameter)parent).getDeclarationScope()).getBody();
           }
@@ -146,12 +170,16 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
           }
         }
         else {
-          while(context != null  && !(context instanceof PsiStatement) && !(context instanceof PsiClass)) {
+          while (context != null &&
+                 !(context instanceof PsiStatement) &&
+                 !(context instanceof PsiClass) &&
+                 !(context instanceof PsiParameterListOwner)) {
             context = context.getParent();
           }
         }
         TextRange textRange = expression.getTextRange();
-        PsiElement psiExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), context);
+        PsiElement psiExpression = JavaPsiFacade.getElementFactory(expression.getProject())
+          .createExpressionFromText(expression.getText(), context);
         return Pair.create(psiExpression, textRange);
       }
       catch (IncorrectOperationException e) {
@@ -161,10 +189,8 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
     return null;
   }
 
-  @Nullable
-  private static String qualifyEnumConstant(PsiElement resolved, @Nullable String def) {
-    if (resolved instanceof PsiEnumConstant) {
-      final PsiEnumConstant enumConstant = (PsiEnumConstant)resolved;
+  private static @Nullable String qualifyEnumConstant(PsiElement resolved, @Nullable String def) {
+    if (resolved instanceof PsiEnumConstant enumConstant) {
       final PsiClass enumClass = enumConstant.getContainingClass();
       if (enumClass != null) {
         return enumClass.getName() + "." + enumConstant.getName();

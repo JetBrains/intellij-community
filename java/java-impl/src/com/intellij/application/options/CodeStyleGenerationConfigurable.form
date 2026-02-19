@@ -15,7 +15,7 @@
         <properties/>
         <border type="empty"/>
         <children>
-          <grid id="452da" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="452da" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="10" bottom="15" right="10"/>
             <constraints/>
             <properties/>
@@ -218,10 +218,10 @@
               </grid>
               <vspacer id="91133">
                 <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
-              <grid id="83565" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="83565" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -252,9 +252,18 @@
                   </component>
                   <vspacer id="4877b">
                     <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                     </constraints>
                   </vspacer>
+                  <component id="f99c8" class="javax.swing.JCheckBox" binding="myCbDeclareVarType">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <margin top="5" left="10" bottom="2" right="2"/>
+                      <text resource-bundle="messages/JavaBundle" key="checkbox.declare.var.type"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
               <component id="be81b" class="javax.swing.JCheckBox" binding="myCbUseExternalAnnotations">
@@ -364,6 +373,15 @@
                   </component>
                 </children>
               </grid>
+              <component id="c89b" class="com.intellij.ui.components.JBCheckBox" binding="myGenerateTypeAnnotationBeforeType">
+                <constraints>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/JavaBundle" key="generate.type.use.before.type"/>
+                  <toolTipText resource-bundle="messages/JavaBundle" key="generate.type.use.before.type.description"/>
+                </properties>
+              </component>
             </children>
           </grid>
         </children>

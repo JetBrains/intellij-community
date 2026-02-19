@@ -1,9 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
-import static git4idea.GitUtil.isUnderGit;
-import static java.util.Arrays.asList;
-
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -15,22 +13,25 @@ import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.impl.PostponableLogRefresher;
+import com.intellij.vcs.log.impl.VcsLogManager;
 import git4idea.branch.GitBranchPair;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GitUpdateEnvironment implements UpdateEnvironment {
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
+
+@Service(Service.Level.PROJECT)
+public final class GitUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
 
   public GitUpdateEnvironment(@NotNull Project project) {
@@ -43,11 +44,10 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   }
 
   @Override
-  @NotNull
-  public UpdateSession updateDirectories(FilePath @NotNull [] filePaths,
-                                         UpdatedFiles updatedFiles,
-                                         ProgressIndicator progressIndicator,
-                                         @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
+  public @NotNull UpdateSession updateDirectories(FilePath @NotNull [] filePaths,
+                                                  UpdatedFiles updatedFiles,
+                                                  ProgressIndicator progressIndicator,
+                                                  @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
     throws ProcessCanceledException {
     return performUpdate(myProject, filePaths, updatedFiles, progressIndicator, GitVcsSettings.getInstance(myProject).getUpdateMethod(),
                          null);
@@ -55,26 +55,19 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   public boolean validateOptions(Collection<FilePath> filePaths) {
-    for (FilePath p : filePaths) {
-      if (!isUnderGit(p)) {
-        return false;
-      }
-    }
     return true;
   }
 
   @Override
-  @Nullable
-  public Configurable createConfigurable(Collection<FilePath> files) {
+  public @Nullable Configurable createConfigurable(Collection<FilePath> files) {
     return new GitUpdateConfigurable(GitVcsSettings.getInstance(myProject));
   }
 
   @Override
-  @RequiresEdt
   public boolean hasCustomNotification() {
     // If the log won't be refreshed after update, we won't be able to build a visible pack for the updated range.
     // Unless we force refresh it by hands, but if we do it, calculating update project info would take enormous amount of time & memory.
-    boolean keepLogUpToDate = PostponableLogRefresher.keepUpToDate();
+    boolean keepLogUpToDate = VcsLogManager.keepUpToDate();
     return Registry.is("git.update.project.info.as.log") && keepLogUpToDate;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +24,14 @@ import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,11 +101,11 @@ public final class SelectBranchPopup {
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<Object> {
-    @NotNull private final Project myProject;
-    @NotNull private final VirtualFile myVcsRoot;
-    @NotNull private final SvnBranchConfigurationNew myConfiguration;
-    @NotNull private final BranchSelectedCallback myCallback;
-    @Nullable private final Component myComponent;
+    private final @NotNull Project myProject;
+    private final @NotNull VirtualFile myVcsRoot;
+    private final @NotNull SvnBranchConfigurationNew myConfiguration;
+    private final @NotNull BranchSelectedCallback myCallback;
+    private final @Nullable Component myComponent;
 
     BranchBasesPopupStep(@NotNull Project project,
                          @NotNull VirtualFile vcsRoot,
@@ -120,11 +127,9 @@ public final class SelectBranchPopup {
       return getConfigureMessage().equals(value) ? new ListSeparator("") : null;
     }
 
-    @NotNull
     @Override
-    public String getTextFor(@NotNull Object value) {
-      if (value instanceof Url) {
-        Url url = (Url)value;
+    public @NotNull String getTextFor(@NotNull Object value) {
+      if (value instanceof Url url) {
         String suffix = url.equals(myConfiguration.getTrunk()) ? " (" + TRUNK_NAME + ")" : ELLIPSIS;
 
         return url.getTail() + suffix;
@@ -133,7 +138,7 @@ public final class SelectBranchPopup {
     }
 
     @Override
-    public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(Object selectedValue, boolean finalChoice) {
       if (getConfigureMessage().equals(selectedValue)) {
         return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
       }
@@ -213,14 +218,14 @@ public final class SelectBranchPopup {
       myUrlLabel.setBorder(JBUI.Borders.empty(1));
       myDateLabel.setHorizontalAlignment(SwingConstants.RIGHT);
       myDateLabel.setBorder(JBUI.Borders.empty(1));
-      myDateLabel.setForeground(UIUtil.getInactiveTextColor());
+      myDateLabel.setForeground(NamedColorUtil.getInactiveTextColor());
     }
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (isSelected || cellHasFocus) {
         setBackground(UIUtil.getListSelectionBackground(true));
-        Color selectedForegroundColor = UIUtil.getListSelectionForeground();
+        Color selectedForegroundColor = NamedColorUtil.getListSelectionForeground(true);
         myUrlLabel.setForeground(selectedForegroundColor);
         myDateLabel.setForeground(selectedForegroundColor);
         setForeground(selectedForegroundColor);
@@ -229,7 +234,7 @@ public final class SelectBranchPopup {
         setBackground(UIUtil.getListBackground());
         Color foregroundColor = UIUtil.getListForeground();
         myUrlLabel.setForeground(foregroundColor);
-        myDateLabel.setForeground(UIUtil.getInactiveTextColor());
+        myDateLabel.setForeground(NamedColorUtil.getInactiveTextColor());
         setForeground(foregroundColor);
       }
       if (value instanceof String) {

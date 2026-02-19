@@ -20,11 +20,13 @@ public interface ChangesViewContentI {
 
   void setSelectedContent(@NotNull Content content, boolean requestFocus);
 
-  @Nullable
-  <T> T getActiveComponent(@NotNull Class<T> aClass);
+  <T> @Nullable T getActiveComponent(@NotNull Class<T> aClass);
 
   void selectContent(@NotNull String tabName);
 
   @NotNull
   List<Content> findContents(@NotNull Predicate<Content> predicate);
+
+  @Nullable
+  Content findContent(@NotNull String tabName);
 }

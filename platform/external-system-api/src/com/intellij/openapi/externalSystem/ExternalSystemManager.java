@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem;
 
 import com.intellij.execution.Executor;
@@ -23,6 +23,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * IntelliJ external systems integration is built using GoF Bridge pattern, i.e. 'external-system' module defines
  * external system-specific extension (current interface) and an api which is used by all extensions. Most of the codebase
@@ -30,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
  * dependencies which are configured at external system but not at the ide' etc.
  * <p/>
  * That makes it relatively easy to add a new external system integration.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemManager<
   ProjectSettings extends ExternalProjectSettings,
@@ -42,7 +43,7 @@ public interface ExternalSystemManager<
   extends ParametersEnhancer
 {
 
-  ExtensionPointName<ExternalSystemManager<?, ?, ?, ?, ?>> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemManager");
+  ExtensionPointName<ExternalSystemManager<?, ?, ?, ?, ?>> EP_NAME = new ExtensionPointName<>("com.intellij.externalSystemManager");
 
   /**
    * @return    id of the external system represented by the current manager
@@ -85,7 +86,10 @@ public interface ExternalSystemManager<
    * @return    class of the build manager to use for the target external system
    * @see #getProjectResolverClass()
    */
-  Class<? extends ExternalSystemTaskManager<ExecutionSettings>> getTaskManagerClass();
+  default @NotNull Class<? extends ExternalSystemTaskManager<ExecutionSettings>> getTaskManagerClass() {
+    //noinspection unchecked
+    return (Class)ExternalSystemTaskManager.NoOp.class;
+  }
 
   /**
    * @return    file chooser descriptor to use when adding new external project
@@ -96,8 +100,7 @@ public interface ExternalSystemManager<
   /**
    * @return scope where to search sources for external system tasks execution
    */
-  @Nullable
-  default GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
+  default @Nullable GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
     return null;
   }
 
@@ -106,12 +109,19 @@ public interface ExternalSystemManager<
    * @deprecated to be removed in IDEA 2020, implement {@link com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider}
    * for your {@link com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration} instead
    */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  default Object createTestConsoleProperties(@NotNull Project project,
+  @Deprecated(forRemoval = true)
+  default @Nullable Object createTestConsoleProperties(@NotNull Project project,
                                              @NotNull Executor executor,
                                              @NotNull RunConfiguration runConfiguration) {
     return null;
+  }
+
+  /**
+   * @return list of extension points used for populating external project data graph.
+   * Plugins containing extensions will be used to look for classes on deserialization of external project data graph.
+   */
+  @ApiStatus.Experimental
+  default @NotNull List<ExtensionPointName<?>> getExtensionPointsForResolver() {
+    return Collections.emptyList();
   }
 }

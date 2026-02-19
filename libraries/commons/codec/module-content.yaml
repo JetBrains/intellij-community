@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.commons.codec.jar
+  modules:
+  - name: intellij.libraries.commons.codec
+  library: commons-codec
+  files:
+  - name: $MAVEN_REPOSITORY$/commons-codec/commons-codec/1/commons-codec-1.jar

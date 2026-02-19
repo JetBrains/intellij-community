@@ -1,17 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.BundleBase;
 import com.intellij.analysis.AnalysisUIOptions;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -26,17 +29,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
+@Service(Service.Level.PROJECT)
 @State(name = "SliceManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class SliceManager implements PersistentStateComponent<SliceManager.StoredSettingsBean> {
   private final Project myProject;
   private ContentManager myBackContentManager;
   private ContentManager myForthContentManager;
-  @NotNull
-  private final StoredSettingsBean myStoredSettings = new StoredSettingsBean();
+  private final @NotNull StoredSettingsBean myStoredSettings = new StoredSettingsBean();
   private static final @NonNls String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
   private static final @NonNls String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
 
-  static class StoredSettingsBean {
+  static final class StoredSettingsBean {
     boolean showDereferences = true; // to show in dataflow/from dialog
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
   }
@@ -52,7 +55,8 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   private ContentManager getContentManager(boolean dataFlowToThis) {
     if (dataFlowToThis) {
       if (myBackContentManager == null) {
-        ToolWindow backToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(BACK_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject);
+        ToolWindow backToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(RegisterToolWindowTask.closable(
+          BACK_TOOLWINDOW_ID, LangBundle.messagePointer("toolwindow.name.dataflow.to.here"), AllIcons.Toolwindows.ToolWindowAnalyzeDataflow, ToolWindowAnchor.BOTTOM));
         myBackContentManager = backToolWindow.getContentManager();
         ContentManagerWatcher.watchContentManager(backToolWindow, myBackContentManager);
       }
@@ -60,7 +64,8 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
     }
 
     if (myForthContentManager == null) {
-      ToolWindow forthToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(FORTH_TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject);
+      ToolWindow forthToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(RegisterToolWindowTask.closable(
+        FORTH_TOOLWINDOW_ID, LangBundle.messagePointer("toolwindow.name.dataflow.from.here"), AllIcons.Toolwindows.ToolWindowAnalyzeDataflow, ToolWindowAnchor.BOTTOM));
       myForthContentManager = forthToolWindow.getContentManager();
       ContentManagerWatcher.watchContentManager(forthToolWindow, myForthContentManager);
     }
@@ -80,7 +85,7 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   }
 
   @Contract(pure = true)
-  private String filterStyle(String dialogTitle) {
+  private static String filterStyle(String dialogTitle) {
     return Pattern.compile("(<style>.*</style>)|<[^<>]*>", Pattern.DOTALL).matcher(dialogTitle).replaceAll("");
   }
 

@@ -1,11 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * For lattice, equations and solver description, see http://pat.keldysh.ru/~ilya/faba.pdf (in Russian)
@@ -19,14 +26,14 @@ final class ELattice<T extends Enum<T>> {
     this.top = top;
   }
 
-  final T join(T x, T y) {
+  T join(T x, T y) {
     if (x == bot) return y;
     if (y == bot) return x;
     if (x == y) return x;
     return top;
   }
 
-  final T meet(T x, T y) {
+  T meet(T x, T y) {
     if (x == top) return y;
     if (y == top) return x;
     if (x == y) return x;
@@ -36,7 +43,7 @@ final class ELattice<T extends Enum<T>> {
 
 
 class ResultUtil {
-  private static final EKey[] EMPTY_PRODUCT = new EKey[0];
+  private static final EKey[] EMPTY_PRODUCT = EKey.EMPTY_ARRAY;
   private final ELattice<Value> lattice;
   final Value top;
   final Value bottom;
@@ -64,21 +71,23 @@ class ResultUtil {
     assert r1 instanceof Pending && r2 instanceof Pending;
     Pending pending1 = (Pending)r1;
     Pending pending2 = (Pending)r2;
+    List<Component> left = Arrays.asList(pending1.delta);
+    List<Component> right = Arrays.asList(pending2.delta);
+    if (left.containsAll(right)) return pending1;
+    if (right.containsAll(left)) return pending2;
     Set<Component> sum = new HashSet<>();
-    sum.addAll(Arrays.asList(pending1.delta));
-    sum.addAll(Arrays.asList(pending2.delta));
-    return new Pending(sum);
+    sum.addAll(left);
+    sum.addAll(right);
+    return new Pending(DfaUtil.upwardsAntichain(sum, (l, r) -> r.isSuperStateOf(l)));
   }
 
-  @Nullable
-  private Result checkFinal(Result r1, Result r2) {
+  private @Nullable Result checkFinal(Result r1, Result r2) {
     if (r1 == top) return r1;
     if (r1 == bottom) return r2;
     return null;
   }
 
-  @NotNull
-  private Result addSingle(Pending pending, Value value) {
+  private @NotNull Result addSingle(Pending pending, Value value) {
     for (int i = 0; i < pending.delta.length; i++) {
       Component component = pending.delta[i];
       if (component.ids.length == 0) {
@@ -197,14 +206,11 @@ final class Solver {
   }
 
   Value negate(Value value) {
-    switch (value) {
-      case True:
-        return Value.False;
-      case False:
-        return Value.True;
-      default:
-        return value;
-    }
+    return switch (value) {
+      case True -> Value.False;
+      case False -> Value.True;
+      default -> value;
+    };
   }
 
   Map<EKey, Value> solve() {

@@ -1,73 +1,67 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting
 
 import com.intellij.application.options.editor.WebEditorOptions
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.options.UiDslConfigurable
+import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.ui.layout.*
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindIntValue
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.xml.XmlBundle
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel
-import javax.swing.JSpinner
-import javax.swing.SpinnerNumberModel
 
-class XmlTagTreeHighlightingConfigurable : UiDslConfigurable.Simple() {
-  override fun RowBuilder.createComponentRow() {
+internal class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
+
+  override fun Panel.createContent() {
     val options = WebEditorOptions.getInstance()
-    row {
-      val enable = checkBox(XmlBundle.message("settings.enable.html.xml.tag.tree.highlighting"),
-                            options::isTagTreeHighlightingEnabled, options::setTagTreeHighlightingEnabled)
-        .onApply { clearTagTreeHighlighting() }
-
-      val spinnerGroupName = "xml.tag.highlight.spinner"
-      row(XmlBundle.message("settings.levels.to.highlight")) {
-        spinner({ options.tagTreeHighlightingLevelCount }, { options.tagTreeHighlightingLevelCount = it },
-                1, 50, 1)
+    lateinit var enable: Cell<JBCheckBox>
+    panel {
+      row {
+        enable = checkBox(XmlBundle.message("settings.enable.html.xml.tag.tree.highlighting"))
+          .bindSelected(options::isTagTreeHighlightingEnabled, options::setTagTreeHighlightingEnabled)
           .onApply { clearTagTreeHighlighting() }
-          .sizeGroup(spinnerGroupName)
-          .enableIf(enable.selected)
-
       }
-      row(XmlBundle.message("settings.opacity")) {
-        component(JSpinner())
-          .applyToComponent { model = SpinnerNumberModel(0.0, 0.0, 1.0, 0.05) }
-          .withBinding({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
-                       PropertyBinding(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
-          .onApply { clearTagTreeHighlighting() }
-          .sizeGroup(spinnerGroupName)
-          .enableIf(enable.selected)
-        largeGapAfter()
-      }
+      indent {
+        row(XmlBundle.message("settings.levels.to.highlight")) {
+          spinner(1..50)
+            .bindIntValue(options::getTagTreeHighlightingLevelCount, options::setTagTreeHighlightingLevelCount)
+            .onApply { clearTagTreeHighlighting() }
+            .align(AlignX.FILL)
+          cell()
+        }.layout(RowLayout.PARENT_GRID)
+        row(XmlBundle.message("settings.opacity")) {
+          spinner(0.0..1.0, step = 0.05)
+            .bind({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
+                  MutableProperty(options::getTagTreeHighlightingOpacity, options::setTagTreeHighlightingOpacity))
+            .onApply { clearTagTreeHighlighting() }
+            .align(AlignX.FILL)
+          cell()
+        }.layout(RowLayout.PARENT_GRID)
+          .bottomGap(BottomGap.SMALL)
+      }.enabledIf(enable.selected)
     }
   }
 
-  companion object {
-    private fun clearTagTreeHighlighting() {
-      for (project in ProjectManager.getInstance().openProjects) {
-        for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
-          if (fileEditor is TextEditor) {
-            val editor = fileEditor.editor
-            XmlTagTreeHighlightingPass.clearHighlightingAndLineMarkers(editor, project)
-            val breadcrumbs = BreadcrumbsPanel.getBreadcrumbsComponent(editor)
-            breadcrumbs?.queueUpdate()
-          }
+  private fun clearTagTreeHighlighting() {
+    for (project in ProjectManager.getInstance().openProjects) {
+      for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
+        if (fileEditor is TextEditor) {
+          val editor = fileEditor.editor
+          XmlTagTreeHighlightingPass.clearHighlightingAndLineMarkers(editor, project)
+          val breadcrumbs = BreadcrumbsPanel.getBreadcrumbsComponent(editor)
+          breadcrumbs?.queueUpdate()
         }
       }
     }
   }
+
 }

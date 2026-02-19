@@ -15,29 +15,34 @@
  */
 package com.jetbrains.python.validation;
 
-import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @deprecated Use {@link Annotator} and 'annotator' extension point.
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated(forRemoval = true)
 public abstract class PyAnnotator extends PyElementVisitor {
-  private final boolean myTestMode = ApplicationManager.getApplication().isUnitTestMode();
-  private AnnotationHolder _holder;
+  public static final @NotNull ExtensionPointName<@NotNull PyAnnotator> EXTENSION_POINT_NAME =
+    ExtensionPointName.create("Pythonid.pyAnnotator");
+
+  private PyAnnotationHolder _holder;
 
   public AnnotationHolder getHolder() {
-    return _holder;
+    PyAnnotationHolder holder = _holder;
+    return holder != null ? holder.getOriginalHolder() : null;
   }
 
   public void setHolder(AnnotationHolder holder) {
-    _holder = holder;
+    _holder = holder != null ? new PyAnnotationHolder(holder) : null;
   }
 
   public synchronized void annotateElement(final PsiElement psiElement, final AnnotationHolder holder) {
@@ -50,26 +55,17 @@ public abstract class PyAnnotator extends PyElementVisitor {
     }
   }
 
-  protected void markError(@NotNull PsiElement element, @NotNull @InspectionMessage String message) {
-    getHolder().newAnnotation(HighlightSeverity.ERROR, message).range(element).create();
-  }
-
   protected void addHighlightingAnnotation(@NotNull PsiElement target, @NotNull TextAttributesKey key) {
-    addHighlightingAnnotation(target, key, HighlightSeverity.INFORMATION);
+    _holder.addHighlightingAnnotation(target, key);
   }
 
   protected void addHighlightingAnnotation(@NotNull PsiElement target,
                                            @NotNull TextAttributesKey key,
                                            @NotNull HighlightSeverity severity) {
-    final String message = myTestMode ? key.getExternalName() : null;
-    // CodeInsightTestFixture#testHighlighting doesn't consider annotations with severity level < INFO
-    final HighlightSeverity actualSeverity =
-      myTestMode && severity.myVal < HighlightSeverity.INFORMATION.myVal ? HighlightSeverity.INFORMATION : severity;
-    (message == null ? getHolder().newSilentAnnotation(actualSeverity) : getHolder().newAnnotation(actualSeverity, message))
-     .range(target).textAttributes(key).create();
+    _holder.addHighlightingAnnotation(target, key, severity);
   }
 
   protected void addHighlightingAnnotation(@NotNull ASTNode target, @NotNull TextAttributesKey key) {
-    addHighlightingAnnotation(target.getPsi(), key);
+    _holder.addHighlightingAnnotation(target, key);
   }
 }

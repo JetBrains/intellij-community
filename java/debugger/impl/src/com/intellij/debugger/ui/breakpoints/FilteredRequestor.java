@@ -9,15 +9,33 @@ public interface FilteredRequestor extends LocatableEventRequestor {
   @Override
   String getSuspendPolicy();
 
-  boolean isInstanceFiltersEnabled();
-  InstanceFilter[] getInstanceFilters();
+  default boolean isInstanceFiltersEnabled() {
+    return false;
+  }
 
-  boolean isCountFilterEnabled();
-  int getCountFilter();
+  default InstanceFilter[] getInstanceFilters() {
+    return InstanceFilter.EMPTY_ARRAY;
+  }
 
-  boolean isClassFiltersEnabled();
-  ClassFilter[] getClassFilters();
-  ClassFilter[] getClassExclusionFilters();
+  default boolean isCountFilterEnabled() {
+    return false;
+  }
+
+  default int getCountFilter() {
+    return 0;
+  }
+
+  default boolean isClassFiltersEnabled() {
+    return false;
+  }
+
+  default ClassFilter[] getClassFilters() {
+    return ClassFilter.EMPTY_ARRAY;
+  }
+
+  default ClassFilter[] getClassExclusionFilters() {
+    return ClassFilter.EMPTY_ARRAY;
+  }
 
   default boolean isConditionEnabled() {
     return false;

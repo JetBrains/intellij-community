@@ -1,0 +1,21 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_defaultArgumentInConstructorAdded-a.kotlin_module
+  foo/A.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultArgumentInConstructorAdded/a/A.kt
+End of files
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_defaultArgumentInConstructorAdded-a.kotlin_module
+  foo/B.class
+  foo/CreateAKt.class
+  foo/UseAKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/defaultArgumentInConstructorAdded/a/B.kt
+  kotlin/pureKotlin/defaultArgumentInConstructorAdded/a/createA.kt
+  kotlin/pureKotlin/defaultArgumentInConstructorAdded/a/useA.kt
+End of files
+------------------------------------------
+Exit code: OK

@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution
 
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.*
+import com.intellij.idea.IJIgnore
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_INTERNAL_JAVA
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_JAVA_HOME
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_PROJECT_JDK
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_DOWNLOADABLE_FIX
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_LOCAL_FIX
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
@@ -13,10 +17,11 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
     assertSdkInfo(sdk, USE_PROJECT_JDK)
   }
 
+  @IJIgnore(issue = "IDEA-369675")
   fun `test nonblocking jdk resolution (java home)`() {
     val sdk = TestSdkGenerator.createNextSdk()
     environment.withVariables(JAVA_HOME to null) { assertSdkInfo(SdkInfo.Undefined, USE_JAVA_HOME) }
-    environment.withVariables(JAVA_HOME to sdk.homePath) { assertSdkInfo(sdk.versionString, sdk.homePath, USE_JAVA_HOME) }
+    environment.withVariables(JAVA_HOME to sdk.homePath) { assertSdkInfo(sdk.versionString!!, sdk.homePath!!, USE_JAVA_HOME) }
   }
 
   fun `test nonblocking jdk resolution (internal jdk)`() {
@@ -38,7 +43,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
       .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
       .onSdkResolved { assertSdkInfo(it!!, null) }
       .executeLookup()
-    waitForLookup()
+    sdkLookupProvider.waitForLookup()
     assertSdkInfo(sdk, null)
 
     assertUnexpectedSdksRegistration {
@@ -48,7 +53,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
         .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
         .onSdkResolved { assertSdkInfo(it!!, null) }
         .executeLookup()
-      waitForLookup()
+      sdkLookupProvider.waitForLookup()
       assertSdkInfo(sdk, null)
     }
 
@@ -59,7 +64,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
         .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
         .onSdkResolved { assertSdkInfo(it!!, null) }
         .executeLookup()
-      waitForLookup()
+      sdkLookupProvider.waitForLookup()
       assertSdkInfo(TestSdkGenerator.getCurrentSdk(), null)
       assertNotSame(sdk, TestSdkGenerator.getCurrentSdk())
     }

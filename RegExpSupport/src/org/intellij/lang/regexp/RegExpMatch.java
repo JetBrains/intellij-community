@@ -2,13 +2,20 @@
 package org.intellij.lang.regexp;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
  * @author Bas Leijdekkers
  */
 public class RegExpMatch {
 
-  private final IntArrayList groups = new IntArrayList();
+  private final IntList groups = new IntArrayList();
+
+  public RegExpMatch() {}
+
+  public RegExpMatch(int start, int end) {
+    add(start, end);
+  }
 
   public void add(int start, int end) {
     groups.add(start);
@@ -38,5 +45,30 @@ public class RegExpMatch {
     if (i < 0 || i > count() - 1) throw new IllegalArgumentException();
 
     return groups.getInt(i * 2 + 1);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    return groups.equals(((RegExpMatch)o).groups);
+  }
+
+  @Override
+  public int hashCode() {
+    return groups.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("RegExpMatch{");
+    final int max = groups.size();
+    for (int i = 0; i < max; i += 2) {
+      builder.append('[').append(groups.getInt(i)).append(", ").append(groups.getInt(i + 1)).append(']');
+    }
+    builder.append('}');
+    return builder.toString();
   }
 }

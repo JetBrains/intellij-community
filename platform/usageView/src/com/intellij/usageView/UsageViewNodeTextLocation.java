@@ -1,0 +1,41 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package com.intellij.usageView;
+
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.psi.ElementDescriptionLocation;
+import com.intellij.psi.ElementDescriptionProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiPresentableMetaData;
+import org.jetbrains.annotations.NotNull;
+
+public final class UsageViewNodeTextLocation extends ElementDescriptionLocation {
+  private UsageViewNodeTextLocation() { }
+
+  public static final UsageViewNodeTextLocation INSTANCE = new UsageViewNodeTextLocation();
+
+  @Override
+  public @NotNull ElementDescriptionProvider getDefaultProvider() {
+    return DEFAULT_PROVIDER;
+  }
+
+  private static final ElementDescriptionProvider DEFAULT_PROVIDER = (element, location) -> {
+    if (!(location instanceof UsageViewNodeTextLocation)) return null;
+
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
+      if (metaData instanceof PsiPresentableMetaData) {
+        return ((PsiPresentableMetaData)metaData).getTypeName() + " " + DescriptiveNameUtil.getMetaDataName(metaData);
+      }
+    }
+
+    if (element instanceof PsiFile) {
+      return ((PsiFile)element).getName();
+    }
+
+    return LanguageFindUsages.getNodeText(element, true);
+  };
+}

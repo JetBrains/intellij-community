@@ -1,0 +1,5 @@
+<fold text='{ 3 keys }'>{
+  "first": "value",
+  "second": "another value",
+  "third": "yet another value"
+}</fold>

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.formatter;
 
@@ -25,7 +11,13 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
@@ -41,11 +33,11 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   private final Project myProject;
   private final ASTNode myASTNode;
   private final FormattingDocumentModelImpl myDocumentModel;
-  @NotNull private final Block myRootBlock;
+  private final @NotNull Block myRootBlock;
   protected boolean myCanModifyAllWhiteSpaces = false;
 
   public PsiBasedFormattingModel(final PsiFile file,
-                                 @NotNull final Block rootBlock,
+                                 final @NotNull Block rootBlock,
                                  final FormattingDocumentModelImpl documentModel) {
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myDocumentModel = documentModel;
@@ -83,8 +75,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   }
 
 
-  @Nullable
-  private String replaceWithPSI(final TextRange textRange, final String whiteSpace) {
+  private @Nullable String replaceWithPSI(final TextRange textRange, final String whiteSpace) {
     final int offset = textRange.getEndOffset();
     ASTNode leafElement = findElementAt(offset);
 
@@ -127,18 +118,13 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
     final TextRange injectionRangeInHost = manipulator.getRangeInElement(host);
     final int hostStartOffset = host.getTextRange().getStartOffset();
 
-    final int injectedDocumentStartOffset = hostStartOffset + injectionRangeInHost.getStartOffset();
-    final int injectedDocumentEndOffset = hostStartOffset + injectionRangeInHost.getEndOffset();
+    final @NotNull TextRange injectedDocument = injectionRangeInHost.shiftRight(hostStartOffset);
 
-    if (textRange.getEndOffset() < injectedDocumentStartOffset || textRange.getStartOffset() > injectedDocumentEndOffset) {
-      return null;
-    }
-
-    return textRange.shiftLeft(injectedDocumentStartOffset);
+    TextRange intersection = textRange.intersection(injectedDocument);
+    return intersection == null ? null : intersection.shiftLeft(injectedDocument.getStartOffset());
   }
 
-  @Nullable
-  protected String replaceWithPsiInLeaf(final TextRange textRange, final String whiteSpace, final ASTNode leafElement) {
+  protected @Nullable String replaceWithPsiInLeaf(final TextRange textRange, final String whiteSpace, final ASTNode leafElement) {
     if (!myCanModifyAllWhiteSpaces) {
       if (leafElement.getElementType() == TokenType.WHITE_SPACE) return null;
     }
@@ -149,8 +135,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
     return whiteSpace;
   }
 
-  @Nullable
-  protected ASTNode findElementAt(final int offset) {
+  protected @Nullable ASTNode findElementAt(final int offset) {
     PsiFile containingFile = myASTNode.getPsi().getContainingFile();
     Project project = containingFile.getProject();
 
@@ -168,14 +153,12 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   }
 
   @Override
-  @NotNull
-  public FormattingDocumentModel getDocumentModel() {
+  public @NotNull FormattingDocumentModel getDocumentModel() {
     return myDocumentModel;
   }
 
   @Override
-  @NotNull
-  public Block getRootBlock() {
+  public @NotNull Block getRootBlock() {
     return myRootBlock;
   }
   

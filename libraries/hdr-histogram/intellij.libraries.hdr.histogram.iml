@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="HdrHistogram" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.hdrhistogram:HdrHistogram:2.2.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2.2.2/HdrHistogram-2.2.2.jar">
+              <sha256sum>22d1d4316c4ec13a68b559e98c8256d69071593731da96136640f864fa14fad8</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2.2.2/HdrHistogram-2.2.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/hdrhistogram/HdrHistogram/2.2.2/HdrHistogram-2.2.2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

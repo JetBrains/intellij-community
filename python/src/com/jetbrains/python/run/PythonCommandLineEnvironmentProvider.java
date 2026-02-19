@@ -21,6 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
+ */
 public interface PythonCommandLineEnvironmentProvider {
   ExtensionPointName<PythonCommandLineEnvironmentProvider> EP_NAME =
     ExtensionPointName.create("Pythonid.pythonCommandLineEnvironmentProvider");

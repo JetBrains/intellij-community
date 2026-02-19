@@ -1,0 +1,4 @@
+// "Add non-null asserted (java.lang.String.valueOf(1)!!) call" "true"
+
+fun bar<caret>() = java.lang.String.valueOf(1)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

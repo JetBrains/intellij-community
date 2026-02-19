@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public abstract class GlobalUsageHelper {
   final Map<PsiClass,Boolean> unusedClassCache = new HashMap<>();
 

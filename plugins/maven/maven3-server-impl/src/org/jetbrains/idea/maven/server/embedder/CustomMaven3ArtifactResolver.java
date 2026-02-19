@@ -31,7 +31,18 @@ import org.apache.maven.artifact.repository.LegacyLocalRepositoryManager;
 import org.apache.maven.artifact.repository.RepositoryRequest;
 import org.apache.maven.artifact.repository.metadata.Snapshot;
 import org.apache.maven.artifact.repository.metadata.SnapshotArtifactRepositoryMetadata;
-import org.apache.maven.artifact.resolver.*;
+import org.apache.maven.artifact.resolver.AbstractArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactCollector;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionRequest;
+import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.DebugResolutionListener;
+import org.apache.maven.artifact.resolver.ResolutionErrorHandler;
+import org.apache.maven.artifact.resolver.ResolutionListener;
+import org.apache.maven.artifact.resolver.ResolutionNode;
+import org.apache.maven.artifact.resolver.WarningResolutionListener;
 import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.LegacySupport;
@@ -51,12 +62,23 @@ import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
-import org.jetbrains.idea.maven.server.MavenModelConverter;
-import org.jetbrains.idea.maven.server.UnresolvedArtifactsCollector;
+import org.jetbrains.idea.maven.server.Maven3ModelConverter;
 
 import java.io.File;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 
@@ -95,7 +117,6 @@ public class CustomMaven3ArtifactResolver
   private final Executor executor;
 
   private volatile MavenWorkspaceMap myWorkspaceMap;
-  private volatile UnresolvedArtifactsCollector myUnresolvedCollector;
 
   public CustomMaven3ArtifactResolver()
   {
@@ -124,7 +145,7 @@ public class CustomMaven3ArtifactResolver
     return LegacyLocalRepositoryManager.overlay( localRepository, legacySupport.getRepositorySession(), repoSystem );
   }
 
-  private void injectSession1( RepositoryRequest request, MavenSession session )
+  private static void injectSession1(RepositoryRequest request, MavenSession session)
   {
     if ( session != null )
     {
@@ -133,7 +154,7 @@ public class CustomMaven3ArtifactResolver
     }
   }
 
-  private void injectSession2( ArtifactResolutionRequest request, MavenSession session )
+  private static void injectSession2(ArtifactResolutionRequest request, MavenSession session)
   {
     injectSession1( request, session );
 
@@ -168,7 +189,7 @@ public class CustomMaven3ArtifactResolver
       resolveOld(artifact, remoteRepositories, session);
     }
     catch (AbstractArtifactResolutionException e) {
-      myUnresolvedCollector.collectAndSetResolved(artifact);
+      artifact.setResolved(true);
     }
   }
 
@@ -213,7 +234,7 @@ public class CustomMaven3ArtifactResolver
       {
         ArtifactRequest artifactRequest = new ArtifactRequest();
         artifactRequest.setArtifact( RepositoryUtils.toArtifact( artifact ) );
-        artifactRequest.setRepositories( RepositoryUtils.toRepos( remoteRepositories ) );
+        artifactRequest.setRepositories(RepositoryUtils.toRepos( remoteRepositories ) );
 
         // Maven 2.x quirk: an artifact always points at the local repo, regardless whether resolved or not
         LocalRepositoryManager lrm = session.getLocalRepositoryManager();
@@ -348,6 +369,7 @@ public class CustomMaven3ArtifactResolver
       .setLocalRepository( localRepository )
       .setRemoteRepositories( remoteRepositories )
       .setCollectionFilter( filter )
+      .setResolveTransitively(true)
       .setListeners( listeners );
 
     injectSession2( request, legacySupport.getSession() );
@@ -481,6 +503,7 @@ public class CustomMaven3ArtifactResolver
         collectionRequest.setServers( request.getServers() );
         collectionRequest.setMirrors( request.getMirrors() );
         collectionRequest.setProxies( request.getProxies() );
+        collectionRequest.setManagedVersionMap(managedVersions);
         collectionRequest.setRemoteRepositories( resolutionGroup.getResolutionRepositories() );
       }
       catch ( ArtifactMetadataRetrievalException e )
@@ -568,18 +591,12 @@ public class CustomMaven3ArtifactResolver
     resolve( artifact, remoteRepositories, localRepository, null );
   }
 
-  public void customize(MavenWorkspaceMap workspaceMap, boolean failOnUnresolved) {
+  public void customize(MavenWorkspaceMap workspaceMap) {
     myWorkspaceMap = workspaceMap;
-    myUnresolvedCollector = new UnresolvedArtifactsCollector(failOnUnresolved);
   }
 
   public void reset() {
     myWorkspaceMap = null;
-    myUnresolvedCollector = null;
-  }
-
-  public UnresolvedArtifactsCollector getUnresolvedCollector() {
-    return myUnresolvedCollector;
   }
 
   private boolean resolveAsModule(Artifact a) {
@@ -587,7 +604,7 @@ public class CustomMaven3ArtifactResolver
     MavenWorkspaceMap map = myWorkspaceMap;
     if (map == null) return false;
 
-    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(MavenModelConverter.createMavenId(a));
+    MavenWorkspaceMap.Data resolved = map.findFileAndOriginalId(Maven3ModelConverter.createMavenId(a));
     if (resolved == null) return false;
 
     a.setResolved(true);

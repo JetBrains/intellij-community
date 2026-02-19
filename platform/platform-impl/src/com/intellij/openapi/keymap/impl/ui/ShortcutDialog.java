@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -24,9 +24,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
@@ -53,7 +58,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   }
 
   String getActionPath(String actionId) {
-    return myGroup == null ? null : myGroup.getActionQualifiedPath(actionId);
+    return myGroup == null ? null : myGroup.getActionQualifiedPath(actionId, true);
   }
 
   boolean hasConflicts() {
@@ -111,15 +116,13 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
 
   protected void addSystemActionsIfPresented(Group group) {}
 
-  @Nullable
   @Override
-  protected Border createContentPaneBorder() {
+  protected @Nullable Border createContentPaneBorder() {
     return JBUI.Borders.empty();
   }
 
-  @Nullable
   @Override
-  protected JComponent createSouthPanel() {
+  protected @Nullable JComponent createSouthPanel() {
     JComponent panel = super.createSouthPanel();
     if (panel != null) {
       panel.setBorder(JBUI.Borders.empty(8, 12));
@@ -127,9 +130,8 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     return panel;
   }
 
-  @Nullable
   @Override
-  protected JComponent createNorthPanel() {
+  protected @Nullable JComponent createNorthPanel() {
     myAction.setIpad(JBUI.insets(10, 10, 5, 10));
     myShortcutPanel.addPropertyChangeListener("shortcut", new PropertyChangeListener() {
       @Override

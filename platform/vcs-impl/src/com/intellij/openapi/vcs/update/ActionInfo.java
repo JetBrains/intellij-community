@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 
@@ -33,31 +32,8 @@ public interface ActionInfo {
 
     @Override
     public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
-      return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.update.scope", scopeName), envToConfMap) {
-        @Override
-        @NlsSafe
-        protected String getActionNameForDimensions() {
-          return "update-v2";
-        }
-
-        @NotNull
-        @Override
-        protected String getDoNotShowMessage() {
-          return VcsBundle.message("update.checkbox.don.t.show.again");
-        }
-
-        @Override
-        protected boolean isToBeShown() {
-          return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
-        }
-
-        @Override
-        protected void setToBeShown(boolean value, boolean onOk) {
-          if (onOk) {
-            ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(value);
-          }
-        }
-      };
+      String title = VcsBundle.message("action.display.name.update.scope", scopeName);
+      return UpdateOptionsDialogProvider.createOptionsDialog(project, title, envToConfMap);
     }
 
     @Override
@@ -155,8 +131,7 @@ public interface ActionInfo {
     public UpdateOrStatusOptionsDialog createOptionsDialog(Project project, LinkedHashMap<Configurable, AbstractVcs> envToConfMap, String scopeName) {
       return new UpdateOrStatusOptionsDialog(project, VcsBundle.message("action.display.name.integrate.scope", scopeName), envToConfMap) {
         @Override
-        @NlsSafe
-        protected String getActionNameForDimensions() {
+        protected @NlsSafe String getActionNameForDimensions() {
           return "integrate";
         }
 

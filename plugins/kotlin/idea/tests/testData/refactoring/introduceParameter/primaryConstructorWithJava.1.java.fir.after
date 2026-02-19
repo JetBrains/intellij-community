@@ -1,0 +1,2 @@
+class Baz extends Bar {
+}

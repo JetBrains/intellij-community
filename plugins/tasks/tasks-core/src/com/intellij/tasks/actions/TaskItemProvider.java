@@ -1,7 +1,7 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.Disposable;
@@ -9,17 +9,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.core.TaskSymbol;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,30 +47,15 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
   }
 
   @Override
-  public @NotNull List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
-    return filterNames((ChooseByNameViewModel) base, names, pattern);
-  }
-
-  @NotNull
-  @Override
-  public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
+  public @NotNull List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }
 
   @Override
-  public boolean filterElements(@NotNull ChooseByNameBase base,
-                                @NotNull String pattern,
-                                boolean everywhere,
-                                @NotNull ProgressIndicator cancelled,
-                                @NotNull Processor<Object> consumer) {
-    return filterElements((ChooseByNameViewModel)base, pattern, everywhere, cancelled, consumer);
-  }
-
-  @Override
   public boolean filterElements(@NotNull ChooseByNameViewModel base,
-                                @NotNull final String pattern,
+                                final @NotNull String pattern,
                                 final boolean everywhere,
-                                @NotNull final ProgressIndicator cancelled,
+                                final @NotNull ProgressIndicator cancelled,
                                 @NotNull Processor<Object> consumer) {
 
     GotoTaskAction.CREATE_NEW_TASK_ACTION.setTaskName(pattern);
@@ -114,6 +103,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       // was contained in server response (as not remotely closed). Moreover on next request with pagination when the
       // same issues was not returned again by server it was *excluded* from popup (thus subsequent update reduced total
       // number of items shown).
+      tasks = new ArrayList<>(tasks);
       tasks.removeAll(allCachedAndLocalTasks);
       return processTasks(tasks, consumer, cancelled);
     }
@@ -162,11 +152,10 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     return tasks;
   }
 
-  private boolean processTasks(List<Task> tasks, Processor<Object> consumer, ProgressIndicator cancelled) {
-    PsiManager psiManager = PsiManager.getInstance(myProject);
+  private static boolean processTasks(List<Task> tasks, Processor<Object> consumer, ProgressIndicator cancelled) {
     for (Task task : tasks) {
       cancelled.checkCanceled();
-      if (!consumer.process(new TaskPsiElement(psiManager, task))) return false;
+      if (!consumer.process(new TaskSymbol(task))) return false;
     }
     return true;
   }

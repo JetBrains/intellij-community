@@ -1,24 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.indentGuide;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 import java.util.Collections;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-
+@PerformanceUnitTest
 public class JavaTextBlockIndentGuidePerformanceTest extends LightDaemonAnalyzerTestCase {
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
-  }
 
   public void testManyCodeBlocks() {
     int n = 2000;
@@ -26,16 +18,9 @@ public class JavaTextBlockIndentGuidePerformanceTest extends LightDaemonAnalyzer
     String text = "class X {\n" +
                   createCodeBlocks(n, nLines) +
                   "\n}";
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 7500, this::doHighlighting)
+    Benchmark.newBenchmark(getTestName(false), this::doHighlighting)
       .setup(() -> configureFromFileText("X.java", text))
-      .usesAllCPUCores()
-      .assertTiming();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
+      .start();
   }
 
   private static String createCodeBlocks(int n, int nLines) {

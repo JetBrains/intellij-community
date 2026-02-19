@@ -1,0 +1,29 @@
+<html>
+<body>
+Reports comparisons where left and right operand represent the identical expression.
+While sometimes comparing an expression with itself could be intended, in most cases, it is an oversight.
+<p>Example:</p>
+<pre><code>
+  // Probably left.getLength() == right.getLength() was intended
+  boolean result = left.getLength() == left.getLength();
+</code></pre>
+<!-- tooltip end -->
+<p>
+  To ignore comparisons that may produce side effects, use the <b>Ignore conditions with side effects</b> option.
+Disabling this option may lead to false-positives, for example, when the same method returns different values on subsequent invocations.
+</p>
+<p>Example:</p>
+<pre><code>
+  native int unknownMethod();
+  
+  ...
+  
+  if (unknownMethod() &gt; unknownMethod()) {
+    System.out.println("Got it");
+  }
+</code></pre>
+<p>Due to possible side effects of <code>unknownMethod()</code> (on the example), the warning will only be
+  triggered if the <b>Ignore conditions with side effects</b> option is disabled.</p>
+<p><small>New in 2024.2</small></p>
+</body>
+</html>

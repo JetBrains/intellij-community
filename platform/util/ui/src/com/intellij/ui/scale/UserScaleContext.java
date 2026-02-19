@@ -1,32 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * Represents a snapshot of the user space scale factors: {@link ScaleType#USR_SCALE} and {@link ScaleType#OBJ_SCALE}).
- * The context can be associated with a UI object (see {@link ScaleContextAware}) to define its HiDPI behaviour.
+ * The context can be associated with a UI object (see {@link ScaleContextAware}) to define its HiDPI behavior.
  * Unlike {@link ScaleContext}, UserScaleContext is device scale independent and is thus used for vector-based painting.
  *
- * @see ScaleContextAware
  * @see ScaleContext
  * @author tav
  */
 public class UserScaleContext {
-  protected Scale usrScale = ScaleType.USR_SCALE.of(JBUIScale.scale(1f));
-  protected Scale objScale = ScaleType.OBJ_SCALE.of(1d);
+  protected Scale usrScale = USR_SCALE.of(JBUIScale.scale(1f));
+  protected Scale objScale = OBJ_SCALE.of(1);
   protected double pixScale = usrScale.value;
 
   private List<UpdateListener> listeners;
-  private EnumSet<ScaleType> overriddenScales;
+  protected @Nullable EnumSet<ScaleType> overriddenScales;
+
+  private static final Scale @NotNull [] EMPTY_SCALE_ARRAY = new Scale[]{};
 
   protected UserScaleContext() {
   }
@@ -34,34 +36,32 @@ public class UserScaleContext {
   /**
    * Creates a context with all scale factors set to 1.
    */
-  @NotNull
-  public static UserScaleContext createIdentity() {
-    return create(ScaleType.USR_SCALE.of(1));
+  public static @NotNull UserScaleContext createIdentity() {
+    return create(USR_SCALE.of(1));
   }
 
   /**
-   * Creates a context with the provided scale factors (system scale is ignored)
+   * Creates a context with the provided scale factors (a system scale is ignored)
    */
-  @NotNull
-  public static UserScaleContext create(Scale @NotNull ... scales) {
+  public static @NotNull UserScaleContext create(Scale @NotNull ... scales) {
     UserScaleContext ctx = create();
-    for (Scale s : scales) ctx.setScale(s);
+    for (Scale s : scales) {
+      ctx.setScale(s);
+    }
     return ctx;
   }
 
   /**
    * Creates a default context with the current user scale
    */
-  @NotNull
-  public static UserScaleContext create() {
+  public static @NotNull UserScaleContext create() {
     return new UserScaleContext();
   }
 
   /**
    * Creates a context from the provided {@code ctx}.
    */
-  @NotNull
-  public static UserScaleContext create(@Nullable UserScaleContext ctx) {
+  public static @NotNull UserScaleContext create(@Nullable UserScaleContext ctx) {
     UserScaleContext c = createIdentity();
     c.update(ctx);
     return c;
@@ -102,9 +102,24 @@ public class UserScaleContext {
     return overriddenScales != null && overriddenScales.contains(scale.type);
   }
 
+  protected Scale @NotNull [] getOverriddenScales() {
+    if (overriddenScales == null) {
+      return EMPTY_SCALE_ARRAY;
+    }
+
+    Scale[] scales = new Scale[overriddenScales.size()];
+    int i = 0;
+    for (ScaleType type : overriddenScales) {
+      scales[i++] = getScaleObject(type);
+    }
+    return scales;
+  }
+
   /**
-   * Sets the new scale (system scale is ignored). Use {@link ScaleType#of(double)} to provide the new scale.
-   * Note, the new scale value can be change on subsequent {@link #update()}. Use {@link #overrideScale(Scale)}
+   * Sets the new scale (a system scale is ignored).
+   * Use {@link ScaleType#of(double)} to provide the new scale.
+   * Note, the new scale value can be changed on subsequent {@link #update()}.
+   * Use {@link #overrideScale(Scale)}
    * to set a scale permanently.
    *
    * @param scale the new scale to set
@@ -112,43 +127,51 @@ public class UserScaleContext {
    * @see ScaleType#of(double)
    */
   public boolean setScale(@NotNull Scale scale) {
-    if (isScaleOverridden(scale)) return false;
+    if (isScaleOverridden(scale)) {
+      return false;
+    }
 
     boolean updated = false;
     switch (scale.type) {
-      case USR_SCALE:
+      case USR_SCALE -> {
         updated = !usrScale.equals(scale);
         usrScale = scale;
-        break;
-      case OBJ_SCALE:
+      }
+      case OBJ_SCALE -> {
         updated = !objScale.equals(scale);
         objScale = scale;
-        break;
-      case SYS_SCALE: return false;
+      }
+      case SYS_SCALE -> {
+        return false;
+      }
     }
     return onUpdated(updated);
   }
 
   /**
-   * @return the context scale factor of the provided type (1d for system scale)
+   * @return the context scale factor of the provided type (1d for a system scale)
    */
   public double getScale(@NotNull ScaleType type) {
-    switch (type) {
-      case USR_SCALE: return usrScale.value;
-      case SYS_SCALE: return 1d;
-      case OBJ_SCALE: return objScale.value;
-    }
-    return 1f; // unreachable
+    return switch (type) {
+      case USR_SCALE -> usrScale.value;
+      case SYS_SCALE -> 1d;
+      case OBJ_SCALE -> objScale.value;
+    };
+  }
+
+  protected @NotNull Scale getScaleObject(@NotNull ScaleType type) {
+    return switch (type) {
+      case USR_SCALE -> usrScale;
+      case SYS_SCALE -> SYS_SCALE.of(1);
+      case OBJ_SCALE -> objScale;
+    };
   }
 
   public double getScale(@NotNull DerivedScaleType type) {
-    switch (type) {
-      case DEV_SCALE: return 1;
-      case PIX_SCALE:
-      case EFF_USR_SCALE:
-        return pixScale;
-    }
-    return 1f; // unreachable
+    return switch (type) {
+      case DEV_SCALE -> 1;
+      case PIX_SCALE, EFF_USR_SCALE -> pixScale;
+    };
   }
 
   /**
@@ -179,31 +202,35 @@ public class UserScaleContext {
    * @return whether any of the scale factors has been updated
    */
   public boolean update() {
-    return onUpdated(setScale(ScaleType.USR_SCALE.of(JBUIScale.scale(1f))));
+    return onUpdated(setScale(USR_SCALE.of(JBUIScale.scale(1f))));
   }
 
   /**
    * Updates the context with the state of the provided one.
    *
-   * @param ctx the new context
+   * @param scaleContext the new context
    * @return whether any of the scale factors has been updated
    */
-  public boolean update(@Nullable UserScaleContext ctx) {
-    if (ctx == null) return update();
-    return onUpdated(updateAll(ctx));
+  public boolean update(@Nullable UserScaleContext scaleContext) {
+    return scaleContext == null ? update() : onUpdated(updateAll(scaleContext));
   }
 
-  protected <T extends UserScaleContext> boolean updateAll(@NotNull T ctx) {
-    boolean updated = setScale(ctx.usrScale);
-    return setScale(ctx.objScale) || updated;
+  protected <T extends UserScaleContext> boolean updateAll(@NotNull T scaleContext) {
+    boolean updated = setScale(scaleContext.usrScale);
+    updated = setScale(scaleContext.objScale) || updated;
+
+    // merge this.overriddenScales with scaleContext.overriddenScales
+    for (Scale scale : scaleContext.getOverriddenScales()) {
+      overrideScale(scale);
+    }
+    return updated;
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof UserScaleContext)) return false;
+    if (!(obj instanceof UserScaleContext that)) return false;
 
-    UserScaleContext that = (UserScaleContext)obj;
     return that.usrScale.value == usrScale.value &&
            that.objScale.value == objScale.value;
   }
@@ -247,8 +274,7 @@ public class UserScaleContext {
     }
   }
 
-  @NotNull
-  public <T extends UserScaleContext> T copy() {
+  public @NotNull <T extends UserScaleContext> T copy() {
     UserScaleContext ctx = createIdentity();
     ctx.updateAll(this);
     //noinspection unchecked
@@ -258,44 +284,5 @@ public class UserScaleContext {
   @Override
   public String toString() {
     return usrScale + ", " + objScale + ", " + pixScale;
-  }
-
-  /**
-   * A cache for the last usage of a data object matching a scale context.
-   *
-   * @param <D> the data type
-   * @param <S> the context type
-   */
-  public static class Cache<D, S extends UserScaleContext> {
-    private final Function<? super S, ? extends D> myDataProvider;
-    private final AtomicReference<Pair<Double, D>> myData = new AtomicReference<>(null);
-
-    /**
-     * @param dataProvider provides a data object matching the passed scale context
-     */
-    public Cache(@NotNull Function<? super S, ? extends D> dataProvider) {
-      myDataProvider = dataProvider;
-    }
-
-    /**
-     * Returns the data object from the cache if it matches the {@code ctx},
-     * otherwise provides the new data via the provider and caches it.
-     */
-    @Nullable
-    public D getOrProvide(@NotNull S ctx) {
-      Pair<Double, D> data = myData.get();
-      double scale = ctx.getScale(DerivedScaleType.PIX_SCALE);
-      if (data == null || Double.compare(scale, data.first) != 0) {
-        myData.set(data = Pair.create(scale, myDataProvider.apply(ctx)));
-      }
-      return data.second;
-    }
-
-    /**
-     * Clears the cache.
-     */
-    public void clear() {
-      myData.set(null);
-    }
   }
 }

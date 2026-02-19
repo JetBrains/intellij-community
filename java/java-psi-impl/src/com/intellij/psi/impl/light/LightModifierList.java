@@ -1,22 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class LightModifierList extends LightElement implements PsiModifierList {
   private final Set<String> myModifiers;
 
-  public LightModifierList(PsiModifierListOwner modifierListOwner) {
+  public LightModifierList(@NotNull PsiModifierListOwner modifierListOwner) {
     this(modifierListOwner.getManager());
     copyModifiers(modifierListOwner.getModifierList());
   }
@@ -27,10 +32,10 @@ public class LightModifierList extends LightElement implements PsiModifierList {
 
   public LightModifierList(PsiManager manager, Language language, String... modifiers) {
     super(manager, language);
-    myModifiers = new HashSet<>(Arrays.asList(modifiers));
+    myModifiers = ContainerUtil.newHashSet(modifiers);
   }
 
-  public void addModifier(String modifier) {
+  public void addModifier(@NotNull String modifier) {
     myModifiers.add(modifier);
   }
 
@@ -84,8 +89,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
   }
 

@@ -1,0 +1,12 @@
+class Test {
+    operator fun set(a: Int, b: Int) {
+
+    }
+}
+
+fun some(t: Test) {
+    t.<caret>
+}
+
+// ELEMENT: "[]"
+// IGNORE_K1

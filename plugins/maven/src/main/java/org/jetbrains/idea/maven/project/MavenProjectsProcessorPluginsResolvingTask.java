@@ -15,24 +15,5 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-
-public class MavenProjectsProcessorPluginsResolvingTask extends MavenProjectsProcessorBasicTask {
-  private final NativeMavenProjectHolder myNativeMavenProject;
-
-  public MavenProjectsProcessorPluginsResolvingTask(MavenProject project,
-                                                    NativeMavenProjectHolder nativeMavenProject,
-                                                    MavenProjectsTree tree) {
-    super(project, tree);
-    myNativeMavenProject = nativeMavenProject;
-  }
-
-  @Override
-  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
-    throws MavenProcessCanceledException {
-    myResolver.resolvePlugins(myMavenProject, myNativeMavenProject, embeddersManager, console, indicator);
-  }
+public class MavenProjectsProcessorPluginsResolvingTask {
 }

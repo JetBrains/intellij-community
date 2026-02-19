@@ -1,0 +1,125 @@
+/*
+ * Copy this file as `.vscode/settings.json` to configure VSCode for this workspace.
+ * Unfortunately, VSCode doesn't (yet) offer any way to have "workspace defaults" or "user-worspace settings",
+ * so offering defaults to copy is the best we can do at the moment.
+ *
+ * ⚠ Disclaimer: The typeshed team doesn't commit to maintaining this file. It exists purely for your ease of use.
+*/
+{
+    // Don't format on save for formatters we don't explicitely control
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "never"
+    },
+    // Set file associations to support comments syntax highlight
+    "files.associations": {
+        "settings.default.json": "jsonc",
+        "pyrightconfig*.json": "jsonc",
+        ".flake8": "properties",
+        "stubtest_allowlist*.txt": "properties",
+        "**/stubtest_allowlists/*.txt": "properties",
+        "pytype_exclude_list.txt": "properties"
+    },
+    "files.exclude": {
+        "**/.*_cache": true, // mypy and Ruff cache
+        "**/__pycache__": true
+    },
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "editor.comments.insertSpace": true,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.tabSize": 2,
+    "[json][jsonc][python][toml]": {
+        "editor.tabSize": 4
+    },
+    "editor.rulers": [
+        90,
+        130
+    ],
+    "[git-commit]": {
+        "editor.rulers": [
+            72
+        ]
+    },
+    // Format on save for formatters we explicitely control
+    "[json][jsonc][yaml][python][toml]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit"
+        }
+    },
+    "[json][jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[toml]": {
+        "editor.rulers": [
+            90
+        ],
+        "editor.defaultFormatter": "tamasfe.even-better-toml"
+    },
+    "[python]": {
+        "editor.rulers": [
+            130
+        ],
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.codeActionsOnSave": {
+            // Let Ruff lint fixes handle imports
+            "source.organizeImports": "never",
+            "source.unusedImports": "never"
+        }
+    },
+    // python.analysis is Pylance (pyright) configurations
+    "python.analysis.fixAll": [
+        // Explicitly omiting "source.convertImportFormat", some stubs use relative imports
+        // Explicitly omiting "source.unusedImports", Let Ruff lint fixes handle imports
+    ],
+    "python.analysis.typeshedPaths": [
+        "${workspaceFolder}"
+    ],
+    "python.analysis.extraPaths": [
+        "tests"
+    ],
+    "mypy-type-checker.importStrategy": "fromEnvironment",
+    "mypy-type-checker.args": [
+        "--custom-typeshed-dir=${workspaceFolder}",
+        // We only guarantee all of our tests can be run if you're on Python 3.9 or higher
+        "--python-version=3.9",
+        "--strict",
+        // Needed because a library stubbed in typeshed won't necessarily be installed in the dev's environment
+        "--ignore-missing-imports"
+    ],
+    // Ensure typeshed's configs are used, and not user's VSCode settings
+    "flake8.args": [
+        "--config=.flake8"
+    ],
+    "flake8.importStrategy": "fromEnvironment",
+    "black-formatter.importStrategy": "fromEnvironment",
+    // Using Ruff instead of isort
+    "isort.check": false,
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.fixAll": true,
+    "ruff.organizeImports": true,
+    "evenBetterToml.formatter.alignComments": false,
+    "evenBetterToml.formatter.alignEntries": false,
+    "evenBetterToml.formatter.allowedBlankLines": 1,
+    "evenBetterToml.formatter.arrayAutoCollapse": true,
+    "evenBetterToml.formatter.arrayAutoExpand": true,
+    "evenBetterToml.formatter.arrayTrailingComma": true,
+    "evenBetterToml.formatter.columnWidth": 90,
+    "evenBetterToml.formatter.compactArrays": true,
+    "evenBetterToml.formatter.compactEntries": false,
+    "evenBetterToml.formatter.compactInlineTables": false,
+    "evenBetterToml.formatter.indentEntries": false,
+    "evenBetterToml.formatter.indentTables": false,
+    "evenBetterToml.formatter.inlineTableExpand": false,
+    "evenBetterToml.formatter.reorderArrays": true,
+    "evenBetterToml.formatter.trailingNewline": true,
+    // We like keeping TOML keys in a certain non-alphabetical order that feels more natural
+    "evenBetterToml.formatter.reorderKeys": false
+}

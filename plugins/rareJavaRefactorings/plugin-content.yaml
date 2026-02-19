@@ -1,0 +1,3 @@
+- name: lib/java-rareRefactorings.jar
+  modules:
+  - name: intellij.java.rareRefactorings

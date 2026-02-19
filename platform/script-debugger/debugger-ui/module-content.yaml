@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.scriptDebugger.ui.jar
+  modules:
+  - name: intellij.platform.scriptDebugger.ui

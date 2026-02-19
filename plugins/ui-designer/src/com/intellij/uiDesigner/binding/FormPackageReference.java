@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.project.Project;
@@ -10,9 +10,7 @@ import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class FormPackageReference extends ReferenceInForm {
   protected FormPackageReference(final PsiPlainTextFile file, TextRange range) {
     super(file, range);
@@ -26,7 +24,7 @@ public class FormPackageReference extends ReferenceInForm {
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(final @NotNull PsiElement element) {
     if (!(element instanceof PsiPackage)) {
       return false;
     }
@@ -36,7 +34,7 @@ public class FormPackageReference extends ReferenceInForm {
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull final String newElementName) {
+  public PsiElement handleElementRename(final @NotNull String newElementName) {
     final String s = getRangeText();
     int pos = s.lastIndexOf("/");
     if (pos < 0) {
@@ -49,7 +47,7 @@ public class FormPackageReference extends ReferenceInForm {
   }
 
   @Override
-  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(final @NotNull PsiElement element) throws IncorrectOperationException {
     return myFile;
   }
 }

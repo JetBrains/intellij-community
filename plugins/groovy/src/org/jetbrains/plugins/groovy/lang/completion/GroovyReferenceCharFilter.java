@@ -1,40 +1,25 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.patterns.StandardPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-/**
- * @author ilyas
- */
-public class GroovyReferenceCharFilter extends CharFilter {
+public final class GroovyReferenceCharFilter extends CharFilter {
   @Override
-  @Nullable
-  public Result acceptChar(char c, int prefixLength, Lookup lookup) {
+  public @Nullable Result acceptChar(char c, int prefixLength, @NotNull Lookup lookup) {
     final PsiFile psiFile = lookup.getPsiFile();
     if (psiFile != null && !psiFile.getViewProvider().getLanguages().contains(GroovyLanguage.INSTANCE)) return null;
 
@@ -57,8 +42,7 @@ public class GroovyReferenceCharFilter extends CharFilter {
       PsiElement element = file.findElementAt(Math.max(caret - 1, 0));
       if (PsiJavaPatterns.psiElement().withParent(
         PsiJavaPatterns.psiElement(GrReferenceExpression.class).withParent(
-          StandardPatterns.or(PsiJavaPatterns.psiElement(GrCaseLabel.class),
-                              PsiJavaPatterns.psiElement(GrConditionalExpression.class)))).accepts(element)) {
+          PsiJavaPatterns.psiElement(GrConditionalExpression.class))).accepts(element)) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
       if (item.getObject() instanceof NamedArgumentDescriptor &&
@@ -72,7 +56,7 @@ public class GroovyReferenceCharFilter extends CharFilter {
 
     if (c == '[' || c == ']' || c == ')' || c == '>') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && item.getObject() instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-    if (c == '(' && PsiKeyword.RETURN.equals(item.getLookupString())) {
+    if (c == '(' && JavaKeywords.RETURN.equals(item.getLookupString())) {
       return Result.HIDE_LOOKUP;
     }
 

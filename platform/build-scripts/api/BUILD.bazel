@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.platform.buildScripts.api` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "api",
+  module_name = "intellij.platform.buildScripts.api",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/groovy/rt/classLoader",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util",
+    "@lib//:jetbrains-annotations",
+    "//platform/build-scripts/downloader",
+    "//jps/model-api:model",
+    "//platform/util/zip",
+    "@community//build:zip",
+  ]
+)
+
+jvm_library(
+  name = "api_test_lib",
+  module_name = "intellij.platform.buildScripts.api",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":api",
+    "//plugins/groovy/rt/classLoader:classLoader_test_lib",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "//jps/model-api:model_test_lib",
+    "//platform/util/zip:zip_test_lib",
+    "@community//build:zip_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.api` end

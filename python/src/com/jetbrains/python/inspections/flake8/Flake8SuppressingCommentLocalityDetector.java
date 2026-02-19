@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Flake8SuppressingCommentLocalityDetector implements ChangeLocalityDetector {
+public final class Flake8SuppressingCommentLocalityDetector implements ChangeLocalityDetector {
   @Override
   public @Nullable PsiElement getChangeHighlightingDirtyScopeFor(@NotNull PsiElement changedElement) {
     if (changedElement instanceof PsiComment && StringUtil.containsIgnoreCase(changedElement.getText(), Flake8InspectionSuppressor.NOQA)) {

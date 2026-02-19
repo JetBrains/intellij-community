@@ -1,29 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector;
 import com.intellij.codeInsight.daemon.problems.Problem;
-import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation;
-import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.MouseButton;
-import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Document;
+import com.intellij.lang.jvm.JvmLanguage;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -32,54 +34,30 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public final class ProjectProblemUtils {
-
+  public static final Key<Boolean> ourTestingProjectProblems = Key.create("TestingProjectProblems");
   private static final Key<Map<PsiMember, Set<Problem>>> PROBLEMS_KEY = Key.create("project.problems.problem.key");
   private static final Key<Long> MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");
-  private static final String RELATED_PROBLEMS_CLICKED_EVENT_ID = "related.problems.clicked";
 
-  static @NotNull InlayPresentation getPresentation(@NotNull Project project,
-                                                    @NotNull Editor editor,
-                                                    @NotNull Document document,
-                                                    @NotNull PresentationFactory factory,
-                                                    int offset,
-                                                    @NotNull PsiMember member,
-                                                    @NotNull Set<Problem> relatedProblems) {
-    int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
-    InlayPresentation problemsOffset = factory.textSpacePlaceholder(column, true);
-    InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
-    InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ ->
-      editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
-    InlayPresentation problemsPresentation =
-      factory.referenceOnHover(errorTextPresentation, (e, p) -> showProblems(editor, member));
-
-    JPopupMenu popupMenu = new JPopupMenu();
-    JMenuItem item = new JMenuItem(JavaBundle.message("project.problems.settings"));
-    item.addActionListener(e -> ProjectProblemHintProvider.openSettings(project));
-    popupMenu.add(item);
-
-    InlayPresentation withSettings = factory.onClick(problemsPresentation, MouseButton.Right, (e, __) -> {
-      JBPopupMenu.showByEvent(e, popupMenu);
-      return Unit.INSTANCE;
-    });
-
-    return factory.seq(problemsOffset, withSettings);
-  }
-
-  private static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
-    FUCounterUsageLogger.getInstance().logEvent(member.getProject(), JavaCodeVisionProvider.FUS_GROUP_ID, RELATED_PROBLEMS_CLICKED_EVENT_ID);
-
+  /**
+   * Show broken usages in tool window. If there's only one broken usage - just navigate to it.
+   *
+   * @param member member with broken usages
+   */
+  public static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
+    JavaCodeVisionUsageCollector.RELATED_PROBLEMS_CLICKED_EVENT_ID.log(member.getProject());
     Map<PsiMember, Set<Problem>> problems = getReportedProblems(editor);
     Set<Problem> relatedProblems = problems.get(member);
     if (relatedProblems == null || relatedProblems.isEmpty()) return;
@@ -107,9 +85,32 @@ public final class ProjectProblemUtils {
         return new BrokenUsage(usageInfo, reportedElement);
       });
 
-      UsageTarget[] usageTargets = new UsageTarget[]{new RelatedProblemTargetAdapter(member)};
-      UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
-      usageViewManager.showUsages(usageTargets, usages, presentation);
+      class MemberInfo {
+        private final String myText;
+        private final String myLocation;
+        private final Icon myIcon;
+
+        MemberInfo(String memberText, String memberLocation, Icon memberIcon) {
+          myText = memberText;
+          myLocation = memberLocation;
+          myIcon = memberIcon;
+        }
+      }
+
+      ReadAction.nonBlocking(() -> {
+          ItemPresentation memberPresentation = member.getPresentation();
+          return memberPresentation == null ? null :
+                 new MemberInfo(memberPresentation.getPresentableText(), memberPresentation.getLocationString(),
+                                memberPresentation.getIcon(true));
+        })
+        .finishOnUiThread(ModalityState.any(), (info) -> {
+          if (info == null) return;
+          RelatedProblemTargetAdapter adapter = new RelatedProblemTargetAdapter(member, info.myText, info.myLocation, info.myIcon);
+          UsageTarget[] usageTargets = new UsageTarget[]{adapter};
+          UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
+          usageViewManager.showUsages(usageTargets, usages, presentation);
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 
@@ -138,14 +139,12 @@ public final class ProjectProblemUtils {
     TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
     String memberName = UsageViewUtil.getLongName(member);
 
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
       .range(identifier.getTextRange())
       .textAttributes(attributes)
       .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", memberName))
+      .registerFix(new ShowRelatedProblemsAction(), null, null, null, null)
       .createUnconditionally();
-
-    QuickFixAction.registerQuickFixAction(info, new ShowRelatedProblemsAction());
-    return info;
   }
 
   static boolean isProjectUpdated(@NotNull PsiJavaFile psiJavaFile, @NotNull Editor editor) {
@@ -157,15 +156,21 @@ public final class ProjectProblemUtils {
     editor.putUserData(MODIFICATION_COUNT, file.getManager().getModificationTracker().getModificationCount());
   }
 
-  private static class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
+  static boolean containsJvmLanguage(@NotNull VirtualFile file) {
+    FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
+    Object obj = fileTypeRegistry.getFileTypeByFileName(file.getName());
+    LanguageFileType languageFileType = obj instanceof LanguageFileType ? (LanguageFileType)obj : null;
+    return languageFileType != null && languageFileType.getLanguage() instanceof JvmLanguage;
+  }
 
+  private static final class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return ProjectProblemHintProvider.hintsEnabled();
+    public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
+      return ProjectProblemCodeVisionProviderKt.isCodeVisionEnabled(project);
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
       PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
       if (member == null) return;
       showProblems(editor, member);

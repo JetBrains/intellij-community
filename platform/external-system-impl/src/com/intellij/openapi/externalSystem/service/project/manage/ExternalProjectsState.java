@@ -3,7 +3,12 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XMap;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,7 +16,8 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalProjectsState {
+@ApiStatus.Internal
+public final class ExternalProjectsState {
   private final Map<String, State> myExternalSystemsState = FactoryMap.create(key -> new State());
 
   @Property(surroundWithTag = false)
@@ -28,7 +34,7 @@ public class ExternalProjectsState {
   public boolean storeExternally = false;
 
   @Tag("state")
-  public static class State {
+  public static final class State {
     private ExternalProjectsViewState projectsViewState = new ExternalProjectsViewState();
 
     private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = FactoryMap.createMap(key-> new TaskActivationState(), LinkedHashMap::new);

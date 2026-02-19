@@ -15,8 +15,11 @@
  */
 package com.intellij.featureStatistics;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.Calendar;
 
+@ApiStatus.Internal
 public class CumulativeStatistics {
   public int invocations = 0;
   public long startDate = 0;

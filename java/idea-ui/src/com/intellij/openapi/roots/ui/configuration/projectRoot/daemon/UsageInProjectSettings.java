@@ -2,12 +2,11 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.roots.ui.configuration.GeneralProjectSettingsElement;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.navigation.Place;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class UsageInProjectSettings extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
@@ -38,7 +37,7 @@ public class UsageInProjectSettings extends ProjectStructureElementUsage {
 
   @Override
   public PlaceInProjectStructure getPlace() {
-    Place configurablePlace = ProjectStructureConfigurable.getInstance(myContext.getProject()).createProjectConfigurablePlace();
+    Place configurablePlace = myContext.getModulesConfigurator().getProjectStructureConfigurable().createProjectConfigurablePlace();
     return new PlaceInProjectStructureBase(myContext.getProject(), configurablePlace, getContainingElement(), false);
   }
 

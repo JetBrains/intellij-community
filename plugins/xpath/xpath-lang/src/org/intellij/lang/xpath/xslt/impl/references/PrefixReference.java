@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -45,20 +45,17 @@ public class PrefixReference extends SimpleAttributeReference implements EmptyRe
   }
 
   @Override
-  @NotNull
-  protected TextRange getTextRange() {
+  protected @NotNull TextRange getTextRange() {
     return myRange;
   }
 
   @Override
-  @Nullable
-  public PsiElement resolveImpl() {
+  public @Nullable PsiElement resolveImpl() {
     return XsltNamespaceContext.resolvePrefix(getCanonicalText(), myAttribute);
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     return XPathBundle.partialMessage("inspection.message.undeclared.namespace.prefix", 1);
   }
 }

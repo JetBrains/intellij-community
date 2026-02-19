@@ -17,12 +17,18 @@ package com.intellij.ui.colorpicker
 
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.UIUtil
-import java.awt.*
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.Shape
 import kotlin.math.max
 import kotlin.math.min
 
 private val DEFAULT_SLIDER_BACKGROUND = Color.WHITE
 
+@ApiStatus.Internal
 class AlphaSliderComponent : SliderComponent<Int>(0) {
 
   /**
@@ -36,7 +42,7 @@ class AlphaSliderComponent : SliderComponent<Int>(0) {
 
   override fun valueToKnobPosition(value: Int): Int = Math.round(value * sliderWidth / 255f)
 
-  override fun slide(shift: Int) = max(0, min(value + shift, 255))
+  override fun slide(shift: Int): Int = max(0, min(value + shift, 255))
 
   override fun paintSlider(g2d: Graphics2D) {
     val transparent = ColorUtil.toAlpha(Color.WHITE, 0)
@@ -52,7 +58,7 @@ class AlphaSliderComponent : SliderComponent<Int>(0) {
   /**
    * Paints a checkered board style background. Each grid square is `cellSize` pixels.
    */
-  fun paintCheckeredBackground(g: Graphics, backgroundColor: Color, checkeredColor: Color, clip: Shape, cellSize: Int) {
+  private fun paintCheckeredBackground(g: Graphics, backgroundColor: Color, checkeredColor: Color, clip: Shape, cellSize: Int) {
     val savedClip = g.clip
     (g as Graphics2D).clip(clip)
 

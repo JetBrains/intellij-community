@@ -1,41 +1,55 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCoreUtil;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.SoftWrapModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FoldingModelImpl;
+import com.intellij.openapi.editor.impl.FoldingKeys;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.EditorPopupHandler;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.Rectangle;
 
-import static java.lang.Character.*;
+import static java.lang.Character.isDigit;
+import static java.lang.Character.isJavaIdentifierPart;
+import static java.lang.Character.isLetterOrDigit;
+import static java.lang.Character.isLowerCase;
+import static java.lang.Character.isUpperCase;
+import static java.lang.Character.isWhitespace;
 
 public final class EditorActionUtil {
-  protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
+  public static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
   public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
 
   private EditorActionUtil() {
@@ -115,30 +129,65 @@ public final class EditorActionUtil {
     return CodeStyle.getIndentOptions(project, editor.getDocument()).SMART_TABS;
   }
 
-  @NotNull
-  public static TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+  /**
+   * Selects the entire lines covering the current selection, if any.
+   * If there's no selection, selects a single line of text at the caret position.
+   * Because the resulting selection always includes the line ending character,
+   * repeated invocations of this method extend the selection to include each next line one by one.
+   */
+  public static void selectEntireLines(@NotNull Caret caret) {
+    selectEntireLines(caret, false);
+  }
+
+  /**
+   * Selects the entire lines covering the current selection, if any.
+   * If there's no selection, or 'resetToSingleLineAtCaret' is true, selects a single line of text at the caret position.
+   * Unless 'resetToSingleLineAtCaret' is set, and because the resulting selection always includes the line ending character,
+   * repeated invocations of this method extend the selection to include each next line one by one.
+   *
+   * @param resetToSingleLineAtCaret discard the current selection, if any,
+   *                                 and select just a single line at the caret position.
+   */
+  public static void selectEntireLines(@NotNull Caret caret, boolean resetToSingleLineAtCaret) {
+    Editor editor = caret.getEditor();
+    int lineNumber = caret.getLogicalPosition().line;
+    Document document = editor.getDocument();
+    if (lineNumber >= document.getLineCount()) {
+      return;
+    }
+    TextRange range =
+      EditorUtil.calcSurroundingTextRange(editor,
+                                          resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionStartPosition(),
+                                          resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionEndPosition());
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    caret.setSelection(range.getStartOffset(), range.getEndOffset());
+  }
+
+  public static @NotNull TextRange getRangeToWordEnd(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
     int startOffset = editor.getCaretModel().getOffset();
     // IDEA-211756 "Delete to word end" is extremely inconvenient on whitespaces
     int endOffset = getNextCaretStopOffset(editor, CaretStopPolicy.BOTH, isCamel, handleQuoted);
     return TextRange.create(startOffset, endOffset);
   }
 
-  @NotNull
-  public static TextRange getRangeToWordStart(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
+  public static @NotNull TextRange getRangeToWordStart(@NotNull Editor editor, boolean isCamel, boolean handleQuoted) {
     int endOffset = editor.getCaretModel().getOffset();
     int startOffset = getPreviousCaretStopOffset(editor, CaretStopPolicy.WORD_START, isCamel, handleQuoted);
     return TextRange.create(startOffset, endOffset);
   }
 
+  @ApiStatus.Internal
   public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
     return getNextCaretStopOffset(editor, caretStopPolicy, isCamel, false);
   }
 
+  @ApiStatus.Internal
   public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy, boolean isCamel) {
     return getPreviousCaretStopOffset(editor, caretStopPolicy, isCamel, false);
   }
 
   @SuppressWarnings("Duplicates")
+  @ApiStatus.Internal
   public static int getNextCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
                                            boolean isCamel, boolean handleQuoted) {
     int maxOffset = getNextLineStopOffset(editor, caretStopPolicy.getLineStop());
@@ -154,7 +203,7 @@ public final class EditorActionUtil {
 
     final int newOffset = getNextWordStopOffset(text, wordStop, tokenIterator, offset, maxOffset, isCamel);
     if (newOffset < maxOffset &&
-        handleQuoted && tokenIterator != null &&
+        handleQuoted && !tokenIterator.atEnd() &&
         isTokenStart(tokenIterator, newOffset - 1) &&
         isQuotedToken(tokenIterator, text)) {
       // now at the end of an opening quote: | "word" -> "|word"
@@ -168,6 +217,7 @@ public final class EditorActionUtil {
   }
 
   @SuppressWarnings("Duplicates")
+  @ApiStatus.Internal
   public static int getPreviousCaretStopOffset(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
                                                boolean isCamel, boolean handleQuoted) {
     int minOffset = getPreviousLineStopOffset(editor, caretStopPolicy.getLineStop());
@@ -183,7 +233,7 @@ public final class EditorActionUtil {
 
     final int newOffset = getPreviousWordStopOffset(text, wordStop, tokenIterator, offset, minOffset, isCamel);
     if (newOffset > minOffset &&
-        handleQuoted && tokenIterator != null &&
+        handleQuoted && !tokenIterator.atEnd() &&
         isTokenEnd(tokenIterator, newOffset + 1) &&
         isQuotedToken(tokenIterator, text)) {
       // at the start of a closing quote:  "word|" <- "word" |
@@ -197,22 +247,22 @@ public final class EditorActionUtil {
   }
 
   private static int getNextWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
-                                           @Nullable HighlighterIterator tokenIterator,
+                                           @NotNull HighlighterIterator tokenIterator,
                                            int offset, int maxOffset, boolean isCamel) {
     int newOffset = offset + 1;
     for (; newOffset < maxOffset; newOffset++) {
-      final boolean isTokenBoundary = tokenIterator != null && advanceTokenOnBoundary(tokenIterator, text, newOffset);
+      final boolean isTokenBoundary = advanceTokenOnBoundary(tokenIterator, text, newOffset);
       if (isWordStopOffset(text, wordStop, newOffset, isCamel, isTokenBoundary)) break;
     }
     return newOffset;
   }
 
   private static int getPreviousWordStopOffset(@NotNull CharSequence text, @NotNull CaretStop wordStop,
-                                               @Nullable HighlighterIterator tokenIterator,
+                                               @NotNull HighlighterIterator tokenIterator,
                                                int offset, int minOffset, boolean isCamel) {
     int newOffset = offset - 1;
     for (; newOffset > minOffset; newOffset--) {
-      final boolean isTokenBoundary = tokenIterator != null && retreatTokenOnBoundary(tokenIterator, text, newOffset);
+      final boolean isTokenBoundary = retreatTokenOnBoundary(tokenIterator, text, newOffset);
       if (isWordStopOffset(text, wordStop, newOffset, isCamel, isTokenBoundary)) break;
     }
     return newOffset;
@@ -231,22 +281,28 @@ public final class EditorActionUtil {
   }
 
   private static boolean advanceTokenOnBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    if (tokenIterator.atEnd()) return false;
     if (isTokenEnd(tokenIterator, offset)) {
       final IElementType leftToken = tokenIterator.getTokenType();
       final boolean wasQuotedToken = isQuotedToken(tokenIterator, text);
       tokenIterator.advance();
-      return wasQuotedToken || isQuotedToken(tokenIterator, text) ||
+      if (wasQuotedToken) return true;
+      if (tokenIterator.atEnd()) return false;
+      return isQuotedToken(tokenIterator, text) ||
              !isBetweenWhitespaces(text, offset) && isLexemeBoundary(leftToken, tokenIterator.getTokenType());
     }
     return isQuotedTokenInnardsBoundary(tokenIterator, text, offset);
   }
 
   private static boolean retreatTokenOnBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    if (tokenIterator.atEnd()) return false;
     if (isTokenStart(tokenIterator, offset)) {
       final IElementType rightToken = tokenIterator.getTokenType();
       final boolean wasQuotedToken = isQuotedToken(tokenIterator, text);
       tokenIterator.retreat();
-      return wasQuotedToken || isQuotedToken(tokenIterator, text) ||
+      if (wasQuotedToken) return true;
+      if (tokenIterator.atEnd()) return false;
+      return isQuotedToken(tokenIterator, text) ||
              !isBetweenWhitespaces(text, offset) && isLexemeBoundary(tokenIterator.getTokenType(), rightToken);
     }
     return isQuotedTokenInnardsBoundary(tokenIterator, text, offset);
@@ -281,20 +337,19 @@ public final class EditorActionUtil {
     return (ch == '\'' || ch == '\"') ? ch : 0;
   }
 
-  @Nullable
-  private static HighlighterIterator createHighlighterIteratorAtOffset(@NotNull Editor editor, int offset) {
-    if (!(editor instanceof EditorEx)) return null;
-    return ((EditorEx)editor).getHighlighter().createIterator(offset);
+  private static @NotNull HighlighterIterator createHighlighterIteratorAtOffset(@NotNull Editor editor, int offset) {
+    return editor.getHighlighter().createIterator(offset);
   }
 
   private static boolean isLexemeBoundary(@Nullable IElementType leftTokenType,
                                           @Nullable IElementType rightTokenType) {
     return leftTokenType != null &&
            rightTokenType != null &&
-           LanguageWordBoundaryFilter.INSTANCE.forLanguage(rightTokenType.getLanguage())
+           LanguageWordBoundaryFilter.getInstance().forLanguage(rightTokenType.getLanguage())
              .isWordBoundary(leftTokenType, rightTokenType);
   }
 
+  @ApiStatus.Internal
   public static int getNextLineStopOffset(@NotNull Editor editor, @NotNull CaretStop lineStop) {
     final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
@@ -322,6 +377,7 @@ public final class EditorActionUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static int getPreviousLineStopOffset(@NotNull Editor editor, @NotNull CaretStop lineStop) {
     final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
@@ -363,13 +419,12 @@ public final class EditorActionUtil {
    * Finds out whether there's a boundary between two lexemes of different type at given offset.
    */
   public static boolean isLexemeBoundary(@NotNull Editor editor, int offset) {
-    if (!(editor instanceof EditorEx) ||
-        offset <= 0 || offset >= editor.getDocument().getTextLength() ||
+    if (offset <= 0 || offset >= editor.getDocument().getTextLength() ||
         DocumentUtil.isInsideSurrogatePair(editor.getDocument(), offset) ||
         isBetweenWhitespaces(editor.getDocument().getCharsSequence(), offset)) {
       return false;
     }
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
     return retreatTokenOnBoundary(it, editor.getDocument().getCharsSequence(), offset);
   }
@@ -452,7 +507,7 @@ public final class EditorActionUtil {
     }
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-    EditorModificationUtil.scrollToCaret(editor);
+    EditorModificationUtilEx.scrollToCaret(editor);
   }
 
   private static void moveCaretToStartOfSoftWrappedLine(@NotNull Editor editor, VisualPosition currentVisual) {
@@ -496,12 +551,8 @@ public final class EditorActionUtil {
   }
 
   /**
-   * Tries to find visual column that points to the first non-white space symbol at the visual line at the given editor.
-   *
-   * @param editor              target editor
-   * @param visualLineNumber    target visual line
-   * @return                    visual column that points to the first non-white space symbol at the target visual line if the one exists;
-   *                            {@code '-1'} otherwise
+   * Returns the visual column that points to the first non-whitespace symbol at the visual line in the given editor,
+   * or -1 if there is no such column.
    */
   public static int findFirstNonSpaceColumnOnTheLine(@NotNull Editor editor, int visualLineNumber) {
     int startOffset = editor.visualPositionToOffset(new VisualPosition(visualLineNumber, 0));
@@ -563,7 +614,7 @@ public final class EditorActionUtil {
       LogicalPosition pos = new LogicalPosition(lineNumber, 0);
       editor.getCaretModel().moveToLogicalPosition(pos);
       setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
-      EditorModificationUtil.scrollToCaret(editor);
+      EditorModificationUtilEx.scrollToCaret(editor);
       return;
     }
     VisualPosition currentVisualCaret = editor.getCaretModel().getVisualPosition();
@@ -611,7 +662,7 @@ public final class EditorActionUtil {
       }
     }
 
-    EditorModificationUtil.scrollToCaret(editor);
+    EditorModificationUtilEx.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -621,6 +672,7 @@ public final class EditorActionUtil {
                         isWithSelection, camel);
   }
 
+  @ApiStatus.Internal
   public static void moveToNextCaretStop(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
                                          boolean isWithSelection, boolean isCamel) {
     Document document = editor.getDocument();
@@ -656,7 +708,7 @@ public final class EditorActionUtil {
       }
     }
     caretModel.moveToOffset(newOffset);
-    EditorModificationUtil.scrollToCaret(editor);
+    EditorModificationUtilEx.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -695,7 +747,7 @@ public final class EditorActionUtil {
       int caret = caretModel.getOffset();
       final FoldRegion collapsedUnderCaret = editor.getFoldingModel().getCollapsedRegionAtOffset(caret);
       if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand() &&
-          Boolean.TRUE.equals(collapsedUnderCaret.getUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY))) {
+          Boolean.TRUE.equals(collapsedUnderCaret.getUserData(FoldingKeys.SELECT_REGION_ON_CARET_NEARBY))) {
         if (caret > collapsedUnderCaret.getStartOffset() && columnShift > 0) {
           caretModel.moveToOffset(collapsedUnderCaret.getEndOffset());
         }
@@ -714,6 +766,7 @@ public final class EditorActionUtil {
                             isWithSelection, camel);
   }
 
+  @ApiStatus.Internal
   public static void moveToPreviousCaretStop(@NotNull Editor editor, @NotNull CaretStopPolicy caretStopPolicy,
                                              boolean isWithSelection, boolean isCamel) {
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -750,7 +803,7 @@ public final class EditorActionUtil {
     else {
       editor.getCaretModel().moveToOffset(newOffset);
     }
-    EditorModificationUtil.scrollToCaret(editor);
+    EditorModificationUtilEx.scrollToCaret(editor);
 
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
@@ -773,6 +826,49 @@ public final class EditorActionUtil {
     int lineShift = calcVisualLineIncrement(editor, editor.getCaretModel().getVisualPosition().line, visibleArea.height);
     editor.getCaretModel().moveCaretRelatively(0, lineShift, isWithSelection, editor.isColumnMode(), true);
   }
+
+  public static void moveCaretToTextStart(@NotNull Editor editor, @Nullable Project project) {
+    editor.getCaretModel().removeSecondaryCarets();
+    editor.getCaretModel().moveToOffset(0);
+    editor.getSelectionModel().removeSelection();
+
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    scrollingModel.disableAnimation();
+    scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+    scrollingModel.enableAnimation();
+
+    if (project != null) {
+      IdeDocumentHistory instance = IdeDocumentHistory.getInstance(project);
+      if (instance != null) {
+        instance.includeCurrentCommandAsNavigation();
+      }
+    }
+  }
+
+  public static void moveCaretToTextEnd(@NotNull Editor editor, @Nullable Project project) {
+    editor.getCaretModel().removeSecondaryCarets();
+    int offset = editor.getDocument().getTextLength();
+    if (editor instanceof EditorImpl) {
+      editor.getCaretModel().moveToLogicalPosition(editor.offsetToLogicalPosition(offset).leanForward(true));
+    }
+    else {
+      editor.getCaretModel().moveToOffset(offset);
+    }
+    editor.getSelectionModel().removeSelection();
+
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    scrollingModel.disableAnimation();
+    scrollingModel.scrollToCaret(ScrollType.CENTER);
+    scrollingModel.enableAnimation();
+
+    if (project != null) {
+      IdeDocumentHistory instance = IdeDocumentHistory.getInstance(project);
+      if (instance != null) {
+        instance.includeCurrentCommandAsNavigation();
+      }
+    }
+  }
+
 
   private static int adjustYToVisualLineBase(@NotNull Editor editor, int y) {
     int visualLineBaseY = editor.visualLineToY(editor.yToVisualLine(y));
@@ -824,55 +920,9 @@ public final class EditorActionUtil {
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
 
-  @NotNull
-  private static Rectangle getVisibleArea(@NotNull Editor editor) {
-    return SystemProperties.isTrueSmoothScrollingEnabled() ? editor.getScrollingModel().getVisibleAreaOnScrollingFinished()
-                                                           : editor.getScrollingModel().getVisibleArea();
-  }
-
-  /**
-   * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
-   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {
-    return new EditorPopupHandler() {
-      @Override
-      public void invokePopup(final EditorMouseEvent event) {
-        if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-          showEditorPopup(event, group);
-        }
-      }
-    };
-  }
-
-  /**
-   * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
-   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {
-    return new EditorPopupHandler() {
-      @Override
-      public void invokePopup(final EditorMouseEvent event) {
-        showEditorPopup(event, group);
-      }
-    };
-  }
-
-  private static void showEditorPopup(final EditorMouseEvent event, @NotNull final ActionGroup group) {
-    if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
-      MouseEvent e = event.getMouseEvent();
-      final Component c = e.getComponent();
-      if (c != null && c.isShowing()) {
-        popupMenu.getComponent().show(c, e.getX(), e.getY());
-      }
-      e.consume();
-    }
+  private static @NotNull Rectangle getVisibleArea(@NotNull Editor editor) {
+    ScrollingModel model = editor.getScrollingModel();
+    return EditorCoreUtil.isTrueSmoothScrollingEnabled() ? model.getVisibleAreaOnScrollingFinished() : model.getVisibleArea();
   }
 
   private static boolean isBetweenWhitespaces(@NotNull CharSequence text, int offset) {
@@ -944,7 +994,7 @@ public final class EditorActionUtil {
   /**
    * This method will make required expansions of collapsed region to make given offset 'visible'.
    */
-  public static void makePositionVisible(@NotNull final Editor editor, final int offset) {
+  public static void makePositionVisible(final @NotNull Editor editor, final int offset) {
     FoldingModel foldingModel = editor.getFoldingModel();
     while (true) {
       FoldRegion region = foldingModel.getCollapsedRegionAtOffset(offset);
@@ -961,6 +1011,6 @@ public final class EditorActionUtil {
       caret.removeSelection();
     }
     caret.moveToOffset(offset);
-    EditorModificationUtil.scrollToCaret(caret.getEditor());
+    EditorModificationUtilEx.scrollToCaret(caret.getEditor());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -12,8 +12,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -27,28 +27,47 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.TooManyListenersException;
 
 public final class ExportToFileUtil {
   private static final Logger LOG = Logger.getInstance(ExportToFileUtil.class);
 
-  public static void exportTextToFile(Project project, String fileName, String textToExport) {
-    String prepend = "";
+  @RequiresEdt
+  public static void chooseFileAndExport(@NotNull Project project, @NotNull ExporterToTextFile exporter) {
+    final ExportDialogBase dlg = new ExportDialogBase(project, exporter);
+
+    if (!dlg.showAndGet()) {
+      return;
+    }
+
+    exportTextToFile(project, dlg.getFileName(), dlg.getText());
+    exporter.exportedTo(dlg.getFileName());
+  }
+
+  private static void exportTextToFile(Project project, String fileName, String textToExport) {
+    boolean append = false;
     File file = new File(fileName);
     if (file.exists()) {
       int result = Messages.showYesNoCancelDialog(
@@ -65,18 +84,12 @@ public final class ExportToFileUtil {
         return;
       }
       if (result == Messages.NO) {
-        char[] buf = new char[(int)file.length()];
-        try (FileReader reader = new FileReader(fileName)) {
-          reader.read(buf, 0, (int)file.length());
-          prepend = new String(buf) + SystemProperties.getLineSeparator();
-        }
-        catch (IOException ignored) {
-        }
+        append = true;
       }
     }
 
-    try (FileWriter writer = new FileWriter(fileName)) {
-      writer.write(prepend + textToExport);
+    try (FileWriter writer = new FileWriter(fileName, StandardCharsets.UTF_8, append)) {
+      writer.write(textToExport);
     }
     catch (IOException e) {
       Messages.showMessageDialog(
@@ -88,23 +101,22 @@ public final class ExportToFileUtil {
     }
   }
 
-  public static class ExportDialogBase extends DialogWrapper {
+  private static final class ExportDialogBase extends DialogWrapper {
     private final Project myProject;
     private final ExporterToTextFile myExporter;
-    protected Editor myTextArea;
-    protected TextFieldWithBrowseButton myTfFile;
+    private Editor myTextArea;
+    private TextFieldWithBrowseButton myTfFile;
     private ChangeListener myListener;
 
-    public ExportDialogBase(Project project, ExporterToTextFile exporter) {
+    ExportDialogBase(Project project, ExporterToTextFile exporter) {
       super(project, true);
       myProject = project;
       myExporter = exporter;
 
       myTfFile = new TextFieldWithBrowseButton();
       myTfFile.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(), myProject) {
-        @NotNull
         @Override
-        protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+        protected @NotNull String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
           String res = super.chosenFileToResultingText(chosenFile);
           if (chosenFile.isDirectory()) {
             res += File.separator + PathUtil.getFileName(myExporter.getDefaultFilePath());
@@ -144,7 +156,7 @@ public final class ExportToFileUtil {
 
     @Override
     protected JComponent createCenterPanel() {
-      final Document document = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true);
+      final Document document = EditorFactory.getInstance().createDocument(true);
       ((DocumentImpl)document).setAcceptSlashR(true);
 
       myTextArea = EditorFactory.getInstance().createEditor(document, myProject, FileTypes.PLAIN_TEXT, true);
@@ -160,6 +172,7 @@ public final class ExportToFileUtil {
       EditorEx editorEx = (EditorEx)myTextArea;
       editorEx.setBackgroundColor(UIUtil.getInactiveTextFieldBackgroundColor());
       editorEx.setColorsScheme(EditorColorsManager.getInstance().getSchemeForCurrentUITheme());
+      editorEx.setHighlighter(new EmptyEditorHighlighter());
 
       myTextArea.getComponent().setPreferredSize(new Dimension(700, 400));
       return myTextArea.getComponent();
@@ -178,7 +191,7 @@ public final class ExportToFileUtil {
       return northPanel;
     }
 
-    protected JPanel createFilePanel() {
+    private JPanel createFilePanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new GridBagLayout());
       GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -222,7 +235,7 @@ public final class ExportToFileUtil {
       return "#com.intellij.ide.util.ExportDialog";
     }
 
-    protected class CopyToClipboardAction extends AbstractAction {
+    protected final class CopyToClipboardAction extends AbstractAction {
       public CopyToClipboardAction() {
         super(IdeBundle.message("button.copy"));
         putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));

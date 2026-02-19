@@ -14,54 +14,27 @@
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="junit5_rt" level="project" />
-    <orderEntry type="module-library" scope="TEST">
-      <library name="jupiter" type="repository">
-        <properties maven-id="org.junit.jupiter:junit-jupiter-engine:5.1.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.1.0/junit-jupiter-engine-5.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.0.0/apiguardian-api-1.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.1.0/junit-platform-engine-1.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.1.0/junit-platform-commons-1.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.0.0/opentest4j-1.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.1.0/junit-jupiter-api-5.1.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-engine/5.1.0/junit-jupiter-engine-5.1.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.0.0/apiguardian-api-1.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.1.0/junit-platform-engine-1.1.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.1.0/junit-platform-commons-1.1.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.0.0/opentest4j-1.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.1.0/junit-jupiter-api-5.1.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" scope="TEST">
-      <library name="vintage" type="repository">
-        <properties maven-id="org.junit.vintage:junit-vintage-engine:5.1.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.1.0/junit-vintage-engine-5.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.0.0/apiguardian-api-1.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.1.0/junit-platform-engine-1.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.1.0/junit-platform-commons-1.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.0.0/opentest4j-1.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/junit/junit/4.12/junit-4.12.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.1.0/junit-vintage-engine-5.1.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.0.0/apiguardian-api-1.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.1.0/junit-platform-engine-1.1.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.1.0/junit-platform-commons-1.1.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.0.0/opentest4j-1.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/junit/junit/4.12/junit-4.12-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Launcher" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.stream" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Vintage" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
   </component>
 </module>

@@ -15,23 +15,32 @@
  */
 package com.intellij.ui
 
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.IdeFrame
+import org.jetbrains.annotations.ApiStatus
 
-abstract class CloseNotificationAction : AnAction() {
+@ApiStatus.Internal
+abstract class CloseNotificationAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val layout = getBalloonLayout(e)
     e.presentation.isEnabled = layout != null && layout.balloonCount > 0
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 }
 
+@ApiStatus.Internal
 class CloseFirstNotificationAction : CloseNotificationAction() {
   override fun actionPerformed(e: AnActionEvent) {
     getBalloonLayout(e)!!.closeFirst()
   }
 }
 
+@ApiStatus.Internal
 class CloseAllNotificationsAction : CloseNotificationAction() {
   override fun actionPerformed(e: AnActionEvent) {
     getBalloonLayout(e)!!.closeAll()

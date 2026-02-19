@@ -1,43 +1,28 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
-import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.text.EditDistance;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.impl.XmlAttributeDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import java.util.ArrayList;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
@@ -52,31 +37,17 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return ATTRIBUTE_SHORT_NAME;
   }
 
   @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.attribute.checkbox.title");
-  }
-
-  @NotNull
-  @Override
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.attribute.title");
-  }
-
-  @Override
-  @NotNull
-  protected Logger getLogger() {
+  protected @NotNull Logger getLogger() {
     return LOG;
   }
 
   @Override
-  protected void checkAttribute(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkAttribute(final @NotNull XmlAttribute attribute, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     final XmlTag tag = attribute.getParent();
 
     if (tag instanceof HtmlTag) {
@@ -84,25 +55,36 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
       if (elementDescriptor == null || elementDescriptor instanceof AnyXmlElementDescriptor) {
         return;
       }
-
+      ArrayList<LocalQuickFix> quickfixes = new ArrayList<>(6);
+      final String name = attribute.getName();
+      boolean isFixRequired = false;
       XmlAttributeDescriptor attributeDescriptor = attribute.getDescriptor();
       if (attributeDescriptor == null && !attribute.isNamespaceDeclaration()) {
-        final String name = attribute.getName();
         if (!XmlUtil.attributeFromTemplateFramework(name, tag) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
+          isFixRequired = true;
           boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
-          ArrayList<LocalQuickFix> quickfixes = new ArrayList<>(6);
-          quickfixes
-            .add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlAnalysisBundle.message(
-              "html.quickfix.add.custom.html.attribute", name)));
+          quickfixes.add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlAnalysisBundle.message("html.quickfix.add.custom.html.attribute", name)));
           quickfixes.add(new RemoveAttributeIntentionFix(name));
           if (maySwitchToHtml5) {
             quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
-
-          registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", attribute.getName()), holder,
-                                         quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
+      }
+      else if (attributeDescriptor instanceof XmlAttributeDescriptorEx) {
+        ((XmlAttributeDescriptorEx)attributeDescriptor).validateAttributeName(attribute, holder, isOnTheFly);
+      }
+
+      var highlightType = addUnknownXmlAttributeQuickFixes(tag, name, quickfixes, holder, isFixRequired);
+
+      if (!quickfixes.isEmpty()) {
+        registerProblemOnAttributeName(
+          attribute,
+          XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", name),
+          holder,
+          highlightType,
+          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY)
+        );
       }
     }
   }
@@ -113,39 +95,31 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
     int initialSize = quickfixes.size();
     for (XmlAttributeDescriptor attr : descriptors) {
-      if (EditDistance.optimalAlignment(name, attr.getName(), false) <= 1) {
-        quickfixes.add(new RenameAttributeFix(attr));
+      if (EditDistance.optimalAlignment(name, attr.getName(), false, 1) <= 1) {
+        quickfixes.add(new XmlAttributeRenameFix(attr));
       }
       if (quickfixes.size() >= initialSize + 3) break;
     }
   }
 
-  private static class RenameAttributeFix implements LocalQuickFix, HighPriorityAction {
-    private final String name;
-
-    RenameAttributeFix(XmlAttributeDescriptor attr) {
-      name = attr.getName();
+  private static @NotNull ProblemHighlightType addUnknownXmlAttributeQuickFixes(XmlTag tag,
+                                                                       String name,
+                                                                       ArrayList<? super LocalQuickFix> quickfixes,
+                                                                       ProblemsHolder holder,
+                                                                       boolean isFixRequired) {
+    var highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    for (XmlUnknownAttributeQuickFixProvider fixProvider : XmlUnknownAttributeQuickFixProvider.EP_NAME.getExtensionList()) {
+      quickfixes.addAll(fixProvider.getOrRegisterAttributeFixes(tag, name, holder, isFixRequired));
+      var providerHighlightType = fixProvider.getProblemHighlightType(tag);
+      if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+          && providerHighlightType != ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+        highlightType = providerHighlightType;
+      }
     }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return XmlAnalysisBundle.message("html.quickfix.rename.attribute.family");
+    if (XmlHighlightVisitor.isInjectedWithoutValidation(tag)
+        && ProblemHighlightType.WEAK_WARNING.ordinal() < highlightType.ordinal()) {
+      highlightType = ProblemHighlightType.WEAK_WARNING;
     }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return XmlAnalysisBundle.message("html.quickfix.rename.attribute.text", name);
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class);
-      if (attribute == null) return;
-      attribute.setName(name);
-    }
+    return highlightType;
   }
 }

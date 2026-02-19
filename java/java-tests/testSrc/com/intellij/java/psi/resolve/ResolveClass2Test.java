@@ -15,7 +15,13 @@
  */
 package com.intellij.java.psi.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightResolveTestCase;
 
 public class ResolveClass2Test extends LightResolveTestCase {

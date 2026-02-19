@@ -17,13 +17,21 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.VfsTestUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -81,7 +89,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     VirtualFile compiledFileInCls = createChildData(myClsDir1, "a.class");
     VirtualFile excludedFile = createChildData(myExcludedDir1, "a.txt");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
 
     PsiFile txtPsiFile = fileManager.findFile(txtFile);
     assertTrue(txtPsiFile instanceof PsiPlainTextFile);
@@ -112,7 +120,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     VirtualFile excludedDir = createChildDirectory(myExcludedDir1, "dir");
     VirtualFile ignoredDir = createChildDirectory(mySrcDir1, "CVS");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
 
     PsiDirectory psiDir = fileManager.findDirectory(dir);
     assertNotNull(psiDir);
@@ -130,7 +138,7 @@ public class FileManagerTest extends JavaPsiTestCase {
   public void testDeleteFile() {
     final VirtualFile file = createChildData(myPrjDir1, "a.txt");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     fileManager.findFile(file);
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> delete(file));
@@ -144,7 +152,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     VirtualFile dir1 = createChildDirectory(dir, "dir1");
     VirtualFile file = createChildData(dir1, "a.txt");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     fileManager.findFile(file);
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> delete(dir));
@@ -156,7 +164,7 @@ public class FileManagerTest extends JavaPsiTestCase {
   public void testChangeFileTypeOnRename() throws IOException {
     final VirtualFile file = createChildData(myPrjDir1, "aaa.txt");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     fileManager.findFile(file);
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> file.rename(null, "bbb.jsp"));
@@ -168,7 +176,7 @@ public class FileManagerTest extends JavaPsiTestCase {
   public void testIgnoreFileOnRename() throws IOException {
     final VirtualFile file = createChildData(myPrjDir1, "aaa.txt");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     fileManager.findFile(file);
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> file.rename(null, "CVS"));
@@ -182,7 +190,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     VirtualFile dir1 = createChildDirectory(dir, "dir1");
     VirtualFile file = createChildData(dir, "aaa.txt");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     fileManager.findDirectory(dir);
     fileManager.findDirectory(dir1);
     fileManager.findFile(file);
@@ -199,7 +207,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     VirtualFile file2 = createChildData(myPrjDir2, "bbb.txt");
     VirtualFile dir2 = createChildDirectory(myPrjDir2, "dir2");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     assertNotNull(fileManager.findDirectory(dir));
 
     PsiFile psiFile2 = fileManager.findFile(file2);
@@ -222,7 +230,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     VirtualFile file2 = createChildData(myPrjDir2, "bbb.txt");
     VirtualFile dir2 = createChildDirectory(myPrjDir2, "dir2");
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     assertNotNull(fileManager.findDirectory(dir1));
 
     PsiFile psiFile2 = fileManager.findFile(file2);
@@ -242,19 +250,19 @@ public class FileManagerTest extends JavaPsiTestCase {
     final VirtualFile file = createChildData(myPrjDir1, "aaa.txt");
 
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      FileTypeManagerImpl ftManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
+      FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
       try {
-        FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+        FileManagerEx fileManager = myPsiManager.getFileManagerEx();
         fileManager.findFile(file);
 
-        ftManager.removeAssociation(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"), false);
-        ftManager.associate(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"), true);
+        fileTypeManager.removeAssociation(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"));
+        fileTypeManager.associate(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"));
 
         fileManager.checkConsistency();
       }
       finally {
-        ftManager.associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"), false);
-        ftManager.removeAssociation(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"), true);
+        fileTypeManager.associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"));
+        fileTypeManager.removeAssociation(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"));
       }
     });
   }
@@ -293,7 +301,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     WriteCommandAction.writeCommandAction(getProject()).run(() -> delete(myPrjDir1));
 
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
     fileManager.checkConsistency();
   }
 
@@ -308,7 +316,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     VirtualFile jarVFile =
       JarFileSystem.getInstance().findFileByPath(jarPath.replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR);
 
-    FileManagerImpl fileManager = (FileManagerImpl)myPsiManager.getFileManager();
+    FileManagerEx fileManager = myPsiManager.getFileManagerEx();
 
     ModuleRootModificationUtil.addModuleLibrary(myModule, "myLib", Collections.emptyList(), Collections.singletonList(jarVFile.getUrl()));
 
@@ -330,8 +338,8 @@ public class FileManagerTest extends JavaPsiTestCase {
 
     assertFalse(oldTimestamp == newTimestamp);
 
-    VirtualFileManager.getInstance().syncRefresh();
-    UIUtil.dispatchAllInvocationEvents();
+    VfsTestUtil.syncRefresh();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     fileManager.checkConsistency();
 

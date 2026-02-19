@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -7,48 +7,67 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.SdkAppearanceService;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
-import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.CellRendererPanel;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
+import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
 import javax.swing.border.Border;
-import java.awt.*;
-import java.util.Objects;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
-import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.ActionItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.InvalidSdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.NoneSdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.ProjectSdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.SuggestedItem;
 
-public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
+public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
 
-  private final @NotNull Producer<SdkListModel> myGetModel;
+  private final @NotNull Producer<? extends SdkListModel> myGetModel;
 
-  public SdkListPresenter(@NotNull Producer<SdkListModel> getSdkListModel) {
-    myGetModel = getSdkListModel;
+  public static <T> ListCellRenderer<T> create(
+    @Nullable ComboBox<T> combo,
+    Supplier<SdkListModel> modelSupplier,
+    Function<T, SdkListItem> listItemProducer
+  ) {
+    return new SdkListPresenter2<T>(combo, modelSupplier, listItemProducer);
   }
 
-  public @NotNull <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
-    return new ListCellRenderer<>() {
-      @Override
-      public Component getListCellRendererComponent(JList<? extends T> list, @Nullable T value, int index, boolean selected, boolean focused) {
-        SdkListItem item = value == null ? null : unwrap.fun(value);
-        @SuppressWarnings("unchecked") JList<SdkItem> cast = (JList<SdkItem>)list;
-        return SdkListPresenter.this.getListCellRendererComponent(cast, item, index, selected, focused);
-      }
-    };
+  /**
+   * @deprecated Use {@link SdkListPresenter#create} instead. The new renderer is New UI compliant.
+   */
+  @Deprecated
+  public SdkListPresenter(@NotNull Producer<? extends SdkListModel> getSdkListModel) {
+    myGetModel = getSdkListModel;
   }
 
   @Override
@@ -58,7 +77,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
                                                 boolean selected,
                                                 boolean hasFocus) {
     SimpleColoredComponent component = (SimpleColoredComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-    JPanel panel = new CellRendererPanel() {
+    JPanel panel = new CellRendererPanel(new BorderLayout()) {
       private final AccessibleContext myContext = component.getAccessibleContext();
 
       @Override
@@ -73,7 +92,6 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
         component.setBorder(border);
       }
     };
-    panel.setLayout(new BorderLayout());
     panel.add(component, BorderLayout.CENTER);
 
     SdkListModel model = myGetModel.produce();
@@ -90,12 +108,12 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
 
     component.setOpaque(true);
     panel.setOpaque(true);
-    Color background = selected ? list.getSelectionBackground() : list.getBackground();
-    panel.setBackground(background);
+    panel.setBackground(list.getBackground());
     if (value instanceof GroupItem) {
-      JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+      JBLabel toggle = new JBLabel(selected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
       toggle.setOpaque(true);
-      toggle.setBackground(background);
+      toggle.setBorder(JBUI.Borders.emptyRight(JBUI.scale(5)));
+      toggle.setBackground(selected ? list.getSelectionBackground() : list.getBackground());
       panel.add(toggle, BorderLayout.EAST);
     }
 
@@ -105,14 +123,10 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
       if (!separatorTextAbove.isEmpty()) {
         separator.setCaption(separatorTextAbove);
       }
-      separator.setOpaque(false);
-      separator.setBackground(list.getBackground());
 
-      JPanel wrapper = new CellRendererPanel();
-      wrapper.setLayout(new BorderLayout());
+      OpaquePanel wrapper = new OpaquePanel(new BorderLayout());
       wrapper.add(separator, BorderLayout.CENTER);
       wrapper.setBackground(list.getBackground());
-      wrapper.setOpaque(true);
 
       panel.add(wrapper, BorderLayout.NORTH);
     }
@@ -127,8 +141,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
                                        boolean hasFocus) {
     setIcon(EMPTY_ICON);    // to fix vertical size
     getAccessibleContext().setAccessibleName(null);
-    if (value instanceof InvalidSdkItem) {
-      InvalidSdkItem item = (InvalidSdkItem)value;
+    if (value instanceof InvalidSdkItem item) {
       String str = ProjectBundle.message("jdk.combo.box.invalid.item", item.sdkName);
       append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
@@ -144,55 +157,39 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
         append(ProjectBundle.message("jdk.combo.box.project.item"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }
-    else if (value instanceof SuggestedItem) {
-      SuggestedItem item = (SuggestedItem)value;
+    else if (value instanceof SuggestedItem item) {
       SdkType type = item.sdkType;
       String home = item.homePath;
       String version = item.version;
 
-      Icon icon = type.getIconForAddAction();
-      if (Objects.equals(icon, IconUtil.getAddIcon())) icon = type.getIcon();
+      Icon icon = type.getIcon();
       if (icon == null) icon = IconUtil.getAddIcon();
       setIcon(icon);
       append(presentDetectedSdkPath(home));
       append(" ");
       append(version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-    else if (value instanceof ActionItem) {
-      ActionItem item = (ActionItem)value;
+    else if (value instanceof ActionItem item) {
       Presentation template = item.action.getTemplatePresentation();
       //this is a sub-menu item
       SdkType sdkType = item.action.getSdkType();
       if (item.group != null) {
-        switch (item.role) {
-          case ADD:
+        setIcon(switch (item.role) {
+          case ADD -> {
             //we already have the (+) in the parent node, thus showing original icon
             Icon icon = sdkType.getIcon();
-            if (icon == null) icon = AllIcons.General.Add;
-            setIcon(icon);
-            append(ProjectBundle.message("sdk.configure.add.sdkType.subAction", sdkType.getPresentableName()));
-            break;
-          case DOWNLOAD:
-            setIcon(template.getIcon());
-            append(ProjectBundle.message("sdk.configure.download.subAction", sdkType.getPresentableName()));
-            break;
-        }
+            yield icon != null ? icon : AllIcons.General.Add;
+          }
+          case DOWNLOAD -> template.getIcon();
+        });
+        append(item.action.getListSubItemText());
       }
       else {
-        switch (item.role) {
-          case ADD:
-            setIcon(template.getIcon());
-            append(ProjectBundle.message("sdk.configure.add.sdkType.action", sdkType.getPresentableName()));
-            break;
-          case DOWNLOAD:
-            setIcon(template.getIcon());
-            append(ProjectBundle.message("sdk.configure.download.action", sdkType.getPresentableName()));
-            break;
-        }
+        setIcon(template.getIcon());
+        append(item.action.getListItemText());
       }
     }
-    else if (value instanceof GroupItem) {
-      GroupItem item = (GroupItem)value;
+    else if (value instanceof GroupItem item) {
       setIcon(item.icon);
       append(item.caption);
     }
@@ -212,9 +209,9 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
         .forNullSdk(selected)
         .customize(this);
       getAccessibleContext().setAccessibleName(ProjectBundle.message("jdk.combo.box.no.sdk.item.accessibility"));
+      setIcon(null);
     }
-    else if (value instanceof SdkReferenceItem) {
-      SdkReferenceItem item = (SdkReferenceItem)value;
+    else if (value instanceof SdkReferenceItem item) {
 
       SdkAppearanceService.getInstance()
         .forSdk(item.sdkType, item.name, null, item.hasValidPath, false, selected)
@@ -232,8 +229,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
     }
   }
 
-  @NotNull
-  public static @NlsSafe String presentDetectedSdkPath(@NotNull String home) {
+  public static @NotNull @NlsSafe String presentDetectedSdkPath(@NotNull String home) {
     return presentDetectedSdkPath(home, 50, 30);
   }
 
@@ -241,7 +237,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
     //for macOS, let's try removing Bundle internals
     home = StringUtil.trimEnd(home, "/Contents/Home"); //NON-NLS
     home = StringUtil.trimEnd(home, "/Contents/MacOS");  //NON-NLS
-    home = FileUtil.getLocationRelativeToUserHome(home);
+    home = FileUtil.getLocationRelativeToUserHome(home, false);
     home = StringUtil.shortenTextWithEllipsis(home, maxLength, suffixLength);
     return home;
   }
@@ -254,8 +250,8 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
     return accessibleContext;
   }
 
-  static private class AccessibleSdkListPresenter extends AccessibleContextDelegate {
-    private String myAccessibleString = null;
+  private static final class AccessibleSdkListPresenter extends AccessibleContextDelegate {
+    private @Nls String myAccessibleString = null;
 
     AccessibleSdkListPresenter(AccessibleContext context) {
       super(context);

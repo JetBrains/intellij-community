@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.execution.console.CustomizableConsoleFoldingBean;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 
@@ -18,11 +19,12 @@ import java.util.stream.IntStream;
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.locateExtensionsByPsiClass;
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
-    moduleBuilder.addLibrary("console", PathUtil.getJarPathForClass(CustomizableConsoleFoldingBean.class));
+    moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Attribute.class));
+    moduleBuilder.addLibrary("platform-lang-impl", PathUtil.getJarPathForClass(CustomizableConsoleFoldingBean.class));
   }
 
   public void testLocatingByPsiClass() {
@@ -30,17 +32,17 @@ public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestC
     myFixture.configureByText("plugin.xml", generatePluginXmlText(randomMethodNames));
     PsiClass psiClass = myFixture.addClass(generateJavaClassText(randomMethodNames));
 
-    PlatformTestUtil.startPerformanceTest("Locating extension tag by PsiClass", 2000, () -> {
+    Benchmark.newBenchmark("Locating extension tag by PsiClass", () -> {
       List<ExtensionCandidate> result = locateExtensionsByPsiClass(psiClass);
       assertSize(1, result);
-    }).attempts(1).assertTiming();
+    }).attempts(1).start();
   }
 
 
   private static List<String> generateRandomMethodNames() {
     return IntStream.range(0, 1000)
-                    .mapToObj(i -> UUID.randomUUID().toString().replace("-", "").toLowerCase())
-                    .collect(Collectors.toList());
+      .mapToObj(i -> UUID.randomUUID().toString().replace("-", "").toLowerCase())
+      .collect(Collectors.toList());
   }
 
   private static String generateJavaClassText(List<String> methodNames) {
@@ -51,12 +53,14 @@ public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestC
   }
 
   private static String generatePluginXmlText(List<String> methodNames) {
-    StringBuilder sb = new StringBuilder().append("<idea-plugin>\n")
-                                          .append("  <id>com.intellij</id>\n")
-                                          .append("  <name>myPlugin</name>\n");
+    StringBuilder sb = new StringBuilder()
+      .append("<idea-plugin>\n")
+      .append("  <id>com.intellij</id>\n")
+      .append("  <name>myPlugin</name>\n");
 
     sb.append("  <extensionPoints>");
-    sb.append("    <extensionPoint name=\"stacktrace.fold\" beanClass=\"com.intellij.execution.console.CustomizableConsoleFoldingBean\"/>\n");
+    sb.append("    <extensionPoint name=\"stacktrace.fold\"" +
+              " beanClass=\"com.intellij.execution.console.CustomizableConsoleFoldingBean\"/>\n");
     sb.append("    <extensionPoint name=\"myEp\" interface=\"java.util.ArrayList\" />\n");
     sb.append("  </extensionPoints>");
 

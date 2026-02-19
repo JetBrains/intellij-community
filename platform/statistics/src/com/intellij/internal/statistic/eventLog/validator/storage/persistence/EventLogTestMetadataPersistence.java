@@ -1,26 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.text.Strings;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersistence {
+public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersistence {
   private static final Logger LOG = Logger.getInstance(EventLogTestMetadataPersistence.class);
 
   public static final String TEST_RULE = "{util#fus_test_mode}";
@@ -28,21 +36,19 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
   private static final String DEPRECATED_TEST_EVENTS_SCHEME_FILE = "test-white-list.json";
   private static final String TEST_EVENTS_SCHEME_FILE = "test-events-scheme.json";
 
-  @NotNull
-  private final String myRecorderId;
+  private final @NotNull String myRecorderId;
 
   public EventLogTestMetadataPersistence(@NotNull String recorderId) {
     myRecorderId = recorderId;
   }
 
   @Override
-  @Nullable
-  public String getCachedEventsScheme() {
+  public @Nullable String getCachedEventsScheme() {
     try {
-      final File file = getEventsTestSchemeFile();
-      if (file.exists()) {
-        return FileUtil.loadFile(file);
-      }
+      Path file = getEventsTestSchemeFile();
+      return Files.readString(file);
+    }
+    catch (NoSuchFileException ignored) {
     }
     catch (IOException e) {
       LOG.error(e);
@@ -52,20 +58,20 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
 
   public void cleanup() {
     try {
-      FileUtil.delete(getEventsTestSchemeFile());
+      Files.deleteIfExists(getEventsTestSchemeFile());
     }
     catch (IOException e) {
       LOG.error(e);
     }
   }
 
-  @NotNull
-  public static EventGroupRemoteDescriptor createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules) {
+  public static @NotNull EventGroupRemoteDescriptor createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules)
+    throws StreamReadException, DatabindException {
     final String content =
       "{\"id\":\"" + groupId + "\"," +
       "\"versions\":[ {\"from\" : \"1\"}]," +
       "\"rules\":" + rules + "}";
-    return new GsonBuilder().create().fromJson(content, EventGroupRemoteDescriptor.class);
+    return SerializationHelper.INSTANCE.deserialize(content, EventGroupRemoteDescriptor.class);
   }
 
   public static void addTestGroup(@NotNull String recorderId, @NotNull GroupValidationTestRule group) throws IOException {
@@ -85,20 +91,26 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
   }
 
   public static void saveNewGroup(@NotNull EventGroupRemoteDescriptor group,
-                                   @NotNull EventGroupRemoteDescriptors approvedGroups,
-                                   @NotNull File file) throws IOException {
-    approvedGroups.groups.stream().
-      filter(g -> StringUtil.equals(g.id, group.id)).findFirst().
-      ifPresent(approvedGroups.groups::remove);
+                                  @NotNull EventGroupRemoteDescriptors approvedGroups,
+                                  @NotNull Path file) throws IOException {
+    List<EventGroupRemoteDescriptor> descriptors = approvedGroups.groups;
+    for (EventGroupRemoteDescriptor g : approvedGroups.groups) {
+      if (Objects.equals(g.id, group.id)) {
+        descriptors.remove(g);
+        break;
+      }
+    }
+
     approvedGroups.groups.add(group);
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    FileUtil.writeToFile(file, gson.toJson(approvedGroups));
+    Files.createDirectories(file.getParent());
+    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
+      SerializationHelper.INSTANCE.serialize(writer, approvedGroups);
+    }
   }
 
-  @NotNull
-  public static EventGroupRemoteDescriptors loadCachedEventGroupsSchemes(@NotNull BaseEventLogMetadataPersistence persistence) {
+  public static @NotNull EventGroupRemoteDescriptors loadCachedEventGroupsSchemes(@NotNull BaseEventLogMetadataPersistence persistence) {
     final String existing = persistence.getCachedEventsScheme();
-    if (StringUtil.isNotEmpty(existing)) {
+    if (Strings.isNotEmpty(existing)) {
       try {
         return EventLogMetadataUtils.parseGroupRemoteDescriptors(existing);
       }
@@ -109,28 +121,26 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
     return new EventGroupRemoteDescriptors();
   }
 
-  @NotNull
-  public static EventGroupRemoteDescriptor createTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) {
+  public static @NotNull EventGroupRemoteDescriptor createTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) {
     final EventGroupRemoteDescriptor group = new EventGroupRemoteDescriptor();
     group.id = groupId;
     if (group.versions != null) {
       group.versions.add(new EventGroupRemoteDescriptors.GroupVersionRange("1", null));
     }
 
-    final GroupRemoteRule rule = new GroupRemoteRule();
-    rule.event_id = ContainerUtil.newHashSet(TEST_RULE);
+    GroupRemoteRule rule = new GroupRemoteRule();
+    rule.event_id = new HashSet<>(Collections.singletonList(TEST_RULE));
 
     final Map<String, Set<String>> dataRules = new HashMap<>();
     for (String datum : eventData) {
-      dataRules.put(datum, ContainerUtil.newHashSet(TEST_RULE));
+      dataRules.put(datum, new HashSet<>(Collections.singletonList(TEST_RULE)));
     }
-    rule.event_data = dataRules;
+    rule.setEvent_data(dataRules);
     group.rules = rule;
     return group;
   }
 
-  @NotNull
-  public File getEventsTestSchemeFile() throws IOException {
+  public @NotNull Path getEventsTestSchemeFile() throws IOException {
     return getDefaultMetadataFile(myRecorderId, TEST_EVENTS_SCHEME_FILE, DEPRECATED_TEST_EVENTS_SCHEME_FILE);
   }
 
@@ -145,7 +155,11 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
         approvedGroups.groups.add(createTestGroup(groupId, Collections.emptySet()));
       }
     }
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    FileUtil.writeToFile(getEventsTestSchemeFile(), gson.toJson(approvedGroups));
+
+    Path file = getEventsTestSchemeFile();
+    Files.createDirectories(file.getParent());
+    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
+      SerializationHelper.INSTANCE.serialize(writer, approvedGroups);
+    }
   }
 }

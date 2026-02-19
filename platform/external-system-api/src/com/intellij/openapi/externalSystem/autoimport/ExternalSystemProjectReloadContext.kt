@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface ExternalSystemProjectReloadContext {
 
   /**

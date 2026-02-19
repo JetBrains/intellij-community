@@ -1,0 +1,19 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+fun test(a: Any, i: Int, b: Boolean, b2: Boolean) {
+    // c1
+    if<caret> (a is Int && a in 0..1 && b && !b2) { // c2
+        if (a is String) { // c3
+            println("1") // c4
+        } // c5
+    } else if (a is Int && a > 5 && !b && b2) { // c6
+        for (j in 100..500) { // c7
+            println("2") // c8
+        } // c9
+    } else if (a is Int && a !in 4..5 && b && b2) { // c10
+        println("3") // c11
+    } else { // c12
+        println("4") // c13
+    } // c14
+    // c15
+}

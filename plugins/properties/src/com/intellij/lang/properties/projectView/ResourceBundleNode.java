@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.projectView;
 
@@ -11,8 +11,12 @@ import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.ValidateableNode;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundleImpl;
+import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -24,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +36,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implements ValidateableNode, DropTargetNode, ResourceBundleAwareNode {
   public ResourceBundleNode(@NotNull Project project, @NotNull ResourceBundle resourceBundle, final ViewSettings settings) {
@@ -39,8 +49,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     List<PropertiesFile> propertiesFiles = getResourceBundle().getPropertiesFiles();
     Collection<AbstractTreeNode<?>> children = new ArrayList<>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
@@ -66,6 +75,14 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     final List<PropertiesFile> list = rb.getPropertiesFiles();
     if (!list.isEmpty()) {
       return list.get(0).getVirtualFile();
+    }
+    return null;
+  }
+
+  @Override
+  protected @Nullable VirtualFile getCacheableFile() {
+    if (getResourceBundle() instanceof ResourceBundleImpl rb) {
+      return rb.getDefaultVirtualFile();
     }
     return null;
   }
@@ -167,28 +184,25 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     resourceBundleManager.dissociateResourceBundle(resourceBundle);
     final ResourceBundle updatedBundle = resourceBundleManager.combineToResourceBundleAndGet(toAddInResourceBundle, baseName);
     FileEditorManager.getInstance(myProject).openFile(new ResourceBundleAsVirtualFile(updatedBundle), true);
-    ProjectView.getInstance(myProject).refresh();
+    ProjectView.getInstance(myProject).refresh(ProjectViewUpdateCause.PLUGIN_PROPERTIES);
   }
 
   @Override
   public void dropExternalFiles(PsiFileSystemItem[] sourceFileArray, DataContext dataContext) {
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     ResourceBundle rb = getResourceBundle();
     return rb.isValid() ? ContainerUtil.map(rb.getPropertiesFiles(), PropertiesFile::getVirtualFile) : Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public ResourceBundle getResourceBundle() {
+  public @NotNull ResourceBundle getResourceBundle() {
     return Objects.requireNonNull(getValue());
   }
 
-  @Nullable
-  private static PropertiesFile extractPropertiesFileFromNode(TreeNode node) {
+  private static @Nullable PropertiesFile extractPropertiesFileFromNode(TreeNode node) {
     if (!(node instanceof DefaultMutableTreeNode)) return null;
     final Object userObject = ((DefaultMutableTreeNode) node).getUserObject();
     if (!(userObject instanceof PsiFileNode)) return null;

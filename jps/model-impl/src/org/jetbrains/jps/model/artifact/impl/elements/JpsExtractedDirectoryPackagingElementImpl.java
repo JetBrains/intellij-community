@@ -1,29 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.artifact.impl.elements;
 
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsExtractedDirectoryPackagingElement;
 
-public class JpsExtractedDirectoryPackagingElementImpl extends JpsFileCopyPackagingElementBase<JpsExtractedDirectoryPackagingElementImpl>
+import java.util.Objects;
+
+class JpsExtractedDirectoryPackagingElementImpl extends JpsFileCopyPackagingElementBase<JpsExtractedDirectoryPackagingElementImpl>
   implements JpsExtractedDirectoryPackagingElement {
   private String myPathInJar;
 
-  public JpsExtractedDirectoryPackagingElementImpl(String filePath, String pathInJar) {
+  JpsExtractedDirectoryPackagingElementImpl(String filePath, String pathInJar) {
     super(filePath);
     myPathInJar = pathInJar;
   }
 
-  @NotNull
   @Override
-  public JpsExtractedDirectoryPackagingElementImpl createCopy() {
+  public @NotNull JpsExtractedDirectoryPackagingElementImpl createElementCopy() {
     return new JpsExtractedDirectoryPackagingElementImpl(myFilePath, myPathInJar);
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsExtractedDirectoryPackagingElementImpl modified) {
-    super.applyChanges(modified);
-    setPathInJar(modified.myPathInJar);
   }
 
   @Override
@@ -35,7 +29,6 @@ public class JpsExtractedDirectoryPackagingElementImpl extends JpsFileCopyPackag
   public void setPathInJar(String pathInJar) {
     if (!Objects.equals(myPathInJar, pathInJar)) {
       myPathInJar = pathInJar;
-      fireElementChanged();
     }
   }
 }

@@ -21,8 +21,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProc
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -49,18 +50,18 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
     this(context, Collections.emptyList(), true, false);
   }
 
-  public DefaultGroovyVariableNameValidator(GroovyPsiElement context, Collection<String> restrictedNames) {
+  public DefaultGroovyVariableNameValidator(GroovyPsiElement context, @Unmodifiable Collection<String> restrictedNames) {
     this(context, restrictedNames, true, false);
   }
 
   public DefaultGroovyVariableNameValidator(GroovyPsiElement context,
-                                            Collection<String> restrictedNames,
+                                            @Unmodifiable Collection<String> restrictedNames,
                                             boolean includeFields) {
     this(context, restrictedNames, includeFields, false);
   }
 
   public DefaultGroovyVariableNameValidator(GroovyPsiElement context,
-                                            Collection<String> restrictedNames,
+                                            @Unmodifiable Collection<String> restrictedNames,
                                             final boolean includeFields,
                                             final boolean checkIntoInner) {
     myContext = context;

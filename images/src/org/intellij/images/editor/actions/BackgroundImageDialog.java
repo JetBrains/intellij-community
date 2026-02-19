@@ -1,14 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.editor.actions;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -21,14 +28,24 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
@@ -38,24 +55,54 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
+import org.intellij.images.fileTypes.impl.SvgFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JSlider;
+import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.Method;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.FRAME_PROP;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.createTemporaryBackgroundTransform;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getBackgroundSpec;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getIdeBackgroundColor;
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.resetBackgroundImagePainters;
 
 public class BackgroundImageDialog extends DialogWrapper {
   private static final String EDITOR = "editor";
@@ -69,16 +116,16 @@ public class BackgroundImageDialog extends DialogWrapper {
   private String myPreviewTarget;
   private ActionToolbar myToolbar;
 
-  private JPanel myRoot;
-  private JSlider myOpacitySlider;
-  private JSpinner myOpacitySpinner;
-  private JPanel myPreviewPanel;
-  private ComboboxWithBrowseButton myPathField;
-  private JBCheckBox myThisProjectOnlyCb;
-  private JPanel myFlipPanel;
-  private JPanel myAnchorPanel;
-  private JPanel myFillPanel;
-  private JPanel myTargetPanel;
+  private final JPanel myRoot;
+  private final JSlider myOpacitySlider;
+  private final JSpinner myOpacitySpinner;
+  private final JPanel myPreviewPanel;
+  private final ComboboxWithBrowseButton myPathField;
+  private final JBCheckBox myThisProjectOnlyCb;
+  private final JPanel myFlipPanel;
+  private final JPanel myAnchorPanel;
+  private final JPanel myFillPanel;
+  private final JPanel myTargetPanel;
 
   private final JBCheckBox myFlipHorCb = new JBCheckBox();
   private final JBCheckBox myFlipVerCb = new JBCheckBox();
@@ -92,8 +139,87 @@ public class BackgroundImageDialog extends DialogWrapper {
   public BackgroundImageDialog(@NotNull Project project, @Nullable @NlsSafe String selectedPath) {
     super(project, true);
     myProject = project;
+    {
+      ComboBox<String> comboBox = new ComboBox<>(new CollectionComboBoxModel<>(), 100);
+      myPathField = new ComboboxWithBrowseButton(comboBox);
+    }
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myRoot = new JPanel();
+      myRoot.setLayout(new GridLayoutManager(2, 1, new Insets(10, 10, 10, 10), -1, -1));
+      myPreviewPanel = new JPanel();
+      myPreviewPanel.setLayout(new BorderLayout(0, 0));
+      myRoot.add(myPreviewPanel, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                     null, null, 0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(5, 7, new Insets(0, 0, 0, 0), -1, -1));
+      myRoot.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      panel1.add(myPathField, new GridConstraints(0, 2, 1, 5, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                  GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myOpacitySlider = new JSlider();
+      myOpacitySlider.setPaintTicks(false);
+      panel1.add(myOpacitySlider, new GridConstraints(1, 2, 1, 4, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                      GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                      null, 0, false));
+      myOpacitySpinner = new JSpinner();
+      panel1.add(myOpacitySpinner, new GridConstraints(1, 6, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED,
+                                                       new Dimension(64, 16), null, null, 0, false));
+      final JBLabel jBLabel1 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel1, this.$$$getMessageFromBundle$$$("messages/IdeBundle", "label.text.image"));
+      panel1.add(jBLabel1,
+                 new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JBLabel jBLabel2 = new JBLabel();
+      this.$$$loadLabelText$$$(jBLabel2, this.$$$getMessageFromBundle$$$("messages/IdeBundle", "label.text.opacity"));
+      panel1.add(jBLabel2,
+                 new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myFillPanel = new JPanel();
+      myFillPanel.setLayout(new BorderLayout(0, 0));
+      panel1.add(myFillPanel,
+                 new GridConstraints(2, 5, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAnchorPanel = new JPanel();
+      myAnchorPanel.setLayout(new BorderLayout(0, 0));
+      panel1.add(myAnchorPanel,
+                 new GridConstraints(2, 6, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myFlipPanel = new JPanel();
+      myFlipPanel.setLayout(new BorderLayout(0, 0));
+      panel1.add(myFlipPanel,
+                 new GridConstraints(2, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myThisProjectOnlyCb = new JBCheckBox();
+      this.$$$loadButtonText$$$(myThisProjectOnlyCb,
+                                this.$$$getMessageFromBundle$$$("messages/IdeBundle", "checkbox.text.this.project.only"));
+      panel1.add(myThisProjectOnlyCb,
+                 new GridConstraints(3, 0, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                     GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTargetPanel = new JPanel();
+      myTargetPanel.setLayout(new BorderLayout(0, 0));
+      panel1.add(myTargetPanel, new GridConstraints(4, 0, 1, 5, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
+                                                    null, 0, false));
+      final Spacer spacer1 = new Spacer();
+      panel1.add(spacer1, new GridConstraints(3, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+      final Spacer spacer2 = new Spacer();
+      panel1.add(spacer2, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                              GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      jBLabel1.setLabelFor(myPathField);
+      jBLabel2.setLabelFor(myOpacitySpinner);
+    }
     setTitle(IdeBundle.message("dialog.title.background.image"));
-    myEditorPreview = createEditorPreview();
+    myEditorPreview = createEditorPreview(getDisposable());
     myIdePreview = createFramePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
     UiNotifyConnector.doWhenFirstShown(myRoot, () -> createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
@@ -110,6 +236,78 @@ public class BackgroundImageDialog extends DialogWrapper {
     pack();
   }
 
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myRoot; }
+
   @Override
   protected Action @NotNull [] createActions() {
     return ArrayUtil.append(super.createActions(), new AbstractAction(IdeBundle.message("button.clear.and.close")) {
@@ -120,11 +318,6 @@ public class BackgroundImageDialog extends DialogWrapper {
     });
   }
 
-  private void createUIComponents() {
-    ComboBox<String> comboBox = new ComboBox<>(new CollectionComboBoxModel<>(), 100);
-    myPathField = new ComboboxWithBrowseButton(comboBox);
-  }
-
   @Override
   protected void dispose() {
     super.dispose();
@@ -132,12 +325,12 @@ public class BackgroundImageDialog extends DialogWrapper {
     System.getProperties().remove(myPropertyTmp);
   }
 
-  @NotNull
-  private static SimpleEditorPreview createEditorPreview() {
+  private static @NotNull SimpleEditorPreview createEditorPreview(@NotNull Disposable disposable) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     ColorAndFontOptions options = new ColorAndFontOptions();
     options.reset();
     options.selectScheme(scheme.getName());
+    Disposer.register(disposable, () -> options.disposeUIResources());
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     int index;
     int attempt = 0;
@@ -148,9 +341,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     return new SimpleEditorPreview(options, pages[index], false);
   }
 
-  @NotNull
-  private static JComponent createFramePreview() {
-    EditorEmptyTextPainter painter = ServiceManager.getService(EditorEmptyTextPainter.class);
+  private static @NotNull JComponent createFramePreview() {
+    EditorEmptyTextPainter painter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
       @Override
       protected void paintComponent(Graphics g) {
@@ -172,26 +364,22 @@ public class BackgroundImageDialog extends DialogWrapper {
     return panel;
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  @NotNull
-  private String getRecentItemsKey() {
+  private @NotNull String getRecentItemsKey() {
     return getDimensionServiceKey() + "#recent";
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myRoot;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myPathField;
   }
 
@@ -206,6 +394,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     actionGroup.add(createToggleAction(EDITOR, IdeBundle.message("toggle.editor.and.tools")));
     actionGroup.add(createToggleAction(FRAME, IdeBundle.message("toggle.empty.frame")));
     myToolbar = ActionManager.getInstance().createActionToolbar(getTitle(), actionGroup, true);
+    myToolbar.setTargetComponent(myToolbar.getComponent());
     JComponent toolbarComponent = myToolbar.getComponent();
     toolbarComponent.setBorder(JBUI.Borders.empty());
     myTargetPanel.add(toolbarComponent);
@@ -215,9 +404,10 @@ public class BackgroundImageDialog extends DialogWrapper {
     initFillPanel(myFillPanel, myFillGroup, getDisposable());
     ((CardLayout)myPreviewPanel.getLayout()).show(myPreviewPanel, EDITOR);
     myPathField.getComboBox().setEditable(true);
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
-      .withFileFilter(file -> ImageFileTypeManager.getInstance().isImage(file));
-    myPathField.addBrowseFolderListener(null, null, null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
+    var descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
+      .withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", ImagesBundle.message("filetype.images.display.name")),
+                           ImageFileTypeManager.getInstance().getImageFileType(), SvgFileType.INSTANCE);
+    myPathField.addBrowseFolderListener(null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
     JTextComponent textComponent = getComboEditor();
     textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -226,12 +416,12 @@ public class BackgroundImageDialog extends DialogWrapper {
         imagePathChanged();
       }
     });
-    for (Enumeration<AbstractButton> e = getFillRbGroup().getElements(); e.hasMoreElements();) {
+    for (Enumeration<AbstractButton> e = getFillRbGroup().getElements(); e.hasMoreElements(); ) {
       AbstractButton button = e.nextElement();
       button.setActionCommand(button.getText());
       button.addItemListener(this::fillOrAnchorChanged);
     }
-    for (Enumeration<AbstractButton> e = getAnchorRbGroup().getElements(); e.hasMoreElements();) {
+    for (Enumeration<AbstractButton> e = getAnchorRbGroup().getElements(); e.hasMoreElements(); ) {
       AbstractButton button = e.nextElement();
       button.setActionCommand(button.getText());
       button.addItemListener(this::fillOrAnchorChanged);
@@ -276,6 +466,11 @@ public class BackgroundImageDialog extends DialogWrapper {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         targetChanged(target);
         myToolbar.updateActionsImmediately();
@@ -305,6 +500,8 @@ public class BackgroundImageDialog extends DialogWrapper {
       myEditorPreview.updateView();
     }
     updatePreview();
+    setOKButtonText(EDITOR.equals(myPreviewTarget) ? IdeBundle.message("set.action.editor.and.tools")
+                                                   : IdeBundle.message("set.action.empty.frame"));
   }
 
   public void setSelectedPath(@NlsSafe String path) {
@@ -355,7 +552,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     String prop = getSystemProp();
     PropertiesComponent.getInstance(myProject).setValue(prop, null);
     PropertiesComponent.getInstance().setValue(prop, null);
-    repaintAllWindows();
+    resetBackgroundImagePainters();
   }
 
   @Override
@@ -375,7 +572,7 @@ public class BackgroundImageDialog extends DialogWrapper {
       PropertiesComponent.getInstance().setValue(prop, value);
     }
 
-    repaintAllWindows();
+    resetBackgroundImagePainters();
   }
 
   private void storeRecentImages() {
@@ -408,8 +605,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     return getSystemProp(EDITOR.equals(myPreviewTarget));
   }
 
-  @NotNull
-  private static String getSystemProp(boolean forEditor) {
+  private static @NotNull String getSystemProp(boolean forEditor) {
     return forEditor ? EDITOR_PROP : FRAME_PROP;
   }
 
@@ -425,8 +621,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     getOKAction().setEnabled(!clear);
   }
 
-  @NotNull
-  private String calcNewValue() {
+  private @NotNull String calcNewValue() {
     String path = (String)myPathField.getComboBox().getEditor().getItem();
     String type = getFillRbGroup().getSelection().getActionCommand().replace('-', '_');
     String anchor = getAnchorRbGroup().getSelection().getActionCommand().replace('-', '_');
@@ -454,8 +649,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     return myAnchorGroup;
   }
 
-  @NotNull
-  private static Color getSelectionBackground() {
+  private static @NotNull Color getSelectionBackground() {
     return ColorUtil.mix(UIUtil.getListSelectionBackground(true), UIUtil.getLabelBackground(), StartupUiUtil.isUnderDarcula() ? .5 : .75);
   }
 
@@ -480,7 +674,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     }
     Color color = getSelectionBackground();
     p.setLayout(new GridLayout(3, 3, 1, 1));
-    for (int i = 0; i < names.length; i ++) {
+    for (int i = 0; i < names.length; i++) {
       JRadioButton button = new JRadioButton(names[i], values[i] == IdeBackgroundUtil.Anchor.CENTER);
       button.setToolTipText(StringUtil.capitalize(button.getText().replace('-', ' ')));
       buttonGroup.add(button);
@@ -497,7 +691,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     }
     Color color = getSelectionBackground();
     p.setLayout(new GridLayout(1, values.length, 1, 1));
-    for (int i = 0; i < values.length; i ++) {
+    for (int i = 0; i < values.length; i++) {
       JRadioButton button = new JRadioButton(names[i], values[i] == Fill.SCALE);
       buttonGroup.add(button);
       button.setToolTipText(StringUtil.capitalize(button.getText().replace('-', ' ')));
@@ -507,8 +701,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  private static BufferedImage sampleImage() {
+  private static @NotNull BufferedImage sampleImage() {
     int size = 16;
     BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
     Graphics ig = image.getGraphics();
@@ -522,10 +715,9 @@ public class BackgroundImageDialog extends DialogWrapper {
     return image;
   }
 
-  @NotNull
-  private static JBPanelWithEmptyText addClickablePanel(@NotNull JPanel buttonPanel,
-                                                        @NotNull JToggleButton button,
-                                                        @NotNull Color color) {
+  private static @NotNull JBPanelWithEmptyText addClickablePanel(@NotNull JPanel buttonPanel,
+                                                                 @NotNull JToggleButton button,
+                                                                 @NotNull Color color) {
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
 
       @Override

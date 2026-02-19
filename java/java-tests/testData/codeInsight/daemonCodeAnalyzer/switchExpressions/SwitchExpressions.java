@@ -3,7 +3,7 @@ import java.util.Random;
 class SwitchExpressions {
   enum E { E1, E2 }
 
-  void m() {
+  void m(String s, Integer i) {
     System.out.println(switch (new Random().nextInt()) {
       default -> "whatever";
     });
@@ -12,17 +12,22 @@ class SwitchExpressions {
 
     System.out.println(switch (new Random().nextInt()) {
       case 0 -> throw new IllegalStateException("no args");
-      <error descr="Different case kinds used in the switch">case 1:</error> yield "lone";
+      <error descr="Different 'case' kinds used in 'switch'">case 1:</error> yield "lone";
     });
 
     System.out.println(
-      switch (<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">new Object()</error>) {
+      switch (<error descr="Selector type of 'java.lang.Object' is not supported at language level '15'">new Object()</error>) {
         default -> "whatever";
       }
     );
 
     System.out.println(switch (E.valueOf("E1")) {
-      case <error descr="Constant expression required">null</error> -> 0;
+      case <error descr="Patterns in switch are not supported at language level '15'">null</error> -> 0;
+      case E1 -> 1;
+      case E2 -> 2;
+    });
+
+    System.out.println(switch (E.valueOf("E1")) {
       case <error descr="An enum switch case label must be the unqualified name of an enumeration constant">E.E1</error> -> 1;
       case E2 -> 2;
       case <error descr="Incompatible types. Found: 'int', required: 'SwitchExpressions.E'">1</error> -> 1;
@@ -40,6 +45,14 @@ class SwitchExpressions {
     System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">E.valueOf("E1")</error>) {
       case E1 -> 1;
     });
+    System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">s</error>) {
+      case "blah blah blah" -> 1;
+    });
+    System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">i</error>) {
+      case 42 -> 1;
+    });
+    System.out.println(switch (<error descr="'switch' expression does not have any case clauses">s</error>) {});
+    System.out.println(switch (<error descr="'switch' expression does not have any case clauses">i</error>) {});
     System.out.println(switch (E.valueOf("E1")) {
       case E1 -> 1;
       case E2 -> 2;
@@ -53,9 +66,9 @@ class SwitchExpressions {
       }
       System.out.println(switch (new Random().nextInt()) {
         case -1: <error descr="Return outside of enclosing switch expression">return;</error>
-        case -2: <error descr="Continue outside of enclosing switch expression">continue lab;</error>
-        case -3: <error descr="Continue outside of enclosing switch expression">continue;</error>
-        default: <error descr="Break outside of enclosing switch expression">break lab;</error>
+        case -2: <error descr="Continue out of switch expression is not allowed">continue lab;</error>
+        case -3: <error descr="Continue out of switch expression is not allowed">continue;</error>
+        default: <error descr="Break out of switch expression is not allowed">break lab;</error>
       });
     }
   }
@@ -64,5 +77,11 @@ class SwitchExpressions {
   
   boolean testEmpty(Empty e) {
     return switch (<error descr="'switch' expression does not have any case clauses">e</error>) {};
+  }
+  
+  byte assignability(String s) {
+    return switch(s) {
+      default -> 42;
+    };
   }
 }

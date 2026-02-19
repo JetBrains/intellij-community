@@ -17,7 +17,15 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReferenceList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,6 +50,15 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
     myFactory = JavaPsiFacade.getElementFactory(getProject());
   }
 
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
   @Override
   public String toString() {
     return "light reference list";

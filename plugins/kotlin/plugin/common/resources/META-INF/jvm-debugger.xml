@@ -1,0 +1,130 @@
+<idea-plugin>
+  <actions>
+    <action id="Kotlin.XDebugger.ToggleKotlinVariableView"
+            class="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesView">
+      <add-to-group group-id="XDebugger.Settings" relative-to-action="XDebugger.Inline" anchor="after"/>
+    </action>
+
+    <action id="InspectBreakpointApplicability" class="org.jetbrains.kotlin.idea.debugger.core.breakpoints.InspectBreakpointApplicabilityAction" internal="true">
+      <add-to-group group-id="KotlinInternalGroup"/>
+    </action>
+  </actions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.debugger.evaluate.DropCodeFragmentCacheOnRefreshListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+    <listener class="org.jetbrains.kotlin.idea.debugger.coroutine.DisableCoroutineViewListener"
+              topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+  </projectListeners>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.debugger.kotlinStackFrameValueContributor"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameValueContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.dexBytecodeInspector"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculator"
+                    interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator" dynamic="true"
+                    />
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.core.classNameContributor" dynamic="true"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider$ClassNameContributor"
+    />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <debugger.creationStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
+    <debugger.dumpItemsProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutinesDumpAsyncProvider"/>
+    <registryKey key="debugger.kotlin.show.coroutines.in.threadDumpPanel" defaultValue="true"
+                 description="Merge coroutine dump with thread dump in ThreadDumpPanel"/>
+
+    <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.KotlinJvmDebuggerFacadeImpl"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
+    <registryKey key="debugger.kotlin.auto.show.coroutines.view" defaultValue="false"
+                 description="Automatically open coroutines view if stack trace contains coroutine stack frames"/>
+
+    <xdebugger.settings implementation="org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings"/>
+    <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType"/>
+    <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
+    <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType"/>
+
+    <debugger.compoundRendererProvider id="KotlinClassRendererProvider"
+                                       implementation="org.jetbrains.kotlin.idea.debugger.core.render.KotlinClassRendererProvider"/>
+    <debugger.positionManagerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory"/>
+    <registryKey key="debugger.kotlin.inline.stack.trace.enabled" defaultValue="true" description="Enable inline stack trace"/>
+
+    <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter"/>
+    <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionProvider"/>
+
+    <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinExtraSteppingFilter"/>
+    <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinSyntheticTypeComponentProvider"/>
+    <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFieldBreakpointHandlerFactory"/>
+    <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinLineBreakpointHandlerFactory"/>
+    <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
+    <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider"/>
+    <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSimpleGetterProvider"/>
+    <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
+
+    <debuggerEditorTextProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.debugger.core.EnclosingKotlinEditorTextProvider"/>
+    <registryKey key="debugger.kotlin.analysis.api.editor.text.provider" defaultValue="true"
+                 description="Use Analysis API-based implementation of 'EditorTextProvider'"/>
+
+    <debuggerClassFilterProvider implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinDebuggerInternalClassesFilterProvider"/>
+
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.debugger.core.filter.JvmDebuggerAddFilterStartupActivity"/>
+
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinAlternativeSourceNotificationProvider"/>
+
+    <exceptionFilter
+            implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinExceptionFilterFactory"
+            order="first"/>
+
+    <registryKey
+            key="kotlin.debugger.coroutines.trace"
+            description="Trace coroutines debugger output"
+            defaultValue="false"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.debugger.coroutines.max"
+            description="Maximum amount of coroutines for debug"
+            defaultValue="1000"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.debugger.coroutines.switch"
+            description="Continuation information provider possible values are: DISPATCHED_CONTINUATION, CANCELLABLE_CONTINUATION."
+            defaultValue="DISPATCHED_CONTINUATION"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.debugger.evaluator.enable.reflection.patching"
+            description="Patch evaluated expression so it uses reflection for calls in order to call private members"
+            defaultValue="true"
+            restartRequired="false"/>
+    <registryKey
+            key="kotlin.debugger.analysis.api.file.applicability.checker"
+            description="Use Analysis API-based implementation for file applicability checker"
+            defaultValue="false"
+            restartRequired="false"/>
+    <registryKey
+            key="debugger.kotlin.multiline.lambda.breakpoints"
+            defaultValue="false"
+            description="Allow installing breakpoint on multiline lambdas"/>
+    <registryKey
+            key="debugger.kotlin.report.smart.step.into.targets.detection.failure"
+            defaultValue="true"
+            description="Report an error when smart targets detection in bytecode failed (leads to a failure in tests)"/>
+    <registryKey
+            key="debugger.kotlin.step.through.inline.lambdas"
+            defaultValue="true"
+            description="Step over action steps into inline lambdas (e.g., calls of let/run/synchronized/...)"/>
+    <registryKey
+            key="debugger.enable.kotlin.evaluator.in.java.context"
+            defaultValue="false"
+            description="Enable Kotlin evaluation features when hitting/suspending in Java frames (suggest Kotlin language in evaluation prompts, conditional breakpoints, and 'Evaluate and log' field; support Kotlin watches)"/>
+  </extensions>
+</idea-plugin>

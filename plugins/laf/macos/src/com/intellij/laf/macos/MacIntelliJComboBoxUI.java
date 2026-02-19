@@ -1,27 +1,44 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.laf.macos;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.util.ColoredItem;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.ComboPopup;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 
@@ -41,12 +58,10 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override
-  protected void installDarculaDefaults() {
+  protected void installDefaults() {
+    super.installDefaults();
     comboBox.setOpaque(false);
   }
-
-  @Override
-  protected void uninstallDarculaDefaults() {}
 
   @Override
   protected JButton createArrowButton() {
@@ -55,11 +70,14 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
       public void paint(Graphics g) {
-        if (!MacIntelliJLaf.Companion.isMacLaf()) return; // Paint events may still arrive after UI switch until entire UI is updated.
+        // paint events may still arrive after UI switch until the entire UI is updated
+        if (!LafManager.getInstance().getCurrentUIThemeLookAndFeel().getId().equals("macOSLight")) {
+          return;
+        }
 
         Icon icon = MacIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {
-          Image image = IconUtil.toImage(icon);
+          Image image = IconLoader.toImage(icon, null);
           StartupUiUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
         }
         else {
@@ -87,7 +105,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom : 0;
     int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
-    editorWidth = Math.max(editorWidth, DarculaUIUtil.MINIMUM_WIDTH.get() + i.left);
+    editorWidth = Math.max(editorWidth, JBUI.CurrentTheme.ComboBox.minimumSize().width + i.left);
 
     int width = size != null ? size.width : 0;
     int height = size != null ? size.height : 0;
@@ -126,11 +144,11 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override
   protected ComboPopup createPopup() {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
-      return new DarculaJBPopupComboPopup<Object>(comboBox) {
+      return new DarculaJBPopupComboPopup<>(comboBox) {
         @Override
         public void configureList(@NotNull JList<Object> list) {
           super.configureList(list);
-          list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
+          list.setSelectionBackground(JBColor.lazy(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
         }
       };
     }
@@ -138,7 +156,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       @Override
       protected void configureList() {
         super.configureList();
-        list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
+        list.setSelectionBackground(JBColor.lazy(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
       }
     };
   }

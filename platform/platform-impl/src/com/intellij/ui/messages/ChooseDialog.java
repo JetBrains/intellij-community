@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
 import com.intellij.openapi.project.Project;
@@ -12,9 +12,17 @@ import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 
 /**
@@ -126,8 +134,7 @@ public class ChooseDialog extends MessageDialog {
     return myComboBox;
   }
 
-  @Nullable
-  public String getInputString() {
+  public @Nullable String getInputString() {
     if (getExitCode() == 0) {
       return myComboBox.getSelectedItem().toString();
     }

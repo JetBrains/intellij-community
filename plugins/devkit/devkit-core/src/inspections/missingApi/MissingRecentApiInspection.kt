@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.missingApi
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -6,22 +6,26 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.group
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.string
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.FormBuilder
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
-import org.jetbrains.idea.devkit.util.PsiUtil
-import java.awt.BorderLayout
-import javax.swing.JComponent
-import javax.swing.JPanel
+
+internal val MISSING_API_INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.java.simpleName)
 
 /**
  * Inspection that warns plugin authors if they use IntelliJ Platform's APIs that aren't available
@@ -33,16 +37,15 @@ import javax.swing.JPanel
  *
  * *Implementation details*.
  * Info on when APIs were first introduced is obtained from "available since" artifacts.
- * They are are built on the build server for each IDE build and uploaded to
+ * They are built on the build server for each IDE build and uploaded to
  * [IntelliJ artifacts repository](https://www.jetbrains.com/intellij-repository/releases/),
  * containing external annotations [org.jetbrains.annotations.ApiStatus.AvailableSince]
  * where APIs' introduction versions are specified.
  */
+@VisibleForTesting
+@IntellijInternalApi
+@Internal
 class MissingRecentApiInspection : LocalInspectionTool() {
-
-  companion object {
-    val INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.java.simpleName)
-  }
 
   /**
    * Actual "since" build constraint of the plugin under development.
@@ -67,7 +70,7 @@ class MissingRecentApiInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val project = holder.project
     val virtualFile = holder.file.virtualFile
-    if (PsiUtil.isIdeaProject(project) || virtualFile != null && TestSourcesFilter.isTestSources(virtualFile, project)) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project) || virtualFile != null && TestSourcesFilter.isTestSources(virtualFile, project)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     val module = ModuleUtil.findModuleForPsiElement(holder.file) ?: return PsiElementVisitor.EMPTY_VISITOR
@@ -80,32 +83,10 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     )
   }
 
-  override fun createOptionsPanel(): JComponent {
-    val emptyBuildNumber = BuildNumber.fromString("1.0")!!
-
-    val sinceField = BuildNumberField("since", emptyBuildNumber)
-    sinceBuild?.also { sinceField.value = it }
-    sinceField.emptyText.text = DevKitBundle.message("inspections.missing.recent.api.settings.since.empty.text")
-    sinceField.valueEditor.addListener { value ->
-      sinceBuildString = value.takeIf { it != emptyBuildNumber }?.asString()
-    }
-
-    val untilField = BuildNumberField("until", untilBuild ?: emptyBuildNumber)
-    untilField.emptyText.text = DevKitBundle.message("inspections.missing.recent.api.settings.until.empty.text")
-    untilBuild?.also { untilField.value = it }
-    untilField.valueEditor.addListener { value ->
-      untilBuildString = value.takeIf { it != emptyBuildNumber }?.asString()
-    }
-
-    val formBuilder = FormBuilder.createFormBuilder()
-      .addComponent(JBLabel(DevKitBundle.message("inspections.missing.recent.api.settings.range")))
-      .addLabeledComponent(DevKitBundle.message("inspections.missing.recent.api.settings.since"), sinceField)
-      .addLabeledComponent(DevKitBundle.message("inspections.missing.recent.api.settings.until"), untilField)
-
-    val container = JPanel(BorderLayout())
-    container.add(formBuilder.panel, BorderLayout.NORTH)
-    return container
-  }
+  override fun getOptionsPane(): OptPane = pane(
+    group(DevKitBundle.message("inspections.missing.recent.api.settings.range"),
+          string("sinceBuildString", DevKitBundle.message("inspections.missing.recent.api.settings.since"), BuildNumberValidator()),
+          string("untilBuildString", DevKitBundle.message("inspections.missing.recent.api.settings.until"), BuildNumberValidator())))
 
   private fun getTargetedSinceUntilRanges(module: Module): List<SinceUntilRange> {
     if (sinceBuild == null && untilBuild == null) {
@@ -121,7 +102,7 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXml) ?: return null
     val ideaVersion = ideaPlugin.ideaVersion
     val sinceBuild = ideaVersion.sinceBuild.value
-    val untilBuild = ideaVersion.untilBuild.value
+    val untilBuild = ideaVersion.strictUntilBuild.value ?: ideaVersion.untilBuild.value
     return SinceUntilRange(sinceBuild, untilBuild)
   }
 

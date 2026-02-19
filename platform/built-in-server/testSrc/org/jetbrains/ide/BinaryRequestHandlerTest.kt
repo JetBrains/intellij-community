@@ -17,7 +17,7 @@ import org.jetbrains.io.Decoder
 import org.jetbrains.io.MessageDecoder
 import org.junit.ClassRule
 import org.junit.Test
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 // we don't handle String in efficient way - because we want to test readContent/readChars also
@@ -49,8 +49,8 @@ internal class BinaryRequestHandlerTest {
     val port = builtInServerManager.port
     val channel = bootstrap.connect(loopbackSocketAddress(port)).syncUninterruptibly().channel()
     val buffer = channel.alloc().buffer()
-    buffer.writeByte('C'.toInt())
-    buffer.writeByte('H'.toInt())
+    buffer.writeByte('C'.code)
+    buffer.writeByte('H'.code)
     buffer.writeLong(MyBinaryRequestHandler.ID.mostSignificantBits)
     buffer.writeLong(MyBinaryRequestHandler.ID.leastSignificantBits)
 

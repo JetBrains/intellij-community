@@ -1,0 +1,9 @@
+// WITH_STDLIB
+// PROBLEM: "Redundant lambda arrow"
+
+fun bar(f: () -> Unit) {}
+fun bar(g: (Int, Int) -> Unit) {}
+
+fun test() {
+    bar(f = { -><caret> })
+}

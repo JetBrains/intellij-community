@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.highlighter;
 
@@ -24,13 +24,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TDQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TSQ;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERATORS;
 
-/**
- * @author ilyas
- */
 public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey LINE_COMMENT = createTextAttributesKey("Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
@@ -167,8 +167,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return new GroovyHighlightingLexer();
   }
 

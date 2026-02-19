@@ -1,0 +1,24 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.toml.ide.formatter.impl
+
+import com.intellij.lang.ASTNode
+import com.intellij.psi.TokenType
+import com.intellij.psi.tree.TokenSet
+import org.toml.lang.psi.TomlElementTypes.L_BRACKET
+import org.toml.lang.psi.TomlElementTypes.L_CURLY
+import org.toml.lang.psi.TomlElementTypes.R_BRACKET
+import org.toml.lang.psi.TomlElementTypes.R_CURLY
+
+val ARRAY_DELIMITERS: TokenSet = TokenSet.create(L_BRACKET, R_BRACKET)
+
+val INLINE_TABLE_DELIMITERS: TokenSet = TokenSet.create(L_CURLY, R_CURLY)
+
+fun ASTNode?.isWhitespaceOrEmpty(): Boolean = this == null || textLength == 0 || elementType == TokenType.WHITE_SPACE
+
+fun ASTNode.isArrayDelimiter(): Boolean = elementType in ARRAY_DELIMITERS
+
+fun ASTNode.isInlineTableDelimiter(): Boolean = elementType in INLINE_TABLE_DELIMITERS

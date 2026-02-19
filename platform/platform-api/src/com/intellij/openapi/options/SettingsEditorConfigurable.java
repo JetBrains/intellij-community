@@ -1,33 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigurable {
   private SettingsEditor<Settings> myEditor;
   private final Settings mySettings;
   private final SettingsEditorListener<Settings> myListener;
-  private final JComponent myComponent;
 
   public SettingsEditorConfigurable(@NotNull SettingsEditor<Settings> editor, @NotNull Settings settings) {
     myEditor = editor;
     mySettings = settings;
-    myListener = new SettingsEditorListener<Settings>() {
+    myListener = new SettingsEditorListener<>() {
       @Override
       public void stateChanged(@NotNull SettingsEditor<Settings> settingsEditor) {
         setModified(true);
       }
     };
     myEditor.addSettingsEditorListener(myListener);
-    myComponent = myEditor.getComponent();
   }
 
   @Override
   public JComponent createComponent() {
-    return myComponent;
+    return myEditor.getComponent();
   }
 
   @Override
@@ -51,14 +49,12 @@ public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigura
     myEditor = null;
   }
 
-  @NotNull
-  public SettingsEditor<Settings> getEditor() {
+  public @NotNull SettingsEditor<Settings> getEditor() {
     // myEditor is null only if disposed
     return myEditor;
   }
 
-  @NotNull
-  public Settings getSettings() {
+  public @NotNull Settings getSettings() {
     return mySettings;
   }
 }

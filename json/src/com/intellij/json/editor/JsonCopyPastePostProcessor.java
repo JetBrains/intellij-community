@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
@@ -18,7 +18,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,51 +34,34 @@ import java.awt.datatransfer.Transferable;
 import java.util.Collections;
 import java.util.List;
 
-public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlockTransferableData> {
+public final class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlockTransferableData> {
   static final List<TextBlockTransferableData> DATA_LIST = Collections.singletonList(new DumbData());
-  static class DumbData implements TextBlockTransferableData {
+  static final class DumbData implements TextBlockTransferableData {
     private static final DataFlavor DATA_FLAVOR = new DataFlavor(JsonCopyPastePostProcessor.class, "class: JsonCopyPastePostProcessor");
     @Override
-    public DataFlavor getFlavor()  {
+    public @Nullable DataFlavor getFlavor()  {
       return  DATA_FLAVOR;
-    }
-
-    @Override
-    public int getOffsetCount() {
-      return 0;
-    }
-
-    @Override
-    public int getOffsets(int[] offsets, int index) {
-      return index;
-    }
-
-    @Override
-    public int setOffsets(int[] offsets, int index) {
-      return index;
     }
   }
 
-  @NotNull
   @Override
-  public List<TextBlockTransferableData> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public @NotNull List<TextBlockTransferableData> collectTransferableData(@NotNull PsiFile file, @NotNull Editor editor, int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
     return ContainerUtil.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<TextBlockTransferableData> extractTransferableData(Transferable content) {
+  public @NotNull List<TextBlockTransferableData> extractTransferableData(@NotNull Transferable content) {
     // if this list is empty, processTransferableData won't be called
     return DATA_LIST;
   }
 
   @Override
-  public void processTransferableData(Project project,
-                                      Editor editor,
-                                      RangeMarker bounds,
+  public void processTransferableData(@NotNull Project project,
+                                      @NotNull Editor editor,
+                                      @NotNull RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<Boolean> indented,
-                                      List<TextBlockTransferableData> values) {
+                                      @NotNull Ref<? super Boolean> indented,
+                                      @NotNull List<? extends TextBlockTransferableData> values) {
     fixCommasOnPaste(project, editor, bounds);
   }
 
@@ -115,8 +102,7 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
     }
   }
 
-  @Nullable
-  private static PsiElement getParentPropertyOrArrayItem(@Nullable PsiElement startElement) {
+  private static @Nullable PsiElement getParentPropertyOrArrayItem(@Nullable PsiElement startElement) {
     PsiElement propertyOrArrayItem = PsiTreeUtil.getParentOfType(startElement, JsonProperty.class, JsonArray.class);
     if (propertyOrArrayItem instanceof JsonArray) {
       for (JsonValue value : ((JsonArray)propertyOrArrayItem).getValueList()) {
@@ -159,8 +145,7 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
     return property != null ? property.getTextRange().getEndOffset() : finalEndElement1.getTextOffset();
   }
 
-  @Nullable
-  private static PsiElement skipWhitespaces(@Nullable PsiElement element) {
+  private static @Nullable PsiElement skipWhitespaces(@Nullable PsiElement element) {
     while (element instanceof PsiWhiteSpace) {
       element = element.getNextSibling();
     }

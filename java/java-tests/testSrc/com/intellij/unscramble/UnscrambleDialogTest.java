@@ -5,9 +5,10 @@ import com.intellij.JavaTestUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -25,6 +26,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     try {
       Disposer.dispose(myContent);
     }
@@ -46,10 +48,11 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testException() {
-    showText("java.lang.NullPointerException\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)\n" +
-             "\tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)");
+    showText("""
+               java.lang.NullPointerException
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.findOneStyleSheet(XhtmlFileInfo.java:291)
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.getStylesheets(XhtmlFileInfo.java:174)
+               \tat com.intellij.psi.css.resolve.impl.XhtmlFileInfo.initStylesheets(XhtmlFileInfo.java:119)""");
     assertIcon("lightning.svg", myContent.getIcon());
     assertEquals("NPE", myContent.getDisplayName());
   }

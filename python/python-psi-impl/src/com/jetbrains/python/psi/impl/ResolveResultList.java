@@ -31,12 +31,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* @author yole
-*/
 public class ResolveResultList extends ArrayList<RatedResolveResult> {
   public static List<RatedResolveResult> to(PsiElement element) {
-    if (element== null) {
+    if (element == null) {
       return Collections.emptyList();
     }
     final ResolveResultList list = new ResolveResultList();
@@ -54,6 +51,7 @@ public class ResolveResultList extends ArrayList<RatedResolveResult> {
 
 
   public static List<PsiElement> getElements(@NotNull List<? extends ResolveResult> from) {
+    if (from.isEmpty()) return Collections.emptyList();
     return Lists.transform(from, res -> res != null ? res.getElement() : null);
   }
 

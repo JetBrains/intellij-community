@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.actions;
 
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.util.ThrowableRunnable;
 import junit.framework.TestSuite;
+import org.intellij.lang.annotations.Language;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,19 +15,19 @@ import java.io.File;
 
 @SuppressWarnings("unused")
 public class MarkdownHeaderTestSuite extends TestSuite {
-  public static class RunMarkdownHeaderUpTestSuite {
+  public static final class RunMarkdownHeaderUpTestSuite {
     public static TestSuite suite() {
       return new MarkdownHeaderUpTestSuite();
     }
   }
 
-  public static class RunMarkdownHeaderDownTestSuite {
+  public static final class RunMarkdownHeaderDownTestSuite {
     public static TestSuite suite() {
       return new MarkdownHeaderDownTestSuite();
     }
   }
 
-  public MarkdownHeaderTestSuite(@NotNull String actionId, @NotNull String dataName) {
+  public MarkdownHeaderTestSuite(@Language("devkit-action-id") @NotNull String actionId, @NotNull String dataName) {
     String testDataPath = getHeadersTestData();
     File dir = new File(testDataPath);
     File[] files = dir.listFiles((dir1, name) -> name.endsWith("_before.md"));
@@ -38,7 +41,14 @@ public class MarkdownHeaderTestSuite extends TestSuite {
         @Override
         protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
           configureByFile(testFile.getName());
-          executeAction(actionId);
+          final var editor = getEditor();
+          CommandProcessor.getInstance().executeCommand(
+            getProject(),
+            () -> EditorTestUtil.executeAction(editor, actionId, false),
+            "",
+            null,
+            editor.getDocument()
+          );
           checkResultByFile(dataName + "/" + StringUtil.substringBefore(testFile.getName(), "_before.md") + "_after.md");
         }
 

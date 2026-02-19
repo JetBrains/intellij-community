@@ -15,13 +15,9 @@
  */
 package com.intellij.uiDesigner;
 
-import junit.framework.TestCase;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import junit.framework.TestCase;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class TextDifferTest extends TestCase{
 
   public void test1() {

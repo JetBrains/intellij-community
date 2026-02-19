@@ -10,20 +10,25 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JSpinner;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.text.JTextComponent;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.MouseListener;
-
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
-import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
+public final class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   public static final String HOVER_PROPERTY = "JTextField.hover";
 
   private MouseListener hoverListener;
@@ -50,7 +55,7 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected void paintBackground(Graphics g) {
-    JTextComponent c = getComponent();
+    JComponent c = getComponent();
     if (ComponentUtil.getParentOfType((Class<? extends JComboBox>)JComboBox.class, (Component)c) != null) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
@@ -107,7 +112,7 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     Insets i = c.getInsets();
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || ComponentUtil.getParentOfType((Class<? extends JSpinner>)JSpinner.class,
                                                                                              (Component)c) != null ?
-           textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
+           textHeight : JBUI.CurrentTheme.TextField.minimumSize().height + i.top + i.bottom;
   }
 
   @Override

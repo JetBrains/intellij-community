@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.impl.ConsoleBuffer;
@@ -23,20 +9,34 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.hamcrest.core.IsCollectionContaining;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.text.ParseException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.either;
+import static org.hamcrest.CoreMatchers.everyItem;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.startsWith;
 
 public class OutputEventSplitterTest extends LightPlatformTestCase {
   private static final List<ProcessOutputType> ALL_TYPES = Arrays.asList(ProcessOutputType.STDERR, ProcessOutputType.STDOUT, ProcessOutputType.SYSTEM);
@@ -52,7 +52,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
   );
 
   private OutputEventSplitter mySplitter;
-  private final Map<ProcessOutputType, Console> myOutput = new THashMap<>();
+  private final Map<ProcessOutputType, Console> myOutput = new HashMap<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -97,6 +97,19 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
     Assert.assertArrayEquals(new String[]{"hello\n", "world\n", message+ "\n", "hi"}, strings);
   }
 
+  public void testTcMessageCrLf() {
+    mySplitter = createEventSplitter(false, true);
+    final ProcessOutputType stdout = ProcessOutputType.STDOUT;
+    mySplitter.process("hello\r\n", stdout);
+    mySplitter.process("world\r\n", stdout);
+    final String message = ServiceMessage.asString("testStart", Collections.emptyMap());
+    mySplitter.process("\r\n" + message + "\r\n", stdout);
+    mySplitter.process("hi", stdout);
+    mySplitter.flush();
+    final String[] strings = myOutput.get(stdout).toArray();
+    Assert.assertArrayEquals(new String[]{"hello\r\n", "world\r\n", message + "\r\n", "hi"}, strings);
+  }
+
   public void testLongMessage() throws ParseException {
     final int maxSize = ConsoleBuffer.getCycleBufferSize();
     final String string = "abc|n";
@@ -107,7 +120,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
 
     mySplitter.process(message, ProcessOutputType.STDOUT);
     final String shortenedLine = myOutput.get(ProcessOutputTypes.STDOUT).toList().get(0);
-    final ServiceMessage shortenedMessage = ServiceMessage.parse(shortenedLine);
+    final ServiceMessage shortenedMessage = ServiceMessageUtil.parse(shortenedLine, true);
     Assert.assertTrue("Failed to shorten message", shortenedMessage.toString().length() <= maxSize);
     final Map<String, String> attrs = shortenedMessage.getAttributes();
     Assert.assertEquals(attrs.get("expected").replaceFirst("abc", junk), attrs.get("actual"));
@@ -223,29 +236,29 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
 
   public void testSeveralServiceMessagesInOneLine() {
     mySplitter.process("##teamcity[name1]##teamcity[name2]##teamcity[name3]##teamcit", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("##teamcity[name1]", "##teamcity[name2]"),
+    Assert.assertEquals(List.of("##teamcity[name1]", "##teamcity[name2]"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
     mySplitter.process("y[name4]\n", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("##teamcity[name1]", "##teamcity[name2]", "##teamcity[name3]", "##teamcity[name4]\n"),
+    Assert.assertEquals(List.of("##teamcity[name1]", "##teamcity[name2]", "##teamcity[name3]", "##teamcity[name4]\n"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
   }
 
   public void testEmittingServiceMessagesPromptly() {
     mySplitter.process("Foo ##teamcity[name1]\n##team", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n"),
+    Assert.assertEquals(List.of("Foo ", "##teamcity[name1]\n"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
     mySplitter.process("city[name2]\n", ProcessOutputTypes.STDOUT);
-    Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n", "##teamcity[name2]\n"),
+    Assert.assertEquals(List.of("Foo ", "##teamcity[name1]\n", "##teamcity[name2]\n"),
                         myOutput.get(ProcessOutputTypes.STDOUT).toList());
   }
 
   public void testStderrNotBufferingServiceMessage() {
     mySplitter = createEventSplitter(false, false);
     mySplitter.process("Some stderr", ProcessOutputTypes.STDERR);
-    Assert.assertEquals(ContainerUtil.newArrayList("Some stderr"),
+    Assert.assertEquals(List.of("Some stderr"),
                         myOutput.get(ProcessOutputTypes.STDERR).toList());
     mySplitter.process("output\nFoo ##team", ProcessOutputTypes.STDERR);
-    Assert.assertEquals(ContainerUtil.newArrayList("Some stderr", "output\n", "Foo ##team"),
+    Assert.assertEquals(List.of("Some stderr", "output\n", "Foo ##team"),
                         myOutput.get(ProcessOutputTypes.STDERR).toList());
   }
 
@@ -371,17 +384,18 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
     }
   }
 
+  @PerformanceUnitTest
   public void testPerformanceWithLotsOfFragments() {
-    PlatformTestUtil.startPerformanceTest("Flushing lot's of fragments", 10, mySplitter::flush)
+    Benchmark.newBenchmark("Flushing lot's of fragments", mySplitter::flush)
       .setup(() -> {
         for (int i = 0; i < 10_000; i++) {
           mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         }
       })
-      .useLegacyScaling()
-      .assertTiming();
+      .start();
   }
 
+  @PerformanceUnitTest
   public void testPerformanceSimple() {
     String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
     mySplitter = new OutputEventSplitter() {
@@ -390,12 +404,12 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
 
       }
     };
-    PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
+    Benchmark.newBenchmark("print newlines with backspace", () -> {
       for (int i = 0; i < 2_000_000; i++) {
         mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         mySplitter.process(testStarted, ProcessOutputTypes.STDOUT);
       }
-    }).assertTiming();
+    }).start();
   }
 
   private static Future<?> execute(final Runnable runnable) {

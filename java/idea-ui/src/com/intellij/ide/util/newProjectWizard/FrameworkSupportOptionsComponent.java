@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
@@ -23,8 +23,9 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.List;
 
 public class FrameworkSupportOptionsComponent {
@@ -125,6 +126,11 @@ public class FrameworkSupportOptionsComponent {
         return myConfigurable.getLibraryVersionFilter().isAccepted(version) &&
                ((FrameworkLibraryVersionImpl)version).getAvailabilityCondition().isAvailableFor(myModel);
       }
+
+      @Override
+      public String toString() {
+        return "FrameworkSupportOptionsFilter(filter = " + myConfigurable.getLibraryVersionFilter() + ")";
+      }
     };
   }
 
@@ -132,8 +138,7 @@ public class FrameworkSupportOptionsComponent {
     return myMainPanel;
   }
 
-  @Nullable
-  public LibraryCompositionSettings getLibraryCompositionSettings() {
+  public @Nullable LibraryCompositionSettings getLibraryCompositionSettings() {
     if (myLibraryCompositionSettings == null && myLibraryOptionsPanel != null) {
       myLibraryCompositionSettings = myLibraryOptionsPanel.apply();
     }

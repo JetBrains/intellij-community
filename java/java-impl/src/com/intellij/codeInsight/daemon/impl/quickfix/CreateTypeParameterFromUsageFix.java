@@ -1,127 +1,115 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassObjectAccessExpression;
+import com.intellij.psi.PsiDeconstructionPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
+import static com.intellij.modcommand.ModCommand.chooseAction;
+import static com.intellij.modcommand.ModCommand.nop;
+import static com.intellij.modcommand.ModCommand.psiUpdateStep;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
-  private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
-
+public class CreateTypeParameterFromUsageFix extends PsiBasedModCommandAction<PsiJavaCodeReferenceElement> {
   public CreateTypeParameterFromUsageFix(PsiJavaCodeReferenceElement refElement) {
-    myRef = SmartPointerManager.getInstance(refElement.getProject()).createSmartPsiElementPointer(refElement);
+    super(refElement);
   }
 
-  @Nullable
-  private PsiJavaCodeReferenceElement getElement() {
-    return myRef.getElement();
-  }
-
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.type.parameter.from.usage.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiJavaCodeReferenceElement element = getElement();
-    if (element == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext actionContext, @NotNull PsiJavaCodeReferenceElement element) {
     Context context = Context.from(element, true);
-    boolean available = context != null;
-    if (available) {
-      setText(QuickFixBundle.message("create.type.parameter.from.usage.text", context.typeName));
-    }
-    return available;
+    if (context == null) return null;
+    return Presentation.of(QuickFixBundle.message("create.type.parameter.from.usage.text", context.typeName));
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiJavaCodeReferenceElement element = getElement();
-    if (element == null) return;
+  protected @NotNull ModCommand perform(@NotNull ActionContext actionContext, @NotNull PsiJavaCodeReferenceElement element) {
     Context context = Context.from(element, false);
-    if (context == null) return;
-    List<PsiNameIdentifierOwner> placesToAdd = context.myPlacesToAdd;
+    if (context == null) return nop();
+    List<PsiNameIdentifierOwner> placesToAdd = context.placesToAdd;
 
-    Application application = ApplicationManager.getApplication();
-    if (placesToAdd.size() == 1 || application.isUnitTestMode() || editor == null) {
-      PsiElement first = placesToAdd.get(0);
-      createTypeParameter(first, context.typeName);
-    }
-    else {
-      IntroduceTargetChooser.showChooser(
-        editor,
-        placesToAdd,
-        new Pass<>() {
-          @Override
-          public void pass(PsiNameIdentifierOwner owner) {
-            createTypeParameter(owner, context.typeName);
-          }
-        },
-        PsiNamedElement::getName,
-        QuickFixBundle.message("create.type.parameter.from.usage.chooser.title")
-      );
-    }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    return chooseAction(QuickFixBundle.message("create.type.parameter.from.usage.chooser.title"),
+                        ContainerUtil.map(placesToAdd, place ->
+                          psiUpdateStep(place, Objects.requireNonNull(place.getName()),
+                                        (owner, updater) -> createTypeParameter(owner, context.typeName))));
   }
 
   private static void createTypeParameter(@NotNull PsiElement methodOrClass, @NotNull String name) {
     Project project = methodOrClass.getProject();
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodOrClass)) return;
-    WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("create.type.parameter.from.usage.family"), null,  () -> {
-      PsiTypeParameterListOwner typeParameterListOwner = tryCast(methodOrClass, PsiTypeParameterListOwner.class);
-      if (typeParameterListOwner == null) {
-        throw new IllegalStateException("Only methods and classes allowed here, but was: " + methodOrClass.getClass());
-      }
-      PsiTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
-      final String typeParameterListText;
-      if (typeParameterList == null) {
+    PsiTypeParameterListOwner typeParameterListOwner = tryCast(methodOrClass, PsiTypeParameterListOwner.class);
+    if (typeParameterListOwner == null) {
+      throw new IllegalStateException("Only methods and classes allowed here, but was: " + methodOrClass.getClass());
+    }
+    PsiTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
+    final String typeParameterListText;
+    if (typeParameterList == null) {
+      typeParameterListText = "<" + name + ">";
+    }
+    else {
+      String existingTypeParameterText = typeParameterList.getText();
+      if (typeParameterList.getTypeParameters().length == 0) {
         typeParameterListText = "<" + name + ">";
       }
       else {
-        String existingTypeParameterText = typeParameterList.getText();
-        if (typeParameterList.getTypeParameters().length == 0) {
-          typeParameterListText = "<" + name + ">";
-        }
-        else {
-          String prefix = existingTypeParameterText.substring(0, existingTypeParameterText.length() - 1);
-          typeParameterListText = prefix + ", " + name + ">";
-        }
+        String prefix = existingTypeParameterText.substring(0, existingTypeParameterText.length() - 1);
+        typeParameterListText = prefix + ", " + name + ">";
       }
-      PsiTypeParameterList newTypeParameterList = createTypeParameterList(typeParameterListText, project);
-      replaceOrAddTypeParameterList(methodOrClass, typeParameterList, newTypeParameterList);
-    });
+    }
+    PsiTypeParameterList newTypeParameterList = createTypeParameterList(typeParameterListText, project);
+    replaceOrAddTypeParameterList(methodOrClass, typeParameterList, newTypeParameterList);
   }
 
   private static void replaceOrAddTypeParameterList(@NotNull PsiElement methodOrClass,
                                                     @Nullable PsiTypeParameterList typeParameterList,
                                                     @NotNull PsiTypeParameterList newTypeParameterList) {
-    if (methodOrClass instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)methodOrClass;
+    if (methodOrClass instanceof PsiMethod method) {
       if (typeParameterList == null) {
         PsiTypeElement returnTypeElement = method.getReturnTypeElement();
         if (returnTypeElement == null) return;
@@ -152,25 +140,21 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
     return classes[0].getTypeParameterList();
   }
 
-  private static class Context {
-    @NotNull final List<PsiNameIdentifierOwner> myPlacesToAdd;
-    @NotNull final String typeName;
-
-    Context(@NotNull List<PsiNameIdentifierOwner> add, @NotNull String name) {
-      myPlacesToAdd = add;
-      typeName = name;
-    }
-
-    @Nullable
-    static Context from(@NotNull PsiJavaCodeReferenceElement element, boolean findFirstOnly) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
+  private record Context(@NotNull List<PsiNameIdentifierOwner> placesToAdd, @NotNull String typeName) {
+    static @Nullable Context from(@NotNull PsiJavaCodeReferenceElement element, boolean findFirstOnly) {
+      if (!PsiUtil.isAvailable(JavaFeature.GENERICS, element)) return null;
       if (element.isQualified()) return null;
+      PsiElement container =
+        PsiTreeUtil.getParentOfType(element, PsiReferenceList.class, PsiClass.class, PsiMethod.class, PsiClassInitializer.class,
+                                    PsiStatement.class);
+      if (container == null || (container instanceof PsiClass aClass && !aClass.isRecord())) return null;
       PsiElement parent = element.getParent();
       if (parent instanceof PsiMethodCallExpression ||
           parent instanceof PsiJavaCodeReferenceElement ||
+          parent instanceof PsiReferenceList ||
           parent instanceof PsiNewExpression ||
           parent instanceof PsiAnnotation ||
-          (parent instanceof PsiTypeElement && parent.getParent() instanceof PsiClassObjectAccessExpression) ||
+          (parent instanceof PsiTypeElement && typeParameterIsNotValidInTypeElementContext((PsiTypeElement)parent)) ||
           element instanceof PsiReferenceExpression) {
         return null;
       }
@@ -180,6 +164,14 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       if (name == null) return null;
       return new Context(candidates, name);
     }
+  }
+
+  private static boolean typeParameterIsNotValidInTypeElementContext(@NotNull PsiTypeElement parent) {
+    PsiElement grandParent = parent.getParent();
+    return grandParent instanceof PsiClassObjectAccessExpression ||
+           grandParent instanceof PsiDeconstructionPattern ||
+           grandParent instanceof PsiPatternVariable ||
+           grandParent instanceof PsiInstanceOfExpression;
   }
 
 

@@ -4,12 +4,11 @@ package com.intellij.openapi.externalSystem.service.ui
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.getJavaSdkType
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import java.io.File
-import java.util.*
+import java.util.Properties
 
 @Suppress("PropertyName")
 abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {
@@ -26,7 +25,7 @@ abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {
   protected val comboBox by lazy {
     invokeAndWaitIfNeeded {
       runWriteAction {
-        val jdkTable = ProjectJdkTable.getInstance()
+        val jdkTable = ProjectJdkTable.getInstance(myProject)
         jdkTable.addJdk(JDK6, myProject)
         jdkTable.addJdk(JDK7, myProject)
         jdkTable.addJdk(JDK8, myProject)
@@ -51,8 +50,10 @@ abstract class ExternalSystemJdkComboBoxTestCase : ExternalSystemTestCase() {
    * @see com.intellij.openapi.projectRoots.JdkUtil.checkForJdk
    */
   private fun createFakeJdk(name: String, version: String): Sdk {
-    val sdk = ProjectJdkImpl(name, getJavaSdkType())
-    sdk.homePath = "$projectPath/jdk-$name"
+    val sdk = ProjectJdkTable.getInstance(myProject).createSdk(name, getJavaSdkType())
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.homePath = "$projectPath/jdk-$name"
+    sdkModificator.commitChanges()
     createProjectSubFile("jdk-$name/release")
     createProjectSubFile("jdk-$name/jre/lib/rt.jar")
     createProjectSubFile("jdk-$name/bin/javac")

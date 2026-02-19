@@ -5,7 +5,10 @@ interface I {
   boolean contains(Object o);
 }
 interface My extends java.util.Collection, I {
-  boolean contains(Object o);
+  /**
+   * @throws NullPointerException before {@inheritDoc} after
+   */
+  boolean contains(Object o) throws IOException;
 }
 class C {
   {

@@ -1,4 +1,4 @@
-// "Copy 'i' to final temp variable" "true"
+// "Copy 'i' to final temp variable" "true-preview"
 class ParamTypeBug {
     private static String strings[] = new String[]{ "a", "b", "c" };
 

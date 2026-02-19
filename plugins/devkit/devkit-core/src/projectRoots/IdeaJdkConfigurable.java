@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
@@ -17,14 +21,20 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ItemEvent;
 import java.util.Objects;
 
@@ -42,7 +52,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private Sdk myIdeaJdk;
 
   private boolean myModified;
-  @NonNls private static final String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
+  private static final @NonNls String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
 
   private final SdkModel mySdkModel;
   private final SdkModificator mySdkModificator;
@@ -75,7 +85,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       }
 
       @Override
-      public void sdkHomeSelected(@NotNull final Sdk sdk, @NotNull final String newSdkHome) {
+      public void sdkHomeSelected(final @NotNull Sdk sdk, final @NotNull String newSdkHome) {
         if (sdk.getSdkType() instanceof IdeaJdk) {
           internalJdkUpdate(sdk);
         }
@@ -103,7 +113,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     mySandboxHome.setHistorySize(5);
     JPanel wholePanel = new JPanel(new GridBagLayout());
     wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST,
-                                                              GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                                              GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     wholePanel.add(GuiUtils.constructFieldWithBrowseButton(mySandboxHome, e -> {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
       descriptor.setTitle(DevKitBundle.message("sandbox.home"));
@@ -117,7 +127,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
                                  GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
 
     wholePanel.add(myInternalJreLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 1, GridBagConstraints.WEST,
-                                                              GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                                              GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     wholePanel.add(myInternalJres, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.EAST,
                                                           GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
     myInternalJres.setRenderer(SimpleListCellRenderer.create("", Sdk::getName));
@@ -182,7 +192,6 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     final SdkModificator modificator = myIdeaJdk.getSdkModificator();
     modificator.setSdkAdditionalData(sandbox);
     ApplicationManager.getApplication().runWriteAction(modificator::commitChanges);
-    ((ProjectJdkImpl) myIdeaJdk).resetVersionString();
     myModified = false;
   }
 
@@ -192,8 +201,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     updateJdkList();
     myFreeze = false;
     mySandboxHome.reset();
-    if (myIdeaJdk != null && myIdeaJdk.getSdkAdditionalData() instanceof Sandbox) {
-      final Sandbox sandbox = (Sandbox)myIdeaJdk.getSdkAdditionalData();
+    if (myIdeaJdk != null && myIdeaJdk.getSdkAdditionalData() instanceof Sandbox sandbox) {
       final String sandboxHome = sandbox.getSandboxHome();
       mySandboxHome.setText(sandboxHome);
       mySandboxHome.setSelectedItem(sandboxHome);

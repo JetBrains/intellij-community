@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// PRIORITY: LOW
+
+fun test() {
+    val a = "a"
+    val b = "b"
+    val c = "c"
+    buildString {
+        append(a)
+        append(b)
+        append(c)
+    }
+}

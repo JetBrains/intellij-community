@@ -1,29 +1,27 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class MethodReturnTypeMacro extends Macro {
+
+public final class MethodReturnTypeMacro extends Macro {
   @Override
   public String getName() {
     return "methodReturnType";
   }
 
   @Override
-  public String getPresentableName() {
-    return "methodReturnType()";
-  }
-
-  @Override
-  @NotNull
-  public String getDefaultValue() {
+  public @NotNull String getDefaultValue() {
     return "a";
   }
 
@@ -31,8 +29,8 @@ public class MethodReturnTypeMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     while (place != null) {
-      if (place instanceof PsiMethod) {
-        PsiType returnType = ((PsiMethod)place).getReturnType();
+      if (place instanceof PsiMethod method) {
+        PsiType returnType = method.getReturnType();
         if (returnType != null) {
           return new PsiTypeResult(returnType, place.getProject());
         }

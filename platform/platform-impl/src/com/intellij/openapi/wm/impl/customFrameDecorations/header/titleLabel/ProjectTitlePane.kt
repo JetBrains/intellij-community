@@ -1,16 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import sun.swing.SwingUtilities2
+import com.intellij.util.ui.UIUtil
 import java.awt.FontMetrics
 import javax.swing.JComponent
 
-
-class ProjectTitlePane : ShrinkingTitlePart {
+internal class ProjectTitlePane : ShrinkingTitlePart {
   private val openChat = " ["
   private val closeChar = "]"
 
@@ -29,7 +28,7 @@ class ProjectTitlePane : ShrinkingTitlePart {
       updatePath()
     }
 
-  fun updatePath() {
+  private fun updatePath() {
     project?.let {
       if (it.isDisposed) {
         return@let
@@ -152,7 +151,7 @@ class ProjectTitle : ShrinkingTitlePart {
   override fun refresh(label: JComponent, fm: FontMetrics) {
     description.refresh(label, fm)
 
-    projectTextWidth = if (project.isEmpty()) 0 else SwingUtilities2.stringWidth(label, fm, project)
+    projectTextWidth = if (project.isEmpty()) 0 else UIUtil.computeStringWidth(label, fm, project)
     longTextWidth = projectTextWidth + description.longWidth
   }
 }

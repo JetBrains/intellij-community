@@ -4,8 +4,11 @@ package com.intellij.framework.detection.impl.exclude;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.Objects;
 
+@ApiStatus.Internal
 @Tag("file")
 public class ExcludedFileState {
   private String myUrl;

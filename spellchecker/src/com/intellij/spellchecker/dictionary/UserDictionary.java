@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.dictionary;
 
-import gnu.trove.THashSet;
+import com.intellij.spellchecker.util.Strings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,45 +9,61 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
-public class UserDictionary implements EditableDictionary {
+import static com.intellij.openapi.util.text.StringUtil.isCapitalized;
+import static com.intellij.openapi.util.text.StringUtil.isUpperCase;
+import static com.intellij.openapi.util.text.StringUtil.toLowerCase;
+import static com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet;
+
+public final class UserDictionary implements EditableDictionary {
   private final String name;
 
-  @NotNull
-  private final Set<String> words = new THashSet<>();
+  private final @NotNull Set<String> words;
+  private final @NotNull Set<String> camelCaseWords;
 
   public UserDictionary(@NotNull String name) {
     this.name = name;
+    this.words = createSmallMemoryFootprintSet();
+    this.camelCaseWords = createSmallMemoryFootprintSet();
   }
 
-  @NotNull
+  public UserDictionary(@NotNull String name, @Nullable Collection<String> words) {
+    this.name = name;
+    this.words = words == null ? createSmallMemoryFootprintSet() : createSmallMemoryFootprintSet(words.size());
+    this.camelCaseWords = createSmallMemoryFootprintSet();
+    addToDictionary(words);
+  }
+
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
   @Override
-  @Nullable
-  public Boolean contains(@NotNull String word) {
-    boolean contains = words.contains(word);
-    if (contains) return true;
+  public @Nullable Boolean contains(@NotNull String word) {
+    if (words.contains(word)) return true;
+    if (isUpperCase(word) || isCapitalized(word)) return words.contains(toLowerCase(word)) ? true : null;
     return null;
   }
 
-  @NotNull
   @Override
-  public Set<String> getWords() {
+  public @NotNull Set<String> getWords() {
     return words;
   }
 
   @Override
-  @NotNull
-  public Set<String> getEditableWords() {
+  public @NotNull Set<String> getEditableWords() {
     return words;
+  }
+
+  @Override
+  public @NotNull Set<String> getCamelCaseWords() {
+    return camelCaseWords;
   }
 
   @Override
   public void clear() {
     words.clear();
+    camelCaseWords.clear();
   }
 
   @Override
@@ -70,6 +72,9 @@ public class UserDictionary implements EditableDictionary {
       return;
     }
     words.add(word);
+    if (Strings.isMixedCase(word)) {
+      camelCaseWords.add(word);
+    }
   }
 
   @Override
@@ -78,6 +83,7 @@ public class UserDictionary implements EditableDictionary {
       return;
     }
     words.remove(word);
+    camelCaseWords.remove(word);
   }
 
   @Override
@@ -111,9 +117,8 @@ public class UserDictionary implements EditableDictionary {
     return name.hashCode();
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + words.size() + '}';
   }
 }

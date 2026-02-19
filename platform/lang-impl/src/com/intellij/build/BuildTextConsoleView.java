@@ -1,12 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
-import com.intellij.build.events.*;
-import com.intellij.execution.filters.CompositeFilter;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildIssueEvent;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.Failure;
+import com.intellij.build.events.FailureResult;
+import com.intellij.build.events.FileMessageEvent;
+import com.intellij.build.events.FinishEvent;
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.MessageEventResult;
+import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.LazyFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -24,29 +31,21 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView, AnsiEscapeDecoder.ColoredTextAcceptor {
+public final class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView, AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
-  public BuildTextConsoleView(@NotNull Project project, boolean viewer, @NotNull List<Filter> executionFilters) {
-    super(project, GlobalSearchScope.allScope(project), viewer, false);
+  public BuildTextConsoleView(@NotNull Project project, boolean viewer, @NotNull List<? extends Filter> executionFilters) {
+    super(project, GlobalSearchScope.allScope(project), viewer, true);
     executionFilters.forEach(this::addMessageFilter);
   }
 
   @Override
-  protected @NotNull CompositeFilter createCompositeFilter() {
-    CompositeFilter compositeFilter = super.createCompositeFilter();
-    // add build execution filters with higher priority than all other predefined message filters
-    Project project = getProject();
-    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    List<Filter> predefinedMessageFilters = ConsoleViewUtil.computeConsoleFilters(project, this, scope);
-    predefinedMessageFilters.forEach(compositeFilter::addFilter);
-    return compositeFilter;
-  }
-
-  @Override
   public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
-    if (event instanceof BuildIssueEvent) {
-      BuildConsoleUtils.print(this, ((BuildIssueEvent)event).getGroup(), ((BuildIssueEvent)event).getIssue());
+    if (event instanceof BuildIssueEvent buildIssueEvent) {
+      final MessageEvent.Kind kind = buildIssueEvent.getResult().getKind();
+      final boolean isErrorOutput = kind == MessageEvent.Kind.ERROR || kind == MessageEvent.Kind.WARNING;
+      final ConsoleViewContentType outputType = isErrorOutput ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;
+      BuildConsoleUtils.print(this, buildIssueEvent.getGroup(), buildIssueEvent.getIssue(), outputType);
     }
     else if (event instanceof FileMessageEvent) {
       boolean isStdOut = ((FileMessageEvent)event).getResult().getKind() != MessageEvent.Kind.ERROR;

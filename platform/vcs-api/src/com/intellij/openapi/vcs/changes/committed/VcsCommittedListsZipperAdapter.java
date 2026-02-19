@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.util.Pair;
@@ -6,11 +6,11 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -26,9 +26,8 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     myGroupCreator = groupCreator;
   }
 
-  @NotNull
   @Override
-  public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
+  public @NotNull Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
     final List<RepositoryLocationGroup> groups = new ArrayList<>();
     final List<RepositoryLocation> singles = new ArrayList<>();
 
@@ -53,15 +52,14 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
     return Pair.create(groups, singles);
   }
 
-  @NotNull
   @Override
-  public CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
+  public @NotNull CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
     if (lists.size() == 1) {
       return lists.get(0);
     }
     final CommittedChangeList result = lists.get(0);
 
-    Set<Change> processed = new THashSet<>(result.getChanges());
+    Set<Change> processed = new HashSet<>(result.getChanges());
 
     for (int i = 1; i < lists.size(); i++) {
       for (Change change : lists.get(i).getChanges()) {

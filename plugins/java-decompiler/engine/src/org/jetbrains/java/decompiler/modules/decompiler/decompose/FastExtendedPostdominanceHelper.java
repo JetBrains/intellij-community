@@ -1,22 +1,33 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
+import org.jetbrains.java.decompiler.modules.decompiler.StrongConnectivityHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 
 public class FastExtendedPostdominanceHelper {
 
   private List<Statement> lstReversePostOrderList;
 
-  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new HashMap<>();
+  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new LinkedHashMap<>();
 
-  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new HashMap<>();
+  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new LinkedHashMap<>();
 
   private Statement statement;
 
@@ -26,7 +37,7 @@ public class FastExtendedPostdominanceHelper {
 
     this.statement = statement;
 
-    HashSet<Integer> set = new HashSet<>();
+    HashSet<Integer> set = new LinkedHashSet<>();
     for (Statement st : statement.getStats()) {
       set.add(st.id);
     }
@@ -51,10 +62,14 @@ public class FastExtendedPostdominanceHelper {
 
     filterOnDominance(filter);
 
+    addSupportedComponents(filter);
+
     Set<Entry<Integer, FastFixedSet<Integer>>> entries = mapExtPostdominators.entrySet();
     HashMap<Integer, Set<Integer>> res = new HashMap<>(entries.size());
     for (Entry<Integer, FastFixedSet<Integer>> entry : entries) {
-      res.put(entry.getKey(), entry.getValue().toPlainSet());
+      List<Integer> lst = new ArrayList<>(entry.getValue().toPlainSet());
+      Collections.sort(lst); // Order Matters!
+      res.put(entry.getKey(), new LinkedHashSet<>(lst));
     }
 
     return res;
@@ -97,7 +112,7 @@ public class FastExtendedPostdominanceHelper {
           continue;
         }
 
-        for (StatEdge edge : stat.getSuccessorEdges(StatEdge.TYPE_REGULAR)) {
+        for (StatEdge edge : stat.getSuccessorEdges(EdgeType.REGULAR)) {
 
           Statement edge_destination = edge.getDestination();
 
@@ -113,6 +128,23 @@ public class FastExtendedPostdominanceHelper {
 
       if (setPostdoms.isEmpty()) {
         mapExtPostdominators.remove(head);
+      }
+    }
+  }
+
+  private void addSupportedComponents(DominatorTreeExceptionFilter filter) {
+    StrongConnectivityHelper schelp = new StrongConnectivityHelper(this.statement);
+
+    for (List<Statement> comp : schelp.getComponents()) {
+      SupportComponent supcomp = SupportComponent.identify(comp, this.mapSupportPoints, filter.getDomEngine());
+
+      if (supcomp != null) {
+        // If the identified support component is not null, then add additional postdom info
+        for (Statement st : supcomp.stats) {
+          if (st != supcomp.supportedPoint) {
+            this.mapExtPostdominators.computeIfAbsent(st.id, i -> this.factory.spawnEmptySet()).add(supcomp.supportedPoint.id);
+          }
+        }
       }
     }
   }
@@ -134,7 +166,7 @@ public class FastExtendedPostdominanceHelper {
   private void removeErroneousNodes() {
     mapSupportPoints = new HashMap<>();
 
-    calcReachabilitySuppPoints(StatEdge.TYPE_REGULAR);
+    calcReachabilitySuppPoints(EdgeType.REGULAR);
 
     iterateReachability((node, mapSets) -> {
       Integer nodeid = node.id;
@@ -142,7 +174,7 @@ public class FastExtendedPostdominanceHelper {
       FastFixedSet<Integer> setReachability = mapSets.get(nodeid);
       List<FastFixedSet<Integer>> lstPredSets = new ArrayList<>();
 
-      for (StatEdge prededge : node.getPredecessorEdges(StatEdge.TYPE_REGULAR)) {
+      for (StatEdge prededge : node.getPredecessorEdges(EdgeType.REGULAR)) {
         FastFixedSet<Integer> setPred = mapSets.get(prededge.getSource().id);
         if (setPred == null) {
           setPred = mapSupportPoints.get(prededge.getSource().id);
@@ -184,7 +216,7 @@ public class FastExtendedPostdominanceHelper {
       }
 
       return false;
-    }, StatEdge.TYPE_REGULAR);
+    }, EdgeType.REGULAR);
 
     // exception handlers cannot be postdominator nodes
     // TODO: replace with a standard set?
@@ -192,8 +224,8 @@ public class FastExtendedPostdominanceHelper {
     boolean handlerfound = false;
 
     for (Statement stat : statement.getStats()) {
-      if (stat.getPredecessorEdges(Statement.STATEDGE_DIRECT_ALL).isEmpty() &&
-          !stat.getPredecessorEdges(StatEdge.TYPE_EXCEPTION).isEmpty()) { // exception handler
+      if (stat.getPredecessorEdges(EdgeType.DIRECT_ALL).isEmpty() &&
+          !stat.getPredecessorEdges(EdgeType.EXCEPTION).isEmpty()) { // exception handler
         setHandlers.add(stat.id);
         handlerfound = true;
       }
@@ -207,7 +239,7 @@ public class FastExtendedPostdominanceHelper {
   }
 
   private void calcDefaultReachableSets() {
-    int edgetype = StatEdge.TYPE_REGULAR | StatEdge.TYPE_EXCEPTION;
+    EdgeType edgetype = EdgeType.REGULAR_EXCEPTION;
 
     calcReachabilitySuppPoints(edgetype);
 
@@ -227,15 +259,15 @@ public class FastExtendedPostdominanceHelper {
     }, edgetype);
   }
 
-  private void calcReachabilitySuppPoints(final int edgetype) {
+  private void calcReachabilitySuppPoints(final EdgeType edgetype) {
     iterateReachability((node, mapSets) -> {
       // consider to be a support point
       for (StatEdge sucedge : node.getAllSuccessorEdges()) {
-        if ((sucedge.getType() & edgetype) != 0) {
+        if ((sucedge.getType().mask() & edgetype.mask()) != 0) {
           if (mapSets.containsKey(sucedge.getDestination().id)) {
             FastFixedSet<Integer> setReachability = mapSets.get(node.id);
 
-            if (!InterpreterUtil.equalObjects(setReachability, mapSupportPoints.get(node.id))) {
+            if (!Objects.equals(setReachability, mapSupportPoints.get(node.id))) {
               mapSupportPoints.put(node.id, setReachability);
               return true;
             }
@@ -247,7 +279,7 @@ public class FastExtendedPostdominanceHelper {
     }, edgetype);
   }
 
-  private void iterateReachability(IReachabilityAction action, int edgetype) {
+  private void iterateReachability(IReachabilityAction action, EdgeType edgetype) {
     while (true) {
       boolean iterate = false;
 
@@ -259,7 +291,7 @@ public class FastExtendedPostdominanceHelper {
         set.add(stat.id);
 
         for (StatEdge prededge : stat.getAllPredecessorEdges()) {
-          if ((prededge.getType() & edgetype) != 0) {
+          if ((prededge.getType().mask() & edgetype.mask()) != 0) {
             Statement pred = prededge.getSource();
 
             FastFixedSet<Integer> setPred = mapSets.get(pred.id);
@@ -281,13 +313,13 @@ public class FastExtendedPostdominanceHelper {
 
         // remove reachability information of fully processed nodes (saves memory)
         for (StatEdge prededge : stat.getAllPredecessorEdges()) {
-          if ((prededge.getType() & edgetype) != 0) {
+          if ((prededge.getType().mask() & edgetype.mask()) != 0) {
             Statement pred = prededge.getSource();
 
             if (mapSets.containsKey(pred.id)) {
               boolean remstat = true;
               for (StatEdge sucedge : pred.getAllSuccessorEdges()) {
-                if ((sucedge.getType() & edgetype) != 0) {
+                if ((sucedge.getType().mask() & edgetype.mask()) != 0) {
                   if (!mapSets.containsKey(sucedge.getDestination().id)) {
                     remstat = false;
                     break;

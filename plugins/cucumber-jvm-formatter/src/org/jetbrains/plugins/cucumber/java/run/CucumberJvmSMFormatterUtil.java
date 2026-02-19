@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.cucumber.java.run;
 
 import java.io.BufferedReader;
@@ -6,7 +7,10 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class CucumberJvmSMFormatterUtil {
+/// Utilities for formatting Cucumber runtime output to render nicely in the IntelliJ test runner. SM stands for Service Messages.
+/// 
+/// @see <a href="https://www.jetbrains.com/help/teamcity/service-messages.html">Service Messages (TeamCity Docs)</a>
+public final class CucumberJvmSMFormatterUtil {
   public static final String TEAMCITY_PREFIX = "##teamcity";
 
   public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSZ");
@@ -82,7 +86,7 @@ public class CucumberJvmSMFormatterUtil {
     for (String line : lines) {
       line = line.trim();
 
-      if (line.length() == 0 || line.charAt(0) == '#' || line.charAt(0) == '@') {
+      if (line.isEmpty() || line.charAt(0) == '#' || line.charAt(0) == '@') {
         continue;
       }
       int i = featureHeader.indexOf(":");
@@ -104,9 +108,7 @@ public class CucumberJvmSMFormatterUtil {
 
   private static String readLineWithNumber(String filePath, int lineNumber) throws IOException {
     int currentLineNumber = 0;
-    FileReader fileStream = null;
-    try {
-      fileStream = new FileReader(filePath);
+    try (FileReader fileStream = new FileReader(filePath)) {
       BufferedReader bufferedReader = new BufferedReader(fileStream);
       String line;
       while ((line = bufferedReader.readLine()) != null) {
@@ -114,11 +116,6 @@ public class CucumberJvmSMFormatterUtil {
         if (currentLineNumber == lineNumber) {
           return line;
         }
-      }
-    }
-    finally {
-      if (fileStream != null) {
-        fileStream.close();
       }
     }
     return null;

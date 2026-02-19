@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.compiler
 
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.module.ModuleManager
@@ -10,22 +13,22 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer
-import java.util.*
 
 @State(name = "ExternalCompilerConfiguration", storages = [(Storage("compiler.xml"))], externalStorageOnly = true)
+@Service(Service.Level.PROJECT)
 internal class ExternalCompilerConfigurationStorage(private val project: Project) : PersistentStateComponent<Element>, ProjectModelElement {
   var loadedState: Map<String, String>? = null
     private set
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ExternalCompilerConfigurationStorage = 
-      project.getService(ExternalCompilerConfigurationStorage::class.java)
-  } 
-  
+    fun getInstance(project: Project): ExternalCompilerConfigurationStorage {
+      return project.getService(ExternalCompilerConfigurationStorage::class.java)
+    }
+  }
+
   override fun getState(): Element {
     val result = Element("state")
     if (!project.isExternalStorageEnabled) {
@@ -43,7 +46,7 @@ internal class ExternalCompilerConfigurationStorage(private val project: Project
   }
 
   override fun loadState(state: Element) {
-    val result = THashMap<String, String>()
+    val result = HashMap<String, String>()
     readByteTargetLevel(state, result)
     loadedState = result
   }
@@ -78,8 +81,8 @@ internal fun getFilteredModuleNameList(project: Project, map: Map<String, String
 }
 
 internal fun writeBytecodeTarget(moduleNames: List<String>, map: Map<String, String>, element: Element) {
-  Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER)
-  for (name in moduleNames) {
+  val sortedModuleNames = moduleNames.sortedWith(String.CASE_INSENSITIVE_ORDER)
+  for (name in sortedModuleNames) {
     val moduleElement = Element(JpsJavaCompilerConfigurationSerializer.MODULE)
     moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name)
     moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, map.get(name) ?: "")

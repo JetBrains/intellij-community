@@ -1,29 +1,31 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public class FileNavigatable implements Navigatable {
+public final class FileNavigatable implements Navigatable {
   private final Project myProject;
   private final NullableLazyValue<OpenFileDescriptor> myValue;
   private final FilePosition myFilePosition;
 
-  public FileNavigatable(Project project, FilePosition filePosition) {
+  public FileNavigatable(@NotNull Project project, @NotNull FilePosition filePosition) {
     myProject = project;
     myFilePosition = filePosition;
-    myValue = new NullableLazyValue<OpenFileDescriptor>() {
-      @Nullable
+    myValue = new NullableLazyValue<>() {
       @Override
-      protected OpenFileDescriptor compute() {
+      protected @Nullable OpenFileDescriptor compute() {
         return createDescriptor();
       }
     };
@@ -31,7 +33,10 @@ public class FileNavigatable implements Navigatable {
 
   @Override
   public void navigate(boolean requestFocus) {
-    Navigatable descriptor = getFileDescriptor();
+    Navigatable descriptor;
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162975")) {
+      descriptor = getFileDescriptor();
+    }
     if (descriptor != null) {
       descriptor.navigate(requestFocus);
     }
@@ -55,13 +60,15 @@ public class FileNavigatable implements Navigatable {
     return false;
   }
 
-  @Nullable
-  public OpenFileDescriptor getFileDescriptor() {
+  public @Nullable OpenFileDescriptor getFileDescriptor() {
     return myValue.getValue();
   }
 
-  @Nullable
-  private OpenFileDescriptor createDescriptor() {
+  public @NotNull FilePosition getFilePosition() {
+    return myFilePosition;
+  }
+
+  private @Nullable OpenFileDescriptor createDescriptor() {
     OpenFileDescriptor descriptor = null;
     VirtualFile file = VfsUtil.findFileByIoFile(myFilePosition.getFile(), false);
     if (file != null) {

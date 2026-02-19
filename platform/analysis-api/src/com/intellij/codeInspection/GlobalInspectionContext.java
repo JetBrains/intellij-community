@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 /**
  * The context for a global inspection run. Provides access to the reference graph
@@ -66,7 +67,7 @@ public interface GlobalInspectionContext extends UserDataHolder {
   @NotNull
   Project getProject();
 
-  <T> T getExtension(@NotNull Key<T> key);
+  <T> @UnknownNullability T getExtension(@NotNull Key<T> key);
 
   void incrementJobDoneAmount(@NotNull JobDescriptor job, @NotNull String message);
 

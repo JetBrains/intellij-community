@@ -5,11 +5,13 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -19,27 +21,38 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
+  private static final ImmutableSet<@NotNull String> PYTHON_2_ATTRIBUTES =
+    ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults", "_field_types");
+  private static final ImmutableSet<@NotNull String> PYTHON_3_ATTRIBUTES =
+    ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_defaults");
 
-  @NotNull
-  public static final Set<String> NAMEDTUPLE_SPECIAL_ATTRIBUTES =
-    ImmutableSet.of("_make", "_asdict", "_replace", "_source", "_fields", "_field_types", "_field_defaults");
+  public static @NotNull Set<String> getSpecialAttributes(LanguageLevel level) {
+    if (level.isPy3K()) {
+      return PYTHON_3_ATTRIBUTES;
+    }
+    else {
+      return PYTHON_2_ATTRIBUTES;
+    }
+  }
 
-  @NotNull
-  private final String myName;
+  private final @NotNull String myName;
 
-  @NotNull
-  private final LinkedHashMap<String, FieldTypeAndDefaultValue> myFields;
+  private final @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> myFields;
 
   private final boolean myTyped;
 
-  @Nullable
-  private final PyQualifiedNameOwner myDeclaration;
+  private final @Nullable PyQualifiedNameOwner myDeclaration;
 
   public PyNamedTupleType(@NotNull PyClass tupleClass,
                           @NotNull String name,
@@ -48,7 +61,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
                           boolean typed,
                           @Nullable PyQualifiedNameOwner declaration) {
     super(tupleClass,
-          Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
+          ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType()),
           false,
           isDefinition);
 
@@ -58,9 +71,8 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     myDeclaration = declaration;
   }
 
-  @NotNull
   @Override
-  public PyQualifiedNameOwner getDeclarationElement() {
+  public @NotNull PyQualifiedNameOwner getDeclarationElement() {
     return ObjectUtils.notNull(myDeclaration, super::getDeclarationElement);
   }
 
@@ -70,11 +82,12 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
 
     for (String field : myFields.keySet()) {
-      result.add(LookupElementBuilder.create(field).withIcon(PlatformIcons.FIELD_ICON));
+      result.add(
+        LookupElementBuilder.create(field).withIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Field)));
     }
 
     if (completionPrefix == null) {
-      final Condition<String> nameFilter = NAMEDTUPLE_SPECIAL_ATTRIBUTES::contains;
+      final Condition<String> nameFilter = getSpecialAttributes(LanguageLevel.forElement(location))::contains;
       final CompletionVariantsProcessor processor =
         new CompletionVariantsProcessor(location, null, nameFilter, false, context.get(CTX_SUPPRESS_PARENTHESES) != null);
 
@@ -86,9 +99,8 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return ArrayUtil.toObjectArray(result);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -97,9 +109,8 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return false;
   }
 
-  @Nullable
   @Override
-  public PyNamedTupleType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public @Nullable PyNamedTupleType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (isDefinition()) {
       return getCallDefinitionType(callSite, context);
     }
@@ -107,17 +118,15 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return null;
   }
 
-  @NotNull
   @Override
-  public PyNamedTupleType toInstance() {
+  public @NotNull PyNamedTupleType toInstance() {
     return isDefinition()
            ? new PyNamedTupleType(myClass, myName, myFields, false, myTyped, myDeclaration)
            : this;
   }
 
-  @NotNull
   @Override
-  public PyNamedTupleType toClass() {
+  public @NotNull PyNamedTupleType toClass() {
     return !isDefinition()
            ? new PyNamedTupleType(myClass, myName, myFields, true, myTyped, myDeclaration)
            : this;
@@ -144,17 +153,15 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return Objects.hash(super.hashCode(), myName, myFields.keySet());
   }
 
-  @NotNull
   @Override
-  public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
+  public @NotNull Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
     final Set<String> result = super.getMemberNames(inherited, context);
     result.addAll(myFields.keySet());
 
     return result;
   }
 
-  @NotNull
-  public Map<String, FieldTypeAndDefaultValue> getFields() {
+  public @NotNull Map<String, FieldTypeAndDefaultValue> getFields() {
     return Collections.unmodifiableMap(myFields);
   }
 
@@ -163,20 +170,24 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return isDefinition();
   }
 
-  @Nullable
   @Override
-  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+  public @Nullable List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return isCallable()
            ? ContainerUtil.map(myFields.entrySet(), field -> fieldToCallableParameter(field.getKey(), field.getValue()))
            : null;
+  }
+
+  @Override
+  public @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = getParameters(context);
+    return parameters != null ? new PyCallableParameterListTypeImpl(parameters) : null;
   }
 
   public boolean isTyped() {
     return myTyped;
   }
 
-  @NotNull
-  public PyNamedTupleType clarifyFields(@NotNull Map<String, PyType> fieldNameToType) {
+  public @NotNull PyNamedTupleType clarifyFields(@NotNull Map<String, PyType> fieldNameToType) {
     if (!myTyped) {
       final LinkedHashMap<String, FieldTypeAndDefaultValue> newFields = new LinkedHashMap<>(myFields);
 
@@ -194,8 +205,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return this;
   }
 
-  @NotNull
-  private PyNamedTupleType getCallDefinitionType(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  private @NotNull PyNamedTupleType getCallDefinitionType(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     if (!myTyped) {
       final List<PyExpression> arguments = callSite.getArguments(null);
 
@@ -216,32 +226,36 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     return toInstance();
   }
 
-  @NotNull
-  private static PyCallableParameter fieldToCallableParameter(@NotNull String name, @NotNull FieldTypeAndDefaultValue typeAndDefaultValue) {
+  private static @NotNull PyCallableParameter fieldToCallableParameter(@NotNull String name,
+                                                                       @NotNull FieldTypeAndDefaultValue typeAndDefaultValue) {
     return PyCallableParameterImpl.nonPsi(name, typeAndDefaultValue.getType(), typeAndDefaultValue.getDefaultValue());
   }
 
   public static class FieldTypeAndDefaultValue {
 
-    @Nullable
-    private final PyType myType;
+    private final @Nullable PyType myType;
 
-    @Nullable
-    private final PyExpression myDefaultValue;
+    private final @Nullable PyExpression myDefaultValue;
 
     public FieldTypeAndDefaultValue(@Nullable PyType type, @Nullable PyExpression defaultValue) {
       myType = type;
       myDefaultValue = defaultValue;
     }
 
-    @Nullable
-    public PyType getType() {
+    public @Nullable PyType getType() {
       return myType;
     }
 
-    @Nullable
-    public PyExpression getDefaultValue() {
+    public @Nullable PyExpression getDefaultValue() {
       return myDefaultValue;
     }
+  }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyNamedTupleType(this);
+    }
+    return visitor.visitPyClassType(this);
   }
 }

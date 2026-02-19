@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.execution.BeforeRunTask;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends AbstractToolBeforeRunTask<?, ?>, T extends Tool>
   extends BeforeRunTask<ToolBeforeRunTask> {
-  @NonNls private final static String ACTION_ID_ATTRIBUTE = "actionId";
+  private static final @NonNls String ACTION_ID_ATTRIBUTE = "actionId";
   private static final Logger LOG = Logger.getInstance(AbstractToolBeforeRunTask.class);
   private String myToolActionId;
 
@@ -28,8 +28,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
     super(providerId);
   }
 
-  @Nullable
-  public String getToolActionId() {
+  public @Nullable String getToolActionId() {
     return myToolActionId;
   }
 
@@ -74,13 +73,19 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
 
     targetDone.down();
     try {
-      ApplicationManager.getApplication().invokeAndWait(() -> ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessAdapter() {
+      ApplicationManager.getApplication().invokeAndWait(() -> ToolAction.runTool(myToolActionId, context, null, executionId, new ProcessListener() {
           @Override
           public void processTerminated(@NotNull ProcessEvent event) {
             result.set(event.getExitCode() == 0);
             targetDone.up();
           }
-      }), ModalityState.defaultModalityState());
+
+          @Override
+          public void processNotStarted() {
+            result.set(false);
+            targetDone.up();
+          }
+        }), ModalityState.defaultModalityState());
     }
     catch (Exception e) {
       LOG.error(e);
@@ -90,8 +95,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
     return result.get();
   }
 
-  @Nullable
-  public T findCorrespondingTool() {
+  public @Nullable T findCorrespondingTool() {
     if (myToolActionId == null) {
       return null;
     }

@@ -15,34 +15,34 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
-public class GroovyTrivialConditionalInspection extends BaseInspection {
+public final class GroovyTrivialConditionalInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryConditionalExpressionVisitor();
   }
 
   @Override
   public String buildErrorString(Object... args) {
-    final GrConditionalExpression exp = (GrConditionalExpression) args[0];
-    return GroovyBundle.message("inspection.message.0.can.be.simplified.to.1", exp.getText(), calculateReplacementExpression(exp));
+    return GroovyBundle.message("inspection.message.trivial.conditional.expression");
   }
 
   private static String calculateReplacementExpression(GrConditionalExpression exp) {
@@ -58,24 +58,22 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new TrivialConditionalFix();
   }
 
-  private static class TrivialConditionalFix extends GroovyFix {
+  private static class TrivialConditionalFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("intention.family.name.simplify");
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final GrConditionalExpression expression = (GrConditionalExpression) element;
       final String newExpression = calculateReplacementExpression(expression);
-      replaceExpression(expression, newExpression);
+      GrInspectionUtil.replaceExpression(expression, newExpression);
     }
   }
 
@@ -87,7 +85,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
       super.visitConditionalExpression(exp);
       final GrExpression condition = exp.getCondition();
       final PsiType type = condition.getType();
-      if (type == null || !(PsiType.BOOLEAN.isAssignableFrom(type))) {
+      if (type == null || !(PsiTypes.booleanType().isAssignableFrom(type))) {
         return;
       }
 
@@ -109,12 +107,12 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
   }
 
   private static boolean isFalse(GrExpression expression) {
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "false".equals(text);
   }
 
   private static boolean isTrue(GrExpression expression) {
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "true".equals(text);
   }
 }

@@ -9,21 +9,18 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class RegExpBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.RegExpBundle";
-  private static final RegExpBundle INSTANCE = new RegExpBundle();
+public final class RegExpBundle {
+  private static final @NonNls String BUNDLE = "messages.RegExpBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(RegExpBundle.class, BUNDLE);
 
   private RegExpBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

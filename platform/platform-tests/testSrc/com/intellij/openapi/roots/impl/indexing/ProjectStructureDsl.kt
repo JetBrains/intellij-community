@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
@@ -13,8 +12,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -280,14 +281,15 @@ fun ProjectModelRule.createJavaModule(moduleName: String, content: ModuleContent
   val directorySpec = DirectorySpec(rootPath)
   ModuleContentBuilderImpl(module, directorySpec).content()
   directorySpec.generateTo(moduleRoot)
+  IndexingTestUtil.waitUntilIndexesAreReady(project)
   return module
 }
 
 private fun createJavaModule(project: Project, moduleName: String, moduleRootDirectory: Path): Module {
-  val type = ModuleTypeManager.getInstance().findByID(ModuleTypeId.JAVA_MODULE)
+  val type = ModuleTypeManager.getInstance().findByID(JAVA_MODULE_ENTITY_TYPE_ID_NAME)
   return WriteCommandAction.writeCommandAction(project).compute(
     ThrowableComputable<Module, RuntimeException> {
-      val moduleModel = ModuleManager.getInstance(project).modifiableModel
+      val moduleModel = ModuleManager.getInstance(project).getModifiableModel()
       val module = moduleModel.newModule(moduleRootDirectory.resolve("$moduleName.iml"), type.id)
       moduleModel.commit()
       module

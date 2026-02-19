@@ -9,8 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.ULiteralExpression;
 import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.Iterator;
 import java.util.List;
@@ -19,21 +19,21 @@ public class PropertyFoldingEditHandler {
   private final UCallExpression myCallExpression;
   private final IProperty myProperty;
 
-  public PropertyFoldingEditHandler(PsiElement foldedPsiElement) {
-    ULiteralExpression literalExpression = null;
+  PropertyFoldingEditHandler(PsiElement foldedPsiElement) {
+    UInjectionHost injectionHost = null;
     if (foldedPsiElement != null && foldedPsiElement.isValid()) {
       myCallExpression = findCallExpression(foldedPsiElement);
       if (myCallExpression == null) {
-        literalExpression = UastContextKt.toUElementOfExpectedTypes(foldedPsiElement, ULiteralExpression.class);
+        injectionHost = UastContextKt.toUElementOfExpectedTypes(foldedPsiElement, UInjectionHost.class);
       }
       else {
-        literalExpression = ObjectUtils.tryCast(myCallExpression.getArgumentForParameter(0), ULiteralExpression.class);
+        injectionHost = ObjectUtils.tryCast(myCallExpression.getArgumentForParameter(0), UInjectionHost.class);
       }
     }
     else {
       myCallExpression = null;
     }
-    myProperty = literalExpression == null ? null : PropertyFoldingBuilder.getI18nProperty(literalExpression);
+    myProperty = injectionHost == null ? null : PropertyFoldingBuilder.getI18nProperty(injectionHost);
   }
 
   private static UCallExpression findCallExpression(PsiElement foldedPsiElement) {
@@ -75,7 +75,7 @@ public class PropertyFoldingEditHandler {
     myProperty.setValue(newValue);
   }
 
-  public int placeholderToValueOffset(int offset) {
+  int placeholderToValueOffset(int offset) {
     if (myCallExpression == null) return offset - 1;
     List<Couple<Integer>> replacements = PropertyFoldingBuilder.format(myCallExpression).second;
     if (replacements == null) return offset - 1;
@@ -91,7 +91,7 @@ public class PropertyFoldingEditHandler {
     return offset - diff - 1;
   }
 
-  public int valueToPlaceholderOffset(int offset) {
+  int valueToPlaceholderOffset(int offset) {
     offset++;
     if (myCallExpression == null) return offset;
     Pair<String, List<Couple<Integer>>> info = PropertyFoldingBuilder.format(myCallExpression);

@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public interface GraphChanges<NodeId> {
 
   @NotNull
@@ -49,7 +37,7 @@ public interface GraphChanges<NodeId> {
   }
 
   class NodeImpl<NodeId> implements Node<NodeId> {
-    @NotNull private final NodeId myNodeId;
+    private final @NotNull NodeId myNodeId;
     private final boolean myRemoved;
 
     public NodeImpl(@NotNull NodeId nodeId, boolean removed) {
@@ -57,9 +45,8 @@ public interface GraphChanges<NodeId> {
       myRemoved = removed;
     }
 
-    @NotNull
     @Override
-    public NodeId getNodeId() {
+    public @NotNull NodeId getNodeId() {
       return myNodeId;
     }
 
@@ -70,9 +57,9 @@ public interface GraphChanges<NodeId> {
   }
 
   class EdgeImpl<NodeId> implements Edge<NodeId> {
-    @Nullable private final NodeId myUpNodeId;
-    @Nullable private final NodeId myDownNodeId;
-    @Nullable private final NodeId myTargetId;
+    private final @Nullable NodeId myUpNodeId;
+    private final @Nullable NodeId myDownNodeId;
+    private final @Nullable NodeId myTargetId;
     private final boolean myRemoved;
 
     public EdgeImpl(@Nullable NodeId upNodeId, @Nullable NodeId downNodeId, @Nullable NodeId targetId, boolean removed) {
@@ -82,21 +69,18 @@ public interface GraphChanges<NodeId> {
       myRemoved = removed;
     }
 
-    @Nullable
     @Override
-    public NodeId upNodeId() {
+    public @Nullable NodeId upNodeId() {
       return myUpNodeId;
     }
 
-    @Nullable
     @Override
-    public NodeId downNodeId() {
+    public @Nullable NodeId downNodeId() {
       return myDownNodeId;
     }
 
-    @Nullable
     @Override
-    public NodeId targetId() {
+    public @Nullable NodeId targetId() {
       return myTargetId;
     }
 
@@ -115,15 +99,13 @@ public interface GraphChanges<NodeId> {
       myChangedEdges = changedEdges;
     }
 
-    @NotNull
     @Override
-    public Collection<Node<NodeId>> getChangedNodes() {
+    public @NotNull Collection<Node<NodeId>> getChangedNodes() {
       return myChangedNodes;
     }
 
-    @NotNull
     @Override
-    public Collection<Edge<NodeId>> getChangedEdges() {
+    public @NotNull Collection<Edge<NodeId>> getChangedEdges() {
       return myChangedEdges;
     }
   }

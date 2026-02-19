@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jcef" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.jcef:jcef:137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.21-261-b50">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.21-261-b50/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.21-261-b50.jar">
+              <sha256sum>b275a4fbff6f712768a937001ee4550fc7d2cde22bdb54c7bcecd9393aba7c13</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.21-261-b50/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.21-261-b50.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jcef/jcef/137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.21-261-b50/jcef-137.0.17-gf354b0e-chromium-137.0.7151.104-api-1.21-261-b50-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

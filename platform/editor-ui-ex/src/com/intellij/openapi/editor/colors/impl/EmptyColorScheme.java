@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.HighlighterColors;
@@ -6,43 +6,39 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 
 /**
  * A base scheme for new schemes (not based on Default/Darcula), imported ones.
  */
 @SuppressWarnings("UseJBColor")
 public final class EmptyColorScheme extends DefaultColorsScheme {
-  public static final String NAME = "Empty";
-  public static final EmptyColorScheme INSTANCE = new EmptyColorScheme();
-
-  private static final TextAttributes EMPTY_TEXT = new TextAttributes(Color.BLACK, Color.white, null, EffectType.BOXED, Font.PLAIN);
   private static final TextAttributes DEFAULT_ATTRS = new TextAttributes(Color.GRAY, null, null, EffectType.BOXED, Font.PLAIN);
+  private static final EmptyColorScheme INSTANCE = new EmptyColorScheme();
+
+  public static @NotNull String getSchemeName() {
+    return "Empty";
+  }
+
+  public static @NotNull EmptyColorScheme getEmptyScheme() {
+    return INSTANCE;
+  }
 
   private EmptyColorScheme() {
-    myAttributesMap.put(HighlighterColors.TEXT.getExternalName(), EMPTY_TEXT);
+    attributesMap.put(HighlighterColors.TEXT.getExternalName(), DEFAULT_ATTRS);
     initFonts();
   }
 
-  @NotNull
   @Override
-  public TextAttributes getAttributes(TextAttributesKey key) {
-    TextAttributes attributes = super.getAttributes(key);
-    return attributes == null ? DEFAULT_ATTRS : attributes;
+  protected @NotNull TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
+    return attributesMap.get(HighlighterColors.TEXT.getExternalName());
   }
 
-  @Nullable
   @Override
-  protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
-    return myAttributesMap.get(HighlighterColors.TEXT.getExternalName());
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return NAME;
+  public @NotNull String getName() {
+    return getSchemeName();
   }
 
   @Override

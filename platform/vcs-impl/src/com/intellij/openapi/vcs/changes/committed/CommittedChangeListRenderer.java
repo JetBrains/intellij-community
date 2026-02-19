@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
@@ -15,11 +15,15 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JTree;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.awt.*;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.util.List;
 
 import static com.intellij.util.text.DateFormatUtil.formatPrettyDateTime;
@@ -39,36 +43,43 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     myFontSize = -1;
   }
 
-  @NotNull
-  public static String getDescriptionOfChangeList(@NotNull String text) {
+  public static @NotNull String getDescriptionOfChangeList(@NotNull String text) {
     return text.replaceAll("\n", " // ");
   }
 
   @Contract(pure = true)
   public static @NotNull String truncateDescription(@NotNull String initDescription, @NotNull FontMetrics fontMetrics, int maxWidth) {
-    String description = initDescription;
-    int descWidth = fontMetrics.stringWidth(description);
-    while (description.length() > 0 && (descWidth > maxWidth)) {
-      description = trimLastWord(description);
-      descWidth = fontMetrics.stringWidth(description + " ");
+    int low = 0;
+    int high = initDescription.length() - 1;
+
+    while (low <= high) {
+      int mid = low + (high - low) / 2;
+      String iteration = initDescription.substring(0, mid);
+      int stringWidth = fontMetrics.stringWidth(iteration);
+      if (stringWidth > maxWidth) {
+        high = mid - 1;
+      } else {
+        low = mid + 1;
+      }
     }
-    return description;
+
+    int lastSpaceIndex = initDescription.lastIndexOf(" ", low - 1);
+    return lastSpaceIndex == -1 ? initDescription : initDescription.substring(0, lastSpaceIndex);
   }
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     customize(tree, value, selected, expanded, leaf, row, hasFocus);
   }
 
   public void customize(JComponent tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-    if (node.getUserObject() instanceof CommittedChangeList) {
-      CommittedChangeList changeList = (CommittedChangeList) node.getUserObject();
-
+    Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+    if (userObject instanceof CommittedChangeList changeList) {
       renderChangeList(tree, changeList);
     }
-    else if (node.getUserObject() != null) {
-      append(node.getUserObject().toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    else if (userObject instanceof String) {
+      append((String)userObject, //NON-NLS See CommittedChangesTreeBrowser.buildTreeModel
+             SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
 
@@ -163,19 +174,10 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  private static String trimLastWord(final String description) {
-    int pos = description.trim().lastIndexOf(' ');
-    if (pos >= 0) {
-      return description.substring(0, pos).trim();
-    }
-    return description.substring(0, description.length()-1);
-  }
-
   public static int getRowX(JTree tree, int depth) {
     if (tree == null) return 0;
     final TreeUI ui = tree.getUI();
-    if (ui instanceof BasicTreeUI) {
-      final BasicTreeUI treeUI = ((BasicTreeUI)ui);
+    if (ui instanceof BasicTreeUI treeUI) {
       return (treeUI.getLeftChildIndent() + treeUI.getRightChildIndent()) * depth;
     }
 

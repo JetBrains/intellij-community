@@ -3,7 +3,9 @@ package com.intellij.lang.ant.config.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.explorer.AntExplorer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -29,6 +31,12 @@ public final class AntBuildFilePropertiesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    presentation.setEnabled(myAntExplorer.isBuildFileSelected());
+    AntBuildFileBase selected = event.getUpdateSession()
+      .compute(this, "getBuildFile", ActionUpdateThread.EDT, () -> myAntExplorer.getSelectedFile());
+    presentation.setEnabled(selected != null && selected.exists());
+  }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

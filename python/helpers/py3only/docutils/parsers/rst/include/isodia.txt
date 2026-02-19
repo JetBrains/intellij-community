@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |acute| unicode:: U+000B4 .. ACUTE ACCENT
 .. |breve| unicode:: U+002D8 .. BREVE

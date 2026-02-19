@@ -5,9 +5,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class CheckPsiTextConsistency extends ActionOnFile {
 
   public CheckPsiTextConsistency(@NotNull PsiFile file) {

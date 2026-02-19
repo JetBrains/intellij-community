@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiClass;
@@ -11,13 +11,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-public class GrClosureTypeConverter extends GrTypeConverter {
-  @Nullable
+public final class GrClosureTypeConverter extends GrTypeConverter {
   @Override
-  public ConversionResult isConvertible(@NotNull PsiType targetType,
-                                        @NotNull PsiType actualType,
-                                        @NotNull Position position,
-                                        @NotNull GroovyPsiElement context) {
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType targetType,
+                                                  @NotNull PsiType actualType,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
     if (!TypesUtil.isClassType(targetType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ) return null;
     if (!TypesUtil.isClassType(actualType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE) ) return null;
 

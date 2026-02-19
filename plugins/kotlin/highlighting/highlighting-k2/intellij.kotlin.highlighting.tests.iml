@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.analysis.api.KaIdeApi -opt-in=org.jetbrains.kotlin.analysis.api.KaNonPublicApi -opt-in=org.jetbrains.kotlin.analysis.api.KaContextParameterApi -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="21" />
+            <stringArg name="apiVersion" arg="2.3" />
+            <stringArg name="languageVersion" arg="2.3" />
+          </stringArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/test">
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="module" module-name="intellij.java.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diff" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-k2" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.analysis.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.searching.base" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.searching" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting" scope="TEST" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.kotlin.highlighting" />
+</module>

@@ -1,9 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.constraints.ConstrainedExecution
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Disposer
@@ -11,9 +15,19 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.jetbrains.concurrency.asDeferred
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.function.Consumer
@@ -92,7 +106,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
   fun `test coroutine onUiThread`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
     GlobalScope.async(executor.coroutineDispatchingContext()) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
     }.joinNonBlocking()
   }
 
@@ -109,7 +123,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       queue.add("start")
 
       launch(executor.coroutineDispatchingContext()) {
-        ApplicationManager.getApplication().assertIsDispatchThread()
+        ThreadingAssertions.assertEventDispatchThread()
 
         queue.add("coroutine start")
         Disposer.dispose(disposable)
@@ -119,7 +133,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
           queue.add("coroutine after yield")
         }
         catch (e: Exception) {
-          ApplicationManager.getApplication().assertIsDispatchThread()
+          ThreadingAssertions.assertEventDispatchThread()
           queue.add("coroutine yield caught ${e.javaClass.simpleName}")
           throw e
         }
@@ -145,11 +159,8 @@ class AppUIExecutorTest : LightPlatformTestCase() {
 
   @ExperimentalCoroutinesApi
   fun `test withDocumentsCommitted`() {
-    val executor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
+    val executor = AppUIExecutor.onUiThread(ModalityState.nonModal())
       .withDocumentsCommitted(project)
-
-    val transactionExecutor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-      .inTransaction(project)
 
     GlobalScope.async(SwingDispatcher) {
       val pdm = PsiDocumentManager.getInstance(project)
@@ -179,17 +190,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         assertEquals("ab", document.text)
 
         commitChannel.close()
-      }
-      withContext(transactionExecutor.coroutineDispatchingContext() + job) {
-        while (true) {
-          runWriteAction { pdm.commitAllDocuments() }
-          if (!commitChannel.isClosedForSend) {
-            commitChannel.send(Unit)
-          }
-          else {
-            return@withContext
-          }
-        }
       }
       coroutineContext.cancelChildren()
 
@@ -376,7 +376,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "constraintDisposable.beforeTreeDispose()",
       "constraintDisposable.dispose()",
       "refuse to run already disposed",
-      "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
       "[context: !outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, constraintDisposable, _ ->
@@ -397,7 +396,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "constraintDisposable.beforeTreeDispose()",
       "constraintDisposable.dispose()",
       "refuse to run already disposed",
-      "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
       "[context: !outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, constraintDisposable, anotherDisposable ->
@@ -415,7 +413,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "disposing anotherDisposable",
       "anotherDisposable.beforeTreeDispose()",
       "anotherDisposable.dispose()",
-      "[context: outer + inner] after receive disposed",
       "[context: outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, _, anotherDisposable ->

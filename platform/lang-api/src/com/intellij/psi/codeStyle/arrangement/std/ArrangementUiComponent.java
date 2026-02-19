@@ -20,9 +20,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Set;
@@ -31,8 +33,6 @@ import java.util.Set;
  * Defines a contract for UI component used at standard arrangement settings managing code.
  * <p/>
  * It's assumed that there is a dedicated implementation of this interface for every {@link StdArrangementTokenUiRole}.
- *
- * @author Denis Zhdanov
  */
 public interface ArrangementUiComponent {
 
@@ -40,6 +40,7 @@ public interface ArrangementUiComponent {
   ArrangementSettingsToken getToken();
 
   @NotNull
+  @Unmodifiable
   Set<ArrangementSettingsToken> getAvailableTokens();
 
   void chooseToken(@NotNull ArrangementSettingsToken data) throws IllegalArgumentException, UnsupportedOperationException;

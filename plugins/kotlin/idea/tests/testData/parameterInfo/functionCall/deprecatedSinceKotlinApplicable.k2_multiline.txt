@@ -1,0 +1,1 @@
+Text: (<highlight>x: Int</highlight>), Disabled: false, Strikeout: true, Green: true

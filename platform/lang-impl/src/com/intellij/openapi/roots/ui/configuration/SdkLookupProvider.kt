@@ -9,15 +9,15 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface SdkLookupProvider {
 
+  val progressIndicator: ProgressIndicator?
+
   fun newLookupBuilder(): SdkLookupBuilder
 
   fun getSdkInfo(): SdkInfo
 
   fun getSdk(): Sdk?
 
-  fun blockingGetSdk(): Sdk?
-
-  fun onProgress(progressIndicator: ProgressIndicator)
+  fun waitForLookup()
 
   sealed class SdkInfo {
     object Undefined : SdkInfo()

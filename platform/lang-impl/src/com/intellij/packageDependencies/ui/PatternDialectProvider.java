@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -11,11 +11,12 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Set;
 
 public abstract class PatternDialectProvider {
@@ -37,22 +38,18 @@ public abstract class PatternDialectProvider {
   public abstract @NlsActions.ActionText String getDisplayName();
 
   @Contract(pure = true)
-  @NonNls @NotNull
-  public abstract String getShortName();
+  public abstract @NonNls @NotNull String getShortName();
 
   public abstract AnAction[] createActions(Project project, final Runnable update);
 
-  @Nullable
-  public abstract PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively);
+  public abstract @Nullable PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively);
 
-  @Nullable
-  protected static String getModulePattern(final PackageDependenciesNode node) {
+  protected static @Nullable String getModulePattern(final PackageDependenciesNode node) {
     final ModuleNode moduleParent = getModuleParent(node);
     return moduleParent != null ? moduleParent.getModuleName() : null;
   }
 
-  @Nullable
-  protected static ModuleNode getModuleParent(PackageDependenciesNode node) {
+  protected static @Nullable ModuleNode getModuleParent(PackageDependenciesNode node) {
     if (node instanceof ModuleNode) return (ModuleNode)node;
     if (node == null || node instanceof RootNode) return null;
     return getModuleParent((PackageDependenciesNode)node.getParent());
@@ -60,8 +57,11 @@ public abstract class PatternDialectProvider {
 
   public abstract Icon getIcon();
 
-  @NotNull
-  protected static String getGroupModulePattern(ModuleGroupNode node) {
+  public @Nls @NotNull String getHintMessage() {
+    return "";
+  }
+
+  protected static @NotNull String getGroupModulePattern(ModuleGroupNode node) {
     if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(node.getProject())) {
       return node.getModuleGroup().getQualifiedName() + "*";
     }

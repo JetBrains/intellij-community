@@ -4,20 +4,34 @@ package com.intellij.laf.win10;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UIUtilities;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonModel;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import static com.intellij.laf.win10.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJButtonUI extends DarculaButtonUI {
+public final class WinIntelliJButtonUI extends DarculaButtonUI {
   static final float DISABLED_ALPHA_LEVEL = 0.47f;
 
   private final PropertyChangeListener helpButtonListener = new PropertyChangeListener() {
@@ -57,8 +71,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
     }
-    else if (c instanceof AbstractButton) {
-      AbstractButton b = (AbstractButton)c;
+    else if (c instanceof AbstractButton b) {
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         Rectangle r = new Rectangle(c.getSize());
@@ -94,11 +107,6 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   protected void modifyViewRect(AbstractButton b, Rectangle rect) {
     super.modifyViewRect(b, rect);
     rect.y -= JBUIScale.scale(1); // Move one pixel up
-  }
-
-  @Override
-  protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -27,22 +27,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.CardLayout;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class RadCardLayoutManager extends RadLayoutManager {
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return UIFormXmlConstants.LAYOUT_CARD;
   }
 
-  @Override @Nullable
-  public LayoutManager createLayout() {
+  @Override
+  public @Nullable LayoutManager createLayout() {
     return new CardLayout();
   }
 
@@ -96,8 +96,8 @@ public class RadCardLayoutManager extends RadLayoutManager {
     super.changeContainerLayout(container);
   }
 
-  @Override @NotNull
-  public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+  @Override
+  public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
     return new CardDropLocation(container);
   }
 
@@ -135,7 +135,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
 
   private static class CardDropLocation implements ComponentDropLocation {
     private final RadContainer myContainer;
-    @NonNls private static final String CARD_NAME_PREFIX = "Card";
+    private static final @NonNls String CARD_NAME_PREFIX = "Card";
 
     CardDropLocation(final RadContainer container) {
       myContainer = container;
@@ -171,8 +171,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     }
 
     @Override
-    @Nullable
-    public ComponentDropLocation getAdjacentLocation(Direction direction) {
+    public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }
@@ -180,10 +179,10 @@ public class RadCardLayoutManager extends RadLayoutManager {
   private static final class CardNameProperty extends Property<RadComponent, String> {
     private final LabelPropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>();
 
-    private final AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<String>() {
+    private final AbstractTextFieldEditor<String> myEditor = new AbstractTextFieldEditor<>() {
       @Override
       protected void setValueFromComponent(RadComponent component, String value) {
-        myTf.setText((String) component.getCustomLayoutConstraints());
+        myTf.setText((String)component.getCustomLayoutConstraints());
       }
 
       @Override
@@ -217,8 +216,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     }
 
     @Override
-    @NotNull
-    public PropertyRenderer<String> getRenderer() {
+    public @NotNull PropertyRenderer<String> getRenderer() {
       return myRenderer;
     }
 
@@ -234,7 +232,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
   }
 
   private static class DefaultCardProperty extends Property<RadContainer, String> {
-    @NonNls private static final String NAME = "Default Card";
+    private static final @NonNls String NAME = "Default Card";
 
     private final ComponentRenderer myRenderer = new ComponentRenderer();
     private ComponentEditor myEditor;
@@ -245,9 +243,8 @@ public class RadCardLayoutManager extends RadLayoutManager {
       super(null, NAME);
     }
 
-    @NotNull
     @Override
-    public PropertyRenderer<String> getRenderer() {
+    public @NotNull PropertyRenderer<String> getRenderer() {
       return myRenderer;
     }
 

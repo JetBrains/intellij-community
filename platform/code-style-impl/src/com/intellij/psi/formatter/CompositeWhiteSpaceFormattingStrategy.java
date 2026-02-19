@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
@@ -21,7 +7,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -29,20 +14,20 @@ import java.util.List;
  * Allows to combine multiple {@link WhiteSpaceFormattingStrategy} implementations.
  * <p/>
  * Not thread-safe.
- *
- * @author Denis Zhdanov
  */
-public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormattingStrategy {
+public final class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormattingStrategy {
 
-  private final List<WhiteSpaceFormattingStrategy> myStrategies = new ArrayList<>();
-  private boolean myReplaceDefaultStrategy;
+  private final List<WhiteSpaceFormattingStrategy> myStrategies;
+  private final boolean myReplaceDefaultStrategy;
 
-  public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<? extends WhiteSpaceFormattingStrategy> strategies)
-    throws IllegalArgumentException
-  {
-    for (WhiteSpaceFormattingStrategy strategy : strategies) {
-      addStrategy(strategy);
-    }
+  public CompositeWhiteSpaceFormattingStrategy(boolean replaceDefaultStrategy,
+                                               @NotNull Collection<? extends WhiteSpaceFormattingStrategy> strategies) {
+    myStrategies = List.copyOf(strategies);
+    myReplaceDefaultStrategy = replaceDefaultStrategy;
+  }
+
+  public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<? extends WhiteSpaceFormattingStrategy> strategies) {
+    this(false, strategies);
   }
 
   @Override
@@ -57,7 +42,7 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
         }
       }
       if (offset == oldOffset) {
-        return start;
+        return offset;
       }
     }
     return offset;
@@ -68,23 +53,11 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
     return myReplaceDefaultStrategy;
   }
 
-  public void addStrategy(@NotNull WhiteSpaceFormattingStrategy strategy) throws IllegalArgumentException {
-    if (myReplaceDefaultStrategy && strategy.replaceDefaultStrategy()) {
-      throw new IllegalArgumentException(String.format(
-        "Can't combine strategy '%s' with already registered strategies (%s). Reason: given strategy is marked to replace "
-        + "all existing strategies but strategy with such characteristics is already registered", strategy, myStrategies
-      ));
-    }
-    myStrategies.add(strategy);
-    myReplaceDefaultStrategy |= strategy.replaceDefaultStrategy();
-  }
-
-  @NotNull
   @Override
-  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
-                                                  @NotNull CharSequence text,
-                                                  int startOffset,
-                                                  int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter)
+  public @NotNull CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
+                                                           @NotNull CharSequence text,
+                                                           int startOffset,
+                                                           int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter)
   {
     CharSequence result = whiteSpaceText;
     for (WhiteSpaceFormattingStrategy strategy : myStrategies) {

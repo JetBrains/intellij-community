@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.FrameworkType;
@@ -13,11 +13,16 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DetectedFrameworksTree extends CheckboxTree {
   private List<? extends DetectedFrameworkDescription> myDetectedFrameworks;
@@ -63,10 +68,9 @@ public class DetectedFrameworksTree extends CheckboxTree {
     }
   }
 
-  public void processUncheckedNodes(@NotNull final Consumer<? super DetectedFrameworkTreeNodeBase> consumer) {
+  public void processUncheckedNodes(final @NotNull Consumer<? super DetectedFrameworkTreeNodeBase> consumer) {
     TreeUtil.traverse(getRoot(), node -> {
-      if (node instanceof DetectedFrameworkTreeNodeBase) {
-        final DetectedFrameworkTreeNodeBase frameworkNode = (DetectedFrameworkTreeNodeBase)node;
+      if (node instanceof DetectedFrameworkTreeNodeBase frameworkNode) {
         if (!frameworkNode.isChecked()) {
           consumer.consume(frameworkNode);
         }
@@ -107,8 +111,7 @@ public class DetectedFrameworksTree extends CheckboxTree {
     return node;
   }
 
-  @NotNull
-  private static FrameworkDirectoryNode createDirectoryNodes(@NotNull VirtualFile dir, @NotNull Map<VirtualFile, FrameworkDirectoryNode> nodes) {
+  private static @NotNull FrameworkDirectoryNode createDirectoryNodes(@NotNull VirtualFile dir, @NotNull Map<VirtualFile, FrameworkDirectoryNode> nodes) {
     final FrameworkDirectoryNode node = nodes.get(dir);
     if (node != null) {
       return node;

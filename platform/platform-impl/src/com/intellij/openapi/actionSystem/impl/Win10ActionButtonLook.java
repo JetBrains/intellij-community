@@ -18,11 +18,17 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 
+@ApiStatus.Internal
 public class Win10ActionButtonLook extends ActionButtonLook {
   @Override
   public void paintLookBackground(@NotNull Graphics g, @NotNull Rectangle rect, @NotNull Color color) {

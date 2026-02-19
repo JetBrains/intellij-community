@@ -1,0 +1,9 @@
+# test code does not need type hints
+jwcrypto.tests
+jwcrypto.tests-cookbook
+
+# even if the deprecated decorator is applied, the attribute is not present
+jwcrypto.jwt.JWTMissingKeyID.__deprecated__
+
+# https://github.com/python/mypy/issues/20160
+(jwcrypto.jwt.JWTMissingKeyID.__init_subclass__)?

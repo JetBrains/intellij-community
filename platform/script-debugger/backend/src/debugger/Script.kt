@@ -17,9 +17,12 @@ package org.jetbrains.debugger
 
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.sourcemap.SourceMap
 
+@ApiStatus.NonExtendable
 interface Script : UserDataHolderEx {
+  @ApiStatus.Internal
   enum class Type {
     /** A native, internal JavaScript VM script  */
     NATIVE,
@@ -31,20 +34,31 @@ interface Script : UserDataHolderEx {
     NORMAL
   }
 
+  @get:ApiStatus.Internal
   val vm: Vm
 
+  @get:ApiStatus.Internal
   val type: Type
 
+  @get:ApiStatus.Internal
   var sourceMap: SourceMap?
 
+  @get:ApiStatus.Internal
+  val sourceMapUrl: String?
+
+  @get:ApiStatus.Internal
   val url: Url
 
+  @get:ApiStatus.Internal
   val functionName: String?
     get() = null
 
+  @get:ApiStatus.Internal
   val line: Int
 
+  @get:ApiStatus.Internal
   val column: Int
 
+  @get:ApiStatus.Internal
   val endLine: Int
 }

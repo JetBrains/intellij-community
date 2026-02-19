@@ -1,4 +1,4 @@
-// "Create local variable 'a'" "true"
+// "Create local variable 'a'" "true-preview"
 class C {
   C builder() {
     return this;

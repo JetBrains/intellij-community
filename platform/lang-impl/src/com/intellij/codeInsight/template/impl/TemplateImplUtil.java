@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -6,20 +6,16 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-/**
- * @author Maxim.Mossienko
- */
 public final class TemplateImplUtil {
 
-  @NotNull
-  public static LinkedHashSet<@NlsSafe String> parseVariableNames(@NotNull CharSequence text) {
+  public static @NotNull LinkedHashSet<@NlsSafe String> parseVariableNames(@NotNull CharSequence text) {
     LinkedHashSet<String> variableNames = new LinkedHashSet<>();
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
@@ -38,8 +34,7 @@ public final class TemplateImplUtil {
     return variableNames;
   }
 
-  @NotNull
-  public static Map<String, Variable> parseVariables(@NotNull CharSequence text) {
+  public static @NotNull Map<String, Variable> parseVariables(@NotNull CharSequence text) {
     Map<String, Variable> variables = new LinkedHashMap<>();
     for (String name : parseVariableNames(text)) {
       variables.put(name, new Variable(name, "", "", true));

@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayD
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrArrayDeclarationImpl extends GroovyPsiElementImpl implements GrArrayDeclaration {
   public GrArrayDeclarationImpl(@NotNull ASTNode node) {
     super(node);

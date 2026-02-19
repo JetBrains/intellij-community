@@ -19,6 +19,8 @@ import com.intellij.ide.actions.GotoFileItemProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,4 +36,9 @@ public interface GotoFileCustomizer {
    */
   @Nullable
   GotoFileItemProvider createItemProvider(@NotNull Project project, @Nullable PsiElement context, GotoFileModel model);
+
+  @ApiStatus.Internal
+  default boolean isAccepted(@NotNull Project project, @NotNull PsiFileSystemItem item) {
+    return true;
+  }
 }

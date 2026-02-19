@@ -1,29 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -32,35 +27,60 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
+import com.intellij.openapi.vcs.annotate.AnnotationGutterColumnProvider;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
+import com.intellij.openapi.vcs.annotate.AnnotationWarning;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
-import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.LightColors;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
+import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
- * @author: lesya
+ * @author lesya
  */
-public class AnnotateToggleAction extends ToggleAction implements DumbAware {
+public final class AnnotateToggleAction extends ToggleAction implements DumbAware, RequiresPermissions {
+  private static final Logger LOG = Logger.getInstance(AnnotateToggleAction.class);
+
   public static final ExtensionPointName<Provider> EP_NAME =
-    ExtensionPointName.create("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
+    new ExtensionPointName<>("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
 
   public AnnotateToggleAction() {
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.Never);
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -68,20 +88,32 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     super.update(e);
     Provider provider = getProvider(e);
     Presentation presentation = e.getPresentation();
-    Project project = e.getProject();
-    presentation.setEnabled(provider != null && !provider.isSuspended(e));
-    if (project != null) {
-      presentation.setText(getActionName(project));
+    presentation.setEnabledAndVisible(provider != null);
+    if (ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION.equals(e.getPlace())) {
+      // Actions in the VCS pop-up should always be visible in order not to break numeric key-bindings
+      presentation.setVisible(true);
+    }
+    if (provider != null) {
+      presentation.setText(provider.getActionName(e));
     }
   }
 
-  private static @Nls @NotNull String getActionName(@NotNull Project project) {
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return List.of();
+  }
+
+  private static @Nls @NotNull String getVcsActionName(@Nullable Project project) {
     String defaultName = ActionsBundle.message("action.Annotate.text");
+    if (project == null) return defaultName;
 
     Set<String> names = ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), vcs -> {
       AnnotationProvider provider = vcs.getAnnotationProvider();
       if (provider != null) {
-        return provider.getActionName();
+        String customActionName = provider.getCustomActionName();
+        if (customActionName != null) return customActionName;
+        String actionName = provider.getActionName();
+        if (!actionName.isEmpty()) return actionName;
       }
       return defaultName;
     });
@@ -92,54 +124,63 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     Provider provider = getProvider(e);
-    return provider != null && provider.isAnnotated(e);
+    return provider != null && (provider.isAnnotated(e) || provider.isSuspended(e));
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
-      MyEditorNotificationPanel notificationPanel = ObjectUtils.tryCast(editor.getHeaderComponent(), MyEditorNotificationPanel.class);
-      if (notificationPanel != null) {
-        notificationPanel.showAnnotations();
+      AnnotationWarningUserData warningUserData = editor.getUserData(AnnotateDataKeys.WARNING_DATA);
+      if (warningUserData != null && !warningUserData.getWarning().getShowAnnotation()) {
+        warningUserData.getForceAnnotate().run();
         return;
       }
     }
 
     Provider provider = getProvider(e);
-    if (provider != null) provider.perform(e, selected);
+    if (provider != null && !provider.isSuspended(e)) {
+      provider.perform(e, selected);
+    }
   }
 
-  public static void doAnnotate(@NotNull final Editor editor,
-                                @NotNull final Project project,
-                                @NotNull final FileAnnotation fileAnnotation,
-                                @NotNull final AbstractVcs vcs) {
+  public static void doAnnotate(final @NotNull Editor editor,
+                                final @NotNull Project project,
+                                final @NotNull FileAnnotation fileAnnotation,
+                                final @NotNull AbstractVcs vcs) {
+    if (project.isDisposed() || editor.isDisposed()) return;
     UpToDateLineNumberProvider upToDateLineNumberProvider = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
     doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumberProvider);
   }
 
-  public static void doAnnotate(@NotNull final Editor editor,
-                                @NotNull final Project project,
-                                @NotNull final FileAnnotation fileAnnotation,
-                                @NotNull final AbstractVcs vcs,
-                                @NotNull final UpToDateLineNumberProvider upToDateLineNumbers) {
-    doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, true);
+  public static void doAnnotate(final @NotNull Editor editor,
+                                final @NotNull Project project,
+                                final @NotNull FileAnnotation fileAnnotation,
+                                final @NotNull AbstractVcs vcs,
+                                final @NotNull UpToDateLineNumberProvider upToDateLineNumbers) {
+    doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, project.getService(AnnotateWarningsService.class));
   }
 
-  private static void doAnnotate(@NotNull final Editor editor,
-                                 @NotNull final Project project,
-                                 @NotNull final FileAnnotation fileAnnotation,
-                                 @NotNull final AbstractVcs vcs,
-                                 @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
-                                 final boolean warnAboutSuspiciousAnnotations) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  private static void doAnnotate(final @NotNull Editor editor,
+                                 final @NotNull Project project,
+                                 final @NotNull FileAnnotation fileAnnotation,
+                                 final @NotNull AbstractVcs vcs,
+                                 final @NotNull UpToDateLineNumberProvider upToDateLineNumbers,
+                                 final @Nullable AnnotateWarningsService warningsService) {
+    ThreadingAssertions.assertEventDispatchThread();
     if (project.isDisposed() || editor.isDisposed()) return;
 
-    if (warnAboutSuspiciousAnnotations) {
-      int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
-      int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
-      if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
-        editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false)));
+    AnnotationWarning warning = warningsService != null ? warningsService.getWarning(fileAnnotation, upToDateLineNumbers) : null;
+    if (warning == null) {
+      resetWarningData(editor);
+      updateEditorNotifications(editor, project);
+    }
+    else {
+      editor.putUserData(AnnotateDataKeys.WARNING_DATA, new AnnotationWarningUserData(warning, () -> {
+        doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, null);
+      }));
+      updateEditorNotifications(editor, project);
+      if (!warning.getShowAnnotation()) {
         return;
       }
     }
@@ -154,7 +195,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       if (hasVcsAnnotations(editor)) {
         if (newFileAnnotation != null) {
           assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
-          doAnnotate(editor, project, newFileAnnotation, vcs, upToDateLineNumbers, false);
+          doAnnotate(editor, project, newFileAnnotation, vcs, upToDateLineNumbers, null);
         }
         else {
           DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
@@ -181,17 +222,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       }
     };
 
-    if (fileAnnotation.getFile() != null && fileAnnotation.getFile().isInLocalFileSystem()) {
-      VcsAnnotationLocalChangesListener changesListener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
-
-      changesListener.registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
-      Disposer.register(disposable, new Disposable() {
-        @Override
-        public void dispose() {
-          changesListener.unregisterAnnotation(fileAnnotation.getFile(), fileAnnotation);
-        }
-      });
-    }
+    VcsAnnotationLocalChangesListener changesListener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
+    changesListener.registerAnnotation(fileAnnotation);
+    Disposer.register(disposable, () -> changesListener.unregisterAnnotation(fileAnnotation));
+    Disposer.register(disposable, () -> resetWarningData(editor));
 
     closeVcsAnnotations(editor);
 
@@ -206,6 +240,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final Couple<Map<VcsRevisionNumber, Color>> bgColorMap = computeBgColors(fileAnnotation, editor);
     final Map<VcsRevisionNumber, Integer> historyIds = computeLineNumbers(fileAnnotation);
 
+    gutters.add(new FillerColumn(fileAnnotation, presentation, bgColorMap));
     if (switcher != null) {
       switcher.switchTo(switcher.getDefaultSource());
       final LineAnnotationAspect revisionAspect = switcher.getRevisionAspect();
@@ -219,18 +254,17 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       switchAction.addSourceSwitchListener(currentRevisionGutter);
       switchAction.addSourceSwitchListener(mergeSourceGutter);
 
-      currentRevisionGutter.consume(switcher.getDefaultSource());
-      mergeSourceGutter.consume(switcher.getDefaultSource());
+      currentRevisionGutter.accept(switcher.getDefaultSource());
+      mergeSourceGutter.accept(switcher.getDefaultSource());
 
       gutters.add(currentRevisionGutter);
       gutters.add(mergeSourceGutter);
     }
 
-    final List<LineAnnotationAspect> aspects = ContainerUtil.newArrayList(fileAnnotation.getAspects());
-    for (AnnotationGutterColumnProvider extension : AnnotationGutterColumnProvider.EP_NAME.getExtensions()) {
-      ContainerUtil.addIfNotNull(aspects, extension.createColumn(fileAnnotation));
-    }
-    for (LineAnnotationAspect aspect : aspects) {
+    List<LineAnnotationAspect> aspects = Arrays.asList(fileAnnotation.getAspects());
+    List<LineAnnotationAspect> fromExt =
+      ContainerUtil.mapNotNull(AnnotationGutterColumnProvider.EP_NAME.getExtensions(), extension -> extension.createColumn(fileAnnotation));
+    for (LineAnnotationAspect aspect : ContainerUtil.concat(aspects, fromExt)) {
       gutters.add(new AspectAnnotationFieldGutter(fileAnnotation, aspect, presentation, bgColorMap));
     }
 
@@ -238,8 +272,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     if (historyIds != null) {
       gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
-    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, presentation, bgColorMap));
-    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, bgColorMap);
+    if (!ExperimentalUI.isNewUI()) {
+      gutters.add(new HighlightedAdditionalColumn(fileAnnotation, presentation, bgColorMap));
+    }
+    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(fileAnnotation, gutters, bgColorMap);
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));
 
@@ -248,7 +284,9 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     addActionsFromExtensions(presentation, fileAnnotation);
 
     for (AnnotationFieldGutter gutter : gutters) {
-      final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(upToDateLineNumbers, gutter);
+      final AnnotationGutterLineConvertorProxy proxy = gutter instanceof TextAnnotationGutterProvider.Filler
+                                                       ? new AnnotationGutterLineConvertorProxy.Filler(upToDateLineNumbers, gutter)
+                                                       : new AnnotationGutterLineConvertorProxy(upToDateLineNumbers, gutter);
       if (gutter.isGutterAction()) {
         editor.getGutter().registerTextAnnotation(proxy, proxy);
       }
@@ -256,10 +294,18 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
         editor.getGutter().registerTextAnnotation(proxy);
       }
     }
+
+    InlineDiffFromAnnotation.showDiffOnHover(editor, fileAnnotation, presentation, disposable);
   }
 
-  @NotNull
-  static List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
+  private static void updateEditorNotifications(@NotNull Editor editor, @NotNull Project project) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    if (file != null) {
+      EditorNotifications.getInstance(project).updateNotifications(file);
+    }
+  }
+
+  static @NotNull List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
     List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
     return ContainerUtil.filterIsInstance(annotations, ActiveAnnotationGutter.class);
   }
@@ -273,8 +319,11 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     editor.getGutter().closeTextAnnotations(vcsAnnotations);
   }
 
-  @Nullable
-  static TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
+  private static void resetWarningData(@NotNull Editor editor) {
+    editor.putUserData(AnnotateDataKeys.WARNING_DATA, null);
+  }
+
+  static @Nullable TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
     List<ActiveAnnotationGutter> annotations = getVcsAnnotations(editor);
     for (TextAnnotationGutterProvider annotation : annotations) {
       if (annotation instanceof AnnotationGutterLineConvertorProxy) {
@@ -287,8 +336,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     return null;
   }
 
-  @Nullable
-  static FileAnnotation getFileAnnotation(@NotNull Editor editor) {
+  static @Nullable FileAnnotation getFileAnnotation(@NotNull Editor editor) {
     TextAnnotationPresentation presentation = getAnnotationPresentation(editor);
     if (presentation instanceof AnnotationPresentation) return ((AnnotationPresentation)presentation).getFileAnnotation();
     return null;
@@ -304,8 +352,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     }
   }
 
-  @Nullable
-  private static Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
+  private static @Nullable Map<VcsRevisionNumber, Integer> computeLineNumbers(@NotNull FileAnnotation fileAnnotation) {
     final Map<VcsRevisionNumber, Integer> numbers = new HashMap<>();
     final List<VcsFileRevision> fileRevisionList = fileAnnotation.getRevisions();
     if (fileRevisionList != null) {
@@ -320,8 +367,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     return numbers.size() < 2 ? null : numbers;
   }
 
-  @NotNull
-  private static Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
+  private static @NotNull Couple<Map<VcsRevisionNumber, Color>> computeBgColors(@NotNull FileAnnotation fileAnnotation, @NotNull Editor editor) {
     Map<VcsRevisionNumber, Color> commitOrderColors = new HashMap<>();
     Map<VcsRevisionNumber, Color> commitAuthorColors = new HashMap<>();
 
@@ -367,45 +413,28 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                      commitAuthorColors.size() > 1 ? commitAuthorColors : null);
   }
 
-  @Nullable
-  private static Provider getProvider(AnActionEvent e) {
+  private static @Nullable Provider getProvider(AnActionEvent e) {
     return EP_NAME.findFirstSafe(provider -> provider.isEnabled(e));
   }
 
   public interface Provider {
+    @CalledInAny
     boolean isEnabled(AnActionEvent e);
 
+    /**
+     * @return whether annotations are already being computed in background
+     */
+    @CalledInAny
     boolean isSuspended(@NotNull AnActionEvent e);
 
+    @CalledInAny
     boolean isAnnotated(AnActionEvent e);
 
+    @RequiresEdt
     void perform(@NotNull AnActionEvent e, boolean selected);
-  }
 
-  private static class MyEditorNotificationPanel extends EditorNotificationPanel {
-    private final Editor myEditor;
-    private final Runnable myShowAnnotations;
-
-    MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
-      super(LightColors.RED);
-      myEditor = editor;
-      myShowAnnotations = doShowAnnotations;
-
-      setText(VcsBundle.message("annotation.wrong.line.number.notification.text", vcs.getDisplayName()));
-
-      createActionLabel(VcsBundle.message("link.label.display.anyway"), () -> showAnnotations());
-      createActionLabel(VcsBundle.message("link.label.hide"), () -> hideNotification()).setToolTipText(
-        VcsBundle.message("hide.this.notification"));
-    }
-
-    public void showAnnotations() {
-      hideNotification();
-      myShowAnnotations.run();
-    }
-
-    private void hideNotification() {
-      setVisible(false);
-      if (myEditor.getHeaderComponent() == this) myEditor.setHeaderComponent(null);
+    default @Nls(capitalization = Nls.Capitalization.Title) String getActionName(@NotNull AnActionEvent e) {
+      return getVcsActionName(e.getProject());
     }
   }
 }

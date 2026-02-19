@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl.rmiCompiler;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -15,8 +14,7 @@ public class RmicConfiguration implements PersistentStateComponent<RmicCompilerO
   private final RmicCompilerOptions mySettings = new RmicCompilerOptions();
 
   @Override
-  @NotNull
-  public RmicCompilerOptions getState() {
+  public @NotNull RmicCompilerOptions getState() {
     return mySettings;
   }
 
@@ -26,6 +24,6 @@ public class RmicConfiguration implements PersistentStateComponent<RmicCompilerO
   }
 
   public static RmicCompilerOptions getOptions(Project project) {
-    return ServiceManager.getService(project, RmicConfiguration.class).getState();
+    return project.getService(RmicConfiguration.class).getState();
   }
 }

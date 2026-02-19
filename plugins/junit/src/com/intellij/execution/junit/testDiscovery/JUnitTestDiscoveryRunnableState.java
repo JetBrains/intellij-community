@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.testDiscovery;
 
 import com.intellij.execution.ExecutionException;
@@ -20,6 +6,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoverySearchHelper;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
@@ -27,15 +14,24 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.FunctionUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-abstract class JUnitTestDiscoveryRunnableState extends TestObject {
+@ApiStatus.Internal
+public abstract class JUnitTestDiscoveryRunnableState extends TestObject {
   JUnitTestDiscoveryRunnableState(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
@@ -71,8 +67,8 @@ abstract class JUnitTestDiscoveryRunnableState extends TestObject {
   }
 
   @Override
-  public SearchForTestsTask createSearchingForTestsTask() {
-    return new SearchForTestsTask(getConfiguration().getProject(), myServerSocket) {
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
+    return new SearchForTestsTask(getConfiguration().getProject(), getServerSocket()) {
 
       private Set<String> myPatterns;
 
@@ -109,7 +105,7 @@ abstract class JUnitTestDiscoveryRunnableState extends TestObject {
   }
 
   @Override
-  public RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration) {
+  public RefactoringElementListener getListener(PsiElement element) {
     return null;
   }
 

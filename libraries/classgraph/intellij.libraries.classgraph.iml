@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="classgraph" type="repository">
+        <properties maven-id="io.github.classgraph:classgraph:4.8.181">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.181/classgraph-4.8.181.jar">
+              <sha256sum>62a6436d69710ef5fab6ec243781ce4c5b299047ed1841b5f92746ae852ce545</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.181/classgraph-4.8.181.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.181/classgraph-4.8.181-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

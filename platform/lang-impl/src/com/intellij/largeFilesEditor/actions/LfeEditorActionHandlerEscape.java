@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.actions;
 
-import com.intellij.find.SearchReplaceComponent;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LfeEditorActionHandlerEscape extends LfeBaseEditorActionHandler {
+public final class LfeEditorActionHandlerEscape extends LfeBaseEditorActionHandler {
 
   public LfeEditorActionHandlerEscape(EditorActionHandler originalHandler) {
     super(originalHandler);
@@ -21,7 +21,7 @@ public class LfeEditorActionHandlerEscape extends LfeBaseEditorActionHandler {
                                 @NotNull Editor editor,
                                 @Nullable Caret caret,
                                 DataContext dataContext) {
-    if (largeFileEditor.getEditor().getHeaderComponent() instanceof SearchReplaceComponent) {
+    if (EditorSearchSession.getSearchReplaceComponent(largeFileEditor.getEditor()) != null) {
       largeFileEditor.getSearchManager().onEscapePressed();
     }
     else if (getOriginalHandler().isEnabled(editor, caret, dataContext)) {

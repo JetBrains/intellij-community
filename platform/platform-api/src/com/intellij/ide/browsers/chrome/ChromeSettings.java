@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.chrome;
 
 import com.intellij.ide.browsers.BrowserSpecificSettings;
@@ -8,30 +8,32 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class ChromeSettings extends BrowserSpecificSettings {
   public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
   public static final String NO_FIRST_RUN_ARG = "--no-first-run";
   public static final String NO_DEFAULT_BROWSER_CHECK_ARG = "--no-default-browser-check";
   public static final String DISABLE_FIRST_RUN_EXPERIENCE_ARG = "--disable-fre";
+  public static final String REMOTE_DEBUGGING_PORT_ARG = "--remote-debugging-port=";
+  public static final String REMOTE_DEBUGGING_PIPE_ARG = "--remote-debugging-pipe";
   private @Nullable String myCommandLineOptions;
   private @Nullable String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
-  private @NotNull Map<String, String> myEnvironmentVariables = new THashMap<>();
+  private @NotNull Map<String, String> myEnvironmentVariables = new HashMap<>();
 
   public ChromeSettings() {
   }
 
-  @Nullable
   @Tag("user-data-dir")
-  public String getUserDataDirectoryPath() {
+  public @Nullable String getUserDataDirectoryPath() {
     return myUserDataDirectoryPath;
   }
 
@@ -40,9 +42,8 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     return myUseCustomProfile;
   }
 
-  @Nullable
   @Tag("command-line-options")
-  public String getCommandLineOptions() {
+  public @Nullable String getCommandLineOptions() {
     return myCommandLineOptions;
   }
 
@@ -58,9 +59,8 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     myUseCustomProfile = useCustomProfile;
   }
 
-  @NotNull
   @Override
-  public List<String> getAdditionalParameters() {
+  public @NotNull List<String> getAdditionalParameters() {
     if (myCommandLineOptions == null) {
       if (myUseCustomProfile && myUserDataDirectoryPath != null) {
         return Collections.singletonList(USER_DATA_DIR_ARG + FileUtilRt.toSystemDependentName(myUserDataDirectoryPath));
@@ -78,26 +78,24 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   }
 
   @Override
-  @NotNull
-  @XMap(propertyElementName = ("environment-variables"))
-  public Map<String, String> getEnvironmentVariables() {
+  @XMap(propertyElementName = "environment-variables")
+  public @NotNull Map<String, String> getEnvironmentVariables() {
     return myEnvironmentVariables;
   }
 
-  public void setEnvironmentVariables(@NotNull final Map<String, String> environmentVariables) {
+  public void setEnvironmentVariables(final @NotNull Map<String, String> environmentVariables) {
     myEnvironmentVariables = environmentVariables;
   }
 
-  @NotNull
   @Override
-  public ChromeSettingsConfigurable createConfigurable() {
+  public @NotNull ChromeSettingsConfigurable createConfigurable() {
     return new ChromeSettingsConfigurable(this);
   }
 
   @Override
   public ChromeSettings clone() {
     ChromeSettings clone = (ChromeSettings)super.clone();
-    clone.myEnvironmentVariables = new THashMap<>(myEnvironmentVariables);
+    clone.myEnvironmentVariables = new HashMap<>(myEnvironmentVariables);
     return clone;
   }
 

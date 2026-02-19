@@ -1,7 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
@@ -26,13 +31,16 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
     myCheckUseCase = checkUseCase;
   }
 
-  @NotNull
-  protected abstract MergerFactory createMergerFactory(final T checker);
-  @NotNull
-  protected abstract T createChecker();
+  protected abstract @NotNull MergerFactory createMergerFactory(final T checker);
+  protected abstract @NotNull T createChecker();
 
   @Override
-  public final void update(@NotNull final AnActionEvent e) {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public final void update(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final CommittedChangesBrowserUseCase useCase = e.getData(CommittedChangesBrowserUseCase.DATA_KEY);
     final Presentation presentation = e.getPresentation();
@@ -62,18 +70,14 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
   protected void updateWithChecker(final AnActionEvent e, SelectedCommittedStuffChecker checker) {
   }
 
-  @Nullable
-  protected abstract Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker);
+  protected abstract @Nullable Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker);
 
-  @Nullable
-  protected abstract String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker);
+  protected abstract @Nullable String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker);
 
-  @DialogTitle
-  @Nullable
-  protected abstract String getDialogTitle();
+  protected abstract @DialogTitle @Nullable String getDialogTitle();
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 

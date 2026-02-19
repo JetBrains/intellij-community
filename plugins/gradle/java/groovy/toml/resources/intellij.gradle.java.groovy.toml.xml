@@ -1,0 +1,21 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.gradle.java"/>
+    <module name="intellij.gradle.java.groovy"/>
+    <module name="intellij.gradle.java.toml"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <gotoDeclarationHandler implementation="com.intellij.gradle.java.groovy.toml.service.GradleVersionCatalogTomlAwareGotoDeclarationHandler"/>
+    <referencesSearch implementation="com.intellij.gradle.java.groovy.toml.service.GradleGroovyVersionCatalogReferencesSearcher"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <dslInspectionProvider language="Groovy" implementationClass="com.intellij.gradle.java.groovy.toml.GroovyGradleDslInspectionProvider"/>
+  </extensions>
+</idea-plugin>

@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodFromUsageFix;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +19,19 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JVMElementFactories;
+import com.intellij.psi.JVMElementFactory;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +56,7 @@ public final class IntentionUtils {
                                              PsiClass owner,
                                              TypeConstraint[] constraints,
                                              boolean isConstructor,
-                                             @NotNull final PsiElement context) {
+                                             final @NotNull PsiElement context) {
     ParameterNameExpression[] nameExpressions = new ParameterNameExpression[paramTypesExpressions.length];
     for (int i = 0; i < nameExpressions.length; i++) {
       nameExpressions[i] = StringParameterNameExpression.Companion.getEMPTY();
@@ -52,7 +68,7 @@ public final class IntentionUtils {
       context.getResolveScope(),
       method.getLanguage() == GroovyLanguage.INSTANCE
     );
-    createTemplateForMethod(paramTypesExpressions, nameExpressions, method, owner, returnTypeExpression, isConstructor, context);
+    createTemplateForMethod(paramTypesExpressions, nameExpressions, method, owner, returnTypeExpression, isConstructor, true, context);
   }
 
   public static void createTemplateForMethod(ChooseTypeExpression[] paramTypesExpressions,
@@ -61,12 +77,14 @@ public final class IntentionUtils {
                                              PsiClass owner,
                                              ChooseTypeExpression returnTypeExpression,
                                              boolean isConstructor,
-                                             @Nullable final PsiElement context) {
+                                             boolean isScrollToTemplate,
+                                             final @Nullable PsiElement context) {
 
     final Project project = owner.getProject();
     PsiTypeElement typeElement = method.getReturnTypeElement();
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
+    builder.setScrollToTemplate(isScrollToTemplate);
     if (!isConstructor) {
       assert typeElement != null;
       builder.replaceElement(typeElement, returnTypeExpression);
@@ -109,17 +127,15 @@ public final class IntentionUtils {
           PsiMethod method1 = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
           if (context instanceof PsiMethod) {
             final PsiTypeParameter[] typeParameters = ((PsiMethod)context).getTypeParameters();
-            if (typeParameters.length > 0) {
-              for (PsiTypeParameter typeParameter : typeParameters) {
-                if (CreateMethodFromUsageFix.checkTypeParam(method1, typeParameter)) {
-                  final JVMElementFactory factory = JVMElementFactories.getFactory(method1.getLanguage(), method1.getProject());
-                  PsiTypeParameterList list = method1.getTypeParameterList();
-                  if (list == null) {
-                    PsiTypeParameterList newList = factory.createTypeParameterList();
-                    list = (PsiTypeParameterList)method1.addAfter(newList, method1.getModifierList());
-                  }
-                  list.add(factory.createTypeParameter(typeParameter.getName(), typeParameter.getExtendsList().getReferencedTypes()));
+            for (PsiTypeParameter typeParameter : typeParameters) {
+              if (CreateMethodFromUsageFix.checkTypeParam(method1, typeParameter)) {
+                final JVMElementFactory factory = JVMElementFactories.getFactory(method1.getLanguage(), method1.getProject());
+                PsiTypeParameterList list = method1.getTypeParameterList();
+                if (list == null) {
+                  PsiTypeParameterList newList = factory.createTypeParameterList();
+                  list = (PsiTypeParameterList)method1.addAfter(newList, method1.getModifierList());
                 }
+                list.add(factory.createTypeParameter(typeParameter.getName(), typeParameter.getExtendsList().getReferencedTypes()));
               }
             }
           }
@@ -127,7 +143,7 @@ public final class IntentionUtils {
             try {
               final boolean hasNoReturnType = method1.getReturnTypeElement() == null && method1 instanceof GrMethod;
               if (hasNoReturnType) {
-                ((GrMethod)method1).setReturnType(PsiType.VOID);
+                ((GrMethod)method1).setReturnType(PsiTypes.voidType());
               }
               if (method1.getBody() != null) {
                 FileTemplateManager templateManager = FileTemplateManager.getInstance(project);

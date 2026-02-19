@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.HelpID;
@@ -31,7 +31,12 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppIcon;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.MessageView;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,20 +44,21 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApiStatus.Internal
-public class CompilerMessagesService implements BuildViewService {
-  private static final Logger LOG = Logger.getInstance(CompilerTask.class);
+public final class CompilerMessagesService implements BuildViewService {
+  private static final Logger LOG = Logger.getInstance(CompilerMessagesService.class);
   private static final Key<Object> CONTENT_ID_KEY = Key.create("CONTENT_ID");
   private static final Key<Object> SESSION_ID_KEY = Key.create("SESSION_ID");
 
-  @NotNull private final Project myProject;
-  @NotNull private final Object myContentId;
-  private @NlsContexts.TabTitle final String myContentName;
+  private final @NotNull Project myProject;
+  private final @NotNull Object myContentId;
+  private final @NlsContexts.TabTitle String myContentName;
   private Runnable myRestartWork;
   private final boolean myHeadlessMode;
   private boolean myMessagesAutoActivated = false;
@@ -102,7 +108,7 @@ public class CompilerMessagesService implements BuildViewService {
           openMessageView(sessionId);
           doAddMessage(message);
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
   }
 
@@ -145,7 +151,7 @@ public class CompilerMessagesService implements BuildViewService {
   }
 
   public static boolean showCompilerContent(final Project project, final Object contentId) {
-    final MessageView messageView = MessageView.SERVICE.getInstance(project);
+    final MessageView messageView = MessageView.getInstance(project);
     for (Content content : messageView.getContentManager().getContents()) {
       if (CONTENT_ID_KEY.get(content) == contentId) {
         messageView.getContentManager().setSelectedContent(content);
@@ -233,7 +239,7 @@ public class CompilerMessagesService implements BuildViewService {
     if (project.isDisposed()) {
       return;
     }
-    final ContentManager contentManager = MessageView.SERVICE.getInstance(project).getContentManager();
+    final ContentManager contentManager = MessageView.getInstance(project).getContentManager();
     for (Content content : contentManager.getContents()) {
       if (!content.isPinned()) {
         if (CONTENT_ID_KEY.get(content) == myContentId || SESSION_ID_KEY.get(content) == sessionId) {
@@ -270,9 +276,9 @@ public class CompilerMessagesService implements BuildViewService {
       component = myErrorTreeView.getComponent();
     }
 
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+    MessageView messageView = MessageView.getInstance(myProject);
     messageView.runWhenInitialized(() -> {
-      Content content = ContentFactory.SERVICE.getInstance().createContent(component, myContentName, true);
+      Content content = ContentFactory.getInstance().createContent(component, myContentName, true);
       content.setHelpId(HelpID.COMPILER);
       CONTENT_ID_KEY.set(content, myContentId);
       SESSION_ID_KEY.set(content, sessionId);
@@ -287,7 +293,7 @@ public class CompilerMessagesService implements BuildViewService {
     if (project.isDisposed()) {
       return;
     }
-    final ContentManager contentManager = MessageView.SERVICE.getInstance(project).getContentManager();
+    final ContentManager contentManager = MessageView.getInstance(project).getContentManager();
     for (Content content : contentManager.getContents()) {
       if (content.isPinned() || content == notRemove) {
         continue;

@@ -1,12 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -56,10 +63,13 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
+  public @Nullable PsiType getTypeGroovy() {
     final PsiType declaredType = getDeclaredType();
     if (declaredType != null) return declaredType;
+
+    if (isIndexVariable()) {
+      return PsiTypes.intType();
+    }
 
     if (isVarArgs()) {
       PsiClassType type = TypesUtil.getJavaLangObject(this);
@@ -97,8 +107,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     if (isMainMethodFirstUntypedParameter()) {
       return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(CommonClassNames.JAVA_LANG_STRING + "[]", this).getType();
     }
@@ -107,15 +116,19 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     }
   }
 
+  private boolean isIndexVariable() {
+    if (!(getParent() instanceof GrForInClause closure)) return false;
+    return closure.getIndexVariable() == this;
+  }
+
   private boolean isMainMethodFirstUntypedParameter() {
-    if (getTypeElementGroovy() != null) return false;
-    if (!(getParent() instanceof GrParameterList)) return false;
+    GrTypeElement typeElement = getTypeElementGroovy();
+    if (typeElement != null && !TypeUtils.isJavaLangObject(typeElement.getType())) return false;
+    if (!(getParent() instanceof GrParameterList parameterList)) return false;
     if (isOptional()) return false;
 
-    GrParameterList parameterList = (GrParameterList)getParent();
-    if (!(parameterList.getParent() instanceof GrMethod)) return false;
+    if (!(parameterList.getParent() instanceof GrMethod method)) return false;
 
-    GrMethod method = (GrMethod)parameterList.getParent();
     return PsiImplUtil.isMainMethod(method);
   }
 
@@ -157,15 +170,16 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return getInitializerGroovy() != null;
   }
 
-  @Nullable
   @Override
-  public PsiElement getEllipsisDots() {
+  public @Nullable PsiElement getEllipsisDots() {
     return findChildByType(GroovyTokenTypes.mTRIPLE_DOT);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     if (!isPhysical()) {
       final PsiFile file = getContainingFile();
       final PsiElement context = file.getContext();
@@ -174,8 +188,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     }
 
     final PsiElement scope = getDeclarationScope();
-    if (scope instanceof GrDocCommentOwner) {
-      GrDocCommentOwner owner = (GrDocCommentOwner)scope;
+    if (scope instanceof GrDocCommentOwner owner) {
       final GrDocComment comment = owner.getDocComment();
       if (comment != null) {
         return new LocalSearchScope(new PsiElement[]{scope, comment});
@@ -186,14 +199,12 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   @Override
-  @NotNull
-  public GrModifierList getModifierList() {
+  public @NotNull GrModifierList getModifierList() {
     return getRequiredStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST);
   }
 
   @Override
-  @NotNull
-  public PsiElement getDeclarationScope() {
+  public @NotNull PsiElement getDeclarationScope() {
     return requireNonNull(getParentOfType(this, GrParametersOwner.class));
   }
 

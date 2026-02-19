@@ -1,8 +1,8 @@
-// "Create class 'MyCollection'" "true"
+// "Create class 'MyCollection'" "true-preview"
 import java.util.*;
 
 public class Test {
-    public static void main() {
+    public void main() {
         Collection c = new Test.My<caret>Collection(1);
     }
 }

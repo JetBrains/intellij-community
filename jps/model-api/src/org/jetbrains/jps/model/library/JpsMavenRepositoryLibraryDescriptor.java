@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.library;
 
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +13,10 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public class JpsMavenRepositoryLibraryDescriptor {
   public static final String DEFAULT_PACKAGING = "jar";
-  
+
   private final String myMavenId;
   private final String myGroupId;
   private final String myArtifactId;
@@ -35,6 +24,10 @@ public class JpsMavenRepositoryLibraryDescriptor {
   private final String myPackaging;
   private final boolean myIncludeTransitiveDependencies;
   private final List<String> myExcludedDependencies;
+
+  private final String myJarRepositoryId;
+
+  private final List<ArtifactVerification> myArtifactsVerification;
 
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
     this(groupId, artifactId, version, true, Collections.emptyList());
@@ -44,9 +37,25 @@ public class JpsMavenRepositoryLibraryDescriptor {
                                              boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
     this(groupId, artifactId, version, DEFAULT_PACKAGING, includeTransitiveDependencies, excludedDependencies);
   }
-  
+
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
-                                             @NotNull final String packaging, boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
+                                             final @NotNull String packaging, boolean includeTransitiveDependencies,
+                                             @NotNull List<String> excludedDependencies) {
+    this(groupId, artifactId, version, packaging, includeTransitiveDependencies, excludedDependencies, Collections.emptyList());
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             final @NotNull String packaging, boolean includeTransitiveDependencies,
+                                             @NotNull List<String> excludedDependencies,
+                                             @NotNull List<ArtifactVerification> metadata) {
+    this(groupId, artifactId, version, packaging, includeTransitiveDependencies, excludedDependencies, metadata, null);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             final @NotNull String packaging, boolean includeTransitiveDependencies,
+                                             @NotNull List<String> excludedDependencies,
+                                             @NotNull List<ArtifactVerification> metadata,
+                                             @Nullable String jarRepositoryId) {
     myGroupId = groupId;
     myArtifactId = artifactId;
     myVersion = version;
@@ -54,6 +63,8 @@ public class JpsMavenRepositoryLibraryDescriptor {
     myIncludeTransitiveDependencies = includeTransitiveDependencies;
     myExcludedDependencies = excludedDependencies;
     myMavenId = groupId + ":" + artifactId + ":" + version;
+    myArtifactsVerification = metadata;
+    myJarRepositoryId = jarRepositoryId;
   }
 
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId) {
@@ -70,10 +81,26 @@ public class JpsMavenRepositoryLibraryDescriptor {
   }
 
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, @NotNull String packaging, boolean includeTransitiveDependencies, List<String> excludedDependencies) {
+    this(mavenId, packaging, includeTransitiveDependencies, excludedDependencies, Collections.emptyList(), null);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, boolean includeTransitiveDependencies, List<String> excludedDependencies,
+                                             @NotNull List<ArtifactVerification> artifactsVerification,
+                                             @Nullable String jarRepositoryId) {
+    this(mavenId, DEFAULT_PACKAGING, includeTransitiveDependencies, excludedDependencies, artifactsVerification,
+         jarRepositoryId);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, @NotNull String packaging, boolean includeTransitiveDependencies, List<String> excludedDependencies,
+                                             @NotNull List<ArtifactVerification> artifactsVerification,
+                                             @Nullable String jarRepositoryId) {
     myMavenId = mavenId;
     myIncludeTransitiveDependencies = includeTransitiveDependencies;
     myExcludedDependencies = excludedDependencies;
     myPackaging = packaging;
+    myArtifactsVerification = artifactsVerification;
+    myJarRepositoryId = jarRepositoryId;
+
     if (mavenId == null) {
       myGroupId = myArtifactId = myVersion = null;
     }
@@ -116,6 +143,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
     return myPackaging;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -127,15 +155,66 @@ public class JpsMavenRepositoryLibraryDescriptor {
     return myIncludeTransitiveDependencies == that.myIncludeTransitiveDependencies &&
       myMavenId.equals(that.myMavenId) &&
       myPackaging.equals(that.myPackaging) &&
-      myExcludedDependencies.equals(that.myExcludedDependencies);
+      myExcludedDependencies.equals(that.myExcludedDependencies) &&
+      myArtifactsVerification.equals(that.myArtifactsVerification) &&
+      Objects.equals(myJarRepositoryId, that.myJarRepositoryId);
   }
 
+  @Override
   public int hashCode() {
-    return Objects.hash(myMavenId, myPackaging, myIncludeTransitiveDependencies, myExcludedDependencies);
+    return Objects.hash(myMavenId, myPackaging, myIncludeTransitiveDependencies, myExcludedDependencies, myArtifactsVerification,
+                        myJarRepositoryId);
   }
 
   @Override
   public String toString() {
     return myMavenId != null ? myMavenId : "null";
+  }
+
+  public boolean isVerifySha256Checksum() {
+    return ContainerUtil.exists(myArtifactsVerification, it -> it.getSha256sum() != null);
+  }
+
+  public List<ArtifactVerification> getArtifactsVerification() {
+    return myArtifactsVerification;
+  }
+
+  public String getJarRepositoryId() {
+    return myJarRepositoryId;
+  }
+
+  public static class ArtifactVerification {
+    private final String url;
+    private final String sha256sum;
+
+    public ArtifactVerification(@NotNull String url, @NotNull String sha256sum) {
+      this.url = url;
+      this.sha256sum = sha256sum;
+    }
+
+    public String getSha256sum() {
+      return sha256sum;
+    }
+
+    public String getUrl() {
+      return url;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      ArtifactVerification that = (ArtifactVerification)o;
+      return Objects.equals(url, that.url) && Objects.equals(sha256sum, that.sha256sum);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(url, sha256sum);
+    }
   }
 }

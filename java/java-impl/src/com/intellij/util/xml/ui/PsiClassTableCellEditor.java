@@ -20,6 +20,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Conditions;
@@ -29,15 +30,23 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.EventObject;
 
-/**
- * @author peter
- */
 public class PsiClassTableCellEditor extends AbstractTableCellEditor {
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
@@ -75,9 +84,9 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
       }
 
       @Override
-      public void addNotify() {
-        super.addNotify();
-        final JComponent editorComponent = getEditor().getContentComponent();
+      protected void onEditorAdded(@NotNull Editor editor) {
+        super.onEditorAdded(editor);
+        final JComponent editorComponent = editor.getContentComponent();
         editorComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
         editorComponent.getActionMap().put("ENTER", new AbstractAction() {
           @Override

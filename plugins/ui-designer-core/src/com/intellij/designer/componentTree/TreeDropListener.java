@@ -30,9 +30,14 @@ import com.intellij.designer.utils.Cursors;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.dnd.*;
+import javax.swing.JComponent;
+import java.awt.Cursor;
+import java.awt.Point;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,21 +56,30 @@ public class TreeDropListener extends DropTargetAdapter {
   private boolean myExecuteEnabled;
   private boolean myShowFeedback;
 
-  public TreeDropListener(ComponentTree tree, EditableArea area, ToolProvider provider) {
-    this(tree, area, provider, TreeDropListener.class, PaletteItem.class);
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      tree.setDragEnabled(true);
-      tree.setTransferHandler(new TreeTransfer(TreeDropListener.class));
-    }
+  private TreeDropListener(EditableArea area, ToolProvider provider) {
+    this(area, provider, TreeDropListener.class, PaletteItem.class);
   }
 
-  public TreeDropListener(JComponent component, EditableArea area, ToolProvider provider, Class... dragTargets) {
+  private TreeDropListener(EditableArea area, ToolProvider provider, Class... dragTargets) {
     myArea = area;
     myContext.setArea(area);
     myToolProvider = provider;
     myDragTargets = dragTargets;
+  }
+
+  public static void installOn(ComponentTree tree, EditableArea area, ToolProvider provider) {
+    TreeDropListener listener = new TreeDropListener(area, provider);
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      component.setDropTarget(new DropTarget(component, this));
+      tree.setDragEnabled(true);
+      tree.setTransferHandler(new TreeTransfer(TreeDropListener.class));
+      tree.setDropTarget(new DropTarget(tree, listener));
+    }
+  }
+
+  public static void installOn(JComponent component, EditableArea area, ToolProvider provider, Class... dragTargets) {
+    TreeDropListener listener = new TreeDropListener(area, provider, dragTargets);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      component.setDropTarget(new DropTarget(component, listener));
     }
   }
 
@@ -118,9 +132,8 @@ public class TreeDropListener extends DropTargetAdapter {
         return;
       }
 
-      if (myToolProvider.getActiveTool() instanceof CreationTool) {
+      if (myToolProvider.getActiveTool() instanceof CreationTool tool) {
         myContext.setType(OperationContext.CREATE);
-        CreationTool tool = (CreationTool)myToolProvider.getActiveTool();
         try {
           myContext.setComponents(Collections.singletonList(tool.getFactory().create()));
         }

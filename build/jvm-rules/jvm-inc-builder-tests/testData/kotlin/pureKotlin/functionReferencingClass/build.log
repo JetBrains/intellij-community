@@ -1,0 +1,10 @@
+================ Step #1 =================
+Cleaning output files:
+  META-INF/kotlin_pureKotlin_functionReferencingClass-a.kotlin_module
+  UseAKt.class
+End of files
+Compiling files:
+  kotlin/pureKotlin/functionReferencingClass/a/useA.kt
+End of files
+------------------------------------------
+Exit code: OK

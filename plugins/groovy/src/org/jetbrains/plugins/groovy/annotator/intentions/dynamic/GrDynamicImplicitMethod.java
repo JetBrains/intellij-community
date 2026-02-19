@@ -1,9 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -25,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrDynamicImplicitEle
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
@@ -68,8 +74,7 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   @Override
-  @Nullable
-  public PsiClass getContainingClassElement() {
+  public @Nullable PsiClass getContainingClassElement() {
     return JavaPsiFacade.getInstance(getProject()).findClass(myContainingClassName, ProjectScope.getAllScope(getProject()));
   }
 
@@ -101,17 +106,12 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   @Override
-  @Nullable
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     return ReadAction.compute(() -> {
       try {
         final GrTypeElement typeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(myContainingClassName);
-        if (typeElement == null) return null;
 
-        final PsiType type = typeElement.getType();
-        if (!(type instanceof PsiClassType)) return null;
-
-        return ((PsiClassType)type).resolve();
+        return typeElement.getType() instanceof PsiClassType type ? type.resolve() : null;
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -126,8 +126,7 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return GlobalSearchScope.projectScope(getProject());
   }
 
@@ -141,9 +140,8 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
 
       Object root = model.getRoot();
 
-      if (!(root instanceof DefaultMutableTreeNode)) return;
+      if (!(root instanceof DefaultMutableTreeNode treeRoot)) return;
 
-      DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
       DefaultMutableTreeNode desiredNode;
 
       JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
@@ -212,14 +210,7 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   }
 
   @Override
-  @Nullable
-  public String getLocationString() {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  public Icon getIcon(boolean open) {
+  public @Nullable Icon getIcon(boolean open) {
     return JetgroovyIcons.Groovy.Method;
   }
 }

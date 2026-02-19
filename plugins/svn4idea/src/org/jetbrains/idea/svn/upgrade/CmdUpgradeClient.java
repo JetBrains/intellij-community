@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.upgrade;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -9,7 +9,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.EventAction;
+import org.jetbrains.idea.svn.api.FileStatusResultParser;
+import org.jetbrains.idea.svn.api.ProgressEvent;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
@@ -69,8 +74,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
       return createEvent(new File(path), createAction(statusMessage));
     }
 
-    @Nullable
-    public static EventAction createAction(@NotNull String code) {
+    public static @Nullable EventAction createAction(@NotNull String code) {
       EventAction result = null;
 
       if (UPGRADED_CODE.equals(code)) {
@@ -83,8 +87,8 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
   private static final class UpgradeLineCommandListener extends LineCommandAdapter {
 
-    @NotNull private final FileStatusResultParser parser;
-    @NotNull private final AtomicReference<VcsException> exception;
+    private final @NotNull FileStatusResultParser parser;
+    private final @NotNull AtomicReference<VcsException> exception;
 
     private UpgradeLineCommandListener(@NotNull FileStatusResultParser parser) {
       this.parser = parser;

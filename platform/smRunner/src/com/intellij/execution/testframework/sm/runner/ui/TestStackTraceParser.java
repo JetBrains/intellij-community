@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.Location;
@@ -6,6 +6,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,8 +17,8 @@ import java.util.regex.Pattern;
 
 public class TestStackTraceParser {
 
-  private final static Pattern outerPattern = Pattern.compile("\tat (.*)\\.([^.]*)\\((.*)\\)");
-  private final static Pattern innerPattern = Pattern.compile("(.*):(\\d*)");
+  private static final Pattern outerPattern = Pattern.compile("\tat (.*)\\.([^.]*)\\((.*)\\)");
+  private static final Pattern innerPattern = Pattern.compile("(.*):(\\d*)");
 
   private int myFailedLine = -1;
   private String myFailedMethodName;
@@ -40,6 +41,14 @@ public class TestStackTraceParser {
     return myTopLocationLine;
   }
 
+  protected TestStackTraceParser(int failedLine, String failedMethodName, String errorMessage, String topLocationLine) {
+    myFailedLine = failedLine;
+    myFailedMethodName = failedMethodName;
+    myErrorMessage = errorMessage;
+    myTopLocationLine = topLocationLine;
+  }
+
+  @ApiStatus.Internal
   public TestStackTraceParser(String url,
                               String stacktrace,
                               String errorMessage,

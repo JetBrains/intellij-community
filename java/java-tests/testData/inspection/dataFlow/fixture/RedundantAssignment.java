@@ -76,3 +76,12 @@ class TestConstant {
     x = NONE;
   }
 }
+// IDEA-258765
+interface Intersection {
+  interface I { }
+  final class A { }
+  class Data<T extends A & I> {
+    final T value;
+    private Data(T value) { this.value = value; }
+  }
+}

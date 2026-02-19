@@ -22,14 +22,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.kohsuke.rngom.parse.compact.*;
+import org.kohsuke.rngom.parse.compact.CharStream;
+import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
+import org.kohsuke.rngom.parse.compact.CompactSyntaxTokenManager;
+import org.kohsuke.rngom.parse.compact.Token;
+import org.kohsuke.rngom.parse.compact.TokenMgrError;
 
-import java.io.CharArrayReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -69,7 +72,7 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
   private IElementType myCurrentTokenType;
   private CharSequence myBuffer;
   private int myEndOffset;
-  private Int2IntOpenHashMap myLengthMap;
+  private Int2IntMap myLengthMap;
 
   @Override
   public void advance() {
@@ -111,7 +114,7 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   private Token nextToken() {
-    if (myTokenQueue.size() > 0) {
+    if (!myTokenQueue.isEmpty()) {
       return myTokenQueue.removeFirst();
     }
 
@@ -127,14 +130,8 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
     }
   }
 
-  @Deprecated
-  public char[] getBuffer() {
-    return CharArrayUtil.fromSequence(myBuffer);
-  }
-
-  @NotNull
   @Override
-  public CharSequence getBufferSequence() {
+  public @NotNull CharSequence getBufferSequence() {
     return myBuffer;
   }
 
@@ -163,21 +160,12 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   @Override
-  @Nullable
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     if (myCurrentToken == null) {
       return null;
     } else {
       return myCurrentTokenType;
     }
-  }
-
-  @Deprecated
-  public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-    myBuffer = new CharArrayCharSequence(buffer, startOffset, endOffset);
-
-    final CharArrayReader reader = new CharArrayReader(buffer, startOffset, endOffset - startOffset);
-    init(startOffset, endOffset, reader, initialState);
   }
 
   @Override

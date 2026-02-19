@@ -1,23 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public final class TailTypeEx {
   public static final TailType SMART_LPARENTH = new TailType() {
     @Override
-    public int processTail(final Editor editor, int tailOffset) {
+    public int processTail(final @NotNull Editor editor, int tailOffset) {
       tailOffset = insertChar(editor, tailOffset, '(');
       return moveCaret(editor, insertChar(editor, tailOffset, ')'), -1);
     }
 
-    @NonNls
-    public String toString() {
+    @Override
+    public @NonNls String toString() {
       return "SMART_LPARENTH";
     }
   };

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.Language;
@@ -14,7 +14,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.CustomHighlighterTokenType;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.cache.TodoCacheManager;
 import com.intellij.psi.search.IndexPattern;
@@ -23,24 +28,30 @@ import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
+@Internal
 public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   private static final String WHITESPACE = " \t";
 
-  public IndexPatternSearcher() {
+  IndexPatternSearcher() {
     super(true);
   }
 
@@ -53,30 +64,37 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       return;
     }
 
-    final TodoCacheManager cacheManager = TodoCacheManager.SERVICE.getInstance(file.getProject());
+    final TodoCacheManager cacheManager = TodoCacheManager.getInstance(file.getProject());
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
+    final IndexPattern queryParametersPattern = queryParameters.getPattern();
     int count = patternProvider != null
                 ? cacheManager.getTodoCount(virtualFile, patternProvider)
-                : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
+                : (queryParametersPattern != null ? cacheManager.getTodoCount(virtualFile, queryParametersPattern) : 0);
     if (count != 0) {
       executeImpl(queryParameters, consumer);
     }
   }
 
-  protected static void executeImpl(IndexPatternSearch.SearchParameters queryParameters, Processor<? super IndexPatternOccurrence> consumer) {
+  protected static void executeImpl(IndexPatternSearch.SearchParameters queryParameters,
+                                    Processor<? super IndexPatternOccurrence> consumer) {
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
-    final PsiFile file = queryParameters.getFile();
-    final CharSequence chars = file.getViewProvider().getContents();
+    PsiFile file = queryParameters.getFile();
+
+
+    final CharSequence chars;
+    FileViewProvider viewProvider = file.getViewProvider();
+
+    chars = viewProvider.getContents();
     boolean multiLine = queryParameters.isMultiLine();
     List<CommentRange> commentRanges = findCommentTokenRanges(file, chars, queryParameters.getRange(), multiLine);
-    IntArrayList occurrences = new IntArrayList(1);
+    IntList occurrences = new IntArrayList(1);
     IndexPattern[] patterns = patternProvider != null ? patternProvider.getIndexPatterns()
-                                                      : new IndexPattern[] {queryParameters.getPattern()};
+                                                      : new IndexPattern[]{queryParameters.getPattern()};
 
     for (int i = 0; i < commentRanges.size(); i++) {
       occurrences.clear();
 
-      for (int j = patterns.length - 1; j >=0; --j) {
+      for (int j = patterns.length - 1; j >= 0; --j) {
         if (!collectPatternMatches(patterns, patterns[j], chars, commentRanges, i, file, queryParameters.getRange(), consumer,
                                    occurrences, multiLine)) {
           return;
@@ -96,31 +114,37 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
     if (file instanceof PsiPlainTextFile) {
       FileType fType = file.getFileType();
       if (fType instanceof CustomSyntaxTableFileType) {
-        Lexer lexer = SyntaxHighlighterFactory.getSyntaxHighlighter(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
-        return findComments(lexer, chars, range, COMMENT_TOKENS, null, multiLine);
+        Lexer lexer = ObjectUtils.doIfNotNull(SyntaxHighlighterFactory.getSyntaxHighlighter(fType, file.getProject(), file.getVirtualFile()), SyntaxHighlighter::getHighlightingLexer);
+        if (lexer != null) {
+          findComments(lexer, chars, range, COMMENT_TOKENS, null, multiLine);
+        }
       }
-      else {
-        return Collections.singletonList(new CommentRange(0, file.getTextLength()));
-      }
+
+      return Collections.singletonList(new CommentRange(0, chars.length()));
     }
     else {
       List<CommentRange> commentRanges = new ArrayList<>();
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language lang : relevantLanguages) {
+        final PsiFile currentPsiFile = file.getViewProvider().getPsi(lang);
         final SyntaxHighlighter syntaxHighlighter =
           SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
         Lexer lexer = syntaxHighlighter.getHighlightingLexer();
         TokenSet commentTokens = null;
         IndexPatternBuilder builderForFile = null;
-        for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
-          Lexer lexerFromBuilder = builder.getIndexingLexer(file);
-          if (lexerFromBuilder != null) {
-            lexer = lexerFromBuilder;
-            commentTokens = builder.getCommentTokenSet(file);
-            builderForFile = builder;
+
+        if (currentPsiFile != null) {
+          for (IndexPatternBuilder builder : IndexPatternBuilder.EP_NAME.getExtensionList()) {
+            Lexer lexerFromBuilder = builder.getIndexingLexer(currentPsiFile);
+            if (lexerFromBuilder != null) {
+              lexer = lexerFromBuilder;
+              commentTokens = builder.getCommentTokenSet(currentPsiFile);
+              builderForFile = builder;
+            }
           }
         }
+
         if (builderForFile == null) {
           final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
           if (parserDefinition != null) {
@@ -160,7 +184,9 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       if (range != null) {
         if (lexer.getTokenEnd() <= range.getStartOffset()) continue;
         if (lexer.getTokenStart() >= range.getEndOffset() &&
-            (!multiLine || lastEndOffset < 0 || !containsOneLineBreak(chars, lastEndOffset, lexer.getTokenStart()))) break;
+            (!multiLine || lastEndOffset < 0 || !containsOneLineBreak(chars, lastEndOffset, lexer.getTokenStart()))) {
+          break;
+        }
       }
 
       boolean isComment = commentTokens.contains(tokenType) || CacheUtil.isInComments(tokenType);
@@ -202,9 +228,9 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                                PsiFile file,
                                                TextRange range,
                                                Processor<? super IndexPatternOccurrence> consumer,
-                                               IntArrayList matches,
+                                               IntList matches,
                                                boolean multiLine
-                                               ) {
+  ) {
     CommentRange commentRange = commentRanges.get(commentNum);
     int commentStart = commentRange.startOffset;
     int commentEnd = commentRange.endOffset;
@@ -218,25 +244,21 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                                                                            commentEnd + commentSuffixLength));
       Matcher matcher = pattern.matcher(input);
       while (true) {
-        //long time1 = System.currentTimeMillis();
         boolean found = matcher.find();
-        //long time2 = System.currentTimeMillis();
-        //System.out.println("scanned text of length " + (lexer.getTokenEnd() - lexer.getTokenStart() + " in " + (time2 - time1) + " ms"));
-
         if (!found) break;
         int suffixStartOffset = input.length() - commentSuffixLength;
         int start = fitToRange(matcher.start(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
         int end = fitToRange(matcher.end(), commentPrefixLength, suffixStartOffset) + commentStart - commentPrefixLength;
         if (start != end) {
-          if ((range == null || range.getStartOffset() <= start && end <= range.getEndOffset()) && !matches.contains(start)) {
+          if ((range == null || range.containsRange(start, end)) && !matches.contains(start)) {
             List<TextRange> additionalRanges = multiLine ? findContinuation(start, chars, allIndexPatterns, commentRanges, commentNum)
                                                          : Collections.emptyList();
             if (range != null && !additionalRanges.isEmpty() &&
-                additionalRanges.get(additionalRanges.size() - 1).getEndOffset() > range.getEndOffset()) {
+                additionalRanges.getLast().getEndOffset() > range.getEndOffset()) {
               continue;
             }
             matches.add(start);
-            IndexPatternOccurrenceImpl occurrence = new IndexPatternOccurrenceImpl(file, start, end, indexPattern, additionalRanges);
+            IndexPatternOccurrence occurrence = new IndexPatternOccurrenceImpl(file, start, end, indexPattern, additionalRanges);
             if (!consumer.process(occurrence)) {
               return false;
             }
@@ -282,7 +304,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         break;
       }
       CharSequence commentText = StringPattern.newBombedCharSequence(text.subSequence(commentStartOffset, continuationEndOffset));
-      for (IndexPattern pattern: allIndexPatterns) {
+      for (IndexPattern pattern : allIndexPatterns) {
         Pattern p = pattern.getPattern();
         if (p != null && p.matcher(commentText).find()) break outer;
       }

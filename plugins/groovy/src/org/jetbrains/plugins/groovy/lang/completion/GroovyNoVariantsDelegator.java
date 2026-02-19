@@ -1,13 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.JavaChainLookupElement;
+import com.intellij.codeInsight.completion.JavaCompletionContributor;
+import com.intellij.codeInsight.completion.JavaCompletionSession;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaNoVariantsDelegator;
+import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +40,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
-public class GroovyNoVariantsDelegator extends CompletionContributor {
+public final class GroovyNoVariantsDelegator extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(GroovyNoVariantsDelegator.class);
 
   private static boolean suggestAnnotations(CompletionParameters parameters) {
@@ -32,7 +48,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     JavaNoVariantsDelegator.ResultTracker tracker = new JavaNoVariantsDelegator.ResultTracker(result);
     result.runRemainingContributors(parameters, tracker);
     final boolean empty = tracker.containsOnlyPackages || suggestAnnotations(parameters);
@@ -100,7 +116,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     JavaCompletionSession session = new JavaCompletionSession(result);
     for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement<?>)qualifier, session)) {
       final PsiType type = getPsiType(base.getObject());
-      if (type != null && !PsiType.VOID.equals(type)) {
+      if (type != null && !PsiTypes.voidType().equals(type)) {
         GrReferenceElement<?> ref = createMockReference(position, type, base);
         PsiElement refName = ref == null ? null : ref.getReferenceNameElement();
         if (refName == null) continue;
@@ -117,8 +133,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     }
   }
 
-  @Nullable
-  private static PsiType getPsiType(final Object o) {
+  private static @Nullable PsiType getPsiType(final Object o) {
     if (o instanceof ResolveResult) {
       return getPsiType(((ResolveResult)o).getElement());
     }
@@ -128,15 +143,13 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     else if (o instanceof PsiMethod) {
       return ((PsiMethod)o).getReturnType();
     }
-    else if (o instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)o;
+    else if (o instanceof PsiClass psiClass) {
       return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
     }
     return null;
   }
 
-  @Nullable
-  private static GrReferenceElement<?> createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+  private static @Nullable GrReferenceElement<?> createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(place.getProject());
     if (qualifierItem.getObject() instanceof PsiClass) {
       try {

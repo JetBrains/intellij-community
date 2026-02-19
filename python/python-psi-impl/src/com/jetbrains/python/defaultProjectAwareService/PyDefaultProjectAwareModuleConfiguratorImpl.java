@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
@@ -24,10 +25,8 @@ public final class PyDefaultProjectAwareModuleConfiguratorImpl<
   SERVICE extends PyDefaultProjectAwareService<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE>,
   APP_SERVICE extends SERVICE,
   MODULE_SERVICE extends SERVICE> implements PyDefaultProjectAwareServiceModuleConfigurator {
-  @NotNull
-  private final PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE> myClasses;
-  @Nullable
-  private final Function<Pair<Module, Collection<VirtualFile>>, ? extends STATE> myAutoDetector;
+  private final @NotNull PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE> myClasses;
+  private final @Nullable Function<Pair<Module, Collection<VirtualFile>>, ? extends STATE> myAutoDetector;
 
   public PyDefaultProjectAwareModuleConfiguratorImpl(@NotNull PyDefaultProjectAwareServiceClasses<STATE, SERVICE, APP_SERVICE, MODULE_SERVICE> classes) {
     this(classes, null);
@@ -58,10 +57,13 @@ public final class PyDefaultProjectAwareModuleConfiguratorImpl<
                                   @NotNull Function<Pair<Module, Collection<VirtualFile>>, ? extends STATE> detector) {
     final String extension = PythonFileType.INSTANCE.getDefaultExtension();
     // Module#getModuleScope() and GlobalSearchScope#getModuleScope() search only in source roots
-    final GlobalSearchScope searchScope = new ModulesScope(Collections.singleton(module), module.getProject());
+    Project project = module.getProject();
+    final GlobalSearchScope searchScope = new ModulesScope(Collections.singleton(module), project);
 
-    final Collection<VirtualFile> pyFiles =
-      ReadAction.compute(() -> FilenameIndex.getAllFilesByExt(module.getProject(), extension, searchScope));
+    Collection<VirtualFile> pyFiles = ReadAction.nonBlocking(() -> FilenameIndex
+        .getAllFilesByExt(project, extension, searchScope))
+      .inSmartMode(project)
+      .executeSynchronously();
 
     STATE state = detector.fun(Pair.create(module, pyFiles));
     if (state != null) {

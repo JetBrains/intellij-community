@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -10,7 +10,11 @@ import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.IntCollectionDataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,35 +51,26 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
     protected MyIndexStorage(@NotNull Path storageFile) throws IOException {
       super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, VoidDataExternalizer.INSTANCE, 4 * 1024, false);
     }
-
-    @Override
-    protected void checkCanceled() {
-      ProgressManager.checkCanceled();
-    }
   }
 
   private static final IndexExtension<Integer, Void, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {
-    @NotNull
     @Override
-    public IndexId<Integer, Void> getName() {
+    public @NotNull IndexId<Integer, Void> getName() {
       return IndexId.create("jvm.discovered.test.files");
     }
 
-    @NotNull
     @Override
-    public DataIndexer<Integer, Void, UsedSources> getIndexer() {
+    public @NotNull DataIndexer<Integer, Void, UsedSources> getIndexer() {
       return inputData -> inputData.myUsedFiles;
     }
 
-    @NotNull
     @Override
-    public KeyDescriptor<Integer> getKeyDescriptor() {
+    public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
       return EnumeratorIntegerDescriptor.INSTANCE;
     }
 
-    @NotNull
     @Override
-    public DataExternalizer<Void> getValueExternalizer() {
+    public @NotNull DataExternalizer<Void> getValueExternalizer() {
       return VoidDataExternalizer.INSTANCE;
     }
 

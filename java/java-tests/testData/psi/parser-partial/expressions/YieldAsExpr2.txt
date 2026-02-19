@@ -1,0 +1,11 @@
+PsiJavaFile:YieldAsExpr2.java
+  PsiAssignmentExpression:yield += 2
+    PsiReferenceExpression:yield
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:yield('yield')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:PLUSEQ('+=')
+    PsiWhiteSpace(' ')
+    PsiLiteralExpression:2
+      PsiJavaToken:INTEGER_LITERAL('2')

@@ -1,0 +1,6 @@
+JsonFile: n_string_escaped_ctrl_char_tab.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\\t"')
+    PsiElement(])(']')

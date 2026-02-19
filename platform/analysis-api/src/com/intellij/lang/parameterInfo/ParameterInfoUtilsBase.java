@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.parameterInfo;
 
 import com.intellij.psi.PsiElement;
@@ -10,23 +10,26 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ParameterInfoUtilsBase {
 
-  @Nullable
-  public static <T extends PsiElement> T findParentOfTypeWithStopElements(PsiFile file,
-                                                                          int offset,
-                                                                          Class<T> parentClass,
-                                                                          Class<? extends PsiElement> @NotNull ... stopAt) {
+  public static @Nullable <T extends PsiElement> T findParentOfTypeWithStopElements(PsiFile file,
+                                                                                    int offset,
+                                                                                    Class<T> parentClass,
+                                                                                    Class<? extends PsiElement> @NotNull ... stopAt) {
     PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
+    return findParentOfTypeWithStopElements(element, parentClass, stopAt);
+  }
 
-    T parentOfType = PsiTreeUtil.getParentOfType(element, parentClass, true, stopAt);
-    if (element instanceof PsiWhiteSpace) {
-      parentOfType = PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(element), parentClass, true, stopAt);
+  public static @Nullable <T extends PsiElement> T findParentOfTypeWithStopElements(PsiElement start, Class<T> parentClass,
+                                                                                    Class<? extends PsiElement> @NotNull ... stopAt) {
+    if (start == null) return null;
+
+    T parentOfType = PsiTreeUtil.getParentOfType(start, parentClass, true, stopAt);
+    if (start instanceof PsiWhiteSpace) {
+      parentOfType = PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(start), parentClass, true, stopAt);
     }
     return parentOfType;
   }
 
-  @Nullable
-  public static <T extends PsiElement> T findParentOfType(PsiFile file, int offset, Class<T> parentClass) {
+  public static @Nullable <T extends PsiElement> T findParentOfType(PsiFile file, int offset, Class<T> parentClass) {
     return findParentOfTypeWithStopElements(file, offset, parentClass);
   }
 }

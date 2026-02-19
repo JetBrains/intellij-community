@@ -92,8 +92,7 @@ class DebuggerConnector implements Runnable {
     session.start();
   }
 
-  @Nullable
-  private Debugger connect() {
+  private @Nullable Debugger connect() {
     Throwable lastException = null;
     for (int i = 0; i < 10; i++) {
       if (myProcess.isProcessTerminated()) return null;
@@ -122,12 +121,10 @@ class DebuggerConnector implements Runnable {
       }
     }
 
-    if (lastException != null) {
-      Logger.getInstance(getClass().getName()).info("Could not connect to debugger", lastException);
+    Logger.getInstance(getClass().getName()).info("Could not connect to debugger", lastException);
 
-      if (lastException.getMessage() != null) {
-        myProcess.notifyTextAvailable("Connection error: " + lastException.getMessage() + "\n", ProcessOutputTypes.SYSTEM);
-      }
+    if (lastException.getMessage() != null) {
+      myProcess.notifyTextAvailable("Connection error: " + lastException.getMessage() + "\n", ProcessOutputTypes.SYSTEM);
     }
 
     return null;

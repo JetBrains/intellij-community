@@ -1,18 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,7 +28,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -44,7 +48,7 @@ import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,39 +65,25 @@ public final class ExecutionHelper {
   }
 
   public static void showErrors(
-    @NotNull final Project myProject,
-    @NotNull final List<? extends Exception> errors,
-    @NotNull final String tabDisplayName,
-    @Nullable final VirtualFile file) {
+    final @NotNull Project myProject,
+    final @NotNull List<? extends Exception> errors,
+    final @NotNull @NlsContexts.TabTitle String tabDisplayName,
+    final @Nullable VirtualFile file) {
     showExceptions(myProject, errors, Collections.emptyList(), tabDisplayName, file);
   }
 
   public static void showExceptions(
-    @NotNull final Project myProject,
-    @NotNull final List<? extends Exception> errors,
-    @NotNull final List<? extends Exception> warnings,
-    @NotNull final @NlsContexts.TabTitle String tabDisplayName,
-    @Nullable final VirtualFile file) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !errors.isEmpty()) {
-      throw new RuntimeException(errors.get(0));
-    }
+    final @NotNull Project myProject,
+    final @NotNull List<? extends Exception> errors,
+    final @NotNull List<? extends Exception> warnings,
+    final @NotNull @NlsContexts.TabTitle String tabDisplayName,
+    final @Nullable VirtualFile file) {
 
     errors.forEach(it -> {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Got error: ", it);
-      }
-      else {
-        LOG.warn("Got error: " + it.getMessage());
-      }
+      LOG.warn(tabDisplayName + " error: " + it.getMessage());
     });
-
     warnings.forEach(it -> {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Got warning: ", it);
-      }
-      else {
-        LOG.warn("Got warning: " + it.getMessage());
-      }
+      LOG.warn(tabDisplayName + " warning: " + it.getMessage());
     });
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -108,34 +98,45 @@ public final class ExecutionHelper {
         openMessagesView(errorTreeView, myProject, tabDisplayName);
       }
       catch (NullPointerException e) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Exceptions occurred:");
-        for (final Exception exception : errors) {
-          builder.append("\n");
-          builder.append(exception.getMessage());
+        String errorText = "";
+        if (!errors.isEmpty()) {
+          StringBuilder builder = new StringBuilder();
+          for (final Exception exception : errors) {
+            builder.append("\n");
+            builder.append(exception.getMessage());
+          }
+          errorText = ExecutionBundle.message("exception.error.text") + builder;
         }
-        builder.append("Warnings occurred:");
-        for (final Exception exception : warnings) {
-          builder.append("\n");
-          builder.append(exception.getMessage());
+        String warningText = "";
+        if (!warnings.isEmpty()) {
+          StringBuilder builder = new StringBuilder();
+          for (final Exception exception : warnings) {
+            builder.append("\n");
+            builder.append(exception.getMessage());
+          }
+          warningText = ExecutionBundle.message("warning.error.text") + builder;
         }
-        Messages.showErrorDialog(builder.toString(), ExecutionBundle.message("execution.error"));
+        Messages.showErrorDialog(errorText + (errorText.isEmpty() || warningText.isEmpty() ? "" : "\n") + warningText,
+                                 ExecutionBundle.message("execution.error"));
         return;
       }
 
       addMessages(MessageCategory.ERROR, errors, errorTreeView, file, "Unknown Error");
       addMessages(MessageCategory.WARNING, warnings, errorTreeView, file, "Unknown Warning");
 
-      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+      final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+      if (window != null) {
+       window.activate(null);
+      }
     });
   }
 
   private static void addMessages(
     final int messageCategory,
-    @NotNull final List<? extends Exception> exceptions,
+    final @NotNull List<? extends Exception> exceptions,
     @NotNull ErrorViewPanel errorTreeView,
-    @Nullable final VirtualFile file,
-    @NotNull final String defaultMessage) {
+    final @Nullable VirtualFile file,
+    final @NotNull String defaultMessage) {
     for (final Exception exception : exceptions) {
       String message = exception.getMessage();
 
@@ -147,10 +148,10 @@ public final class ExecutionHelper {
     }
   }
 
-  public static void showOutput(@NotNull final Project myProject,
-                                @NotNull final ProcessOutput output,
-                                @NotNull final String tabDisplayName,
-                                @Nullable final VirtualFile file,
+  public static void showOutput(final @NotNull Project myProject,
+                                final @NotNull ProcessOutput output,
+                                final @NotNull @NlsContexts.TabTitle String tabDisplayName,
+                                final @Nullable VirtualFile file,
                                 final boolean activateWindow) {
     final String stdout = output.getStdout();
     final String stderr = output.getStderr();
@@ -161,9 +162,7 @@ public final class ExecutionHelper {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
 
-      //noinspection HardCodedStringLiteral
       final String stdOutTitle = "[Stdout]:";
-      //noinspection HardCodedStringLiteral
       final String stderrTitle = "[Stderr]:";
       final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
       try {
@@ -212,43 +211,45 @@ public final class ExecutionHelper {
         .addMessage(MessageCategory.SIMPLE, new String[]{"Process finished with exit code " + output.getExitCode()}, null, -1, -1, null);
 
       if (activateWindow) {
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+        final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+        if (toolWindow != null) {
+          toolWindow.activate(null);
+        }
       }
     });
   }
 
-  private static void openMessagesView(@NotNull final ErrorViewPanel errorTreeView,
-                                       @NotNull final Project myProject,
-                                       @NotNull final @NlsContexts.TabTitle String tabDisplayName) {
+  private static void openMessagesView(final @NotNull ErrorViewPanel errorTreeView,
+                                       final @NotNull Project myProject,
+                                       final @NotNull @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
-      final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
-      final Content content = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
-      messageView.getContentManager().addContent(content);
-      Disposer.register(content, errorTreeView);
-      messageView.getContentManager().setSelectedContent(content);
-      ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
+      final MessageView messageView = MessageView.getInstance(myProject);
+      messageView.runWhenInitialized(() -> {
+        final Content content = ContentFactory.getInstance().createContent(errorTreeView, tabDisplayName, true);
+        messageView.getContentManager().addContent(content);
+        Disposer.register(content, errorTreeView);
+        messageView.getContentManager().setSelectedContent(content);
+        ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
+      });
     }, ExecutionBundle.message("open.message.view"), null);
   }
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,
-                                                                           @NotNull final NotNullFunction<? super String, Boolean> titleMatcher) {
+                                                                           final @NotNull NotNullFunction<? super String, Boolean> titleMatcher) {
     return findRunningConsole(project, selectedContent -> titleMatcher.fun(selectedContent.getDisplayName()));
   }
 
   public static Collection<RunContentDescriptor> findRunningConsole(@NotNull Project project,
                                                                     @NotNull NotNullFunction<? super RunContentDescriptor, Boolean> descriptorMatcher) {
-    final Ref<Collection<RunContentDescriptor>> ref = new Ref<>();
-
-    final Runnable computeDescriptors = () -> {
+    return ReadAction.compute(() -> {
       RunContentManager contentManager = RunContentManager.getInstance(project);
       final RunContentDescriptor selectedContent = contentManager.getSelectedContent();
       if (selectedContent != null) {
         final ToolWindow toolWindow = contentManager.getToolWindowByDescriptor(selectedContent);
         if (toolWindow != null && toolWindow.isVisible()) {
           if (descriptorMatcher.fun(selectedContent)) {
-            ref.set(Collections.singletonList(selectedContent));
-            return;
+            return Collections.singletonList(selectedContent);
           }
         }
       }
@@ -259,18 +260,8 @@ public final class ExecutionHelper {
           result.add(runContentDescriptor);
         }
       }
-      ref.set(result);
-    };
-
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      computeDescriptors.run();
-    }
-    else {
-      LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
-      ApplicationManager.getApplication().invokeAndWait(computeDescriptors);
-    }
-
-    return ref.get();
+      return result;
+    });
   }
 
   public static List<RunContentDescriptor> collectConsolesByDisplayName(@NotNull Project project,
@@ -286,17 +277,21 @@ public final class ExecutionHelper {
 
   public static void selectContentDescriptor(final @NotNull DataContext dataContext,
                                              final @NotNull Project project,
-                                             @NotNull Collection<? extends RunContentDescriptor> consoles,
-                                             @NlsContexts.PopupTitle String selectDialogTitle, final Consumer<? super RunContentDescriptor> descriptorConsumer) {
-    if (consoles.size() == 1) {
-      RunContentDescriptor descriptor = consoles.iterator().next();
+                                             @NotNull Collection<? extends RunContentDescriptor> contentDescriptors,
+                                             @NlsContexts.PopupTitle String selectDialogTitle,
+                                             final Consumer<? super RunContentDescriptor> descriptorConsumer) {
+    if (contentDescriptors.size() == 1) {
+      RunContentDescriptor descriptor = contentDescriptors.iterator().next();
       descriptorConsumer.consume(descriptor);
       descriptorToFront(project, descriptor);
     }
-    else if (consoles.size() > 1) {
+    else if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.error("Expected a single content descriptor, got " + contentDescriptors);
+    }
+    else if (contentDescriptors.size() > 1) {
       final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
       JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(new ArrayList<>(consoles))
+        .createPopupChooserBuilder(new ArrayList<>(contentDescriptors))
         .setRenderer(SimpleListCellRenderer.<RunContentDescriptor>create((label, value, index) -> {
           label.setText(value.getDisplayName());
           label.setIcon(icon);
@@ -311,7 +306,7 @@ public final class ExecutionHelper {
     }
   }
 
-  private static void descriptorToFront(@NotNull final Project project, @NotNull final RunContentDescriptor descriptor) {
+  private static void descriptorToFront(final @NotNull Project project, final @NotNull RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(() -> {
       RunContentManager manager = RunContentManager.getInstance(project);
       ToolWindow toolWindow = manager.getToolWindowByDescriptor(descriptor);
@@ -322,9 +317,10 @@ public final class ExecutionHelper {
     }, project.getDisposed());
   }
 
-  static class ErrorViewPanel extends NewErrorTreeViewPanel {
-    ErrorViewPanel(final Project project) {
+  static final class ErrorViewPanel extends NewErrorTreeViewPanel {
+    ErrorViewPanel(@NotNull Project project) {
       super(project, "reference.toolWindows.messages");
+      Disposer.register(project, this);
     }
 
     @Override
@@ -334,17 +330,17 @@ public final class ExecutionHelper {
   }
 
 
-  public static void executeExternalProcess(@Nullable final Project myProject,
-                                            @NotNull final ProcessHandler processHandler,
-                                            @NotNull final ExecutionMode mode,
-                                            @NotNull final GeneralCommandLine cmdline) {
+  public static void executeExternalProcess(final @Nullable Project myProject,
+                                            final @NotNull ProcessHandler processHandler,
+                                            final @NotNull ExecutionMode mode,
+                                            final @NotNull GeneralCommandLine cmdline) {
     executeExternalProcess(myProject, processHandler, mode, cmdline.getCommandLineString());
   }
 
-  private static void executeExternalProcess(@Nullable final Project myProject,
-                                             @NotNull final ProcessHandler processHandler,
-                                             @NotNull final ExecutionMode mode,
-                                             @NotNull final String presentableCmdline) {
+  private static void executeExternalProcess(final @Nullable Project myProject,
+                                             final @NotNull ProcessHandler processHandler,
+                                             final @NotNull ExecutionMode mode,
+                                             final @NotNull String presentableCmdline) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.debug("Running " + presentableCmdline);
       processHandler.waitFor();
@@ -371,7 +367,7 @@ public final class ExecutionHelper {
     else if (mode.inBackGround()) {
       final Task task = new Task.Backgroundable(myProject, title, mode.cancelable()) {
         @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+        public void run(final @NotNull ProgressIndicator indicator) {
           process.run();
         }
       };
@@ -455,9 +451,9 @@ public final class ExecutionHelper {
 
   private static Runnable createTimeLimitedExecutionProcess(@NotNull ProcessHandler processHandler,
                                                             @NotNull ExecutionMode mode,
-                                                            @NotNull final String presentableCmdline) {
+                                                            final @NotNull String presentableCmdline) {
     ProcessOutput outputCollected = new ProcessOutput();
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         String eventText = event.getText();

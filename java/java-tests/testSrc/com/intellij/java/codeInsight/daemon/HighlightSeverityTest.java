@@ -46,7 +46,7 @@ public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
                                             @NotNull LocalInspectionToolSession session) {
         return new JavaElementVisitor() {
           @Override
-          public void visitIdentifier(PsiIdentifier identifier) {
+          public void visitIdentifier(@NotNull PsiIdentifier identifier) {
             if (identifier.getText().equals("k")) {
               holder.registerProblem(identifier, "Variable 'k' is never used");
             }

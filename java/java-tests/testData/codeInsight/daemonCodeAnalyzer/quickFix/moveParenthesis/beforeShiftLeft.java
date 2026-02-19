@@ -1,4 +1,4 @@
-// "Fix closing parenthesis placement" "true"
+// "Fix closing parenthesis placement" "true-preview"
 public class Example {
   String foo(String s, boolean b) {
     return s;
@@ -9,6 +9,6 @@ public class Example {
   }
 
   void test() {
-    foo(bar("hello"<caret>, true));
+    foo(bar("hello", t<caret>rue));
   }
 }

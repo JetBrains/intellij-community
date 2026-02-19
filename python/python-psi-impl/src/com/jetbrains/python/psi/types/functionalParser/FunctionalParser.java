@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
-* @author vlan
-*/
 public interface FunctionalParser<R, T> {
   @NotNull
   R parse(@NotNull List<Token<T>> tokens) throws ParserException;

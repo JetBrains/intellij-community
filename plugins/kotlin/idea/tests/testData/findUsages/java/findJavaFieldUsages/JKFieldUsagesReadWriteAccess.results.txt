@@ -1,0 +1,2 @@
+[JKFieldUsagesReadWriteAccess.0.java] Unclassified 7 this.foo = foo;
+[JKFieldUsagesReadWriteAccess.1.kt] Value write 2 Foo("abc").foo = "foo"

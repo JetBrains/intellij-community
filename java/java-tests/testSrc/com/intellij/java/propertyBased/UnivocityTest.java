@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
@@ -10,13 +11,26 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.propertyBased.*;
+import com.intellij.testFramework.propertyBased.ActionOnFile;
+import com.intellij.testFramework.propertyBased.DeleteRange;
+import com.intellij.testFramework.propertyBased.FilePropertiesChanged;
+import com.intellij.testFramework.propertyBased.InvokeCompletion;
+import com.intellij.testFramework.propertyBased.InvokeIntention;
+import com.intellij.testFramework.propertyBased.MadTestingAction;
+import com.intellij.testFramework.propertyBased.MadTestingUtil;
+import com.intellij.testFramework.propertyBased.RehighlightAllEditors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.IntDistribution;
@@ -27,7 +41,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
@@ -36,7 +49,7 @@ public class UnivocityTest extends BaseUnivocityTest {
   public void setUp() throws Exception {
     super.setUp();
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
-    MadTestingUtil.enableAllInspections(myProject);
+    MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
   }
 
   @Override
@@ -56,6 +69,7 @@ public class UnivocityTest extends BaseUnivocityTest {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     GlobalSearchScope allScope = GlobalSearchScope.allScope(myProject);
     Assume.assumeTrue("Maven import failed",
+                      facade.findClass("java.lang.Object", allScope) != null && // verify that JDK is attached
                       facade.findClass("org.testng.Assert", allScope) != null &&
                       facade.findClass("com.univocity.test.OutputTester", allScope) != null);
 
@@ -78,8 +92,7 @@ public class UnivocityTest extends BaseUnivocityTest {
           env1.logMessage("Open " + file.getVirtualFile().getPath() + " in editor");
           if ("Example.java".equals(file.getName())) {
             env1.logMessage("OutputTester class: " + facade.findClass("com.univocity.test.OutputTester", allScope));
-            env1.logMessage("OutputTester files: " + Arrays.toString(
-              FilenameIndex.getFilesByName(myProject, "OutputTester.java", allScope)));
+            env1.logMessage("OutputTester files: " + FilenameIndex.getVirtualFilesByName("OutputTester.java", allScope));
             env1.logMessage("content roots: " + Arrays.toString(
               ModuleRootManager.getInstance(ModuleManager.getInstance(myProject).getModules()[0]).getSourceRoots(true)));
           }
@@ -96,6 +109,7 @@ public class UnivocityTest extends BaseUnivocityTest {
   public void testRandomActivity() {
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     Generator<PsiJavaFile> javaFiles = psiJavaFiles();
+    initCompiler();
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env ->
       MadTestingUtil.changeAndRevert(myProject, () ->
@@ -129,8 +143,8 @@ public class UnivocityTest extends BaseUnivocityTest {
     public void performCommand(@NotNull Environment env) {
       PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
       PsiFile file = getFile();
-      if (file instanceof PsiJavaFile) {
-        PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      if (file instanceof PsiJavaFile javaFile) {
+        PsiImportList importList = javaFile.getImportList();
         if (importList != null) {
           PsiImportStatement[] statements = importList.getImportStatements();
           if (statements.length > 0) {

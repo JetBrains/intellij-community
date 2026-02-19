@@ -21,6 +21,7 @@ import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.PaletteItem;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -44,6 +45,11 @@ public class MorphingAction extends AnAction {
     myArea = area;
     myComponents = components;
     myTarget = target;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

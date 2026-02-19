@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +11,12 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.Field;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveValue;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +36,7 @@ public class UnBoxingEvaluator implements Evaluator {
 
   private final Evaluator myOperand;
   private static final Map<String, Couple<String>> TYPES_TO_CONVERSION_METHOD_MAP = new HashMap<>();
+
   static {
     TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_BOOLEAN, Couple.of("booleanValue", "()Z"));
     TYPES_TO_CONVERSION_METHOD_MAP.put(CommonClassNames.JAVA_LANG_BYTE, Couple.of("byteValue", "()B"));
@@ -54,7 +61,7 @@ public class UnBoxingEvaluator implements Evaluator {
     return unbox(myOperand.evaluate(context), context);
   }
 
-  public static Object unbox(@Nullable Object value, EvaluationContextImpl context) throws EvaluateException {
+  public static Object unbox(@Nullable Object value, EvaluationContext context) throws EvaluateException {
     if (value == null) {
       throw new EvaluateException("java.lang.NullPointerException: cannot unbox null value");
     }
@@ -68,7 +75,7 @@ public class UnBoxingEvaluator implements Evaluator {
     return value;
   }
 
-  private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
+  private static Value convertToPrimitive(EvaluationContext context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
     // for speedup first try value field
     Value primitiveValue = getInnerPrimitiveValue(value, true).join();

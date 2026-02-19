@@ -1,9 +1,9 @@
 class Foo<Z> {
   void foo(final Bar baz) {
     Z z =  z(new Bar<String>(baz));
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Z'">Z z1 = z(new Bar<>(baz));</error>
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Z'">Z z2 = z(c(baz));</error>
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Z'">Z z3 = z(this.<String>c(baz));</error>
+    Z z1 = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Z'">z</error>(new Bar<>(baz));
+    Z z2 = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Z'">z</error>(c(baz));
+    Z z3 = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Z'">z</error>(this.<String>c(baz));
   }
 
   <P> Bar<P> c(Bar<P> b) {

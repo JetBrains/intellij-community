@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
@@ -16,8 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class EnterInCommentUtil {
-  @Nullable
-  public static CodeDocumentationAwareCommenter getDocumentationAwareCommenter(@NotNull DataContext dataContext) {
+  public static @Nullable CodeDocumentationAwareCommenter getDocumentationAwareCommenter(@NotNull DataContext dataContext) {
     Language language = EnterHandler.getLanguage(dataContext);
     if (language == null) return null;
 

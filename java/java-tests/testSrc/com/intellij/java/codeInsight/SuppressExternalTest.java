@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -30,12 +31,22 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 
 import java.io.File;
 
+/**
+ * Support for suppressions in external annotations is dropped. We may reconsider this later
+ * when external annotations will be supported in ModCommands
+ */
+@IgnoreJUnit3
 public class SuppressExternalTest extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
 
@@ -59,12 +70,12 @@ public class SuppressExternalTest extends UsefulTestCase {
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
     myLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(facade.getProject(), LanguageLevel.JDK_1_5);
   }
 
   @Override
   public void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), myLanguageLevel);
 
     try {
       myFixture.tearDown();

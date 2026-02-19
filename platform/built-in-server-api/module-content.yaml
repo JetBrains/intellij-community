@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.builtInServer.jar
+  modules:
+  - name: intellij.platform.builtInServer

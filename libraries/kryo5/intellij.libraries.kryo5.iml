@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="kryo" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.esotericsoftware:kryo5:5.6.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo5/5.6.0/kryo5-5.6.0.jar">
+              <sha256sum>2ceef6a5a0527ad89ab6d1fd71bba4fef355cded510970c650d1443412b18dc5</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo5/5.6.0/kryo5-5.6.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo5/5.6.0/kryo5-5.6.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

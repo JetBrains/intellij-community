@@ -1,12 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.ui.FileColorManager
 import org.jdom.Element
 
-@Service
 internal abstract class FileColorModelStorageManager(private val project: Project) : PersistentStateComponent<Element> {
   protected abstract val perUser: Boolean
 
@@ -21,12 +24,14 @@ internal abstract class FileColorModelStorageManager(private val project: Projec
   }
 }
 
+@Service(Service.Level.PROJECT)
 @State(name = "SharedFileColors", storages = [Storage("fileColors.xml")])
 internal class PerTeamFileColorModelStorageManager(project: Project) : FileColorModelStorageManager(project) {
   override val perUser: Boolean
     get() = false
 }
 
+@Service(Service.Level.PROJECT)
 @State(name = "FileColors", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 internal class PerUserFileColorModelStorageManager(project: Project) : FileColorModelStorageManager(project) {
   override val perUser: Boolean

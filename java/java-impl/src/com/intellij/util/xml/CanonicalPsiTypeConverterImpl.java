@@ -1,9 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
@@ -15,16 +22,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
-  @NonNls static final String[] PRIMITIVES = {"boolean", "byte", "char", "double", "float", "int", "long", "short"};
-  @NonNls private static final String ARRAY_PREFIX = "[L";
+public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
+  static final @NonNls String[] PRIMITIVES = {"boolean", "byte", "char", "double", "float", "int", "long", "short"};
+  private static final @NonNls String ARRAY_PREFIX = "[L";
 
   @Override
-  public PsiType fromString(final String s, final ConvertContext context) {
-    if (s == null) return null;
+  public PsiType fromString(final String s, final @NotNull ConvertContext context) {
+    if (s == null) {
+      return null;
+    }
+
     try {
       return JavaPsiFacade.getElementFactory(context.getFile().getProject()).createTypeFromText(s.replace('$', '.'), null);
     }
@@ -34,7 +41,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   }
 
   @Override
-  public String toString(final PsiType t, final ConvertContext context) {
+  public String toString(final PsiType t, final @NotNull ConvertContext context) {
     return t == null ? null : t.getCanonicalText();
   }
 
@@ -47,7 +54,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
     return getReferences(genericDomValue.getValue(), typeText, 0, element);
   }
 
-  public PsiReference[] getReferences(@Nullable PsiType type, String typeText, int startOffsetInText, @NotNull final PsiElement element) {
+  public PsiReference[] getReferences(@Nullable PsiType type, String typeText, int startOffsetInText, final @NotNull PsiElement element) {
     String trimmed = typeText.trim();
     int offset = ElementManipulators.getValueTextRange(element).getStartOffset() + startOffsetInText + typeText.indexOf(trimmed);
     if (trimmed.startsWith(ARRAY_PREFIX)) {
@@ -66,8 +73,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
 
     return new JavaClassReferenceSet(trimmed, element, offset, false, new JavaClassReferenceProvider()) {
       @Override
-      @NotNull
-      protected JavaClassReference createReference(int refIndex, @NotNull String subRefText, @NotNull TextRange textRange, boolean staticImport) {
+      protected @NotNull JavaClassReference createReference(int refIndex, @NotNull String subRefText, @NotNull TextRange textRange, boolean staticImport) {
         return new JavaClassReference(this, textRange, refIndex, subRefText, staticImport) {
           @Override
           public boolean isSoft() {
@@ -75,8 +81,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
           }
 
           @Override
-          @NotNull
-          public JavaResolveResult advancedResolve(final boolean incompleteCode) {
+          public @NotNull JavaResolveResult advancedResolve(final boolean incompleteCode) {
             if (isPrimitiveType) {
               return new CandidateInfo(element, PsiSubstitutor.EMPTY, false, false, element);
             }
@@ -85,7 +90,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
           }
 
           @Override
-          public void processVariants(@NotNull final PsiScopeProcessor processor) {
+          public void processVariants(final @NotNull PsiScopeProcessor processor) {
             if (processor instanceof JavaCompletionProcessor) {
               ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
             } else {

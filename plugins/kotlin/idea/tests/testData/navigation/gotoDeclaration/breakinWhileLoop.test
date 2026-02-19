@@ -1,0 +1,18 @@
+// FILE: before.kt
+// IGNORE_K1
+fun some() {
+    while (true) {
+        if (condition()) <caret>break
+    }
+}
+
+fun condition() = true
+// FILE: after.kt
+// IGNORE_K1
+fun some() {
+    while (true) {
+        if (condition()) break
+    }<caret>
+}
+
+fun condition() = true

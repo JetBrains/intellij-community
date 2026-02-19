@@ -3,10 +3,14 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-public class TabImpl extends AbstractTab implements Tab {
+@ApiStatus.Internal
+public final class TabImpl extends AbstractTab implements Tab {
   TabImpl() {
   }
 
@@ -20,7 +24,8 @@ public class TabImpl extends AbstractTab implements Tab {
     return myDefaultIndex >= 0 ? myDefaultIndex : myIndex;
   }
 
-  public String getDisplayName() {
+  @Transient
+  public @NlsSafe String getDisplayName() {
     return myDisplayName;
   }
 
@@ -106,35 +111,21 @@ public class TabImpl extends AbstractTab implements Tab {
 
   @Override
   public boolean isDetached(PlaceInGrid place) {
-    switch (place) {
-      case bottom:
-        return isBottomDetached();
-      case center:
-        return isCenterDetached();
-      case left:
-        return isLeftDetached();
-      case right:
-        return isRightDetached();
-    }
-
-    return false;
+    return switch (place) {
+      case bottom -> isBottomDetached();
+      case center -> isCenterDetached();
+      case left -> isLeftDetached();
+      case right -> isRightDetached();
+    };
   }
 
   @Override
   public void setDetached(PlaceInGrid place, boolean detached) {
     switch (place) {
-      case bottom:
-        setBottomDetached(detached);
-        break;
-      case center:
-        setCenterDetached(detached);
-        break;
-      case left:
-        setLeftDetached(detached);
-        break;
-      case right:
-        setRightDetached(detached);
-        break;
+      case bottom -> setBottomDetached(detached);
+      case center -> setCenterDetached(detached);
+      case left -> setLeftDetached(detached);
+      case right -> setRightDetached(detached);
     }
   }
 

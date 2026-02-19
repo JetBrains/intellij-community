@@ -1,0 +1,12 @@
+// FIR_COMPARISON
+
+package test
+
+fun test() {
+    class Bar
+
+    val bar = foo.Bar<caret>
+}
+
+// ELEMENT: Bar
+// TAIL_TEXT: " (foo)"

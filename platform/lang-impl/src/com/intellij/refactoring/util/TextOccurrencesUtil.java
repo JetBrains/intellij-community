@@ -14,7 +14,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.PairProcessor;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Collection;
 
@@ -22,16 +24,9 @@ public final class TextOccurrencesUtil {
   private TextOccurrencesUtil() {
   }
 
-  /** @deprecated Use {@link TextOccurrencesUtil#addTextOccurrences} */
-  @Deprecated
-  public static void addTextOccurences(@NotNull PsiElement element,
-                                       @NotNull String stringToSearch,
-                                       @NotNull GlobalSearchScope searchScope,
-                                       @NotNull final Collection<? super UsageInfo> results,
-                                       @NotNull final UsageInfoFactory factory) {
-    addTextOccurrences(element, stringToSearch, searchScope, results, factory);
-  }
-
+  /**
+   * @param results must be thread-safe
+   */
   public static void addTextOccurrences(@NotNull PsiElement element,
                                         @NotNull String stringToSearch,
                                         @NotNull GlobalSearchScope searchScope,
@@ -40,41 +35,33 @@ public final class TextOccurrencesUtil {
     TextOccurrencesUtilBase.addTextOccurrences(element, stringToSearch, searchScope, results, factory);
   }
 
-    /** @deprecated Use {@link TextOccurrencesUtil#processUsagesInStringsAndComments(
-     * PsiElement, SearchScope, String, boolean, PairProcessor)} */
-  @Deprecated
-  public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
-                                                          @NotNull String stringToSearch,
-                                                          boolean ignoreReferences,
-                                                          @NotNull PairProcessor<? super PsiElement, ? super TextRange> processor) {
-    return processUsagesInStringsAndComments(element, GlobalSearchScope.projectScope(element.getProject()),
-                                             stringToSearch, ignoreReferences, processor);
-  }
-
+  /**
+   * @param includeReferences usage with a reference at offset would be skipped iff {@code includeReferences == false}
+   * @param processor must be thread-safe
+   */
   public static boolean processUsagesInStringsAndComments(@NotNull PsiElement element,
                                                           @NotNull SearchScope searchScope,
                                                           @NotNull String stringToSearch,
-                                                          boolean ignoreReferences,
+                                                          boolean includeReferences,
                                                           @NotNull PairProcessor<? super PsiElement, ? super TextRange> processor) {
-    return TextOccurrencesUtilBase.processUsagesInStringsAndComments(element, searchScope, stringToSearch, ignoreReferences, processor);
+    return TextOccurrencesUtilBase.processUsagesInStringsAndComments(element, searchScope, stringToSearch, includeReferences, processor);
   }
 
-  /** @deprecated Use {@link TextOccurrencesUtil#addUsagesInStringsAndComments(
-   * PsiElement, SearchScope, String, Collection, UsageInfoFactory)} */
-  @Deprecated
-  public static void addUsagesInStringsAndComments(@NotNull PsiElement element,
-                                                   @NotNull String stringToSearch,
-                                                   @NotNull Collection<? super UsageInfo> results,
-                                                   @NotNull UsageInfoFactory factory) {
-    addUsagesInStringsAndComments(element, GlobalSearchScope.projectScope(element.getProject()), stringToSearch, results, factory);
-  }
-
+  /**
+   * @param results must be thread-safe
+   */
   public static void addUsagesInStringsAndComments(@NotNull PsiElement element,
                                                    @NotNull SearchScope searchScope,
                                                    @NotNull String stringToSearch,
                                                    @NotNull Collection<? super UsageInfo> results,
                                                    @NotNull UsageInfoFactory factory) {
-    TextOccurrencesUtilBase.addUsagesInStringsAndComments(element, searchScope, stringToSearch, results, factory);
+    TextOccurrencesUtilBase.processUsagesInStringsAndComments(element, searchScope, stringToSearch, false, (commentOrLiteral, textRange) -> {
+      UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
+      if (usageInfo != null) {
+        results.add(usageInfo);
+      }
+      return true;
+    });
   }
 
   public static boolean isSearchTextOccurrencesEnabled(@NotNull PsiElement element) {
@@ -83,26 +70,16 @@ public final class TextOccurrencesUtil {
     return FindUsagesUtil.isSearchForTextOccurrencesAvailable(element, false, handler);
   }
 
-  /** @deprecated Use {@link TextOccurrencesUtil#findNonCodeUsages(
-   * PsiElement, SearchScope, String, boolean, boolean, String, Collection)} */
-  @Deprecated
-  public static void findNonCodeUsages(PsiElement element,
-                                       String stringToSearch,
-                                       boolean searchInStringsAndComments,
-                                       boolean searchInNonJavaFiles,
-                                       String newQName,
-                                       Collection<? super UsageInfo> results) {
-    findNonCodeUsages(element, GlobalSearchScope.projectScope(element.getProject()),
-                      stringToSearch, searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
-  }
-
+  /**
+   * @param results must be thread-safe
+   */
   public static void findNonCodeUsages(@NotNull PsiElement element,
                                        @NotNull SearchScope searchScope,
-                                       String stringToSearch,
+                                       @NotNull String stringToSearch,
                                        boolean searchInStringsAndComments,
                                        boolean searchInNonJavaFiles,
                                        String newQName,
-                                       Collection<? super UsageInfo> results) {
+                                       @NotNull Collection<? super UsageInfo> results) {
     if (searchInStringsAndComments || searchInNonJavaFiles) {
       UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
 
@@ -110,14 +87,14 @@ public final class TextOccurrencesUtil {
         addUsagesInStringsAndComments(element, searchScope, stringToSearch, results, factory);
       }
 
-      if (searchInNonJavaFiles && searchScope instanceof GlobalSearchScope) {
-        addTextOccurrences(element, stringToSearch, (GlobalSearchScope)searchScope, results, factory);
+      if (searchInNonJavaFiles && searchScope instanceof GlobalSearchScope gss) {
+        addTextOccurrences(element, stringToSearch, gss, results, factory);
       }
     }
   }
 
-  private static UsageInfoFactory createUsageInfoFactory(final PsiElement element,
-                                                        final String newQName) {
+  @Contract(pure = true)
+  private static @NonNull UsageInfoFactory createUsageInfoFactory(final PsiElement element, final String newQName) {
     return (usage, startOffset, endOffset) -> {
       int start = usage.getTextRange().getStartOffset();
       return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,

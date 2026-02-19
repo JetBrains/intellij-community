@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -8,55 +8,38 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /**
- * Builder for the changes list in the file system. The instances of
+ * Builder for the list of changes in the file system. The instances of
  * this class are used to collect changes that happened in the file system.
  *
- * @see ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder,com.intellij.openapi.progress.ProgressIndicator, ChangeListManagerGate)
- * @author max
+ * @see ChangeProvider#getChanges(VcsDirtyScope, ChangelistBuilder, com.intellij.openapi.progress.ProgressIndicator, ChangeListManagerGate)
  */
 public interface ChangelistBuilder {
   /**
-   * Process a change to the file. This method is used to report changes that
-   * version control system knows about.
-   *
-   * @param change a change to process.
-   * @param vcsKey
+   * Process a change to the file.
+   * This method is used to report changes that the version control system knows about.
    */
-  void processChange(Change change, VcsKey vcsKey);
+  void processChange(@NotNull Change change, VcsKey vcsKey);
 
-  void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey);
+  /**
+   * Put the given change into the given change list.
+   * If there is no such change list, an error is logged and change goes to the default list.
+   */
+  void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey);
 
   /**
    * Put the given change into the change list with the given name.
-   * If there is no such change list it is created.
-   * This method allows not to refer to ChangeListManager for the LocalChangeList object.
-   *
-   * @param change         Submitted change
-   * @param changeListName A name for a change list.
-   * @param vcsKey
+   * If there is no such change list, it is created.
+   * This method allows not referring to ChangeListManager for the LocalChangeList object.
    */
-  void processChangeInList(Change change, @NlsSafe String changeListName, VcsKey vcsKey);
+  void processChangeInList(@NotNull Change change, @Nullable @NlsSafe String changeListName, VcsKey vcsKey);
 
   void removeRegisteredChangeFor(final FilePath path);
-
-  /**
-   * Process a file that is not under version control.
-   *
-   * @param file a file to process
-   * @deprecated use {@link #processUnversionedFile(FilePath)} instead
-   */
-  @Deprecated
-  default void processUnversionedFile(VirtualFile file) {
-    if (file != null) {
-      processUnversionedFile(VcsUtil.getFilePath(file));
-    }
-  }
 
   void processUnversionedFile(FilePath filePath);
 
@@ -67,7 +50,7 @@ public interface ChangelistBuilder {
    * @param file a file to process
    */
   void processLocallyDeletedFile(FilePath file);
-  
+
   void processLocallyDeletedFile(final LocallyDeletedChange locallyDeletedChange);
 
   /**
@@ -77,19 +60,6 @@ public interface ChangelistBuilder {
    * @param file a file to process
    */
   void processModifiedWithoutCheckout(VirtualFile file);
-
-  /**
-   * Process the file that is ignored by the version control.
-   *
-   * @param file an ignored file
-   * @deprecated use {@link #processIgnoredFile(FilePath)} instead
-   */
-  @Deprecated
-  default void processIgnoredFile(VirtualFile file) {
-    if (file != null) {
-      processIgnoredFile(VcsUtil.getFilePath(file));
-    }
-  }
 
   void processIgnoredFile(FilePath filePath);
 
@@ -109,7 +79,7 @@ public interface ChangelistBuilder {
    *
    * @param file      the switched file
    * @param branch    the name of the branch to which the file is switched.
-   * @param recursive if true, all subdirectories of file are also marked as switched to that branch
+   * @param recursive if true, all subdirectories of the file are also marked as switched to that branch
    */
   void processSwitchedFile(VirtualFile file, @NlsSafe String branch, final boolean recursive);
 
@@ -117,7 +87,7 @@ public interface ChangelistBuilder {
 
   boolean reportChangesOutsideProject();
 
-  void reportAdditionalInfo(@NlsContexts.Label final String text);
+  void reportAdditionalInfo(final @NlsContexts.Label String text);
 
-  void reportAdditionalInfo(final Factory<JComponent> infoComponent);
+  void reportAdditionalInfo(@NotNull Factory<@Nullable JComponent> infoComponent);
 }

@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.relaxNG.compact.psi.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -25,10 +24,17 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
-import org.intellij.plugins.relaxNG.compact.psi.*;
+import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
+import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
+import org.intellij.plugins.relaxNG.compact.psi.RncFile;
+import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
+import org.intellij.plugins.relaxNG.compact.psi.RncInclude;
+import org.intellij.plugins.relaxNG.compact.psi.RncPattern;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.intellij.plugins.relaxNG.model.Define;
@@ -37,7 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,8 +73,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
     return getNameNode().getPsi();
   }
 
-  @NotNull
-  public ASTNode getNameNode() {
+  public @NotNull ASTNode getNameNode() {
     final ASTNode node = getNode().findChildByType(RncTokenTypes.IDENTIFIERS);
     assert node != null;
     return node;
@@ -82,8 +87,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
   }
 
   @Override
-  @Nullable
-  public RncPattern getPattern() {
+  public @Nullable RncPattern getPattern() {
     return findChildByClass(RncPattern.class);
   }
 
@@ -121,9 +125,8 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(int flags) {
-    return AllIcons.Nodes.Property;
+  public @Nullable Icon getIcon(int flags) {
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.Property);
   }
 
   public boolean isMetaEnough() {
@@ -131,8 +134,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
   }
 
   @Override
-  @Nullable
-  public PsiMetaData getMetaData() {
+  public @Nullable PsiMetaData getMetaData() {
     return new MyMetaData();
   }
 
@@ -142,8 +144,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
     }*/
 
     @Override
-    @Nullable
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return RncDefineImpl.this.getIcon(0);
     }
 
@@ -158,14 +159,12 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
     }
 
     @Override
-    @NonNls
-    public String getName(PsiElement context) {
+    public @NonNls String getName(PsiElement context) {
       return RncDefineImpl.this.getName();
     }
 
     @Override
-    @NonNls
-    public String getName() {
+    public @NonNls String getName() {
       return RncDefineImpl.this.getName();
     }
 

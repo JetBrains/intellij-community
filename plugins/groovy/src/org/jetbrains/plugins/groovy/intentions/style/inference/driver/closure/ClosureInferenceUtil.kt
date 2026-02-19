@@ -1,10 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMemberValue
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIntersectionType
+import com.intellij.psi.PsiLiteral
+import com.intellij.psi.PsiLiteralValue
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameterList
+import com.intellij.psi.PsiTypeVisitor
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.closure.isClosureCall
@@ -31,7 +46,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.stringValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Position.ASSIGNMENT
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SignatureHintProcessor
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_CLOSURE_PARAMS
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_FROM_ABSTRACT_TYPE_METHODS
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_FROM_STRING
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_MAP_ENTRY_OR_KEY_VALUE
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_STC_SIMPLE_TYPE
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpressionConstraint
@@ -123,7 +145,7 @@ fun extractSignature(innerParameter: PsiParameter,
   val options = arrayOptionsAttribute.mapNotNull { (it as? PsiLiteral)?.stringValue() }.toTypedArray()
   val invokedMethod = resolveResult.candidate?.method ?: return null
   val collectingSubstitutor = CollectingGroovyInferenceSession.getContextSubstitutor(resolveResult, nearestCall)
-  return hintProcessor.inferExpectedSignatures(invokedMethod, collectingSubstitutor, options).singleOrNull() ?: return null
+  return hintProcessor.inferExpectedSignatures(invokedMethod, collectingSubstitutor, options).singleOrNull()
 }
 
 fun collectClosureParamsDependencies(innerParameter: PsiParameter,

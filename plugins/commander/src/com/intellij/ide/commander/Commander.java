@@ -1,54 +1,97 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.commander;
 
-import com.intellij.diff.actions.CompareFilesAction;
+import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.TwoPaneIdeView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.*;
-import com.intellij.psi.*;
+import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.PopupHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.List;
 
+import static com.intellij.ide.commander.CommanderPanel.getNodeElement;
 import static com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy.getPreferredFocusedComponent;
 
 /**
  * @author Eugene Belyaev
  */
 @State(name = "Commander", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class Commander extends JPanel implements PersistentStateComponent<Element>, DataProvider, TwoPaneIdeView, Disposable {
-  private final Project myProject;
+public class Commander extends JPanel implements PersistentStateComponent<Element>, UiDataProvider, TwoPaneIdeView, Disposable {
+  private final Project project;
   private CommanderPanel myLeftPanel;
   private CommanderPanel myRightPanel;
   private final Splitter mySplitter;
@@ -59,31 +102,22 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   private final FocusWatcher myFocusWatcher;
   private final CommanderHistory myHistory;
   private boolean myAutoScrollMode;
-  private final ToolWindowManager myToolWindowManager;
-  @NonNls private static final String ACTION_BACKCOMMAND = "backCommand";
-  @NonNls private static final String ACTION_FORWARDCOMMAND = "forwardCommand";
-  @NonNls private static final String ELEMENT_LEFTPANEL = "leftPanel";
-  @NonNls private static final String ATTRIBUTE_MOVE_FOCUS = "MOVE_FOCUS";
-  @NonNls private static final String ELEMENT_OPTION = "OPTION";
-  @NonNls private static final String ATTRIBUTE_PROPORTION = "proportion";
-  @NonNls private static final String ELEMENT_SPLITTER = "splitter";
-  @NonNls private static final String ELEMENT_RIGHTPANEL = "rightPanel";
-  @NonNls private static final String ATTRIBUTE_URL = "url";
-  @NonNls private static final String ATTRIBUTE_CLASS = "class";
+  private static final @NonNls String ACTION_BACKCOMMAND = "backCommand";
+  private static final @NonNls String ACTION_FORWARDCOMMAND = "forwardCommand";
+  private static final @NonNls String ELEMENT_LEFTPANEL = "leftPanel";
+  private static final @NonNls String ATTRIBUTE_MOVE_FOCUS = "MOVE_FOCUS";
+  private static final @NonNls String ELEMENT_OPTION = "OPTION";
+  private static final @NonNls String ATTRIBUTE_PROPORTION = "proportion";
+  private static final @NonNls String ELEMENT_SPLITTER = "splitter";
+  private static final @NonNls String ELEMENT_RIGHTPANEL = "rightPanel";
+  private static final @NonNls String ATTRIBUTE_URL = "url";
+  private static final @NonNls String ATTRIBUTE_CLASS = "class";
 
-  /**
-   * @param project
-   */
-  @TestOnly
-  public Commander(final Project project) {
-    this(project, null);
-  }
 
-  public Commander(final Project project, final ToolWindowManager toolWindowManager) {
+  public Commander(Project project) {
     super(new BorderLayout());
 
-    myProject = project;
-    myToolWindowManager = toolWindowManager;
+    this.project = project;
 
     final AbstractAction backAction = new AbstractAction() {
       @Override
@@ -189,7 +223,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   public static Commander getInstance(final Project project) {
-    return ServiceManager.getService(project, Commander.class);
+    return project.getService(Commander.class);
   }
 
   public CommanderHistory getCommandHistory() {
@@ -268,6 +302,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoBack());
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     ActionUtil.copyFrom(backAction, IdeActions.ACTION_GOTO_BACK);
     group.add(backAction);
@@ -282,6 +321,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(myHistory.canGoForward());
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     ActionUtil.copyFrom(forwardAction, IdeActions.ACTION_GOTO_FORWARD);
     group.add(forwardAction);
@@ -293,12 +337,12 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   private CommanderPanel createPanel() {
-    final CommanderPanel panel = new CommanderPanel(myProject, true, false);
+    final CommanderPanel panel = new CommanderPluginPanel(project, true, false);
 
     panel.getList().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
 
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
-    panel.setBuilder(new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true));
+    panel.setBuilder(new ProjectListBuilder(project, panel, treeStructure, AlphaComparator.getInstance(), true));
     panel.setProjectTreeStructure(treeStructure);
 
     final FocusAdapter focusListener = new FocusAdapter() {
@@ -324,7 +368,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   protected AbstractProjectTreeStructure createProjectTreeStructure() {
-    return new AbstractProjectTreeStructure(myProject) {
+    return new AbstractProjectTreeStructure(project) {
       @Override
       public boolean isShowMembers() {
         return true;
@@ -346,11 +390,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   protected void updateToolWindowTitle(CommanderPanel activePanel) {
-    final ToolWindow toolWindow = myToolWindowManager.getToolWindow(ToolWindowId.COMMANDER);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMANDER);
     if (toolWindow != null) {
-      final AbstractTreeNode node = activePanel.getSelectedNode();
+      AbstractTreeNode<?> node = activePanel.getSelectedNode();
       if (node instanceof ProjectViewNode) {
-        toolWindow.setTitle(((ProjectViewNode)node).getTitle());
+        toolWindow.setTitle(ObjectUtils.notNull(((ProjectViewNode<?>)node).getTitle(), ""));
       }
     }
   }
@@ -382,7 +426,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     final CommanderPanel inactivePanel = getInactivePanel();
     inactivePanel.setActive(true);
     activePanel.setActive(false);
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true));
+    IdeFocusManager.getGlobalInstance()
+      .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true));
   }
 
   public void enterElementInActivePanel(final PsiElement element) {
@@ -404,7 +449,8 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (isLeftPanelActive()) {
       activePanel = myLeftPanel;
       passivePanel = myRightPanel;
-    } else {
+    }
+    else {
       activePanel = myRightPanel;
       passivePanel = myLeftPanel;
     }
@@ -421,22 +467,24 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) {
-      return "viewingStructure.commander";
-    }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    else if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
-      final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentNode();
-      if (parentElement == null) return null;
-      final Object element = parentElement.getValue();
-      return element instanceof PsiElement && ((PsiElement)element).isValid()? element : null;
-    }
-    else if (CompareFilesAction.DIFF_REQUEST.is(dataId)) {
-      PsiElement primary = getActivePanel().getSelectedElement();
-      PsiElement secondary = getInactivePanel().getSelectedElement();
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "viewingStructure.commander");
+    sink.set(CommonDataKeys.PROJECT, project);
+
+    getActivePanel().uiDataSnapshot(sink);
+
+    AbstractTreeNode<?> parent1 = getActivePanel().getBuilder().getParentNode();
+    AbstractTreeNode<?> selection1 = getActivePanel().getSelectedNode();
+    AbstractTreeNode<?> parent2 = getInactivePanel().getBuilder().getParentNode();
+    AbstractTreeNode<?> selection2 = getInactivePanel().getSelectedNode();
+    Couple<AbstractTreeNode<?>> active = Couple.of(parent1, selection1);
+    Couple<AbstractTreeNode<?>> inactive = Couple.of(parent2, selection2);
+    sink.lazy(LangDataKeys.TARGET_PSI_ELEMENT, () -> {
+      return getNodeElement(inactive.first);
+    });
+    sink.lazy(DiffDataKeys.DIFF_REQUEST_TO_COMPARE, () -> {
+      PsiElement primary = getNodeElement(active.second);
+      PsiElement secondary = getNodeElement(inactive.second);
       if (primary != null && secondary != null &&
           primary.isValid() && secondary.isValid() &&
           !PsiTreeUtil.isAncestor(primary, secondary, false) &&
@@ -444,10 +492,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         return PsiDiffContentFactory.comparePsiElements(primary, secondary);
       }
       return null;
-    }
-    else {
-      return getActivePanel().getDataImpl(dataId);
-    }
+    });
   }
 
   @Override
@@ -456,7 +501,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (myLeftPanel == null || myRightPanel == null) {
       return element;
     }
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     Element e = new Element(ELEMENT_LEFTPANEL);
     element.addContent(e);
     writePanel(myLeftPanel, e);
@@ -469,7 +514,6 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (!MOVE_FOCUS) {
       e = new Element(ELEMENT_OPTION);
       element.addContent(e);
-      //noinspection HardCodedStringLiteral
       e.setAttribute(ATTRIBUTE_MOVE_FOCUS, "false");
     }
     return element;
@@ -481,15 +525,14 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (builder == null) return;
 
     final AbstractTreeNode parentNode = builder.getParentNode();
-    final Object parentElement = parentNode != null? parentNode.getValue() : null;
-    if (parentElement instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory) parentElement;
+    final Object parentElement = parentNode != null ? parentNode.getValue() : null;
+    if (parentElement instanceof PsiDirectory directory) {
       element.setAttribute(ATTRIBUTE_URL, directory.getVirtualFile().getUrl());
     }
     else if (parentElement instanceof PsiClass) {
-      for (PsiElement e = (PsiElement) parentElement; e != null && e.isValid(); e = e.getParent()) {
+      for (PsiElement e = (PsiElement)parentElement; e != null && e.isValid(); e = e.getParent()) {
         if (e instanceof PsiClass) {
-          final String qualifiedName = ((PsiClass) e).getQualifiedName();
+          final String qualifiedName = ((PsiClass)e).getQualifiedName();
           if (qualifiedName != null) {
             element.setAttribute(ATTRIBUTE_CLASS, qualifiedName);
             break;
@@ -510,11 +553,11 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (element.getAttributeValue(ATTRIBUTE_URL) != null) {
       final String url = element.getAttributeValue(ATTRIBUTE_URL);
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      return file != null ? PsiManager.getInstance(myProject).findDirectory(file) : null;
+      return file != null ? PsiManager.getInstance(project).findDirectory(file) : null;
     }
     if (element.getAttributeValue(ATTRIBUTE_CLASS) != null) {
       final String className = element.getAttributeValue(ATTRIBUTE_CLASS);
-      return className != null ? JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject)) : null;
+      return className != null ? JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)) : null;
     }
     return null;
   }
@@ -543,5 +586,44 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     CommanderPanel panel = selectInActivePanel ? getActivePanel() : getInactivePanel();
     panel.getBuilder().selectElement(element, PsiUtilCore.getVirtualFile(element));
   }
-}
 
+  private static class CommanderPluginPanel extends CommanderPanel {
+    private final @NotNull CopyPasteDelegator myCopyPasteDelegator;
+
+    CommanderPluginPanel(Project project, boolean enablePopupMenu, boolean enableSearchHighlighting) {
+      super(project, enableSearchHighlighting);
+      myCopyPasteDelegator = new CopyPasteDelegator(project, myList);
+
+      myList.addMouseListener(new PopupHandler() {
+        @Override
+        public void invokePopup(final Component comp, final int x, final int y) {
+          CommanderPluginPanel.this.invokePopup(comp, x, y);
+        }
+      });
+    }
+
+    private void invokePopup(final Component c, final int x, final int y) {
+      if (myBuilder == null) return;
+
+      if (myList.getSelectedIndices().length <= 1) {
+        final int popupIndex = myList.locationToIndex(new Point(x, y));
+        if (popupIndex >= 0) {
+          myList.setSelectedIndex(popupIndex);
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
+        }
+      }
+
+      final ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_COMMANDER_POPUP);
+      final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMMANDER_POPUP, group);
+      popupMenu.getComponent().show(c, x, y);
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyPasteDelegator.getCopyProvider());
+      sink.set(PlatformDataKeys.CUT_PROVIDER, myCopyPasteDelegator.getCutProvider());
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, myCopyPasteDelegator.getPasteProvider());
+    }
+  }
+}

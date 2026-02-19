@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.util.Pair;
@@ -9,8 +9,8 @@ import com.thoughtworks.qdox.model.JavaModule;
 import com.thoughtworks.qdox.model.JavaModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.javac.ModulePath;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -18,7 +18,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -26,7 +32,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 26-Sep-19
  */
 public final class ModulePathSplitter {
   private final Map<File, ModuleInfo> myCache = Collections.synchronizedMap(FileCollectionFactory.createCanonicalFileMap());
@@ -74,18 +79,21 @@ public final class ModulePathSplitter {
     return dotIndex >= 0? fName.substring(0, dotIndex) : fName;
   };
 
-  @NotNull
-  private final Function<File, String> myModuleNameSearch;
+  private final @NotNull Function<? super File, String> myModuleNameSearch;
 
   public ModulePathSplitter() {
     this(DEFAULT_MODULE_NAME_SEARCH);
   }
 
-  public ModulePathSplitter(@NotNull Function<File, String> moduleNameSearch) {
+  public ModulePathSplitter(@NotNull Function<? super File, String> moduleNameSearch) {
     myModuleNameSearch = moduleNameSearch;
   }
 
-  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<File> chunkOutputs, Collection<File> path) {
+  public Pair<ModulePath, Collection<File>> splitPath(@Nullable File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path) {
+    return splitPath(chunkModuleInfo, chunkOutputs, path, Collections.emptySet());
+  }
+
+  public Pair<ModulePath, Collection<File>> splitPath(@Nullable File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path, Collection<String> addReads) {
     if (myModuleFinderCreateMethod == null) {
       // the module API is not available
       return Pair.create(ModulePath.create(path), Collections.emptyList());
@@ -94,6 +102,7 @@ public final class ModulePathSplitter {
     final List<File> classpath = new ArrayList<>();
 
     final Set<String> allRequired = collectRequired(chunkModuleInfo, Iterators.filter(path, file -> !chunkOutputs.contains(file)));
+    allRequired.addAll(addReads);
     for (File file : path) {
       if (chunkOutputs.contains(file)) {
         mpBuilder.add(null, file);
@@ -137,14 +146,16 @@ public final class ModulePathSplitter {
     return fName;
   }
 
-  private Set<String> collectRequired(File chunkModuleInfo, Iterable<? extends File> path) {
+  private Set<String> collectRequired(@Nullable File chunkModuleInfo, Iterable<? extends File> path) {
     final Set<String> result = new HashSet<>();
-    // first, add all requires from chunk module-info
-    final JavaModuleDescriptor chunkDescr = new JavaProjectBuilder(new OrderedClassLibraryBuilder()).addSourceFolder(chunkModuleInfo.getParentFile()).getDescriptor();
-    for (JavaModuleDescriptor.JavaRequires require : chunkDescr.getRequires()) {
-      final JavaModule rm = require.getModule();
-      if (rm != null) {
-        result.add(rm.getName());
+    if (chunkModuleInfo != null) {
+      // first, add all requires from chunk module-info
+      final JavaModuleDescriptor chunkDescr = new JavaProjectBuilder(new OrderedClassLibraryBuilder()).addSourceFolder(chunkModuleInfo.getParentFile()).getDescriptor();
+      for (JavaModuleDescriptor.JavaRequires require : chunkDescr.getRequires()) {
+        final JavaModule rm = require.getModule();
+        if (rm != null) {
+          result.add(rm.getName());
+        }
       }
     }
     for (File file : path) {
@@ -153,8 +164,7 @@ public final class ModulePathSplitter {
     return result;
   }
 
-  @NotNull
-  private ModuleInfo getModuleInfo(File f) {
+  private @NotNull ModuleInfo getModuleInfo(File f) {
     ModuleInfo info = myCache.get(f);
     if (info != null) {
       return info;
@@ -212,10 +222,8 @@ public final class ModulePathSplitter {
 
   private static final class ModuleInfo {
     static final ModuleInfo EMPTY = new ModuleInfo(null, false);
-    @Nullable
-    final String name;
-    @NotNull
-    final Collection<String> requires;
+    final @Nullable String name;
+    final @NotNull Collection<String> requires;
     private final boolean isAutomaticExploded;
 
     ModuleInfo(@Nullable String name, boolean isAutomaticExploded) {

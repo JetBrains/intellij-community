@@ -25,9 +25,8 @@ import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GrammarFactory {
-  @Nullable
-  public static Grammar getGrammar(@NotNull XmlFile element) {
+public final class GrammarFactory {
+  public static @Nullable Grammar getGrammar(@NotNull XmlFile element) {
     if (element instanceof RncFile) {
       return ((RncFile)element).getGrammar();
     }

@@ -1,105 +1,166 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.vcs.AbstractVcs
-import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.ui.IdeBorderFactory.createTitledBorder
-import com.intellij.ui.ScrollPaneFactory.createScrollPane
-import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.util.ui.components.BorderLayoutPanel
-import javax.swing.Box
+import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
+import javax.swing.JCheckBox
+import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.collections.set
+import javax.swing.ScrollPaneConstants
+import javax.swing.border.Border
+import javax.swing.border.EmptyBorder
 
-class CommitOptionsPanel(private val actionNameSupplier: () -> String) : BorderLayoutPanel(), CommitOptionsUi {
-  private val perVcsOptionsPanels = mutableMapOf<AbstractVcs, JPanel>()
-  private val vcsOptionsPanel = verticalPanel()
-  private val beforeOptionsPanel = simplePanel()
-  private val afterOptionsPanel = simplePanel()
+internal class CommitOptionsPanel(
+  private val project: Project,
+  private val actionNameSupplier: () -> @Nls String,
+  private val nonFocusable: Boolean,
+  private val nonModalCommit: Boolean,
+  private val contentBorder: Border = JBUI.Borders.empty()
+) : CommitOptionsUi {
+  @JvmField
+  val component: JComponent
+  private lateinit var placeholder: Placeholder
 
-  private val actionName get() = removeMnemonic(actionNameSupplier())
+  var isEmpty: Boolean = true
+    private set
 
-  private val options = MutableCommitOptions()
-  private val vcsOptions get() = options.vcsOptions
-  private val beforeOptions get() = options.beforeOptions
-  private val afterOptions get() = options.afterOptions
-
-  val isEmpty: Boolean get() = options.isEmpty
+  private var visibleVcses: Set<AbstractVcs>? = null
+  private val visibleVcsListeners = mutableListOf<Runnable>()
 
   init {
-    buildLayout()
-  }
-
-  private fun buildLayout() {
-    val optionsBox = Box.createVerticalBox().apply {
-      add(vcsOptionsPanel)
-      add(beforeOptionsPanel)
-      add(afterOptionsPanel)
+    val panel = panel {
+      row {
+        placeholder = placeholder()
+          .align(Align.FILL)
+      }.resizableRow()
+    }.apply {
+      border = contentBorder
     }
-    val optionsPane = createScrollPane(simplePanel().addToTop(optionsBox), true)
-    addToCenter(optionsPane)
+    component = ScrollPaneFactory.createScrollPane(panel,
+                                                   ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                   ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED,
+                                                   true)
   }
 
   override fun setOptions(options: CommitOptions) {
-    setVcsOptions(options.vcsOptions)
-    setBeforeOptions(options.beforeOptions)
-    setAfterOptions(options.afterOptions)
-  }
+    val actionName = removeMnemonic(actionNameSupplier())
 
-  override fun setVisible(vcses: Collection<AbstractVcs>) =
-    perVcsOptionsPanels.forEach { (vcs, vcsPanel) -> vcsPanel.isVisible = vcs in vcses }
+    visibleVcsListeners.clear()
+    isEmpty = options.isEmpty
 
-  private fun setVcsOptions(newOptions: Map<AbstractVcs, RefreshableOnComponent>) {
-    if (vcsOptions != newOptions) {
-      vcsOptions.clear()
-      perVcsOptionsPanels.clear()
-      vcsOptionsPanel.removeAll()
-
-      vcsOptions += newOptions
-      vcsOptions.forEach { (vcs, options) ->
-        val panel = verticalPanel(vcs.displayName).apply { add(options.component) }
-        vcsOptionsPanel.add(panel)
-        perVcsOptionsPanels[vcs] = panel
+    placeholder.component = panel {
+      for ((vcs, option) in options.vcsOptions) {
+        group(vcs.displayName) {
+          appendOptionRow(option)
+        }.visibleIf(VcsVisiblePredicate(vcs))
       }
-    }
-  }
 
-  private fun setBeforeOptions(newOptions: List<RefreshableOnComponent>) {
-    if (beforeOptions != newOptions) {
-      beforeOptions.clear()
-      beforeOptionsPanel.removeAll()
-
-      beforeOptions += newOptions
-      if (beforeOptions.isNotEmpty()) {
-        val panel = verticalPanel(message("border.standard.checkin.options.group", actionName))
-        beforeOptions.forEach { panel.add(it.component) }
-        beforeOptionsPanel.add(panel)
+      val preCommitChecks = options.beforeCommitChecksOptions
+      if (preCommitChecks.isNotEmpty()) {
+        group(commitChecksGroupTitle(actionName)) {
+          appendOptionRows(preCommitChecks)
+        }
       }
-    }
-  }
 
-  private fun setAfterOptions(newOptions: List<RefreshableOnComponent>) {
-    if (afterOptions != newOptions) {
-      afterOptions.clear()
-      afterOptionsPanel.removeAll()
+      val postCommitChecks = options.postCommitChecksOptions
+      if (postCommitChecks.isNotEmpty()) {
+        group(postCommitChecksGroupTitle(actionName)) {
+          appendOptionRows(postCommitChecks)
+          if (nonModalCommit) {
+            separator()
+            appendNonModalCommitSettingsRow(actionName)
+          }
+        }
+      }
 
-      afterOptions += newOptions
+      val afterOptions = options.afterOptions
       if (afterOptions.isNotEmpty()) {
-        val panel = verticalPanel(message("border.standard.after.checkin.options.group", actionName))
-        afterOptions.forEach { panel.add(it.component) }
-        afterOptionsPanel.add(panel)
+        group(VcsBundle.message("border.standard.after.checkin.options.group", actionName)) {
+          appendOptionRows(afterOptions)
+        }
       }
+
+      val extensionOptions = options.extensionOptions
+      appendOptionRows(extensionOptions)
+    }
+
+    // Hack: do not iterate over checkboxes in CommitDialog.
+    if (nonFocusable) {
+      UIUtil.forEachComponentInHierarchy(component) {
+        if (it is JCheckBox) it.isFocusable = false
+      }
+    }
+  }
+
+  private fun Panel.appendNonModalCommitSettingsRow(actionName: String) {
+    val settings = VcsConfiguration.getInstance(project)
+    row {
+      checkBox(VcsBundle.message("settings.commit.postpone.slow.checks", actionName))
+        .comment(VcsBundle.message("settings.commit.postpone.slow.checks.description.short"))
+        .selected(settings.NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS)
+        .onChanged { setRunSlowCommitChecksAfterCommit(project, it.isSelected) }
+    }
+  }
+
+  private fun Panel.appendOptionRows(options: List<RefreshableOnComponent>) = options.forEach { appendOptionRow(it) }
+
+  private fun Panel.appendOptionRow(option: RefreshableOnComponent) {
+    val component = extractMeaningfulComponent(option.component)
+    row {
+      cell(component ?: option.component)
+        .align(Align.FILL)
+    }
+  }
+
+  private fun extractMeaningfulComponent(component: JComponent): JComponent? {
+    if (component is DialogPanel) return null
+    if (component is JPanel) {
+      val border = component.border
+      if (component.layout is BorderLayout &&
+          component.components.size == 1 &&
+          (border == null || border is EmptyBorder)) {
+        return component.components[0] as? JComponent
+      }
+    }
+    return null
+  }
+
+  override fun setVisible(vcses: Collection<AbstractVcs>?) {
+    visibleVcses = vcses?.toSet()
+    for (listener in visibleVcsListeners) {
+      listener.run()
+    }
+  }
+
+  private inner class VcsVisiblePredicate(val vcs: AbstractVcs) : ComponentPredicate() {
+    override fun addListener(listener: (Boolean) -> Unit) {
+      visibleVcsListeners.add(Runnable { listener(invoke()) })
+    }
+
+    override fun invoke(): Boolean {
+      return visibleVcses?.contains(vcs) ?: true
     }
   }
 
   companion object {
-    private fun verticalPanel() = JPanel(VerticalFlowLayout(0, 0))
+    fun commitChecksGroupTitle(actionName: @Nls String): @Nls String = VcsBundle.message("commit.checks.group", actionName)
 
-    fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 5)).apply {
-      border = createTitledBorder(title)
-    }
+    fun postCommitChecksGroupTitle(actionName: @Nls String): @Nls String = VcsBundle.message("commit.checks.group.post", actionName)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -6,12 +6,10 @@ import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
-/**
- * @author yole
- */
+
 public class RadTable extends RadAtomicComponent {
   public static class Factory extends RadComponentFactory {
     @Override

@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from io import BytesIO
 
 from _shaded_thriftpy._compat import CYTHON
-from .. import TTransportBase
+from ..base import TTransportBase
 
 
 class TMemoryBuffer(TTransportBase):

@@ -6,17 +6,18 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.List;
 
 public interface FoldingModelEx extends FoldingModel {
   void setFoldingEnabled(boolean isEnabled);
   boolean isFoldingEnabled();
 
-  FoldRegion getFoldingPlaceholderAt(@NotNull Point p);
+  @Nullable FoldRegion getFoldingPlaceholderAt(@NotNull Point p);
 
   boolean intersectsRegion(int startOffset, int endOffset);
 
@@ -26,9 +27,10 @@ public interface FoldingModelEx extends FoldingModel {
    */
   int getLastCollapsedRegionBefore(int offset);
 
+  @Nullable
   TextAttributes getPlaceholderAttributes();
 
-  FoldRegion[] fetchTopLevel();
+  FoldRegion @Nullable [] fetchTopLevel();
 
   /**
    * @param neverExpands If {@code true}, the created region is created in the collapsed state, and cannot be expanded
@@ -36,8 +38,8 @@ public interface FoldingModelEx extends FoldingModel {
    *                     region. 'Never-expanding' fold region cannot be part of a {@link FoldingGroup}.
    */
   @Nullable
-  FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group,
-                              boolean neverExpands);
+  @RequiresEdt
+  FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, @Nullable FoldingGroup group, boolean neverExpands);
 
   void addListener(@NotNull FoldingListener listener, @NotNull Disposable parentDisposable);
 
@@ -46,9 +48,11 @@ public interface FoldingModelEx extends FoldingModel {
   void rebuild();
 
   @NotNull
-  List<FoldRegion> getGroupedRegions(FoldingGroup group);
+  List<FoldRegion> getGroupedRegions(@NotNull FoldingGroup group);
 
   void clearDocumentRangesModificationStatus();
 
   boolean hasDocumentRegionChangedFor(@NotNull FoldRegion region);
+
+  @NotNull List<@NotNull FoldRegion> getRegionsOverlappingWith(int startOffset, int endOffset);
 }

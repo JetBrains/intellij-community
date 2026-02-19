@@ -1,28 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
-import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaModuleGraphHelper;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author peter
- */
-public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
+public final class JavaCopyPasteReferenceProcessor extends AbstractJavaCopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
   private static final Logger LOG = Logger.getInstance(JavaCopyPasteReferenceProcessor.class);
 
   @Override
@@ -52,19 +71,19 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   }
 
   @Override
-  protected void removeImports(PsiFile file, Set<String> imports) {
+  protected void removeImports(@NotNull PsiFile file, @NotNull Set<String> imports) {
     removeImports((PsiJavaFile)file, imports);
   }
 
   /**
    * Remove imports on {@code imports} (including static imports in format Class_Name.Member_Name)
    * To ensure that on-demand import expands when one of the import inside was deleted, let's do optimize imports.
-   *
+   * <p>
    * This may change some unrelated imports
    */
   public static void removeImports(PsiJavaFile javaFile, Set<String> imports) {
     PsiImportList importList = new ImportHelper(JavaCodeStyleSettings.getInstance(javaFile))
-      .prepareOptimizeImportsResult(javaFile, pair -> !imports.contains(pair.first));
+      .prepareOptimizeImportsResult(javaFile, anImport -> !imports.contains(anImport.name()));
     if (importList != null) {
       Objects.requireNonNull(javaFile.getImportList()).replace(importList);
     }
@@ -72,9 +91,9 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
 
 
   @Override
-  protected PsiJavaCodeReferenceElement @NotNull [] findReferencesToRestore(PsiFile file,
-                                                                            RangeMarker bounds,
-                                                                            ReferenceData[] referenceData) {
+  protected PsiJavaCodeReferenceElement @NotNull [] findReferencesToRestore(@NotNull PsiFile file,
+                                                                            @NotNull RangeMarker bounds,
+                                                                            ReferenceData @NotNull [] referenceData) {
     PsiManager manager = file.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper helper = facade.getResolveHelper();
@@ -89,8 +108,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
       int endOffset = data.endOffset + bounds.getStartOffset();
       PsiElement element = file.findElementAt(startOffset);
 
-      if (element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)element.getParent();
+      if (element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement reference) {
         TextRange range = reference.getTextRange();
         if (range.getStartOffset() == startOffset && range.getEndOffset() == endOffset) {
           if (data.staticMemberName == null) {
@@ -116,37 +134,42 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
       }
     }
 
-    if (ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)) {
-      for (int i = 0; i < refs.length; i++) {
-        if (isUnambiguous(refs[i])) {
-          refs[i] = null;
-        }
-      }
-    }
-
     return refs;
   }
 
-  private static boolean isUnambiguous(@Nullable PsiJavaCodeReferenceElement ref) {
-    return ref != null && !(ref.getParent() instanceof PsiMethodCallExpression) &&
-           new ImportClassFix(ref).getClassesToImport().size() == 1;
+  @Override
+  protected void restoreReferences(ReferenceData @NotNull [] referenceData,
+                                   List<PsiJavaCodeReferenceElement> refs,
+                                   @NotNull Set<? super String> imported) {
+    restoreReferences(referenceData, refs, imported, null);
   }
 
   @Override
-  protected void restoreReferences(ReferenceData[] referenceData,
-                                   PsiJavaCodeReferenceElement[] refs,
-                                   Set<String> imported) {
-    for (int i = 0; i < refs.length; i++) {
-      PsiJavaCodeReferenceElement reference = refs[i];
+  protected void restoreReferences(ReferenceData @NotNull [] referenceData,
+                                   List<PsiJavaCodeReferenceElement> refs,
+                                   @NotNull Set<? super String> imported,
+                                   @Nullable ModPsiUpdater updater) {
+    PsiJavaModule writableDescriptor = null;
+    PsiJavaModule fromDescriptor = null;
+    for (int i = 0; i < refs.size(); i++) {
+      PsiJavaCodeReferenceElement reference = refs.get(i);
       if (reference == null || !reference.isValid()) continue;
+      PsiFile containingFile = reference.getContainingFile();
+      if (fromDescriptor == null) {
+        fromDescriptor = JavaPsiModuleUtil.findDescriptorByElement(containingFile.getOriginalElement());
+        if (fromDescriptor != null && updater != null && PsiUtil.isAvailable(JavaFeature.MODULES, containingFile.getOriginalElement())) {
+          writableDescriptor = updater.getWritable(fromDescriptor);
+        }
+      }
       try {
         PsiManager manager = reference.getManager();
         ReferenceData refData = referenceData[i];
+        ProgressManager.progress2(refData.qClassName);
         PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
         if (refClass != null) {
           if (refData.staticMemberName == null) {
             if (reference instanceof PsiJavaCodeReferenceElementImpl &&
-                ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(reference.getContainingFile()) ==
+                ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(containingFile) ==
                 PsiJavaCodeReferenceElementImpl.Kind.PACKAGE_NAME_KIND) {
               // Trying to paste class reference into e.g. package statement
               continue;
@@ -156,8 +179,16 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
           }
           else {
             LOG.assertTrue(reference instanceof PsiReferenceExpression);
-            ((PsiReferenceExpression)reference).bindToElementViaStaticImport(refClass);
+            if (reference instanceof PsiReferenceExpressionImpl expression) {
+              expression.bindToElementViaStaticImport(refClass);
+            }
             imported.add(StringUtil.getQualifiedName(refData.qClassName, refData.staticMemberName));
+          }
+          if (fromDescriptor != null && (updater == null || writableDescriptor != null)) {
+            PsiJavaModule toDescriptor = JavaPsiModuleUtil.findDescriptorByElement(refClass);
+            if (toDescriptor == null) continue;
+            if (!JavaModuleGraphHelper.getInstance().isAccessible(refClass, reference)) continue;
+            JavaModuleGraphUtil.addDependency(writableDescriptor != null ? writableDescriptor : fromDescriptor, toDescriptor, null);
           }
         }
       }

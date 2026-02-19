@@ -18,7 +18,7 @@ package com.intellij.diagnostic.hprof.analysis
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.histogram.HistogramEntry
 
-internal class ClassNomination(private val histogram: Histogram,
+class ClassNomination(private val histogram: Histogram,
                       private val classLimitPerCategory: Int) {
   fun nominateClasses(): List<HistogramEntry> {
     val resultClasses = HashSet<HistogramEntry>()

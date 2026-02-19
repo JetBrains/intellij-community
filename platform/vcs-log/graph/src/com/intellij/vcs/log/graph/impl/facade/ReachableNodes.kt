@@ -1,35 +1,23 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.facade
 
-import com.intellij.util.Consumer
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.Flags
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 
+@ApiStatus.Internal
 class ReachableNodes(private val graph: LiteLinearGraph) {
   private val visited: Flags = BitSetFlags(graph.nodesCount())
 
-  fun getContainingBranches(nodeIndex: Int, branchNodeIndexes: Collection<Int>): Set<Int> {
-    val result = HashSet<Int>()
+  fun getContainingBranches(nodeId: VcsLogGraphNodeId, branchNodeIndexes: Collection<VcsLogGraphNodeId>): Set<VcsLogGraphNodeId> {
+    val result = HashSet<VcsLogGraphNodeId>()
 
-    walk(listOf(nodeIndex), false) { node: Int ->
+    walk(listOf(nodeId), false) { node: VcsLogGraphNodeId ->
       if (branchNodeIndexes.contains(node)) result.add(node)
       true
     }
@@ -37,14 +25,14 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
     return result
   }
 
-  fun walkDown(headIds: Collection<Int>, consumer: Consumer<Int>) {
+  fun walkDown(headIds: Collection<VcsLogGraphNodeId>, consumer: Consumer<VcsLogGraphNodeId>) {
     walk(headIds, true) { node: Int ->
-      consumer.consume(node)
+      consumer.accept(node)
       true
     }
   }
 
-  fun walk(startNodes: Collection<Int>, goDown: Boolean, consumer: (Int) -> Boolean) {
+  fun walk(startNodes: Collection<VcsLogGraphNodeId>, goDown: Boolean, consumer: (VcsLogGraphNodeId) -> Boolean) {
     synchronized(visited) {
       visited.setAll(false)
       DfsWalk(startNodes, graph, visited).walk(goDown, consumer)

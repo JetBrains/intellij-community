@@ -8,7 +8,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.NativeLibraryOrderRootType;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -21,7 +29,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.*;
+import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader;
+import org.jetbrains.idea.eclipse.ConversionException;
+import org.jetbrains.idea.eclipse.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.EclipseProjectFinder;
+import org.jetbrains.idea.eclipse.EclipseXml;
+import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 import org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
@@ -35,10 +48,6 @@ import java.util.Set;
 public class EclipseClasspathReader extends AbstractEclipseClasspathReader<ModifiableRootModel> {
   private final Project myProject;
   private ContentEntry myContentEntry;
-
-  public EclipseClasspathReader(@NotNull String rootPath, @NotNull Project project, @Nullable List<String> currentRoots) {
-    this(rootPath, project, currentRoots, null);
-  }
 
   public EclipseClasspathReader(@NotNull String rootPath, @NotNull Project project, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
     super(rootPath, currentRoots, moduleNames);
@@ -256,7 +265,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
 
   public static Library findLibraryByName(Project project, String name) {
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
-    Library lib = tablesRegistrar.getLibraryTable().getLibraryByName(name);
+    Library lib = tablesRegistrar.getGlobalLibraryTable(project).getLibraryByName(name);
     if (lib == null) {
       lib = tablesRegistrar.getLibraryTable(project).getLibraryByName(name);
     }
@@ -271,7 +280,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     return lib;
   }
 
-  static String getJunitClsUrl(final boolean version4) {
+  public static String getJunitClsUrl(final boolean version4) {
     String url = version4 ? JavaSdkUtil.getJunit4JarPath() : JavaSdkUtil.getJunit3JarPath();
     final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(url));
     if (localFile != null) {

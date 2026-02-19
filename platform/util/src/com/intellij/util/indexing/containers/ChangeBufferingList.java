@@ -1,69 +1,64 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Arrays;
+import java.util.function.IntPredicate;
 
 /**
- * Class buffers changes in 2 modes:
+ * Represents mutable (add/remove) set of integers.
+ * <p>
+ * Implementation is optimized: it buffers changes in 2 modes:
  * - Accumulating up to MAX_FILES changes appending them *sequentially* to changes array
- * - Adding changes to randomAccessContainer once it is available: later happens if we accumulated many changes or external client queried
- * state of the changes: asked for predicate, iterator, isEmpty, etc. We are trying hard to delay transformation of state upon 2nd reason for
- * performance reasons.
- * It is assumed that add / remove operations as well as read only operations are externally synchronized, the only synchronization is
- * performed upon transforming changes array into randomAccessContainer because it can be done during read only operations in several threads
+ * - Adding changes to randomAccessContainer once it is available: later happens if we accumulated many changes or
+ * external client queried state of the changes: asked for predicate, iterator, isEmpty, etc.
+ * We are trying hard to delay transformation of state upon 2nd reason for performance reasons.
+ * <p>
+ * It is assumed that add / remove operations as well as read only operations are externally synchronized, the only
+ * synchronization is performed upon transforming changes array into randomAccessContainer because it can be done
+ * during read only operations in several threads
  */
-public class ChangeBufferingList implements Cloneable {
+@ApiStatus.Internal
+public final class ChangeBufferingList implements Cloneable {
   static final int MAX_FILES = 20000; // less than Short.MAX_VALUE
-  //static final int MAX_FILES = 100;
-  private volatile int[] changes;
-  private short length;
-  private boolean hasRemovals;
-  private volatile boolean mayHaveDupes;
-  private volatile RandomAccessIntContainer randomAccessContainer;
 
-  public ChangeBufferingList() { this(3); }
+  private int[] changes;
+  private short length;
+  /** true if container is in 'changes' mode, and .changes array contains removals (which stored as -value) */
+  private boolean hasRemovals;
+  /**
+   * true if container is in 'changes' mode, and .changes array _may_ duplicates -- but this is not guaranteed.
+   * Currently very rough heuristics is used: if elements is added out of order (i.e. at some point most recently
+   * added element is < previously added) -- we assume duplicates are possible.
+   * MAYBE RC: rename the field to 'unSorted'? -- because this is the property really stored in this field
+   */
+  private boolean mayHaveDupes;
+
+  private RandomAccessIntContainer randomAccessContainer;
+
+  public ChangeBufferingList() {
+    this(3);
+  }
+
   public ChangeBufferingList(int length) {
     if (length > MAX_FILES) {
       randomAccessContainer = new IdBitSet(length);
-    } else {
+    }
+    else {
       changes = new int[length];
     }
   }
 
-  static int @NotNull [] calcMinMax(int[] set, int length) {
-    int max = Integer.MIN_VALUE;
-    int min = Integer.MAX_VALUE;
-    for(int i = 0; i < length; ++i) {
-      max = Math.max(max, set[i]);
-      min = Math.min(min, set[i]);
-    }
-    return new int[] {min, max};
-  }
-
   public synchronized void add(int value) {
     ensureCapacity(1);
-    
+
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
       addChange(value);
-    } else {
+    }
+    else {
       intContainer.add(value);
     }
   }
@@ -71,7 +66,11 @@ public class ChangeBufferingList implements Cloneable {
   private void addChange(int value) {
     if (value < 0) {
       if (!hasRemovals) hasRemovals = true;
-    } else if (!mayHaveDupes && length > 0 && changes[length - 1] >= value) {
+    }
+    else if (!mayHaveDupes && length > 0 && changes[length - 1] >= value) {
+      //quite simple heuristics:
+      // if (last added element >= currently added element)
+      // => elements are added out-of-order => it may be duplicates
       mayHaveDupes = true;
     }
     changes[length++] = value;
@@ -79,7 +78,7 @@ public class ChangeBufferingList implements Cloneable {
 
   public synchronized void remove(int value) {
     ensureCapacity(1);
-    
+
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
       addChange(-value);
@@ -98,7 +97,7 @@ public class ChangeBufferingList implements Cloneable {
       if (randomAccessContainer != null) {
         clone.randomAccessContainer = (RandomAccessIntContainer)randomAccessContainer.clone();
       }
-      
+
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -106,76 +105,86 @@ public class ChangeBufferingList implements Cloneable {
     }
   }
 
-  private RandomAccessIntContainer getRandomAccessContainer() {
-    int[] currentChanges = changes;
-    if (currentChanges == null) return randomAccessContainer;
+  /**
+   * @return randomAccessContainer, if storage was already converted into 'compact' format, or first convert changes to
+   * compact format, and return randomAccessContainer afterwards
+   */
+  private /*@NotNull?*/ RandomAccessIntContainer getRandomAccessContainer() {
+    if (changes == null) return randomAccessContainer;
 
-    synchronized (currentChanges) {
-      currentChanges = changes;
-      if (currentChanges == null) return randomAccessContainer;
-      boolean copyChanges = true;
-      RandomAccessIntContainer idSet;
+    boolean copyChanges = true;
+    RandomAccessIntContainer idSet;
 
-      if (randomAccessContainer == null) {
-        int someElementsNumberEstimation = length;
+    if (randomAccessContainer == null) {
+      int someElementsNumberEstimation = length;
 
-        // todo we can check these lengths instead of only relying upon reaching MAX_FILES
-        //int lengthOfBitSet = IdBitSet.sizeInBytes(minMax[1], minMax[0]);
-        //int lengthOfIntSet = 4 * length;
+      //todo we can check these lengths instead of only relying upon reaching MAX_FILES
+      //int lengthOfBitSet = IdBitSet.sizeInBytes(minMax[1], minMax[0]);
+      //int lengthOfIntSet = 4 * length;
+      //TODO RC: IdBitSet is very memory-hungry even for small ids count, if the _range_ of ids is big.
+      //         IdBitSet size is ~(max(id)-min(id))/8, e.g. ~1.25Mb for a set of 2 ids: {1, 10_000_000}.
+      //         On the other hand, SortedIdSet becomes CPU-hungry for large N -- which means there are
+      //         scenarios there _neither_ of options is good. E.e. if length > 20k, but ids range is large,
+      //         and we opted to use SortedIdSet because it is less memory-hungry -- but it could still be
+      //         very CPU hungry instead
 
-        if (someElementsNumberEstimation < MAX_FILES) {
-          if (!hasRemovals) {
-            if (mayHaveDupes) {
-              removingDupesAndSort();
-            }
-            idSet = new SortedIdSet(currentChanges, length);
-
-            copyChanges = false;
-          } else {
-            idSet = new SortedIdSet(Math.max(someElementsNumberEstimation, 3));
+      if (someElementsNumberEstimation < MAX_FILES) {
+        if (!hasRemovals) {
+          if (mayHaveDupes) {
+            removingDupesAndSort();
           }
-        }
-        else if (!hasRemovals) {
-          idSet = new IdBitSet(changes, length, 0);
+          idSet = new SortedIdSet(changes, length);
+
           copyChanges = false;
-        } else {
-          idSet = new IdBitSet(calcMinMax(changes, length), 0);
         }
-      } else {
-        idSet = randomAccessContainer;
-      }
-
-      assert idSet != null;
-
-      if (copyChanges) {
-        for(int i = 0, len = length; i < len; ++i) {
-          int id = currentChanges[i];
-          if (id > 0) {
-            idSet.add(id);
-          } else {
-            idSet.remove(-id);
-          }
+        else {
+          idSet = new SortedIdSet(Math.max(someElementsNumberEstimation, 3));
         }
       }
-      
-      length = 0;
-      hasRemovals = false;
-      mayHaveDupes = false;
-      randomAccessContainer = idSet;
-      changes = null;
-      return randomAccessContainer;
+      else if (!hasRemovals) {
+        idSet = new IdBitSet(changes, length, 0);
+        copyChanges = false;
+      }
+      else {
+        idSet = new IdBitSet(IdBitSet.calcMinMax(changes, length), 0);
+      }
     }
+    else {
+      idSet = randomAccessContainer;
+    }
+
+    assert idSet != null;
+
+    if (copyChanges) {
+      for (int i = 0, len = length; i < len; ++i) {
+        int id = changes[i];
+        if (id > 0) {
+          idSet.add(id);
+        }
+        else {
+          idSet.remove(-id);
+        }
+      }
+    }
+
+    length = 0;
+    hasRemovals = false;
+    mayHaveDupes = false;
+    randomAccessContainer = idSet;
+    changes = null;
+    return randomAccessContainer;
   }
 
   private void removingDupesAndSort() { // duplicated ids can be present for some index due to cancellation of indexing for next index
     final int[] currentChanges = changes;
     final int intLength = length;
 
-    if (intLength < 250) { // Plain sorting in Arrays works without allocations for small number of elements (see DualPivotQuicksort.QUICKSORT_THRESHOLD)
+    if (intLength <
+        250) { // Plain sorting in Arrays works without allocations for small number of elements (see DualPivotQuicksort.QUICKSORT_THRESHOLD)
       Arrays.sort(currentChanges, 0, intLength);
       boolean hasDupes = false;
 
-      for(int i = 0, max = intLength - 1; i < max; ++i) {
+      for (int i = 0, max = intLength - 1; i < max; ++i) {
         if (currentChanges[i] == currentChanges[i + 1]) {
           hasDupes = true;
           break;
@@ -184,14 +193,15 @@ public class ChangeBufferingList implements Cloneable {
 
       if (hasDupes) {
         int ptr = 0;
-        for(int i = 1; i < intLength; ++i) {
+        for (int i = 1; i < intLength; ++i) {
           if (currentChanges[i] != currentChanges[ptr]) {
             currentChanges[++ptr] = currentChanges[i];
           }
         }
         length = (short)(ptr + 1);
       }
-    } else {
+    }
+    else {
       ValueContainer.IntIterator sorted =
         SortedFileIdSetIterator.getTransientIterator(new ChangesIterator(currentChanges, length, false));
       int lastIndex = 0;
@@ -219,7 +229,8 @@ public class ChangeBufferingList implements Cloneable {
     }
     if (changes == null) {
       changes = new int[Math.max(3, diff)];
-    } else if (length + diff > changes.length) {
+    }
+    else if (length + diff > changes.length) {
       int[] newChanges = new int[calcNextArraySize(changes.length, length + diff)];
       System.arraycopy(changes, 0, newChanges, 0, length);
       changes = newChanges;
@@ -247,7 +258,7 @@ public class ChangeBufferingList implements Cloneable {
     return intContainer.size() == 0;
   }
 
-  public synchronized ValueContainer.IntPredicate intPredicate() {
+  public synchronized IntPredicate intPredicate() {
     RandomAccessIntContainer container = getRandomAccessContainer();
     return container::contains;
   }
@@ -255,14 +266,11 @@ public class ChangeBufferingList implements Cloneable {
   public synchronized IntIdsIterator intIterator() {
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null && !hasRemovals) {
-      int[] currentChanges = changes;
-      if (currentChanges != null) {
+      if (changes != null) {
         if (mayHaveDupes) {
-          synchronized (currentChanges) {
-            if (mayHaveDupes) removingDupesAndSort();
-          }
+          removingDupesAndSort();
         }
-        return new ChangesIterator(currentChanges, length, true);
+        return new ChangesIterator(changes, length, true);
       }
     }
     return getRandomAccessContainer().intIterator();
@@ -277,7 +285,7 @@ public class ChangeBufferingList implements Cloneable {
     return intIterator;
   }
 
-  private static class ChangesIterator implements IntIdsIterator {
+  private static final class ChangesIterator implements IntIdsIterator {
     private int cursor;
     private final int length;
     private final int[] changes;

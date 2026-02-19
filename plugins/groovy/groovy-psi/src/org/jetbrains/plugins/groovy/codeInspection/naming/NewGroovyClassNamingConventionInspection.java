@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.naming;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
-  @NonNls private static final String GROOVY = "Groovy";
+public final class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
+  private static final @NonNls String GROOVY = "Groovy";
 
   public NewGroovyClassNamingConventionInspection() {
     super(NewClassNamingConventionInspection.EP_NAME.getExtensionList(), GROOVY + ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
@@ -26,29 +26,29 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
   }
 
   private static NamingConvention<PsiClass> wrapClassExtension(NamingConvention<PsiClass> ex) {
-    return new NamingConvention<PsiClass>() {
-        @Override
-        public boolean isApplicable(PsiClass member) {
-          return ex.isApplicable(member);
-        }
+    return new NamingConvention<>() {
+      @Override
+      public boolean isApplicable(PsiClass member) {
+        return ex.isApplicable(member);
+      }
 
-        @Override
-        public String getElementDescription() {
-          return ex.getElementDescription();
-        }
+      @Override
+      public String getElementDescription() {
+        return ex.getElementDescription();
+      }
 
-        @Override
-        public String getShortName() {
-          String shortName = ex.getShortName();
-          if (shortName.startsWith("JUnit")) return shortName;
-          return GROOVY + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
-        }
+      @Override
+      public String getShortName() {
+        String shortName = ex.getShortName();
+        if (shortName.startsWith("JUnit")) return shortName;
+        return GROOVY + (shortName.startsWith("Enum") ? "EnumerationNamingConvention" : shortName);
+      }
 
-        @Override
-        public NamingConventionBean createDefaultBean() {
-          return ex.createDefaultBean();
-        }
-      };
+      @Override
+      public NamingConventionBean createDefaultBean() {
+        return ex.createDefaultBean();
+      }
+    };
   }
 
   @Override
@@ -61,17 +61,15 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
     super.unregisterConvention(wrapClassExtension(extension));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!(holder.getFile() instanceof PsiClassOwner)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof GrTypeDefinition) {
-          PsiClass aClass = (PsiClass)element;
+        if (element instanceof GrTypeDefinition aClass) {
           final String name = aClass.getName();
           if (name == null) return;
           checkName(aClass, name, holder);

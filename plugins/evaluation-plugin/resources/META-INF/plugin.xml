@@ -1,0 +1,129 @@
+<idea-plugin package="com.intellij.cce">
+  <id>com.intellij.completion.evaluation</id>
+  <!--suppress PluginXmlValidity -->
+  <name>Evaluation Plugin</name>
+  <vendor>JetBrains</vendor>
+  <category>Platform Development</category>
+  <!--suppress PluginXmlValidity -->
+  <idea-version since-build="211"/>
+  <description><![CDATA[
+    <p>The plugin deals with the quality evaluation of IDE features based on artificial queries.</p>
+  ]]></description>
+  
+  <content namespace="jetbrains">
+    <module name="intellij.evaluationPlugin.languages.java"/>
+    <module name="intellij.evaluationPlugin.languages.python"/>
+    <module name="intellij.evaluationPlugin.languages.kotlin"/>
+
+    <module name="intellij.evaluationPlugin.languages.cpp"/>
+    <module name="intellij.evaluationPlugin.languages.cppRd"/>
+    <module name="intellij.evaluationPlugin.languages.csharp"/>
+    <module name="intellij.evaluationPlugin.languages.go"/>
+    <module name="intellij.evaluationPlugin.languages.js"/>
+    <module name="intellij.evaluationPlugin.languages.json"/>
+    <module name="intellij.evaluationPlugin.languages.markdown"/>
+    <module name="intellij.evaluationPlugin.languages.php"/>
+    <module name="intellij.evaluationPlugin.languages.properties"/>
+    <module name="intellij.evaluationPlugin.languages.pythonDocker"/>
+    <module name="intellij.evaluationPlugin.languages.ruby"/>
+    <module name="intellij.evaluationPlugin.languages.rust"/>
+    <module name="intellij.evaluationPlugin.languages.sql"/>
+    <module name="intellij.evaluationPlugin.languages.terraform"/>
+    <module name="intellij.evaluationPlugin.languages.xml"/>
+    <module name="intellij.evaluationPlugin.languages.terminal"/>
+    <module name="intellij.evaluationPlugin.languages.yaml"/>
+    <module name="intellij.evaluationPlugin.inlineCompletion"/>
+    <module name="intellij.evaluationPlugin.fullLine"/>
+    <module name="intellij.evaluationPlugin.agent"/>
+    <module name="intellij.evaluationPlugin.llm"/>
+    <module name="intellij.evaluationPlugin.ijnext"/>
+  </content>
+
+  <dependencies>
+    <plugin id="com.intellij.completion.ml.ranking"/>
+    <plugin id="com.intellij.stats.completion"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.platform.warmup"/>
+    <module name="intellij.libraries.commons.text"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter id="ml-evaluate" implementation="com.intellij.cce.actions.CompletionEvaluationStarter"/>
+
+    <registryKey key="evaluation.plugin.disable.sdk.check" defaultValue="false"
+                 description="Disables check that project sdk configured properly" restartRequired="false"/>
+    <completion.ml.featuresOverride language="" implementationClass="com.intellij.cce.interpreter.DisableUserDependentFeatures"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.cce.command"
+                    interface="com.intellij.cce.commands.EvaluationCommandExtension"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.completionEvaluationVisitor"
+                    interface="com.intellij.cce.visitor.EvaluationVisitor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.callGraphBuilder"
+                    interface="com.intellij.evaluationPlugin.languages.callGraphs.CallGraphBuilder"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.lineCompletionVisitorFactory"
+                    interface="com.intellij.cce.visitor.LineCompletionVisitorFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.codeCompletionHandlerFactory" area="IDEA_PROJECT"
+                    interface="com.intellij.cce.evaluation.CodeCompletionHandlerFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.suggestionsProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.cce.evaluation.SuggestionsProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.openProjectMethodProvider"
+                    interface="com.intellij.cce.actions.OpenProjectMethodProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.setupSdkStep" area="IDEA_PROJECT"
+                    interface="com.intellij.cce.evaluation.SetupSdkStepFactory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.evaluableFeature"
+                    interface="com.intellij.cce.evaluable.EvaluableFeature"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.apiCallExtractor"
+                    interface="com.intellij.cce.metric.ApiCallExtractorProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.exposedApiExtractor"
+                    interface="com.intellij.cce.evaluable.ExposedApiExtractor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.datasetActionProvider"
+                    interface="com.intellij.cce.ui.DatasetActionProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.codeExecutionManager"
+                    interface="com.intellij.cce.execution.manager.CodeExecutionManager"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.extraEvaluationStepProvider"
+                    interface="com.intellij.cce.evaluation.step.ExtraEvaluationStepProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.testRunner"
+                    interface="com.intellij.cce.test.TestRunner"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.projectSyncInvoker"
+                interface="com.intellij.cce.project.ProjectSyncInvoker"
+                dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.cce">
+    <evaluableFeature implementation="com.intellij.cce.evaluable.rename.RenameFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.docGeneration.DocGenerationFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.completion.TokenCompletionFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.actions.ContextCollectionFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.standaloneExample.StandaloneExampleFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.conflictResolution.ConflictResolutionFeature"/>
+    <suggestionsProvider implementation="com.intellij.cce.evaluable.completion.DefaultCompletionProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <supportsKotlinPluginMode supportsK2="true"/>
+  </extensions>
+
+  <actions resource-bundle="messages.EvaluationPluginBundle">
+    <action id="EvaluationDatasetTool" class="com.intellij.cce.ui.EvaluationDatasetToolAction" internal="true">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
+</idea-plugin>

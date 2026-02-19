@@ -1,20 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.parsers
 
 import com.intellij.debugger.engine.ReferringObject
-import com.intellij.debugger.memory.agent.*
+import com.intellij.debugger.memory.agent.CompoundRootReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgent
+import com.intellij.debugger.memory.agent.MemoryAgentActionResult
+import com.intellij.debugger.memory.agent.MemoryAgentArrayReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentConstantPoolReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentFieldReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentKindReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentReferenceKind
+import com.intellij.debugger.memory.agent.MemoryAgentReferringObject
+import com.intellij.debugger.memory.agent.MemoryAgentTruncatedReferringObject
+import com.intellij.debugger.memory.agent.ReferringObjectsInfo
+import com.intellij.debugger.memory.agent.UnexpectedValueFormatException
 import com.intellij.openapi.util.Pair
-import com.sun.jdi.*
-
-object StringParser : ResultParser<String> {
-  override fun parse(value: Value): String {
-    if (value is StringReference) {
-      return value.value()
-    }
-
-    throw UnexpectedValueFormatException("String value is expected")
-  }
-}
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.BooleanValue
+import com.sun.jdi.Field
+import com.sun.jdi.IntegerValue
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.PrimitiveValue
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.Value
+import java.util.LinkedList
 
 object BooleanParser : ResultParser<Boolean> {
   override fun parse(value: Value): Boolean {
@@ -85,16 +94,13 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
                   throw UnexpectedValueFormatException("Object references information should be represented by array")
 
       val distinctIndices = mutableSetOf<Int>()
-      val referenceInfos =  mutableListOf<ReferringObject>()
+      val referenceInfos = LinkedList<ReferringObject>()
+      val rootReferenceKinds = mutableListOf<MemoryAgentReferenceKind>()
       for ((i, index) in indices.withIndex()) {
         if (index == -1) {
-          referenceInfos.add(
-            MemoryAgentReferringObjectCreator.createRootReferringObject(
-              MemoryAgentReferenceKind.valueOf(kinds[i]),
-              infos.getValue(i)
-            )
-          )
-        } else if (!distinctIndices.contains(index)) {
+          rootReferenceKinds.add(MemoryAgentReferenceKind.valueOf(kinds[i]))
+        }
+        else if (!distinctIndices.contains(index)) {
           distinctIndices.add(index)
           referenceInfos.add(
             MemoryAgentReferringObjectCreator.createReferringObject(
@@ -107,6 +113,9 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
         }
       }
 
+      if (rootReferenceKinds.isNotEmpty()) {
+        referenceInfos.add(0, CompoundRootReferringObject(rootReferenceKinds.toTypedArray()))
+      }
       result.add(referenceInfos)
     }
 
@@ -142,13 +151,37 @@ object ShallowAndRetainedSizeParser : ResultParser<Pair<List<Long>, List<Long>>>
   }
 }
 
-object SizeAndHeldObjectsParser : ResultParser<Pair<Long, List<ObjectReference>>> {
-  override fun parse(value: Value): Pair<Long, List<ObjectReference>> {
+object SizeAndHeldObjectsParser : ResultParser<Pair<Array<Long>, Array<ObjectReference>>> {
+  override fun parse(value: Value): Pair<Array<Long>, Array<ObjectReference>> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
-    if (value.length() < 2) throw UnexpectedValueFormatException("long and array of objects expected")
+    if (value.length() < 2) throw UnexpectedValueFormatException("array of longs and array of objects expected")
     return Pair(
-      LongArrayParser.parse(value.getValue(0))[0],
-      ObjectReferencesParser.parse(value.getValue(1))
+      LongArrayParser.parse(value.getValue(0)).toTypedArray(),
+      ObjectReferencesParser.parse(value.getValue(1)).toTypedArray()
+    )
+  }
+}
+
+object SizesAndObjectsOfClassParser : ResultParser<MemoryAgent.ObjectsAndSizes> {
+  override fun parse(value: Value): MemoryAgent.ObjectsAndSizes  {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    if (value.length() < 3) throw UnexpectedValueFormatException("two arrays of longs and one array of objects expected")
+    return MemoryAgent.ObjectsAndSizes(
+      ObjectReferencesParser.parse(value.getValue(0)).toTypedArray(),
+      LongArrayParser.parse(value.getValue(1)).toLongArray(),
+      LongArrayParser.parse(value.getValue(2)).toLongArray(),
+    )
+  }
+}
+
+object ErrorCodeParser : ResultParser<Pair<MemoryAgentActionResult.ErrorCode, Value>> {
+  override fun parse(value: Value): Pair<MemoryAgentActionResult.ErrorCode, Value> {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    return Pair(
+      MemoryAgentActionResult.ErrorCode.valueOf(
+        IntArrayParser.parse(value.getValue(0))[0]
+      ),
+      value.getValue(1)
     )
   }
 }
@@ -160,30 +193,7 @@ object BooleanArrayParser : ResultParser<List<Boolean>> {
   }
 }
 
-object StringArrayParser : ResultParser<List<String?>> {
-  override fun parse(value: Value): List<String?> {
-    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
-    return value.values.map { it?.let { StringParser.parse(it) } }
-  }
-}
-
 object MemoryAgentReferringObjectCreator {
-  fun createRootReferringObject(
-    kind: MemoryAgentReferenceKind,
-    value: Value?): GCRootReferringObject {
-    return if (value == null) GCRootReferringObject(kind) else
-      when (kind) {
-        MemoryAgentReferenceKind.STACK_LOCAL,
-        MemoryAgentReferenceKind.JNI_LOCAL -> {
-          if (value !is ArrayReference) return GCRootReferringObject(kind)
-          val longs = LongArrayParser.parse(value.getValue(0))
-          val methodName = value.getValue(1)?.let { StringArrayParser.parse(it)[0] }
-          StackLocalReferringObject(kind, methodName, longs[0], longs[1])
-        }
-        else -> GCRootReferringObject(kind)
-      }
-  }
-
   fun createReferringObject(
     referrer: ObjectReference,
     kind: MemoryAgentReferenceKind,

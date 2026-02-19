@@ -1,0 +1,18 @@
+fragment pullRequestReviewComment on PullRequestReviewComment {
+  ...comment
+  url
+  state
+  commit {
+    ...commitHash
+  }
+  originalCommit {
+    ...commitHash
+  }
+  diffHunk
+  pullRequestReview {
+    ...nodeInfo
+  }
+  viewerCanDelete
+  viewerCanUpdate
+  viewerCanReact
+}

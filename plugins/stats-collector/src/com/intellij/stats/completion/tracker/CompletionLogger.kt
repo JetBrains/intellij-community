@@ -1,30 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.lang.Language
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 
 
 abstract class CompletionLoggerProvider {
 
-    abstract fun newCompletionLogger(language: Language): CompletionLogger
+    abstract fun newCompletionLogger(languageName: String, shouldLogElementFeatures: Boolean): CompletionLogger
 
     open fun dispose(): Unit = Unit
 
     companion object {
-        fun getInstance(): CompletionLoggerProvider = ServiceManager.getService(CompletionLoggerProvider::class.java)
+        fun getInstance(): CompletionLoggerProvider = ApplicationManager.getApplication().getService(CompletionLoggerProvider::class.java)
     }
 
 }
 
 abstract class CompletionLogger {
 
-    abstract fun completionStarted(lookup: LookupImpl, isExperimentPerformed: Boolean, experimentVersion: Int, timestamp: Long)
+    abstract fun completionStarted(lookup: LookupImpl, prefixLength: Int, isExperimentPerformed: Boolean, experimentVersion: Int,
+                                   timestamp: Long)
 
-    abstract fun afterCharTyped(c: Char, lookup: LookupImpl, timestamp: Long)
+    abstract fun afterCharTyped(c: Char, lookup: LookupImpl, prefixLength: Int, timestamp: Long)
 
-    abstract fun afterBackspacePressed(lookup: LookupImpl, timestamp: Long)
+    abstract fun afterBackspacePressed(lookup: LookupImpl, prefixLength: Int, timestamp: Long)
 
     abstract fun downPressed(lookup: LookupImpl, timestamp: Long)
     abstract fun upPressed(lookup: LookupImpl, timestamp: Long)

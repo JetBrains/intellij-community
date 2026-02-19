@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -14,6 +14,7 @@ import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -36,6 +37,12 @@ public class InvokerTest {
   private static final TestApplicationManager application = TestApplicationManager.getInstance();
   private final List<Promise<?>> futures = Collections.synchronizedList(new ArrayList<>());
   private final Disposable parent = Disposer.newDisposable();
+  private AtomicReference<Thread> edt;
+
+  @Before
+  public void setUp() throws Exception {
+    edt = new AtomicReference<>();
+  }
 
   @After
   public void tearDown() throws Exception {
@@ -67,7 +74,7 @@ public class InvokerTest {
 
   @Test
   public void testValidBgThread() {
-    testValidThread(new Invoker.Background(parent));
+    testValidThread(Invoker.forBackgroundThreadWithReadAction(parent));
   }
 
   private void testValidThread(Invoker invoker) {
@@ -87,7 +94,7 @@ public class InvokerTest {
 
   @Test
   public void testInvokeLaterOnBgThread() {
-    testInvokeLater(new Invoker.Background(parent));
+    testInvokeLater(Invoker.forBackgroundThreadWithReadAction(parent));
   }
 
   private void testInvokeLater(Invoker invoker) {
@@ -111,7 +118,7 @@ public class InvokerTest {
 
   @Test
   public void testScheduleOnBgThread() {
-    testSchedule(new Invoker.Background(parent));
+    testSchedule(Invoker.forBackgroundThreadWithReadAction(parent));
   }
 
   private void testSchedule(Invoker invoker) {
@@ -135,7 +142,7 @@ public class InvokerTest {
 
   @Test
   public void testInvokeLaterIfNeededOnBgThread() {
-    testInvokeLaterIfNeeded(new Invoker.Background(parent));
+    testInvokeLaterIfNeeded(Invoker.forBackgroundThreadWithReadAction(parent));
   }
 
   private void testInvokeLaterIfNeeded(Invoker invoker) {
@@ -149,17 +156,12 @@ public class InvokerTest {
 
   @Test
   public void testReadActionYes() {
-    testReadAction(new Invoker.Background(parent, ThreeState.YES), true, true);
+    testReadAction(Invoker.forBackgroundThreadWithReadAction(parent), true, true);
   }
 
   @Test
   public void testReadActionNo() {
-    testReadAction(new Invoker.Background(parent, ThreeState.NO), false, false);
-  }
-
-  @Test
-  public void testReadAction() {
-    testReadAction(new Invoker.Background(parent, ThreeState.UNSURE), false, true);
+    testReadAction(Invoker.forBackgroundPoolWithoutReadAction(parent), false, false);
   }
 
   private static boolean isExpected(CountDownLatch latch, AtomicReference<? super String> error, String message, boolean expected) {
@@ -197,7 +199,7 @@ public class InvokerTest {
 
   @Test
   public void testComputeOnBgThread() {
-    testCompute(new Invoker.Background(parent));
+    testCompute(Invoker.forBackgroundThreadWithReadAction(parent));
   }
 
   private void testCompute(@NotNull Invoker invoker) {
@@ -234,7 +236,7 @@ public class InvokerTest {
 
   @Test
   public void testComputeLaterOnBgThread() {
-    testComputeLater(new Invoker.Background(parent));
+    testComputeLater(Invoker.forBackgroundThreadWithReadAction(parent));
   }
 
   private void testComputeLater(@NotNull Invoker invoker) {
@@ -271,7 +273,7 @@ public class InvokerTest {
 
   @Test
   public void testRestartOnBgThread() {
-    testRestartOnPCE(new Invoker.Background(parent));
+    testRestartOnPCE(Invoker.forBackgroundThreadWithReadAction(parent));
   }
 
   private void testRestartOnPCE(Invoker invoker) {
@@ -295,7 +297,7 @@ public class InvokerTest {
 
   @Test
   public void testQueueOnBgThread() {
-    testQueue(new Invoker.Background(parent), true);
+    testQueue(Invoker.forBackgroundThreadWithReadAction(parent), true);
   }
 
   private void testQueue(Invoker invoker, boolean ordered) {
@@ -310,93 +312,140 @@ public class InvokerTest {
 
   @Test
   public void testThreadChangingOnEDT() {
-    testThreadChanging(new Invoker.EDT(parent));
+    testThreadChanging(new Invoker.EDT(parent), true);
   }
 
   @Test
   public void testThreadChangingOnBgPool() {
-    testThreadChanging(new Invoker.Background(parent, 10));
+    testThreadChanging(new Invoker.Background(parent, 10), false);
   }
 
   @Test
   public void testThreadChangingOnBgThread() {
-    testThreadChanging(new Invoker.Background(parent));
+    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), false);
   }
 
-  private void testThreadChanging(Invoker invoker) {
-    testThreadChanging(invoker, invoker, true);
+  private void testThreadChanging(Invoker invoker, boolean isEDT) {
+    testThreadChanging(invoker, invoker, isEDT, isEDT, true);
   }
 
   @Test
   public void testThreadChangingOnEDTfromEDT() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.EDT(parent), true);
+    testThreadChanging(new Invoker.EDT(parent), new Invoker.EDT(parent), true, true, true);
   }
 
   @Test
   public void testThreadChangingOnEDTfromBgPool() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent, 10), false);
+    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent, 10), true, false, false);
   }
 
   @Test
   public void testThreadChangingOnEDTfromBgThread() {
-    testThreadChanging(new Invoker.EDT(parent), new Invoker.Background(parent), false);
+    testThreadChanging(new Invoker.EDT(parent), Invoker.forBackgroundThreadWithReadAction(parent), true, false, false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromEDT() {
-    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.EDT(parent), false);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.EDT(parent), false, true, false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromBgPool() {
-    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent, 10), false);
+    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent, 10), false, false, false);
   }
 
   @Test
   public void testThreadChangingOnBgPoolFromBgThread() {
-    testThreadChanging(new Invoker.Background(parent, 10), new Invoker.Background(parent), false);
+    testThreadChanging(new Invoker.Background(parent, 10), Invoker.forBackgroundThreadWithReadAction(parent), false, false, false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromEDT() {
-    testThreadChanging(new Invoker.Background(parent), new Invoker.EDT(parent), false);
+    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), new Invoker.EDT(parent), false, true, false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromBgPool() {
-    testThreadChanging(new Invoker.Background(parent), new Invoker.Background(parent, 10), false);
+    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), new Invoker.Background(parent, 10), false, false, false);
   }
 
   @Test
   public void testThreadChangingOnBgThreadFromBgThread() {
-    testThreadChanging(new Invoker.Background(parent), new Invoker.Background(parent), false);
+    testThreadChanging(Invoker.forBackgroundThreadWithReadAction(parent), Invoker.forBackgroundThreadWithReadAction(parent), false, false, false);
   }
 
-  private void testThreadChanging(Invoker foreground, Invoker background, Boolean equal) {
+  private void testThreadChanging(Invoker foreground, Invoker background, boolean isForegroundEDT, boolean isBackgroundEDT, boolean callsInPlace) {
     CountDownLatch latch = new CountDownLatch(1);
     test(foreground, latch, error
-      -> process(background, foreground, Thread::currentThread, thread
-      -> countDown(latch, 0, error, "unexpected thread", ()
-      -> isExpected(thread, equal))));
+      -> process(background, foreground, () -> new BackgroundThread(Thread.currentThread(), new AtomicBoolean(true)), thread
+      -> countDown(latch, 0, error, ()
+      -> checkThreads(thread, isBackgroundEDT, isForegroundEDT, callsInPlace)),
+     postInvoke -> {
+       postInvoke.isRunningTask.set(false);
+     }
+    ));
   }
+
+  private record BackgroundThread(@NotNull Thread thread, @NotNull AtomicBoolean isRunningTask) {}
 
   /**
    * Lets the specified supplier to produce a value on the background thread
    * and the specified consumer to accept this value on the foreground thread.
+   * The other consumer is called on the background thread right after scheduling the foreground consumer.
    */
   private static <T> void process(@NotNull Invoker background, @NotNull Invoker foreground, @NotNull Supplier<? extends T> supplier,
-                                  @NotNull Consumer<? super T> consumer) {
-    background.compute(supplier).onSuccess(value -> foreground.invoke(() -> consumer.accept(value)));
+                                  @NotNull Consumer<? super T> consumer, @NotNull Consumer<? super T> postInvokeBackgroundConsumer) {
+    background.invoke(() -> {
+      var value = supplier.get();
+      foreground.invoke(() -> {
+        consumer.accept(value);
+      });
+      postInvokeBackgroundConsumer.accept(value);
+    });
   }
 
-  private static boolean isExpected(Thread thread, Boolean equal) {
-    if (equal != null) return equal.equals(thread == Thread.currentThread());
-    return true; // debug only: thread may be reused
+  private String checkThreads(BackgroundThread backgroundThread, boolean isBackgroundEDT, boolean isForegroundEDT, boolean callsInPlace) {
+    Thread foregroundThread = Thread.currentThread();
+    if (isBackgroundEDT) {
+      if (backgroundThread.thread != edt.get()) {
+        return "Expected background to be EDT, got " + backgroundThread.thread;
+      }
+    }
+    else {
+      if (backgroundThread.thread == edt.get()) {
+        return "Expected background NOT to be EDT, got " + backgroundThread.thread;
+      }
+    }
+    if (isForegroundEDT) {
+      if (foregroundThread != edt.get()) {
+        return "Expected foreground to be EDT, got " + foregroundThread;
+      }
+    }
+    else {
+      if (foregroundThread == edt.get()) {
+        return "Expected foreground NOT to be EDT, got " + foregroundThread;
+      }
+    }
+    if (callsInPlace) {
+      if (!backgroundThread.isRunningTask.get()) {
+        return "Expected foreground to be called in place, but the background task has already finished";
+      }
+    }
+    // If callsInPlace is false, we can't check because the background task MIGHT still be running.
+    return null;
   }
 
 
   private void test(Invoker invoker, CountDownLatch latch, Consumer<? super AtomicReference<String>> consumer) {
     Assert.assertFalse("EDT should not be used to start this test", invoker instanceof Invoker.EDT && isEventDispatchThread());
+    if (isEventDispatchThread()) {
+      edt.set(Thread.currentThread());
+    }
+    else {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        edt.set(Thread.currentThread());
+      });
+    }
     AtomicReference<String> error = new AtomicReference<>();
     register(invoker.invokeLater(() -> consumer.accept(error)));
     String message;
@@ -410,16 +459,20 @@ public class InvokerTest {
     if (message != null) Assert.fail(message + " @ " + invoker);
   }
 
-  private static void countDown(CountDownLatch latch, long ms, AtomicReference<? super String> error, String message, BooleanSupplier success) {
+  private static void countDown(CountDownLatch latch, long ms, AtomicReference<? super String> error, Supplier<String> errorSupplier) {
     try {
       if (ms > 0) Thread.sleep(ms);
     }
     catch (InterruptedException ignore) {
     }
     finally {
-      if (!success.getAsBoolean()) error.set(message);
+      error.set(errorSupplier.get());
       latch.countDown();
     }
+  }
+
+  private static void countDown(CountDownLatch latch, long ms, AtomicReference<? super String> error, String message, BooleanSupplier success) {
+    countDown(latch, ms, error, () -> success.getAsBoolean() ? null : message);
   }
 
   @Test
@@ -431,7 +484,7 @@ public class InvokerTest {
   @Test
   public void testDisposeOnBgThread() {
     Disposable parent = Disposer.newDisposable("disposed");
-    testInterrupt(parent, new Invoker.Background(parent), promise -> Disposer.dispose(parent));
+    testInterrupt(parent, Invoker.forBackgroundThreadWithReadAction(parent), promise -> Disposer.dispose(parent));
   }
 
   @Test
@@ -449,7 +502,7 @@ public class InvokerTest {
   @Test
   public void testCancelOnBgThread() {
     Disposable parent = Disposer.newDisposable("cancelled");
-    testInterrupt(parent, new Invoker.Background(parent), promise -> promise.cancel());
+    testInterrupt(parent, Invoker.forBackgroundThreadWithReadAction(parent), promise -> promise.cancel());
   }
 
   @Test

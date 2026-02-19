@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -23,14 +8,18 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.InspectionsResultUtil;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -38,7 +27,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -49,24 +39,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ViewOfflineResultsAction extends AnAction {
+public final class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ViewOfflineResultsAction.class);
 
   @Override
@@ -74,7 +62,12 @@ public class ViewOfflineResultsAction extends AnAction {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getProject();
     presentation.setEnabled(project != null);
-    presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && !PlatformUtils.isCidr());
+    presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -83,16 +76,8 @@ public class ViewOfflineResultsAction extends AnAction {
 
     LOG.assertTrue(project != null);
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false){
-      @Override
-      public Icon getIcon(VirtualFile file) {
-        if (file.isDirectory() &&
-            file.findChild(InspectionsResultUtil.DESCRIPTIONS + "." + StdFileTypes.XML.getDefaultExtension()) != null) {
-          return AllIcons.Nodes.InspectionResults;
-        }
-        return super.getIcon(file);
-      }
-    }.withFileFilter(f -> f.isDirectory() || StdFileTypes.XML.getDefaultExtension().equals(f.getExtension()))
+    var xmlFileType = FileTypeManager.getInstance().getStdFileType("XML");
+    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(xmlFileType)
       .withTitle(InspectionsBundle.message("view.offline.inspections.select.path.title"))
       .withDescription(InspectionsBundle.message("view.offline.inspections.select.path.description"));
     final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
@@ -106,7 +91,7 @@ public class ViewOfflineResultsAction extends AnAction {
                                                               new PerformAnalysisInBackgroundOption(project)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        //for non project directories ensure refreshed directory 
+        //for non project directories ensure refreshed directory
         VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile);
         final VirtualFile[] files = virtualFile.isDirectory() ? virtualFile.getChildren() : new VirtualFile[] {virtualFile};
         try {
@@ -114,7 +99,7 @@ public class ViewOfflineResultsAction extends AnAction {
             if (inspectionFile.isDirectory()) continue;
             final String shortName = inspectionFile.getNameWithoutExtension();
             final String extension = inspectionFile.getExtension();
-            File inspectionIoFile = VfsUtilCore.virtualToIoFile(inspectionFile);
+            Path inspectionIoFile = inspectionFile.toNioPath();
             try {
               if (shortName.equals(InspectionsResultUtil.DESCRIPTIONS)) {
                 profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(inspectionIoFile));
@@ -166,9 +151,8 @@ public class ViewOfflineResultsAction extends AnAction {
       profile = null;
     }
     final InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
-      @NotNull
       @Override
-      public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
+      public @NotNull HighlightDisplayLevel getErrorLevel(final @NotNull HighlightDisplayKey key, PsiElement element) {
         return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
       }
     };
@@ -189,11 +173,10 @@ public class ViewOfflineResultsAction extends AnAction {
     return showOfflineView(project, resMap, inspectionProfile, title);
   }
 
-  @NotNull
-  public static InspectionResultsView showOfflineView(@NotNull Project project,
-                                                      @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
-                                                      @NotNull InspectionProfileImpl inspectionProfile,
-                                                      @NotNull @NlsContexts.TabTitle String title) {
+  public static @NotNull InspectionResultsView showOfflineView(@NotNull Project project,
+                                                               @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+                                                               @NotNull InspectionProfileImpl inspectionProfile,
+                                                               @NotNull @NlsContexts.TabTitle String title) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
@@ -204,7 +187,14 @@ public class ViewOfflineResultsAction extends AnAction {
                                                                  new OfflineInspectionRVContentProvider(resMap));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
     context.addView(view, title, true);
-    view.update();
+    Collection<Tools> tools = new ArrayList<>(context.getTools().values());
+    ProgressManager.getInstance().run(new Task.Backgroundable(project,
+                                                              InspectionsBundle.message("progress.title.load.offline.inspection.results")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        view.updateResults(tools);
+      }
+    });
     return view;
   }
 }

@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +19,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public class ProjectNode extends ExternalSystemNode<ProjectData> {
-  private String myTooltipCache;
+  private @Nls String myTooltipCache;
   private ModuleNode effectiveRoot = null;
 
   public ProjectNode(ExternalProjectsView externalProjectsView, DataNode<ProjectData> projectDataNode) {
@@ -34,9 +37,8 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
     return (ExternalSystemNode)getParent();
   }
 
-  @NotNull
   @Override
-  protected List<? extends ExternalSystemNode<?>> doBuildChildren() {
+  protected @NotNull List<? extends ExternalSystemNode<?>> doBuildChildren() {
     setIdeGrouping(null);
     final List<? extends ExternalSystemNode<?>> children = super.doBuildChildren();
     final List<ExternalSystemNode<?>> visibleChildren = ContainerUtil.filter(children, node -> node.isVisible());
@@ -63,24 +65,27 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   @Override
-  protected void doUpdate() {
-    setNameAndTooltip(getName(), myTooltipCache);
+  protected void doUpdate(@NotNull PresentationData presentation) {
+    setNameAndTooltip(presentation, getName(), myTooltipCache);
   }
 
-  private String makeDescription() {
-    StringBuilder desc = new StringBuilder();
+  private @NlsSafe String makeDescription() {
     final ProjectData projectData = getData();
-    desc
-      .append("Project: ").append(getName())
-      .append(projectData != null ?
-              "\n\rLocation: " + projectData.getLinkedExternalProjectPath() : "")
-      .append(projectData != null && !StringUtil.isEmptyOrSpaces(projectData.getDescription()) ?
-              "\n\r" + projectData.getDescription() : "");
+    StringBuilder desc = new StringBuilder();
+    desc.append(ExternalSystemBundle.message("external.project.structure.project"))
+      .append(": ").append(getName());
+    if (projectData != null) {
+      desc.append("\n\r").append(ExternalSystemBundle.message("external.project.structure.project.location"))
+        .append(": ").append(projectData.getLinkedExternalProjectPath());
+      String description = projectData.getDescription();
+      if (!StringUtil.isEmptyOrSpaces(description)) {
+        desc.append("\n\r").append(description);
+      }
+    }
     return desc.toString();
   }
 
-  @Nullable
-  public String getIdeGrouping() {
+  public @Nullable String getIdeGrouping() {
     ProjectData data = getData();
     if (data == null) return null;
     return data.getIdeGrouping();
@@ -94,9 +99,7 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  protected String getMenuId() {
+  protected @Nullable @NonNls String getMenuId() {
     return "ExternalSystemView.ProjectMenu";
   }
 

@@ -7,9 +7,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
-/**
- * @author ilyas
- */
 public interface GrTryCatchStatement extends GroovyPsiElement, GrStatement {
 
   @Nullable

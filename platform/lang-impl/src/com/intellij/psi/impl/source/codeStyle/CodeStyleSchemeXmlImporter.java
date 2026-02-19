@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.ImportSchemeChooserDialog;
@@ -38,7 +38,7 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
   public @Nullable CodeStyleScheme importScheme(@NotNull Project project,
                                                 @NotNull VirtualFile selectedFile,
                                                 @NotNull CodeStyleScheme currentScheme,
-                                                @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
+                                                @NotNull SchemeFactory<? extends CodeStyleScheme> schemeFactory) throws SchemeImportException {
     Element rootElement = SchemeImportUtil.loadSchemeDom(selectedFile);
     Element schemeRoot = findSchemeRoot(rootElement);
     Pair<String, CodeStyleScheme> importPair =

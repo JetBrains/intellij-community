@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -18,7 +20,9 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
@@ -26,10 +30,22 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.lang.management.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JTextArea;
+import java.lang.management.CompilationMXBean;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -72,8 +88,12 @@ final class ActivityMonitorAction extends DumbAwareAction {
     "com.intellij.openapi.progress.impl.",
     "com.intellij.ide.IdeEventQueue",
     "com.intellij.openapi.fileTypes.",
+
     "com.intellij.openapi.vfs.newvfs.persistent.PersistentFS",
     "com.intellij.openapi.vfs.newvfs.persistent.FSRecords",
+    "com.intellij.util.io.pagecache",
+    FilePageCacheLockFree.class.getName(),
+
     "com.intellij.openapi.roots.impl",
     "javax."
   };
@@ -88,8 +108,8 @@ final class ActivityMonitorAction extends DumbAwareAction {
     OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
     Method getProcessCpuTime = Objects.requireNonNull(ReflectionUtil.getMethod(osBean.getClass().getInterfaces()[0], "getProcessCpuTime"));
     ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(new Runnable() {
-      final Long2LongOpenHashMap lastThreadTimes = new Long2LongOpenHashMap();
-      final Object2LongOpenHashMap<String> subsystemToSamples = new Object2LongOpenHashMap<>();
+      final Long2LongMap lastThreadTimes = new Long2LongOpenHashMap();
+      final Object2LongMap<String> subsystemToSamples = new Object2LongOpenHashMap<>();
       long lastGcTime = totalGcTime();
       long lastProcessTime = totalProcessTime();
       long lastJitTime = jitBean.getTotalCompilationTime();
@@ -97,8 +117,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
 
       private final Map<String, String> classToSubsystem = new HashMap<>();
 
-      @NotNull
-      private String calcSubSystemName(String className) {
+      private @NotNull String calcSubSystemName(String className) {
         String pkg = StringUtil.getPackageName(className);
         if (pkg.isEmpty()) pkg = className;
 
@@ -107,8 +126,8 @@ final class ActivityMonitorAction extends DumbAwareAction {
           pkg = pkg.substring(prefix.length()) + " (in " + StringUtil.trimEnd(prefix, ".") + ")";
         }
 
-        IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginManagerCore.getPluginByClassName(className));
-        return plugin != null ? "Plugin " + plugin.getName() + ": " + pkg : pkg;
+        IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginManager.getPluginByClassNameAsNoAccessToClass(className));
+        return plugin == null ? pkg : "Plugin " + plugin.getName() + ": " + pkg;
       }
 
       private String getMeaninglessPrefix(String qname) {
@@ -119,7 +138,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         return result;
       }
 
-      private String findPrefix(String qname, String[] prefixes) {
+      private static String findPrefix(String qname, String[] prefixes) {
         for (String prefix : prefixes) {
           if (qname.startsWith(prefix)) {
             return prefix;
@@ -141,8 +160,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         }
       }
 
-      @NotNull
-      private String getSubsystemName(long threadId) {
+      private @NotNull String getSubsystemName(long threadId) {
         if (threadId == Thread.currentThread().getId()) {
           return "<Activity Monitor>";
         }
@@ -162,7 +180,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         return (runnable ? "<infrastructure: " : "<unidentified: ") + getCommonThreadName(info) + ">";
       }
 
-      private String getCommonThreadName(ThreadInfo info) {
+      private static String getCommonThreadName(ThreadInfo info) {
         String name = info.getThreadName();
         if (ThreadDumper.isEDT(name)) return "UI thread";
 
@@ -171,7 +189,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         return name;
       }
 
-      private boolean isInfrastructureClass(String className) {
+      private static boolean isInfrastructureClass(String className) {
         return ContainerUtil.exists(INFRASTRUCTURE_PREFIXES, className::startsWith);
       }
 
@@ -208,11 +226,9 @@ final class ActivityMonitorAction extends DumbAwareAction {
         }, ModalityState.any());
       }
 
-      @NotNull
-      private List<Pair<String, Long>> takeSnapshot() {
+      private @NotNull List<Pair<String, Long>> takeSnapshot() {
         List<Pair<String, Long>> times = new ArrayList<>();
-        for (Iterator<Object2LongMap.Entry<String>> iterator = subsystemToSamples.object2LongEntrySet().fastIterator(); iterator.hasNext(); ) {
-          Object2LongMap.Entry<String> entry = iterator.next();
+        for (Object2LongMap.Entry<String> entry : subsystemToSamples.object2LongEntrySet()) {
           times.add(new Pair<>(entry.getKey(), TimeUnit.NANOSECONDS.toMillis(entry.getLongValue())));
         }
         subsystemToSamples.clear();
@@ -265,5 +281,10 @@ final class ActivityMonitorAction extends DumbAwareAction {
     dialog.setModal(false);
     Disposer.register(dialog.getDisposable(), () -> future.cancel(false));
     dialog.show();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

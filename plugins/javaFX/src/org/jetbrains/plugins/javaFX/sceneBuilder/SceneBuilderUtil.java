@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -19,14 +19,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class SceneBuilderUtil {
   private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
 
-  static final String SCENE_BUILDER_VERSION = "11.0.5";
-  static final String JAVAFX_VERSION = "11.0.1";
+  static final String SCENE_BUILDER_VERSION = "11.0.6";
+  static final String JAVAFX_VERSION = "17.0.12";
   static final String SCENE_BUILDER_KIT_FULL_NAME = "scenebuilderkit-" + SCENE_BUILDER_VERSION + ".jar";
 
   public static final String[] JAVAFX_ARTIFACTS = {
@@ -61,7 +60,7 @@ final class SceneBuilderUtil {
       final Path javaFxJar = Paths.get(PathUtil.getJarPathForClass(SceneBuilderUtil.class));
       boolean isDevMode = Files.isDirectory(javaFxJar);
       final Path sceneBuilder = getSceneBuilder11Path();
-      final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "rt/sceneBuilderBridge.jar", javaFxJar);
+      final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "../rt/sceneBuilderBridge.jar", javaFxJar);
 
       try {
         Class.forName(JavaFxCommonNames.JAVAFX_SCENE_NODE);
@@ -100,7 +99,7 @@ final class SceneBuilderUtil {
           .filter(path -> {
             String name = path.toFile().getName();
             return name.startsWith(artifact + "-" + JAVAFX_VERSION) && name.endsWith(".jar"); //include os-specific jars
-          }).collect(Collectors.toList());
+          }).toList();
 
         for (Path path : paths) {
           urls.add(path.toUri().toURL());

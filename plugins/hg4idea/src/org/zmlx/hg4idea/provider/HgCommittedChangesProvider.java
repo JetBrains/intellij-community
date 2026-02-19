@@ -20,7 +20,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ChangeListColumn;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
@@ -36,7 +42,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileRevision;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.ui.HgVersionFilterComponent;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -44,7 +55,13 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class HgCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
 
@@ -57,15 +74,13 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     myVcs = vcs;
   }
 
-  @NotNull
   @Override
-  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
+  public @NotNull ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new HgVersionFilterComponent(showDateFilter);
   }
 
   @Override
-  @Nullable
-  public RepositoryLocation getLocationFor(@NotNull FilePath filePath) {
+  public @Nullable RepositoryLocation getLocationFor(@NotNull FilePath filePath) {
     VirtualFile repo = VcsUtil.getVcsRootFor(project, filePath);
     if (repo == null) {
       return null;
@@ -89,11 +104,10 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     }
   }
 
-  @NotNull
   @Override
-  public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
-                                                       @NotNull RepositoryLocation repositoryLocation,
-                                                       int maxCount) {
+  public @NotNull List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
+                                                                @NotNull RepositoryLocation repositoryLocation,
+                                                                int maxCount) {
     VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
 
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
@@ -131,7 +145,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
       }
       for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
         changes
-          .add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.RENAMED));
+          .add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.FileStatuses.RENAMED));
       }
 
       result.add(new HgCommittedChangeList(myVcs, vcsRevisionNumber, revision.getBranchName(), revision.getCommitMessage(),
@@ -161,8 +175,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   }
 
   @Override
-  @NotNull
-  public VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
+  public @NotNull VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
     AnAction copyHashAction = new DumbAwareAction(
       HgBundle.messagePointer("action.DumbAware.HgCommittedChangesProvider.text.copy.hash"),
       HgBundle.messagePointer("action.DumbAware.HgCommittedChangesProvider.description.copy.hash.to.clipboard"),
@@ -185,9 +198,8 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return -1;
   }
 
-  @Nullable
   @Override
-  public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, @NotNull VcsRevisionNumber number) {
+  public @Nullable Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, @NotNull VcsRevisionNumber number) {
     final ChangeBrowserSettings settings = createDefaultSettings();
     settings.USE_CHANGE_AFTER_FILTER = true;
     settings.USE_CHANGE_BEFORE_FILTER = true;
@@ -211,8 +223,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     return false;
   }
 
-  @Nullable
-  public CommittedChangeList getCommittedChangesForRevision(@Nullable RepositoryLocation repositoryLocation, String revision) {
+  public @Nullable CommittedChangeList getCommittedChangesForRevision(@Nullable RepositoryLocation repositoryLocation, String revision) {
     if (repositoryLocation == null) {
       return null;
     }
@@ -244,7 +255,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
       changes.add(createChange(root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
     }
     for (Map.Entry<String, String> copiedFile : localRevision.getMovedFiles().entrySet()) {
-      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.RENAMED));
+      changes.add(createChange(root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber, HgChangeProvider.FileStatuses.RENAMED));
     }
 
     return new HgCommittedChangeList(myVcs, vcsRevisionNumber, localRevision.getBranchName(), localRevision.getCommitMessage(),
@@ -254,7 +265,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   private static final Comparator<HgCommittedChangeList> BRANCH_COLUMN_COMPARATOR =
     (o1, o2) -> Comparing.compare(o1.getBranch(), o2.getBranch());
 
-  private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
+  private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<>() {
     @Override
     public String getTitle() {
       return HgBundle.message("hg4idea.changelist.column.branch");
@@ -266,16 +277,15 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
       return branch.isEmpty() ? "default" : branch;
     }
 
-    @NotNull
     @Override
-    public Comparator<HgCommittedChangeList> getComparator() {
+    public @NotNull Comparator<HgCommittedChangeList> getComparator() {
       return BRANCH_COLUMN_COMPARATOR;
     }
   };
 
   private static class HgLogArgsBuilder {
 
-    @NotNull private final ChangeBrowserSettings myBrowserSettings;
+    private final @NotNull ChangeBrowserSettings myBrowserSettings;
 
     HgLogArgsBuilder(@NotNull ChangeBrowserSettings browserSettings) {
       myBrowserSettings = browserSettings;
@@ -306,21 +316,21 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
       }
 
       if (afterDate != null) {
-        if (args.length() > 0) {
+        if (!args.isEmpty()) {
           args.append(" and ");
         }
         args.append("date('>").append(dateFormatter.format(afterDate)).append("')");
       }
 
       if (beforeDate != null) {
-        if (args.length() > 0) {
+        if (!args.isEmpty()) {
           args.append(" and ");
         }
 
         args.append("date('<").append(dateFormatter.format(beforeDate)).append("')");
       }
 
-      if (args.length() > 0) {
+      if (!args.isEmpty()) {
         List<String> logArgs = new ArrayList<>();
         logArgs.add("-r");
         logArgs.add(args.toString());

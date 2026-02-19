@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SmartStripTrailingSpacesFilter;
 import com.intellij.openapi.editor.StripTrailingSpacesFilter;
@@ -23,15 +10,18 @@ import com.intellij.openapi.editor.StripTrailingSpacesFilterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.StripTrailingSpacesFilter.ALL_LINES;
 
-public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSpacesFilterFactory {
+@ApiStatus.Internal
+public final class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSpacesFilterFactory {
 
-  private static class KeepTrailingSpacesOnEmptyLinesFilter extends SmartStripTrailingSpacesFilter {
-    private @NotNull final Document myDocument;
+  private static final class KeepTrailingSpacesOnEmptyLinesFilter extends SmartStripTrailingSpacesFilter {
+    private final @NotNull Document myDocument;
 
     KeepTrailingSpacesOnEmptyLinesFilter(@NotNull Document document) {
       myDocument = document;
@@ -100,9 +90,8 @@ public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSp
   }
 
 
-  @NotNull
   @Override
-  public StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document) {
+  public @NotNull StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document) {
     if (project != null && shouldKeepTrailingSpacesOnEmptyLines(project, document)) {
       return new KeepTrailingSpacesOnEmptyLinesFilter(document);
     }
@@ -111,7 +100,10 @@ public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSp
 
 
   private static boolean shouldKeepTrailingSpacesOnEmptyLines(@NotNull Project project, @NotNull Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
+    PsiFile file;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-341942, IDEA-307607, EA-765259")) {
+      file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
+    }
     if (file != null) {
       CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(file);
       CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions();

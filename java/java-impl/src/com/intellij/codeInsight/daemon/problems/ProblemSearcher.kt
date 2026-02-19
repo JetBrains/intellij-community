@@ -1,24 +1,40 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.problems
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl
-import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector
 import com.intellij.pom.Navigatable
-import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaElementVisitor
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiCatchSection
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiForeachStatement
+import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiVariable
+import com.intellij.psi.SyntheticElement
+import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.util.PsiTreeUtil
 
-class Problem(val reportedElement: PsiElement, val context: PsiElement) {
+/**
+ * Pair of reported element and context. 
+ * Context is mainly used for display purposes.
+ */
+public class Problem(public val reportedElement: PsiElement, public val context: PsiElement) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
     other as Problem
 
-    if (context != other.context) return false
-
-    return true
+    return context == other.context
   }
 
   override fun hashCode(): Int {
@@ -33,7 +49,9 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
 
   override fun visitElement(element: PsiElement) {
     findProblem(element)
-    element.parent?.accept(this)
+    if (element != file) {
+      element.parent?.accept(this)
+    }
   }
 
   override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
@@ -74,7 +92,8 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
 
   override fun visitForeachStatement(statement: PsiForeachStatement) {
     visitStatement(statement)
-    findProblem(statement.iterationParameter)
+    val element = statement.iterationParameter
+    findProblem(element)
   }
 
   override fun visitStatement(statement: PsiStatement) {
@@ -104,37 +123,21 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
   }
 
   private fun findProblem(element: PsiElement) {
-    if (element !is Navigatable) return
-    val problemHolder = ProblemHolder(file)
-    val visitor = object : HighlightVisitorImpl() {
-      init {
-        prepareToRunAsInspection(problemHolder)
-      }
-    }
-    element.accept(visitor)
-    val reportedElement = problemHolder.reportedElement ?: return
+    if (element !is Navigatable || element is SyntheticElement || element is LightElement) return
+    val error = JavaErrorCollector.findSingleError(element) ?: return
     val context = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement::class.java,
                                                        PsiClass::class.java, PsiMethod::class.java, PsiVariable::class.java) ?: element
-    problems.add(Problem(reportedElement, context))
-  }
-
-  private class ProblemHolder(private val file: PsiFile) : HighlightInfoHolder(file) {
-
-    var reportedElement: PsiElement? = null
-
-    override fun add(info: HighlightInfo?): Boolean {
-      if (reportedElement != null || info == null || info.severity != HighlightSeverity.ERROR || info.description == null) return true
-      reportedElement = file.findElementAt(info.actualStartOffset)
-      return true
-    }
-
-    override fun hasErrorResults(): Boolean {
-      return reportedElement != null
-    }
+    problems.add(Problem(error.psi(), context))
   }
 
   companion object {
 
+    /**
+     * Checks if usage is broken due to change in target file.
+     * 
+     * To understand if usage is broken we visit this usage with {@link HighlightVisitorImpl} and check if highlighter reported any problems
+     * It is possible that one broken usage led to multiple problems.
+     */
     internal fun getProblems(usage: PsiElement, targetFile: PsiFile, memberType: MemberType): Set<Problem> {
       val startElement = getSearchStartElement(usage, targetFile) ?: return emptySet()
       val psiFile = startElement.containingFile

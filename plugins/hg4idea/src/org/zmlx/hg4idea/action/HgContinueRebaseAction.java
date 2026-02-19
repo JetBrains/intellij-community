@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.action;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -30,6 +17,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_CONTINUE_ERROR;
+
 public class HgContinueRebaseAction extends HgProcessStateAction {
 
   public HgContinueRebaseAction() {
@@ -37,9 +26,10 @@ public class HgContinueRebaseAction extends HgProcessStateAction {
   }
 
   @Override
-  protected void execute(@NotNull final Project project,
+  protected void execute(final @NotNull Project project,
                          @NotNull Collection<HgRepository> repositories,
-                         @Nullable final HgRepository selectedRepo) {
+                         final @Nullable HgRepository selectedRepo,
+                         @NotNull DataContext dataContext) {
 
     new Task.Backgroundable(project, HgBundle.message("action.hg4idea.Rebase.Continue.progress")) {
       @Override
@@ -48,7 +38,7 @@ public class HgContinueRebaseAction extends HgProcessStateAction {
           HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo);
           HgCommandResult result = rebaseCommand.continueRebase();
           if (HgErrorUtil.isAbort(result)) {
-            new HgCommandResultNotifier(project).notifyError("hg.rebase.continue.error",
+            new HgCommandResultNotifier(project).notifyError(REBASE_CONTINUE_ERROR,
                                                              result,
                                                              HgBundle.message("hg4idea.hg.error"),
                                                              HgBundle.message("action.hg4idea.Rebase.Continue.error"));

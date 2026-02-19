@@ -35,8 +35,7 @@ import java.text.MessageFormat;
 import java.util.Set;
 
 public class CheckNodeTest extends XPathInspection {
-    @NonNls
-    private static final String SHORT_NAME = "CheckNodeTest";
+    private static final @NonNls String SHORT_NAME = "CheckNodeTest";
 
     @Override
     protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
@@ -44,9 +43,7 @@ public class CheckNodeTest extends XPathInspection {
     }
 
   @Override
-    @NotNull
-    @NonNls
-    public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
         return SHORT_NAME;
     }
 
@@ -60,7 +57,7 @@ public class CheckNodeTest extends XPathInspection {
       return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
     }
 
-    final static class MyVisitor extends Visitor {
+    static final class MyVisitor extends Visitor {
         MyVisitor(InspectionManager manager, boolean isOnTheFly) {
             super(manager, isOnTheFly);
         }
@@ -89,7 +86,7 @@ public class CheckNodeTest extends XPathInspection {
                                 }
                             }
                             if (!found) {
-                                registerProblem(contextProvider, prefixedName, nodeTest, "element");
+                                registerProblem(contextProvider, prefixedName, nodeTest, false);
                             }
                         }
                     } else if (nodeTest.getPrincipalType() == XPathNodeTest.PrincipalType.ATTRIBUTE) {
@@ -103,7 +100,7 @@ public class CheckNodeTest extends XPathInspection {
                                 }
                             }
                             if (!found) {
-                                registerProblem(contextProvider, prefixedName, nodeTest, "attribute");
+                                registerProblem(contextProvider, prefixedName, nodeTest, true);
                             }
                         }
                     }
@@ -111,24 +108,26 @@ public class CheckNodeTest extends XPathInspection {
             }
         }
 
-        private void registerProblem(ContextProvider contextProvider, PrefixedName prefixedName, XPathNodeTest nodeTest, String type) {
+        private void registerProblem(ContextProvider contextProvider, PrefixedName prefixedName, XPathNodeTest nodeTest, boolean attribute) {
             final QName qName = contextProvider.getQName(prefixedName, nodeTest);
             final String name;
             if (qName != null) {
                 final String pattern;
                 if (!"".equals(qName.getNamespaceURI())) {
-                    pattern = "''<b>{0}</b>'' (<i>{1}</i>)";
+                    pattern = "''{0}'' ({1})";
                 } else {
-                    pattern = "''<b>{0}</b>''";
+                    pattern = "''{0}''";
                 }
                 name = MessageFormat.format(pattern, qName.getLocalPart(), qName.getNamespaceURI());
             } else {
-                name = MessageFormat.format("''<b>{0}</b>''", prefixedName.getLocalName());
+                name = MessageFormat.format("''{0}''", prefixedName.getLocalName());
             }
 
             final LocalQuickFix[] fixes = contextProvider.getQuickFixFactory().createUnknownNodeTestFixes(nodeTest);
             addProblem(myManager.createProblemDescriptor(nodeTest,
-                                                         XPathBundle.message("inspection.message.html.unknown.name.html", type, name),
+                                                         XPathBundle.message(attribute ? "inspection.message.html.unknown.attribute.name.html"
+                                                                                       : "inspection.message.html.unknown.element.name.html",
+                                                                             name),
                                                          myOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
 
@@ -150,9 +149,9 @@ public class CheckNodeTest extends XPathInspection {
               }
             } else if (allowDefaultNamespace) {
               final String namespaceURI = namespaceContext.getDefaultNamespace(context);
-              b = b && (element.getNamespaceURI().equals(namespaceURI) || (element.getNamespaceURI().length() == 0 && namespaceURI == null));
+              b = b && (element.getNamespaceURI().equals(namespaceURI) || (element.getNamespaceURI().isEmpty() && namespaceURI == null));
             } else {
-              b = b && element.getNamespaceURI().length() == 0;
+              b = b && element.getNamespaceURI().isEmpty();
             }
           return b;
         }

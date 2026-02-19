@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.groovy.dev` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "groovy-dev_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "groovy-dev",
+  module_name = "intellij.groovy.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":groovy-dev_resources"],
+  deps = [
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//plugins/groovy/groovy-psi:psi",
+  ]
+)
+
+jvm_library(
+  name = "groovy-dev_test_lib",
+  module_name = "intellij.groovy.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":groovy-dev",
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/analysis-impl:analysis-impl_test_lib",
+    "//plugins/groovy/groovy-psi:psi_test_lib",
+  ]
+)
+### auto-generated section `build intellij.groovy.dev` end

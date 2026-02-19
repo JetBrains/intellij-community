@@ -1,4 +1,4 @@
-// "Replace with Comparator chain" "false"
+// "Replace with 'Comparator' chain" "false"
 
 import java.util.*;
 

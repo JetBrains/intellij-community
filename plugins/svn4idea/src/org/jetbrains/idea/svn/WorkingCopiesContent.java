@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.project.Project;
@@ -9,14 +9,15 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.CopiesPanel;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-public class WorkingCopiesContent implements ChangesViewContentProvider {
-  @NotNull private final Project myProject;
+public final class WorkingCopiesContent implements ChangesViewContentProvider {
+  private final @NotNull Project myProject;
 
   public WorkingCopiesContent(@NotNull Project project) {
     myProject = project;
@@ -27,36 +28,34 @@ public class WorkingCopiesContent implements ChangesViewContentProvider {
     return new CopiesPanel(myProject);
   }
 
-  @Override
-  public void disposeContent() {
-  }
-
   public static void show(@NotNull Project project) {
     final ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    if (manager != null) {
-      final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-      if (window != null) {
-        window.show(null);
-        final ContentManager cm = window.getContentManager();
-        final Content content = cm.findContent(getTabName());
-        if (content != null) {
-          cm.setSelectedContent(content, true);
-        }
+    final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    if (window != null) {
+      window.show(null);
+      final ContentManager cm = window.getContentManager();
+      final Content content = cm.findContent(getTabName());
+      if (content != null) {
+        cm.setSelectedContent(content, true);
       }
     }
   }
 
-  public static class VisibilityPredicate implements NotNullFunction<Project, Boolean> {
-
-    @NotNull
+  static final class VisibilityPredicate implements Predicate<Project> {
     @Override
-    public Boolean fun(@NotNull Project project) {
+    public boolean test(@NotNull Project project) {
       return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);
     }
   }
 
-  @NotNull
-  public static String getTabName() {
+  static final class DisplayNameSupplier implements Supplier<String> {
+    @Override
+    public String get() {
+      return SvnBundle.message("toolwindow.working.copies.info.title");
+    }
+  }
+
+  public static @NotNull String getTabName() {
     return SvnBundle.message("dialog.show.svn.map.title");
   }
 }

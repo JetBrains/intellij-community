@@ -1,0 +1,116 @@
+{
+  "name": "CollaborationTools",
+  "fixed": false,
+  "ui": [
+    {
+      "key": "Review.MetaInfo.StatusLine.Blue",
+      "description": "Information status line color",
+      "since": "[2022.3]"
+    },
+    {
+      "key": "Review.MetaInfo.StatusLine.Gray",
+      "description": "Secondary information status line color",
+      "since": "[2022.3]"
+    },
+    {
+      "key": "Review.MetaInfo.StatusLine.Green",
+      "description": "Success status line color",
+      "since": "[2022.3]"
+    },
+    {
+      "key": "Review.MetaInfo.StatusLine.Orange",
+      "description": "Warning status line color",
+      "since": "[2022.3]"
+    },
+    {
+      "key": "Review.ChatItem.Hover",
+      "description": "Hover background of the review item (timeline items, thread comments, etc.)",
+      "since": "[2023.1]"
+    },
+    {
+      "key": "Review.LineFrame.BorderColor",
+      "description": "Border of the outline around the commented lines",
+      "since": "[2025.3]"
+    },
+    {
+      "key": "Review.ChatItem.BubblePanel.Border",
+      "description": "Border of the rounded panel for wrapping diffs",
+      "since": "[2023.1]"
+    },
+    {
+      "key": "Review.Timeline.Thread.Diff.AnchorLine",
+      "description": "Background of an anchor line in thread diff",
+      "since": "[2023.1]"
+    },
+    {
+      "key": "Review.State.Foreground",
+      "description": "Foreground of review state (opened, closed, merged, drafted)",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.State.Background",
+      "description": "Background of review state (opened, closed, merged, drafted)",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.Branch.Background",
+      "description": "Background of branch component",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.Branch.Background.Hover",
+      "description": "Hovered background of branch component",
+      "since": "[2023.2]"
+    },
+    {
+      "key": "Review.Editor.Line.Status.Marker",
+      "description": "Color of the line status markers in gutter and scrollbar for lines changed in review",
+      "since": "[2023.3]"
+    },
+    {
+      "key": "Review.Avatar.Border.Status.Accepted",
+      "description": "Border color of a reviewer who accepted the changes",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Avatar.Border.Status.WaitForUpdates",
+      "description": "Border color of a reviewer who is waiting for response",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Avatar.Border.Status.NeedReview",
+      "description": "Border color of a reviewer who needs to start a review",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Background",
+      "description": "Background of reaction component",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Background.Hovered",
+      "description": "Hovered background of reaction component",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Background.Pressed",
+      "description": "Pressed background of reaction component",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Reaction.Border.Reacted",
+      "description": "Border color of reaction component where the current user has reacted",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.Notification.Blue",
+      "description": "Color of the notification dot in the list of reviews",
+      "since": "[2024.1]"
+    },
+    {
+      "key": "Review.AI.Background",
+      "description": "Background color of AI-generated comments",
+      "since": "[2024.3]"
+    }
+  ]
+}

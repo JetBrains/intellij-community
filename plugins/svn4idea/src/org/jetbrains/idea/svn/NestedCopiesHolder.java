@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ public class NestedCopiesHolder {
 
   private final Set<NestedCopyInfo> mySet = new HashSet<>();
 
-  public synchronized void add(@NotNull final Set<NestedCopyInfo> data) {
+  public synchronized void add(final @NotNull Set<NestedCopyInfo> data) {
     mySet.addAll(data);
   }
 

@@ -5,8 +5,7 @@ class Test {
         return newMethod();
     }
 
-    @NotNull
-    private String newMethod() {
+    private @NotNull String newMethod() {
         return "42";
     }
 }

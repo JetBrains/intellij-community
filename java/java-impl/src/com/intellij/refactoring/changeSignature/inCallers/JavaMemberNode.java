@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature.inCallers;
 
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -37,11 +27,11 @@ public abstract class JavaMemberNode<M extends PsiMember> extends MemberNodeBase
   }
 
   @Override
-  protected void customizeRendererText(ColoredTreeCellRenderer renderer) {
+  protected void customizeRendererText(@NotNull ColoredTreeCellRenderer renderer) {
     customizeRendererText(renderer, getMember(), isEnabled());
   }
 
-  public static <M extends PsiMember> void customizeRendererText(ColoredTreeCellRenderer renderer, M member, boolean enabled) {
+  public static void customizeRendererText(@NotNull ColoredTreeCellRenderer renderer, @NotNull PsiMember member, boolean enabled) {
     final @NlsSafe StringBuilder buffer = new StringBuilder(128);
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass != null) {
@@ -69,13 +59,15 @@ public abstract class JavaMemberNode<M extends PsiMember> extends MemberNodeBase
         PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
         PsiFormatUtilBase.SHOW_TYPE
       );
-    } else {
-      assert member instanceof PsiField;
+    } else if (member instanceof PsiField){
       return PsiFormatUtil.formatVariable(
         (PsiField)member,
         PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE,
         PsiSubstitutor.EMPTY
       );
+    }
+    else {
+      return PsiFormatUtil.formatClass((PsiClass)member, PsiFormatUtilBase.SHOW_NAME);
     }
   }
 }

@@ -1,15 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.UIDefaults;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
@@ -53,14 +55,14 @@ public abstract class JBValue {
   /**
    * Returns initial unscaled value.
    */
-  protected abstract float getUnscaled();
+  public abstract float getUnscaled();
 
   /**
    * JBValue wrapper over an integer value in {@link UIDefaults}.
    *
    * @see JBUI#uiIntValue(String,int)
    */
-  public static class UIInteger extends JBValue {
+  public static final class UIInteger extends JBValue {
     private final @NotNull String key;
     private final int defValue;
 
@@ -70,7 +72,7 @@ public abstract class JBValue {
     }
 
     @Override
-    protected float getUnscaled() {
+    public float getUnscaled() {
       return JBUI.getInt(key, defValue);
     }
   }
@@ -81,27 +83,43 @@ public abstract class JBValue {
    * @see JBUI#value(float)
    */
   public static class Float extends JBValue {
+    @ApiStatus.Internal
+    public static final JBValue EMPTY = new Float(0f);
+
     private final float value;
 
     /**
      * @param value unscaled value
      */
     public Float(float value) {
-      this.value = value;
+      this(value, false);
+    }
+
+    /**
+     * @param value unscaled or pre-scaled value
+     */
+    public Float(float value, boolean preScaled) {
+      this.value = preScaled ? value / JBUIScale.scale(1f) : value;
     }
 
     @Override
-    protected float getUnscaled() {
+    public float getUnscaled() {
       return value;
     }
   }
 
-  private static class CachedFloat extends Float {
+  private static final class CachedFloat extends JBValue {
+    private final @NotNull Supplier<java.lang.Float> valueSupplier;
     private float cachedScaledValue;
 
-    protected CachedFloat(float value) {
-      super(value);
+    private CachedFloat(@NotNull Supplier<java.lang.Float> valueSupplier) {
+      this.valueSupplier = valueSupplier;
       scaleAndCache();
+    }
+
+    @Override
+    public float getUnscaled() {
+      return valueSupplier.get();
     }
 
     @Override
@@ -126,17 +144,29 @@ public abstract class JBValue {
 
   /**
    * A group of values, utilizing caching strategy per value. The group listens to the global user scale factor change and updates
-   * all of the values. The {@link JBValue#get()} method of a value returns a cached scaled value, saving recalculation.
+   * all the values. The {@link JBValue#get()} method of a value returns a cached scaled value, saving recalculation.
    * This can be a better choice when values are used multiple times in a code block.
    */
-  public static class JBValueGroup {
+  public static final class JBValueGroup {
     private final List<CachedFloat> group = new LinkedList<>();
     private final PropertyChangeListener listener = new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        for (CachedFloat value : group) value.scaleAndCache();
+        updateCachedValues();
       }
     };
+
+    /**
+     * Update the cached values immediately.
+     * <p>
+     *   Called automatically when the user scaling factor changes.
+     *   Should be called manually if the unscaled value suppliers are expected to return different values,
+     *   e.g. after a LaF change.
+     * </p>
+     */
+    public void updateCachedValues() {
+      for (CachedFloat value : group) value.scaleAndCache();
+    }
 
     public JBValueGroup() {
       JBUIScale.addUserScaleChangeListener(listener);
@@ -146,7 +176,16 @@ public abstract class JBValue {
      * Creates {@link JBValue} and adds it to this group.
      */
     public JBValue value(float value) {
-      CachedFloat v = new CachedFloat(value);
+      CachedFloat v = new CachedFloat(() -> value);
+      group.add(v);
+      return v;
+    }
+
+    /**
+     * Creates {@link JBValue} and adds it to this group.
+     */
+    public JBValue value(@NotNull Supplier<java.lang.Float> valueSupplier) {
+      CachedFloat v = new CachedFloat(valueSupplier);
       group.add(v);
       return v;
     }

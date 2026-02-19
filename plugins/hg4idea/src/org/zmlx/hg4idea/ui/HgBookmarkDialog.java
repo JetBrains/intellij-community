@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -15,17 +15,22 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class HgBookmarkDialog extends DialogWrapper {
-  @NotNull private final HgRepository myRepository;
-  @NotNull private JBTextField myBookmarkName;
-  @NotNull private JBCheckBox myActiveCheckbox;
+  private final @NotNull HgRepository myRepository;
+  private @NotNull JBTextField myBookmarkName;
+  private @NotNull JBCheckBox myActiveCheckbox;
 
   public HgBookmarkDialog(@NotNull HgRepository repository) {
     super(repository.getProject(), false);
@@ -36,26 +41,22 @@ public class HgBookmarkDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.mercurial.create.bookmark";
   }
 
   @Override
-  @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return myBookmarkName;
   }
 
   @Override
-  @NotNull
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return HgBookmarkDialog.class.getName();
   }
 
   @Override
-  @NotNull
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
 
     JPanel contentPanel = new JPanel(new GridBagLayout());
     GridBag g = new GridBag()
@@ -101,8 +102,7 @@ public class HgBookmarkDialog extends DialogWrapper {
     return !myActiveCheckbox.isSelected();
   }
 
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return myBookmarkName.getText();
   }
 }

@@ -16,18 +16,18 @@
 package org.intellij.images.options.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.BaseConfigurableWithChangeSupport;
+import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.intellij.images.ImagesBundle;
+import org.intellij.images.actions.EditExternalImageEditorAction;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -36,7 +36,7 @@ import java.beans.PropertyChangeListener;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport implements SearchableConfigurable, PropertyChangeListener {
+public final class ImagesConfigurable extends BaseConfigurable implements SearchableConfigurable, PropertyChangeListener {
   private ImagesOptionsComponent myComponent;
   private final Disposable myUIResourcesDisposable = Disposer.newDisposable();
 
@@ -96,13 +96,11 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
   }
 
   public static void show(Project project) {
-    ShowSettingsUtil.getInstance().editConfigurable(project, new ImagesConfigurable());
+    EditExternalImageEditorAction.Companion.showDialog(project);
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return "Images";
   }
 }

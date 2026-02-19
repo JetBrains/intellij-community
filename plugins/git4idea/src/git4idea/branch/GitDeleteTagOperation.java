@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
@@ -9,10 +9,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
 import git4idea.GitUtil;
@@ -27,8 +27,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
-import static git4idea.util.GitUIUtil.bold;
+import static git4idea.GitNotificationIdsHolder.TAG_DELETION_ROLLBACK_ERROR;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -36,10 +35,10 @@ import static git4idea.util.GitUIUtil.code;
  */
 class GitDeleteTagOperation extends GitBranchOperation {
 
-  @NotNull private final String myTagName;
-  @NotNull private final VcsNotifier myNotifier;
+  private final @NotNull String myTagName;
+  private final @NotNull VcsNotifier myNotifier;
 
-  @NotNull private final Map<GitRepository, String> myDeletedTagTips = new HashMap<>();
+  private final @NotNull Map<GitRepository, String> myDeletedTagTips = new HashMap<>();
 
   GitDeleteTagOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                         @NotNull Collection<? extends GitRepository> repositories, @NotNull String tagName) {
@@ -76,7 +75,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
         markSuccessful(repository);
       }
       else {
-        fatalError(GitBundle.message("delete.tag.operation.tag.was.not.deleted", myTagName), result.getErrorOutputAsJoinedString());
+        fatalError(GitBundle.message("delete.tag.operation.tag.was.not.deleted", myTagName), result);
         return;
       }
     }
@@ -86,8 +85,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess() {
     String message = GitBundle.message("delete.tag.operation.deleted.tag", myTagName);
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null,
-                                                                         "git.tag.deleted");
+    Notification notification = VcsNotifier.standardNotification().createNotification("", message, NotificationType.INFORMATION);
+    notification.setDisplayId(GitNotificationIdsHolder.TAG_DELETED);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
       "action.NotificationAction.GitDeleteTagOperation.text.restore"), () -> restoreInBackground(notification)));
 
@@ -116,13 +115,13 @@ class GitDeleteTagOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = doRollback();
     if (result.totalSuccess()) {
-      Notification notification =
-        STANDARD_NOTIFICATION.createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
-          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION, null, "git.tag.restored");
+      Notification notification = VcsNotifier.standardNotification().createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
+          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION);
+      notification.setDisplayId(GitNotificationIdsHolder.TAG_RESTORED);
       myNotifier.notify(notification);
     }
     else {
-      myNotifier.notifyError("git.tag.deletion.rollback.error",
+      myNotifier.notifyError(TAG_DELETION_ROLLBACK_ERROR,
                              GitBundle.message("delete.tag.operation.error.during.rollback.of.tag.deletion"),
                              result.getErrorOutputWithReposIndication(),
                              true);
@@ -135,15 +134,14 @@ class GitDeleteTagOperation extends GitBranchOperation {
       notification.expire();
     }
     else {
-      myNotifier.notifyError("git.tag.deletion.rollback.error",
-                             GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
+      myNotifier.notifyError(TAG_DELETION_ROLLBACK_ERROR,
+                             GitBundle.message("delete.tag.operation.could.not.restore.tag", code(myTagName)),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
   }
 
-  @NotNull
-  private GitCompoundResult doRollback() {
+  private @NotNull GitCompoundResult doRollback() {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository: getSuccessfulRepositories()) {
       GitCommandResult res = myGit.createNewTag(repository, myTagName, null, myDeletedTagTips.get(repository));
@@ -153,9 +151,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
     return result;
   }
 
-  @NotNull
   @Override
-  protected String getRollbackProposal() {
+  protected @NotNull String getRollbackProposal() {
     return new HtmlBuilder().append(GitBundle.message("delete.tag.operation.however.tag.deletion.has.succeeded.for.the.following",
                                                       getSkippedRepositories().size()))
       .br()
@@ -165,15 +162,13 @@ class GitDeleteTagOperation extends GitBranchOperation {
       .toString();
   }
 
-  @NotNull
   @Override
-  protected String getOperationName() {
+  protected @NotNull String getOperationName() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  @NotNull
-  public String getSuccessMessage() {
+  protected @NotNull String getSuccessMessage() {
     throw new UnsupportedOperationException();
   }
 

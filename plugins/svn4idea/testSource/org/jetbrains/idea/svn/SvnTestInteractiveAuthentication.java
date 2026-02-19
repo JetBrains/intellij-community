@@ -3,7 +3,12 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.auth.*;
+import org.jetbrains.idea.svn.auth.AcceptResult;
+import org.jetbrains.idea.svn.auth.AuthenticationData;
+import org.jetbrains.idea.svn.auth.AuthenticationProvider;
+import org.jetbrains.idea.svn.auth.CertificateAuthenticationData;
+import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
+import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 
 import java.util.HashMap;
 import java.util.Map;

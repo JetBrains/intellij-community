@@ -1,0 +1,17 @@
+<idea-plugin package="org.jetbrains.idea.devkit.gradle">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.gradle.java"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <frameworkSupport implementation="org.jetbrains.idea.devkit.gradle.GradleIntellijPluginFrameworkSupportProvider"/>
+    <kotlinDslFrameworkSupport implementation="org.jetbrains.idea.devkit.gradle.KdslGradleIntellijPluginFrameworkSupportProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <attachSourcesProvider implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformAttachSourcesProvider"/>
+    <consoleFilterProvider implementation="org.jetbrains.idea.devkit.gradle.GradlePluginConsoleFilterProvider"/>
+  </extensions>
+</idea-plugin>

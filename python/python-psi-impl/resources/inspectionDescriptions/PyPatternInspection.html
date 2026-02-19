@@ -1,0 +1,45 @@
+<html>
+<body>
+<p>Reports incorrect or ambiguous use of structural pattern matching in Python class patterns and <code>__match_args__</code> definitions.
+</p>
+
+<p>This inspection helps you catch issues such as:</p>
+<ul>
+  <li>Using positional patterns for a class that does not define <code>__match_args__</code>.</li>
+  <li>Providing more positional patterns than the class exposes via <code>__match_args__</code>.</li>
+  <li>Specifying the same attribute both positionally and by keyword in a single class pattern.</li>
+  <li>Defining <code>__match_args__</code> with invalid type (must be <code>tuple[str, ...]</code>).</li>
+</ul>
+
+<p>For certain simple <code>as</code>-patterns with built-in classes, it also suggests a quick fix to simplify the pattern.</p>
+
+<pre><code class="language-python">
+# Too many positional patterns
+match p:
+    case Point(x, y, z):  # expected only 2 according to __match_args__
+        ...
+
+# Positional + keyword conflict
+match p:
+    case Point(x, y, x=0):  # 'x' is already specified positionally
+        ...
+
+# Class without __match_args__ but used with positional patterns
+class C:
+    def __init__(self, a, b):
+        self.a = a; self.b = b
+
+match obj:
+    case C(1, 2):  # C does not support positional patterns
+        ...
+
+# Invalid __match_args__ declaration
+class D:
+    __match_args__ = ["a", 42]  # must be tuple[str, ...]
+</code></pre>
+<!-- tooltip end -->
+
+<p>The inspection provides quick fixes where possible, for example to add <code>__match_args__</code>, remove redundant patterns, or
+  simplify certain <code>as</code>-patterns involving built-in classes.</p>
+</body>
+</html>

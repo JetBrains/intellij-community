@@ -15,13 +15,20 @@
  */
 package com.jetbrains.python.intentions;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User : ktisha
  */
 public class PyStringConcatenationToFormatIntentionTest extends PyIntentionTestCase {
+
+  @Override
+  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
+    return ourPy2Descriptor;
+  }
 
   public void testSimple() {
     doTest(PyPsiBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON26);
@@ -71,5 +78,9 @@ public class PyStringConcatenationToFormatIntentionTest extends PyIntentionTestC
 
   public void testPy3Unicode() {
     doTest(PyPsiBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
+  }
+
+  public void testEnclosingConcatenationWithIntermediateCall() {
+    doTest(PyPsiBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.getLatest());
   }
 }

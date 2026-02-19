@@ -1,23 +1,18 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiDisjunctionType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -26,21 +21,18 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.BitUtil.isSet;
 
-/**
- * @author dsl
- */
 public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiTypeCodeFragment {
-  private final static Logger LOG = Logger.getInstance(PsiTypeCodeFragmentImpl.class);
+  private static final Logger LOG = Logger.getInstance(PsiTypeCodeFragmentImpl.class);
 
   private final boolean myAllowEllipsis;
   private final boolean myAllowDisjunction;
   private final boolean myAllowConjunction;
 
-  public PsiTypeCodeFragmentImpl(final Project project,
-                                 final boolean isPhysical,
-                                 @NonNls final String name,
-                                 final CharSequence text,
-                                 final int flags,
+  public PsiTypeCodeFragmentImpl(Project project,
+                                 boolean isPhysical,
+                                 @NonNls String name,
+                                 CharSequence text,
+                                 int flags,
                                  PsiElement context) {
     super(project,
           isSet(flags, JavaCodeFragmentFactory.ALLOW_INTERSECTION) ? JavaElementType.TYPE_WITH_CONJUNCTIONS_TEXT : JavaElementType.TYPE_WITH_DISJUNCTIONS_TEXT,
@@ -60,12 +52,12 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
   }
 
   @Override
-  @NotNull
-  public PsiType getType() throws TypeSyntaxException, NoTypeException {
+  public @NotNull PsiType getType() throws TypeSyntaxException, NoTypeException {
     class MyTypeSyntaxException extends RuntimeException {
       final PsiErrorElement error;
 
-      MyTypeSyntaxException(final PsiErrorElement e) { super(e.getErrorDescription());
+      MyTypeSyntaxException(PsiErrorElement e) {
+        super(e.getErrorDescription());
         error = e;
       }
     }
@@ -94,7 +86,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     else if (type instanceof PsiDisjunctionType && !myAllowDisjunction) {
       throw new TypeSyntaxException("Disjunction not allowed: " + type);
     }
-    else if (type instanceof PsiDisjunctionType && !myAllowConjunction) {
+    else if (type instanceof PsiIntersectionType && !myAllowConjunction) {
       throw new TypeSyntaxException("Conjunction not allowed: " + type);
     }
     return type;

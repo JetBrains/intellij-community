@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
@@ -11,12 +11,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementAtomMatchCondition> myModifiers = new HashSet<>();
+  private final @NotNull Set<ArrangementAtomMatchCondition> myModifiers = new HashSet<>();
 
   public ByModifierArrangementEntryMatcher(@NotNull ArrangementAtomMatchCondition interestedModifier) {
     myModifiers.add(interestedModifier);
@@ -29,7 +26,7 @@ public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatche
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof ModifierAwareArrangementEntry) {
-      final Set<ArrangementSettingsToken> modifiers = ((ModifierAwareArrangementEntry)entry).getModifiers();
+      final Set<? extends ArrangementSettingsToken> modifiers = ((ModifierAwareArrangementEntry)entry).getModifiers();
       for (ArrangementAtomMatchCondition condition : myModifiers) {
         final Object value = condition.getValue();
         boolean isInverted = value instanceof Boolean && !((Boolean)value);

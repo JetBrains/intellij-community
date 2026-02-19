@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.ChildContext;
+import com.intellij.util.concurrency.Propagation;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -31,9 +34,9 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
   }
 
   private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private final Set<UUID> myCanceledSessions = ContainerUtil.newConcurrentSet();
+  private final Set<UUID> myCanceledSessions = ConcurrentCollectionFactory.createConcurrentSet();
 
-  public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
+  public void registerBuildMessageHandler(final @NotNull RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {
     final BuilderMessageHandler wrappedHandler = new DelegatingMessageHandler() {
       @Override
       protected BuilderMessageHandler getDelegateHandler() {
@@ -54,8 +57,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
     mySessionDescriptors.put(sessionId, new SessionData(sessionId, wrappedHandler, params));
   }
 
-  @Nullable
-  public BuilderMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
+  public @Nullable BuilderMessageHandler unregisterBuildMessageHandler(UUID sessionId) {
     myCanceledSessions.remove(sessionId);
     final SessionData data = mySessionDescriptors.remove(sessionId);
     if (data == null) {
@@ -78,19 +80,17 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
     }
   }
 
-  @Nullable
-  public Channel getConnectedChannel(@NotNull UUID sessionId) {
+  public @Nullable Channel getConnectedChannel(@NotNull UUID sessionId) {
     final Channel channel = getAssociatedChannel(sessionId);
     return channel != null && channel.isActive()? channel : null;
   }
 
-  @Nullable
-  public Channel getAssociatedChannel(@NotNull UUID sessionId) {
+  public @Nullable Channel getAssociatedChannel(@NotNull UUID sessionId) {
     final SessionData data = mySessionDescriptors.get(sessionId);
     return data != null? data.channel : null;
   }
 
-  public boolean sendBuildParameters(@NotNull final UUID preloadedSessionId, @NotNull CmdlineRemoteProto.Message.ControllerMessage params) {
+  public boolean sendBuildParameters(final @NotNull UUID preloadedSessionId, @NotNull CmdlineRemoteProto.Message.ControllerMessage params) {
     boolean succeeded = false;
     final SessionData sessionData = mySessionDescriptors.get(preloadedSessionId);
     if (sessionData != null) {
@@ -148,11 +148,8 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
       final CmdlineRemoteProto.Message.Type messageType = message.getType();
       switch (messageType) {
-        case FAILURE:
-          handler.handleFailure(sessionId, message.getFailure());
-          break;
-
-        case BUILDER_MESSAGE:
+        case FAILURE -> handler.handleFailure(sessionId, message.getFailure());
+        case BUILDER_MESSAGE -> {
           final CmdlineRemoteProto.Message.BuilderMessage builderMessage = message.getBuilderMessage();
           final CmdlineRemoteProto.Message.BuilderMessage.Type msgType = builderMessage.getType();
           if (msgType == CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST) {
@@ -180,16 +177,13 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
           else {
             handler.handleBuildMessage(context.channel(), sessionId, builderMessage);
           }
-          break;
-
-        default:
-          LOG.info("Unsupported message type " + messageType);
-          break;
+        }
+        default -> LOG.info("Unsupported message type " + messageType);
       }
     }
     finally {
       if ((isFirstMessage && myCanceledSessions.contains(sessionId)) || (handler == null && !isBuilderEvent(message))) {
-        // handle the case when the session had been cancelled before communication even started  
+        // handle the case when the session had been cancelled before communication even started
         // or if message handling is not possible due to missing handler
         context.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
       }
@@ -229,18 +223,58 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
       INITIAL, WAITING_PARAMS, RUNNING
     }
 
-    @NotNull
-    final UUID sessionId;
-    @NotNull
-    final BuilderMessageHandler handler;
+    final @NotNull UUID sessionId;
+    final @NotNull BuilderMessageHandler handler;
     volatile CmdlineRemoteProto.Message.ControllerMessage params;
     volatile Channel channel;
     State state = State.INITIAL;
 
     private SessionData(@NotNull UUID sessionId, @NotNull BuilderMessageHandler handler, CmdlineRemoteProto.Message.ControllerMessage params) {
       this.sessionId = sessionId;
-      this.handler = handler;
+      this.handler = new ContextAwareBuilderMessageHandler(handler);
       this.params = params;
+    }
+
+    private static class ContextAwareBuilderMessageHandler implements BuilderMessageHandler {
+      private final BuilderMessageHandler myDelegate;
+      private final @NotNull ChildContext myCapturedContext;
+
+      private ContextAwareBuilderMessageHandler(BuilderMessageHandler delegate) {
+        myDelegate = delegate;
+        myCapturedContext = Propagation.createChildContext(BuildMessageDispatcher.class.getSimpleName());
+      }
+
+      @Override
+      public void buildStarted(@NotNull UUID sessionId) {
+        ThreadContext.resetThreadContext(() -> {
+          myCapturedContext.runInChildContext(() -> myDelegate.buildStarted(sessionId));
+          return null;
+        });
+      }
+
+      @Override
+      public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
+        ThreadContext.resetThreadContext(() -> {
+          myCapturedContext.runInChildContext(() -> myDelegate.handleBuildMessage(channel, sessionId, msg));
+          return null;
+        });
+      }
+
+      @Override
+      public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+        ThreadContext.resetThreadContext(() -> {
+          myCapturedContext.runInChildContext(() -> myDelegate.handleFailure(sessionId, failure));
+          return null;
+        });
+      }
+
+      @Override
+      public void sessionTerminated(@NotNull UUID sessionId) {
+        ThreadContext.resetThreadContext(() -> {
+          myCapturedContext.runInChildContext(() -> myDelegate.sessionTerminated(sessionId));
+          return null;
+        });
+      }
     }
   }
 }

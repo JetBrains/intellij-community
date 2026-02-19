@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,14 +22,23 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.ComboBoxEditor;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.KeyStroke;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EditorComboBox extends ComboBox implements DocumentListener {
-  public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<EditorComboBox>() {
+  public static TextComponentAccessor<EditorComboBox> COMPONENT_ACCESSOR = new TextComponentAccessor<>() {
     @Override
     public String getText(EditorComboBox component) {
       return component.getText();
@@ -202,7 +211,7 @@ public class EditorComboBox extends ComboBox implements DocumentListener {
     setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(objects)));
   }
 
-  private class MyEditor implements ComboBoxEditor {
+  private final class MyEditor implements ComboBoxEditor {
     @Override
     public void addActionListener(ActionListener l) {
     }

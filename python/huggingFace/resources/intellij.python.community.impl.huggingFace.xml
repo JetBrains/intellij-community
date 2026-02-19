@@ -1,0 +1,22 @@
+<idea-plugin visibility="internal">
+
+  <resource-bundle>messages.PyHuggingFaceBundle</resource-bundle>
+
+  <dependencies>
+    <module name="intellij.json.backend"/>
+    <module name="intellij.python.community.impl"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <annotator language="Python" implementationClass="com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceEntityNameAnnotator"/>
+    <psi.referenceContributor implementation="com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierReferenceContributor"
+                              language="Python"/>
+    <platform.backend.documentation.psiTargetProvider id="HuggingFaceDocumentationProvider"
+                                                      implementation="com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationTargetProvider"/>
+    <lang.inspectionSuppressor language="Python" implementationClass="com.intellij.python.community.impl.huggingFace.service.HuggingFaceTypoInspectionSuppressor"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector$PipelineTagValidationRule"/>
+    <registryKey defaultValue="true"
+                 description="Enable Hugging Face model and dataset cards, see PY-63670"
+                 key="python.enable.hugging.face.cards"/>
+  </extensions>
+</idea-plugin>

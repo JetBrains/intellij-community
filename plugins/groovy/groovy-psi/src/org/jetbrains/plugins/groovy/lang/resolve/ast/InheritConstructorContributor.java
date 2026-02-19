@@ -1,7 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +20,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 /**
  * @author Maxim.Medvedev
  */
-public class InheritConstructorContributor implements AstTransformationSupport {
+public final class InheritConstructorContributor implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

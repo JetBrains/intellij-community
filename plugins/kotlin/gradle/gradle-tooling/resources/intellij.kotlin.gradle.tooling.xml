@@ -1,0 +1,16 @@
+<!--suppress PluginXmlValidity -->
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.gradleTooling">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.gradle.toolingExtension"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.gradleTooling.serialization.IdeaKotlinSerializationContext"
+            interface="org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinSerializationContext"
+            dynamic="true"/>
+  </extensionPoints>
+
+</idea-plugin>

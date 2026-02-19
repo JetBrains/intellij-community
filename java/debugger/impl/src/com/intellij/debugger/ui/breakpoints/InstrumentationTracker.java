@@ -1,22 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ReferenceTypeImpl;
-import com.sun.jdi.*;
+import com.jetbrains.jdi.VirtualMachineImpl;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ClassObjectReference;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
@@ -25,7 +37,7 @@ public final class InstrumentationTracker {
 
   @SuppressWarnings("FieldCanBeLocal") private final InstrumentationMethodBreakpoint myRedefineBreakpoint;
   @SuppressWarnings("FieldCanBeLocal") private final InstrumentationMethodBreakpoint myRetransformBreakpoint;
-  @NotNull private final DebugProcessImpl myDebugProcess;
+  private final @NotNull DebugProcessImpl myDebugProcess;
 
   private static final java.lang.reflect.Method ourNoticeRedefineClassMethod;
 
@@ -34,14 +46,14 @@ public final class InstrumentationTracker {
     try {
       redefineMethod = ReflectionUtil.getDeclaredMethod(Class.forName("com.sun.tools.jdi.ReferenceTypeImpl"), "noticeRedefineClass");
     }
-    catch (ClassNotFoundException e) {
+    catch (ClassNotFoundException | InaccessibleObjectException e) {
       LOG.warn(e);
     }
     ourNoticeRedefineClassMethod = redefineMethod;
   }
 
   public static void track(DebugProcessImpl debugProcess) {
-    if (ourNoticeRedefineClassMethod != null) {
+    if (ourNoticeRedefineClassMethod != null || VirtualMachineProxyImpl.getCurrent().getVirtualMachine() instanceof VirtualMachineImpl) {
       new InstrumentationTracker(debugProcess);
     }
   }
@@ -55,7 +67,7 @@ public final class InstrumentationTracker {
             Value value = ContainerUtil.getFirstItem(DebuggerUtilsEx.getArgumentValues(event.thread().frame(0)));
             if (value instanceof ArrayReference) {
               ((ArrayReference)value).getValues().forEach(v -> {
-                Value aClass = ((ObjectReference)v).getValue(((ReferenceType)v.type()).fieldByName("mClass"));
+                Value aClass = ((ObjectReference)v).getValue(DebuggerUtils.findField(((ReferenceType)v.type()), "mClass"));
                 noticeRedefineClass(((ClassObjectReference)aClass).reflectedType());
               });
             }

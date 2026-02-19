@@ -1,11 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionResult;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,14 +20,18 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Rectangle;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-public class ActionTracer implements UiDebuggerExtension, AnActionListener {
+public final class ActionTracer implements UiDebuggerExtension, AnActionListener {
   private static final Logger LOG = Logger.getInstance("ActionTracer");
 
   private JTextArea myText;
@@ -61,7 +70,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
   }
 
   @Override
-  public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+  public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     StringBuilder out = new StringBuilder(String.format("%1$tF %1$tT,%1$tL ", System.currentTimeMillis()));
     final ActionManager actionManager = ActionManager.getInstance();
     final String id = actionManager.getId(action);

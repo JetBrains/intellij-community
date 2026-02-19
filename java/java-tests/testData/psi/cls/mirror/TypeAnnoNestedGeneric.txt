@@ -1,0 +1,19 @@
+
+  // IntelliJ API Decompiler stub source generated from a class file
+  // Implementation of methods is not available
+
+package pkg;
+
+public class TypeAnnoNestedGeneric {
+    public TypeAnnoNestedGeneric() { /* compiled code */ }
+
+    @java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE_USE})
+    static @interface TAA {
+    }
+
+    public static class Nested <T> {
+        public Nested() { /* compiled code */ }
+
+        public static pkg.TypeAnnoNestedGeneric.Nested<java.lang.@pkg.TypeAnnoNestedGeneric.TAA String> foo() { /* compiled code */ }
+    }
+}

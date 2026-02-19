@@ -1,11 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.awt;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
-public class RelativeRectangle {
+public final class RelativeRectangle {
 
   private final RelativePoint myPoint;
   private final Dimension myDimension;
@@ -62,7 +67,9 @@ public class RelativeRectangle {
     return getPoint().getComponent();
   }
 
-  public boolean contains(final RelativePoint relativePoint) {
-    return getScreenRectangle().contains(relativePoint.getScreenPoint());
+  public boolean contains(final DevicePoint devicePoint) {
+    // Get this rectangle and the device point in their own screen coordinate systems. If the rectangle is going to contain the device
+    // point, then they must be on the same screen, and will therefore be in the same coordinate system, and it's safe to compare.
+    return getScreenRectangle().contains(devicePoint.getLocationOnScreen());
   }
 }

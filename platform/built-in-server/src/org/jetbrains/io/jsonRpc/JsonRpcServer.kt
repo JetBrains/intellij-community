@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.jsonRpc
 
 import com.google.gson.Gson
@@ -16,9 +16,13 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.Consumer
 import com.intellij.util.SmartList
 import com.intellij.util.io.releaseIfError
-import com.intellij.util.io.writeUtf8
-import io.netty.buffer.*
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.ByteBufUtf8Writer
+import io.netty.buffer.ByteBufUtil
+import io.netty.buffer.CompositeByteBuf
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
@@ -53,7 +57,6 @@ private val gson by lazy {
     .create()
 }
 
-@Suppress("HardCodedStringLiteral")
 class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
 
   private val messageIdCounter = AtomicInteger()
@@ -306,7 +309,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
           }
           @Suppress("UNCHECKED_CAST")
           (param as Consumer<StringBuilder>).consume(sb)
-          buffer.writeUtf8(sb)
+          ByteBufUtil.writeUtf8(buffer, sb)
           sb.setLength(0)
         }
         else -> {
@@ -320,7 +323,7 @@ class JsonRpcServer(private val clientManager: ClientManager) : MessageServer {
   }
 }
 
-private fun ByteBuf.writeByte(c: Char) = writeByte(c.toInt())
+private fun ByteBuf.writeByte(c: Char) = writeByte(c.code)
 
 private fun ByteBuf.writeAscii(s: CharSequence): ByteBuf {
   ByteBufUtil.writeAscii(this, s)
@@ -331,7 +334,7 @@ private class IntArrayListTypeAdapter<T> : TypeAdapter<T>() {
   override fun write(out: JsonWriter, value: T) {
     var error: IOException? = null
     out.beginArray()
-    val iterator = (value as IntArrayList).iterator()
+    val iterator = (value as IntList).iterator()
     while (iterator.hasNext()) {
       try {
         out.value(iterator.nextInt().toLong())

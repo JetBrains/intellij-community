@@ -5,15 +5,18 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -26,11 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
-/**
- * @author dcheryasov
- */
 public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implements PyDecorator {
 
   public PyDecoratorImpl(ASTNode astNode) {
@@ -38,7 +36,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
   }
 
   public PyDecoratorImpl(PyDecoratorStub stub) {
-    super(stub, PyElementTypes.DECORATOR_CALL);
+    super(stub, PyStubElementTypes.DECORATOR_CALL);
   }
 
   @Override
@@ -51,19 +49,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
    */
   @Override
   public String getName() {
-    final QualifiedName qname = getQualifiedName();
-    return qname != null ? qname.getLastComponent() : null;
-  }
-
-  @Override
-  @Nullable
-  public final PyFunction getTarget() {
-    return PsiTreeUtil.getStubOrPsiParentOfType(this, PyFunction.class);
-  }
-
-  @Override
-  public @Nullable PyExpression getExpression() {
-    return findChildByClass(PyExpression.class);
+    return PyDecorator.super.getName();
   }
 
   @Override
@@ -79,38 +65,28 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
 
   @Override
   public boolean hasArgumentList() {
-    return getExpression() instanceof PyCallExpression;
+    final PyDecoratorStub stub = getStub();
+    if (stub != null) {
+      return stub.hasArgumentList();
+    }
+    else {
+      return getExpression() instanceof PyCallExpression;
+    }
   }
 
   @Override
-  public PyArgumentList getArgumentList() {
-    final PyCallExpression callExpr = as(getExpression(), PyCallExpression.class);
-    return callExpr != null ? callExpr.getArgumentList() : null;
-  }
-
-  @Override
-  @Nullable
-  public QualifiedName getQualifiedName() {
+  public @Nullable QualifiedName getQualifiedName() {
     final PyDecoratorStub stub = getStub();
     if (stub != null) {
       return stub.getQualifiedName();
     }
     else {
-      final PyReferenceExpression refExpr = as(getCallee(), PyReferenceExpression.class);
-      return refExpr != null ? refExpr.asQualifiedName() : null;
+      return PyDecorator.super.getQualifiedName();
     }
   }
 
   @Override
-  @Nullable
-  public PyExpression getCallee() {
-    final PyExpression exprAfterAt = getExpression();
-    return exprAfterAt instanceof PyCallExpression ? ((PyCallExpression)exprAfterAt).getCallee() : exprAfterAt;
-  }
-
-  @NotNull
-  @Override
-  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+  public @NotNull List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
     final Function<PyCallableType, PyCallableType> mapping = callableType -> {
       if (!hasArgumentList()) {
         // NOTE: that +1 thing looks fishy
@@ -128,15 +104,14 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
     return ContainerUtil.map(PyCallExpressionHelper.multiResolveCallee(this, resolveContext), mapping);
   }
 
-  @NotNull
   @Override
-  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+  public @NotNull List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
     return PyCallExpressionHelper.mapArguments(this, resolveContext);
   }
 
   @Override
   public String toString() {
-    return "PyDecorator: @" + PyUtil.getReadableRepr(getCallee(), true); //getCalledFunctionReference().getReferencedName();
+    return "PyDecorator: @" + getQualifiedName();
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
@@ -153,8 +128,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
   }
 
   @Override
-  @Nullable
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyCallExpressionHelper.getCallType(this, context, key);
   }
 }

@@ -38,8 +38,7 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyTupleParameterImpl(node);
   }
 
@@ -49,14 +48,12 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
   }
 
   @Override
-  @NotNull
-  public PyTupleParameterStub createStub(@NotNull PyTupleParameter psi, StubElement parentStub) {
+  public @NotNull PyTupleParameterStub createStub(@NotNull PyTupleParameter psi, StubElement parentStub) {
     return new PyTupleParameterStubImpl(psi.getDefaultValueText(), parentStub);
   }
 
   @Override
-  @NotNull
-  public PyTupleParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyTupleParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PyTupleParameterStubImpl(dataStream.readNameString(), parentStub);
   }
 

@@ -1,0 +1,15 @@
+LineBreakpoint created at inlineTypeVariables.kt:10
+Run Java
+Connected to the target VM
+inlineTypeVariables.kt:10
+Compile bytecode for (x) as Any?
+Compile bytecode for x.p
+Compile bytecode for (y) as Any?
+Compile bytecode for y.p
+Compile bytecode for (this) as Any?
+Compile bytecode for this.p
+Compile bytecode for (z) as Any?
+Compile bytecode for z.p
+Disconnected from the target VM
+
+Process finished with exit code 0

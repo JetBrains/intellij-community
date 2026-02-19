@@ -1,2 +1,2 @@
 * item
-<caret>
+* <caret>

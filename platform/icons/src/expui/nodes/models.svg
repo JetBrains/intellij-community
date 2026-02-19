@@ -1,0 +1,7 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 7.5L14.5 4.5V11.5199L8 14.5V7.5Z" fill="#E7EFFD"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 7.5L1.5 4.5V11.5199L8 14.5V7.5Z" fill="#E7EFFD"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M14.5 4.5L7.99998 1.5L1.5 4.5L8 7.5L14.5 4.5Z" fill="#E7EFFD"/>
+<path d="M8 7.5L14.5 4.5M8 7.5V14.5M8 7.5L1.5 4.5M14.5 4.5V11.5199L8 14.5M14.5 4.5L7.99998 1.5L1.5 4.5M8 14.5L1.5 11.5199V4.5" stroke="#3574F0" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

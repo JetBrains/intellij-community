@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
@@ -7,12 +7,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents the occurrence of a type in Java source code, for example, as a return
- * type of the method or the type of a method parameter.
+ * Represents the occurrence of a type in Java source code, for example, a return
+ * type of a method or the type of a method parameter.
  */
 public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
   /**
-   * The empty array of PSI directories which can be reused to avoid unnecessary allocations.
+   * The empty array of PSI type elements which can be reused to avoid unnecessary allocations.
    */
   PsiTypeElement[] EMPTY_ARRAY = new PsiTypeElement[0];
 
@@ -47,14 +47,23 @@ public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
 
   /**
    * Returns {@code true} when a variable is declared as {@code var name;}
-   * 
+   *
    * The actual type should be inferred according to the JEP 286: Local-Variable Type Inference
-   * (http://openjdk.java.net/jeps/286). 
-   * 
+   * (<a href="http://openjdk.org/jeps/286">JEP-286</a>). 
+   * <p/>
    * Applicable to local variables with initializers, foreach parameters, try-with-resources variables 
    */
   @Contract(pure = true)
   default boolean isInferredType() {
     return false;
+  }
+
+  /**
+   * @return false if annotations cannot be added to this type element 
+   * For example, the JVM language that doesn't support type-use annotations;
+   * or type element represents the void type.
+   */
+  default boolean acceptsAnnotations() {
+    return true;
   }
 }

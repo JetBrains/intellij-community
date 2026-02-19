@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -20,18 +20,16 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
-import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.*;
+import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.ACTIVE;
+import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.ERROR;
+import static org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status.MODIFIED;
 
-/**
- * @author peter
- */
-public class GroovyDslAnnotator implements Annotator {
+public final class GroovyDslAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    if (!(psiElement instanceof GroovyFile)) return;
+    if (!(psiElement instanceof GroovyFile groovyFile)) return;
 
-    final GroovyFile groovyFile = (GroovyFile)psiElement;
     if (!GrFileIndexUtil.isGroovySourceFile(groovyFile)) return;
     
     final VirtualFile vfile = groovyFile.getVirtualFile();
@@ -64,27 +62,25 @@ public class GroovyDslAnnotator implements Annotator {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
       return GroovyBundle.message("intention.name.activate.back");
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("intention.family.name.activate.dsl.descriptor");
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
       return true;
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
       FileDocumentManager.getInstance().saveAllDocuments();
       GroovyDslFileIndex.activate(myVfile);
-      DaemonCodeAnalyzer.getInstance(project).restart();
+      DaemonCodeAnalyzer.getInstance(project).restart(this);
     }
 
     @Override

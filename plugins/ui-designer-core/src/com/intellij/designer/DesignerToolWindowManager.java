@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -58,7 +57,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
                                                                                false, getAnchor(), myProject, true);
-    myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowUIDesigner);
+    myToolWindow.setIcon(UiDesignerIcons.ToolWindowUIDesigner);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
@@ -97,9 +96,8 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     }
   }
 
-  @NotNull
   @Override
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return "UIDesignerToolWindowManager2";
   }
 
@@ -117,7 +115,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     return createContent(designer,
                          toolWindowContent,
                          DesignerBundle.message("designer.toolwindow.title"),
-                         AllIcons.Toolwindows.ToolWindowUIDesigner,
+                         UiDesignerIcons.ToolWindowUIDesigner,
                          toolWindowContent.getToolWindowPanel(),
                          toolWindowContent.getComponentTree(),
                          320,

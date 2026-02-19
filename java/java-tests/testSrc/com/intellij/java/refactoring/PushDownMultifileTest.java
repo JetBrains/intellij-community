@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -43,14 +28,14 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
     doTest(fail, "a.A", "b.B");
   }
 
-  private void doTest(final boolean fail, final String sourceClassName, final String targetClassName) {
+  private void doTest(final boolean fail, final String sourceClassName, final String... targetClassNames) {
     try {
       doTest(() -> {
         final PsiClass srcClass = myFixture.findClass(sourceClassName);
-        assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myFixture.findClass(targetClassName);
-        assertTrue("Target class not found", targetClass != null);
+        for (String targetClassName : targetClassNames) {
+          myFixture.findClass(targetClassName);
+        }
 
         final PsiMethod[] methods = srcClass.getMethods();
         assertTrue("No methods found", methods.length > 0);
@@ -93,14 +78,16 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
     doTest(false, "a.I", "a.I1");
   }
 
+  public void testTwoInheritors() {
+    doTest(false, "c.Super", "a.SomeA", "b.SomeB");
+  }
+
   public void testUsagesInXml() {
     try {
       doTest(() -> {
         final PsiClass srcClass = myFixture.findClass("a.A");
-        assertTrue("Source class not found", srcClass != null);
 
-        final PsiClass targetClass = myFixture.findClass("b.B");
-        assertTrue("Target class not found", targetClass != null);
+        myFixture.findClass("b.B");
 
         final PsiField[] fields = srcClass.getFields();
         assertTrue("No methods found", fields.length > 0);
@@ -114,7 +101,8 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
       });
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals(e.getMessage(), "Class <b><code>b.B</code></b> is package-private and will not be accessible from file <b><code>A.form</code></b>.");
+      assertEquals("Class <b><code>b.B</code></b> is package-private and will not be accessible from file <b><code>A.form</code></b>.",
+                   e.getMessage());
       return;
     }
     fail("Conflict was not detected");

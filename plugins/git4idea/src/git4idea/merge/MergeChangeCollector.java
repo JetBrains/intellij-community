@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.openapi.project.Project;
@@ -17,39 +17,32 @@ import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Collect changes for merge or pull operations
  */
 public class MergeChangeCollector {
-  @NotNull private final HashSet<String> myUnmergedPaths = new HashSet<>();
+  private final @NotNull HashSet<String> myUnmergedPaths = new HashSet<>();
 
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myRoot;
-  @NotNull private final GitRevisionNumber myStart; // Revision number before update (used for diff)
-  @NotNull private final GitRepository myRepository;
+  private final @NotNull Project myProject;
+  private final @NotNull VirtualFile myRoot;
+  private final @NotNull GitRevisionNumber myStart; // Revision number before update (used for diff)
+  private final @NotNull GitRepository myRepository;
 
   public MergeChangeCollector(@NotNull Project project, @NotNull GitRepository repository, @NotNull GitRevisionNumber start) {
     myStart = start;
     myProject = project;
     myRoot = repository.getRoot();
     myRepository = repository;
-  }
-
-  /**
-   * @deprecated use constructor with GitRepository
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public MergeChangeCollector(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRevisionNumber start) {
-    this(project, Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)), start);
   }
 
   /**
@@ -75,19 +68,6 @@ public class MergeChangeCollector {
     addAll(updatedFiles, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
   }
 
-  /**
-   * @deprecated Use {@link #collect(UpdatedFiles)}
-   */
-  @Deprecated
-  public void collect(@NotNull UpdatedFiles updatedFiles, List<? super VcsException> exceptions) {
-    try {
-      collect(updatedFiles);
-    }
-    catch (VcsException e) {
-      exceptions.add(e);
-    }
-  }
-
   public int calcUpdatedFilesCount() throws VcsException {
     String revisionsForDiff = getRevisionsForDiff();
     if (revisionsForDiff == null) {
@@ -102,8 +82,7 @@ public class MergeChangeCollector {
   /**
    * Returns absolute paths to files which are currently unmerged, and also populates myUnmergedPaths with relative paths.
    */
-  @NotNull
-  private Set<String> getUnmergedPaths() throws VcsException {
+  private @NotNull Set<String> getUnmergedPaths() throws VcsException {
     String root = myRoot.getPath();
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.LS_FILES);
     h.setSilent(true);
@@ -131,8 +110,7 @@ public class MergeChangeCollector {
    * @return The revision range which will be used to find merge diff (merge may be just finished, or in progress)
    * or null in case of error or inconsistency.
    */
-  @Nullable
-  public String getRevisionsForDiff() throws VcsException {
+  public @Nullable String getRevisionsForDiff() throws VcsException {
     GitRevisionNumber currentHead = GitRevisionNumber.resolve(myProject, myRoot, GitUtil.HEAD);
     if (currentHead.equals(myStart)) {
       // The head has not advanced. This means that this is a merge that did not commit.
@@ -146,7 +124,7 @@ public class MergeChangeCollector {
           String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, CharsetToolkit.UTF8));
           for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData(); ) {
             String head = s.line();
-            if (head.length() == 0) {
+            if (head.isEmpty()) {
               continue;
             }
             // note that "..." cause the diff to start from common parent between head and merge head
@@ -193,19 +171,13 @@ public class MergeChangeCollector {
         continue;
       }
       String path = root + "/" + GitUtil.unescapePath(relative);
-      switch (status) {
-        case 'M':
-          updated.add(path);
-          break;
-        case 'A':
-          created.add(path);
-          break;
-        case 'D':
-          removed.add(path);
-          break;
-        default:
-          throw new IllegalStateException("Unexpected status: " + status);
-      }
+      Collection<? super String> collection = switch (status) {
+        case 'M' -> updated;
+        case 'A' -> created;
+        case 'D' -> removed;
+        default -> throw new IllegalStateException("Unexpected status: " + status);
+      };
+      collection.add(path);
     }
   }
 

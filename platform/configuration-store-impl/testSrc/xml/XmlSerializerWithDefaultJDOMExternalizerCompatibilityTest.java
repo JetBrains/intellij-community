@@ -2,31 +2,28 @@ package com.intellij.configurationStore.xml;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
-import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-@SuppressWarnings({"deprecation"})
-public class XmlSerializerWithDefaultJDOMExternalizerCompatibilityTest extends TestCase {
+public class XmlSerializerWithDefaultJDOMExternalizerCompatibilityTest {
+  @Test
   public void testCompatibility() {
-    assertCompatibleSerialization(new MyBean());
-  }
-
-  private static void assertCompatibleSerialization(final Object data) {
+    var data = new MyBean();
     assertThat(serializeWithJDom(data)).isEqualTo(serialize(data));
   }
 
+  @SuppressWarnings("deprecation")
   private static Element serializeWithJDom(@NotNull Object data) {
-    final Element jDomRoot = new Element("MyBean");
+    var jDomRoot = new Element("MyBean");
     if (data instanceof com.intellij.openapi.util.JDOMExternalizable) {
       ((com.intellij.openapi.util.JDOMExternalizable)data).writeExternal(jDomRoot);
     }
     else {
       com.intellij.openapi.util.DefaultJDOMExternalizer.writeExternal(data, jDomRoot);
     }
-
     return jDomRoot;
   }
 

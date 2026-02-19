@@ -1,0 +1,2 @@
+module test.module {
+}

@@ -5,18 +5,15 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class BooleanRenderer extends JCheckBox implements PropertyRenderer<Boolean> {
   @Override
   public JComponent getComponent(final RadRootContainer rootContainer, final Boolean value, final boolean selected, final boolean hasFocus){
     // Background and foreground
     if(selected){
-      setForeground(UIUtil.getTableSelectionForeground());
+      setForeground(UIUtil.getTableSelectionForeground(true));
       setBackground(UIUtil.getTableSelectionBackground(true));
     }else{
       setForeground(UIUtil.getTableForeground());

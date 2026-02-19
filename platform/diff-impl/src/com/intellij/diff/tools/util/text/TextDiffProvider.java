@@ -16,10 +16,12 @@
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface TextDiffProvider {
   @NotNull
   List<AnAction> getToolbarActions();

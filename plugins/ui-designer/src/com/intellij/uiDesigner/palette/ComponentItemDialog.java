@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,8 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.ResourceFileUtil;
@@ -15,69 +17,93 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.ImageFileFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.ResourceBundle;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class ComponentItemDialog extends DialogWrapper {
-  private JPanel myPanel;
+  private final JPanel myPanel;
   private final ComponentWithBrowseButton<EditorTextField> myTfClassName;
   private final Project myProject;
   private final ComponentItem myItemToBeEdited;
   private final boolean myOneOff;
-  private JLabel myLblIcon;
-  private TextFieldWithBrowseButton myTfIconPath;
-  private JCheckBox myChkHorCanShrink;
-  private JCheckBox myChkHorCanGrow;
-  private JCheckBox myChkHorWantGrow;
-  private JCheckBox myChkVerCanShrink;
-  private JCheckBox myChkVerCanGrow;
-  private JCheckBox myChkVerWantGrow;
-  private JPanel myClassNamePlaceholder;
-  private JRadioButton myClassRadioButton;
-  private JRadioButton myNestedFormRadioButton;
-  private TextFieldWithBrowseButton myTfNestedForm;
-  private JCheckBox myAutoCreateBindingCheckbox;
-  private JCheckBox myCanAttachLabelCheckbox;
-  private JPanel myHSizePolicyPanel;
-  private JPanel myVSizePolicyPanel;
-  private JComboBox myGroupComboBox;
-  private JLabel myGroupLabel;
-  private JCheckBox myIsContainerCheckBox;
-  private JLabel myErrorLabel;
+  private final JLabel myLblIcon;
+  private final TextFieldWithBrowseButton myTfIconPath;
+  private final JCheckBox myChkHorCanShrink;
+  private final JCheckBox myChkHorCanGrow;
+  private final JCheckBox myChkHorWantGrow;
+  private final JCheckBox myChkVerCanShrink;
+  private final JCheckBox myChkVerCanGrow;
+  private final JCheckBox myChkVerWantGrow;
+  private final JPanel myClassNamePlaceholder;
+  private final JRadioButton myClassRadioButton;
+  private final JRadioButton myNestedFormRadioButton;
+  private final TextFieldWithBrowseButton myTfNestedForm;
+  private final JCheckBox myAutoCreateBindingCheckbox;
+  private final JCheckBox myCanAttachLabelCheckbox;
+  private final JPanel myHSizePolicyPanel;
+  private final JPanel myVSizePolicyPanel;
+  private final JComboBox myGroupComboBox;
+  private final JLabel myGroupLabel;
+  private final JCheckBox myIsContainerCheckBox;
+  private final JLabel myErrorLabel;
   private final EditorTextField myEditorTextField;
   private Document myDocument;
 
   /**
    * @param itemToBeEdited item to be edited. If user closes dialog by "OK" button then
-   * @param oneOff
    */
   public ComponentItemDialog(final Project project, final Component parent, @NotNull ComponentItem itemToBeEdited, final boolean oneOff) {
     super(parent, false);
@@ -85,6 +111,163 @@ public final class ComponentItemDialog extends DialogWrapper {
 
     myItemToBeEdited = itemToBeEdited;
     myOneOff = oneOff;
+    {
+      // GUI initializer generated by IntelliJ IDEA GUI Designer
+      // >>> IMPORTANT!! <<<
+      // DO NOT EDIT OR ADD ANY CODE HERE!
+      myPanel = new JPanel();
+      myPanel.setLayout(new GridLayoutManager(9, 2, new Insets(0, 0, 0, 0), -1, -1));
+      final Spacer spacer1 = new Spacer();
+      myPanel.add(spacer1, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+                                               GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+      myLblIcon = new JLabel();
+      this.$$$loadLabelText$$$(myLblIcon, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "editbox.icon"));
+      myPanel.add(myLblIcon,
+                  new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      final JPanel panel1 = new JPanel();
+      panel1.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel1, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                              0, false));
+      myVSizePolicyPanel = new JPanel();
+      myVSizePolicyPanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myVSizePolicyPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      panel1.add(myVSizePolicyPanel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                         null, null, 0, false));
+      myVSizePolicyPanel.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
+                                                                                            this.$$$getMessageFromBundle$$$(
+                                                                                              "messages/UIDesignerBundle",
+                                                                                              "group.vertical.size.policy"),
+                                                                                            TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                            TitledBorder.DEFAULT_POSITION, null, null));
+      myChkVerCanShrink = new JCheckBox();
+      this.$$$loadButtonText$$$(myChkVerCanShrink,
+                                this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.can.shrink.vert"));
+      myVSizePolicyPanel.add(myChkVerCanShrink, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                    null, null, null, 0, false));
+      myChkVerCanGrow = new JCheckBox();
+      this.$$$loadButtonText$$$(myChkVerCanGrow, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.can.grow.vert"));
+      myVSizePolicyPanel.add(myChkVerCanGrow, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                  GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                  null, null, null, 0, false));
+      myChkVerWantGrow = new JCheckBox();
+      this.$$$loadButtonText$$$(myChkVerWantGrow, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.want.grow.vert"));
+      myVSizePolicyPanel.add(myChkVerWantGrow, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                   GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                   null, null, null, 0, false));
+      myHSizePolicyPanel = new JPanel();
+      myHSizePolicyPanel.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+      myHSizePolicyPanel.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+      panel1.add(myHSizePolicyPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null,
+                                                         null, null, 0, false));
+      myHSizePolicyPanel.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(BorderFactory.createEtchedBorder(),
+                                                                                            this.$$$getMessageFromBundle$$$(
+                                                                                              "messages/UIDesignerBundle",
+                                                                                              "group.horizontal.size.policy"),
+                                                                                            TitledBorder.DEFAULT_JUSTIFICATION,
+                                                                                            TitledBorder.DEFAULT_POSITION, null, null));
+      myChkHorCanShrink = new JCheckBox();
+      this.$$$loadButtonText$$$(myChkHorCanShrink,
+                                this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.can.shrink.horz"));
+      myHSizePolicyPanel.add(myChkHorCanShrink, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                    GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                    null, null, null, 0, false));
+      myChkHorCanGrow = new JCheckBox();
+      this.$$$loadButtonText$$$(myChkHorCanGrow, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.can.grow.horz"));
+      myHSizePolicyPanel.add(myChkHorCanGrow, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                  GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                  GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                  null, null, null, 0, false));
+      myChkHorWantGrow = new JCheckBox();
+      this.$$$loadButtonText$$$(myChkHorWantGrow, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.want.grow.horz"));
+      myHSizePolicyPanel.add(myChkHorWantGrow, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                   GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                   null, null, null, 0, false));
+      myTfIconPath = new TextFieldWithBrowseButton();
+      myPanel.add(myTfIconPath, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                    GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null,
+                                                    new Dimension(333, -1), null, 0, false));
+      final JPanel panel2 = new JPanel();
+      panel2.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+      myPanel.add(panel2, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
+                                              0, true));
+      myClassNamePlaceholder = new JPanel();
+      myClassNamePlaceholder.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+      panel2.add(myClassNamePlaceholder, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             null, null, null, 0, false));
+      myClassRadioButton = new JRadioButton();
+      this.$$$loadButtonText$$$(myClassRadioButton, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "add.component.class"));
+      panel2.add(myClassRadioButton, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                         GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myTfNestedForm = new TextFieldWithBrowseButton();
+      panel2.add(myTfNestedForm, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                     GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                     null, 0, false));
+      myNestedFormRadioButton = new JRadioButton();
+      this.$$$loadButtonText$$$(myNestedFormRadioButton,
+                                this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "add.component.form"));
+      panel2.add(myNestedFormRadioButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                              GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myAutoCreateBindingCheckbox = new JCheckBox();
+      this.$$$loadButtonText$$$(myAutoCreateBindingCheckbox,
+                                this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.auto.create.binding"));
+      myPanel.add(myAutoCreateBindingCheckbox, new GridConstraints(5, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                   GridConstraints.SIZEPOLICY_CAN_SHRINK |
+                                                                   GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+                                                                   null, null, null, 0, false));
+      myCanAttachLabelCheckbox = new JCheckBox();
+      this.$$$loadButtonText$$$(myCanAttachLabelCheckbox,
+                                this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.can.attach.label"));
+      myPanel.add(myCanAttachLabelCheckbox, new GridConstraints(6, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                                GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myGroupLabel = new JLabel();
+      this.$$$loadLabelText$$$(myGroupLabel, this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "combobox.group"));
+      myGroupLabel.setVisible(false);
+      myPanel.add(myGroupLabel,
+                  new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myGroupComboBox = new JComboBox();
+      myGroupComboBox.setVisible(false);
+      myPanel.add(myGroupComboBox, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+                                                       GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null,
+                                                       null, 0, false));
+      myIsContainerCheckBox = new JCheckBox();
+      this.$$$loadButtonText$$$(myIsContainerCheckBox,
+                                this.$$$getMessageFromBundle$$$("messages/UIDesignerBundle", "checkbox.is.container"));
+      myPanel.add(myIsContainerCheckBox, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myErrorLabel = new JLabel();
+      myErrorLabel.setForeground(Color.red);
+      myErrorLabel.setText(" ");
+      myPanel.add(myErrorLabel,
+                  new GridConstraints(7, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
+                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+      myGroupLabel.setLabelFor(myGroupComboBox);
+      ButtonGroup buttonGroup;
+      buttonGroup = new ButtonGroup();
+      buttonGroup.add(myClassRadioButton);
+      buttonGroup.add(myNestedFormRadioButton);
+    }
 
     myEditorTextField = new EditorTextField("", project, JavaFileType.INSTANCE);
     myEditorTextField.setFontInheritedFromLAF(true);
@@ -169,6 +352,78 @@ public final class ComponentItemDialog extends DialogWrapper {
     init();
   }
 
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  /** @noinspection ALL */
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    }
+    catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) break;
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /** @noinspection ALL */
+  public JComponent $$$getRootComponent$$$() { return myPanel; }
+
   void showGroupChooser(GroupItem defaultGroup) {
     myGroupLabel.setVisible(true);
     myGroupComboBox.setVisible(true);
@@ -185,7 +440,7 @@ public final class ComponentItemDialog extends DialogWrapper {
   }
 
   GroupItem getSelectedGroup() {
-    return (GroupItem) myGroupComboBox.getSelectedItem();
+    return (GroupItem)myGroupComboBox.getSelectedItem();
   }
 
   private void setEditorText(final String className) {
@@ -252,7 +507,8 @@ public final class ComponentItemDialog extends DialogWrapper {
   private boolean saveNestedForm() {
     VirtualFile formFile = ResourceFileUtil.findResourceFileInProject(myProject, myTfNestedForm.getText());
     if (formFile == null) {
-      Messages.showErrorDialog(getWindow(), UIDesignerBundle.message("add.component.cannot.load.form", myTfNestedForm.getText()), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(getWindow(), UIDesignerBundle.message("add.component.cannot.load.form", myTfNestedForm.getText()),
+                               CommonBundle.getErrorTitle());
       return false;
     }
     LwRootContainer lwRootContainer;
@@ -323,16 +579,18 @@ public final class ComponentItemDialog extends DialogWrapper {
         }
         return false;
       }
-      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(myProject);
-      PsiClass psiClass = javaPsiFacade.findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
-      PsiClass componentClass = javaPsiFacade.findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
-      if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {
-        myErrorLabel.setText(UIDesignerBundle.message("add.component.error.component.required"));
-        return false;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-766233")) {
+        final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(myProject);
+        PsiClass psiClass = javaPsiFacade.findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
+        PsiClass componentClass = javaPsiFacade.findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
+        if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {
+          myErrorLabel.setText(UIDesignerBundle.message("add.component.error.component.required"));
+          return false;
+        }
       }
     }
     else {
-      if (myTfNestedForm.getText().length() == 0) {
+      if (myTfNestedForm.getText().isEmpty()) {
         return false;
       }
     }
@@ -344,7 +602,7 @@ public final class ComponentItemDialog extends DialogWrapper {
 
   private static String getClassOrInnerName(final PsiClass aClass) {
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-    if(parentClass != null) {
+    if (parentClass != null) {
       return getClassOrInnerName(parentClass) + "$" + aClass.getName();
     }
     return aClass.getQualifiedName();
@@ -359,14 +617,19 @@ public final class ComponentItemDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(final ActionEvent e) {
-      final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
-      final TreeClassChooser chooser = factory.createInheritanceClassChooser(UIDesignerBundle.message("title.choose.component.class"),
-                                                                             GlobalSearchScope.allScope(myProject), JavaPsiFacade.getInstance(myProject).findClass(
-        JComponent.class.getName(), GlobalSearchScope.allScope(myProject)), true, true, null);
-      chooser.showDialog();
-      final PsiClass result = chooser.getSelected();
-      if (result != null) {
-        setEditorText(result.getQualifiedName());
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-766230")) {
+        final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
+        final TreeClassChooser chooser = factory.createInheritanceClassChooser(UIDesignerBundle.message("title.choose.component.class"),
+                                                                               GlobalSearchScope.allScope(myProject),
+                                                                               JavaPsiFacade.getInstance(myProject)
+                                                                                 .findClass(JComponent.class.getName(),
+                                                                                            GlobalSearchScope.allScope(myProject)), true,
+                                                                               true, null);
+        chooser.showDialog();
+        final PsiClass result = chooser.getSelected();
+        if (result != null) {
+          setEditorText(result.getQualifiedName());
+        }
       }
     }
   }
@@ -378,9 +641,9 @@ public final class ComponentItemDialog extends DialogWrapper {
     private final @Nls String myTitle;
 
     MyChooseFileActionListener(final Project project,
-                                      final TreeFileChooser.PsiFileFilter filter,
-                                      final TextFieldWithBrowseButton textField,
-                                      final @Nls String title) {
+                               final TreeFileChooser.PsiFileFilter filter,
+                               final TextFieldWithBrowseButton textField,
+                               final @Nls String title) {
       myProject = project;
       myFilter = filter;
       myTextField = textField;
@@ -389,14 +652,15 @@ public final class ComponentItemDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       PsiFile formFile = null;
-      if (myTextField.getText().length() > 0) {
-        VirtualFile formVFile = ResourceFileUtil.findResourceFileInScope(myTextField.getText(), myProject, ProjectScope.getAllScope(myProject));
+      if (!myTextField.getText().isEmpty()) {
+        VirtualFile formVFile =
+          ResourceFileUtil.findResourceFileInScope(myTextField.getText(), myProject, ProjectScope.getAllScope(myProject));
         if (formVFile != null) {
           formFile = PsiManager.getInstance(myProject).findFile(formVFile);
         }
       }
+      final TreeFileChooserFactory factory = TreeFileChooserFactory.getInstance(myProject);
       TreeFileChooser fileChooser = factory.createFileChooser(myTitle, formFile, null, myFilter, true, true);
       fileChooser.showDialog();
       PsiFile file = fileChooser.getSelectedFile();

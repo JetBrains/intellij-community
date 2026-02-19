@@ -21,9 +21,21 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,59 +43,84 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.LazyInitializer.NotNullValue;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
-import org.intellij.images.options.*;
+import org.intellij.images.options.EditorOptions;
+import org.intellij.images.options.GridOptions;
+import org.intellij.images.options.Options;
+import org.intellij.images.options.OptionsManager;
+import org.intellij.images.options.TransparencyChessboardOptions;
+import org.intellij.images.options.ZoomOptions;
+import org.intellij.images.scientific.utils.ScientificUtils;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.thumbnail.actions.ShowBorderAction;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.intellij.images.vfs.IfsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.ByteArrayInputStream;
+import java.util.Objects;
 
 /**
  * Image editor UI
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, ImageComponentDecorator, Disposable {
-  @NonNls
-  private static final String IMAGE_PANEL = "image";
-  @NonNls
-  private static final String ERROR_PANEL = "error";
-  @NonNls
-  private static final String ZOOM_FACTOR_PROP = "ImageEditor.zoomFactor";
+@ApiStatus.Internal
+public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyProvider, ImageComponentDecorator, Disposable {
+  private static final @NonNls String IMAGE_PANEL = "image";
+  private static final @NonNls String ERROR_PANEL = "error";
+  private static final @NonNls String ZOOM_FACTOR_PROP = "ImageEditor.zoomFactor";
 
-  @Nullable
-  private final ImageEditor editor;
+  private final @Nullable ImageEditor editor;
   private final DeleteProvider deleteProvider;
   private final CopyPasteSupport copyPasteSupport;
 
@@ -98,10 +135,10 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private final boolean isEmbedded;
 
   ImageEditorUI(@Nullable ImageEditor editor) {
-    this(editor, false);
+    this(editor, false, false);
   }
 
-  ImageEditorUI(@Nullable ImageEditor editor, boolean isEmbedded) {
+  ImageEditorUI(@Nullable ImageEditor editor, boolean isEmbedded, boolean isOpaque) {
     this.editor = editor;
     this.isEmbedded = isEmbedded;
 
@@ -129,7 +166,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     // Create layout
     ImageContainerPane view = new ImageContainerPane(imageComponent);
-    view.addMouseListener(new EditorMouseAdapter());
+    PopupHandler.installPopupMenu(view, ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
     view.addMouseListener(new FocusRequester());
 
     myScrollPane = ScrollPaneFactory.createScrollPane(view, true);
@@ -148,17 +185,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     if (!isEmbedded) {
       ActionManager actionManager = ActionManager.getInstance();
       ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
-      ActionToolbar actionToolbar = actionManager.createActionToolbar(
-        ImageEditorActions.ACTION_PLACE, actionGroup, true
-      );
-
-      // Make sure toolbar is 'ready' before it's added to component hierarchy
-      // to prevent ActionToolbarImpl.updateActionsImpl(boolean, boolean) from increasing popup size unnecessarily
-      actionToolbar.updateActionsImmediately();
-
+      ActionToolbar actionToolbar = actionManager.createActionToolbar(ImageEditorActions.ACTION_PLACE, actionGroup, true);
       actionToolbar.setTargetComponent(this);
 
       toolbarPanel = actionToolbar.getComponent();
+      toolbarPanel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(getBackground(), UIUtil.getPanelBackground())));
       toolbarPanel.addMouseListener(new FocusRequester());
     }
 
@@ -174,12 +205,15 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     contentPanel.add(myScrollPane, IMAGE_PANEL);
     contentPanel.add(errorPanel, ERROR_PANEL);
 
-    JPanel topPanel = new JPanel(new BorderLayout());
+    boolean isScientificMode = editor != null && editor.getFile().getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null;
+    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
     if (!isEmbedded) {
-      topPanel.add(toolbarPanel, BorderLayout.WEST);
-      infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
-      infoLabel.setBorder(JBUI.Borders.emptyRight(2));
-      topPanel.add(infoLabel, BorderLayout.EAST);
+      topPanel.add(toolbarPanel, BorderLayout.CENTER);
+      if (!isScientificMode) {
+        infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
+        infoLabel.setBorder(JBUI.Borders.emptyRight(2));
+        topPanel.add(infoLabel, BorderLayout.EAST);
+      }
     }
 
     add(topPanel, BorderLayout.NORTH);
@@ -192,11 +226,23 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       }
     });
 
+    if (!isOpaque) {
+      //setOpaque(false);
+      contentPanel.setOpaque(false);
+      myScrollPane.setOpaque(false);
+      myScrollPane.getViewport().setOpaque(false);
+    }
+
+    setBackground(JBColor.lazy(() -> ObjectUtils.notNull(
+      EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.PREVIEW_BACKGROUND),
+      EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground())));
     updateInfo();
   }
 
   private void updateInfo() {
     if (isEmbedded) return;
+    boolean isScientificMode = editor != null && editor.getFile().getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null;
+    if (isScientificMode) return;
     ImageDocument document = imageComponent.getDocument();
     BufferedImage image = document.getValue();
     if (image != null) {
@@ -204,7 +250,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       String format = document.getFormat();
       if (format == null) {
         format = editor != null ? ImagesBundle.message("unknown.format") : "";
-      } else {
+      }
+      else {
         format = StringUtil.toUpperCase(format);
       }
       VirtualFile file = editor != null ? editor.getFile() : null;
@@ -212,7 +259,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         ImagesBundle.message("image.info",
                              image.getWidth(), image.getHeight(), format,
                              colorModel.getPixelSize(), file != null ? StringUtil.formatFileSize(file.getLength()) : ""));
-    } else {
+    }
+    else {
       infoLabel.setText(null);
     }
   }
@@ -233,6 +281,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     removeAll();
   }
+
   @Override
   public void setTransparencyChessboardVisible(boolean visible) {
     imageComponent.setTransparencyChessboardVisible(visible);
@@ -275,8 +324,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     document.setFormat(format);
 
     if (previousImage == null || !zoomModel.isZoomLevelChanged()) {
-      Options options = OptionsManager.getInstance().getOptions();
-      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+      ZoomOptions zoomOptions = getZoomOptions();
 
       if (!(zoomOptions.isSmartZooming() && updateZoomFactor())) {
         zoomModel.setZoomFactor(1.0);
@@ -285,11 +333,12 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private boolean updateZoomFactor() {
-    Options options = OptionsManager.getInstance().getOptions();
-    ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+    ZoomOptions zoomOptions = getZoomOptions();
 
     if (zoomOptions.isSmartZooming() && !zoomModel.isZoomLevelChanged()) {
-      Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
+      Double smartZoomFactor =
+        zoomOptions.getSmartZoomFactor(imageComponent.getDocument().getBounds(), myScrollPane.getViewport().getExtentSize(),
+                                       ImageComponent.IMAGE_INSETS);
       if (smartZoomFactor != null) {
         zoomModel.setZoomFactor(smartZoomFactor);
         return true;
@@ -298,11 +347,24 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     return false;
   }
 
+  private ZoomOptions getZoomOptions() {
+    ImageEditor editor = this.editor;
+    if (editor != null) {
+      ZoomOptions options = editor.getZoomModel().getCustomZoomOptions();
+      if (options != null) {
+        return options;
+      }
+    }
+    Options options = OptionsManager.getInstance().getOptions();
+    return options.getEditorOptions().getZoomOptions();
+  }
+
   private final class ImageContainerPane extends JBLayeredPane {
     private final ImageComponent imageComponent;
 
     ImageContainerPane(final ImageComponent imageComponent) {
       this.imageComponent = imageComponent;
+      setLayout(new Layout());
       add(imageComponent);
 
       putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
@@ -328,14 +390,31 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     @Override
-    public void invalidate() {
-      centerComponents();
-      super.invalidate();
-    }
-
-    @Override
     public Dimension getPreferredSize() {
       return imageComponent.getSize();
+    }
+
+    private class Layout implements LayoutManager {
+      @Override
+      public void addLayoutComponent(String name, Component comp) { }
+
+      @Override
+      public void removeLayoutComponent(Component comp) { }
+
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        return imageComponent.getPreferredSize();
+      }
+
+      @Override
+      public Dimension minimumLayoutSize(Container parent) {
+        return imageComponent.getMinimumSize();
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        centerComponents();
+      }
     }
   }
 
@@ -375,26 +454,24 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
   }
 
-  private class ImageZoomModelImpl implements ImageZoomModel {
-    private boolean myZoomLevelChanged;
-    private final NotNullValue<Double> IMAGE_MAX_ZOOM_FACTOR = new NotNullValue<Double>() {
-      @NotNull
-      @Override
-      public Double initialize() {
-        if (editor == null) return Double.MAX_VALUE;
-        VirtualFile file = editor.getFile();
+  private final class ImageZoomModelImpl implements ImageZoomModel {
+    private @Nullable ZoomOptions myCustomZoomOptions;
 
-        if (IfsUtil.isSVG(file)) {
-          try {
-            return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()), ScaleContext.create(editor.getComponent())));
-          }
-          catch (Throwable t) {
-            Logger.getInstance("#org.intellij.images.editor.impl.ImageEditorUI").warn(t);
-          }
+    private boolean myZoomLevelChanged;
+    private final LazyInitializer.LazyValue<@NotNull Double> IMAGE_MAX_ZOOM_FACTOR = LazyInitializer.create(() -> {
+      if (editor == null) return Double.MAX_VALUE;
+      VirtualFile file = editor.getFile();
+
+      if (IfsUtil.isSVG(file)) {
+        try {
+          return Math.max(1, SVGLoader.INSTANCE.getMaxZoomFactor(file.contentsToByteArray(), ScaleContext.create(editor.getComponent())));
         }
-        return Double.MAX_VALUE;
+        catch (Throwable t) {
+          Logger.getInstance(ImageEditorUI.class).warn(t);
+        }
       }
-    };
+      return Double.MAX_VALUE;
+    });
     private double zoomFactor = 0.0d;
 
     @Override
@@ -432,10 +509,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     @Override
     public void fitZoomToWindow() {
-      Options options = OptionsManager.getInstance().getOptions();
-      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+      ZoomOptions zoomOptions = getZoomOptions();
 
-      Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
+      Double smartZoomFactor =
+        zoomOptions.getSmartZoomFactor(imageComponent.getDocument().getBounds(), myScrollPane.getViewport().getExtentSize(),
+                                       ImageComponent.IMAGE_INSETS);
       if (smartZoomFactor != null) {
         zoomModel.setZoomFactor(smartZoomFactor);
       }
@@ -505,36 +583,16 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     public boolean isZoomLevelChanged() {
       return myZoomLevelChanged;
     }
-  }
 
-  @Nullable
-  private Double getSmartZoomFactor(@NotNull ZoomOptions zoomOptions) {
-    Rectangle bounds = imageComponent.getDocument().getBounds();
-    if (bounds == null) return null;
-    if (bounds.getWidth() == 0 || bounds.getHeight() == 0) return null;
-    int width = bounds.width;
-    int height = bounds.height;
-
-    Dimension preferredMinimumSize = zoomOptions.getPrefferedSize();
-    if (width < preferredMinimumSize.width &&
-        height < preferredMinimumSize.height) {
-      double factor = (preferredMinimumSize.getWidth() / (double)width +
-                       preferredMinimumSize.getHeight() / (double)height) / 2.0d;
-      return Math.ceil(factor);
+    @Override
+    public @Nullable ZoomOptions getCustomZoomOptions() {
+      return myCustomZoomOptions;
     }
 
-    Dimension canvasSize = myScrollPane.getViewport().getExtentSize();
-    canvasSize.height -= ImageComponent.IMAGE_INSETS * 2;
-    canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
-    if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
-
-    if (canvasSize.width < width ||
-        canvasSize.height < height) {
-      return Math.min((double)canvasSize.height / height,
-                      (double)canvasSize.width / width);
+    @Override
+    public void setCustomZoomOptions(@Nullable ZoomOptions zoomOptions) {
+      myCustomZoomOptions = zoomOptions;
     }
-
-    return 1.0d;
   }
 
   private void updateImageComponentSize() {
@@ -566,66 +624,41 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private class FocusRequester extends MouseAdapter {
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
     }
   }
-
-  private static final class EditorMouseAdapter extends PopupHandler {
-    @Override
-    public void invokePopup(Component comp, int x, int y) {
-      // Single right click
-      ActionManager actionManager = ActionManager.getInstance();
-      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_POPUP);
-      ActionPopupMenu menu = actionManager.createActionPopupMenu(ImageEditorActions.ACTION_PLACE, actionGroup);
-      JPopupMenu popupMenu = menu.getComponent();
-      popupMenu.pack();
-      popupMenu.show(comp, x, y);
-    }
-  }
-
 
   @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return editor != null ? editor.getProject() : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return editor != null ? editor.getFile() : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return editor != null ? new VirtualFile[]{editor.getFile()} : VirtualFile.EMPTY_ARRAY;
-    }
-    else if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      return findPsiFile();
-    }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return findPsiFile();
-    }
-    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      PsiElement psi = findPsiFile();
-      return psi != null ? new PsiElement[]{psi} : PsiElement.EMPTY_ARRAY;
-    }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && copyPasteSupport != null) {
-      return this;
-    }
-    else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {
-      return copyPasteSupport.getCutProvider();
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return deleteProvider;
-    }
-    else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
-      return editor != null ? editor : this;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+    sink.set(DATA_KEY, editor != null ? editor : this);
+    if (editor == null) return;
+    sink.set(ImageDocument.IMAGE_DOCUMENT_DATA_KEY, editor.getDocument());
+    Project project = editor.getProject();
+    VirtualFile file = editor.getFile();
 
-    return null;
+    sink.set(CommonDataKeys.PROJECT, project);
+    sink.set(CommonDataKeys.VIRTUAL_FILE, file);
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{file});
+    if (copyPasteSupport != null) {
+      sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteSupport.getCutProvider());
+    }
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, deleteProvider);
+    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+      return findPsiFile(project, file);
+    });
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+      return findPsiFile(project, file);
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+      PsiElement psi = findPsiFile(project, file);
+      return psi != null ? new PsiElement[]{psi} : PsiElement.EMPTY_ARRAY;
+    });
   }
 
-  @Nullable
-  private PsiFile findPsiFile() {
-    VirtualFile file = editor != null ? editor.getFile() : null;
-    return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
+  private static @Nullable PsiFile findPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
+    return file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
   }
 
   @Override
@@ -633,6 +666,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     ImageDocument document = imageComponent.getDocument();
     BufferedImage image = document.getValue();
     CopyPasteManager.getInstance().setContents(new ImageTransferable(image));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -654,7 +692,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     @Override
     public DataFlavor[] getTransferDataFlavors() {
-      return new DataFlavor[] { DataFlavor.imageFlavor };
+      return new DataFlavor[]{DataFlavor.imageFlavor};
     }
 
     @Override
@@ -674,7 +712,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private class OptionsChangeListener implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-      Options options = (Options) evt.getSource();
+      Options options = (Options)evt.getSource();
       EditorOptions editorOptions = options.getEditorOptions();
       TransparencyChessboardOptions chessboardOptions = editorOptions.getTransparencyChessboardOptions();
       GridOptions gridOptions = editorOptions.getGridOptions();
@@ -687,5 +725,4 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       imageComponent.setGridLineColor(gridOptions.getLineColor());
     }
   }
-
 }

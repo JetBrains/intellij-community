@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
@@ -34,8 +35,7 @@ public final class TestDataUtil {
   private TestDataUtil() {
   }
 
-  @NotNull
-  public static String getGroupDisplayName(@NotNull String beforeName, @NotNull String afterName) {
+  public static @NotNull String getGroupDisplayName(@NotNull String beforeName, @NotNull String afterName) {
     if (isBeforeAfterPrefixedPair(beforeName, afterName)) {
       return BEFORE_AFTER_DISPLAY_NAME_PART + StringUtil.trimStart(beforeName, TESTDATA_FILE_BEFORE_MARKER);
     }
@@ -68,13 +68,12 @@ public final class TestDataUtil {
   }
 
   @TestOnly
-  @Nullable
-  static TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
+  public static @Nullable TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
     return getTestDataGroup(new TestDataFile.LazyResolved(fileName1), new TestDataFile.LazyResolved(fileName2));
   }
 
-  @Nullable
-  static TestDataGroupVirtualFile getTestDataGroup(@NotNull TestDataFile testDataFile1, @NotNull TestDataFile testDataFile2) {
+  @VisibleForTesting
+  public static @Nullable TestDataGroupVirtualFile getTestDataGroup(@NotNull TestDataFile testDataFile1, @NotNull TestDataFile testDataFile2) {
     VirtualFile file1 = testDataFile1.getVirtualFile();
     VirtualFile file2 = testDataFile2.getVirtualFile();
     if (file1 == null || file2 == null) {
@@ -137,7 +136,7 @@ public final class TestDataUtil {
   }
 
   static void createFileAndNavigate(final Project project, final String path) {
-    VirtualFile file = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    VirtualFile file = ApplicationManager.getApplication().runWriteAction(new Computable<>() {
       @Override
       public VirtualFile compute() {
         try {
@@ -171,8 +170,7 @@ public final class TestDataUtil {
     }
   }
 
-  @Nullable
-  private static Pair<String, String> getModuleOrProjectRelativePath(Project project, String filePath) {
+  private static @Nullable Pair<String, String> getModuleOrProjectRelativePath(Project project, String filePath) {
     String currentPath = PathUtil.getParentPath(filePath);
     if (currentPath.isEmpty()) {
       return null;
@@ -202,8 +200,7 @@ public final class TestDataUtil {
     return null;
   }
 
-  @Nullable
-  static Pair<String, String> getModuleOrProjectRelativeParentPath(Project project, VirtualFile file) {
+  static @Nullable Pair<String, String> getModuleOrProjectRelativeParentPath(Project project, VirtualFile file) {
     VirtualFile parent = file.getParent();
     if (parent == null) {
       // shouldn't happen
@@ -213,8 +210,7 @@ public final class TestDataUtil {
     return getModuleOrProjectRelativePath(project, parent);
   }
 
-  @Nullable
-  private static Pair<String, String> getModuleOrProjectRelativePath(Project project, VirtualFile file) {
+  private static @Nullable Pair<String, String> getModuleOrProjectRelativePath(Project project, VirtualFile file) {
     Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
       VirtualFile moduleFile = module.getModuleFile();
@@ -241,16 +237,14 @@ public final class TestDataUtil {
   }
 
 
-  @NotNull
-  static String getHtmlDisplayPathForMissingFile(Project project, String path) {
+  static @NotNull String getHtmlDisplayPathForMissingFile(Project project, String path) {
     return getHtmlDisplayPathForRelativePathPair(getRelativePathPairForMissingFile(project, path));
   }
 
   /**
    * @return pair of module/project name (or null if cannot be determined) and relative (or absolute) path.
    */
-  @NotNull
-  static Pair<String, String> getRelativePathPairForMissingFile(Project project, String path) {
+  static @NotNull Pair<String, String> getRelativePathPairForMissingFile(Project project, String path) {
     Pair<String, String> relativePath = getModuleOrProjectRelativePath(project, path);
     if (relativePath == null) {
       return new Pair<>(null, path);
@@ -262,8 +256,7 @@ public final class TestDataUtil {
    * Returns the presentable path for passed pair of module/project name (or null) and relative (or absolute) path. HTML is used.
    * @see #getRelativePathPairForMissingFile(Project, String)
    */
-  @NotNull
-  static String getHtmlDisplayPathForRelativePathPair(Pair<String, String> relativePathPair) {
+  static @NotNull String getHtmlDisplayPathForRelativePathPair(Pair<String, String> relativePathPair) {
     String base = relativePathPair.getFirst();
     if (base == null) {
       return relativePathPair.getSecond();

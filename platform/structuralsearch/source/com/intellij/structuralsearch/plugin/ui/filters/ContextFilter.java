@@ -1,27 +1,30 @@
- // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
-import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.TextFieldWithAutoCompletion;
-import com.intellij.util.containers.JBIterable;
+ import com.intellij.openapi.actionSystem.ActionManager;
+ import com.intellij.openapi.actionSystem.IdeActions;
+ import com.intellij.openapi.keymap.KeymapUtil;
+ import com.intellij.openapi.util.text.StringUtil;
+ import com.intellij.psi.PsiElement;
+ import com.intellij.structuralsearch.MatchVariableConstraint;
+ import com.intellij.structuralsearch.SSRBundle;
+ import com.intellij.structuralsearch.StructuralSearchProfile;
+ import com.intellij.structuralsearch.plugin.ui.Configuration;
+ import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
+ import com.intellij.structuralsearch.plugin.ui.UIUtil;
+ import com.intellij.ui.ContextHelpLabel;
+ import com.intellij.ui.SimpleColoredComponent;
+ import com.intellij.ui.TextFieldWithAutoCompletion;
+ import com.intellij.util.containers.JBIterable;
 
-import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
+ import javax.swing.GroupLayout;
+ import javax.swing.JComponent;
+ import javax.swing.JLabel;
+ import javax.swing.LayoutStyle;
+ import java.util.Collections;
+ import java.util.List;
 
-@SuppressWarnings("ComponentNotRegistered")
-public class ContextFilter extends FilterAction {
+ public class ContextFilter extends FilterAction {
 
   public ContextFilter() {
     super(SSRBundle.messagePointer("context.filter.name"));
@@ -45,7 +48,7 @@ public class ContextFilter extends FilterAction {
   @Override
   public boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     return myTable.getVariable() instanceof MatchVariableConstraint && completePattern &&
-           myTable.getProfile().isApplicableConstraint(UIUtil.CONTEXT, nodes, true, target);
+           isApplicableConstraint(UIUtil.CONTEXT, nodes, true, target);
   }
 
   @Override
@@ -59,22 +62,25 @@ public class ContextFilter extends FilterAction {
 
   @Override
   public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<MatchVariableConstraint>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
       private final JLabel myLabel = new JLabel(SSRBundle.message("context.label"));
       private final TextFieldWithAutoCompletion<String> textField =
         TextFieldWithAutoCompletion.create(myTable.getProject(), Collections.emptyList(), false, "");
       private final String shortcut =
         KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("tooltip.preconfigured.search.patterns", shortcut));
+      private final ContextHelpLabel myHelpLabel =
+        ContextHelpLabel.create(SSRBundle.message("tooltip.preconfigured.search.patterns", shortcut));
 
       @Override
       protected void layoutComponents() {
         final ConfigurationManager configManager = ConfigurationManager.getInstance(myTable.getProject());
+        final StructuralSearchProfile profile = myTable.getProfile();
+        assert profile != null;
         final List<String> configurationNames = JBIterable
           .from(configManager.getAllConfigurationNames())
           .filter(name -> {
             final Configuration config = configManager.findConfigurationByName(name);
-            return config != null && myTable.getProfile().isApplicableContextConfiguration(config);
+            return config != null && profile.isApplicableContextConfiguration(config);
           })
           .toList();
         textField.setVariants(configurationNames);

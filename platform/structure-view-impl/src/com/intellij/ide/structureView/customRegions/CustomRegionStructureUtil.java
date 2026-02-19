@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.customRegions;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -10,36 +10,45 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Rustam Vishnyakov
- */
+@ApiStatus.Internal
 public final class CustomRegionStructureUtil {
 
   public static Collection<StructureViewTreeElement> groupByCustomRegions(@NotNull PsiElement rootElement,
                                                                           @NotNull Collection<StructureViewTreeElement> originalElements) {
     if (rootElement instanceof PsiFileEx && !((PsiFileEx)rootElement).isContentsLoaded() ||
-        rootElement instanceof StubBasedPsiElement && ((StubBasedPsiElement)rootElement).getStub() != null) {
+        rootElement instanceof StubBasedPsiElement && ((StubBasedPsiElement<?>)rootElement).getStub() != null) {
       return originalElements;
     }
     List<StructureViewTreeElement> physicalElements = ContainerUtil.filter(originalElements, element -> {
       Object value = element.getValue();
-      return !(value instanceof StubBasedPsiElement) || ((StubBasedPsiElement)value).getStub() == null;
+      return !(value instanceof StubBasedPsiElement) || ((StubBasedPsiElement<?>)value).getStub() == null;
     });
     Set<TextRange> childrenRanges = ContainerUtil.map2SetNotNull(physicalElements, element -> {
       Object value = element.getValue();
       return value instanceof PsiElement ? getTextRange((PsiElement)value) : null;
     });
     Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement, childrenRanges);
-    if (customRegions.size() > 0) {
+    if (!customRegions.isEmpty()) {
       List<StructureViewTreeElement> result = new ArrayList<>(customRegions);
       for (StructureViewTreeElement element : physicalElements) {
         ProgressManager.checkCanceled();
@@ -73,7 +82,7 @@ public final class CustomRegionStructureUtil {
     return element.getTextRange();
   }
 
-  private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<? extends TextRange> ranges) {
+  private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull @Unmodifiable Set<? extends TextRange> ranges) {
     TextRange rootRange = getTextRange(rootElement);
     Iterator<PsiElement> iterator = SyntaxTraverser.psiTraverser(rootElement)
       .filter(element -> isCustomRegionCommentCandidate(element) &&
@@ -107,8 +116,7 @@ public final class CustomRegionStructureUtil {
     return customRegions;
   }
 
-  @Nullable
-  static CustomFoldingProvider getProvider(@NotNull PsiElement element) {
+  static @Nullable CustomFoldingProvider getProvider(@NotNull PsiElement element) {
     ASTNode node = element.getNode();
     if (node != null) {
       for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {

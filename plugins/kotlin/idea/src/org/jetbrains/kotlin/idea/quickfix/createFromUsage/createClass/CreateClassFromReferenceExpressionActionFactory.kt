@@ -1,0 +1,136 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
+
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.K1Deprecation
+import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.checkClassName
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.getFullCallExpression
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.isQualifierExpected
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassLiteralExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getCall
+import org.jetbrains.kotlin.utils.ifEmpty
+import java.util.Collections
+
+@K1Deprecation
+object CreateClassFromReferenceExpressionActionFactory : CreateClassFromUsageFactory<KtSimpleNameExpression>() {
+    override fun getElementOfInterest(diagnostic: Diagnostic): KtSimpleNameExpression? {
+        val refExpr = diagnostic.psiElement as? KtSimpleNameExpression ?: return null
+        if (refExpr.getNonStrictParentOfType<KtTypeReference>() != null) return null
+        return refExpr
+    }
+
+    override fun getPossibleClassKinds(element: KtSimpleNameExpression, diagnostic: Diagnostic): List<ClassKind> {
+        fun isEnum(element: PsiElement): Boolean {
+            return when (element) {
+                is KtClass -> element.isEnum()
+                is PsiClass -> element.isEnum
+                else -> false
+            }
+        }
+
+        val name = element.getReferencedName()
+
+        val (context, moduleDescriptor) = element.analyzeAndGetResult()
+
+        val fullCallExpr = getFullCallExpression(element) ?: return Collections.emptyList()
+
+        val inImport = element.getNonStrictParentOfType<KtImportDirective>() != null
+        if (inImport || isQualifierExpected(element)) {
+            val receiverSelector =
+                (fullCallExpr as? KtQualifiedExpression)?.receiverExpression?.getQualifiedElementSelector() as? KtReferenceExpression
+            val qualifierDescriptor = receiverSelector?.let { context[BindingContext.REFERENCE_TARGET, it] }
+
+            val targetParents = getTargetParentsByQualifier(element, receiverSelector != null, qualifierDescriptor)
+                .ifEmpty { return emptyList() }
+
+            targetParents.forEach {
+                if (element.getCreatePackageFixIfApplicable(it) != null) return emptyList()
+            }
+
+            if (!name.checkClassName()) return emptyList()
+
+            return ClassKind.entries.filter {
+                when (it) {
+                    ClassKind.ANNOTATION_CLASS -> inImport
+                    ClassKind.ENUM_ENTRY -> inImport && targetParents.any { parent -> isEnum(parent) }
+                    else -> true
+                }
+            }
+        }
+        val parent = element.parent
+        if (parent is KtClassLiteralExpression && parent.receiverExpression == element) {
+            return listOf(ClassKind.PLAIN_CLASS, ClassKind.ENUM_CLASS, ClassKind.INTERFACE, ClassKind.ANNOTATION_CLASS, ClassKind.OBJECT)
+        }
+
+        if (fullCallExpr.getAssignmentByLHS() != null) return Collections.emptyList()
+
+        val call = element.getCall(context) ?: return Collections.emptyList()
+        val targetParents = getTargetParentsByCall(call, context).ifEmpty { return emptyList() }
+        if (isInnerClassExpected(call)) return Collections.emptyList()
+
+        val allKinds = listOf(ClassKind.OBJECT, ClassKind.ENUM_ENTRY)
+
+        val expectedType = fullCallExpr.guessTypeForClass(context, moduleDescriptor)
+
+        return allKinds.filter { classKind ->
+            targetParents.any { targetParent ->
+                (expectedType == null || getClassKindFilter(expectedType, targetParent)(classKind)) && when (classKind) {
+                    ClassKind.OBJECT -> expectedType == null || !isEnum(targetParent)
+                    ClassKind.ENUM_ENTRY -> isEnum(targetParent)
+                    else -> false
+                }
+            }
+        }
+    }
+
+    override fun extractFixData(element: KtSimpleNameExpression, diagnostic: Diagnostic): ClassInfo? {
+        val name = element.getReferencedName()
+
+        val (context, moduleDescriptor) = element.analyzeAndGetResult()
+
+        val fullCallExpr = getFullCallExpression(element) ?: return null
+
+        if (element.isInImportDirective() || isQualifierExpected(element)) {
+            val receiverSelector =
+                (fullCallExpr as? KtQualifiedExpression)?.receiverExpression?.getQualifiedElementSelector() as? KtReferenceExpression
+            val qualifierDescriptor = receiverSelector?.let { context[BindingContext.REFERENCE_TARGET, it] }
+
+            val targetParents = getTargetParentsByQualifier(element, receiverSelector != null, qualifierDescriptor)
+                .ifEmpty { return null }
+
+            return ClassInfo(
+                name = name,
+                targetParents = targetParents,
+                expectedTypeInfo = TypeInfo.Empty
+            )
+        }
+
+        val call = element.getCall(context) ?: return null
+        val targetParents = getTargetParentsByCall(call, context).ifEmpty { return null }
+
+        val expectedTypeInfo = fullCallExpr.guessTypeForClass(context, moduleDescriptor)?.toClassTypeInfo() ?: TypeInfo.Empty
+
+        return ClassInfo(
+            name = name,
+            targetParents = targetParents,
+            expectedTypeInfo = expectedTypeInfo
+        )
+    }
+}

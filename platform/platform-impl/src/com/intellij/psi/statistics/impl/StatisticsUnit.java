@@ -8,15 +8,27 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
-import java.util.*;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
 final class StatisticsUnit {
   private static final int FORMAT_VERSION_NUMBER = 6;
 
   private final int myNumber;
 
-  private final Map<String, LinkedList<String>> myDataMap = new HashMap<>();
+  private final Map<String, Deque<String>> myDataMap = new HashMap<>();
   private final Object2IntMap<String> myContextMaxStamps = new Object2IntOpenHashMap<>();
   private final Map<String, Object2IntMap<String>> myValueStamps = new HashMap<>();
 
@@ -34,7 +46,7 @@ final class StatisticsUnit {
   }
 
   public int getData(@NotNull String key1, @NotNull String key2) {
-    final List<String> list = myDataMap.get(key1);
+    final Deque<String> list = myDataMap.get(key1);
     if (list == null) return 0;
 
     int result = 0;
@@ -45,9 +57,9 @@ final class StatisticsUnit {
   }
 
   public void incData(String key1, String key2) {
-    LinkedList<String> list = myDataMap.get(key1);
+    Deque<String> list = myDataMap.get(key1);
     if (list == null) {
-      myDataMap.put(key1, list = new LinkedList<>());
+      myDataMap.put(key1, list = new ArrayDeque<>());
     }
     list.addFirst(key2);
     if (list.size() > StatisticsManager.OBLIVION_THRESHOLD) {
@@ -90,7 +102,7 @@ final class StatisticsUnit {
 
   @NotNull
   Collection<String> getKeys2(@NotNull String key1) {
-    List<String> list = myDataMap.get(key1);
+    Deque<String> list = myDataMap.get(key1);
     return list == null ? Collections.emptyList() : new LinkedHashSet<>(list);
   }
 
@@ -128,7 +140,7 @@ final class StatisticsUnit {
 
     DataInputOutputUtilRt.readSeq(dataIn, () -> {
       myDataMap.put(IOUtil.readUTF(dataIn),
-                    new LinkedList<>(DataInputOutputUtilRt.readSeq(dataIn, () -> IOUtil.readUTF(dataIn))));
+                    new ArrayDeque<>(DataInputOutputUtilRt.readSeq(dataIn, () -> IOUtil.readUTF(dataIn))));
       return null;
     });
 
@@ -145,8 +157,8 @@ final class StatisticsUnit {
 
   private static void writeStringIntMap(DataOutput dataOut, Object2IntMap<String> map) throws IOException {
     DataInputOutputUtilRt.writeINT(dataOut, map.size());
-    for (Object context : map.keySet()) {
-      IOUtil.writeUTF(dataOut, (String)context);
+    for (String context : map.keySet()) {
+      IOUtil.writeUTF(dataOut, context);
       DataInputOutputUtilRt.writeINT(dataOut, map.getInt(context));
     }
   }

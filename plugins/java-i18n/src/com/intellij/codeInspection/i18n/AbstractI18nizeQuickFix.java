@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
@@ -36,12 +37,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQuickFix, I18nQuickFixHandler<T>, HighPriorityAction {
+@ApiStatus.Internal
+public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQuickFix, I18nQuickFixHandler<T>, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private static final Set<String> AUXILIARY_WORDS = Set.of("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
 
-  protected AbstractI18nizeQuickFix(NlsInfo.Localized info) {
+  AbstractI18nizeQuickFix(NlsInfo.Localized info) {
     myInfo = info;
   }
 
@@ -74,20 +76,20 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
   }
 
   @Override
-  public final void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public final void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     doFix(descriptor, project);
   }
 
-  abstract protected void doReplacement(@NotNull PsiFile psiFile,
+  protected abstract void doReplacement(@NotNull PsiFile psiFile,
                                         Editor editor,
                                         T literalExpression,
                                         String i18nizedText) throws IncorrectOperationException;
 
-  protected static void doDocumentReplacement(@NotNull PsiFile psiFile,
-                                              UElement literalExpression,
-                                              String i18nizedText,
-                                              Document document,
-                                              @Nullable UastCodeGenerationPlugin generationPlugin) {
+  static void doDocumentReplacement(@NotNull PsiFile psiFile,
+                                    UElement literalExpression,
+                                    String i18nizedText,
+                                    Document document,
+                                    @Nullable UastCodeGenerationPlugin generationPlugin) {
     PsiElement psi = literalExpression.getSourcePsi();
     if (psi == null) {
       return;
@@ -113,8 +115,7 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
     generationPlugin.replace(uElement, uElement, UElement.class);
   }
 
-  @NotNull
-  protected I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
+  @NotNull I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
     return new I18nizeQuickFixDialog.DialogCustomization(null, true, false, null, getSuggestedName(value, myInfo));
   }
 
@@ -150,7 +151,7 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
 
   protected abstract JavaI18nizeQuickFixDialog<T> createDialog(Project project, PsiFile context, @NotNull T concatenation);
 
-  protected static String getSuggestedName(String value, NlsInfo.Localized info) {
+  static String getSuggestedName(String value, NlsInfo.Localized info) {
     String prefix = info.getPrefix();
     String suffix = info.getSuffix();
     if (prefix.isEmpty() && suffix.isEmpty()) return null;

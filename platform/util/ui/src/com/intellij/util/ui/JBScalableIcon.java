@@ -1,15 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.ui.scale.*;
+import com.intellij.ui.scale.AbstractScaleContextAware;
+import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.ScaleType;
+import com.intellij.ui.scale.Scaler;
+import com.intellij.ui.scale.UserScaleContext;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
-import static com.intellij.ui.scale.ScaleType.*;
+import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
+import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
 /**
  * A scalable icon, {@link UserScaleContext} aware, assuming vector-based painting (system scale independent).
@@ -17,13 +24,16 @@ import static com.intellij.ui.scale.ScaleType.*;
  * @author tav
  */
 public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScaleContext> implements ScalableIcon {
-  private final Scaler myScaler = new Scaler() {
+  private final Scaler scaler = new Scaler() {
     @Override
     protected double currentScale() {
-      if (autoUpdateScaleContext) getScaleContext().update();
+      if (autoUpdateScaleContext) {
+        getScaleContext().update();
+      }
       return getScale(USR_SCALE);
     }
   };
+
   private boolean autoUpdateScaleContext = true;
 
   public JBScalableIcon() {
@@ -32,43 +42,50 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
 
   protected JBScalableIcon(@NotNull JBScalableIcon icon) {
     this();
+    updateContextFrom(icon);
+  }
+
+  protected final void updateContextFrom(@NotNull JBScalableIcon icon) {
     updateScaleContext(icon.getScaleContext());
-    myScaler.update(icon.myScaler);
+    scaler.update(icon.scaler);
     autoUpdateScaleContext = icon.autoUpdateScaleContext;
   }
 
   protected boolean isIconPreScaled() {
-    return myScaler.isPreScaled();
+    return scaler.isPreScaled();
   }
 
   protected void setIconPreScaled(boolean preScaled) {
-    myScaler.setPreScaled(preScaled);
+    scaler.setPreScaled(preScaled);
   }
 
   /**
    * The pre-scaled state of the icon indicates whether the initial size of the icon
    * is pre-scaled (by the global user scale) or not. If the size is not pre-scaled,
-   * then there're two approaches to deal with it:
-   * 1) scale its initial size right away and store;
-   * 2) scale its initial size every time it's requested.
-   * The 2nd approach is preferable because of the the following. Scaling of the icon may
+   * then there are two approaches to deal with it:
+   * <ol>
+   * <li>scale its initial size right away and store</li>
+   * <li>scale its initial size every time it's requested</li>
+   * </ol>
+   * <p>
+   * The 2nd approach is preferable because of the following. Scaling of the icon may
    * involve not only USR_SCALE but OBJ_SCALE as well. In which case applying all the scale
    * factors and then rounding (the size is integer, the scale factors are not) gives more
    * accurate result than rounding and then scaling.
    * <p>
    * For example, say we have an icon of 15x15 initial size, USR_SCALE is 1.5f, OBJ_SCALE is 1,5f.
-   * Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35
-   * Math.round(15 * USR_SCALE * OBJ_SCALE) = 34
+   * {@code Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35}
+   * <br/>
+   * {@code Math.round(15 * USR_SCALE * OBJ_SCALE) = 34}
    * <p>
-   * Thus, JBUI.scale(MyIcon.create(w, h)) is preferable to MyIcon.create(JBUI.scale(w), JBUI.scale(h)).
+   * Thus, {@code JBUI.scale(MyIcon.create(w, h))} is preferable to {@code MyIcon.create(JBUI.scale(w), JBUI.scale(h))}.
    * Here [w, h] is "raw" unscaled size.
    *
    * @param preScaled whether the icon is pre-scaled
    * @return the icon in the provided pre-scaled state
    * @see JBUIScale#scaleIcon(JBScalableIcon) (JBScalableIcon)
    */
-  @NotNull
-  public JBScalableIcon withIconPreScaled(boolean preScaled) {
+  public @NotNull JBScalableIcon withIconPreScaled(boolean preScaled) {
     setIconPreScaled(preScaled);
     return this;
   }
@@ -81,7 +98,7 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
    * and/or it doesn't listen for updates. Otherwise, the value should be set to
    * false and the scale context should be updated manually.
    * <p>
-   * By default the value is true.
+   * By default, the value is true.
    */
   protected void setAutoUpdateScaleContext(boolean autoUpdate) {
     autoUpdateScaleContext = autoUpdate;
@@ -89,12 +106,12 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
 
   @Override
   public float getScale() {
-    return (float)getScale(OBJ_SCALE); // todo: float -> double
+    // todo: float -> double
+    return (float)getScale(OBJ_SCALE);
   }
 
   @Override
-  @NotNull
-  public Icon scale(float scale) {
+  public @NotNull Icon scale(float scale) {
     setScale(OBJ_SCALE.of(scale));
     return this;
   }
@@ -110,25 +127,21 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
    * Returns the value scaled according to the provided scale type
    */
   protected double scaleVal(double value, @NotNull ScaleType type) {
-    switch (type) {
-      case USR_SCALE: return myScaler.scaleVal(value);
-      case SYS_SCALE: return value * getScale(SYS_SCALE);
-      case OBJ_SCALE: return value * getScale(OBJ_SCALE);
-    }
-    return value; // unreachable
+    return switch (type) {
+      case USR_SCALE -> scaler.scaleVal(value);
+      case SYS_SCALE -> value * getScale(SYS_SCALE);
+      case OBJ_SCALE -> value * getScale(OBJ_SCALE);
+    };
   }
 
   /**
    * Returns the value scaled according to the provided scale type
    */
   protected double scaleVal(double value, @NotNull DerivedScaleType type) {
-    switch (type) {
-      case DEV_SCALE: return value * getScale(DEV_SCALE);
-      case EFF_USR_SCALE:
-      case PIX_SCALE:
-        return myScaler.scaleVal(value) * getScale(OBJ_SCALE);
-    }
-    return value; // unreachable
+    return switch (type) {
+      case DEV_SCALE -> value * getScale(DEV_SCALE);
+      case EFF_USR_SCALE, PIX_SCALE -> scaler.scaleVal(value) * getScale(OBJ_SCALE);
+    };
   }
 
   @Override

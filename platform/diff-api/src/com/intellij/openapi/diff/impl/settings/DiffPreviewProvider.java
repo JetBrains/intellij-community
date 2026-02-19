@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.diff.impl.settings;
 
@@ -24,7 +24,7 @@ public abstract class DiffPreviewProvider {
   public static DiffContent @NotNull [] getContents() {
     // Assuming that standalone IDE should provide one provider
     final List<DiffPreviewProvider> providers = EP_NAME.getExtensionList();
-    if (providers.size() != 0) {
+    if (!providers.isEmpty()) {
       return providers.get(0).createContents();
     }
     return createContent(LEFT_TEXT, CENTER_TEXT, RIGHT_TEXT, StdFileTypes.JAVA);
@@ -40,53 +40,58 @@ public abstract class DiffPreviewProvider {
       createContent(right, fileType)};
   }
 
-  @NotNull
-  private static DiffContent createContent(@NotNull String text, @NotNull FileType fileType) {
+  private static @NotNull DiffContent createContent(@NotNull String text, @NotNull FileType fileType) {
     return DiffContentFactory.getInstance().create(text, fileType);
   }
 
-  @NonNls private static final String LEFT_TEXT = "class MyClass {\n" +
-                                                  "  int value;\n" +
-                                                  "\n" +
-                                                  "  void leftOnly() {}\n" +
-                                                  "\n" +
-                                                  "  void foo() {\n" +
-                                                  "   // Left changes\n" +
-                                                  "  }\n" +
-                                                  "\n" +
-                                                  "  void bar() {\n" +
-                                                  "\n" +
-                                                  "  }\n" +
-                                                  "}\n" +
-                                                  "\n" +
-                                                  "\n";
-  @NonNls private static final String CENTER_TEXT = "class MyClass {\n" +
-                                                    "  int value;\n" +
-                                                    "\n" +
-                                                    "  void foo() {\n" +
-                                                    "  }\n" +
-                                                    "\n" +
-                                                    "  void removedFromLeft() {}\n" +
-                                                    "\n" +
-                                                    "  void bar() {\n" +
-                                                    "\n" +
-                                                    "  }\n" +
-                                                    "}\n" +
-                                                    "\n" +
-                                                    "\n";
-  @NonNls private static final String RIGHT_TEXT = "class MyClass {\n" +
-                                                   "  long value;\n" +
-                                                   "\n" +
-                                                   "  void foo() {\n" +
-                                                   "   // Right changes\n" +
-                                                   "  }\n" +
-                                                   "\n" +
-                                                   "  void removedFromLeft() {}\n" +
-                                                   "\n" +
-                                                   "  void bar() {\n" +
-                                                   "  }\n" +
-                                                   "\n" +
-                                                   "}\n" +
-                                                   "\n" +
-                                                   "\n";
+  private static final @NonNls String LEFT_TEXT = """
+    class MyClass {
+      int value;
+
+      void leftOnly() {}
+
+      void foo() {
+       // Left changes
+      }
+
+      void bar() {
+
+      }
+    }
+
+
+    """;
+  private static final @NonNls String CENTER_TEXT = """
+    class MyClass {
+      int value;
+
+      void foo() {
+      }
+
+      void removedFromLeft() {}
+
+      void bar() {
+
+      }
+    }
+
+
+    """;
+  private static final @NonNls String RIGHT_TEXT = """
+    class MyClass {
+      long value;
+
+      void foo() {
+       // Right changes
+      }
+
+      void removedFromLeft() {}
+
+      void bar() {
+      }
+
+    }
+
+
+    """;
 }

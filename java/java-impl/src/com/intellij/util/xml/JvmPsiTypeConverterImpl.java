@@ -1,21 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jetbrains.annotations.NonNls;
@@ -25,10 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
-public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
+public final class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
 
   private static final BidirectionalMap<PsiType, Character> ourPrimitiveTypes = new BidirectionalMap<>();
 
@@ -43,23 +34,22 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   static {
-    ourPrimitiveTypes.put(PsiType.BYTE, 'B');
-    ourPrimitiveTypes.put(PsiType.CHAR, 'C');
-    ourPrimitiveTypes.put(PsiType.DOUBLE, 'D');
-    ourPrimitiveTypes.put(PsiType.FLOAT, 'F');
-    ourPrimitiveTypes.put(PsiType.INT, 'I');
-    ourPrimitiveTypes.put(PsiType.LONG, 'L');
-    ourPrimitiveTypes.put(PsiType.SHORT, 'S');
-    ourPrimitiveTypes.put(PsiType.BOOLEAN, 'Z');
+    ourPrimitiveTypes.put(PsiTypes.byteType(), 'B');
+    ourPrimitiveTypes.put(PsiTypes.charType(), 'C');
+    ourPrimitiveTypes.put(PsiTypes.doubleType(), 'D');
+    ourPrimitiveTypes.put(PsiTypes.floatType(), 'F');
+    ourPrimitiveTypes.put(PsiTypes.intType(), 'I');
+    ourPrimitiveTypes.put(PsiTypes.longType(), 'L');
+    ourPrimitiveTypes.put(PsiTypes.shortType(), 'S');
+    ourPrimitiveTypes.put(PsiTypes.booleanType(), 'Z');
   }
 
   @Override
-  public PsiType fromString(final String s, final ConvertContext context) {
+  public PsiType fromString(final String s, final @NotNull ConvertContext context) {
     return convertFromString(s, context);
   }
 
-  @Nullable
-  public static PsiType convertFromString(final String s, final ConvertContext context) {
+  public static @Nullable PsiType convertFromString(final String s, final ConvertContext context) {
     if (s == null) return null;
 
     if (s.startsWith("[")) {
@@ -109,12 +99,11 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   @Override
-  public String toString(final PsiType psiType, final ConvertContext context) {
+  public String toString(final PsiType psiType, final @NotNull ConvertContext context) {
     return convertToString(psiType);
   }
 
-  @Nullable
-  public static String convertToString(final PsiType psiType) {
+  public static @Nullable String convertToString(final PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
       return '[' + toStringArray(((PsiArrayType)psiType).getComponentType());
     }
@@ -124,8 +113,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     return null;
   }
 
-  @NonNls @Nullable
-  private static String toStringArray(final PsiType psiType) {
+  private static @NonNls @Nullable String toStringArray(final PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
       return '[' + toStringArray(((PsiArrayType)psiType).getComponentType());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
 
 import com.intellij.navigation.NavigationItem;
@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
-/**
- * @author ilyas
- */
 public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrExpression,
                                      PsiArrayInitializerMemberValue, GrNamedArgumentsOwner {
   /*
@@ -25,6 +22,7 @@ public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiE
 
   boolean isMap();
 
+  @Override
   boolean isEmpty();
 
   @NotNull

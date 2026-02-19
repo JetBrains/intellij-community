@@ -1,8 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -11,15 +7,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class LanguageStructureViewBuilder extends LanguageExtension<PsiStructureViewFactory>{
+
+  /**
+   * @deprecated use {@link #getInstance()} instead
+   */
+  @Deprecated
   public static final LanguageStructureViewBuilder INSTANCE = new LanguageStructureViewBuilder();
+
+  public static LanguageStructureViewBuilder getInstance() {
+    return INSTANCE;
+  }
 
   private LanguageStructureViewBuilder() {
     super(PsiStructureViewFactory.EP_NAME);
   }
 
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile file) {
+  public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile file) {
     PsiStructureViewFactory factory = forLanguage(file.getLanguage());
+    if (factory == null) {
+      factory = forLanguage(Language.ANY);
+    }
     if (factory != null) {
       return factory.getStructureViewBuilder(file);
     }

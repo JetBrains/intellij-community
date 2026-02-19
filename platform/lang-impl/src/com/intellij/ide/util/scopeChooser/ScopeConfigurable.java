@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.scopeChooser;
 
@@ -17,14 +17,20 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
-public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
+@ApiStatus.Internal
+public final class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   private final Disposable myDisposable = Disposer.newDisposable();
   private NamedScope myScope;
   private ScopeEditorPanel myPanel;
@@ -45,6 +51,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     mySharedContextHelp.setToolTipText(IdeBundle.message("share.scope.context.help"));
     mySharedContextHelp.setBorder(JBUI.Borders.empty(0, 5));
     myPanel = new ScopeEditorPanel(project, getHolder());
+    Disposer.register(myDisposable, myPanel);
     myIcon = getHolder(myShareScope).getIcon();
     mySharedCheckbox.addActionListener(e -> {
       myIcon = getHolder().getIcon();
@@ -77,28 +84,23 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     return id;
   }
 
-  @NotNull
-  public NamedScopesHolder getHolder() {
+  public @NotNull NamedScopesHolder getHolder() {
     return getHolder(mySharedCheckbox.isSelected());
   }
 
-  @NotNull
-  private NamedScopesHolder getHolder(boolean local) {
+  private @NotNull NamedScopesHolder getHolder(boolean local) {
     return (local
             ? DependencyValidationManager.getInstance(myProject)
             : NamedScopeManager.getInstance(myProject));
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return "project.scopes";
   }
 
-  @Nullable
   @Override
-  protected JComponent createTopRightComponent() {
+  protected @Nullable JComponent createTopRightComponent() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(BorderLayout.WEST, mySharedCheckbox);
     panel.add(BorderLayout.EAST, mySharedContextHelp);
@@ -167,9 +169,8 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     }
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     return myIcon;
   }
 }

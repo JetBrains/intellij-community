@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.xml;
 
 import com.intellij.lang.properties.IProperty;
@@ -21,12 +21,18 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -70,15 +76,13 @@ public final class XmlPropertiesFileImpl extends XmlPropertiesFile {
     myFile = file;
   }
 
-  @NotNull
   @Override
-  public PsiFile getContainingFile() {
+  public @NotNull PsiFile getContainingFile() {
     return myFile;
   }
 
-  @NotNull
   @Override
-  public List<IProperty> getProperties() {
+  public @NotNull List<IProperty> getProperties() {
     synchronized (myLock) {
       ensurePropertiesLoaded();
       return myProperties;
@@ -94,47 +98,40 @@ public final class XmlPropertiesFileImpl extends XmlPropertiesFile {
     }
   }
 
-  @NotNull
   @Override
-  public List<IProperty> findPropertiesByKey(@NotNull @NonNls String key) {
+  public @NotNull @Unmodifiable List<IProperty> findPropertiesByKey(@NotNull @NonNls String key) {
     synchronized (myLock) {
       ensurePropertiesLoaded();
       return ContainerUtil.collect(myPropertiesMap.get(key).iterator());
     }
   }
 
-  @NotNull
   @Override
-  public ResourceBundle getResourceBundle() {
+  public @NotNull ResourceBundle getResourceBundle() {
     return PropertiesImplUtil.getResourceBundle(this);
   }
 
-  @NotNull
   @Override
-  public Locale getLocale() {
+  public @NotNull Locale getLocale() {
     return PropertiesUtil.getLocale(this);
   }
 
-  @NotNull
   @Override
-  public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
+  public @NotNull PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
     return addProperty(property.getKey(), property.getValue()).getPsiElement().getNavigationElement();
   }
 
-  @NotNull
   @Override
-  public PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException {
+  public @NotNull PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException {
     return addPropertyAfter(property.getKey(), property.getValue(), anchor).getPsiElement().getNavigationElement();
   }
 
-  @NotNull
   @Override
-  public IProperty addPropertyAfter(@NotNull String key, @NotNull String value, IProperty anchor) {
+  public @NotNull IProperty addPropertyAfter(@NotNull String key, @NotNull String value, IProperty anchor) {
     return addPropertyAfter(key, value, anchor, true);
   }
 
-  @NotNull
-  public IProperty addPropertyAfter(String key, String value, @Nullable IProperty anchor, boolean addToEnd) {
+  public @NotNull IProperty addPropertyAfter(String key, String value, @Nullable IProperty anchor, boolean addToEnd) {
     final XmlTag anchorTag = anchor == null ? null : (XmlTag)anchor.getPsiElement().getNavigationElement();
     final XmlTag rootTag = myFile.getRootTag();
     final XmlTag entry = createPropertyTag(key, value);
@@ -198,19 +195,17 @@ public final class XmlPropertiesFileImpl extends XmlPropertiesFile {
     return null;
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getNamesMap() {
-    Map<String, String> result = new THashMap<>();
+  public @NotNull Map<String, String> getNamesMap() {
+    Map<String, String> result = new HashMap<>();
     for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
     }
     return result;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return getContainingFile().getName();
   }
 
@@ -224,9 +219,8 @@ public final class XmlPropertiesFileImpl extends XmlPropertiesFile {
     return getContainingFile().getParent();
   }
 
-  @NotNull
   @Override
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return getContainingFile().getProject();
   }
 

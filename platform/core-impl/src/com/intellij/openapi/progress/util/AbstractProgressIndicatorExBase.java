@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -20,22 +6,32 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.WeakList;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link AbstractProgressIndicatorBase} notice.
+ * </p>
+ */
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private final boolean myReusable;
-  private volatile ProgressIndicatorEx @Nullable [] myStateDelegates; // never updated inplace, only the whole array is replaced under getLock()
+  private volatile @NotNull ProgressIndicatorEx @NotNull [] myStateDelegates = EMPTY_ARRAY; // elements never updated, only the whole array is replaced under getLock()
   private volatile WeakList<TaskInfo> myFinished;
   private volatile boolean myWasStarted;
   private TaskInfo myOwnerTask;
 
+  @Obsolete
   public AbstractProgressIndicatorExBase(boolean reusable) {
     myReusable = reusable;
   }
 
+  @Obsolete
   public AbstractProgressIndicatorExBase() {
     this(false);
   }
@@ -63,7 +59,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   @Override
-  public void finish(@NotNull final TaskInfo task) {
+  public void finish(final @NotNull TaskInfo task) {
     WeakList<TaskInfo> finished = myFinished;
     if (finished == null) {
       synchronized (getLock()) {
@@ -79,7 +75,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   @Override
-  public boolean isFinished(@NotNull final TaskInfo task) {
+  public boolean isFinished(final @NotNull TaskInfo task) {
     Collection<TaskInfo> list = myFinished;
     return list != null && list.contains(task);
   }
@@ -159,36 +155,30 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     synchronized (getLock()) {
       delegate.initStateFrom(this);
       ProgressIndicatorEx[] stateDelegates = myStateDelegates;
-      if (stateDelegates == null) {
-        myStateDelegates = new ProgressIndicatorEx[]{delegate};
+      // hard throw is essential for avoiding deadlocks
+      if (ArrayUtil.contains(delegate, stateDelegates)) {
+        throw new IllegalArgumentException("Already registered: " + delegate);
       }
-      else {
-        // hard throw is essential for avoiding deadlocks
-        if (ArrayUtil.contains(delegate, stateDelegates)) {
-          throw new IllegalArgumentException("Already registered: " + delegate);
-        }
-        myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
-      }
+      myStateDelegates = ArrayUtil.append(stateDelegates, delegate, ProgressIndicatorEx.class);
     }
     onProgressChange();
   }
 
   public final void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
     synchronized (getLock()) {
-      ProgressIndicatorEx[] delegates = myStateDelegates;
-      if (delegates == null) return;
-      myStateDelegates = ArrayUtil.remove(delegates, delegate);
+      myStateDelegates = ArrayUtil.remove(myStateDelegates, delegate);
     }
     onProgressChange();
   }
 
   protected final void removeAllStateDelegates() {
     synchronized (getLock()) {
-      myStateDelegates = null;
+      myStateDelegates = EMPTY_ARRAY;
     }
   }
 
-  private void delegateProgressChange(@NotNull IndicatorAction action) {
+  @ApiStatus.Internal
+  protected void delegateProgressChange(@NotNull IndicatorAction action) {
     delegate(action);
     onProgressChange();
   }
@@ -202,15 +192,13 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
    * @deprecated do not use. Instead, create new indicator and call {@link #addStateDelegate(ProgressIndicatorEx)} with it.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   protected void delegateRunningChange(@NotNull IndicatorAction action) {
   }
 
   private void delegate(@NotNull IndicatorAction action) {
-    ProgressIndicatorEx[] list = myStateDelegates;
-    if (list != null) {
-      for (ProgressIndicatorEx each : list) {
-        action.execute(each);
-      }
+    for (ProgressIndicatorEx each : myStateDelegates) {
+      action.execute(each);
     }
   }
 
@@ -236,5 +224,10 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   @FunctionalInterface
   protected interface IndicatorAction {
     void execute(@NotNull ProgressIndicatorEx each);
+  }
+
+  @Override
+  public @NonNls String toString() {
+    return "ProgressIndicatorEx " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled() + (isReuseable() ? "; reusable=true" : "");
   }
 }

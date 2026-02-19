@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -8,7 +9,6 @@ import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.JVMModuleBuildTarget;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
@@ -18,27 +18,28 @@ import org.jetbrains.jps.maven.model.JpsMavenModuleExtension;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Class is used to provide implicit dependencies between modules. It is used in cases when one module uses other project modules as
  * annotation processors, which is possible using "annotationProcessorPaths" option of "maven-compiler-plugin"
- * @author ibessonov
  */
-public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
+@ApiStatus.Internal
+public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
+  private final @NotNull MavenAnnotationProcessorTargetType myTargetType;
 
-  private final MavenAnnotationProcessorTargetType myTargetType;
-
-  public MavenAnnotationProcessorTarget(MavenAnnotationProcessorTargetType targetType, JpsModule module) {
+  public MavenAnnotationProcessorTarget(@NotNull MavenAnnotationProcessorTargetType targetType, JpsModule module) {
     super(targetType, module);
     myTargetType = targetType;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myTargetType.getTypeId() + ":" + myModule.getName();
   }
 
@@ -57,7 +58,7 @@ public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRo
    * {@link JpsMavenModuleExtension}
    */
   @Override
-  public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex) {
+  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     JpsMavenModuleExtension moduleExtension = JpsMavenExtensionService.getInstance().getExtension(myModule);
     if (moduleExtension == null) return Collections.emptyList();
 
@@ -69,18 +70,11 @@ public class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRo
                    .collect(Collectors.toList());
   }
 
-  @NotNull
   @Override
-  public List<BuildRootDescriptor> computeRootDescriptors(JpsModel model,
-                                                          ModuleExcludeIndex index,
-                                                          IgnoredFileIndex ignoredFileIndex,
-                                                          BuildDataPaths dataPaths) {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public Collection<File> getOutputRoots(CompileContext context) {
-    return Collections.emptyList();
+  public @NotNull List<BuildRootDescriptor> computeRootDescriptors(@NotNull JpsModel model,
+                                                                   @NotNull ModuleExcludeIndex index,
+                                                                   @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                                   @NotNull BuildDataPaths dataPaths) {
+    return List.of();
   }
 }

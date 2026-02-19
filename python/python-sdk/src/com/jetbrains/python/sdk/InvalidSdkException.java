@@ -17,8 +17,11 @@ package com.jetbrains.python.sdk;
 
 
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import org.jetbrains.annotations.ApiStatus;
 
-public class InvalidSdkException extends Exception {
+@ApiStatus.Internal
+
+public final class InvalidSdkException extends Exception {
   public InvalidSdkException(@DialogMessage String s) {
     super(s);
   }

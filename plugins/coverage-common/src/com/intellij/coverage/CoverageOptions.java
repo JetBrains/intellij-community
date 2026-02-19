@@ -4,6 +4,7 @@ package com.intellij.coverage;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 
-public abstract class CoverageOptions implements UnnamedConfigurable {
-  public static final ProjectExtensionPointName<CoverageOptions> EP_NAME = new ProjectExtensionPointName<>("com.intellij.coverageOptions");
+public interface CoverageOptions extends UnnamedConfigurable {
+
+  ProjectExtensionPointName<CoverageOptions> EP_NAME = new ProjectExtensionPointName<>("com.intellij.coverageOptions");
 }

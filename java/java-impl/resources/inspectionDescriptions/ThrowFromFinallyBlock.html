@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports <code>throw</code> statements inside <code>finally</code> blocks. 
+While occasionally intended, such <code>throw</code> statements can hide exceptions thrown from the <code>try</code> and 
+<code>catch</code> blocks, thereby complicating the debugging process.
+<p><b>Example:</b></p>
+<pre><code>
+  class Fascinating {
+    void doTask(Task t) {
+      try {
+        t.activity();
+      } finally {
+        if (!t.finish()) {
+          throw new IllegalStateException();
+        }
+      }
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>Use the <b>Warn everywhere declared exceptions may be thrown</b> option 
+  to warn on method calls to methods that declare exceptions as well.</p>
+</body>
+</html>

@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.isNotAlive
 
 
 /**
@@ -27,8 +27,31 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
     return lifetimeDefinition
   }
 
-  this.attach { if (lifetimeDefinition.lifetime.isAlive) lifetimeDefinition.terminate() }
+  if (!Disposer.tryRegister(this) { lifetimeDefinition.terminate() })
+    lifetimeDefinition.terminate()
+
   return lifetimeDefinition
+}
+
+/**
+ * Attaches [this] disposable as a child to [lifetime] such as the disposable will be terminated when [lifetime] terminates.
+ *
+ * When the disposable is disposed of its own, there should be no leaks because the subscription to [lifetime] is also terminated on disposal of [this].
+ */
+fun Disposable.attachAsChildTo(lifetime: Lifetime) {
+  val childLt = lifetime.createNested()
+  if (!childLt.onTerminationIfAlive {
+      Disposer.dispose(this)
+    }) {
+    Disposer.dispose(this)
+    return
+  }
+
+  if (!Disposer.tryRegister(this) {
+      childLt.terminate()
+    }) {
+    childLt.terminate()
+  }
 }
 
 /**
@@ -37,16 +60,10 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
  * @see createLifetime
  */
 fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
-  val disposableLifetime: Lifetime?
-  if(Disposer.isDisposed(this)) return
+  if (Disposer.isDisposed(this)) return
 
-  try {
-    disposableLifetime = createLifetime()
-  }
-  catch(t : Throwable){
-    //do nothing, there is no other way to handle disposables
-    return
-  }
+  val disposableLifetime = createLifetime()
+  if (disposableLifetime.isNotAlive) return
 
   action(disposableLifetime)
 }
@@ -56,13 +73,8 @@ fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
  * If the lifetime was already terminated, the returned disposable will be disposed too,
  */
 fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisposable"): Disposable {
-  val d = Disposer.newDisposable(debugName)
-
-  val added = this.onTerminationIfAlive {
-    Disposer.dispose(d)
-  }
-  if (!added) { // false indicates an already-terminated lifetime
-    Disposer.dispose(d)
+  val d = Disposer.newDisposable(debugName).apply {
+    attachAsChildTo(this@createNestedDisposable)
   }
   return d
 }

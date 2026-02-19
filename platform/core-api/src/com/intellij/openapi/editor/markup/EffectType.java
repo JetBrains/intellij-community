@@ -26,5 +26,6 @@ public enum EffectType {
   BOLD_DOTTED_LINE,
   SEARCH_MATCH,
   ROUNDED_BOX,
-  @ApiStatus.Experimental SLIGHTLY_WIDER_BOX
+  @ApiStatus.Experimental SLIGHTLY_WIDER_BOX,
+  @ApiStatus.Experimental FADED
 }

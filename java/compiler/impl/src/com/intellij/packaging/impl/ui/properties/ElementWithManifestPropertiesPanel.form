@@ -69,19 +69,14 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <labelFor value="aca67"/>
-                  <text value="Manifest &amp;File:"/>
+                  <labelFor value="1fef"/>
+                  <text resource-bundle="messages/JavaCompilerBundle" key="element.with.manifest.label.manifest.file"/>
                 </properties>
               </component>
-              <component id="aca67" class="javax.swing.JTextField" binding="myManifestPathField">
+              <component id="1fef" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myManifestPathField">
                 <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties>
-                  <editable value="false"/>
-                </properties>
               </component>
             </children>
           </grid>
@@ -98,7 +93,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Create Manifest..."/>
+                  <text resource-bundle="messages/JavaCompilerBundle" key="element.with.manifest.button.create.manifest"/>
                 </properties>
               </component>
               <hspacer id="970f7">
@@ -116,7 +111,7 @@
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Use Existing Manifest..."/>
+                  <text resource-bundle="messages/JavaCompilerBundle" key="element.with.manifest.button.use.existing.manifest"/>
                 </properties>
               </component>
               <component id="a0a7b" class="javax.swing.JLabel" binding="myManifestNotFoundLabel">
@@ -124,7 +119,7 @@
                   <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="META-INF/MANIFEST.MF file not found"/>
+                  <text resource-bundle="messages/JavaCompilerBundle" key="element.with.manifest.label.meta.inf.manifest.mf.file.not.found"/>
                 </properties>
               </component>
             </children>
@@ -133,4 +128,7 @@
       </grid>
     </children>
   </grid>
+  <inspectionSuppressions>
+    <suppress inspection="I18nForm" id="e12c"/>
+  </inspectionSuppressions>
 </form>

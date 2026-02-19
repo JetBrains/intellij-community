@@ -1,0 +1,15 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.kernel"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.rpc"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.platform.entityTypes" dynamic="true"
+                    interface="com.intellij.platform.kernel.EntityTypeProvider"/>
+  </extensionPoints>
+</idea-plugin>

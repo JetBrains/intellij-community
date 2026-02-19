@@ -3,6 +3,8 @@ package com.intellij.util.text;
 
 import org.junit.Test;
 
+import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -31,6 +33,18 @@ public class UniqueNameGeneratorTest {
     assertEquals("qwerty", generator.generateUniqueName("qwerty"));
     assertEquals("qwerty2", generator.generateUniqueName("qwerty"));
     assertEquals("qwerty3", generator.generateUniqueName("qwerty"));
+  }
+  @Test
+  public void testOneBased() {
+    assertEquals("xyz1", UniqueNameGenerator.generateUniqueNameOneBased("xyz", x -> !"xyz".equals(x)));
+  }
+
+  @Test
+  public void testStartingNumber() {
+    assertEquals("xyz129", UniqueNameGenerator.generateUniqueName("xyz128", Set.of("xyz128")));
+    assertEquals("xyz130", UniqueNameGenerator.generateUniqueName("xyz128", Set.of("xyz128", "xyz129")));
+    assertEquals("xyz123_2", UniqueNameGenerator.generateUniqueName("xyz123", "", "", "_", "", s -> !s.equals("xyz123")));
+    assertEquals("xyz_124", UniqueNameGenerator.generateUniqueName("xyz_123", "", "", "_", "", s -> !s.equals("xyz_123")));
   }
 
   @Test

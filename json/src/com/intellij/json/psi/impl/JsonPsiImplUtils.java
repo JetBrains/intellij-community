@@ -1,13 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.JsonParserDefinition;
-import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
-import com.intellij.json.psi.*;
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonBooleanLiteral;
+import com.intellij.json.psi.JsonLiteral;
+import com.intellij.json.psi.JsonNumberLiteral;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.json.psi.JsonPsiChangeUtils;
+import com.intellij.json.psi.JsonReferenceExpression;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
@@ -16,22 +23,33 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-public class JsonPsiImplUtils {
+import static com.intellij.json.JsonTokenSets.STRING_LITERALS;
+
+public final class JsonPsiImplUtils {
   static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<>("JSON string fragments");
 
-  @NotNull
-  public static String getName(@NotNull JsonProperty property) {
-    return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(property.getNameElement().getText()));
+  public static @NotNull String getName(@NotNull JsonProperty property) {
+    PsiElement name = property.getNameElement();
+    // Below is a highly optimized version of:
+    // String text = InjectedLanguageManager.getInstance(property.getProject()).getUnescapedText(property.getNameElement());
+    // to avoid calls to PsiElement.getProject() and to avoid walking visitor
+    String text = InjectedLanguageUtilBase.getUnescapedLeafText(name,false);
+    if (text == null) {
+      text = Objects.requireNonNull(InjectedLanguageUtilBase.getUnescapedLeafText(name.getFirstChild(), false));
+    }
+    return JsonTextLiteralService.getInstance().unquoteAndUnescape(text);
   }
 
   /**
@@ -41,41 +59,35 @@ public class JsonPsiImplUtils {
    *
    * @see JsonStandardComplianceInspection
    */
-  @NotNull
-  public static JsonValue getNameElement(@NotNull JsonProperty property) {
+  public static @NotNull JsonValue getNameElement(@NotNull JsonProperty property) {
     final PsiElement firstChild = property.getFirstChild();
     assert firstChild instanceof JsonLiteral || firstChild instanceof JsonReferenceExpression;
     return (JsonValue)firstChild;
   }
 
-  @Nullable
-  public static JsonValue getValue(@NotNull JsonProperty property) {
+  public static @Nullable JsonValue getValue(@NotNull JsonProperty property) {
     return PsiTreeUtil.getNextSiblingOfType(getNameElement(property), JsonValue.class);
   }
 
   public static boolean isQuotedString(@NotNull JsonLiteral literal) {
-    return literal.getNode().findChildByType(JsonParserDefinition.STRING_LITERALS) != null;
+    return literal.getNode().findChildByType(STRING_LITERALS) != null;
   }
 
-  @Nullable
-  public static ItemPresentation getPresentation(@NotNull final JsonProperty property) {
+  public static @Nullable ItemPresentation getPresentation(final @NotNull JsonProperty property) {
     return new ItemPresentation() {
-      @Nullable
       @Override
-      public String getPresentableText() {
+      public @Nullable String getPresentableText() {
         return property.getName();
       }
 
-      @Nullable
       @Override
-      public String getLocationString() {
+      public @Nullable String getLocationString() {
         final JsonValue value = property.getValue();
         return value instanceof JsonLiteral ? value.getText() : null;
       }
 
-      @Nullable
       @Override
-      public Icon getIcon(boolean unused) {
+      public @Nullable Icon getIcon(boolean unused) {
         if (property.getValue() instanceof JsonArray) {
           return AllIcons.Json.Array;
         }
@@ -87,47 +99,29 @@ public class JsonPsiImplUtils {
     };
   }
 
-  @Nullable
-  public static ItemPresentation getPresentation(@NotNull final JsonArray array) {
+  public static @Nullable ItemPresentation getPresentation(final @NotNull JsonArray array) {
     return new ItemPresentation() {
-      @Nullable
       @Override
-      public String getPresentableText() {
+      public @Nullable String getPresentableText() {
         return JsonBundle.message("json.array");
       }
 
-      @Nullable
       @Override
-      public String getLocationString() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon(boolean unused) {
+      public @Nullable Icon getIcon(boolean unused) {
         return AllIcons.Json.Array;
       }
     };
   }
 
-  @Nullable
-  public static ItemPresentation getPresentation(@NotNull final JsonObject object) {
+  public static @Nullable ItemPresentation getPresentation(final @NotNull JsonObject object) {
     return new ItemPresentation() {
-      @Nullable
       @Override
-      public String getPresentableText() {
+      public @Nullable String getPresentableText() {
         return JsonBundle.message("json.object");
       }
 
-      @Nullable
       @Override
-      public String getLocationString() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon(boolean unused) {
+      public @Nullable Icon getIcon(boolean unused) {
         return AllIcons.Json.Object;
       }
     };
@@ -135,8 +129,7 @@ public class JsonPsiImplUtils {
 
   private static final String ourEscapesTable = "\"\"\\\\//b\bf\fn\nr\rt\t";
 
-  @NotNull
-  public static List<Pair<TextRange, String>> getTextFragments(@NotNull JsonStringLiteral literal) {
+  public static @NotNull List<Pair<TextRange, String>> getTextFragments(@NotNull JsonStringLiteral literal) {
     List<Pair<TextRange, String>> result = literal.getUserData(STRING_FRAGMENTS);
     if (result == null) {
       result = new ArrayList<>();
@@ -214,9 +207,8 @@ public class JsonPsiImplUtils {
     JsonPsiChangeUtils.removeCommaSeparatedFromList(myNode, myNode.getTreeParent());
   }
 
-  @NotNull
-  public static String getValue(@NotNull JsonStringLiteral literal) {
-    return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(literal.getText()));
+  public static @NotNull String getValue(@NotNull JsonStringLiteral literal) {
+    return JsonTextLiteralService.getInstance().unquoteAndUnescape(literal.getText());
   }
 
   public static boolean isPropertyName(@NotNull JsonStringLiteral literal) {

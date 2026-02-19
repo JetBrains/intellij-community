@@ -1,4 +1,4 @@
-static <T> void foo(List<T> x, T[] t) {
+static <T> void foo(ArrayList<T> x, T[] t) {
   x.add(t[0])
 }
 

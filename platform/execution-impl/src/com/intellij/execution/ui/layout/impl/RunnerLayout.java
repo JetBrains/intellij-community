@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -9,38 +9,66 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
-public class RunnerLayout  {
+public final class RunnerLayout  {
   public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
   public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");
 
-  protected Map<String, ViewImpl> myViews = new LinkedHashMap<>();
+  private final Map<String, ViewImpl> myViews = new LinkedHashMap<>();
   private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<>();
 
-  protected Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
-  private final Int2ObjectOpenHashMap<TabImpl.Default> myDefaultTabs = new Int2ObjectOpenHashMap<>();
+  private final Set<TabImpl> myTabs = new TreeSet<>(Comparator.comparingInt(TabImpl::getIndex));
+  private final Int2ObjectMap<TabImpl.Default> myDefaultTabs = new Int2ObjectOpenHashMap<>();
 
-  protected General myGeneral = new General();
+  private final General myGeneral = new General();
   private final Map<String, Pair<String, LayoutAttractionPolicy>> myDefaultFocus = new HashMap<>();
   private Set<String> myLightWeightIds = null;
 
-  @Nullable
-  public String getDefaultDisplayName(final int defaultIndex) {
+  public @Nullable String getDefaultDisplayName(final int defaultIndex) {
     final TabImpl.Default tab = myDefaultTabs.get(defaultIndex);
     return tab != null ? tab.myDisplayName : null;
   }
 
-  @NotNull
-  public TabImpl getOrCreateTab(final int index) {
+  public @Nullable Icon getDefaultIcon(int defaultIndex) {
+    TabImpl.Default tab = myDefaultTabs.get(defaultIndex);
+    return tab != null ? tab.myIcon : null;
+  }
+
+  public int getDefaultTabIndex(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null ? viewDefault.getTabID() : -1;
+  }
+
+  public @Nullable PlaceInGrid getDefaultPlaceInGrid(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null ? viewDefault.getPlaceInGrid() : null;
+  }
+
+  public boolean getDefaultIsMinimized(String contentId) {
+    ViewImpl.Default viewDefault = myDefaultViews.get(contentId);
+    return viewDefault != null && viewDefault.isMinimizedInGrid();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull TabImpl getOrCreateTab(final int index) {
     if (index < 0) {
       return createNewTab();
     }
@@ -53,8 +81,7 @@ public class RunnerLayout  {
     return tab;
   }
 
-  @NotNull
-  private TabImpl createNewTab(final int index) {
+  private @NotNull TabImpl createNewTab(final int index) {
     final TabImpl.Default defaultTab = getOrCreateDefaultTab(index);
     final TabImpl tab = defaultTab.createTab();
 
@@ -63,8 +90,7 @@ public class RunnerLayout  {
     return tab;
   }
 
-  @NotNull
-  private TabImpl.Default getOrCreateDefaultTab(final int index) {
+  private @NotNull TabImpl.Default getOrCreateDefaultTab(final int index) {
     TabImpl.Default tab = myDefaultTabs.get(index);
     if (tab == null) {
       tab = new TabImpl.Default(index, null, null);
@@ -73,8 +99,8 @@ public class RunnerLayout  {
     return tab;
   }
 
-  @NotNull
-  public TabImpl createNewTab() {
+  @ApiStatus.Internal
+  public @NotNull TabImpl createNewTab() {
     final int index = myTabs.stream().mapToInt(x -> x.getIndex()).max().orElse(-1) + 1;
     return createNewTab(index);
   }
@@ -87,8 +113,7 @@ public class RunnerLayout  {
     return false;
   }
 
-  @Nullable
-  protected TabImpl findTab(int index) {
+  private @Nullable TabImpl findTab(int index) {
     for (TabImpl each : myTabs) {
       if (index == each.getIndex()) return each;
     }
@@ -96,8 +121,7 @@ public class RunnerLayout  {
     return null;
   }
 
-  @NotNull
-  public Element getState() {
+  public @NotNull Element getState() {
     return write(new Element("layout"));
   }
 
@@ -105,8 +129,7 @@ public class RunnerLayout  {
     read(state);
   }
 
-  @NotNull
-  public Element read(@NotNull Element parentNode) {
+  public @NotNull Element read(@NotNull Element parentNode) {
     List<Element> tabs = parentNode.getChildren(StringUtil.getShortName(TabImpl.class.getName()));
     for (Element eachTabElement : tabs) {
       TabImpl eachTab = XmlSerializer.deserialize(eachTabElement, TabImpl.class);
@@ -126,8 +149,7 @@ public class RunnerLayout  {
     return parentNode;
   }
 
-  @NotNull
-  public Element write(@NotNull Element parentNode) {
+  public @NotNull Element write(@NotNull Element parentNode) {
     for (ViewImpl eachState : myViews.values()) {
       if (myLightWeightIds != null && myLightWeightIds.contains(eachState.getID())) {
         continue;
@@ -156,13 +178,16 @@ public class RunnerLayout  {
     myTabs.clear();
   }
 
-  @NotNull
-  public ViewImpl getStateFor(@NotNull Content content) {
+  public @NotNull ViewImpl getStateFor(@NotNull Content content) {
     return getOrCreateView(getOrCreateContentId(content));
   }
 
   public void clearStateFor(@NotNull Content content) {
     String id = getOrCreateContentId(content);
+    clearStateForId(id);
+  }
+
+  public void clearStateForId(@NotNull String id) {
     myDefaultViews.remove(id);
     final ViewImpl view = myViews.remove(id);
     if (view != null) {
@@ -173,8 +198,7 @@ public class RunnerLayout  {
     }
   }
 
-  @NotNull
-  private static String getOrCreateContentId(@NotNull Content content) {
+  private static @NotNull String getOrCreateContentId(@NotNull Content content) {
     @NonNls String id = content.getUserData(ViewImpl.ID);
     if (id == null) {
       id = "UnknownView-" + content.getDisplayName();
@@ -183,8 +207,7 @@ public class RunnerLayout  {
     return id;
   }
 
-  @NotNull
-  private ViewImpl getOrCreateView(@NotNull String id) {
+  private @NotNull ViewImpl getOrCreateView(@NotNull String id) {
     ViewImpl view = myViews.get(id);
     if (view == null) {
       view = getOrCreateDefault(id).createView(this);
@@ -193,31 +216,32 @@ public class RunnerLayout  {
     return view;
   }
 
-  @NotNull
-  private ViewImpl.Default getOrCreateDefault(@NotNull String id) {
+  public @Nullable ViewImpl getViewById(@NotNull String id) {
+    return myViews.get(id);
+  }
+
+  private @NotNull ViewImpl.Default getOrCreateDefault(@NotNull String id) {
     if (myDefaultViews.containsKey(id)) {
       return myDefaultViews.get(id);
     }
     return setDefault(id, Integer.MAX_VALUE, PlaceInGrid.bottom, false);
   }
 
-
-  @NotNull
-  public TabImpl.Default setDefault(int tabID, String displayName, Icon icon) {
+  @ApiStatus.Internal
+  public @NotNull TabImpl.Default setDefault(int tabID, String displayName, Icon icon) {
     final TabImpl.Default tab = new TabImpl.Default(tabID, displayName, icon);
     myDefaultTabs.put(tabID, tab);
     return tab;
   }
 
-  @NotNull
-  public ViewImpl.Default setDefault(@NotNull String id, int tabIndex, @NotNull PlaceInGrid placeInGrid, boolean isMinimized) {
+  @ApiStatus.Internal
+  public @NotNull ViewImpl.Default setDefault(@NotNull String id, int tabIndex, @NotNull PlaceInGrid placeInGrid, boolean isMinimized) {
     final ViewImpl.Default view = new ViewImpl.Default(id, tabIndex, placeInGrid, isMinimized);
     myDefaultViews.put(id, view);
     return view;
   }
 
-  @NotNull
-  public PlaceInGrid getDefaultGridPlace(@NotNull Content content) {
+  public @NotNull PlaceInGrid getDefaultGridPlace(@NotNull Content content) {
     return getOrCreateDefault(getOrCreateContentId(content)).getPlaceInGrid();
   }
 
@@ -229,7 +253,7 @@ public class RunnerLayout  {
     myGeneral.focusOnCondition.put(condition, id);
   }
 
-  public void setDefaultToFocus(@NotNull String id, @NotNull String condition, @NotNull final LayoutAttractionPolicy policy) {
+  public void setDefaultToFocus(@NotNull String id, @NotNull String condition, final @NotNull LayoutAttractionPolicy policy) {
     myDefaultFocus.put(condition, Pair.create(id, policy));
   }
 
@@ -237,14 +261,12 @@ public class RunnerLayout  {
     myDefaultFocus.remove(condition);
   }
 
-  @Nullable
-  public String getToFocus(@NotNull String condition) {
+  public @Nullable String getToFocus(@NotNull String condition) {
     return myGeneral.focusOnCondition.containsKey(condition) ? myGeneral.focusOnCondition.get(condition) :
            myDefaultFocus.containsKey(condition) ? myDefaultFocus.get(condition).getFirst() : null;
   }
 
-  @NotNull
-  public LayoutAttractionPolicy getAttractionPolicy(@NotNull String condition) {
+  public @NotNull LayoutAttractionPolicy getAttractionPolicy(@NotNull String condition) {
     final Pair<String, LayoutAttractionPolicy> pair = myDefaultFocus.get(condition);
     return pair == null ? new LayoutAttractionPolicy.FocusOnce() : pair.getSecond();
   }
@@ -259,8 +281,17 @@ public class RunnerLayout  {
     myLightWeightIds.add(getOrCreateContentId(content));
   }
 
-  public static class General {
+  public boolean isTabLabelsHidden() {
+    return myGeneral.isTabLabelsHidden;
+  }
+
+  public void setTabLabelsHidden(boolean tabLabelsHidden) {
+    myGeneral.isTabLabelsHidden = tabLabelsHidden;
+  }
+
+  public static final class General {
     public volatile boolean horizontalToolbar = false;
     public volatile Map<String, String> focusOnCondition = new HashMap<>();
+    public volatile boolean isTabLabelsHidden = true;
   }
 }

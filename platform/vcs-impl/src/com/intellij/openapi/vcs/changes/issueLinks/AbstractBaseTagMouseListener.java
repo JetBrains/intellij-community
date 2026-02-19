@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
 
-public abstract class AbstractBaseTagMouseListener extends LinkMouseListenerBase {
+public abstract class AbstractBaseTagMouseListener extends LinkMouseListenerBase<Object> {
   @Override
   public boolean onClick(@NotNull MouseEvent e, int clickCount) {
     if (e.getButton() == 1 && !e.isPopupTrigger()) {

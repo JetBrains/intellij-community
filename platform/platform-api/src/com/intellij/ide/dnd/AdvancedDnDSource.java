@@ -18,9 +18,6 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.Disposable;
 
-/**
- * @author spleaner
- */
 public interface AdvancedDnDSource extends DnDSource, DnDAware, Disposable {
 
 }

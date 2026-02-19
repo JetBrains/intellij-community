@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
@@ -25,32 +11,35 @@ import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lesya
- */
+import java.util.Objects;
+
 public class ImportsFormatter extends XmlRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(ImportsFormatter.class);
   
   private final FormattingDocumentModelImpl myDocumentModel;
   private final CommonCodeStyleSettings.IndentOptions myIndentOptions;
-  @NonNls private static final String PAGE_DIRECTIVE = "page";
-  @NonNls private static final String IMPORT_ATT = "import";
+  private static final @NonNls String PAGE_DIRECTIVE = "page";
+  private static final @NonNls String IMPORT_ATT = "import";
 
   private final PostFormatProcessorHelper myPostProcessor;
 
   public ImportsFormatter(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
-    myPostProcessor = new PostFormatProcessorHelper(settings);
+    myPostProcessor = new PostFormatProcessorHelper(settings.getCommonSettings(file.getLanguage()));
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
     myIndentOptions = settings.getIndentOptionsByFile(file);
   }
 
-  @Override public void visitXmlTag(XmlTag tag) {
+  @Override public void visitXmlTag(@NotNull XmlTag tag) {
     if (checkElementContainsRange(tag)) {
       super.visitXmlTag(tag);
     }
@@ -60,11 +49,11 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
     return PAGE_DIRECTIVE.equals(tag.getName());
   }
 
-  @Override public void visitXmlText(XmlText text) {
+  @Override public void visitXmlText(@NotNull XmlText text) {
 
   }
 
-  @Override public void visitXmlAttribute(XmlAttribute attribute) {
+  @Override public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
     if (isPageDirectiveTag(attribute.getParent())) {
       final XmlAttributeValue valueElement = attribute.getValueElement();
       if (valueElement != null && checkRangeContainsElement(attribute) && isImportAttribute(attribute) && PostFormatProcessorHelper
@@ -72,7 +61,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
         final int oldLength = attribute.getTextLength();
         ASTNode valueToken = findValueToken(valueElement.getNode());
         if (valueToken != null) {
-          String newAttributeValue = formatImports(valueToken.getStartOffset(), attribute.getValue());
+          String newAttributeValue = formatImports(valueToken.getStartOffset(), Objects.requireNonNull(attribute.getValue()));
           try {
             attribute.setValue(newAttributeValue);
           }
@@ -111,9 +100,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
     final int emptyLineEnd = CharArrayUtil.shiftForward(myDocumentModel.getDocument().getCharsSequence(), lineStartOffset, " \t");
     final CharSequence spaces = myDocumentModel.getText(new TextRange(lineStartOffset, emptyLineEnd));
 
-    if (spaces != null) {
-      result.append(spaces.toString());
-    }
+    result.append(spaces);
 
     appendSpaces(result, startOffset - emptyLineEnd);
 

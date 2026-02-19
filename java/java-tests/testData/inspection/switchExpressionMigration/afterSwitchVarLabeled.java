@@ -1,4 +1,4 @@
-// "Replace with 'switch' expression" "true"
+// "Replace with 'switch' expression" "true-preview"
 import java.util.*;
 
 class SwitchExpressionMigration {
@@ -7,8 +7,7 @@ class SwitchExpressionMigration {
     System.out.println("adasd");
     /*before label*/
       /*after label*/
-      /*in switch*/
-      result = switch (s) {
+      result = switch (s) {/*in switch*/
           case "a" -> 1;
           case "b" -> throw new NullPointerException();
           default -> 0;

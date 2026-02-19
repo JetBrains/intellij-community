@@ -1,135 +1,68 @@
 package com.intellij.tools.launch
 
-import com.intellij.tools.launch.impl.ClassPathBuilder
-import java.io.File
-import java.net.InetAddress
-import java.net.ServerSocket
-import java.nio.file.Files
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.tools.launch.ide.ClassPathBuilder
+import com.intellij.tools.launch.ide.ClasspathCollector
+import com.intellij.tools.launch.ide.IdeDebugOptions
+import com.intellij.tools.launch.ide.IdeLaunchContext
+import com.intellij.tools.launch.ide.IdeLauncher
+import com.intellij.tools.launch.ide.collectedClasspath
+import com.intellij.tools.launch.ide.environments.docker.legacyDockerRunCliCommandLauncherFactory
+import com.intellij.tools.launch.ide.environments.local.LocalIdeCommandLauncherFactory
+import com.intellij.tools.launch.ide.environments.local.localLaunchOptions
+import com.intellij.tools.launch.os.ProcessOutputStrategy
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 
 object Launcher {
+  @Suppress("SSBasedInspection")
+  private val launcherLifespanScope = CoroutineScope(CoroutineName("IDE Launcher"))
 
-  private const val defaultDebugPort = 5050
-
-  fun launch(paths: PathsProvider,
-             modules: ModulesProvider,
-             options: LauncherOptions): Process {
-    val classPathBuilder = ClassPathBuilder(paths, modules)
-    val classPathFile = classPathBuilder.build()
-
-    return launch(paths, classPathFile, options)
+  fun launch(
+    paths: PathsProvider,
+    modulesToScopes: Map<String, JpsJavaClasspathKind>,
+    options: LauncherOptions,
+    logClasspath: Boolean,
+  ): Pair<Process, String?> {
+    val classpath = ClassPathBuilder(paths, modulesToScopes).buildClasspath(logClasspath)
+    return launch(paths, collectedClasspath(classpath), options)
   }
 
-  fun launch(paths: PathsProvider,
-             classPathFile: File,
-             options: LauncherOptions): Process {
-
-    // We should create config folder to avoid import settings dialog.
-    Files.createDirectories(paths.configFolder.toPath())
-
-    val cmd = mutableListOf(
-      paths.javaExecutable.canonicalPath,
-      "-ea",
-      "-classpath", classPathFile.canonicalPath,
-      "-Dapple.laf.useScreenMenuBar=true",
-      "-Dfus.internal.test.mode=true",
-      "-Djb.privacy.policy.text=\"<!--999.999-->\"",
-      "-Djb.consents.confirmation.enabled=false",
-      "-Didea.suppress.statistics.report=true",
-      "-Drsch.send.usage.stat=false",
-      "-Duse.linux.keychain=false",
-      "-Didea.initially.ask.config=force-not",
-      "-Dide.show.tips.on.startup.default.value=false",
-      "-Didea.config.path=${paths.configFolder.canonicalPath}",
-      "-Didea.system.path=${paths.systemFolder.canonicalPath}",
-      "-Didea.log.path=${paths.logFolder.canonicalPath}",
-      "-Didea.is.internal=true",
-      "-Didea.debug.mode=true",
-      "-Didea.jre.check=true",
-      "-Didea.fix.mac.env=true",
-      "-Djdk.attach.allowAttachSelf",
-      "-Djdk.module.illegalAccess.silent=true",
-      "-Dkotlinx.coroutines.debug=off",
-      "-Dsun.awt.disablegrab=true",
-      "-Dsun.io.useCanonCaches=false",
-      "-Dteamcity.build.tempDir=${paths.tempFolder.canonicalPath}",
-      "-Xmx${options.xmx}m",
-      "-XX:+UseConcMarkSweepGC",
-      "-XX:-OmitStackTraceInFastThrow",
-      "-XX:CICompilerCount=2",
-      "-XX:HeapDumpPath=${paths.tempFolder.canonicalPath}",
-      "-XX:MaxJavaStackTraceDepth=10000",
-      "-XX:ReservedCodeCacheSize=240m",
-      "-XX:SoftRefLRUPolicyMSPerMB=50"
+  fun launch(
+    paths: PathsProvider,
+    classpathCollector: ClasspathCollector,
+    options: LauncherOptions,
+  ): Pair<Process, String?> {
+    val currentUserIsNotRoot = true
+    val ideLaunchContext = IdeLaunchContext(
+      classpathCollector = classpathCollector,
+      localPaths = paths,
+      ideDebugOptions = options.debugPort?.let { debugPort -> IdeDebugOptions(debugPort, options.debugSuspendOnStart, "*:") },
+      platformPrefix = options.platformPrefix,
+      productMode = options.productMode,
+      xmx = options.xmx,
+      javaArguments = options.javaArguments,
+      ideaArguments = options.ideaArguments,
+      environment = options.environment,
+      specifyUserHomeExplicitly = options is DockerLauncherOptions && currentUserIsNotRoot
     )
-
-    if (options.platformPrefix != null) {
-      cmd.add("-Didea.platform.prefix=${options.platformPrefix}")
-    }
-
-    if (!TeamCityHelper.isUnderTeamCity) {
-      val suspendOnStart = if (options.debugSuspendOnStart) "y" else "n"
-      val port = if (options.debugPort > 0) options.debugPort else findFreeDebugPort()
-      cmd.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$port")
-    }
-
-    for (arg in options.javaArguments) {
-      cmd.add(arg.trim('"'))
-    }
-
-    cmd.add("com.intellij.idea.Main")
-
-    for (arg in options.ideaArguments) {
-      cmd.add(arg.trim('"'))
-    }
-
-/*
-    println("Starting cmd:")
-    for (arg in cmd) {
-      println("  $arg")
-    }
-    println("-- END")
-*/
-
-    val processBuilder = ProcessBuilder(cmd)
-    if (options.redirectOutputIntoParentProcess) {
-      processBuilder.inheritIO()
+    if (options is DockerLauncherOptions) {
+      assert(SystemInfo.isLinux) { "Launching IDE backend from tests is now only supported on Linux" }
+      val dockerLauncherFactory = legacyDockerRunCliCommandLauncherFactory(options, paths)
+      val launchCommand = IdeLauncher.launchCommand(dockerLauncherFactory, ideLaunchContext)
+      return launchCommand.process to launchCommand.containerId
     }
     else {
-      paths.logFolder.mkdirs()
-      processBuilder.redirectOutput(paths.logFolder.resolve("out.log"))
-      processBuilder.redirectError(paths.logFolder.resolve("err.log"))
-    }
-
-    processBuilder.environment().putAll(options.environment)
-    options.beforeProcessStart.invoke(processBuilder)
-
-    return processBuilder.start()
-  }
-
-  fun findFreeDebugPort(): Int {
-    if (isDefaultPortFree()) {
-      return defaultDebugPort
-    }
-
-    val socket = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
-    val result = socket.localPort
-    socket.reuseAddress = true
-    socket.close()
-    return result
-  }
-
-  private fun isDefaultPortFree(): Boolean {
-    var socket: ServerSocket? = null
-    try {
-      socket = ServerSocket(defaultDebugPort, 0, InetAddress.getByName("127.0.0.1"))
-      socket.reuseAddress = true
-      return true
-    }
-    catch (e: Exception) {
-      return false
-    }
-    finally {
-      socket?.close()
+      val localLauncherFactory = LocalIdeCommandLauncherFactory(
+        localLaunchOptions(
+          beforeProcessStart = options.beforeProcessStart,
+          processOutputStrategy = if (options.redirectOutputIntoParentProcess) ProcessOutputStrategy.InheritIO else ProcessOutputStrategy.RedirectToFiles(paths.logFolder),
+          processTitle = "IDE backend (local process)",
+          lifespanScope = launcherLifespanScope
+        )
+      )
+      return IdeLauncher.launchCommand(localLauncherFactory, ideLaunchContext).process to null
     }
   }
 }

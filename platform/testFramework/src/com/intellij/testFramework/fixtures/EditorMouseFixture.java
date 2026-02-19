@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.VisualPosition;
@@ -7,8 +7,9 @@ import com.intellij.openapi.util.SystemInfo;
 import org.intellij.lang.annotations.MagicConstant;
 import org.junit.Assert;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
@@ -37,7 +38,7 @@ public class EditorMouseFixture {
 
   public EditorMouseFixture pressAtLineNumbers(int visualLine) {
     assert myEditor.getSettings().isLineNumbersShown();
-    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(0, myEditor.visualLineToY(visualLine)));
+    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(myEditor.getGutterComponentEx().getLineNumberAreaOffset(), myEditor.visualLineToY(visualLine)));
   }
 
   private EditorMouseFixture pressAt(int clickCount, Point p) {
@@ -190,20 +191,20 @@ public class EditorMouseFixture {
 
   @MagicConstant(flagsFromClass = InputEvent.class)
   private static int getModifiersForButtonPress(int button) {
-    switch (button) {
-      case MouseEvent.BUTTON1: return InputEvent.BUTTON1_DOWN_MASK;
-      case MouseEvent.BUTTON2: return InputEvent.BUTTON2_DOWN_MASK;
-      case MouseEvent.BUTTON3: return InputEvent.BUTTON3_DOWN_MASK;
-      default: return 0;
-    }
+    return switch (button) {
+      case MouseEvent.BUTTON1 -> InputEvent.BUTTON1_DOWN_MASK;
+      case MouseEvent.BUTTON2 -> InputEvent.BUTTON2_DOWN_MASK;
+      case MouseEvent.BUTTON3 -> InputEvent.BUTTON3_DOWN_MASK;
+      default -> 0;
+    };
   }
 
   @MagicConstant(flagsFromClass = InputEvent.class)
   private static int getModifiersForButtonRelease(int button) {
-    switch (button) {
-      case MouseEvent.BUTTON2: return InputEvent.ALT_DOWN_MASK;
-      case MouseEvent.BUTTON3: return InputEvent.META_DOWN_MASK;
-      default: return 0;
-    }
+    return switch (button) {
+      case MouseEvent.BUTTON2 -> InputEvent.ALT_DOWN_MASK;
+      case MouseEvent.BUTTON3 -> InputEvent.META_DOWN_MASK;
+      default -> 0;
+    };
   }
 }

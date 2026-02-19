@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,12 +18,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina
- */
-public class TestClientRunner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.vcs.TestClientRunner");
+public final class TestClientRunner {
+  private static final Logger LOG = Logger.getInstance(TestClientRunner.class);
   private final boolean myTraceClient;
   private final File myClientBinaryPath;
   private final Map<String, String> myClientEnvironment;
@@ -37,7 +34,7 @@ public class TestClientRunner {
 
   public ProcessOutput runClient(@NotNull String exeName,
                                  @Nullable String stdin,
-                                 @Nullable final File workingDir,
+                                 final @Nullable File workingDir,
                                  String... commandLine) throws IOException {
     final List<String> arguments = new ArrayList<>();
 
@@ -79,17 +76,17 @@ public class TestClientRunner {
     if (myTraceClient || result.isTimeout()) {
       LOG.debug("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
-      if (out.length() > 0) {
+      if (!out.isEmpty()) {
         LOG.debug("*** output:\n" + out);
       }
       final String err = result.getStderr().trim();
-      if (err.length() > 0) {
+      if (!err.isEmpty()) {
         LOG.debug("*** error:\n" + err);
       }
     }
 
     if (result.isTimeout()) {
-      String processList = LogUtil.getProcessList();
+      String processList = ProcessHandle.allProcesses().map(h -> h.pid() + ": " + h.info()).collect(Collectors.joining("\n"));
       handler.destroyProcess();
       throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + processList);
     }

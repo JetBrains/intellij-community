@@ -1,22 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 
 /**
  * This is convenient class for implementing property renderers which
  * are based on JLabel.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer<V> {
-  private String myStaticText;
+  private @Nls String myStaticText;
 
   public LabelPropertyRenderer() {
     setOpaque(true);
@@ -24,7 +24,7 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
     setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
   }
 
-  public LabelPropertyRenderer(String staticText) {
+  public LabelPropertyRenderer(@Nls String staticText) {
     this();
     myStaticText = staticText;
   }
@@ -37,7 +37,7 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
 
     // Background and foreground
     if(selected){
-      setForeground(UIUtil.getTableSelectionForeground());
+      setForeground(UIUtil.getTableSelectionForeground(true));
       setBackground(UIUtil.getTableSelectionBackground(true));
     }else{
       setForeground(UIUtil.getTableForeground());
@@ -57,6 +57,12 @@ public class LabelPropertyRenderer<V> extends JLabel implements PropertyRenderer
    * set.
    */
   protected void customize(@NotNull V value) {
-    setText(myStaticText != null ? myStaticText : value.toString());
+    if (myStaticText == null) {
+      @NlsSafe String s = value.toString();
+      setText(s);
+    }
+    else {
+      setText(myStaticText);
+    }
   }
 }

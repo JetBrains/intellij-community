@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.CommandProcessor;
@@ -17,6 +18,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -24,7 +26,8 @@ import org.jetbrains.idea.devkit.actions.DevkitActionsUtil;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
-abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patcher {
+@ApiStatus.Internal
+public abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patcher {
   protected final SmartPsiElementPointer<PsiClass> myPointer;
   protected static final Logger LOG = Logger.getInstance(AbstractRegisterFix.class);
 
@@ -33,8 +36,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.family", StringUtil.toLowerCase(getType()));
   }
 
@@ -44,8 +46,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return DevKitBundle.message("inspections.component.not.registered.quickfix.name", getType());
   }
 
@@ -60,7 +61,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
     PsiFile psiFile = myPointer.getContainingFile();
     final PsiClass element = myPointer.getElement();
@@ -91,5 +92,10 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
     };
 
     CommandProcessor.getInstance().executeCommand(project, command, getName(), null);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

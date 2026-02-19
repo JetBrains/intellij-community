@@ -12,11 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 
-/**
- * @author Denis Zhdanov
- */
 @RunWith(JMock.class)
 @SkipInHeadlessEnvironment
 public class RichTextControlBuilderTest {

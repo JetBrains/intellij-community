@@ -1,10 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ContributedReferenceHost;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
@@ -44,29 +57,30 @@ public class PsiLiteralExpressionImpl
   public PsiType getType() {
     final IElementType type = getLiteralElementType();
     if (type == JavaTokenType.INTEGER_LITERAL) {
-      return PsiType.INT;
+      return PsiTypes.intType();
     }
     if (type == JavaTokenType.LONG_LITERAL) {
-      return PsiType.LONG;
+      return PsiTypes.longType();
     }
     if (type == JavaTokenType.FLOAT_LITERAL) {
-      return PsiType.FLOAT;
+      return PsiTypes.floatType();
     }
     if (type == JavaTokenType.DOUBLE_LITERAL) {
-      return PsiType.DOUBLE;
+      return PsiTypes.doubleType();
     }
     if (type == JavaTokenType.CHARACTER_LITERAL) {
-      return PsiType.CHAR;
+      return PsiTypes.charType();
     }
     if (ElementType.STRING_LITERALS.contains(type)) {
       PsiFile file = getContainingFile();
-      return PsiType.getJavaLangString(file.getManager(), ResolveScopeManager.getElementResolveScope(file));
+      return PsiType.getJavaLangString(file.getManager(), ResolveScopeManager.getElementResolveScope(file))
+        .withNullability(TypeNullability.NOT_NULL_MANDATED);
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
-      return PsiType.BOOLEAN;
+      return PsiTypes.booleanType();
     }
     if (type == JavaTokenType.NULL_KEYWORD) {
-      return PsiType.NULL;
+      return PsiTypes.nullType();
     }
     return null;
   }
@@ -134,9 +148,8 @@ public class PsiLiteralExpressionImpl
         return null;
       }
       text = text.substring(1, textLength - 1);
-      StringBuilder chars = new StringBuilder();
-      boolean success = parseStringCharacters(text, chars, null);
-      if (!success) return null;
+      CharSequence chars = CodeInsightUtilCore.parseStringCharacters(text, null);
+      if (chars == null) return null;
       if (chars.length() != 1) return null;
       return chars.charAt(0);
     }
@@ -148,18 +161,15 @@ public class PsiLiteralExpressionImpl
    * @deprecated use {@link PsiLiteralUtil#getStringLiteralContent(PsiLiteralExpression)} instead.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Nullable
-  public String getInnerText() {
+  @ApiStatus.ScheduledForRemoval
+  public @Nullable String getInnerText() {
     return PsiLiteralUtil.getStringLiteralContent(this);
   }
 
-  @Nullable
-  private static String internedParseStringCharacters(final String chars) {
+  private static @Nullable String internedParseStringCharacters(final String chars) {
     if (chars == null) return null;
-    final StringBuilder outChars = new StringBuilder(chars.length());
-    final boolean success = parseStringCharacters(chars, outChars, null);
-    return success ? outChars.toString() : null;
+    final CharSequence outChars = CodeInsightUtilCore.parseStringCharacters(chars, null);
+    return outChars == null ? null : outChars.toString();
   }
 
   public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {
@@ -195,16 +205,15 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(final @NotNull String text) {
     ASTNode valueNode = getNode().getFirstChildNode();
     assert valueNode instanceof LeafElement;
     ((LeafElement)valueNode).replaceWithText(text);
     return this;
   }
 
-  @NotNull
   @Override
-  public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
     return new StringLiteralEscaper<>(this);
   }
 }

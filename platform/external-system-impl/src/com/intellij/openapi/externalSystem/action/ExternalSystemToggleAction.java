@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -8,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -51,18 +53,23 @@ public abstract class ExternalSystemToggleAction extends ToggleAction implements
     return e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
   }
 
-  protected void setText(String message) {
+  protected void setText(@NlsActions.ActionText String message) {
     getTemplatePresentation().setText(message);
   }
 
-  protected void setDescription(String message) {
+  protected void setDescription(@NlsActions.ActionDescription String message) {
     getTemplatePresentation().setDescription(message);
   }
 
-  protected void setText(@NotNull AnActionEvent e, String message) {
+  protected void setText(@NotNull AnActionEvent e, @NlsActions.ActionText String message) {
     e.getPresentation().setText(message);
   }
-  protected void setDescription(@NotNull AnActionEvent e, String message) {
+  protected void setDescription(@NotNull AnActionEvent e, @NlsActions.ActionDescription String message) {
     e.getPresentation().setDescription(message);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -1,188 +1,244 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DisposableWindow;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.*;
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.BitUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.FontUtil;
+import com.intellij.util.Function;
+import com.intellij.util.PairFunction;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.system.OS;
+import kotlin.text.StringsKt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.*;
+import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import sun.font.FontUtilities;
+import sun.swing.SwingUtilities2;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.Timer;
-import javax.swing.*;
-import javax.swing.border.AbstractBorder;
+import javax.swing.AbstractButton;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.CellRendererPane;
+import javax.swing.FocusManager;
+import javax.swing.Icon;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
+import javax.swing.JFormattedTextField;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
+import javax.swing.JRootPane;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import javax.swing.JWindow;
+import javax.swing.KeyStroke;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
+import javax.swing.text.DefaultFormatterFactory;
+import javax.swing.text.Document;
+import javax.swing.text.EditorKit;
+import javax.swing.text.Element;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.NumberFormatter;
+import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.ParagraphView;
-import javax.swing.text.html.StyleSheet;
-import javax.swing.undo.UndoManager;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.AWTError;
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Event;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Frame;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Paint;
+import java.awt.Point;
+import java.awt.PrintGraphics;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.AWTEventListener;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.RGBImageFilter;
 import java.awt.print.PrinterGraphics;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
-  static {
-    LoadingState.LAF_INITIALIZED.checkOccurred();
-  }
-
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
-  @NlsSafe public static final String BR = "<br/>";
-  @NlsSafe public static final String HR = "<hr/>";
-  @NlsSafe public static final String LINE_SEPARATOR = "\n";
+  public static final @NlsSafe String BR = "<br/>";
+  public static final @NlsSafe String HR = "<hr/>";
+  public static final @NlsSafe String LINE_SEPARATOR = "\n";
+  private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
+  private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
-  public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
-  public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
+  /**
+   * A key for hiding a line under the window title bar on macOS
+   * It works if and only if transparent title bars are enabled and IDE runs on JetBrains Runtime
+   */
+  @ApiStatus.Internal
+  public static final String NO_BORDER_UNDER_WINDOW_TITLE_KEY = "";
 
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(UIUtil.class);
   }
 
-  public static void decorateWindowHeader(JRootPane pane) {
-    if (pane != null && SystemInfo.isMacOSMojave) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", StartupUiUtil.isUnderDarcula());
-    }
-  }
-
-  public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<? super Runnable> onDispose) {
-    if (!SystemInfoRt.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
-      return;
+  public static int getTransparentTitleBarHeight(JRootPane rootPane) {
+    Object property = rootPane.getClientProperty("Window.transparentTitleBarHeight");
+    if (property instanceof Integer) {
+      return (int)property;
     }
 
-    JBInsets topWindowInset = JBUI.insetsTop(24);
-    rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
-    AbstractBorder customDecorationBorder = new AbstractBorder() {
-      @Override
-      public Insets getBorderInsets(Component c) {
-        return topWindowInset;
-      }
-
-      @Override
-      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        Graphics2D graphics = (Graphics2D)g.create();
-        try {
-          Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
-          graphics.setColor(getPanelBackground());
-          graphics.fill(headerRectangle);
-          Color color = window.isActive()
-                        ? JBColor.black
-                        : JBColor.gray;
-          graphics.setColor(color);
-          int controlButtonsWidth = 70;
-          String windowTitle = getWindowTitle(window);
-          double widthToFit = controlButtonsWidth * 2 + GraphicsUtil.stringWidth(windowTitle, g.getFont()) - c.getWidth();
-          if (widthToFit <= 0) {
-            drawCenteredString(graphics, headerRectangle, windowTitle);
-          } else {
-            FontMetrics fm = graphics.getFontMetrics();
-            Rectangle2D stringBounds = fm.getStringBounds(windowTitle, graphics);
-            Rectangle bounds =
-              AffineTransform.getTranslateInstance(controlButtonsWidth, fm.getAscent() + (headerRectangle.height - stringBounds.getHeight()) / 2).createTransformedShape(stringBounds).getBounds();
-            drawCenteredString(graphics, bounds, windowTitle, false, true);
-          }
-        }
-        finally {
-          graphics.dispose();
-        }
-      }
-    };
-    rootPane.setBorder(customDecorationBorder);
-
-    WindowAdapter windowAdapter = new WindowAdapter() {
-      @Override
-      public void windowActivated(WindowEvent e) {
-        rootPane.repaint();
-      }
-
-      @Override
-      public void windowDeactivated(WindowEvent e) {
-        rootPane.repaint();
-      }
-    };
-    PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
-    window.addPropertyChangeListener("title", propertyChangeListener);
-    onDispose.accept((Runnable)() -> {
-      window.removeWindowListener(windowAdapter);
-      window.removePropertyChangeListener("title", propertyChangeListener);
-    });
-  }
-
-  private static String getWindowTitle(Window window) {
-    return window instanceof JDialog ? ((JDialog)window).getTitle() : ((JFrame)window).getTitle() ;
-  }
-
-  // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
-  public static void markAsTypeAheadAware(Window window) {
-    putWindowClientProperty(window, "TypeAheadAwareWindow", Boolean.TRUE);
-  }
-
-  public static boolean isTypeAheadAware(Window window) {
-    return isWindowClientPropertyTrue(window, "TypeAheadAwareWindow");
+    if ("small".equals(rootPane.getClientProperty("Window.style"))) {
+      return JBUI.getInt("macOSWindow.Title.heightSmall", 19);
+    }
+    else {
+      return JBUI.getInt("macOSWindow.Title.height", SystemInfo.isMacOSBigSur ? 29 : 23);
+    }
   }
 
   // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
   public static void markAsPossibleOwner(Dialog dialog) {
-    putWindowClientProperty(dialog, "PossibleOwner", Boolean.TRUE);
+    ClientProperty.put(dialog, "PossibleOwner", Boolean.TRUE);
   }
 
   public static boolean isPossibleOwner(@NotNull Dialog dialog) {
-    return isWindowClientPropertyTrue(dialog, "PossibleOwner");
+    return ClientProperty.isTrue(dialog, "PossibleOwner");
   }
 
   public static int getMultiClickInterval() {
@@ -193,49 +249,47 @@ public final class UIUtil {
     return 500;
   }
 
-  private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
-    @Override
-    protected @NotNull Boolean compute() {
-      if (!SystemInfo.isXWindow) {
-        return false;
-      }
-      try {
-        final Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass("sun.awt.X11GraphicsEnvironment");
-        final Method method = clazz.getMethod("isXRenderAvailable");
-        return (Boolean)method.invoke(null);
-      }
-      catch (Throwable e) {
-        return false;
-      }
+  private static final Supplier<Boolean> X_RENDER_ACTIVE = new SynchronizedClearableLazy<>(() -> {
+    if (!StartupUiUtil.isXToolkit()) {
+      return false;
     }
-  };
+
+    try {
+      Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass("sun.awt.X11GraphicsEnvironment");
+      Method method = clazz.getMethod("isXRenderAvailable");
+      return (Boolean)method.invoke(null);
+    }
+    catch (Throwable e) {
+      return false;
+    }
+  });
 
   private static final String[] STANDARD_FONT_SIZES =
     {"8", "9", "10", "11", "12", "14", "16", "18", "20", "22", "24", "26", "28", "36", "48", "72"};
 
   public static void applyStyle(@NotNull ComponentStyle componentStyle, @NotNull Component comp) {
-    if (!(comp instanceof JComponent)) return;
-
-    JComponent c = (JComponent)comp;
+    if (!(comp instanceof JComponent c)) {
+      return;
+    }
 
     if (isUnderAquaBasedLookAndFeel()) {
-      c.putClientProperty("JComponent.sizeVariant", StringUtil.toLowerCase(componentStyle.name()));
+      c.putClientProperty("JComponent.sizeVariant", Strings.toLowerCase(componentStyle.name()));
     }
-    FontSize fontSize = componentStyle == ComponentStyle.MINI
-                        ? FontSize.MINI
-                        : componentStyle == ComponentStyle.SMALL
-                          ? FontSize.SMALL
-                          : FontSize.NORMAL;
+    FontSize fontSize;
+    if (componentStyle == ComponentStyle.MINI) {
+      fontSize = FontSize.MINI;
+    }
+    else if (componentStyle == ComponentStyle.SMALL) {
+      fontSize = FontSize.SMALL;
+    }
+    else {
+      fontSize = FontSize.NORMAL;
+    }
     c.setFont(getFont(fontSize, c.getFont()));
     Container p = c.getParent();
     if (p != null) {
       SwingUtilities.updateComponentTreeUI(p);
     }
-  }
-
-  public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
-    return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
-           MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
   public static @Nullable Cursor cursorIfNotDefault(@Nullable Cursor cursorToSet) {
@@ -248,110 +302,6 @@ public final class UIUtil {
 
   public static @NotNull RGBImageFilter getTextGrayFilter() {
     return GrayFilter.namedFilter("text.grayFilter", new GrayFilter(20, 0, 100));
-  }
-
-  @ApiStatus.Experimental
-  public static class GrayFilter extends RGBImageFilter {
-    private float brightness;
-    private float contrast;
-    private int alpha;
-
-    private int origContrast;
-    private int origBrightness;
-
-    /**
-     * @param brightness in range [-100..100] where 0 has no effect
-     * @param contrast in range [-100..100] where 0 has no effect
-     * @param alpha in range [0..100] where 0 is transparent, 100 has no effect
-     */
-    public GrayFilter(int brightness, int contrast, int alpha) {
-      setBrightness(brightness);
-      setContrast(contrast);
-      setAlpha(alpha);
-    }
-
-    public GrayFilter() {
-      this(0, 0, 100);
-    }
-
-    private void setBrightness(int brightness) {
-      origBrightness = Math.max(-100, Math.min(100, brightness));
-      this.brightness = (float)(Math.pow(origBrightness, 3) / (100f * 100f)); // cubic in [0..100]
-    }
-
-    public int getBrightness() {
-      return origBrightness;
-    }
-
-    private void setContrast(int contrast) {
-      origContrast = Math.max(-100, Math.min(100, contrast));
-      this.contrast = origContrast / 100f;
-    }
-
-    public int getContrast() {
-      return origContrast;
-    }
-
-    private void setAlpha(int alpha) {
-      this.alpha = Math.max(0, Math.min(100, alpha));
-    }
-
-    public int getAlpha() {
-      return alpha;
-    }
-
-    @Override
-    @SuppressWarnings("AssignmentReplaceableWithOperatorAssignment")
-    public int filterRGB(int x, int y, int rgb) {
-      // Use NTSC conversion formula.
-      int gray = (int)(0.30 * (rgb >> 16 & 0xff) +
-                       0.59 * (rgb >> 8 & 0xff) +
-                       0.11 * (rgb & 0xff));
-
-      if (brightness >= 0) {
-        gray = (int)((gray + brightness * 255) / (1 + brightness));
-      }
-      else {
-        gray = (int)(gray / (1 - brightness));
-      }
-
-      if (contrast >= 0) {
-        if (gray >= 127) {
-          gray = (int)(gray + (255 - gray) * contrast);
-        }
-        else {
-          gray = (int)(gray - gray * contrast);
-        }
-      }
-      else {
-        gray = (int)(127 + (gray - 127) * (contrast + 1));
-      }
-
-      int a = ((rgb >> 24) & 0xff) * alpha / 100;
-
-      return (a << 24) | (gray << 16) | (gray << 8) | gray;
-    }
-
-    public @NotNull GrayFilterUIResource asUIResource() {
-      return new GrayFilterUIResource(this);
-    }
-
-    public static class GrayFilterUIResource extends GrayFilter implements UIResource {
-      public GrayFilterUIResource(@NotNull GrayFilter filter) {
-        super(filter.origBrightness, filter.origContrast, filter.alpha);
-      }
-    }
-
-    public static @NotNull GrayFilter namedFilter(@NotNull String resourceName, @NotNull GrayFilter defaultFilter) {
-      return ObjectUtils.notNull((GrayFilter)UIManager.get(resourceName), defaultFilter);
-    }
-  }
-
-  /** @deprecated use {@link JBUIScale} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isAppleRetina() {
-    return false;
   }
 
   public static @NotNull Couple<Color> getCellColors(@NotNull JTable table, boolean isSel, int row, int column) {
@@ -367,7 +317,7 @@ public final class UIUtil {
     if (table.isEditing()) {
       int column = table.getEditingColumn();
       int row = table.getEditingRow();
-      Component renderer = column>=0 && row >= 0 ? table.getCellRenderer(row, column)
+      Component renderer = column >= 0 && row >= 0 ? table.getCellRenderer(row, column)
         .getTableCellRendererComponent(table, table.getValueAt(row, column), true, table.hasFocus(), row, column) : null;
       Component component = table.getEditorComponent();
       if (component != null && renderer != null) {
@@ -383,25 +333,17 @@ public final class UIUtil {
   public enum FontColor {NORMAL, BRIGHTER}
 
   public static final char MNEMONIC = BundleBase.MNEMONIC;
-  @NlsSafe public static final String HTML_MIME = "text/html";
-  @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
-  @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
-  /**
-   * Prevent component DataContext from returning parent editor
-   * Useful for components that are manually painted over the editor to prevent shortcuts from falling-through to editor
-   *
-   * Usage: {@code component.putClientProperty(HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE)}
-   */
-  @NonNls public static final String HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY = "AuxEditorComponent";
-  @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
-  @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
+  public static final @NlsSafe String HTML_MIME = "text/html";
+  public static final @NonNls String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
+  public static final @NonNls String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
+  public static final @NonNls String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
+
+  public static final @NonNls String ENABLE_IME_FORWARDING_IN_POPUP = "EnableIMEForwardingInPopup";
 
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
-  @NonNls private static final String FOCUS_PROXY_KEY = "isFocusProxy";
-
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
-  private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+
   /**
    * Alt+click does copy text from tooltip or balloon to clipboard.
    * We collect this text from components recursively and this generic approach might 'grab' unexpected text fragments.
@@ -409,25 +351,6 @@ public final class UIUtil {
    * Note, main(root) components of BalloonImpl and AbstractPopup are already marked with this key
    */
   public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
-
-  private static final Action REDO_ACTION = new AbstractAction() {
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
-      if (manager != null && manager.canRedo()) {
-        manager.redo();
-      }
-    }
-  };
-  private static final Action UNDO_ACTION = new AbstractAction() {
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
-      if (manager != null && manager.canUndo()) {
-        manager.undo();
-      }
-    }
-  };
 
   private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
@@ -450,20 +373,16 @@ public final class UIUtil {
 
   public static final Insets PANEL_SMALL_INSETS = JBInsets.create(5, 8);
 
-  @NonNls private static final String ROOT_PANE = "JRootPane.future";
+  private static final @NonNls String ROOT_PANE = "JRootPane.future";
 
-  private static final Ref<Boolean> ourRetina = Ref.create(SystemInfo.isMac ? null : false);
+  private static final Ref<Boolean> ourRetina = Ref.create(SystemInfoRt.isMac ? null : false);
 
   private UIUtil() {
   }
 
   public static boolean isRetina(@NotNull Graphics2D graphics) {
-    return SystemInfo.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
+    return SystemInfoRt.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
-
-  //public static boolean isMacRetina(Graphics2D g) {
-  //  return DetectRetinaKit.isMacRetina(g);
-  //}
 
   public static boolean isRetina() {
     if (GraphicsEnvironment.isHeadless()) return false;
@@ -485,12 +404,13 @@ public final class UIUtil {
             GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
             final GraphicsDevice device = env.getDefaultScreenDevice();
             Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-            if (scale != null && scale.intValue() == 2) {
+            if (scale != null && scale == 2) {
               ourRetina.set(true);
               return true;
             }
           }
-          catch (AWTError | Exception ignore) { }
+          catch (AWTError | Exception ignore) {
+          }
           ourRetina.set(false);
         }
 
@@ -499,67 +419,51 @@ public final class UIUtil {
     }
   }
 
-  public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
-    return Boolean.TRUE.equals(getWindowClientProperty(window, key));
-  }
-
-  public static Object getWindowClientProperty(Window window, @NotNull Object key) {
-    if (window instanceof RootPaneContainer) {
-      JRootPane pane = ((RootPaneContainer)window).getRootPane();
-      if (pane != null) {
-        return pane.getClientProperty(key);
-      }
-    }
-    return null;
-  }
-
-  public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
-    if (window instanceof RootPaneContainer) {
-      JRootPane pane = ((RootPaneContainer)window).getRootPane();
-      if (pane != null) {
-        pane.putClientProperty(key, value);
-      }
-    }
-  }
-
   /**
    * @param component a Swing component that may hold a client property value
    * @param key       the client property key
    * @return {@code true} if the property of the specified component is set to {@code true}
+   * @deprecated use {@link ClientProperty#isTrue(Component, Object)} instead
    */
+  @Deprecated
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
-    return Boolean.TRUE.equals(getClientProperty(component, key));
+    return component instanceof Component && ClientProperty.isTrue((Component)component, key);
+  }
+
+  /**
+   * @param component a Swing component that may hold a client property value
+   * @return the property value from the specified component or {@code null}
+   */
+  public static <T> T getClientProperty(Component component, @NotNull Class<T> type) {
+    Object obj = ClientProperty.get(component, type);
+    return type.isInstance(obj) ? type.cast(obj) : null;
   }
 
   /**
    * @param component a Swing component that may hold a client property value
    * @param key       the client property key that specifies a return type
    * @return the property value from the specified component or {@code null}
+   * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
-  public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
-    return component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null;
+  @Deprecated
+  public static <T> @Nullable T getClientProperty(Object component, @NotNull Key<T> key) {
+    return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
 
   /**
-   * @param component a Swing component that may hold a client property value
-   * @return the property value from the specified component or {@code null}
+   * @deprecated use {@link JComponent#putClientProperty(Object, Object)}
+   * or {@link ClientProperty#put(JComponent, Key, Object)} instead
    */
-  public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
-    return ObjectUtils.tryCast(getClientProperty(component, (Object)type), type);
-  }
-
-  /**
-   * @param component a Swing component that may hold a client property value
-   * @param key       the client property key that specifies a return type
-   * @return the property value from the specified component or {@code null}
-   */
-  public static <T> T getClientProperty(Object component, @NotNull Key<T> key) {
-    //noinspection unchecked
-    return (T)getClientProperty(component, (Object)key);
-  }
-
+  @Deprecated
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
-    ComponentUtil.putClientProperty(component, key, value);
+    component.putClientProperty(key, value);
+  }
+
+  @Contract(pure = true)
+  @ApiStatus.Internal
+  public static @NotNull String getHtmlBodyWithoutPreWrapper(@NotNull String text) {
+    String result = getHtmlBody(text);
+    return StringsKt.removeSuffix(StringsKt.removePrefix(result, "<pre>"), "</pre>");
   }
 
   @Contract(pure = true)
@@ -607,26 +511,46 @@ public final class UIUtil {
 
   public static boolean isReallyTypedEvent(@NotNull KeyEvent e) {
     char c = e.getKeyChar();
-    if (c == KeyEvent.CHAR_UNDEFINED) return false; // ignore CHAR_UNDEFINED, like Swing text components do
-    if (c < 0x20 || c == 0x7F) return false;
-
-    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
-    if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
-
-    if (SystemInfo.isMac) {
-      return !e.isMetaDown() && !e.isControlDown();
+    if (c == KeyEvent.CHAR_UNDEFINED) {
+      // ignore CHAR_UNDEFINED, like Swing text components do
+      return false;
+    }
+    if (c < 0x20 || c == 0x7F) {
+      return false;
     }
 
-    return !e.isAltDown() && !e.isControlDown();
+    // allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
+    if (SystemInfoRt.isWindows && c >= 0x200C && c <= 0x200F) {
+      return true;
+    }
+    else if (SystemInfoRt.isMac) {
+      return !e.isMetaDown() && !e.isControlDown();
+    }
+    else {
+      return !e.isAltDown() && !e.isControlDown();
+    }
   }
 
   public static int getStringY(final @NotNull String string, final @NotNull Rectangle bounds, final @NotNull Graphics2D g) {
-    final int centerY = bounds.height / 2;
-    final Font font = g.getFont();
-    final FontRenderContext frc = g.getFontRenderContext();
-    final Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
-
+    int centerY = bounds.height / 2;
+    Font font = g.getFont();
+    FontRenderContext frc = g.getFontRenderContext();
+    Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
+  }
+
+  public static int computeStringWidth(@NotNull JComponent c, @Nullable String string) {
+    Font font = c.getFont();
+    if (font == null) font = getLabelFont();
+    return computeStringWidth(c, c.getFontMetrics(font), string);
+  }
+
+  /**
+   * Helper method that hides dependency on Swing.
+   * To be used in pair with the {@link SwingUtilities2#drawString}, that is commonly used by {@link ComponentUI} implementations..
+   */
+  public static int computeStringWidth(@NotNull JComponent c, @NotNull FontMetrics fontMetrics, @Nullable String string) {
+    return SwingUtilities2.stringWidth(c, fontMetrics, string);
   }
 
   public static void drawLabelDottedRectangle(final @NotNull JLabel label, final @NotNull Graphics g) {
@@ -655,7 +579,8 @@ public final class UIUtil {
       if (label.getHorizontalTextPosition() == SwingConstants.TRAILING) {
         point.x += label.getIconTextGap();
         point.x += icon.getIconWidth();
-      } else if (label.getHorizontalTextPosition() == SwingConstants.LEADING) {
+      }
+      else if (label.getHorizontalTextPosition() == SwingConstants.LEADING) {
         size.width -= icon.getIconWidth();
       }
     }
@@ -669,8 +594,8 @@ public final class UIUtil {
   }
 
   /**
-   * @param string {@code String} to examine
-   * @param font {@code Font} that is used to render the string
+   * @param string   {@code String} to examine
+   * @param font     {@code Font} that is used to render the string
    * @param graphics {@link Graphics} that should be used to render the string
    * @return height of the tallest glyph in a string. If string is empty, returns 0
    */
@@ -678,7 +603,7 @@ public final class UIUtil {
     FontRenderContext frc = ((Graphics2D)graphics).getFontRenderContext();
     GlyphVector gv = font.createGlyphVector(frc, string);
     int maxHeight = 0;
-    for (int i = 0; i < string.length(); i ++) {
+    for (int i = 0; i < string.length(); i++) {
       maxHeight = Math.max(maxHeight, (int)gv.getGlyphMetrics(i).getBounds2D().getHeight());
     }
     return maxHeight;
@@ -700,14 +625,6 @@ public final class UIUtil {
     }
   }
 
-  /**
-   * @deprecated Use {@link LinePainter2D#paint(Graphics2D, double, double, double, double)} instead.
-   */
-  @Deprecated
-  public static void drawLine(@NotNull Graphics g, int x1, int y1, int x2, int y2) {
-    LinePainter2D.paint((Graphics2D)g, x1, y1, x2, y2);
-  }
-
   public static void drawLine(@NotNull Graphics2D g, int x1, int y1, int x2, int y2, @Nullable Color bgColor, @Nullable Color fgColor) {
     Color oldFg = g.getColor();
     Color oldBg = g.getBackground();
@@ -727,7 +644,7 @@ public final class UIUtil {
   }
 
   public static void drawWave(@NotNull Graphics2D g, @NotNull Rectangle rectangle) {
-    WavePainter.forColor(g.getColor()).paint(g, (int)rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
+    WavePainter.forColor(g.getColor()).paint(g, (int)rectangle.getMinX(), (int)rectangle.getMaxX(), (int)rectangle.getMaxY());
   }
 
   public static String @NotNull [] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
@@ -739,7 +656,8 @@ public final class UIUtil {
       char ch = text.charAt(i);
       currentAtom.append(ch);
 
-      if (ch == separator) {
+      boolean lineBreak = ch == '\n';
+      if (lineBreak || ch == separator) {
         currentLine.append(currentAtom);
         currentAtom.setLength(0);
       }
@@ -747,8 +665,8 @@ public final class UIUtil {
       String s = currentLine.toString() + currentAtom;
       int width = fontMetrics.stringWidth(s);
 
-      if (width >= widthLimit - fontMetrics.charWidth('w')) {
-        if (currentLine.length() > 0) {
+      if (lineBreak || width >= widthLimit - fontMetrics.charWidth('w')) {
+        if (!currentLine.isEmpty()) {
           lines.add(currentLine.toString());
           currentLine = new StringBuilder();
         }
@@ -767,13 +685,65 @@ public final class UIUtil {
     return ArrayUtilRt.toStringArray(lines);
   }
 
+  /**
+   * Computes the minimum size the component must have to keep the given number of characters
+   * <p>
+   * Same as {@code computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4)}.
+   *
+   * @param preferredSize the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
+   * @param text          the currently set text
+   * @param fontMetrics   the current font metrics
+   * @return the minimum size the component has to have to keep the given number of characters
+   */
+  public static int computeTextComponentMinimumSize(
+    int preferredSize,
+    @Nullable String text,
+    @Nullable FontMetrics fontMetrics
+  ) {
+    return computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4);
+  }
+
+  /**
+   * Computes the minimum size the component must have to keep the given number of characters
+   * <p>
+   * Intended to be used for simple {@code JLabel}-like text components.
+   * Often they provide the preferred size, but not the minimum size.
+   * This function can be used to roughly compute the minimum size based on the preferred one.
+   * The returned size will be reduced by the difference between the full text width and
+   * the width of the text contracted to just the {@code nCharactersToKeep} first characters plus {@code "..."}
+   * that's usually added by such components when the text doesn't fit.
+   * </p>
+   * <p>
+   * Note that, due to various factors, the result may be off by a few pixels which is enough to gain or lose an extra character.
+   * Because of fractional font metrics, fractional scaling, complicated calculations, rounding errors and other such things
+   * it's hard to make strict guarantees here.
+   * </p>
+   *
+   * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
+   * @param text              the currently set text
+   * @param fontMetrics       the current font metrics
+   * @param nCharactersToKeep the number of characters the component must keep
+   * @return the minimum size the component has to have to keep the given number of characters
+   */
+  public static int computeTextComponentMinimumSize(
+    int preferredSize,
+    @Nullable String text,
+    @Nullable FontMetrics fontMetrics,
+    int nCharactersToKeep
+  ) {
+    if (text == null || text.length() <= nCharactersToKeep || fontMetrics == null) return preferredSize;
+    var fullTextWidth = fontMetrics.stringWidth(text);
+    var minTextWidth = fontMetrics.stringWidth(text.substring(0, nCharactersToKeep) + "...");
+    return preferredSize - (fullTextWidth - minTextWidth);
+  }
+
   public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     assignMnemonic(text, action);
 
-    //noinspection HardCodedStringLiteral
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
+
   public static void assignMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     int mnemoPos = text.indexOf('&');
     if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
@@ -792,19 +762,16 @@ public final class UIUtil {
   public static @NotNull Font getFont(@NotNull FontSize size, @Nullable Font base) {
     if (base == null) base = StartupUiUtil.getLabelFont();
 
-    return base.deriveFont(getFontSize(size));
+    return JBFont.create(base).deriveFont(getFontSize(size));
   }
 
   public static float getFontSize(@NotNull FontSize size) {
     int defSize = StartupUiUtil.getLabelFont().getSize();
-    switch (size) {
-      case SMALL:
-        return Math.max(defSize - JBUIScale.scale(2f), JBUIScale.scale(11f));
-      case MINI:
-        return Math.max(defSize - JBUIScale.scale(4f), JBUIScale.scale(9f));
-      default:
-        return defSize;
-    }
+    return switch (size) {
+      case SMALL -> Math.max(defSize - JBUIScale.scale(2f), JBUIScale.scale(11f));
+      case MINI -> Math.max(defSize - JBUIScale.scale(4f), JBUIScale.scale(9f));
+      default -> defSize;
+    };
   }
 
   public static @NotNull Color getLabelFontColor(@NotNull FontColor fontColor) {
@@ -819,7 +786,6 @@ public final class UIUtil {
   public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
     // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint
     ButtonUI ui = cb.getUI();
-    String text = cb.getText();
 
     Icon buttonIcon = cb.getIcon();
     if (buttonIcon == null && ui != null) {
@@ -828,27 +794,28 @@ public final class UIUtil {
       }
     }
 
-    Dimension size = new Dimension();
+    return getButtonTextHorizontalOffset(cb, cb.getSize(new Dimension()), buttonIcon);
+  }
+
+  public static int getButtonTextHorizontalOffset(@NotNull AbstractButton button, @NotNull Dimension size, @Nullable Icon buttonIcon) {
+    String text = button.getText();
+
     Rectangle viewRect = new Rectangle();
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
 
-    Insets i = cb.getInsets();
+    Insets i = button.getInsets();
 
-    size = cb.getSize(size);
-    viewRect.x = i.left;
     viewRect.y = i.top;
     viewRect.width = size.width - (i.right + viewRect.x);
     viewRect.height = size.height - (i.bottom + viewRect.y);
-    iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
-    textRect.x = textRect.y = textRect.width = textRect.height = 0;
 
     SwingUtilities.layoutCompoundLabel(
-      cb, cb.getFontMetrics(cb.getFont()), text, buttonIcon,
-      cb.getVerticalAlignment(), cb.getHorizontalAlignment(),
-      cb.getVerticalTextPosition(), cb.getHorizontalTextPosition(),
+      button, button.getFontMetrics(button.getFont()), text, buttonIcon,
+      button.getVerticalAlignment(), button.getHorizontalAlignment(),
+      button.getVerticalTextPosition(), button.getHorizontalTextPosition(),
       viewRect, iconRect, textRect,
-      text == null ? 0 : cb.getIconTextGap());
+      text == null ? 0 : button.getIconTextGap());
 
     return textRect.x;
   }
@@ -865,30 +832,28 @@ public final class UIUtil {
     return JBColor.namedColor("Label.foreground", new JBColor(Gray._0, Gray.xBB));
   }
 
-  public static Color getErrorForeground() {
-    return JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+  public static @NotNull Color getLabelSuccessForeground() {
+    return JBColor.namedColor("Label.successForeground", 0x368746, 0x50A661);
+  }
+
+  public static @NotNull Color getErrorForeground() {
+    return NamedColorUtil.getErrorForeground();
   }
 
   public static @NotNull Color getLabelDisabledForeground() {
     return JBColor.namedColor("Label.disabledForeground", JBColor.GRAY);
   }
 
-  public static @NotNull Color getContextHelpForeground() {
-    return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+  public static @NotNull Color getLabelInfoForeground() {
+    return JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
+  public static @NotNull Color getContextHelpForeground() {
+    return JBUI.CurrentTheme.ContextHelp.FOREGROUND;
+  }
+
   public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {
-    if (s.indexOf('&') != -1) {
-      s = StringUtil.replace(s, "&", "");
-    }
-    if (s.indexOf('_') != -1) {
-      s = StringUtil.replace(s, "_", "");
-    }
-    if (s.indexOf(MNEMONIC) != -1) {
-      s = StringUtil.replace(s, String.valueOf(MNEMONIC), "");
-    }
-    return s;
+    return TextWithMnemonic.parse(s).getText();
   }
 
   public static int getDisplayMnemonicIndex(@NotNull String s) {
@@ -908,7 +873,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getTreeForeground()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getTreeTextForeground() {
     return getTreeForeground();
   }
@@ -930,27 +895,11 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getInactiveTextColor() {
-    return JBColor.namedColor("Component.infoForeground", new JBColor(Gray.x99, Gray.x78));
-  }
-
-  /**
-   * @deprecated use {@link UIUtil#getTextFieldBackground()} instead
-   */
-  @Deprecated
-  public static Color getActiveTextFieldBackgroundColor() {
-    return getTextFieldBackground();
+    return NamedColorUtil.getInactiveTextColor();
   }
 
   public static Color getInactiveTextFieldBackgroundColor() {
     return UIManager.getColor("TextField.inactiveBackground");
-  }
-
-  /**
-   * @deprecated use {@link UIUtil#getInactiveTextColor()} instead
-   */
-  @Deprecated
-  public static @NotNull Color getTextInactiveTextColor() {
-    return getInactiveTextColor();
   }
 
   public static Color getTreeSelectionBorderColor() {
@@ -966,15 +915,15 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getToolTipBackground() {
-    return JBColor.namedColor("ToolTip.background", new JBColor(Gray.xF2, new Color(0x3c3f41)));
+    return JBUI.CurrentTheme.Tooltip.background();
   }
 
   public static @NotNull Color getToolTipActionBackground() {
-    return JBColor.namedColor("ToolTip.Actions.background", new JBColor(Gray.xEB, new Color(0x43474a)));
+    return JBUI.CurrentTheme.Tooltip.Actions.background();
   }
 
   public static @NotNull Color getToolTipForeground() {
-    return JBColor.namedColor("ToolTip.foreground", new JBColor(Gray.x00, Gray.xBF));
+    return JBUI.CurrentTheme.Tooltip.foreground();
   }
 
   public static Color getComboBoxDisabledForeground() {
@@ -1029,12 +978,16 @@ public final class UIUtil {
     return UIManager.getColor("TextField.background");
   }
 
+  public static Color getTextFieldDisabledBackground() {
+    return UIManager.getColor("TextField.disabledBackground");
+  }
+
   public static Font getButtonFont() {
     return UIManager.getFont("Button.font");
   }
 
   public static Font getToolTipFont() {
-    return UIManager.getFont("ToolTip.font");
+    return JBUI.CurrentTheme.Tooltip.font();
   }
 
   public static void setSliderIsFilled(final @NotNull JSlider slider, final boolean value) {
@@ -1042,7 +995,7 @@ public final class UIUtil {
   }
 
   public static Color getLabelTextForeground() {
-    return UIManager.getColor("Label.textForeground");
+    return UIManager.getColor("Label.foreground");
   }
 
   public static Color getControlColor() {
@@ -1053,32 +1006,10 @@ public final class UIUtil {
     return UIManager.getFont("OptionPane.messageFont");
   }
 
-  public static Font getMenuFont() {
-    return UIManager.getFont("Menu.font");
-  }
-
   /**
    * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
    */
-  @Deprecated
-  public static @NotNull Color getSeparatorForeground() {
-    return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
-  }
-
-  public static Color getSeparatorShadow() {
-    return UIManager.getColor("Separator.shadow");
-  }
-
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  public static Color getSeparatorHighlight() {
-    return UIManager.getColor("Separator.highlight");
-  }
-
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.CustomFrameDecorations#separatorForeground()}
-   */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getSeparatorColor() {
     return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
@@ -1103,19 +1034,19 @@ public final class UIUtil {
   }
 
   public static @NotNull Icon getErrorIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.errorIcon"), AllIcons.General.ErrorDialog);
   }
 
   public static @NotNull Icon getInformationIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.informationIcon"), AllIcons.General.InformationDialog);
   }
 
   public static @NotNull Icon getQuestionIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.questionIcon"), AllIcons.General.QuestionDialog);
   }
 
   public static @NotNull Icon getWarningIcon() {
-    return ObjectUtils.notNull(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
+    return Objects.requireNonNullElse(UIManager.getIcon("OptionPane.warningIcon"), AllIcons.General.WarningDialog);
   }
 
   public static @NotNull Icon getBalloonInformationIcon() {
@@ -1128,12 +1059,6 @@ public final class UIUtil {
 
   public static @NotNull Icon getBalloonErrorIcon() {
     return AllIcons.General.BalloonError;
-  }
-
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  public static Icon getRadioButtonIcon() {
-    return UIManager.getIcon("RadioButton.icon");
   }
 
   public static @NotNull Icon getTreeNodeIcon(boolean expanded, boolean selected, boolean focused) {
@@ -1165,28 +1090,14 @@ public final class UIUtil {
     return UIManager.getIcon("Tree.expandedIcon");
   }
 
-  /**
-   * @deprecated use {@link #getTreeExpandedIcon()} and {@link #getTreeCollapsedIcon()}
-   */
-  @Deprecated
-  public static Icon getTreeIcon(boolean expanded) {
-    return expanded ? getTreeExpandedIcon() : getTreeCollapsedIcon();
-  }
-
   public static @NotNull Icon getTreeSelectedCollapsedIcon() {
     Icon icon = UIManager.getIcon("Tree.collapsedSelectedIcon");
-    return icon != null ? icon : getTreeCollapsedIcon();
+    return icon == null ? getTreeCollapsedIcon() : icon;
   }
 
   public static @NotNull Icon getTreeSelectedExpandedIcon() {
     Icon icon = UIManager.getIcon("Tree.expandedSelectedIcon");
-    return icon != null ? icon : getTreeExpandedIcon();
-  }
-
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  public static Border getTableHeaderCellBorder() {
-    return UIManager.getBorder("TableHeader.cellBorder");
+    return icon == null ? getTreeExpandedIcon() : icon;
   }
 
   public static Color getWindowColor() {
@@ -1202,76 +1113,63 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Aqua Look-n-Feel is not supported anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderAquaLookAndFeel() {
-    return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
-  }
-
-  /**
    * @deprecated Nimbus Look-n-Feel is deprecated and not supported anymore
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public static boolean isUnderNimbusLookAndFeel() {
     return false;
   }
 
   public static boolean isUnderAquaBasedLookAndFeel() {
-    return SystemInfo.isMac && (StartupUiUtil.isUnderDarcula() || isUnderIntelliJLaF());
+    return SystemInfoRt.isMac && (StartupUiUtil.isUnderDarcula() || isUnderIntelliJLaF());
   }
 
+  /**
+   * Do not use it. Use theme properties instead of it.
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderDefaultMacTheme() {
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (SystemInfo.isMac && lookAndFeel instanceof UserDataHolder) {
-      UserDataHolder dh = (UserDataHolder)lookAndFeel;
-
-      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-             StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
-    }
     return false;
   }
 
+  /**
+   * Do not use it. Use theme properties instead of it.
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderWin10LookAndFeel() {
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (SystemInfo.isWindows && lookAndFeel instanceof UserDataHolder) {
-      UserDataHolder dh = (UserDataHolder)lookAndFeel;
-
-      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
-             StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
-    }
     return false;
   }
 
+  /**
+   * @deprecated Do not use it. Use {@link JBColor#isBright()} to detect if current LaF theme is dark or bright.
+   * See also {@link com.intellij.openapi.editor.colors.EditorColorsManager#isDarkEditor()}
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderDarcula() {
-    return StartupUiUtil.isUnderDarcula();
+    return StartupUiUtil.INSTANCE.isDarkTheme();
   }
 
   public static boolean isUnderIntelliJLaF() {
-    return UIManager.getLookAndFeel().getName().contains("IntelliJ") || isUnderDefaultMacTheme() || isUnderWin10LookAndFeel();
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnderGTKLookAndFeel() {
-    return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
+    return StartupUiUtil.isUnderIntelliJLaF();
   }
 
   public static boolean isGraphite() {
-    if (!SystemInfo.isMac) return false;
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
+
     try {
       // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
       // NSGraphiteControlTint = 6
       return Foundation.invoke("NSColor", "currentControlTint").intValue() == 6;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return false;
     }
   }
 
   public static @NotNull Font getToolbarFont() {
-    return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : StartupUiUtil.getLabelFont();
+    return SystemInfoRt.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : StartupUiUtil.getLabelFont();
   }
 
   public static @NotNull Color shade(@NotNull Color c, final double factor, final double alphaFactor) {
@@ -1285,6 +1183,12 @@ public final class UIUtil {
     );
   }
 
+  /**
+   * @param c1     first color to mix
+   * @param c2     second color to mix
+   * @param factor impact of color specified in {@code c2}
+   * @return Mixed color
+   */
   public static @NotNull Color mix(@NotNull Color c1, final Color c2, final double factor) {
     assert 0 <= factor && factor <= 1.0 : factor;
     final double backFactor = 1.0 - factor;
@@ -1323,7 +1227,11 @@ public final class UIUtil {
   }
 
   public static @NotNull Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? JBInsets.create(1, 0) : JBUI.emptyInsets();
+    return getListViewportPadding(false);
+  }
+
+  public static @NotNull Insets getListViewportPadding(boolean listWithAdvertiser) {
+    return listWithAdvertiser ? new JBInsets(4, 0, 8, 0) : JBInsets.create(4, 0);
   }
 
   public static boolean isToUseDottedCellBorder() {
@@ -1331,31 +1239,11 @@ public final class UIUtil {
   }
 
   public static boolean isControlKeyDown(@NotNull MouseEvent mouseEvent) {
-    return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
+    return SystemInfoRt.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
-  public static String @NotNull [] getValidFontNames(final boolean familyName) {
-    Set<String> result = new TreeSet<>();
-
-    // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
-    for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
-      try {
-        if (FontUtil.isValidFont(font)) {
-          result.add(familyName ? font.getFamily() : font.getName());
-        }
-      }
-      catch (Exception ignore) {
-        // JRE has problems working with the font. Just skip.
-      }
-    }
-
-    // add label font (if isn't listed among above)
-    Font labelFont = StartupUiUtil.getLabelFont();
-    if (labelFont != null && FontUtil.isValidFont(labelFont)) {
-      result.add(familyName ? labelFont.getFamily() : labelFont.getName());
-    }
-
-    return ArrayUtilRt.toStringArray(result);
+  public static @NotNull String getControlKeyName() {
+    return SystemInfoRt.isMac ? "Command" : "Ctrl";
   }
 
   public static String @NotNull [] getStandardFontSizes() {
@@ -1406,10 +1294,6 @@ public final class UIUtil {
     sb.append(Integer.toHexString(color.getBlue()));
   }
 
-  public static void drawDottedRectangle(@NotNull Graphics g, @NotNull Rectangle r) {
-    drawDottedRectangle(g, r.x, r.y, r.x + r.width, r.y + r.height);
-  }
-
   /**
    * @param g  graphics.
    * @param x  top left X coordinate.
@@ -1454,7 +1338,7 @@ public final class UIUtil {
                                         final Color bgColor,
                                         final Color fgColor,
                                         final boolean opaque) {
-    if (SystemInfo.isMac && !isRetina() || SystemInfo.isLinux) {
+    if (SystemInfoRt.isMac && !isRetina() || SystemInfoRt.isLinux) {
       drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
     }
     else {
@@ -1462,50 +1346,54 @@ public final class UIUtil {
     }
   }
 
-  @SuppressWarnings("UnregisteredNamedColor")
+  @SuppressWarnings({"UnregisteredNamedColor", "UseJBColor"})
   public static void drawSearchMatch(@NotNull Graphics2D g,
                                      final float startX,
                                      final float endX,
                                      final int height) {
-    Color c1 = JBColor.namedColor("SearchMatch.startBackground", JBColor.namedColor("SearchMatch.startColor", 0xffeaa2));
-    Color c2 = JBColor.namedColor("SearchMatch.endBackground", JBColor.namedColor("SearchMatch.endColor", 0xffd042));
-    drawSearchMatch(g, startX, endX, height, c1, c2);
+    drawSearchMatch(g, startX, endX, height, getSearchMatchGradientStartColor(), getSearchMatchGradientEndColor());
+  }
+
+  public static @NotNull JBColor getSearchMatchGradientStartColor() {
+    return JBColor.namedColor("SearchMatch.startBackground", JBColor.namedColor("SearchMatch.startColor", new Color(0xb3ffeaa2, true)));
+  }
+
+  public static @NotNull JBColor getSearchMatchGradientEndColor() {
+    return JBColor.namedColor("SearchMatch.endBackground", JBColor.namedColor("SearchMatch.endColor", new Color(0xb3ffd042, true)));
   }
 
   public static void drawSearchMatch(@NotNull Graphics2D g, float startXf, float endXf, int height, Color c1, Color c2) {
-    GraphicsConfig config = new GraphicsConfig(g);
-    float alpha = JBUI.getInt("SearchMatch.transparency", 70) / 100f;
-    alpha = alpha < 0 || alpha > 1 ? 0.7f : alpha;
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-    g.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setPaint(getGradientPaint(startXf, 2, c1, startXf, height - 5, c2));
 
-    if (JreHiDpiUtil.isJreHiDPI(g)) {
-      GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
-      g.fill(new RoundRectangle2D.Float(startXf, 2, endXf - startXf, height - 4, 5, 5));
-      c.restore();
-      config.restore();
-      return;
+      if (JreHiDpiUtil.isJreHiDPI(g2)) {
+        GraphicsUtil.setupRoundedBorderAntialiasing(g2);
+        g2.fill(new RoundRectangle2D.Float(startXf, 2, endXf - startXf, height - 4, 5, 5));
+      }
+      else {
+        int startX = (int)startXf;
+        int endX = (int)endXf;
+
+        g2.fillRect(startX, 3, endX - startX, height - 5);
+
+        boolean drawRound = endXf - startXf > 4;
+        if (drawRound) {
+          LinePainter2D.paint(g2, startX - 1, 4, startX - 1, height - 4);
+          LinePainter2D.paint(g2, endX, 4, endX, height - 4);
+
+          g2.setColor(new Color(100, 100, 100, 50));
+          LinePainter2D.paint(g2, startX - 1, 4, startX - 1, height - 4);
+          LinePainter2D.paint(g2, endX, 4, endX, height - 4);
+
+          LinePainter2D.paint(g2, startX, 3, endX - 1, 3);
+          LinePainter2D.paint(g2, startX, height - 3, endX - 1, height - 3);
+        }
+      }
     }
-
-    int startX = (int)startXf;
-    int endX = (int)endXf;
-
-    g.fillRect(startX, 3, endX - startX, height - 5);
-
-    final boolean drawRound = endXf - startXf > 4;
-    if (drawRound) {
-      LinePainter2D.paint(g, startX - 1, 4, startX - 1, height - 4);
-      LinePainter2D.paint(g, endX, 4, endX, height - 4);
-
-      g.setColor(new Color(100, 100, 100, 50));
-      LinePainter2D.paint(g, startX - 1, 4, startX - 1, height - 4);
-      LinePainter2D.paint(g, endX, 4, endX, height - 4);
-
-      LinePainter2D.paint(g, startX, 3, endX - 1, 3);
-      LinePainter2D.paint(g, startX, height - 3, endX - 1, height - 3);
+    finally {
+      g2.dispose();
     }
-
-    config.restore();
   }
 
   private static void drawBoringDottedLine(final @NotNull Graphics2D g,
@@ -1572,7 +1460,6 @@ public final class UIUtil {
       g.setColor(JBUI.CurrentTheme.ToolWindow.headerBorderBackground());
       if (drawTopLine) LinePainter2D.paint((Graphics2D)g, x, 0, width, 0);
       if (drawBottomLine) LinePainter2D.paint((Graphics2D)g, x, height - 1, width, height - 1);
-
     }
     finally {
       config.restore();
@@ -1615,11 +1502,11 @@ public final class UIUtil {
       LinePainter2D.paint(g, startX, lineY + 2, endX, lineY + 2);
     }
 
-    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(ObjectUtils.notNull(fgColor, oldColor));
+    AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(Objects.requireNonNullElse(fgColor, oldColor));
     painter.paint(g, startX, endX, lineY);
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void applyRenderingHints(@NotNull Graphics g) {
     GraphicsUtil.applyRenderingHints((Graphics2D)g);
   }
@@ -1633,84 +1520,40 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Use {@link ImageUtil#createImage(GraphicsConfiguration, int, int, int)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
-    return ImageUtil.createImage(gc, width, height, type);
-  }
-
-  /**
    * Creates a HiDPI-aware BufferedImage in the graphics config scale.
    *
-   * @param gc the graphics config
-   * @param width the width in user coordinate space
+   * @param gc     the graphics config
+   * @param width  the width in user coordinate space
    * @param height the height in user coordinate space
-   * @param type the type of the image
-   * @param rm the rounding mode to apply to width/height (for a HiDPI-aware image, the rounding is applied in the device space)
-   *
+   * @param type   the type of the image
+   * @param rm     the rounding mode to apply to width/height (for a HiDPI-aware image, the rounding is applied in the device space)
    * @return a HiDPI-aware BufferedImage in the graphics scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  public static @NotNull BufferedImage createImage(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
+  public static @NotNull BufferedImage createImage(GraphicsConfiguration gc,
+                                                   double width,
+                                                   double height,
+                                                   int type,
+                                                   @NotNull RoundingMode rm) {
     if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return RetinaImage.create(gc, width, height, type, rm);
+      return new HiDPIImage(gc, width, height, type, rm);
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(rm.round(width), rm.round(height), type);
-  }
-
-  /**
-   * @see #createImage(GraphicsConfiguration, double, double, int, RoundingMode)
-   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
-   */
-  public static @NotNull BufferedImage createImage(ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
-    if (StartupUiUtil.isJreHiDPI(ctx)) {
-      return RetinaImage.create(ctx, width, height, type, rm);
-    }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(rm.round(width), rm.round(height), type);
-  }
-
-  /**
-   * @deprecated Use {@link ImageUtil#createImage(Graphics, int, int, int)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImage(Graphics g, int width, int height, int type) {
-    return ImageUtil.createImage(g, width, height, type);
-  }
-
-  /**
-   * @deprecated Use {@link ImageUtil#createImage(Graphics, double, double, int, RoundingMode)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull RoundingMode rm) {
-    return ImageUtil.createImage(g, width, height, type, rm);
   }
 
   /**
    * Creates a HiDPI-aware BufferedImage in the component scale.
    *
-   * @param comp the component associated with the target graphics device
-   * @param width the width in user coordinate space
-   * @param height the height in user coordinate space
-   * @param type the type of the image
-   *
+   * @param component the component associated with the target graphics device
+   * @param width     the width in user coordinate space
+   * @param height    the height in user coordinate space
+   * @param type      the type of the image
    * @return a HiDPI-aware BufferedImage in the component scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  public static @NotNull BufferedImage createImage(Component comp, int width, int height, int type) {
-    return comp != null ?
-           ImageUtil.createImage(comp.getGraphicsConfiguration(), width, height, type) :
-           ImageUtil.createImage(width, height, type);
-  }
-
-  /**
-   * @deprecated use {@link #createImage(Graphics, int, int, int)}
-   */
-  @Deprecated
-  public static @NotNull BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
-    return ImageUtil.createImage(g, width, height, type);
+  public static @NotNull BufferedImage createImage(@Nullable Component component, int width, int height, int type) {
+    return ImageUtil.createImage(component == null ? null : component.getGraphicsConfiguration(), width, height, type);
   }
 
   /**
@@ -1722,33 +1565,37 @@ public final class UIUtil {
    * @param g target graphics container
    */
   public static void setupComposite(@NotNull Graphics2D g) {
-    g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
+    g.setComposite(X_RENDER_ACTIVE.get() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
-   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
+   * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()} instead
+   * Must be called from EDT.
+   *
    * @see #pump()
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    EdtInvocationManager.dispatchAllInvocationEvents();
+    try (AccessToken ignored = UtilKt.reportTooLongDispatch()) {
+      EDT.dispatchAllInvocationEvents();
+    }
   }
 
-  public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
+  public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
+    StartupUiUtil.addAwtListener(mask, parent, listener);
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
     component.addPropertyChangeListener("ancestor", listener);
   }
 
-  public static void removeParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
-    component.removePropertyChangeListener("ancestor", listener);
-  }
-
-  public static void drawVDottedLine(@NotNull Graphics2D g, int lineX, int startY, int endY, final @Nullable Color bgColor, final Color fgColor) {
+  public static void drawVDottedLine(@NotNull Graphics2D g,
+                                     int lineX,
+                                     int startY,
+                                     int endY,
+                                     final @Nullable Color bgColor,
+                                     final Color fgColor) {
     if (bgColor != null) {
       g.setColor(bgColor);
       LinePainter2D.paint(g, lineX, startY, lineX, endY);
@@ -1760,7 +1607,12 @@ public final class UIUtil {
     }
   }
 
-  public static void drawHDottedLine(@NotNull Graphics2D g, int startX, int endX, int lineY, final @Nullable Color bgColor, final Color fgColor) {
+  public static void drawHDottedLine(@NotNull Graphics2D g,
+                                     int startX,
+                                     int endX,
+                                     int lineY,
+                                     final @Nullable Color bgColor,
+                                     final Color fgColor) {
     if (bgColor != null) {
       g.setColor(bgColor);
       LinePainter2D.paint(g, startX, lineY, endX, lineY);
@@ -1773,7 +1625,13 @@ public final class UIUtil {
     }
   }
 
-  public static void drawDottedLine(@NotNull Graphics2D g, int x1, int y1, int x2, int y2, final @Nullable Color bgColor, final Color fgColor) {
+  public static void drawDottedLine(@NotNull Graphics2D g,
+                                    int x1,
+                                    int y1,
+                                    int x2,
+                                    int y2,
+                                    final @Nullable Color bgColor,
+                                    final Color fgColor) {
     if (x1 == x2) {
       drawVDottedLine(g, x1, y1, y2, bgColor, fgColor);
     }
@@ -1785,7 +1643,12 @@ public final class UIUtil {
     }
   }
 
-  public static void drawStringWithHighlighting(@NotNull Graphics g, @NotNull String s, int x, int y, Color foreground, Color highlighting) {
+  public static void drawStringWithHighlighting(@NotNull Graphics g,
+                                                @NotNull String s,
+                                                int x,
+                                                int y,
+                                                Color foreground,
+                                                Color highlighting) {
     g.setColor(highlighting);
     boolean isRetina = JreHiDpiUtil.isJreHiDPI((Graphics2D)g);
     float scale = 1 / JBUIScale.sysScale((Graphics2D)g);
@@ -1800,13 +1663,18 @@ public final class UIUtil {
 
   /**
    * Draws a centered string in the passed rectangle.
-   * @param g the {@link Graphics} instance to draw to
-   * @param rect the {@link Rectangle} to use as bounding box
-   * @param str the string to draw
+   *
+   * @param g            the {@link Graphics} instance to draw to
+   * @param rect         the {@link Rectangle} to use as bounding box
+   * @param str          the string to draw
    * @param horzCentered if true, the string will be centered horizontally
    * @param vertCentered if true, the string will be centered vertically
    */
-  public static void drawCenteredString(@NotNull Graphics2D g, @NotNull Rectangle rect, @NotNull String str, boolean horzCentered, boolean vertCentered) {
+  public static void drawCenteredString(@NotNull Graphics2D g,
+                                        @NotNull Rectangle rect,
+                                        @NotNull String str,
+                                        boolean horzCentered,
+                                        boolean vertCentered) {
     FontMetrics fm = g.getFontMetrics(g.getFont());
     int textWidth = fm.stringWidth(str) - 1;
     int x = horzCentered ? Math.max(rect.x, rect.x + (rect.width - textWidth) / 2) : rect.x;
@@ -1819,9 +1687,10 @@ public final class UIUtil {
 
   /**
    * Draws a centered string in the passed rectangle.
-   * @param g the {@link Graphics} instance to draw to
+   *
+   * @param g    the {@link Graphics} instance to draw to
    * @param rect the {@link Rectangle} to use as bounding box
-   * @param str the string to draw
+   * @param str  the string to draw
    */
   public static void drawCenteredString(@NotNull Graphics2D g, @NotNull Rectangle rect, @NotNull String str) {
     drawCenteredString(g, rect, str, true, true);
@@ -1829,14 +1698,118 @@ public final class UIUtil {
 
   /**
    * @param component to check whether it has focus within its component hierarchy
-   * @return {@code true} if component or one of its children has focus
+   * @return {@code true} if component or one of its parents has focus in a more general sense than UI focuses,
+   * sometimes useful to limit various activities by checking the focus of the real UI,
+   * but it could be unneeded in headless mode or in other scenarios.
    * @see Component#isFocusOwner()
    */
   public static boolean isFocusAncestor(@NotNull Component component) {
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (owner == null) return false;
-    if (owner == component) return true;
-    return SwingUtilities.isDescendingFrom(owner, component);
+    if (owner == null) {
+      return false;
+    }
+    if (SwingUtilities.isDescendingFrom(owner, component) || GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
+
+    while (component != null) {
+      if (kindaHasFocus(component)) {
+        return true;
+      }
+      component = component.getParent();
+    }
+    return false;
+  }
+
+  /**
+   * Get the parent of a component in a more general sense than UI parent, i.e.,
+   * if it doesn't have a real UI parent, use a foster one instead.
+   *
+   * @see UIUtil#setFosterParent(JComponent, Component)
+   */
+  @ApiStatus.Experimental
+  public static @Nullable Component getParent(@NotNull Component component) {
+    WeakReference<Component> ref = ClientProperty.get(component, FOSTER_PARENT);
+    if (ref != null) {
+      Component fosterParent = ref.get();
+      if (fosterParent != null) {
+        return fosterParent;
+      }
+    }
+
+    return component.getParent();
+  }
+
+  /**
+   * Set a foster parent for a component, i.e., explicitly specify what should be treated
+   * as the component's parent if it doesn't have a real UI one.
+   *
+   * @throws IllegalArgumentException if the establishment of requested link
+   *                                  will form a cycle in a generalized hierarchy graph.
+   * @see UIUtil#getParent(Component)
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void setFosterParent(@NotNull JComponent component, @Nullable Component parent) {
+    WeakReference<Component> ref = validateFosterParent(component, parent);
+    ClientProperty.put(component, FOSTER_PARENT, ref);
+  }
+
+  /**
+   * An overload of {@link UIUtil#setFosterParent(JComponent, Component)} for windows.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void setFosterParent(@NotNull Window window, @Nullable Component parent) {
+    WeakReference<Component> ref = validateFosterParent(window, parent);
+    ClientProperty.put(window, FOSTER_PARENT, ref);
+  }
+
+  private static @Nullable WeakReference<Component> validateFosterParent(@NotNull Component component, @Nullable Component parent) {
+    if (parent != null && isGeneralizedAncestor(component, parent)) {
+      throw new IllegalArgumentException("Setting this component as a foster parent will form a cycle in a hierarchy graph");
+    }
+    return parent != null ? new WeakReference<>(parent) : null;
+  }
+
+  private static boolean isGeneralizedAncestor(@NotNull Component ancestor, @NotNull Component descendant) {
+    do {
+      if (descendant == ancestor) {
+        return true;
+      }
+      descendant = getParent(descendant);
+    }
+    while (descendant != null);
+    return false;
+  }
+
+  private static boolean kindaHasFocus(@NotNull Component component) {
+    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
+    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
+  }
+
+  /**
+   * Checks if a component is focused in a more general sense than UI focuses,
+   * sometimes useful to limit various activities by checking the focus of real UI,
+   * but it could be unneeded in headless mode or in other scenarios.
+   *
+   * @see UIUtil#isShowing(Component)
+   */
+  @ApiStatus.Experimental
+  public static boolean hasFocus(@NotNull Component component) {
+    return GraphicsEnvironment.isHeadless() || kindaHasFocus(component) || component.hasFocus();
+  }
+
+  /**
+   * Marks a component as focused
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void markAsFocused(@NotNull JComponent component, boolean value) {
+    if (GraphicsEnvironment.isHeadless()) {
+      return;
+    }
+    component.putClientProperty(HAS_FOCUS, value ? Boolean.TRUE : null);
   }
 
   public static boolean isCloseClick(@NotNull MouseEvent e) {
@@ -1861,8 +1834,20 @@ public final class UIUtil {
     return e.getButton() == MouseEvent.BUTTON1;
   }
 
+  /**
+   * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
+   */
+  @MagicConstant(flags = {
+    Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK,
+    InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK,
+    InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK,
+  })
+  public static int getAllModifiers(@NotNull InputEvent event) {
+    return event.getModifiers() | event.getModifiersEx();
+  }
+
   public static @NotNull Color getBgFillColor(@NotNull Component c) {
-    final Component parent = findNearestOpaque(c);
+    Component parent = findNearestOpaque(c);
     return parent == null ? c.getBackground() : parent.getBackground();
   }
 
@@ -1870,31 +1855,38 @@ public final class UIUtil {
     return ComponentUtil.findParentByCondition(c, Component::isOpaque);
   }
 
-  /**
-   * @deprecated use {@link ComponentUtil#findParentByCondition(Component, java.util.function.Predicate)}
-   */
-  @Deprecated
-  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
-    return ComponentUtil.findParentByCondition(c, it -> condition.value(it));
-  }
-
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
   public static @Nullable Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
     Component component = SwingUtilities.getDeepestComponentAt(parent, x, y);
-    if (component != null && component.getParent() instanceof JRootPane) { // GlassPane case
-      JRootPane rootPane = (JRootPane)component.getParent();
+    if (component != null && component.getParent() instanceof JRootPane rootPane) { // GlassPane case
       component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getLayeredPane());
       if (component == null) {
         component = getDeepestComponentAtForComponent(parent, x, y, rootPane.getContentPane());
       }
     }
-    if (component != null && component.getParent() instanceof JLayeredPane) { // Handle LoadingDecorator
+    if (component != null && component.getParent() instanceof LoadingDecoratorLayeredPane) {
       Component[] components = ((JLayeredPane)component.getParent()).getComponentsInLayer(JLayeredPane.DEFAULT_LAYER);
       if (components.length == 1 && ArrayUtilRt.indexOf(components, component, 0, components.length) == -1) {
         component = getDeepestComponentAtForComponent(parent, x, y, components[0]);
       }
     }
     return component;
+  }
+
+  public static @Nullable JLayeredPane getWindowLayeredPaneFor(@NotNull Component component) {
+    Window window = SwingUtilities.windowForComponent(component);
+    if (window instanceof JFrame) {
+      return ((JFrame)window).getLayeredPane();
+    }
+    else if (window instanceof JDialog) {
+      return ((JDialog)window).getLayeredPane();
+    }
+    else if (window instanceof JWindow) {
+      return ((JWindow)window).getLayeredPane();
+    }
+    else {
+      return null;
+    }
   }
 
   private static Component getDeepestComponentAtForComponent(@NotNull Component parent, int x, int y, @NotNull Component component) {
@@ -1911,23 +1903,26 @@ public final class UIUtil {
 
   @Language("HTML")
   public static @NlsSafe @NotNull String getCssFontDeclaration(@NotNull Font font) {
-    return getCssFontDeclaration(font, getLabelForeground(), JBUI.CurrentTheme.Link.linkColor(), null);
+    return getCssFontDeclaration(font, getLabelForeground(), JBUI.CurrentTheme.Link.Foreground.ENABLED, null);
   }
 
   @Language("HTML")
-  public static @NlsSafe @NotNull String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
+  public static @NlsSafe @NotNull String getCssFontDeclaration(@NotNull Font font,
+                                                               @Nullable Color fgColor,
+                                                               @Nullable Color linkColor,
+                                                               @Nullable String liImg) {
     @Language("HTML")
     String familyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
     return "<style>\n"
-    +"body, div, td, p {" + familyAndSize
-    + (fgColor != null ? " color:#" + ColorUtil.toHex(fgColor)+';' : "")
-    +"}\n"
-    +"a {" + familyAndSize
-    + (linkColor != null ? " color:#"+ColorUtil.toHex(linkColor)+';' : "")
-    +"}\n"
-    +"code {font-size:"+font.getSize()+"pt;}\n"
-    +"ul {list-style:disc; margin-left:15px;}\n"
-    +"</style>";
+           + "body, div, td, p {" + familyAndSize
+           + (fgColor != null ? " color:#" + ColorUtil.toHex(fgColor) + ';' : "")
+           + "}\n"
+           + "a {"
+           + (linkColor != null ? " color:#" + ColorUtil.toHex(linkColor) + ';' : "")
+           + "}\n"
+           + "code {font-size:" + font.getSize() + "pt;}\n"
+           + "ul {list-style:disc; margin-left:15px;}\n"
+           + "</style>";
   }
 
   public static @NotNull Color getFocusedFillColor() {
@@ -1935,15 +1930,11 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getFocusedBoundsColor() {
-    return getBoundsColor();
+    return NamedColorUtil.getBoundsColor();
   }
 
   public static @NotNull Color getBoundsColor() {
-    return JBColor.border();
-  }
-
-  public static @NotNull Color getBoundsColor(boolean focused) {
-    return focused ? getFocusedBoundsColor() : getBoundsColor();
+    return NamedColorUtil.getBoundsColor();
   }
 
   public static @NotNull Color toAlpha(final Color color, final int alpha) {
@@ -1954,7 +1945,7 @@ public final class UIUtil {
   /**
    * @param component to check whether it can be focused or not
    * @return {@code true} if component is not {@code null} and can be focused
-   * @see Component#isRequestFocusAccepted(boolean, boolean, sun.awt.CausedFocusEvent.Cause)
+   * @see Component#isRequestFocusAccepted(boolean, boolean, FocusEvent.Cause)
    */
   public static boolean isFocusable(@Nullable Component component) {
     return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
@@ -1964,7 +1955,7 @@ public final class UIUtil {
    * @deprecated use {@link com.intellij.openapi.wm.IdeFocusManager}
    */
   @Deprecated
-  public static void requestFocus(final @NotNull JComponent c) {
+  public static void requestFocus(@NotNull JComponent c) {
     if (c.isShowing()) {
       c.requestFocus();
     }
@@ -1973,7 +1964,7 @@ public final class UIUtil {
     }
   }
 
-  //Whitelist for component types that provide obvious 'focused' view
+  // whitelist for component types that provide obvious 'focused' view
   public static boolean canDisplayFocusedState(@NotNull Component component) {
     return component instanceof JTextComponent || component instanceof AbstractButton || component instanceof JComboBox;
   }
@@ -2033,83 +2024,47 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated use getBorderColor instead
+   * @deprecated use {@link HTMLEditorKitBuilder}
    */
   @Deprecated
-  public static @NotNull Color getBorderInactiveColor() {
-    return JBColor.border();
-  }
-
-  /**
-   * @deprecated use getBorderColor instead
-   */
-  @Deprecated
-  public static @NotNull Color getBorderActiveColor() {
-    return JBColor.border();
-  }
-
-  /**
-   * @deprecated use getBorderColor instead
-   */
-  @Deprecated
-  public static @NotNull Color getBorderSeparatorColor() {
-    return JBColor.border();
-  }
-
-  public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    if (url == null) return null;
-    try {
-      StyleSheet styleSheet = new StyleSheet();
-      styleSheet.loadRules(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url);
-      return styleSheet;
-    }
-    catch (IOException e) {
-      getLogger().warn(url + " loading failed", e);
-      return null;
-    }
-  }
-
   public static @NotNull HTMLEditorKit getHTMLEditorKit() {
-    return getHTMLEditorKit(true);
+    return HTMLEditorKitBuilder.simple();
   }
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder}
+   */
+  @Deprecated
   public static @NotNull HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
-    return new JBHtmlEditorKit(noGapsBetweenParagraphs);
+    HTMLEditorKitBuilder builder = new HTMLEditorKitBuilder();
+    if (!noGapsBetweenParagraphs) {
+      builder.withGapsBetweenParagraphs();
+    }
+    return builder.build();
   }
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder#withWordWrapViewFactory()}
+   */
+  @Deprecated
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
-    private final ViewFactory myFactory = new HTMLFactory() {
-      @Override
-      public View create(Element e) {
-        View view = super.create(e);
-        if (view instanceof javax.swing.text.html.ParagraphView) {
-          // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
-          return new ParagraphView(e) {
-            @Override
-            protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
-              if (r == null) {
-                r = new SizeRequirements();
-              }
-              r.minimum = (int)layoutPool.getMinimumSpan(axis);
-              r.preferred = Math.max(r.minimum, (int)layoutPool.getPreferredSpan(axis));
-              r.maximum = Integer.MAX_VALUE;
-              r.alignment = 0.5f;
-              return r;
-            }
-          };
-        }
-        return view;
-      }
-    };
-
     @Override
     public ViewFactory getViewFactory() {
-      return myFactory;
+      return ExtendableHTMLViewFactory.DEFAULT_WORD_WRAP;
     }
   }
 
   public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull String text) {
-    if (!SystemInfo.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text) != -1) {
+    if (!SystemInfoRt.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text) != -1) {
+      return getFontWithFallback(font);
+    }
+    else {
+      return font;
+    }
+  }
+
+  public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull char[] text) {
+    if (!SystemInfoRt.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text, 0, text.length) != -1) {
       return getFontWithFallback(font);
     }
     else {
@@ -2118,21 +2073,33 @@ public final class UIUtil {
   }
 
   public static @NotNull FontUIResource getFontWithFallback(@NotNull Font font) {
-    return getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
+    // On macOS font fallback is implemented in JDK by default
+    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
+    if (!SystemInfoRt.isMac) {
+      try {
+        if (!FontUtilities.fontSupportsDefaultEncoding(font)) {
+          font = FontUtilities.getCompositeFontUIResource(font);
+        }
+      }
+      catch (Throwable e) {
+        // this might happen e.g., if we're running under newer runtime, forbidding access to sun.font package
+        getLogger().warn(e);
+        // this might not give the same result, but we have no choice here
+        return StartupUiUtil.getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
+      }
+    }
+    return font instanceof FontUIResource ? (FontUIResource)font : new FontUIResource(font);
   }
 
   public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
-    // On macOS font fallback is implemented in JDK by default
-    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
-    Font fontWithFallback = SystemInfo.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
-    return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
+    return StartupUiUtil.getFontWithFallback(familyName, style, size);
   }
 
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
-    if (toRender instanceof String && StringUtil.toLowerCase((String)toRender).startsWith("<html>")) {
+    if (toRender instanceof String && Strings.toLowerCase((String)toRender).startsWith("<html>")) {
       //noinspection unchecked
-      return (T) ("<html>" + StringUtil.escapeXmlEntities((String)toRender));
+      return (T)("<html>" + Strings.escapeXmlEntities((String)toRender));
     }
     return toRender;
   }
@@ -2142,23 +2109,23 @@ public final class UIUtil {
    * {@link com.intellij.ui.ScrollPaneFactory#createScrollPane(Component, boolean)}.
    */
   @Deprecated
-  public static void removeScrollBorder(final Component c) {
+  public static void removeScrollBorder(@NotNull Component c) {
     JBIterable<JScrollPane> scrollPanes = uiTraverser(c)
       .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
       .filter(JScrollPane.class);
     for (JScrollPane scrollPane : scrollPanes) {
-      Integer keepBorderSides = ComponentUtil.getClientProperty(scrollPane, KEEP_BORDER_SIDES);
-      if (keepBorderSides != null) {
-        if (scrollPane.getBorder() instanceof LineBorder) {
-          Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
-          scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
-        }
-        else {
-          scrollPane.setBorder(new SideBorder(getBoundsColor(), keepBorderSides.intValue()));
-        }
+      Integer keepBorderSides = ClientProperty.get(scrollPane, KEEP_BORDER_SIDES);
+      if (keepBorderSides == null) {
+        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.NONE));
+      }
+      else if (scrollPane.getBorder() instanceof LineBorder lineBorder) {
+        Color color = lineBorder.getLineColor();
+        //noinspection MagicConstant
+        scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
       }
       else {
-        scrollPane.setBorder(new SideBorder(getBoundsColor(), SideBorder.NONE));
+        //noinspection MagicConstant
+        scrollPane.setBorder(new SideBorder(NamedColorUtil.getBoundsColor(), keepBorderSides.intValue()));
       }
     }
   }
@@ -2168,10 +2135,10 @@ public final class UIUtil {
   }
 
   public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
-    @NlsSafe final String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
+    final @NlsSafe String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : JBUIScale.scale(11);
+    @NonNls String family = font.getFamily();
+    int size = font.getSize();
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"
@@ -2182,35 +2149,10 @@ public final class UIUtil {
     return String.format("<p style=\"margin: 0 %dpx 0 %dpx;\">%s</p>", hPadding, hPadding, html);
   }
 
-  public static @NotNull String convertSpace2Nbsp(@NotNull String html) {
-    @NonNls StringBuilder result = new StringBuilder();
-    int currentPos = 0;
-    int braces = 0;
-    while (currentPos < html.length()) {
-      String each = html.substring(currentPos, currentPos + 1);
-      if ("<".equals(each)) {
-        braces++;
-      }
-      else if (">".equals(each)) {
-        braces--;
-      }
-
-      if (" ".equals(each) && braces == 0) {
-        result.append("&nbsp;");
-      }
-      else {
-        result.append(each);
-      }
-      currentPos++;
-    }
-
-    return result.toString();
-  }
-
   /**
-   * Please use Application.invokeLater() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
-   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings. For those, use GuiUtils, application.invoke* or TransactionGuard methods.<p/>
-   *
+   * Please use Application.invokeLater() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings. For those, use ModalityUiUtil, application.invoke* or TransactionGuard methods.<p/>
+   * <p>
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
@@ -2218,70 +2160,37 @@ public final class UIUtil {
   }
 
   /**
-   * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
+   * Please use Application.invokeAndWait() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
    * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
-   *
+   * <p>
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
+  @ApiStatus.Obsolete
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
   }
 
   /**
-   * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
+   * Please use Application.invokeAndWait() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
    * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
-   *
+   * <p>
    * Invoke and wait in the event dispatch thread
    * or in the current thread if the current thread
    * is event queue thread.
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param computable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
-  public static <T> T invokeAndWaitIfNeeded(final @NotNull Computable<T> computable) {
+  @ApiStatus.Obsolete
+  public static <T> T invokeAndWaitIfNeeded(@NotNull Computable<T> computable) {
     final Ref<T> result = Ref.create();
-    invokeAndWaitIfNeeded((Runnable)() -> result.set(computable.compute()));
+    EdtInvocationManager.invokeAndWaitIfNeeded(() -> result.set(computable.compute()));
     return result.get();
-  }
-
-  /**
-   * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
-   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
-   *
-   * Invoke and wait in the event dispatch thread
-   * or in the current thread if the current thread
-   * is event queue thread.
-   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
-   *
-   * @param runnable a runnable to invoke
-   */
-  public static void invokeAndWaitIfNeeded(final @NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      final Ref<Throwable> ref = Ref.create();
-      EdtInvocationManager.getInstance().invokeAndWait(() -> {
-        try {
-          runnable.run();
-        }
-        catch (Throwable throwable) {
-          ref.set(throwable);
-        }
-      });
-      if (!ref.isNull()) throw ref.get();
-    }
-  }
-
-  public static boolean isFocusProxy(@Nullable Component c) {
-    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
   }
 
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
@@ -2313,7 +2222,7 @@ public final class UIUtil {
   }
 
   public static void fixFormattedField(@NotNull JFormattedTextField field) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       final int commandKeyMask;
       try {
         commandKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
@@ -2335,60 +2244,26 @@ public final class UIUtil {
     return g instanceof PrintGraphics || g instanceof PrinterGraphics;
   }
 
-  public static int getSelectedButton(@NotNull ButtonGroup group) {
-    Enumeration<AbstractButton> enumeration = group.getElements();
-    int i = 0;
-    while (enumeration.hasMoreElements()) {
-      AbstractButton button = enumeration.nextElement();
-      if (group.isSelected(button.getModel())) {
-        return i;
-      }
-      i++;
-    }
-    return -1;
-  }
-
-  public static void setSelectedButton(@NotNull ButtonGroup group, int index) {
-    Enumeration<AbstractButton> enumeration = group.getElements();
-    int i = 0;
-    while (enumeration.hasMoreElements()) {
-      AbstractButton button = enumeration.nextElement();
-      group.setSelected(button.getModel(), index == i);
-      i++;
-    }
-  }
-
   public static boolean isSelectionButtonDown(@NotNull MouseEvent e) {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
   }
 
   public static boolean isToggleListSelectionEvent(@NotNull MouseEvent e) {
-    return SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
-  }
-
-  @SuppressWarnings("deprecation")
-  public static void setComboBoxEditorBounds(int x, int y, int width, int height, @NotNull JComponent editor) {
-    editor.reshape(x, y, width, height);
+    return SwingUtilities.isLeftMouseButton(e) && (SystemInfoRt.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
   }
 
   /**
-   * @deprecated the method was used to fix Aqua Look-n-Feel problems. Now it does not make sense
+   * @see JBUI.CurrentTheme.List#rowHeight()
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static int fixComboBoxHeight(final int height) {
-    return height;
-  }
-
   public static final int LIST_FIXED_CELL_HEIGHT = 20;
 
   /**
    * The main difference from javax.swing.SwingUtilities#isDescendingFrom(Component, Component) is that this method
    * uses getInvoker() instead of getParent() when it meets JPopupMenu
-   * @param child child component
+   *
+   * @param child  child component
    * @param parent parent component
    * @return true if parent if a top parent of child, false otherwise
-   *
    * @see SwingUtilities#isDescendingFrom(Component, Component)
    */
   public static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
@@ -2413,13 +2288,39 @@ public final class UIUtil {
     return ComponentUtil.getParentOfType(type, component);
   }
 
+  /**
+   * Searches above in the component hierarchy starting from the specified component, taking foster parents into account.
+   * <p>
+   * Note that the initial component is also checked and is immediately returned if it has the correct type.
+   *</p>
+   * <p>
+   * <em>Please consider using the plain {@link #getParent(Component)} if you're dealing with pure UI without remote development hacks.</em>
+   *</p>
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see #getParent(Component)
+   * @see #getParentOfType(Class, Component)
+   */
+  @Contract(pure = true)
+  public static @Nullable <T> T getGeneralizedParentOfType(@NotNull Class<? extends T> type, @Nullable Component component) {
+    var result = component;
+    while (result != null) {
+      if (type.isInstance(result)) {
+        //noinspection unchecked
+        return (T)result;
+      }
+      result = getParent(result);
+    }
+    return null;
+  }
+
   public static @NotNull JBIterable<Component> uiParents(@Nullable Component c, boolean strict) {
     return strict ? JBIterable.generate(c, c1 -> c1.getParent()).skip(1) : JBIterable.generate(c, c1 -> c1.getParent());
   }
 
   public static @NotNull JBIterable<Component> uiChildren(@Nullable Component component) {
-    if (!(component instanceof Container)) return JBIterable.empty();
-    Container container = (Container)component;
+    if (!(component instanceof Container container)) return JBIterable.empty();
     return JBIterable.of(container.getComponents());
   }
 
@@ -2427,9 +2328,12 @@ public final class UIUtil {
     return UI_TRAVERSER.withRoot(component).expandAndFilter(o -> !(o instanceof CellRendererPane));
   }
 
-  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
+  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS;
 
   private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from((Function<Component, JBIterable<Component>>)c -> {
+    if (c instanceof Window window && isDisposed(window)) {
+      return JBIterable.empty();
+    }
     JBIterable<Component> result;
     if (c instanceof JMenu) {
       result = JBIterable.of(((JMenu)c).getMenuComponents());
@@ -2437,9 +2341,8 @@ public final class UIUtil {
     else {
       result = uiChildren(c);
     }
-    if (c instanceof JComponent) {
-      JComponent jc = (JComponent)c;
-      Iterable<? extends Component> orphans = ComponentUtil.getClientProperty(jc, NOT_IN_HIERARCHY_COMPONENTS);
+    if (c instanceof JComponent jc) {
+      Iterable<? extends Component> orphans = ClientProperty.get(jc, ComponentUtil.NOT_IN_HIERARCHY_COMPONENTS);
       if (orphans != null) {
         result = result.append(orphans);
       }
@@ -2450,6 +2353,28 @@ public final class UIUtil {
     }
     return result;
   });
+
+  private static boolean isDisposed(Window window) {
+    Window w = window;
+    while (w != null) {
+      if (w instanceof DisposableWindow dw && dw.isWindowDisposed()) {
+        return true;
+      }
+      w = w.getOwner();
+    }
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public static void addNotInHierarchyComponents(@NotNull JComponent container, @NotNull Iterable<Component> components) {
+    Iterable<? extends Component> oldValue = ClientProperty.get(container, NOT_IN_HIERARCHY_COMPONENTS);
+    if (oldValue == null) {
+      ClientProperty.put(container, NOT_IN_HIERARCHY_COMPONENTS, components);
+      return;
+    }
+
+    ClientProperty.put(container, NOT_IN_HIERARCHY_COMPONENTS, IterablesConcat.concat(oldValue, components));
+  }
 
   public static void scrollListToVisibleIfNeeded(final @NotNull JList<?> list) {
     SwingUtilities.invokeLater(() -> {
@@ -2477,32 +2402,18 @@ public final class UIUtil {
     return null;
   }
 
-  public static @NotNull <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
-    List<T> result = new ArrayList<>();
-    findComponentsOfType(parent, cls, result);
-    return result;
+  public static @NotNull <T extends JComponent> List<T> findComponentsOfType(@Nullable JComponent parent, @NotNull Class<? extends T> cls) {
+    return ComponentUtil.findComponentsOfType(parent, cls);
   }
 
-  private static <T extends JComponent> void findComponentsOfType(JComponent parent, @NotNull Class<T> cls, @NotNull List<? super T> result) {
-    if (parent == null) return;
-    if (cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings("unchecked") final T t = (T)parent;
-      result.add(t);
-    }
-    for (Component c : parent.getComponents()) {
-      if (c instanceof JComponent) {
-        findComponentsOfType((JComponent)c, cls, result);
-      }
-    }
-  }
-
-  public static class TextPainter {
+  public static final class TextPainter {
     private final List<String> myLines = new ArrayList<>();
     private boolean myDrawShadow;
     private Color myShadowColor;
     private float myLineSpacing;
     private Font myFont;
     private Color myColor;
+    private Color myShortcutColor;
 
     public TextPainter() {
       myDrawShadow = StartupUiUtil.isUnderDarcula();
@@ -2526,6 +2437,11 @@ public final class UIUtil {
       return this;
     }
 
+    public @NotNull TextPainter withShortcutColor(Color color) {
+      myShortcutColor = color;
+      return this;
+    }
+
     public @NotNull TextPainter withFont(Font font) {
       myFont = font;
       return this;
@@ -2540,7 +2456,8 @@ public final class UIUtil {
     /**
      * _position(block width, block height) => (x, y) of the block
      */
-    public void draw(final @NotNull Graphics g, @NotNull PairFunction<? super Integer, ? super Integer, ? extends Couple<Integer>> _position) {
+    public void draw(final @NotNull Graphics g,
+                     @NotNull PairFunction<? super Integer, ? super Integer, ? extends Couple<Integer>> _position) {
       Font oldFont = null;
       if (myFont != null) {
         oldFont = g.getFont();
@@ -2588,9 +2505,11 @@ public final class UIUtil {
           }
 
           g.drawString(text, x, yOffset[0]);
-          if (!StringUtil.isEmpty(shortcut)) {
+          if (!Strings.isEmpty(shortcut)) {
             Color oldColor1 = g.getColor();
-            g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
+            g.setColor(myShortcutColor == null
+                       ? JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246)))
+                       : myShortcutColor);
             g.drawString(shortcut, x + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
             g.setColor(oldColor1);
           }
@@ -2627,28 +2546,6 @@ public final class UIUtil {
     c.putClientProperty(ROOT_PANE, new WeakReference<>(pane));
   }
 
-  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
-    if (c == null || !c.isShowing()) return true;
-
-    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
-  }
-
-  /**
-   * @deprecated Use {@link TimerUtil#createNamedTimer(String, int, ActionListener)}
-   */
-  @Deprecated
-  public static @NotNull Timer createNamedTimer(@NonNls @NotNull String name, int delay, @NotNull ActionListener listener) {
-    return TimerUtil.createNamedTimer(name, delay, listener);
-  }
-
-  /**
-   * @deprecated Use {@link TimerUtil#createNamedTimer(String, int)}
-   */
-  @Deprecated
-  public static @NotNull Timer createNamedTimer(@NonNls @NotNull String name, int delay) {
-    return TimerUtil.createNamedTimer(name, delay);
-  }
-
   public static boolean isDialogRootPane(JRootPane rootPane) {
     if (rootPane != null) {
       final Object isDialog = rootPane.getClientProperty("DIALOG_ROOT_PANE");
@@ -2657,16 +2554,38 @@ public final class UIUtil {
     return false;
   }
 
+  public static void runWhenVisibilityChanged(@NotNull Component component, Runnable runnable) {
+    component.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentShown(ComponentEvent e) {
+        runnable.run();
+      }
+
+      @Override
+      public void componentHidden(ComponentEvent e) {
+        runnable.run();
+      }
+    });
+  }
+
   public static @Nullable JComponent mergeComponentsWithAnchor(PanelWithAnchor @NotNull ... panels) {
     return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
 
   public static @Nullable JComponent mergeComponentsWithAnchor(@NotNull Collection<? extends PanelWithAnchor> panels) {
+    return mergeComponentsWithAnchor(panels, false);
+  }
+
+  public static @Nullable JComponent mergeComponentsWithAnchor(@NotNull Collection<? extends PanelWithAnchor> panels, boolean visibleOnly) {
     JComponent maxWidthAnchor = null;
     int maxWidth = 0;
     for (PanelWithAnchor panel : panels) {
-      JComponent anchor = panel != null ? panel.getAnchor() : null;
+      if (visibleOnly && (panel instanceof JComponent) && !((JComponent)panel).isVisible()) {
+        continue;
+      }
+      JComponent anchor = panel != null ? panel.getOwnAnchor() : null;
       if (anchor != null) {
+        panel.setAnchor(null); // to get own preferred size
         int anchorWidth = anchor.getPreferredSize().width;
         if (maxWidth < anchorWidth) {
           maxWidth = anchorWidth;
@@ -2677,6 +2596,10 @@ public final class UIUtil {
     for (PanelWithAnchor panel : panels) {
       if (panel != null) {
         panel.setAnchor(maxWidthAnchor);
+        if (panel instanceof JComponent) {
+          ((JComponent)panel).revalidate();
+          ((JComponent)panel).repaint();
+        }
       }
     }
     return maxWidthAnchor;
@@ -2697,6 +2620,13 @@ public final class UIUtil {
     });
   }
 
+  public static void setEnabledRecursively(@NotNull Component component, boolean enabled) {
+    forEachComponentInHierarchy(component, c -> c.setEnabled(enabled));
+    // Changing the enable state for some UI elements change their size or visibility.
+    // For example, the label component with icon hides icon if it disabled.
+    component.revalidate();
+  }
+
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
     forEachComponentInHierarchy(component, c -> c.setBackground(bg));
   }
@@ -2705,7 +2635,11 @@ public final class UIUtil {
     forEachComponentInHierarchy(component, c -> c.setForeground(bg));
   }
 
-  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
+  public static void setTooltipRecursively(@NotNull Component component, @Nls String text) {
+    forEachComponentInHierarchy(component, c -> ((JComponent)c).setToolTipText(text));
+  }
+
+  public static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
     action.consume(component);
     if (component instanceof Container) {
       for (Component c : ((Container)component).getComponents()) {
@@ -2739,30 +2673,8 @@ public final class UIUtil {
     addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
-  public static void adjustWindowToMinimumSize(final Window window) {
-    if (window == null) return;
-    final Dimension minSize = window.getMinimumSize();
-    final Dimension size = window.getSize();
-    final Dimension newSize = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
-
-    if (!newSize.equals(size)) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        if (window.isShowing()) {
-          window.setSize(newSize);
-        }
-      });
-    }
-  }
-
   public static int getLcdContrastValue() {
-    int lcdContrastValue  = Registry.intValue("lcd.contrast.value", 0);
-    if (lcdContrastValue == 0) {
-      return StartupUiUtil.doGetLcdContrastValueForSplash(StartupUiUtil.isUnderDarcula());
-    }
-    else {
-      return StartupUiUtil.normalizeLcdContrastValue(lcdContrastValue);
-    }
+    return StartupUiUtil.getLcdContrastValue();
   }
 
   /**
@@ -2790,7 +2702,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
-    return Registry.is("ui.no.bangs.and.whistles", false) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
+    return Registry.is("ui.simplified", false) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
 
   public static @Nullable Point getLocationOnScreen(@NotNull JComponent component) {
@@ -2812,7 +2724,7 @@ public final class UIUtil {
   }
 
   public static void setAutoRequestFocus(@NotNull Window window, boolean value) {
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       window.setAutoRequestFocus(value);
     }
   }
@@ -2839,7 +2751,7 @@ public final class UIUtil {
 
   //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
   public static @NotNull String getDebugText(@NotNull Component c) {
-    StringBuilder builder  = new StringBuilder();
+    StringBuilder builder = new StringBuilder();
     getAllTextsRecursively(c, builder);
     return builder.toString();
   }
@@ -2849,10 +2761,12 @@ public final class UIUtil {
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
-    if (StringUtil.isNotEmpty(candidate)) {
+    if (Strings.isNotEmpty(candidate)) {
       candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
-      if (builder.length() > 0) builder.append(' ');
-      builder.append(StringUtil.removeHtmlTags(candidate).trim());
+      if (!builder.isEmpty()) {
+        builder.append(' ');
+      }
+      builder.append(StringUtil.removeHtmlTags(candidate, true).trim());
     }
     if (component instanceof Container) {
       Component[] components = ((Container)component).getComponents();
@@ -2872,57 +2786,14 @@ public final class UIUtil {
     return false;
   }
 
-  public static void resetUndoRedoActions(@NotNull JTextComponent textComponent) {
-    UndoManager undoManager = ComponentUtil.getClientProperty(textComponent, UNDO_MANAGER);
-    if (undoManager != null) {
-      undoManager.discardAllEdits();
-    }
-  }
-
-  private static final DocumentListener SET_TEXT_CHECKER = new DocumentAdapter() {
-    @Override
-    protected void textChanged(@NotNull DocumentEvent e) {
-      Document document = e.getDocument();
-      if (document instanceof AbstractDocument) {
-        StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-          if (!element.getClassName().equals(JTextComponent.class.getName()) || !element.getMethodName().equals("setText")) continue;
-          UndoableEditListener[] undoableEditListeners = ((AbstractDocument)document).getUndoableEditListeners();
-          for (final UndoableEditListener listener : undoableEditListeners) {
-            if (listener instanceof UndoManager) {
-              Runnable runnable = ((UndoManager)listener)::discardAllEdits;
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(runnable);
-              return;
-            }
-          }
-        }
-      }
-    }
-  };
-
-  public static void addUndoRedoActions(final @NotNull JTextComponent textComponent) {
-    if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
-      return;
-    }
-
-    UndoManager undoManager = new UndoManager();
-    textComponent.putClientProperty(UNDO_MANAGER, undoManager);
-    textComponent.getDocument().addUndoableEditListener(undoManager);
-    textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfoRt.isMac ? Event.META_MASK : Event.CTRL_MASK), "undoKeystroke");
-    textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac
-                                                                           ? Event.META_MASK : Event.CTRL_MASK) | Event.SHIFT_MASK), "redoKeystroke");
-    textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
-  }
-
-  public static @Nullable UndoManager getUndoManager(Component component) {
-    if (component instanceof JTextComponent) {
-      Object o = ((JTextComponent)component).getClientProperty(UNDO_MANAGER);
-      if (o instanceof UndoManager) return (UndoManager)o;
-    }
-    return null;
+  /**
+   * Use {@link SwingUndoUtil#addUndoRedoActions(JTextComponent)}
+   *
+   * @param textComponent
+   */
+  @Deprecated
+  public static void addUndoRedoActions(@NotNull JTextComponent textComponent) {
+    SwingUndoUtil.addUndoRedoActions(textComponent);
   }
 
   public static void playSoundFromResource(@NotNull String resourceName) {
@@ -2952,18 +2823,15 @@ public final class UIUtil {
     }, "play sound").start();
   }
 
-  @NlsSafe
-  public static @NotNull String leftArrow() {
+  public static @NlsSafe @NotNull String leftArrow() {
     return FontUtil.leftArrow(StartupUiUtil.getLabelFont());
   }
 
-  @NlsSafe
-  public static @NotNull String rightArrow() {
+  public static @NlsSafe @NotNull String rightArrow() {
     return FontUtil.rightArrow(StartupUiUtil.getLabelFont());
   }
 
-  @NlsSafe
-  public static @NotNull String upArrow(@NotNull String defaultValue) {
+  public static @NlsSafe @NotNull String upArrow(@NotNull String defaultValue) {
     return FontUtil.upArrow(StartupUiUtil.getLabelFont(), defaultValue);
   }
 
@@ -2982,14 +2850,6 @@ public final class UIUtil {
     textField.setColumns(4);
   }
 
-  /**
-   * Returns the first window ancestor of the component.
-   * Note that this method returns the component itself if it is a window.
-   *
-   * @param component the component used to find corresponding window
-   * @return the first window ancestor of the component; or {@code null}
-   *         if the component is not a window and is not contained inside a window
-   */
   public static @Nullable Window getWindow(@Nullable Component component) {
     return ComponentUtil.getWindow(component);
   }
@@ -3026,8 +2886,7 @@ public final class UIUtil {
         return true;
       }
     }
-    if (component instanceof Container) {
-      Container container = (Container)component;
+    if (component instanceof Container container) {
       for (int i = 0; i < container.getComponentCount(); i++) {
         if (hasComponentOfType(container.getComponent(i), types)) {
           return true;
@@ -3047,7 +2906,11 @@ public final class UIUtil {
   }
 
   public static int getLineHeight(@NotNull JTextComponent textComponent) {
-    return textComponent.getFontMetrics(textComponent.getFont()).getHeight();
+    return getLineHeight((JComponent)textComponent);
+  }
+
+  public static int getLineHeight(@NotNull JComponent component) {
+    return component.getFontMetrics(component.getFont()).getHeight();
   }
 
   /**
@@ -3103,8 +2966,9 @@ public final class UIUtil {
 
   public static void setCursor(@NotNull Component component, Cursor cursor) {
     // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
-    if(component.isCursorSet() && component.getCursor() == cursor) return;
-    component.setCursor(cursor);
+    if (!component.isCursorSet() || component.getCursor() != cursor) {
+      component.setCursor(cursor);
+    }
   }
 
   public static boolean haveCommonOwner(Component c1, Component c2) {
@@ -3112,7 +2976,7 @@ public final class UIUtil {
     Window c1Ancestor = findWindowAncestor(c1);
     Window c2Ancestor = findWindowAncestor(c2);
 
-    Set <Window> ownerSet = new HashSet<>();
+    Set<Window> ownerSet = new HashSet<>();
 
     Window owner = c1Ancestor;
 
@@ -3135,6 +2999,10 @@ public final class UIUtil {
     return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
   }
 
+  public static boolean isSimpleWindow(Window window) {
+    return window != null && !(window instanceof Frame || window instanceof Dialog);
+  }
+
   public static boolean isHelpButton(Component button) {
     return button instanceof JButton && "help".equals(((JComponent)button).getClientProperty("JButton.buttonType"));
   }
@@ -3143,10 +3011,11 @@ public final class UIUtil {
     return DetectRetinaKit.isOracleMacRetinaDevice(device);
   }
 
-  /** Employs a common pattern to use {@code Graphics}. This is a non-distractive approach
+  /**
+   * Employs a common pattern to use {@code Graphics}. This is a non-distractive approach
    * all modifications on {@code Graphics} are metter only inside the {@code Consumer} block
    *
-   * @param originGraphics graphics to work with
+   * @param originGraphics  graphics to work with
    * @param drawingConsumer you can use the Graphics2D object here safely
    */
   public static void useSafely(@NotNull Graphics originGraphics, @NotNull Consumer<? super Graphics2D> drawingConsumer) {
@@ -3160,25 +3029,6 @@ public final class UIUtil {
   }
 
 
-  private static final Color BACKGROUND = new JBColor(0xFFFFFF, 0x3C3F41);
-  private static final Color LIST_BACKGROUND = JBColor.namedColor("List.background", BACKGROUND);
-  private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.background", BACKGROUND);
-  private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.background", BACKGROUND);
-
-  private static final class FocusedSelection {
-    private static final Color BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
-    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.selectionBackground", BACKGROUND);
-    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionBackground", BACKGROUND);
-  }
-
-  private static final class UnfocusedSelection {
-    private static final Color BACKGROUND = new JBColor(0xD4D4D4, 0x0D293E);
-    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.selectionInactiveBackground", BACKGROUND);
-    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.selectionInactiveBackground", BACKGROUND);
-    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionInactiveBackground", BACKGROUND);
-  }
-
-
   // List
 
   public static @NotNull Font getListFont() {
@@ -3188,18 +3038,18 @@ public final class UIUtil {
 
   // background
 
+  /**
+   * @see RenderingUtil#getBackground(JList)
+   */
   public static @NotNull Color getListBackground() {
-    return LIST_BACKGROUND;
+    return JBUI.CurrentTheme.List.BACKGROUND;
   }
 
-  private static final JBValue SELECTED_ITEM_ALPHA = new JBValue.UIInteger("List.selectedItemAlpha", 75);
-
+  /**
+   * @see RenderingUtil#getSelectionBackground(JList)
+   */
   public static @NotNull Color getListSelectionBackground(boolean focused) {
-    if (!focused) return UnfocusedSelection.LIST_BACKGROUND;
-    Color color = UIManager.getColor("List.selectionBackground");
-    double alpha = SELECTED_ITEM_ALPHA.getFloat() / 100.0;
-    //noinspection UseJBColor
-    return isUnderDefaultMacTheme() && alpha >= 0 && alpha <= 1.0 ? ColorUtil.mix(Color.WHITE, color, alpha) : color;
+    return JBUI.CurrentTheme.List.Selection.background(focused);
   }
 
   public static @NotNull Dimension updateListRowHeight(@NotNull Dimension size) {
@@ -3207,6 +3057,9 @@ public final class UIUtil {
     return size;
   }
 
+  /**
+   * @see RenderingUtil#getBackground(JList, boolean)
+   */
   public static @NotNull Color getListBackground(boolean selected, boolean focused) {
     return !selected ? getListBackground() : getListSelectionBackground(focused);
   }
@@ -3230,31 +3083,38 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getListSelectionBackground(boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getListUnfocusedSelectionBackground() {
     return getListSelectionBackground(false);
   }
 
   // foreground
 
+  /**
+   * @see RenderingUtil#getForeground(JList)
+   */
   public static @NotNull Color getListForeground() {
-    return UIManager.getColor("List.foreground");
+    return JBUI.CurrentTheme.List.FOREGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getSelectionForeground(JList)
+   */
   public static @NotNull Color getListSelectionForeground(boolean focused) {
-    Color foreground = UIManager.getColor(focused ? "List.selectionForeground" : "List.selectionInactiveForeground");
-    if (focused && foreground == null) foreground = UIManager.getColor("List[Selected].textForeground");  // Nimbus
-    return foreground != null ? foreground : getListForeground();
+    return NamedColorUtil.getListSelectionForeground(focused);
   }
 
+  /**
+   * @see RenderingUtil#getForeground(JList, boolean)
+   */
   public static @NotNull Color getListForeground(boolean selected, boolean focused) {
-    return !selected ? getListForeground() : getListSelectionForeground(focused);
+    return !selected ? getListForeground() : NamedColorUtil.getListSelectionForeground(focused);
   }
 
   /**
    * @deprecated use {@link #getListForeground(boolean, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getListForeground(boolean selected) {
     return getListForeground(selected, true);
   }
@@ -3264,9 +3124,8 @@ public final class UIUtil {
    */
   @Deprecated
   public static @NotNull Color getListSelectionForeground() {
-    return getListSelectionForeground(true);
+    return NamedColorUtil.getListSelectionForeground(true);
   }
-
 
   // Tree
 
@@ -3277,14 +3136,23 @@ public final class UIUtil {
 
   // background
 
+  /**
+   * @see RenderingUtil#getBackground(JTree)
+   */
   public static @NotNull Color getTreeBackground() {
-    return TREE_BACKGROUND;
+    return JBUI.CurrentTheme.Tree.BACKGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getSelectionBackground(JTree)
+   */
   public static @NotNull Color getTreeSelectionBackground(boolean focused) {
-    return focused ? FocusedSelection.TREE_BACKGROUND : UnfocusedSelection.TREE_BACKGROUND;
+    return JBUI.CurrentTheme.Tree.Selection.background(focused);
   }
 
+  /**
+   * @see RenderingUtil#getBackground(JTree, boolean)
+   */
   public static @NotNull Color getTreeBackground(boolean selected, boolean focused) {
     return !selected ? getTreeBackground() : getTreeSelectionBackground(focused);
   }
@@ -3307,15 +3175,23 @@ public final class UIUtil {
 
   // foreground
 
+  /**
+   * @see RenderingUtil#getForeground(JTree)
+   */
   public static @NotNull Color getTreeForeground() {
-    return UIManager.getColor("Tree.foreground");
+    return JBUI.CurrentTheme.Tree.FOREGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getSelectionForeground(JTree)
+   */
   public static @NotNull Color getTreeSelectionForeground(boolean focused) {
-    Color foreground = UIManager.getColor(focused ? "Tree.selectionForeground" : "Tree.selectionInactiveForeground");
-    return foreground != null ? foreground : getTreeForeground();
+    return JBUI.CurrentTheme.Tree.Selection.foreground(focused);
   }
 
+  /**
+   * @see RenderingUtil#getForeground(JTree, boolean)
+   */
   public static @NotNull Color getTreeForeground(boolean selected, boolean focused) {
     return !selected ? getTreeForeground() : getTreeSelectionForeground(focused);
   }
@@ -3328,14 +3204,23 @@ public final class UIUtil {
     return getTreeSelectionForeground(true);
   }
 
+  /**
+   * @see RenderingUtil#getBackground(JTable)
+   */
   public static @NotNull Color getTableBackground() {
-    return TABLE_BACKGROUND;
+    return JBUI.CurrentTheme.Table.BACKGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getSelectionBackground(JTable)
+   */
   public static @NotNull Color getTableSelectionBackground(boolean focused) {
-    return focused ? FocusedSelection.TABLE_BACKGROUND : UnfocusedSelection.TABLE_BACKGROUND;
+    return JBUI.CurrentTheme.Table.Selection.background(focused);
   }
 
+  /**
+   * @see RenderingUtil#getBackground(JTable, boolean)
+   */
   public static @NotNull Color getTableBackground(boolean selected, boolean focused) {
     return !selected ? getTableBackground() : getTableSelectionBackground(focused);
   }
@@ -3356,25 +3241,25 @@ public final class UIUtil {
     return getTableSelectionBackground(true);
   }
 
-  /**
-   * @deprecated use {@link #getTableSelectionBackground(boolean)}
-   */
-  @Deprecated
-  public static @NotNull Color getTableUnfocusedSelectionBackground() {
-    return getTableSelectionBackground(false);
-  }
-
   // foreground
 
+  /**
+   * @see RenderingUtil#getForeground(JTable)
+   */
   public static @NotNull Color getTableForeground() {
-    return UIManager.getColor("Table.foreground");
+    return JBUI.CurrentTheme.Table.FOREGROUND;
   }
 
+  /**
+   * @see RenderingUtil#getSelectionForeground(JTable)
+   */
   public static @NotNull Color getTableSelectionForeground(boolean focused) {
-    Color foreground = UIManager.getColor(focused ? "Table.selectionForeground" : "Table.selectionInactiveForeground");
-    return foreground != null ? foreground : getTreeForeground();
+    return JBUI.CurrentTheme.Table.Selection.foreground(focused);
   }
 
+  /**
+   * @see RenderingUtil#getForeground(JTable, boolean)
+   */
   public static @NotNull Color getTableForeground(boolean selected, boolean focused) {
     return !selected ? getTableForeground() : getTableSelectionForeground(focused);
   }
@@ -3382,7 +3267,7 @@ public final class UIUtil {
   /**
    * @deprecated use {@link #getTableForeground(boolean, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Color getTableForeground(boolean selected) {
     return getTableForeground(selected, true);
   }
@@ -3392,49 +3277,23 @@ public final class UIUtil {
    */
   @Deprecated
   public static @NotNull Color getTableSelectionForeground() {
-    return UIManager.getColor("Table.selectionForeground");
-  }
-
-  /**
-   * @deprecated use {@link JBUIScale#getSystemFontData()}
-   */
-  @Deprecated
-  public static Pair<String, Integer> getSystemFontData() {
-    return JBUIScale.getSystemFontData();
-  }
-
-  /**
-   * @deprecated use {@link JreHiDpiUtil#isJreHiDPIEnabled()}
-   */
-  @Deprecated
-  public static boolean isJreHiDPIEnabled() {
-    return JreHiDpiUtil.isJreHiDPIEnabled();
-  }
-
-  /**
-   * @deprecated use {@link JreHiDpiUtil#isJreHiDPI(Graphics2D)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean isJreHiDPI(@Nullable Graphics2D g) {
-    return JreHiDpiUtil.isJreHiDPI(g);
-  }
-
-  /**
-   * @deprecated use {@link UIUtil#getPanelBackground()} instead
-   */
-  @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull Color getPanelBackgound() {
-    return getPanelBackground();
+    return getTableSelectionForeground(true);
   }
 
   public static void doNotScrollToCaret(@NotNull JTextComponent textComponent) {
     textComponent.setCaret(new DefaultCaret() {
       @Override
-      protected void adjustVisibility(Rectangle nloc) {}
+      protected void adjustVisibility(Rectangle nloc) { }
     });
+  }
+
+  public static void convertToLabel(@NotNull JEditorPane editorPane) {
+    editorPane.setEditable(false);
+    editorPane.setFocusable(false);
+    editorPane.setOpaque(false);
+    editorPane.setBorder(null);
+    editorPane.setContentType("text/html");
+    editorPane.setEditorKit(HTMLEditorKitBuilder.simple());
   }
 
   /**
@@ -3450,7 +3309,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getTooltipSeparatorColor() {
-    return JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
+    return JBUI.CurrentTheme.Tooltip.separatorColor();
   }
 
   /**
@@ -3459,23 +3318,57 @@ public final class UIUtil {
   public static void scrollToReference(@NotNull JEditorPane editor, @NotNull @NonNls String reference) {
     Document document = editor.getDocument();
     if (document instanceof HTMLDocument) {
-      Element elementById = ((HTMLDocument) document).getElement(reference);
+      Element elementById = ((HTMLDocument)document).getElement(reference);
       if (elementById != null) {
-        try {
-          int pos = elementById.getStartOffset();
-          Rectangle r = editor.modelToView(pos);
-          if (r != null) {
-            r.height = editor.getVisibleRect().height;
-            editor.scrollRectToVisible(r);
-            editor.setCaretPosition(pos);
+        SwingUtilities.invokeLater(() -> {
+          try {
+            int pos = elementById.getStartOffset();
+            Rectangle r = editor.modelToView2D(pos).getBounds();
+            if (r != null) {
+              r.height = editor.getVisibleRect().height;
+              editor.scrollRectToVisible(r);
+              editor.setCaretPosition(pos);
+            }
           }
-        } catch (BadLocationException e) {
-          getLogger().error(e);
-        }
+          catch (BadLocationException e) {
+            getLogger().error(e);
+          }
+        });
         return;
       }
     }
     editor.scrollToReference(reference);
+  }
+
+  /**
+   * Checks if a component is showing in a more general sense than UI visibility,
+   * sometimes it's useful to limit various activities by checking the visibility of the real UI,
+   * but it could be unneeded in headless mode or in other scenarios.
+   *
+   * @see UIUtil#hasFocus(Component)
+   */
+  @ApiStatus.Experimental
+  public static boolean isShowing(@NotNull Component component) {
+    return isShowing(component, true);
+  }
+
+  /**
+   * An overload of {@link UIUtil#isShowing(Component)} allowing to ignore headless mode.
+   *
+   * @param checkHeadless when {@code true}, the {@code component} will always be considered visible in headless mode.
+   */
+  @ApiStatus.Experimental
+  public static boolean isShowing(@NotNull Component component, boolean checkHeadless) {
+    return ComponentUtil.isShowing(component, checkHeadless);
+  }
+
+  /**
+   * Marks a component as showing
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void markAsShowing(@NotNull JComponent component, boolean value) {
+    ComponentUtil.markAsShowing(component, value);
   }
 
   public static void runWhenFocused(@NotNull Component component, @NotNull Runnable runnable) {
@@ -3506,12 +3399,63 @@ public final class UIUtil {
     }
   }
 
+  public static void runWhenHidden(@NotNull Component component, @NotNull Runnable runnable) {
+    component.addHierarchyListener(runWhenHidden(runnable));
+  }
+
+  private static @NotNull HierarchyListener runWhenHidden(@NotNull Runnable runnable) {
+    return new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if (!BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+          return;
+        }
+        Component component = e.getComponent();
+        if (component.isDisplayable()) {
+          return;
+        }
+        component.removeHierarchyListener(this);
+        runnable.run();
+      }
+    };
+  }
+
+  public static void runWhenChanged(@NotNull Component component, @NotNull String property, @NotNull Runnable runnable) {
+    component.addPropertyChangeListener(property, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        component.removePropertyChangeListener(property, this);
+        runnable.run();
+      }
+    });
+  }
+
+  public static Future<?> runOnceWhenResized(@NotNull Component component, @NotNull Runnable runnable) {
+    var future = new CompletableFuture<>();
+    component.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        component.removeComponentListener(this);
+        if (!future.isCancelled()) {
+          try {
+            runnable.run();
+            future.complete(null);
+          }
+          catch (Throwable ex) {
+            future.completeExceptionally(ex);
+          }
+        }
+      }
+    });
+    return future;
+  }
+
   public static Font getLabelFont() {
     return StartupUiUtil.getLabelFont();
   }
 
   public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, @Nullable ImageObserver observer) {
-    StartupUiUtil.drawImage(g, image, x, y, null);
+    StartupUiUtil.drawImage(g, image, x, y, observer);
   }
 
   public static @NotNull Point getCenterPoint(@NotNull Dimension container, @NotNull Dimension child) {
@@ -3530,18 +3474,9 @@ public final class UIUtil {
     StartupUiUtil.drawImage(g, image, dstBounds, srcBounds, null, observer);
   }
 
-  public static void drawImage(@NotNull Graphics g, @NotNull BufferedImage image, @Nullable BufferedImageOp op, int x, int y) {
-    StartupUiUtil.drawImage(g, image, x, y, -1, -1, op, null);
-  }
-
-  /** @see UIUtil#dispatchAllInvocationEvents() */
   @TestOnly
   public static void pump() {
-    assert !SwingUtilities.isEventDispatchThread();
-    Semaphore lock = new Semaphore(1);
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> lock.up());
-    lock.waitFor();
+    StartupUiUtil.INSTANCE.pump();
   }
 
   public static boolean isJreHiDPI() {
@@ -3563,5 +3498,74 @@ public final class UIUtil {
       return 0;
     }
     return Math.min(result, 255);
+  }
+
+  public static void stopFocusedEditing(@NotNull Window window) {
+    Component focusOwner = FocusManager.getCurrentManager().getFocusOwner();
+    if (focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, window)) {
+      return;
+    }
+    if (focusOwner instanceof JFormattedTextField) {
+      try {
+        ((JFormattedTextField)focusOwner).commitEdit();
+      }
+      catch (ParseException ignored) {
+      }
+    }
+    Object obj = focusOwner.getParent();
+    if (obj instanceof JTable) {
+      TableUtil.stopEditing((JTable)obj);
+    }
+    Object obj1 = focusOwner.getParent();
+    if (obj1 instanceof JTree) {
+      ((JTree)obj1).stopEditing();
+    }
+  }
+
+  public static String colorToHex(final Color color) {
+    return to2DigitsHex(color.getRed()) + to2DigitsHex(color.getGreen()) + to2DigitsHex(color.getBlue());
+  }
+
+  private static String to2DigitsHex(int i) {
+    String s = Integer.toHexString(i);
+    if (s.length() < 2) s = "0" + s;
+    return s;
+  }
+
+  @ApiStatus.Experimental
+  public static boolean equalColors(@Nullable Color color1, @Nullable Color color2) {
+    return ComparableColor.equalColors(color1, color2);
+  }
+
+  @ApiStatus.Experimental
+  public static int colorHashCode(@Nullable Color color) {
+    return ComparableColor.colorHashCode(color);
+  }
+
+  public static boolean isXServerOnWindows() {
+    // This is heuristics to detect using Cygwin/X or other build of X.Org server on Windows in a WSL 2 environment
+    return OS.isGenericUnix() && !StartupUiUtil.isWayland() && System.getenv("WSLENV") != null;
+  }
+
+  public static void applyDeprecatedBackground(@Nullable JComponent component) {
+    Color color = getDeprecatedBackground();
+    if (component != null && color != null) {
+      component.setBackground(color);
+      component.setOpaque(true);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Color getDeprecatedBackground() {
+    return Registry.getColor("ui.deprecated.components.color", null);
+  }
+
+  public static boolean isMetalRendering() {
+    return SystemInfo.isMac && Boolean.getBoolean("sun.java2d.metal");
+  }
+
+  public static boolean isFullScreenSupportedByDefaultGD() {
+    GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+    return gd.isFullScreenSupported();
   }
 }

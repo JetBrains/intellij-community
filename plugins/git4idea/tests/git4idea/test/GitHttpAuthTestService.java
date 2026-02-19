@@ -15,17 +15,21 @@
  */
 package git4idea.test;
 
+import com.intellij.externalProcessAuthHelper.AuthenticationGate;
+import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
-import git4idea.commands.GitAuthenticationGate;
-import git4idea.commands.GitAuthenticationMode;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.commands.GitHttpAuthenticator;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 
 public class GitHttpAuthTestService extends GitHttpAuthService {
+  GitHttpAuthTestService(CoroutineScope coroutineScope) {
+    super(coroutineScope);
+  }
 
   @NotNull private GitHttpAuthenticator myAuthenticator = STUB_AUTHENTICATOR;
 
@@ -33,9 +37,9 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
   @Override
   public GitHttpAuthenticator createAuthenticator(@NotNull Project project,
                                                   @NotNull Collection<String> urls,
-                                                  @NotNull File workingDirectory,
-                                                  @NotNull GitAuthenticationGate authenticationGate,
-                                                  @NotNull GitAuthenticationMode authenticationMode) {
+                                                  @NotNull Path workingDirectory,
+                                                  @NotNull AuthenticationGate authenticationGate,
+                                                  @NotNull AuthenticationMode authenticationMode) {
     return myAuthenticator;
   }
 
@@ -47,4 +51,38 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
     myAuthenticator = STUB_AUTHENTICATOR;
   }
 
+  /**
+   * NOOP handler providing empty values for credentials
+   */
+  public static final GitHttpAuthenticator STUB_AUTHENTICATOR = new GitHttpAuthenticator() {
+    @NotNull
+    @Override
+    public String askPassword(@NotNull String url) {
+      return "";
+    }
+
+    @NotNull
+    @Override
+    public String askUsername(@NotNull String url) {
+      return "";
+    }
+
+    @Override
+    public void saveAuthData() {
+    }
+
+    @Override
+    public void forgetPassword() {
+    }
+
+    @Override
+    public boolean wasCancelled() {
+      return false;
+    }
+
+    @Override
+    public boolean wasRequested() {
+      return false;
+    }
+  };
 }

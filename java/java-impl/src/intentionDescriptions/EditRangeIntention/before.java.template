@@ -1,6 +1,0 @@
-import org.jetbrains.annotations.Range;
-
-interface Date {
-
-  int getMonth();
-}

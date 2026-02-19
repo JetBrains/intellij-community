@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -25,7 +26,7 @@ import java.util.Set;
 
 public interface BuildTargetIndex extends BuildTargetRegistry {
 
-  List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context);
+  @NotNull List<BuildTargetChunk> getSortedTargetChunks(@NotNull CompileContext context);
 
   /**
    * Returns {@code true} if target is {@link BuildTargetType#isFileBased() file-based} and has no source roots so it may be skipped during build.
@@ -35,7 +36,8 @@ public interface BuildTargetIndex extends BuildTargetRegistry {
   /**
    * @deprecated use {@link #getDependencies(BuildTarget, CompileContext)}
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context);
 
   @NotNull

@@ -21,19 +21,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 
-/**
- * @author vlan
- */
 public final class PyDynamicallyEvaluatedType extends PyUnionType {
   private PyDynamicallyEvaluatedType(@NotNull LinkedHashSet<@Nullable PyType> members) {
     super(members);
   }
 
-  @NotNull
-  public static PyDynamicallyEvaluatedType create(@NotNull PyType type) {
+  public static @NotNull PyDynamicallyEvaluatedType create(@NotNull PyType type) {
     final LinkedHashSet<PyType> members = new LinkedHashSet<>();
-    if (type instanceof PyUnionType) {
-      members.addAll(((PyUnionType)type).getMembers());
+    if (type instanceof PyUnionType unionType) {
+      members.addAll(unionType.getMembers());
     }
     else {
       members.add(type);
@@ -45,6 +41,6 @@ public final class PyDynamicallyEvaluatedType extends PyUnionType {
   @Override
   public String getName() {
     PyType res = excludeNull();
-    return res != null ? res.getName() : PyNames.UNKNOWN_TYPE;
+    return res != null ? res.getName() : PyNames.ANY_TYPE;
   }
 }

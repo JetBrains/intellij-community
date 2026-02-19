@@ -1,14 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger.sourcemap
 
-import com.intellij.reference.SoftReference
 import com.intellij.util.Url
-import com.intellij.util.io.readText
+import java.lang.ref.SoftReference
 import java.nio.file.Path
+import kotlin.io.path.readText
 
-class FileBackedSourceMap private constructor(filePath: Path,
-                                              initialData: SourceMapDataEx,
-                                              sourceResolver: SourceResolver)
+internal class FileBackedSourceMap private constructor(
+  filePath: Path,
+  initialData: SourceMapDataEx,
+  sourceResolver: SourceResolver,
+)
   : SourceMapBase(FileBackedSourceMapData(filePath, initialData), sourceResolver) {
 
   override val sourceIndexToMappings: Array<MappingList?>
@@ -24,7 +26,7 @@ class FileBackedSourceMap private constructor(filePath: Path,
                                baseUrlIsFile: Boolean): FileBackedSourceMap? {
       val text = filePath.readText()
       val data = SourceMapDataCache.getOrCreate(text, filePath.toString()) ?: return null
-      return FileBackedSourceMap(filePath, data, SourceResolver(data.sourceMapData.sources, trimFileScheme, baseUrl, baseUrlIsFile))
+      return FileBackedSourceMap(filePath, data, SourceResolver(data.sourceMapData.sources, baseUrl, baseUrlIsFile))
     }
   }
 }
@@ -40,6 +42,8 @@ private class FileBackedSourceMapData(private val filePath: Path, initialData: S
   override val hasNameMappings: Boolean = initialData.sourceMapData.hasNameMappings
   override val mappings: List<MappingEntry>
     get() = getData().sourceMapData.mappings
+  override val ignoreList: List<Int>
+    get() = getData().sourceMapData.ignoreList
 
   val sourceIndexToMappings: Array<MappingList?>
     get() = getData().sourceIndexToMappings

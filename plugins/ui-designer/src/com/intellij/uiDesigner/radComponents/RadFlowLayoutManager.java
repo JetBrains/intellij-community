@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -16,11 +16,11 @@ import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.FlowLayout;
+import java.awt.LayoutManager;
+import java.awt.Point;
 
-/**
- * @author yole
- */
+
 public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
   private static final MyAlignProperty ALIGN_PROPERTY = new MyAlignProperty();
 
@@ -42,8 +42,8 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     writer.addAttribute(UIFormXmlConstants.ATTRIBUTE_FLOW_ALIGN, layout.getAlignment());
   }
 
-  @NotNull @Override
-  public ComponentDropLocation getDropLocation(RadContainer container, final Point location) {
+  @Override
+  public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final Point location) {
     FlowLayout flowLayout = (FlowLayout) container.getLayout();
     return new FlowDropLocation(container, location, flowLayout.getAlignment(),
                                 (flowLayout.getHgap()+1)/2, (flowLayout.getVgap()+1)/2);
@@ -80,8 +80,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     @Override
     public Integer getValue(final RadContainer component) {
       final LayoutManager layout = component.getLayout();
-      if (!(layout instanceof FlowLayout)) return null;
-      FlowLayout flowLayout = (FlowLayout)layout;
+      if (!(layout instanceof FlowLayout flowLayout)) return null;
       return flowLayout.getAlignment();
     }
 
@@ -92,7 +91,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     }
 
     @Override
-    @NotNull public PropertyRenderer<Integer> getRenderer() {
+    public @NotNull PropertyRenderer<Integer> getRenderer() {
       if (myRenderer == null) {
         initPairs();
         myRenderer = new IntEnumRenderer(myPairs);
@@ -101,7 +100,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     }
 
     @Override
-    @NotNull public PropertyEditor<Integer> getEditor() {
+    public @NotNull PropertyEditor<Integer> getEditor() {
       if (myEditor == null) {
         initPairs();
         myEditor = new IntEnumEditor(myPairs);
@@ -111,8 +110,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
 
     @Override public boolean isModified(final RadContainer component) {
       final LayoutManager layout = component.getLayout();
-      if (!(layout instanceof FlowLayout)) return false;
-      FlowLayout flowLayout = (FlowLayout)layout;
+      if (!(layout instanceof FlowLayout flowLayout)) return false;
       return flowLayout.getAlignment() != FlowLayout.CENTER;
     }
   }

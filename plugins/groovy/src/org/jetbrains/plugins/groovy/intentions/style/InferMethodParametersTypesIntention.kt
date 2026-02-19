@@ -1,18 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.PsiTypes
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
-import org.jetbrains.plugins.groovy.intentions.style.inference.*
+import org.jetbrains.plugins.groovy.intentions.style.inference.DefaultInferenceContext
+import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceOptions
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
+import org.jetbrains.plugins.groovy.intentions.style.inference.recursiveSubstitute
+import org.jetbrains.plugins.groovy.intentions.style.inference.runInferenceProcess
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
@@ -34,7 +36,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), false, DefaultInferenceContext, lazy { unreachable() })
+    val options = SignatureInferenceOptions(false, DefaultInferenceContext)
     val virtualMethod = runInferenceProcess(method, options)
     substituteMethodSignature(virtualMethod, method)
   }
@@ -71,7 +73,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     }
     sinkMethod.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
     if (!sinkMethod.isConstructor && sinkMethod.returnTypeElement == null) {
-      val returnType = sinkMethod.inferredReturnType?.takeIf { it != PsiType.NULL } ?: getJavaLangObject(sinkMethod)
+      val returnType = sinkMethod.inferredReturnType?.takeIf { it != PsiTypes.nullType() } ?: getJavaLangObject(sinkMethod)
       GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.setReturnType(returnType))
     }
     sinkMethod.modifierList.setModifierProperty(GrModifier.DEF, false)

@@ -2,6 +2,8 @@
 @author Fabio Zadrozny
 '''
 from _pydev_bundle import _pydev_imports_tipper
+from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
 import inspect
 import pytest
 import sys
@@ -82,6 +84,7 @@ class TestCPython(unittest.TestCase):
             t = self.assert_in('readlines' , tips)
             self.assertTrue('->' in t[1] or 'sizehint' in t[1])
 
+    @pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-886')
     def test_imports(self):
         '''
         You can print_ the results to check...
@@ -127,7 +130,10 @@ class TestCPython(unittest.TestCase):
         self.check_args(t, '(object, class_or_type_or_tuple)', '(object o, type typeinfo)', '(o: object, typeinfo: type)', '(obj, class_or_tuple)') #args
 
         t = self.assert_in('compile' , tip)
-        self.check_args(t, '(source, filename, mode)', '()', '(o: object, name: str, val: object)', '(source, filename, mode, flags, dont_inherit, optimize)') #args
+        if IS_PY38_OR_GREATER:
+            self.check_args(t, '(source, filename, mode)', '()', '(o: object, name: str, val: object)', '(source, filename, mode, flags, dont_inherit, optimize, _feature_version=-1)') #args
+        else:
+            self.check_args(t, '(source, filename, mode)', '()', '(o: object, name: str, val: object)', '(source, filename, mode, flags, dont_inherit, optimize)')
 
         t = self.assert_in('setattr' , tip)
         self.check_args(t, '(object, name, value)', '(object o, str name, object val)', '(o: object, name: str, val: object)', '(obj, name, value)') #args
@@ -149,7 +155,10 @@ class TestCPython(unittest.TestCase):
                 self.assert_args('walk', '(tree, visitor, walker, verbose)', tip)
                 self.assert_in('parseFile'      , tip)
             else:
-                self.assert_args('parse', '(source, filename, mode)', tip)
+                if IS_PY38_OR_GREATER:
+                    self.assert_args('parse', '(source, filename, mode, type_comments=False, feature_version=None)', tip)
+                else:
+                    self.assert_args('parse', '(source, filename, mode)', tip)
                 self.assert_args('walk', '(node)', tip)
             self.assert_in('parse'          , tip)
 

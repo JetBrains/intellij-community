@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -11,7 +11,11 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,8 +35,12 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
+
+  @Override
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     NamedLibraryElement libraryElement = getValue();
     if (libraryElement != null) {
@@ -83,8 +91,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     Icon icon = AllIcons.Nodes.PpLibFolder;
     String tooltip = null;
     String location = null;
-    if (orderEntry instanceof JdkOrderEntry) {
-      JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
+    if (orderEntry instanceof JdkOrderEntry jdkOrderEntry) {
       icon = getJdkIcon(jdkOrderEntry);
       Sdk projectJdk = jdkOrderEntry.getJdk();
       if (projectJdk != null) { //jdk not specified
@@ -102,8 +109,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
         }
       }
     }
-    else if (orderEntry instanceof LibraryOrderEntry) {
-      LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+    else if (orderEntry instanceof LibraryOrderEntry libraryOrderEntry) {
       tooltip = StringUtil.capitalize(IdeBundle.message("node.projectview.library", libraryOrderEntry.getLibraryLevel()));
     }
     presentation.setIcon(icon);

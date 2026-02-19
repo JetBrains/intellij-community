@@ -1,0 +1,26 @@
+package records;
+
+import java.util.Map;
+
+public record TestHideConstructorRecordAnnoParameterType(Map<@Anno String, String> b2) {
+   public TestHideConstructorRecordAnnoParameterType(Map<String, @Anno String> b2) {
+      this.b2 = b2;// 9
+   }// 10
+}
+
+class 'records/TestHideConstructorRecordAnnoParameterType' {
+   method '<init> (Ljava/util/Map;)V' {
+      4      6
+      5      6
+      6      6
+      7      6
+      8      6
+      9      7
+   }
+}
+
+Lines mapping:
+9 <-> 7
+10 <-> 8
+Not mapped:
+8

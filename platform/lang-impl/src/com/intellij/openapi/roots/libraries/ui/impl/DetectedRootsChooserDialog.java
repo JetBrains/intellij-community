@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.lang.LangBundle;
@@ -13,25 +13,38 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeTable;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxCellEditor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 /**
  * This dialog allows selecting paths inside selected archives or directories.
@@ -45,7 +58,8 @@ import java.util.*;
  * @author max
  * @author Constantine.Plotnikov
  */
-public class DetectedRootsChooserDialog extends DialogWrapper {
+@ApiStatus.Internal
+public final class DetectedRootsChooserDialog extends DialogWrapper {
   private static final ColumnInfo<?, ?> ROOT_COLUMN = new TreeColumnInfo("");
   private static final ColumnInfo<VirtualFileCheckedTreeNode, String> ROOT_TYPE_COLUMN = new ColumnInfo<>("") {
     @Override
@@ -121,8 +135,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     CheckboxTreeTable treeTable = new CheckboxTreeTable(root, new CheckboxTree.CheckboxTreeCellRenderer(true) {
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof VirtualFileCheckedTreeNode)) return;
-        VirtualFileCheckedTreeNode node = (VirtualFileCheckedTreeNode)value;
+        if (!(value instanceof VirtualFileCheckedTreeNode node)) return;
         VirtualFile file = node.getFile();
         @NlsSafe String text;
         SimpleTextAttributes attributes;
@@ -168,7 +181,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     column.setPreferredWidth(width);
     column.setMaxWidth(width);
     treeTable.setRootVisible(false);
-    new TreeTableSpeedSearch(treeTable, o -> {
+    TreeTableSpeedSearch.installOn(treeTable, o -> {
       Object node = o.getLastPathComponent();
       if (!(node instanceof VirtualFileCheckedTreeNode)) return "";
       return ((VirtualFileCheckedTreeNode)node).getFile().getPresentableUrl();
@@ -201,9 +214,8 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     return new TitlePanel(ProjectBundle.message("section.title.choose.roots"), myDescription);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPane;
   }
 
@@ -211,19 +223,17 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     return myTreeTable.getCheckedNodes(SuggestedChildRootInfo.class);
   }
 
-  @NonNls
   @Override
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "DetectedRootsChooserDialog";
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myTreeTable;
   }
 
-  private static class VirtualFileCheckedTreeNode extends CheckedTreeNode {
+  private static final class VirtualFileCheckedTreeNode extends CheckedTreeNode {
     private final VirtualFile myFile;
 
     private VirtualFileCheckedTreeNode(VirtualFile file) {
@@ -240,8 +250,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
       return myFile;
     }
 
-    @Nullable
-    private SuggestedChildRootInfo getRootInfo() {
+    private @Nullable SuggestedChildRootInfo getRootInfo() {
       return userObject instanceof SuggestedChildRootInfo ? (SuggestedChildRootInfo)userObject : null;
     }
   }

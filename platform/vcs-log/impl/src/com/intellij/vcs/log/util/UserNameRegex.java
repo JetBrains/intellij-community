@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -6,7 +6,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public final class UserNameRegex implements Function<String, String> {
-  @NotNull public static final UserNameRegex EXTENDED_INSTANCE = new UserNameRegex(true);
+  public static final @NotNull UserNameRegex EXTENDED_INSTANCE = new UserNameRegex(true);
   private static final char @NotNull [] BASIC_REGEX_CHARS = new char[]{'.', '^', '$', '*', '[', ']'};
   public static final char @NotNull []
     EXTENDED_REGEX_CHARS = new char[]{'.', '^', '$', '*', '+', '-', '?', '(', ')', '[', ']', '{', '}', '|'};

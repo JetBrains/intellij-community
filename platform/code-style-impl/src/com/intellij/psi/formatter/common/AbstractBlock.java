@@ -1,11 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.common;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.ASTBlock;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
+import com.intellij.formatting.FormattingRangesInfo;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,14 +42,12 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       List<Block> list = buildChildren();
       if (list.isEmpty()) {
@@ -64,8 +69,7 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     return myBuildIndentsOnly;
   }
 
-  @NotNull
-  private List<Block> buildInjectedBlocks() {
+  private @NotNull List<Block> buildInjectedBlocks() {
     if (myBuildIndentsOnly) {
       return EMPTY;
     }
@@ -82,7 +86,8 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     }
 
     TextRange blockRange = myNode.getTextRange();
-    List<DocumentWindow> documentWindows = InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
+    List<DocumentWindow> documentWindows =
+      InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, blockRange);
     if (documentWindows.isEmpty()) {
       return EMPTY;
     }
@@ -105,37 +110,32 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
 
   protected abstract List<Block> buildChildren();
 
-  @Nullable
   @Override
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return myWrap;
   }
 
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     return myAlignment;
   }
 
-  @NotNull
   @Override
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     return myNode;
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     return new ChildAttributes(getChildIndent(), getFirstChildAlignment());
   }
 
-  @Nullable
-  private Alignment getFirstChildAlignment() {
+  private @Nullable Alignment getFirstChildAlignment() {
     List<Block> subBlocks = getSubBlocks();
     for (Block subBlock : subBlocks) {
       Alignment alignment = subBlock.getAlignment();
@@ -146,8 +146,7 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     return null;
   }
 
-  @Nullable
-  protected Indent getChildIndent() {
+  protected @Nullable Indent getChildIndent() {
     return null;
   }
 
@@ -162,9 +161,8 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
   /**
    * @return additional range to reformat, when this block if formatted
    */
-  @Nullable
   @Override
-  public List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
+  public @Nullable List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
     return info.isOnInsertedLine(getTextRange().getStartOffset()) && myNode.textContains('\n')
            ? new NodeIndentRangesCalculator(myNode).calculateExtraRanges()
            : null;
@@ -172,6 +170,6 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
 
   @Override
   public String toString() {
-    return myNode.getText() + " " + getTextRange();
+    return this.getClass().getSimpleName() + " '" + StringUtil.escapeLineBreak(myNode.getText()) + "' " + getTextRange();
   }
 }

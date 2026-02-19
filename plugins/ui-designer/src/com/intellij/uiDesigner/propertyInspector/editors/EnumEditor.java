@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.propertyInspector.editors;
 
@@ -6,11 +6,13 @@ import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
-/**
- * @author yole
- */
+
 public class EnumEditor extends PropertyEditor<Enum> {
   private final JComboBox myCbx;
 

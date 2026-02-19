@@ -1,0 +1,6 @@
+JsonFile: y_string_unicodeEscapedBackslash.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\u005C"')
+    PsiElement(])(']')

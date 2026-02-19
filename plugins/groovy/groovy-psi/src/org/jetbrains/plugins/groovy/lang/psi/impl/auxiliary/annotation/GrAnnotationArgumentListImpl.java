@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
@@ -51,7 +55,7 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     if (first.getElementType() == GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR && last.getElementType() ==
                                                                                          GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR) {
       ASTNode lparenth = getNode().getFirstChildNode();
@@ -92,9 +96,8 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
     return super.addInternal(first, last, anchor, before);
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getAttributes());
   }
 }

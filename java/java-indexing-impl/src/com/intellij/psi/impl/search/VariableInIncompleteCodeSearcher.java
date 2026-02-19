@@ -1,9 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
@@ -16,13 +22,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Looks for references to local variable or method parameter in invalid (incomplete) code.
  */
-public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public VariableInIncompleteCodeSearcher() {
     super(true);
   }
 
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<? super PsiReference> consumer) {
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters p, final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
     if (!refElement.isValid() || !(refElement instanceof PsiVariable)) return;
 
@@ -53,13 +59,10 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
         if (!child.textMatches(name)) {
           break;
         }
-        if (child instanceof PsiJavaCodeReferenceElement) {
-          final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)child;
-          if (!ref.isQualified() &&
-              !(ref.getParent() instanceof PsiMethodCallExpression) &&
-              ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
-            consumer.process(ref);
-          }
+        if (child instanceof PsiJavaCodeReferenceElement ref && !ref.isQualified() &&
+            !(ref.getParent() instanceof PsiMethodCallExpression) &&
+            ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
+          consumer.process(ref);
         }
       }
       return true;

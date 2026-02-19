@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -10,11 +10,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JLabel;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.basic.BasicHTML;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-public class HoverHyperlinkLabel extends JLabel {
+public final class HoverHyperlinkLabel extends JLabel {
   private @NlsContexts.LinkLabel String myOriginalText;
   private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -76,8 +77,7 @@ public class HoverHyperlinkLabel extends JLabel {
   }
 
   @Contract(pure = true)
-  @Nls
-  private static String underlineTextInHtml(@NlsContexts.LinkLabel String text) {
+  private static @Nls String underlineTextInHtml(@NlsContexts.LinkLabel String text) {
     return HtmlChunk.text(StringUtil.escapeXmlEntities(text)).wrapWith("u").wrapWith(HtmlChunk.html()).toString();
   }
 

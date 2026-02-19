@@ -1,0 +1,591 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.env.python;
+
+import com.google.common.collect.Sets;
+import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.test.env.core.CachingPyEnvironmentFactory;
+import com.intellij.python.test.env.core.PyEnvironment;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.env.EnvTestTagsRequired;
+import com.jetbrains.env.PyAbstractTestProcessRunner;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.SMRootTestsCounter;
+import com.jetbrains.python.testing.tox.PyToxConfiguration;
+import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
+import com.jetbrains.python.testing.tox.PyToxTestTools;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
+import kotlinx.coroutines.Dispatchers;
+import org.assertj.core.api.Condition;
+import org.hamcrest.Matchers;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static com.intellij.python.test.env.common.PyEnvironmentFactoriesKt.createPyEnvironmentFactory;
+import static kotlinx.coroutines.BuildersKt.runBlocking;
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Ensure tox runner works
+ *
+ * @author Ilya.Kazakevich
+ */
+@EnvTestTagsRequired(tags = "python3.8")
+public final class PyToxTest extends PyEnvTestCase {
+
+  private List<String> myRoots;
+
+  public PyToxTest() {
+    super("tox");
+  }
+
+  @Before
+  public void setUp() throws Exception {
+    myRoots = getEnvironmentRoots();
+  }
+
+  /**
+   * Simply ensure tox runner works
+   */
+  @Test
+  public void testToxSimpleRun() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxSimpleRun/", 2,
+                                                     () -> createTestProcessRunner(),
+                                                     Collections.singletonList(
+                                                       Pair.create("py39", new InterpreterExpectations("", true))
+                                                     ),
+                                                     Integer.MAX_VALUE));
+  }
+
+  /**
+   * Check tox pytest runner
+   */
+  @Test
+  public void testToxPyTest() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTest/", 1,
+                                                     () -> createTestProcessRunner(),
+                                                     Arrays.asList(
+                                                       Pair.create("py39", new InterpreterExpectations("", true)),
+                                                       Pair.create("py38", new InterpreterExpectations("Assertion", false))
+                                                     ),
+                                                     Integer.MAX_VALUE)
+    );
+  }
+
+
+  @Test
+  public void testToxPyTestXDist() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestXDist/", 1,
+                                                     () -> createTestProcessRunner(),
+                                                     Arrays.asList(
+                                                       Pair.create("py38", new InterpreterExpectations("", false)),
+                                                       Pair.create("py39", new InterpreterExpectations("", true))
+                                                     ),
+                                                     Integer.MAX_VALUE) {
+                    @Override
+                    protected void checkTestResults(@NotNull MyTestProcessRunner runner,
+                                                    @NotNull String stdout,
+                                                    @NotNull String stderr,
+                                                    @NotNull String all,
+                                                    int exitCode) {
+                      super.checkTestResults(runner, stdout, stderr, all, exitCode);
+                      Assert.assertEquals(5, runner.getPassedTestsCount());
+                      Assert.assertEquals(1, runner.getFailedTestsCount());
+                      runner.getFormattedTestTree();
+                    }
+                  }
+    );
+  }
+
+
+  @Test
+  public void testToxPyTestPy3k() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxPyTestPy3k/", 1,
+                                                     () -> createTestProcessRunner(),
+                                                     Collections.singletonList(
+                                                       Pair.create("py38", new InterpreterExpectations("", true))
+                                                     ),
+                                                     Integer.MAX_VALUE)
+    );
+  }
+
+  /**
+   * Check tox unit runner
+   */
+  @Test
+  public void testToxUnitTest() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxUnitTest/", 1,
+                                                     () -> createTestProcessRunner(),
+                                                     Arrays.asList(
+                                                       Pair.create("py39", new InterpreterExpectations("", true)),
+                                                       Pair.create("py38", new InterpreterExpectations("Assertion", false))
+                                                     ),
+                                                     Integer.MAX_VALUE)
+    );
+  }
+
+  /**
+   * Checks empty envs for all but 3.8
+   */
+  @Test
+  public void textToxOneInterpreter() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxOneInterpreter/", 0,
+                                                     () -> createTestProcessRunner(),
+                                                     Arrays.asList(
+                                                       Pair.create("py39", new InterpreterExpectations("ython 3.9", true)),
+                                                       Pair.create("py38", new InterpreterExpectations("", false))
+                                                     ),
+                                                     Integer.MAX_VALUE)
+    );
+  }
+
+
+  /**
+   * Ensures test is not launched 2 times because folder added 2 times
+   */
+  @Test
+  public void testDoubleRun() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxDoubleRun/", 1,
+                                                     () -> createTestProcessRunner(),
+                                                     Collections.singletonList(
+                                                       Pair.create("py39", new InterpreterExpectations("", true))
+                                                     ),
+                                                     1)
+    );
+  }
+
+  /**
+   * Big test which should run on any interpreter and check its output
+   */
+  @Test
+  public void testToxSuccessTest() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxSuccess/", 1,
+                                                     () -> createTestProcessRunner(),
+                                                     Arrays.asList(
+                                                       Pair.create("py39", new InterpreterExpectations("I am 3.9", true)),
+                                                       // Should have output
+                                                       Pair.create("py38", new InterpreterExpectations("I am 3.8", true))
+                                                     ),
+                                                     Integer.MAX_VALUE)
+    );
+  }
+
+  /**
+   * Ensures rerun works for tox
+   */
+  @Test
+  public void testEnvRerun() {
+    runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxConcreteEnv/", 0,
+                                                     () -> createTestProcessRunner(1),
+                                                     Arrays.asList(
+                                                       //26 and 39 only used for first time, they aren't used after rerun
+                                                       Pair.create("py39", new InterpreterExpectations("", true, 1)),
+                                                       Pair.create("py38", new InterpreterExpectations("", false))
+                                                     ),
+                                                     Integer.MAX_VALUE)
+    );
+  }
+
+  private @NotNull MyTestProcessRunner createTestProcessRunner() {
+    return createTestProcessRunner(0);
+  }
+
+  private MyTestProcessRunner createTestProcessRunner(int timesToRerunFailedTests) {
+    return new MyTestProcessRunner(timesToRerunFailedTests, myRoots);
+  }
+
+  private static List<String> getEnvironmentRoots() {
+    CachingPyEnvironmentFactory factory = createPyEnvironmentFactory();
+    return ContainerUtil.map(PyEnvTestCase.ALL_ENVIRONMENTS, e -> {
+      try {
+        PyEnvironment environment = runBlocking(Dispatchers.getIO(), (scope, continuation) -> factory.createEnvironment(e.getSpec(), continuation));
+        return environment.getEnvPath().toString();
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+        return null;
+      }
+    });
+  }
+
+
+  /**
+   * Ensures {posargs} are passed correctly
+   */
+  @Test
+  public void testToxPosArgs() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxPosArgs/", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
+          return new MyTestProcessRunner(0, myRoots) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              PyToxTestTools.setArguments(configuration, "--", "arg1");
+            }
+          };
+        }
+
+
+        @Override
+        protected void checkTestResults(@NotNull final PyAbstractTestProcessRunner<PyToxConfiguration> runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all, int exitCode) {
+          Assert.assertThat("Wrong sys.argv", stdout, Matchers.containsString("['spam.py', 'arg1']"));
+        }
+
+        @NotNull
+        @Override
+        public Set<String> getTags() {
+          return Sets.newHashSet("tox");
+        }
+      });
+  }
+
+  /**
+   * Provide certain env and check it is launched
+   */
+  @Test
+  public void testConcreteEnv() {
+    final String[] envsToRun = {"py39", "py38"};
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxSuccess/", SdkCreationType.EMPTY_SDK) {
+        @NotNull
+        @Override
+        protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
+          return new RunnerWithArguments(myRoots, envsToRun, "-v");
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyAbstractTestProcessRunner<PyToxConfiguration> runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all,
+                                        final int exitCode) {
+          final Set<String> environments = runner.getTestProxy().getChildren().stream().map(t -> t.getName()).collect(Collectors.toSet());
+          assertThat(environments)
+            .describedAs("Wrong environments launched")
+            .containsExactlyInAnyOrderElementsOf(Arrays.asList(envsToRun));
+          assertThat(all).contains("-v");
+        }
+
+        @NotNull
+        @Override
+        public Set<String> getTags() {
+          return Sets.newHashSet("tox");
+        }
+      });
+  }
+
+  /**
+   * Provide certain env and check it is launched
+   */
+  @Test
+  public void testDoubleDash() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyAbstractTestProcessRunner<PyToxConfiguration>>("/toxtest/toxDoubleDash/",
+                                                                                        SdkCreationType.EMPTY_SDK) {
+        @NotNull
+        @Override
+        protected PyAbstractTestProcessRunner<PyToxConfiguration> createProcessRunner() {
+          return new RunnerWithArguments(myRoots, new String[]{"py39"}, "--", "--version");
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyAbstractTestProcessRunner<PyToxConfiguration> runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all,
+                                        final int exitCode) {
+          Assert.assertThat("Pytest should provide version because of --version", runner.getAllConsoleText(),
+                            Matchers.containsString("pytest"));
+          Assert.assertEquals("Only 3.9 should be launched", """
+            Test tree:
+            [root](+)
+            .py39(+)
+            """, runner.getFormattedTestTree());
+          runner.getFormattedTestTree();
+        }
+
+        @NotNull
+        @Override
+        public Set<String> getTags() {
+          return Sets.newHashSet("tox");
+        }
+      });
+  }
+
+
+  private static class MyPyProcessWithConsoleTestTask extends PyProcessWithConsoleTestTask<MyTestProcessRunner> {
+    private static final Logger LOGGER = Logger.getInstance(MyPyProcessWithConsoleTestTask.class);
+    @NotNull
+    private final Map<String, InterpreterExpectations> myInterpreters = new HashMap<>();
+    private final int myMinimumSuccessTestCount;
+    private final int myMaximumSuccessTestCount;
+    @NotNull
+    private final Supplier<MyTestProcessRunner> myRunnerSupplier;
+
+    /**
+     * @param minimumSuccessTestCount how many success tests should be
+     * @param interpreterExpectations interpreter_name -] expected result
+     * @param runnerSupplier          Lambda to create runner (can't reuse one runner several times,
+     *                                see {@link PyProcessWithConsoleTestTask#createProcessRunner()}
+     * @param maximumTestCount        max number of success tests
+     */
+    MyPyProcessWithConsoleTestTask(@Nullable final String relativeTestDataPath,
+                                   final int minimumSuccessTestCount,
+                                   @NotNull final Supplier<MyTestProcessRunner> runnerSupplier,
+                                   @NotNull final Iterable<Pair<String, InterpreterExpectations>> interpreterExpectations,
+                                   final int maximumTestCount) {
+      super(relativeTestDataPath, SdkCreationType.EMPTY_SDK);
+      myMinimumSuccessTestCount = minimumSuccessTestCount;
+      myMaximumSuccessTestCount = maximumTestCount;
+      myRunnerSupplier = runnerSupplier;
+      for (final Pair<String, InterpreterExpectations> interpreterExpectation : interpreterExpectations) {
+        myInterpreters.put(interpreterExpectation.first, interpreterExpectation.second);
+      }
+    }
+
+    @Override
+    protected void checkTestResults(@NotNull final MyTestProcessRunner runner,
+                                    @NotNull final String stdout,
+                                    @NotNull final String stderr,
+                                    @NotNull final String all, int exitCode) {
+
+      final Set<String> expectedInterpreters =
+        myInterpreters.entrySet().stream()
+          .filter(intAndExp -> intAndExp.getValue() != null)
+          .filter(o -> o.getValue().myUntilStep >
+                       runner.getCurrentRerunStep()) // Remove interp. which shouldn't be launched on this step
+          .map(intAndExp -> intAndExp.getKey())
+          .collect(Collectors.toSet());
+
+      // Interpreters are used in tox.ini, so there should be such text
+      for (final String interpreterName : expectedInterpreters) {
+        assertThat(all)
+          .describedAs(String.format("No %s used from tox.ini", interpreterName))
+          .contains(interpreterName);
+      }
+
+      if (!stderr.isEmpty()) {
+        Logger.getInstance(PyToxTest.class).warn(stderr);
+      }
+
+
+      final Set<String> checkedInterpreters = new HashSet<>();
+      final Collection<String> skippedMissingInterpreters = new HashSet<>();
+      // Interpreter should either run tests or mentioned as NotFound
+      for (final SMTestProxy interpreterSuite : runner.getTestProxy().getChildren()) {
+        final String interpreterName = interpreterSuite.getName();
+        assert interpreterName.startsWith("py") : String
+          .format("Bad interpreter name: %s. Tree is %s \n", interpreterName, getTestTree(interpreterSuite, 0));
+        checkedInterpreters.add(interpreterName);
+
+        final InterpreterExpectations expectations = myInterpreters.get(interpreterName);
+        if (expectations == null) {
+          LOGGER.warn(String.format("Launched %s, but no expectation provided, skipping", interpreterName));
+          continue;
+        }
+
+
+        if (interpreterSuite.getChildren().size() == 1 && interpreterSuite.getChildren().get(0).getName().endsWith("ERROR")) {
+          // Interpreter failed to run
+          final String testOutput = BaseSMTRunnerTestCase.getTestOutput(interpreterSuite.getChildren().get(0));
+          if (testOutput.contains("InterpreterNotFound")) {
+            // Skipped with out of "skip_missing_interpreters = True"
+            Logger.getInstance(PyToxTest.class).warn(String.format("Interpreter %s does not exit", interpreterName));
+            skippedMissingInterpreters.add(interpreterName); // Interpreter does not exit
+            continue;
+          }
+          // Some other error?
+          Assert
+            .assertFalse(String.format("Interpreter %s should not fail, but failed: %s", interpreterName, BaseSMTRunnerTestCase
+                           .getTestOutput(interpreterSuite)),
+                         expectations.myExpectedSuccess);
+          continue;
+        }
+
+        if (interpreterSuite.getChildren().size() == 1 && interpreterSuite.getChildren().get(0).getName().endsWith("SKIP")) {
+          // The only reason it may be skipped is it does not exist and skip_missing_interpreters = True
+          final String output = BaseSMTRunnerTestCase.getTestOutput(interpreterSuite);
+          assertThat(output)
+            .describedAs("Test marked skipped but not because interpreter not found")
+            .contains("InterpreterNotFound");
+        }
+
+
+        // Interpretr run success,
+        //At least one interpreter tests should passed
+        final int numberOfTests = new SMRootTestsCounter(interpreterSuite.getRoot()).getPassedTestsCount();
+        assertThat(numberOfTests)
+          .describedAs(String.format("Not enough test passed, should %s at least", myMinimumSuccessTestCount))
+          .isGreaterThanOrEqualTo(myMinimumSuccessTestCount);
+        assertThat(numberOfTests)
+          .describedAs(String.format("Too many tests passed, should %s maximum", myMaximumSuccessTestCount))
+          .isLessThanOrEqualTo(myMaximumSuccessTestCount);
+        // Check expected output
+        final String message = String.format("Interpreter %s does not have expected string in output. \n ", interpreterName) +
+                               String.format("All: %s \n", all) +
+                               String.format("Test tree: %s \n", getTestTree(interpreterSuite, 0)) +
+                               String.format("Error: %s \n", stderr);
+
+
+        assertThat(message)
+          .describedAs(BaseSMTRunnerTestCase.getTestOutput(interpreterSuite))
+          .contains(expectations.myExpectedOutput);
+      }
+
+      // Skipped interpreters should not be checked since we do not know which interpreters used on environemnt
+      // But if all interpreters are skipped, we can't say we tested something.
+      assert !skippedMissingInterpreters.equals(checkedInterpreters) : "All interpreters skipped (they do not exist on platform), " +
+                                                                       "we test nothing";
+      expectedInterpreters.removeAll(skippedMissingInterpreters);
+      checkedInterpreters.removeAll(skippedMissingInterpreters);
+
+      assertThat(checkedInterpreters)
+        .describedAs(String.format("No all interpreters from tox.ini used (test tree \n%s\n )", getTestTree(runner.getTestProxy(), 0)))
+        .are(new Condition<>() {
+          @Override
+          public boolean matches(String value) {
+            return expectedInterpreters.contains(value);
+          }
+        });
+    }
+
+    @NotNull
+    private static String getTestTree(@NotNull final SMTestProxy root, final int level) {
+      final StringBuilder result = new StringBuilder();
+      result.append(StringUtil.repeat(".", level)).append(root.getPresentableName()).append('\n');
+      final Optional<String> children = root.getChildren().stream().map(o -> getTestTree(o, level + 1)).reduce((s, s2) -> s + s2);
+      children.ifPresent(result::append);
+      return result.toString();
+    }
+
+    @NotNull
+    @Override
+    public Set<String> getTags() {
+      return Sets.newHashSet("tox");
+    }
+
+    @NotNull
+    @Override
+    protected MyTestProcessRunner createProcessRunner() {
+      return myRunnerSupplier.get();
+    }
+  }
+
+  private static class MyTestProcessRunner extends PyAbstractTestProcessRunner<PyToxConfiguration> {
+
+    private final List<String> myRoots;
+
+    private MyTestProcessRunner(int timesToRerunFailedTests, List<String> roots) {
+      super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, timesToRerunFailedTests);
+      myRoots = roots;
+    }
+
+    @Override
+    protected void configurationCreatedAndWillLaunch(@NotNull PyToxConfiguration configuration) throws IOException {
+      super.configurationCreatedAndWillLaunch(configuration);
+      fixPathForTox(configuration, myRoots);
+    }
+  }
+
+  private static void fixPathForTox(final @NotNull PyToxConfiguration configuration, List<String> envRoots) {
+    // To help tox with all interpreters, we add all our environments to path
+    // Envs should have binaries like "python2.7" (with version included),
+    // and tox will find em: see tox_get_python_executable @ interpreters.py
+
+    //On linux we also need shared libs from Anaconda, so we add it to LD_LIBRARY_PATH
+    final List<String> roots = new ArrayList<>();
+    final List<String> libs = new ArrayList<>();
+    for (final String root : envRoots) {
+      File bin = new File(root, "/bin/");
+      roots.add(bin.exists() ? bin.getAbsolutePath() : root);
+      File lib = new File(root, "/lib/");
+      if (lib.exists()) {
+        libs.add(lib.getAbsolutePath());
+      }
+    }
+
+    final String pathes = StringUtil.join(roots, File.pathSeparator);
+    final String libraryPathes = StringUtil.join(libs, File.pathSeparator);
+    final Logger logger = Logger.getInstance(PyToxTest.class);
+    Map<String, String> envs = configuration.getEnvs();
+    envs.put("PATH", pathes);
+    envs.put("LD_LIBRARY_PATH", libraryPathes);
+    for (final String key : envs.keySet()) {
+      logger.warn(String.format("%s: %s", key, envs.get(key)));
+    }
+  }
+
+  private static final class InterpreterExpectations {
+    @NotNull
+    private final String myExpectedOutput;
+    private final boolean myExpectedSuccess;
+    private final int myUntilStep;
+
+    /**
+     * @param expectedOutput  expected test output
+     * @param expectedSuccess if test should be success
+     * @param untilStep       in case of rerun, expectation works only until this step and not checked after it
+     */
+    private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess, final int untilStep) {
+      myExpectedOutput = expectedOutput;
+      myExpectedSuccess = expectedSuccess;
+      myUntilStep = untilStep;
+    }
+
+    /**
+     * @see #InterpreterExpectations(String, boolean, int)
+     */
+    private InterpreterExpectations(@NotNull final String expectedOutput, final boolean expectedSuccess) {
+      this(expectedOutput, expectedSuccess, Integer.MAX_VALUE);
+    }
+  }
+
+  private static class RunnerWithArguments extends PyAbstractTestProcessRunner<PyToxConfiguration> {
+    private final String[] myEnvsToRun;
+    private final String[] myArgs;
+    private final List<String> myRoots;
+
+    RunnerWithArguments(final List<String> roots, final String @NotNull [] envsToRun, final String @NotNull ... args) {
+      super(PyToxConfigurationFactory.INSTANCE, PyToxConfiguration.class, 0);
+      myEnvsToRun = envsToRun;
+      myArgs = args;
+      myRoots = roots;
+    }
+
+    @Override
+    protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
+      super.configurationCreatedAndWillLaunch(configuration);
+      PyToxTestTools.setArguments(configuration, myArgs);
+      PyToxTestTools.setRunOnlyEnvs(configuration, myEnvsToRun);
+      fixPathForTox(configuration, myRoots);
+    }
+  }
+}

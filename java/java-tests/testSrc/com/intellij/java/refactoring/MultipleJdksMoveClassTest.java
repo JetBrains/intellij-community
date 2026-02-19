@@ -16,9 +16,12 @@
 
 package com.intellij.java.refactoring;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +34,11 @@ import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 
@@ -72,13 +79,17 @@ public class MultipleJdksMoveClassTest extends UsefulTestCase {
     myJava8Module = builder8.getFixture().getModule();
 
     ModuleRootModificationUtil.updateModel(myJava7Module, model -> {
-      model.setSdk(IdeaTestUtil.getMockJdk17());
+      Sdk mockJdk17 = IdeaTestUtil.getMockJdk17();
+      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk17, myFixture.getProject()));
+      model.setSdk(mockJdk17);
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java7";
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
 
     ModuleRootModificationUtil.updateModel(myJava8Module, model -> {
-      model.setSdk(IdeaTestUtil.getMockJdk18());
+      Sdk mockJdk18 = IdeaTestUtil.getMockJdk18();
+      WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk18, myFixture.getProject()));
+      model.setSdk(mockJdk18);
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java8";
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
@@ -88,8 +99,8 @@ public class MultipleJdksMoveClassTest extends UsefulTestCase {
   public void testConflictStringUsage() {
     final PsiFile[] files = myFixture.configureByFiles("java7/p/Main.java", "java8/p/Foo.java");
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    RefactoringConflictsUtil.analyzeModuleConflicts(files[0].getProject(), Collections.singletonList(files[0]), 
-                                                    UsageInfo.EMPTY_ARRAY, files[1].getVirtualFile(), conflicts);
+    RefactoringConflictsUtil.getInstance().analyzeModuleConflicts(files[0].getProject(), Collections.singletonList(files[0]),
+                                                                  UsageInfo.EMPTY_ARRAY, files[1].getVirtualFile(), conflicts);
     
     assertEmpty(conflicts.keySet());
   }

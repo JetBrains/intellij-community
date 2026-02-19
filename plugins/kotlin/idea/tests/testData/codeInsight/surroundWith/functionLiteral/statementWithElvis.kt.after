@@ -1,0 +1,6 @@
+fun elvisFun(str: String?): String? {
+    val v = str?.length ?: <selection><caret>run</selection> {
+        return null
+    }
+    return v.toString()
+}

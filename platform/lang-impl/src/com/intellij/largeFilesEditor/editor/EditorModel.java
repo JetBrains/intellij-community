@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.google.common.collect.EvictingQueue;
@@ -9,10 +9,21 @@ import com.intellij.largeFilesEditor.search.SearchResult;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -24,23 +35,34 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
-public class EditorModel {
+public final class EditorModel {
   private static final Logger LOG = Logger.getInstance(EditorModel.class);
 
   private static final int EDITOR_LINE_BEGINNING_INDENT = 5;
-  private static final int PAGES_CASH_CAPACITY = 10;
+  private static final int PAGES_CACHE_CAPACITY = 10;
   private static final int MAX_AVAILABLE_LINE_LENGTH = 1000;
 
   private final DataProvider dataProvider;
@@ -49,10 +71,11 @@ public class EditorModel {
   private final DocumentOfPagesModel documentOfPagesModel;
   private final Collection<RangeHighlighter> pageRangeHighlighters;
 
-  private final EvictingQueue<Page> pagesCash = EvictingQueue.create(PAGES_CASH_CAPACITY);
+  private final EvictingQueue<Page> pagesCache = EvictingQueue.create(PAGES_CACHE_CAPACITY);
   private final List<Long> numbersOfRequestedForReadingPages = new LinkedList<>();
   private final AtomicBoolean isUpdateRequested = new AtomicBoolean(false);
   private boolean isBrokenMode = false;
+  private boolean isDisposed = false;
 
   private final AbsoluteEditorPosition targetVisiblePosition = new AbsoluteEditorPosition(0, 0);
   private boolean isLocalScrollBarStabilized = false;
@@ -117,8 +140,7 @@ public class EditorModel {
   private void insertGlobalScrollBarIntoEditorComponent() {
     JComponent mainPanelInEditor = editor.getComponent();
     LayoutManager layout = mainPanelInEditor.getLayout();
-    if (layout instanceof BorderLayout) {
-      BorderLayout borderLayout = (BorderLayout)layout;
+    if (layout instanceof BorderLayout borderLayout) {
       Component originalCentralComponent = borderLayout.getLayoutComponent(BorderLayout.CENTER);
 
       JBLayeredPane intermediatePane = new JBLayeredPane() {
@@ -273,6 +295,10 @@ public class EditorModel {
 
   @RequiresEdt
   private void update() {
+    if (isDisposed) {
+      return;
+    }
+
     if (isBrokenMode) {
       documentOfPagesModel.removeAllPages(dataProvider.getProject());
       return;
@@ -304,15 +330,25 @@ public class EditorModel {
     if (documentOfPagesModel.getPagesAmount() == 0) {
       long pageNumber = targetVisiblePosition.pageNumber == 0
                         ? 0
-                        : targetVisiblePosition.pageNumber == pagesAmountInFile  // to avoid redundant document rebuilding
-                          ? targetVisiblePosition.pageNumber - 2
-                          : targetVisiblePosition.pageNumber - 1;
-      Page page = tryGetPageFromCash(pageNumber);
-      if (page != null) {
-        setNextPageIntoDocument(page);
+                        : targetVisiblePosition.pageNumber - 1;
+      long prevPageNumber = pageNumber - 1;
+      boolean isPrevPageNeeded = prevPageNumber >= 0;
+      long nextPageNumber = pageNumber + 1;
+      boolean isNextPageNeeded = nextPageNumber < pagesAmountInFile;
+
+      int expectedNumberOfPages = 1 + (isPrevPageNeeded ? 1 : 0) + (isNextPageNeeded ? 1 : 0);
+      List<Page> pagesFromCache = Stream.of(
+        tryGetPageFromCache(prevPageNumber), tryGetPageFromCache(pageNumber), tryGetPageFromCache(nextPageNumber)
+      ).toList();
+      boolean allRequestedPagesAreCached = pagesFromCache.stream().filter(Objects::nonNull).count() == expectedNumberOfPages;
+
+      if (allRequestedPagesAreCached) {
+        pagesFromCache.stream().filter(Objects::nonNull).forEach(this::setNextPageIntoDocument);
       }
       else {
-        requestReadPage(pageNumber);
+        if (isPrevPageNeeded && pagesFromCache.get(0) == null) requestReadPage(prevPageNumber);
+        if (pagesFromCache.get(1) == null) requestReadPage(pageNumber);
+        if (isNextPageNeeded && pagesFromCache.get(2) == null) requestReadPage(nextPageNumber);
         return;
       }
     }
@@ -346,7 +382,7 @@ public class EditorModel {
 
     long nextPageNumberToAdd = tryGetNextPageNumberToAdd(pagesAmountInFile);
     if (nextPageNumberToAdd != -1) {
-      Page nextPageToAdd = tryGetPageFromCash(nextPageNumberToAdd);
+      Page nextPageToAdd = tryGetPageFromCache(nextPageNumberToAdd);
       if (nextPageToAdd != null) {
         setNextPageIntoDocument(nextPageToAdd);
         requestUpdate();
@@ -357,7 +393,7 @@ public class EditorModel {
       return;
     }
 
-    pagesCash.clear();
+    pagesCache.clear();
 
     if (isNeedToShowCaret) {
       if (isLocalScrollBarStabilized) {
@@ -388,12 +424,14 @@ public class EditorModel {
     Page lastPageInDocument = documentOfPagesModel.getLastPage();
     if (lastPageInDocument.isLastInFile() != (lastPageInDocument.getPageNumber() == pagesAmountInFile - 1)) {
       removeLastPageFromDocument();
-      pagesCash.removeIf(page -> lastPageInDocument.getPageNumber() == page.getPageNumber());
+      pagesCache.removeIf(page -> lastPageInDocument.getPageNumber() == page.getPageNumber());
     }
   }
 
   private boolean isNeedToTurnOnSoftWrapping() {
-    return !editor.getSettings().isUseSoftWraps() && isExistLineWithTooLargeLength();
+    return Boolean.TRUE.equals(editor.getUserData(LargeFileEditor.LARGE_FILE_EDITOR_SOFT_WRAP_KEY)) &&
+           !editor.getSettings().isUseSoftWraps() &&
+           isExistLineWithTooLargeLength();
   }
 
   // TODO: 2019-05-13 can be optimized by checking lines only for last added page
@@ -829,6 +867,15 @@ public class EditorModel {
     }
   }
 
+  public void trySetHighlighter(@NotNull EditorHighlighter highlighter) {
+    if (editor instanceof EditorEx) {
+      ((EditorEx)editor).setHighlighter(highlighter);
+    } else {
+      LOG.warn("[Large File Editor Subsystem] EditorModel.trySetHighlighter: " + editor.getClass().getName()
+               + " is not instance of EditorEx. Can't set proper editor highlighter.");
+    }
+  }
+
   public void setCaretToFileEndAndShow() {
     long pagesAmount;
     try {
@@ -873,7 +920,7 @@ public class EditorModel {
         return;
       }
 
-      pagesCash.add(page);
+      pagesCache.add(page);
       numbersOfRequestedForReadingPages.remove(pageNumber);
       requestUpdate();
     });
@@ -886,14 +933,14 @@ public class EditorModel {
 
   private void removeLastPageFromDocument() {
     if (documentOfPagesModel.getPagesAmount() > 0) {
-      pagesCash.add(documentOfPagesModel.getLastPage());
+      pagesCache.add(documentOfPagesModel.getLastPage());
       runCaretAndSelectionListeningTransparentCommand(
         () -> documentOfPagesModel.removeLastPage(dataProvider.getProject()));
     }
   }
 
   private void deleteAllPagesFromDocument() {
-    pagesCash.addAll(documentOfPagesModel.getPagesList());
+    pagesCache.addAll(documentOfPagesModel.getPagesList());
     runCaretAndSelectionListeningTransparentCommand(
       () -> documentOfPagesModel.removeAllPages(dataProvider.getProject()));
   }
@@ -904,8 +951,8 @@ public class EditorModel {
     isRealCaretAndSelectionCanAffectOnTarget = true;
   }
 
-  private Page tryGetPageFromCash(long pageNumber) {
-    for (Page page : pagesCash) {
+  private Page tryGetPageFromCache(long pageNumber) {
+    for (Page page : pagesCache) {
       if (page.getPageNumber() == pageNumber) {
         return page;
       }
@@ -956,6 +1003,7 @@ public class EditorModel {
   }
 
   void dispose() {
+    isDisposed = true;
     if (editor != null) {
       EditorFactory.getInstance().releaseEditor(editor);
     }
@@ -1050,10 +1098,11 @@ public class EditorModel {
     }
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
   public void onFileChanged(Page lastPage, boolean isLengthIncreased) {
     isLocalScrollBarStabilized = false;
-    pagesCash.clear();
+    pagesCache.clear();
 
     if (isLengthIncreased) {
       runCaretAndSelectionListeningTransparentCommand(() -> {
@@ -1068,7 +1117,7 @@ public class EditorModel {
     }
 
     if (lastPage != null) {
-      pagesCash.add(lastPage);
+      pagesCache.add(lastPage);
     }
     update();
   }
@@ -1076,7 +1125,7 @@ public class EditorModel {
   @RequiresEdt
   public void onEncodingChanged() {
     isLocalScrollBarStabilized = false;
-    pagesCash.clear();
+    pagesCache.clear();
     runCaretAndSelectionListeningTransparentCommand(() -> {
       documentOfPagesModel.removeAllPages(dataProvider.getProject());
     });

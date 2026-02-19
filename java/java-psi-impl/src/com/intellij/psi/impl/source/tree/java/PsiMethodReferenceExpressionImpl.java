@@ -1,12 +1,38 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiMethodReferenceUtil;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
@@ -14,7 +40,6 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -22,17 +47,24 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiMethodReferenceExpression>>
+public final class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<FunctionalExpressionStub<PsiMethodReferenceExpression>>
   implements PsiMethodReferenceExpression {
   private static final Logger LOG = Logger.getInstance(PsiMethodReferenceExpressionImpl.class);
   private static final MethodReferenceResolver RESOLVER = new MethodReferenceResolver();
@@ -51,9 +83,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return qualifier instanceof PsiTypeElement ? (PsiTypeElement)qualifier : null;
   }
 
-  @Nullable
   @Override
-  public PsiType getFunctionalInterfaceType() {
+  public @Nullable PsiType getFunctionalInterfaceType() {
     return getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
   }
 
@@ -88,16 +119,19 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
         final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
         final int parametersCount = ((PsiMethod)element).getParameterList().getParametersCount();
         if (qualifierResolveResult.isReferenceTypeQualified() && getReferenceNameElement() instanceof PsiIdentifier) {
-          if (parametersCount == interfaceArity && isStatic) {
+          int offset = isStatic ? 0 : 1;
+          if (parametersCount == interfaceArity - offset) {
             return true;
           }
-          if (parametersCount == interfaceArity - 1 && !isStatic) {
+          if (((PsiMethod)element).isVarArgs() && (interfaceMethod.isVarArgs() || interfaceArity >= parametersCount + offset - 1)) {
             return true;
           }
-          if (((PsiMethod)element).isVarArgs()) return true;
         }
         else if (!isStatic) {
-          if (parametersCount == interfaceArity || ((PsiMethod)element).isVarArgs()) {
+          if (parametersCount == interfaceArity) {
+            return true;
+          }
+          if (((PsiMethod)element).isVarArgs() && (interfaceMethod.isVarArgs() || interfaceArity >= parametersCount - 1)) {
             return true;
           }
         }
@@ -108,9 +142,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiType getGroundTargetType(PsiType functionalInterfaceType) {
+  public @Nullable PsiType getGroundTargetType(PsiType functionalInterfaceType) {
     return FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType);
   }
 
@@ -158,9 +191,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     }
     else if (isConstructor()) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-      final PsiClass arrayClass = factory.getArrayClass(PsiUtil.getLanguageLevel(this));
-      if (arrayClass == containingClass) {
-        final PsiTypeParameter[] typeParameters = arrayClass.getTypeParameters();
+      if (factory.isArrayClass(containingClass)) {
+        final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
         if (typeParameters.length != 1) return null;
         final PsiType componentType = qualifierResolveResult.getSubstitutor().substitute(typeParameters[0]);
         LOG.assertTrue(componentType != null, qualifierResolveResult.getSubstitutor());
@@ -216,7 +248,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public void processVariants(@NotNull final PsiScopeProcessor processor) {
+  public void processVariants(final @NotNull PsiScopeProcessor processor) {
     final FilterScopeProcessor proc = new FilterScopeProcessor(ElementClassFilter.METHOD, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
@@ -249,9 +281,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return element instanceof PsiExpression || element instanceof PsiTypeElement ? element : null;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final PsiElement element = getReferenceNameElement();
     if (element != null) {
       final int offsetInParent = element.getStartOffsetInParent();
@@ -266,14 +297,13 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return null;
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getText();
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(final @NotNull PsiElement element) {
     if (!(element instanceof PsiMethod)) return false;
     final PsiMethod method = (PsiMethod)element;
 
@@ -289,7 +319,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(final @NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitMethodReferenceExpression(this);
     }
@@ -316,19 +346,10 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    PsiElement oldIdentifier = findChildByType(JavaTokenType.IDENTIFIER);
-    if (oldIdentifier == null) {
-      oldIdentifier = findChildByType(JavaElementType.REFERENCE_EXPRESSION);
-    }
+    if (isConstructor()) return this;
+    PsiElement oldIdentifier = getReferenceNameElement();
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
-    }
-    final String oldRefName = oldIdentifier.getText();
-    if (PsiKeyword.THIS.equals(oldRefName) ||
-        PsiKeyword.SUPER.equals(oldRefName) ||
-        PsiKeyword.NEW.equals(oldRefName) ||
-        Comparing.strEqual(oldRefName, newElementName)) {
-      return this;
     }
     PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
@@ -338,7 +359,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   @Override
   public boolean isConstructor() {
     final PsiElement element = getReferenceNameElement();
-    return element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
+    return element instanceof PsiKeyword && JavaKeywords.NEW.equals(element.getText());
   }
 
   @Override
@@ -400,20 +421,18 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return PsiMethodReferenceUtil.isReturnTypeCompatible(this, result, left);
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(int flags) {
-    return AllIcons.Nodes.MethodReference;
+  public @Nullable Icon getIcon(int flags) {
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.MethodReference);
   }
 
   @Override
-  public PsiElement bindToElementViaStaticImport(@NotNull final PsiClass qualifierClass) throws IncorrectOperationException {
+  public PsiElement bindToElementViaStaticImport(final @NotNull PsiClass qualifierClass) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 
@@ -438,9 +457,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return this;
   }
 
-  @NotNull
   @Override
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+  public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
     return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
   }

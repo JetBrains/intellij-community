@@ -1,12 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.NullableFunction;
@@ -32,7 +39,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteralContainer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -45,15 +58,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * @author Gregory.Shrago
- */
-public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
-  @NonNls public static final String GROOVY_SUPPORT_ID = "groovy";
+final class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
+  public static final @NonNls String GROOVY_SUPPORT_ID = "groovy";
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return GROOVY_SUPPORT_ID;
   }
 
@@ -62,9 +71,8 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     return new Class[] {GroovyPatterns.class};
   }
 
-  @Nullable
   @Override
-  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
+  public @Nullable BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
     PsiFile containingFile = host.getContainingFile();
     boolean compiled = containingFile != null && containingFile.getOriginalFile() instanceof PsiCompiledFile;
     return compiled ? null : super.findCommentInjection(host, commentRef);
@@ -95,7 +103,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
   }
 
   @Override
-  public boolean removeInjectionInPlace(@Nullable final PsiLanguageInjectionHost psiElement) {
+  public boolean removeInjectionInPlace(final @Nullable PsiLanguageInjectionHost psiElement) {
     if (!isStringLiteral(psiElement)) return false;
 
     GrLiteralContainer host = (GrLiteralContainer)psiElement;
@@ -122,8 +130,8 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
   private static void collectInjections(@NotNull GrLiteralContainer host,
                                         @NotNull Configuration configuration,
                                         @NotNull LanguageInjectionSupport support,
-                                        @NotNull final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
-                                        @NotNull final ArrayList<PsiElement> annotations) {
+                                        final @NotNull HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
+                                        final @NotNull ArrayList<PsiElement> annotations) {
     new GrConcatenationAwareInjector.InjectionProcessor(configuration, support, host) {
       @Override
       protected boolean processCommentInjectionInner(PsiVariable owner, PsiElement comment, BaseInjection injection) {
@@ -202,8 +210,8 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     return false;
   }
 
-  private static Processor<PsiLanguageInjectionHost> getAnnotationFixer(@NotNull final Project project,
-                                                                        @NotNull final String languageId) {
+  private static Processor<PsiLanguageInjectionHost> getAnnotationFixer(final @NotNull Project project,
+                                                                        final @NotNull String languageId) {
     return host -> {
       if (host == null) return false;
 
@@ -231,8 +239,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
     return false;
   }
 
-  @NotNull
-  public static PsiElement getTopLevelInjectionTarget(@NotNull final PsiElement host) {
+  public static @NotNull PsiElement getTopLevelInjectionTarget(final @NotNull PsiElement host) {
     PsiElement target = host;
     PsiElement parent = target.getParent();
     for (; parent != null; target = parent, parent = target.getParent()) {

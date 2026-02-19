@@ -16,18 +16,42 @@
 package com.intellij.ui.colorpicker
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import org.jetbrains.annotations.ApiStatus
+import java.awt.AlphaComposite
+import java.awt.Color
+import java.awt.Dialog
+import java.awt.Dimension
+import java.awt.Frame
+import java.awt.Graphics2D
+import java.awt.Image
+import java.awt.MouseInfo
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.RenderingHints
+import java.awt.Robot
+import java.awt.Toolkit
+import java.awt.Transparency
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.awt.image.ImageObserver
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JFrame
+import javax.swing.SwingUtilities
+import javax.swing.Timer
+import javax.swing.WindowConstants
 
 /**
  * The size of captured screen area. It is same as the number of pixels are caught.<br>
@@ -37,18 +61,18 @@ private const val SCREEN_CAPTURE_SIZE = 11
 /**
  * The size of zoomed rectangle which shows the captured screen.
  */
-private const val ZOOM_RECTANGLE_SIZE = 64
+private val ZOOM_RECTANGLE_SIZE = Toolkit.getDefaultToolkit().getBestCursorSize(64, 64).width
 
 private val PIPETTE_BORDER_COLOR = Color.BLACK
 private val INDICATOR_BOUND_COLOR = Color.RED
 /**
  * The left/top bound of selected pixel in zoomed rectangle.
  */
-private const val INDICATOR_BOUND_START = ZOOM_RECTANGLE_SIZE * (SCREEN_CAPTURE_SIZE / 2) / SCREEN_CAPTURE_SIZE
+private val INDICATOR_BOUND_START = ZOOM_RECTANGLE_SIZE * (SCREEN_CAPTURE_SIZE / 2) / SCREEN_CAPTURE_SIZE
 /**
  * The width/height of selected pixel in zoomed rectangle.
  */
-private const val INDICATOR_BOUND_SIZE = ZOOM_RECTANGLE_SIZE * (SCREEN_CAPTURE_SIZE / 2 + 1) / SCREEN_CAPTURE_SIZE - INDICATOR_BOUND_START
+private val INDICATOR_BOUND_SIZE = ZOOM_RECTANGLE_SIZE * (SCREEN_CAPTURE_SIZE / 2 + 1) / SCREEN_CAPTURE_SIZE - INDICATOR_BOUND_START
 
 private val TRANSPARENT_COLOR = Color(0, true)
 
@@ -62,16 +86,18 @@ private const val DURATION_COLOR_UPDATING = 33
 /**
  * The [ColorPipette] which picks up the color from monitor.
  */
+@ApiStatus.Internal
 open class GraphicalColorPipette(private val parent: JComponent) : ColorPipette {
   override val icon: Icon = AllIcons.Ide.Pipette
 
-  override val rolloverIcon: Icon = AllIcons.Ide.Pipette_rollover
+  override val rolloverIcon: Icon = AllIcons.Ide.PipetteRollover
 
-  override val pressedIcon: Icon = AllIcons.Ide.Pipette_rollover
+  override val pressedIcon: Icon = AllIcons.Ide.PipetteRollover
 
-  override fun pick(callback: ColorPipette.Callback) = PickerDialog(parent, callback).pick()
+  override fun pick(callback: ColorPipette.Callback): Unit = PickerDialog(parent, callback).pick()
 }
 
+@ApiStatus.Internal
 class GraphicalColorPipetteProvider : ColorPipetteProvider {
   override fun createPipette(owner: JComponent): ColorPipette = GraphicalColorPipette(owner)
 }
@@ -82,6 +108,8 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
   private val center = Point(ZOOM_RECTANGLE_SIZE / 2, ZOOM_RECTANGLE_SIZE / 2)
   private val zoomRect = Rectangle(0, 0, ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE)
   private val captureRect = Rectangle()
+  private var disposable = newDisposable()
+  private fun newDisposable() = Disposer.newDisposable("Color Pipette")
 
   private val maskImage = ImageUtil.createImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, BufferedImage.TYPE_INT_ARGB)
   private val magnifierImage = ImageUtil.createImage(ZOOM_RECTANGLE_SIZE, ZOOM_RECTANGLE_SIZE, BufferedImage.TYPE_INT_ARGB)
@@ -99,9 +127,7 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
   private var previousLoc: Point? = null
 
   private val picker: Dialog = let {
-    val owner = SwingUtilities.getWindowAncestor(parent)
-
-    val pickerFrame = when (owner) {
+    val pickerFrame = when (val owner = SwingUtilities.getWindowAncestor(parent)) {
       is Dialog -> JDialog(owner)
       is Frame -> JDialog(owner)
       else -> JDialog(JFrame())
@@ -156,10 +182,50 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
   }
 
   fun pick() {
-    picker.isVisible = true
-    timer.start()
-    // it seems like it's the lowest value for opacity for mouse events to be processed correctly
-    WindowManager.getInstance().setAlphaModeRatio(picker, if (SystemInfo.isMac) 0.95f else 0.99f)
+    if (Registry.`is`("ide.color.picker.new.pipette")) {
+      timer.start()
+      disposable = newDisposable()
+      ApplicationManager.getApplication().invokeLater {
+        IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.EventDispatcher {
+          if (it is MouseEvent) {
+            if (it.clickCount > 0) {
+              it.consume()
+              when {
+                SwingUtilities.isLeftMouseButton(it) -> pickDone()
+                SwingUtilities.isRightMouseButton(it) -> cancelPipette()
+                else -> Unit
+              }
+            }
+            else if (it.id == MouseEvent.MOUSE_MOVED) {
+              updatePipette()
+            }
+          }
+          if (it is KeyEvent && it.id == KeyEvent.KEY_PRESSED) {
+            when (it.keyCode) {
+              KeyEvent.VK_ESCAPE -> it.consume().also { cancelPipette() }
+              KeyEvent.VK_ENTER -> it.consume().also { pickDone() }
+              KeyEvent.VK_UP -> moveMouse(it, 0, -1)
+              KeyEvent.VK_DOWN -> moveMouse(it, 0, +1)
+              KeyEvent.VK_LEFT -> moveMouse(it, -1, 0)
+              KeyEvent.VK_RIGHT -> moveMouse(it, +1, 0)
+            }
+          }
+          false
+        }, disposable)
+      }
+    }
+    else {
+      picker.isVisible = true
+      timer.start()
+      // it seems like it's the lowest value for opacity for mouse events to be processed correctly
+      WindowManager.getInstance().setAlphaModeRatio(picker, if (SystemInfo.isMac) 0.95f else 0.99f)
+    }
+  }
+
+  private fun moveMouse(e: KeyEvent, x: Int, y: Int) {
+    val p = MouseInfo.getPointerInfo().location
+    robot.mouseMove(p.x + x, p.y + y)
+    e.consume()
   }
 
   override fun imageUpdate(img: Image, flags: Int, x: Int, y: Int, width: Int, height: Int) = false
@@ -169,7 +235,7 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
 
     picker.isVisible = false
     picker.dispose()
-
+    Disposer.dispose(disposable)
     callback.cancel()
   }
 
@@ -180,53 +246,65 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
     val location = pointerInfo.location
     val pickedColor = robot.getPixelColor(location.x, location.y)
     picker.isVisible = false
-
+    Disposer.dispose(disposable)
     callback.picked(pickedColor)
   }
 
   private fun updatePipette() {
-    if (picker.isShowing) {
+    if (Registry.`is`("ide.color.picker.new.pipette")) {
       val pointerInfo = MouseInfo.getPointerInfo()
       val mouseLoc = pointerInfo.location
-      picker.setLocation(mouseLoc.x - picker.width / 2, mouseLoc.y - picker.height / 2)
-
       val pickedColor = robot.getPixelColor(mouseLoc.x, mouseLoc.y)
-
       if (previousLoc != mouseLoc || previousColor != pickedColor) {
         previousLoc = mouseLoc
         previousColor = pickedColor
-
-        val halfPixelNumber = SCREEN_CAPTURE_SIZE / 2
-        captureRect.setBounds(mouseLoc.x - halfPixelNumber, mouseLoc.y - halfPixelNumber, SCREEN_CAPTURE_SIZE, SCREEN_CAPTURE_SIZE)
-
-        val capture = robot.createScreenCapture(captureRect)
-
-        val graphics = image.graphics as Graphics2D
-
-        // Clear the cursor graphics
-        graphics.composite = AlphaComposite.Src
-        graphics.color = TRANSPARENT_COLOR
-        graphics.fillRect(0, 0, image.width, image.height)
-
-        graphics.drawImage(capture, zoomRect.x, zoomRect.y, zoomRect.width, zoomRect.height, this)
-
-        // cropping round image
-        graphics.composite = AlphaComposite.DstOut
-        graphics.drawImage(maskImage, zoomRect.x, zoomRect.y, zoomRect.width, zoomRect.height, this)
-
-        // paint magnifier
-        graphics.composite = AlphaComposite.SrcOver
-        graphics.drawImage(magnifierImage, 0, 0, this)
-
-        graphics.composite = AlphaComposite.SrcOver
-        graphics.color = PIPETTE_BORDER_COLOR
-        graphics.drawRect(0, 0, ZOOM_RECTANGLE_SIZE - 1, ZOOM_RECTANGLE_SIZE - 1)
-        graphics.color = INDICATOR_BOUND_COLOR
-        graphics.drawRect(INDICATOR_BOUND_START, INDICATOR_BOUND_START, INDICATOR_BOUND_SIZE, INDICATOR_BOUND_SIZE)
-
-        picker.cursor = parent.toolkit.createCustomCursor(image, center, CURSOR_NAME)
-
         callback.update(pickedColor)
+      }
+    }
+    else {
+      if (picker.isShowing) {
+        val pointerInfo = MouseInfo.getPointerInfo()
+        val mouseLoc = pointerInfo.location
+        picker.setLocation(mouseLoc.x - picker.width / 2, mouseLoc.y - picker.height / 2)
+
+        val pickedColor = robot.getPixelColor(mouseLoc.x, mouseLoc.y)
+
+        if (previousLoc != mouseLoc || previousColor != pickedColor) {
+          previousLoc = mouseLoc
+          previousColor = pickedColor
+
+          val halfPixelNumber = SCREEN_CAPTURE_SIZE / 2
+          captureRect.setBounds(mouseLoc.x - halfPixelNumber, mouseLoc.y - halfPixelNumber, SCREEN_CAPTURE_SIZE, SCREEN_CAPTURE_SIZE)
+
+          val capture = robot.createScreenCapture(captureRect)
+
+          val graphics = image.graphics as Graphics2D
+
+          // Clear the cursor graphics
+          graphics.composite = AlphaComposite.Src
+          graphics.color = TRANSPARENT_COLOR
+          graphics.fillRect(0, 0, image.width, image.height)
+
+          graphics.drawImage(capture, zoomRect.x, zoomRect.y, zoomRect.width, zoomRect.height, this)
+
+          // cropping round image
+          graphics.composite = AlphaComposite.DstOut
+          graphics.drawImage(maskImage, zoomRect.x, zoomRect.y, zoomRect.width, zoomRect.height, this)
+
+          // paint magnifier
+          graphics.composite = AlphaComposite.SrcOver
+          graphics.drawImage(magnifierImage, 0, 0, this)
+
+          graphics.composite = AlphaComposite.SrcOver
+          graphics.color = PIPETTE_BORDER_COLOR
+          graphics.drawRect(0, 0, ZOOM_RECTANGLE_SIZE - 1, ZOOM_RECTANGLE_SIZE - 1)
+          graphics.color = INDICATOR_BOUND_COLOR
+          graphics.drawRect(INDICATOR_BOUND_START, INDICATOR_BOUND_START, INDICATOR_BOUND_SIZE, INDICATOR_BOUND_SIZE)
+
+          picker.cursor = parent.toolkit.createCustomCursor(image, center, CURSOR_NAME)
+
+          callback.update(pickedColor)
+        }
       }
     }
   }

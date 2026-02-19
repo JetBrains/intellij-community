@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -18,37 +20,45 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.PsiConsistencyAssertions;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
+import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-/**
- * @author yole
- */
+import static com.intellij.reference.SoftReference.dereference;
+
+
 @ApiStatus.Internal
 public final class CompletionInitializationUtil {
   private static final Logger LOG = Logger.getInstance(CompletionInitializationUtil.class);
 
-  public static CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
-                                                                                          @NotNull Editor editor,
-                                                                                          @NotNull Caret caret,
-                                                                                          int invocationCount,
-                                                                                          CompletionType completionType) {
+  public static @NotNull CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
+                                                                                                   @NotNull Editor editor,
+                                                                                                   @NotNull Caret caret,
+                                                                                                   int invocationCount,
+                                                                                                   @NotNull CompletionType completionType) {
     return WriteAction.compute(() -> {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       CompletionAssertions.checkEditorValid(editor);
@@ -56,18 +66,17 @@ public final class CompletionInitializationUtil {
       final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
       assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
       psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-      CompletionAssertions.assertCommitSuccessful(editor, psiFile);
+      PsiConsistencyAssertions.assertNoFileTextMismatch(psiFile, editor.getDocument(), null);
 
       return runContributorsBeforeCompletion(editor, psiFile, invocationCount, caret, completionType);
     });
   }
 
-  @ApiStatus.Internal
-  public static CompletionInitializationContextImpl runContributorsBeforeCompletion(Editor editor,
-                                                                                     PsiFile psiFile,
-                                                                                     int invocationCount,
-                                                                                     @NotNull Caret caret,
-                                                                                     CompletionType completionType) {
+  public static @NotNull CompletionInitializationContextImpl runContributorsBeforeCompletion(@NotNull Editor editor,
+                                                                                             @NotNull PsiFile psiFile,
+                                                                                             int invocationCount,
+                                                                                             @NotNull Caret caret,
+                                                                                             @NotNull CompletionType completionType) {
     final Ref<CompletionContributor> current = Ref.create(null);
     CompletionInitializationContextImpl context =
       new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount) {
@@ -78,28 +87,30 @@ public final class CompletionInitializationUtil {
           super.setDummyIdentifier(dummyIdentifier);
 
           if (dummyIdentifierChanger != null) {
-            LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger);
+            LOG.error("Changing the dummy identifier twice, already changed by " + dummyIdentifierChanger + ". The second one is " + current.get());
           }
           dummyIdentifierChanger = current.get();
         }
       };
-    Project project = psiFile.getProject();
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
-      for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      Project project = psiFile.getProject();
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project);
+      for (CompletionContributor contributor : contributors) {
         current.set(contributor);
         contributor.beforeCompletion(context);
         CompletionAssertions.checkEditorValid(editor);
-        assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " +
-                                                                                             contributor +
-                                                                                             " left the document uncommitted";
+        if (documentManager.isUncommited(editor.getDocument())) {
+          LOG.error("Contributor " + contributor + " left the document uncommitted");
+        }
       }
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
     return context;
   }
 
-  @NotNull
-  public static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                CompletionProcess indicator, OffsetsInFile finalOffsets) {
+  public static @NotNull CompletionParameters createCompletionParameters(@NotNull CompletionInitializationContext initContext,
+                                                                         @NotNull CompletionProcess indicator,
+                                                                         @NotNull OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
@@ -110,23 +121,15 @@ public final class CompletionInitializationUtil {
                                     initContext.getEditor(), indicator);
   }
 
-  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
+  public static CopyFileUpdateTask insertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
+                                                         @NotNull CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
-    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> indicator.registerChildDisposable(supplier);
-
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
+    return doInsertDummyIdentifier(initContext, topLevelOffsets, indicator);
   }
 
-  //need for code with me
-  public static Supplier<OffsetsInFile> insertDummyIdentifier(CompletionInitializationContext initContext, OffsetsInFile topLevelOffsets, Disposable parentDisposable) {
-    final Consumer<Supplier<Disposable>> registerDisposable = supplier -> Disposer.register(parentDisposable, supplier.get());
-
-    return doInsertDummyIdentifier(initContext, topLevelOffsets, registerDisposable);
-  }
-
-  private static Supplier<OffsetsInFile> doInsertDummyIdentifier(CompletionInitializationContext initContext,
-                                                                 OffsetsInFile topLevelOffsets,
-                                                                 Consumer<Supplier<Disposable>> registerDisposable) {
+  private static CopyFileUpdateTask doInsertDummyIdentifier(@NotNull CompletionInitializationContext initContext,
+                                                            @NotNull OffsetsInFile topLevelOffsets,
+                                                            @NotNull CompletionProcessEx completionProcess) {
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -134,7 +137,7 @@ public final class CompletionInitializationUtil {
     }
 
     Editor editor = initContext.getEditor();
-    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     OffsetMap hostMap = topLevelOffsets.getOffsets();
 
     PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
@@ -144,21 +147,25 @@ public final class CompletionInitializationUtil {
     int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
     int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
 
-    Supplier<OffsetsInFile> apply = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
+    CopyFileUpdateTask copyFileUpdateTask = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
 
     // despite being non-physical, the copy file should only be modified in a write action,
-    // because it's reused in multiple completions and it can also escapes uncontrollably into other threads (e.g. quick doc)
-    return () -> WriteAction.compute(() -> {
-      registerDisposable.accept(() -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
-      OffsetsInFile copyOffsets = apply.get();
+    // because it's reused in multiple completions, and it can also escape uncontrollably into other threads (e.g., quick doc)
+    return () -> {
+      return WriteAction.compute(() -> {
+        completionProcess.registerChildDisposable(
+          () -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier)
+        );
 
-      registerDisposable.accept(() -> copyOffsets.getOffsets());
+        OffsetsInFile copyOffsets = copyFileUpdateTask.ensureUpdatedAndGetNewOffsets();
+        completionProcess.registerChildDisposable(() -> copyOffsets.getOffsets());
 
-      return copyOffsets;
-    });
+        return copyOffsets;
+      });
+    };
   }
 
-  public static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
+  public static @NotNull OffsetsInFile toInjectedIfAny(@NotNull PsiFile originalFile, @NotNull OffsetsInFile hostCopyOffsets) {
     CompletionAssertions.assertHostInfo(hostCopyOffsets.getFile(), hostCopyOffsets.getOffsets());
 
     int hostStartOffset = hostCopyOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
@@ -166,14 +173,14 @@ public final class CompletionInitializationUtil {
     if (translatedOffsets != hostCopyOffsets) {
       PsiFile injected = translatedOffsets.getFile();
       if (originalFile != injected &&
-          injected instanceof PsiFileImpl &&
+          injected instanceof PsiFileImpl psiFile &&
           InjectedLanguageManager.getInstance(originalFile.getProject()).isInjectedFragment(originalFile)) {
-        setOriginalFile((PsiFileImpl)injected, originalFile);
+        setOriginalFile(psiFile, originalFile);
       }
       VirtualFile virtualFile = injected.getVirtualFile();
       DocumentWindow documentWindow = null;
-      if (virtualFile instanceof VirtualFileWindow) {
-        documentWindow = ((VirtualFileWindow)virtualFile).getDocumentWindow();
+      if (virtualFile instanceof VirtualFileWindow window) {
+        documentWindow = window.getDocumentWindow();
       }
       CompletionAssertions.assertInjectedOffsets(hostStartOffset, injected, documentWindow);
 
@@ -185,7 +192,7 @@ public final class CompletionInitializationUtil {
     return hostCopyOffsets;
   }
 
-  private static void setOriginalFile(PsiFileImpl copy, PsiFile origin) {
+  private static void setOriginalFile(@NotNull PsiFileImpl copy, @NotNull PsiFile origin) {
     checkInjectionConsistency(copy);
     PsiFile currentOrigin = copy.getOriginalFile();
     if (currentOrigin == copy) {
@@ -205,17 +212,17 @@ public final class CompletionInitializationUtil {
     }
   }
 
-  private static void recoverFromBrokenInjection(PsiFile hostFile) {
+  private static void recoverFromBrokenInjection(@NotNull PsiFile hostFile) {
     ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(hostFile.getViewProvider().getVirtualFile()));
   }
 
-  private static void checkInjectionConsistency(PsiFile injectedFile) {
+  private static void checkInjectionConsistency(@NotNull PsiFile injectedFile) {
     PsiElement host = injectedFile.getContext();
-    if (host instanceof PsiLanguageInjectionHost) {
+    if (host instanceof PsiLanguageInjectionHost injectionHost) {
       DocumentWindow document = (DocumentWindow)injectedFile.getViewProvider().getDocument();
       assert document != null;
       TextRange hostRange = host.getTextRange();
-      LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = ((PsiLanguageInjectionHost)host).createLiteralTextEscaper();
+      LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = injectionHost.createLiteralTextEscaper();
       TextRange relevantRange = escaper.getRelevantTextRange().shiftRight(hostRange.getStartOffset());
       for (Segment range : document.getHostRanges()) {
         if (hostRange.contains(range) && !relevantRange.contains(range)) {
@@ -233,8 +240,9 @@ public final class CompletionInitializationUtil {
     }
   }
 
-  @NotNull
-  private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
+  public static @NotNull PsiElement findCompletionPositionLeaf(@NotNull OffsetsInFile offsets,
+                                                               int offset,
+                                                               @NotNull PsiFile originalFile) {
     PsiElement insertedElement = offsets.getFile().findElementAt(offset);
     if (insertedElement == null && offsets.getFile().getTextLength() == offset) {
       insertedElement = PsiTreeUtil.getDeepestLast(offsets.getFile());
@@ -243,13 +251,13 @@ public final class CompletionInitializationUtil {
     return insertedElement;
   }
 
-  private static PsiFile obtainFileCopy(PsiFile file) {
+  private static @NotNull PsiFile obtainFileCopy(@NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
+    // we don't want to cache code fragment copies even if they appear to be physical
     boolean mayCacheCopy = file.isPhysical() &&
-                           // we don't want to cache code fragment copies even if they appear to be physical
                            virtualFile != null && virtualFile.isInLocalFileSystem();
     if (mayCacheCopy) {
-      final Pair<PsiFile, Document> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
+      final Pair<PsiFile, Document> cached = dereference(file.getUserData(FILE_COPY_KEY));
       if (cached != null && isCopyUpToDate(cached.second, cached.first, file)) {
         PsiFile copy = cached.first;
         CompletionAssertions.assertCorrectOriginalFile("Cached", file, copy);
@@ -268,6 +276,13 @@ public final class CompletionInitializationUtil {
     }
     CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
 
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(file.getProject())) {
+      CodeInsightContextManagerImpl codeInsightContextManager =
+        (CodeInsightContextManagerImpl)CodeInsightContextManager.getInstance(file.getProject());
+      CodeInsightContext context = codeInsightContextManager.getCodeInsightContext(file.getViewProvider());
+      codeInsightContextManager.setCodeInsightContext(copy.getViewProvider(), context);
+    }
+
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();
       assert document != null;
@@ -279,7 +294,7 @@ public final class CompletionInitializationUtil {
 
   private static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
-  private static boolean isCopyUpToDate(Document document, @NotNull PsiFile copyFile, @NotNull PsiFile originalFile) {
+  private static boolean isCopyUpToDate(@NotNull Document document, @NotNull PsiFile copyFile, @NotNull PsiFile originalFile) {
     if (!copyFile.getClass().equals(originalFile.getClass()) ||
         !copyFile.isValid() ||
         !copyFile.getName().equals(originalFile.getName())) {
@@ -292,10 +307,10 @@ public final class CompletionInitializationUtil {
   }
 
   private static void syncAcceptSlashR(Document originalDocument, Document documentCopy) {
-    if (!(originalDocument instanceof DocumentImpl) || !(documentCopy instanceof DocumentImpl)) {
+    if (!(originalDocument instanceof DocumentImpl origDocument) || !(documentCopy instanceof DocumentImpl copyDocument)) {
       return;
     }
 
-    ((DocumentImpl)documentCopy).setAcceptSlashR(((DocumentImpl)originalDocument).acceptsSlashR());
+    copyDocument.setAcceptSlashR(origDocument.acceptsSlashR());
   }
 }

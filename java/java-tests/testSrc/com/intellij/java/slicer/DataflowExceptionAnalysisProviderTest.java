@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.slicer;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider;
@@ -22,57 +22,57 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testClassCast() {
     doTest("java.lang.ClassCastException: class X cannot be cast to class java.lang.Number",
-           "Find why 'obj' could be X (not-null)",
+           "Find why 'obj' could be X (non-null)",
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
   }
   
   public void testClassCastUnresolvedTarget() {
     doTest("java.lang.ClassCastException: class X cannot be cast to class foo.Bar",
-           "Find why 'obj' could be X (not-null)",
+           "Find why 'obj' could be X (non-null)",
            "class X {static void test(Object obj) {System.out.println(((Bar) obj).intValue());}}");
   }
   
   public void testClassCastUnknownClass() {
     doTest("java.lang.ClassCastException: class XYZ cannot be cast to class java.lang.Number",
-           "Find why 'obj' could be not instanceof java.lang.Number (not-null)",
+           "Find why 'obj' could be not instanceof java.lang.Number (non-null)",
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
   }
   
   public void testClassCastGenericArray() {
     //noinspection unchecked
     doTest("java.lang.ClassCastException: class java.lang.String cannot be cast to class [Ljava.lang.Object; (java.lang.String and [Ljava.lang.Object; are in module java.base of loader 'bootstrap')",
-           "Find why 'obj' could be java.lang.String (not-null)",
+           "Find why 'obj' could be java.lang.String (non-null)",
            "class X {static <E> E[] asArray(Object obj) {return (E[])obj;}}");
   }
   
   public void testClassCastFromArray() {
     doTest("java.lang.ClassCastException: class [Ljava.lang.String; cannot be cast to class java.lang.String",
-           "Find why 'obj' could be java.lang.String[] (not-null)",
+           "Find why 'obj' could be java.lang.String[] (non-null)",
            "class X {static String cast(Object obj) {return (String)obj;}}");
   }
   
   public void testClassCastFromPrimitiveTwoDimArray() {
     doTest("java.lang.ClassCastException: class [[J cannot be cast to class java.lang.String",
-           "Find why 'obj' could be long[][] (not-null)",
+           "Find why 'obj' could be long[][] (non-null)",
            "class X {static String cast(Object obj) {return (String)obj;}}");
   }
   
   public void testClassCastFromNested() {
     doTest("java.lang.ClassCastException: class MainTest$X cannot be cast to class java.lang.String",
-           "Find why 'obj' could be MainTest.X (not-null)",
+           "Find why 'obj' could be MainTest.X (non-null)",
            "class MainTest {static String cast(Object obj) {return (String)obj;}static class X {}}");
   }
   
   public void testClassCastFromLocal() {
     doTest("java.lang.ClassCastException: class MainTest$1X cannot be cast to class java.lang.String",
-           "Find why 'obj' could be X (not-null)",
+           "Find why 'obj' could be X (non-null)",
            "class MainTest {static String cast(Object obj) {return (String)obj;}" +
            "public static void main(String[] args) { class X{}cast(new X()); }}");
   }
   
   public void testClassCastFromAnonymous() {
     doTest("java.lang.ClassCastException: class MainTest$1 cannot be cast to class java.lang.String",
-           "Find why 'obj' could be anonymous java.lang.Object (not-null)",
+           "Find why 'obj' could be anonymous java.lang.Object (non-null)",
            "class MainTest {static String cast(Object obj) {return (String)obj;}" +
            "public static void main(String[] args) { cast(new Object() {});}}");
   }
@@ -158,7 +158,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   
   public void testStringInEquality() {
     doTest("java.lang.IllegalArgumentException",
-           "Find why 's' could be != \"hello\" (not-null)",
+           "Find why 's' could be != \"hello\" (non-null)",
            "class X {static void test(String s) {if (!s.equals(\"hello\")) throw new IllegalArgumentException();}}");
   }
 
@@ -176,7 +176,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testClassInEquality() {
     doTest("java.lang.IllegalArgumentException",
-           "Find why 'cls' could be != String (not-null)",
+           "Find why 'cls' could be != String (non-null)",
            "class X {static void test(Class<?> cls) {if (!cls.equals(String.class)) throw new IllegalArgumentException();}}");
   }
 
@@ -206,7 +206,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testIsNotNull() {
     doTest("java.lang.IllegalArgumentException",
-           "Find why 'obj' could be not-null",
+           "Find why 'obj' could be non-null",
            "class X {static void test(Object obj) {if (null != obj) {throw new IllegalArgumentException();}}}");
   }
 
@@ -219,17 +219,16 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   public void testInSwitch() {
     doTest("java.lang.IllegalArgumentException",
            "Find why 'x' could be 5",
-           "class X {" +
-           "  static void test(int x) {\n" +
-           "    switch (x) {\n" +
-           "      case 3:\n" +
-           "        System.out.println(\"oops\");\n" +
-           "        break;\n" +
-           "      case 5:\n" +
-           "        throw new IllegalArgumentException();\n" +
-           "    }\n" +
-           "  }" +
-           "}");
+           """
+             class X {  static void test(int x) {
+                 switch (x) {
+                   case 3:
+                     System.out.println("oops");
+                     break;
+                   case 5:
+                     throw new IllegalArgumentException();
+                 }
+               }}""");
   }
 
   public void testInSwitchRule() {
@@ -248,7 +247,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testInSwitchDefaultString() {
     doTest("java.lang.IllegalArgumentException",
-           "Find why 's' could be != \"BAR\", \"FOO\" (not-null)",
+           "Find why 's' could be != \"BAR\", \"FOO\" (non-null)",
            "class X {static void test(String s) { switch (s) { " +
            "case \"FOO\": break; case \"BAR\": return;" +
            "default: case \"BAZ\": throw new IllegalArgumentException(); } } }");
@@ -257,15 +256,14 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   public void testIfExits() {
     doTest("java.lang.IllegalArgumentException",
            "Find why 'x' could be >= 0",
-           "class X {" +
-           "  static void test(int x) {\n" +
-           "    if (x < 0) {\n" +
-           "      System.out.println(\"ok\");\n" +
-           "      return;\n" +
-           "    }\n" +
-           "    throw new IllegalArgumentException();\n" +
-           "  }" +
-           "}");
+           """
+             class X {  static void test(int x) {
+                 if (x < 0) {
+                   System.out.println("ok");
+                   return;
+                 }
+                 throw new IllegalArgumentException();
+               }}""");
   }
   
   public void testNoInfo() {
@@ -298,7 +296,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   }
 
   public void testAssertNull() {
-    doTestIntermediate("Find why 'str' could be not-null",
+    doTestIntermediate("Find why 'str' could be non-null",
                        "class X {static void test(String str) {<caret>assertNull(str);}" +
                        "static void assertNull(Object obj) {if(obj != null) throw new AssertionError();}}");
   }
@@ -314,6 +312,12 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
                        "class X {static void test(int x) {<caret>assertFalse(x > 0);}" +
                        "static void assertFalse(boolean flag) {if(flag) throw new AssertionError();}}");
   }
+  
+  public void testAssertTrueUnboxing() {
+    doTestIntermediate("Find why 'x' could be false",
+                       "class X {static void test(Boolean x) {<caret>assertTrue(x);}" +
+                       "static void assertTrue(boolean flag) {if(!flag) throw new AssertionError();}}");
+  }
 
   public void testOptionalGet() {
     // Not supported
@@ -322,33 +326,35 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   }
 
   public void testNpeJetBrains() {
-    doTest("java.lang.IllegalArgumentException: Argument for @NotNull parameter 'y' of foo/bar/Test.callee must not be null\n" +
-           "\tat foo.bar.Test.$$$reportNull$$$0(Test.java)\n" +
-           "\tat foo.bar.Test.callee(Test.java)",
+    doTest("""
+             java.lang.IllegalArgumentException: Argument for @NotNull parameter 'y' of foo/bar/Test.callee must not be null
+             \tat foo.bar.Test.$$$reportNull$$$0(Test.java)
+             \tat foo.bar.Test.callee(Test.java)""",
            "Find why 'b' could be null",
-           "package foo.bar;\n" +
-           "class Test {\n" +
-           "  void caller(String a, String b, String c) {\n" +
-           "    callee(a, b, c);\n" +
-           "  }\n" +
-           "\n" +
-           "  void callee(String x, String y, String z) {}\n" +
-           "}");
+           """
+             package foo.bar;
+             class Test {
+               void caller(String a, String b, String c) {
+                 callee(a, b, c);
+               }
+
+               void callee(String x, String y, String z) {}
+             }""");
   }
   
   public void testNpeJetBrainsOverride() {
-    doTest("Exception in thread \"main\" java.lang.IllegalArgumentException: Argument for @NotNull parameter 's' of MainTest$XImpl.foo must not be null\n" +
-           "\tat MainTest$XImpl.$$$reportNull$$$0(MainTest.java)\n" +
-           "\tat MainTest$XImpl.foo(MainTest.java)",
+    doTest("""
+             Exception in thread "main" java.lang.IllegalArgumentException: Argument for @NotNull parameter 's' of MainTest$XImpl.foo must not be null
+             \tat MainTest$XImpl.$$$reportNull$$$0(MainTest.java)
+             \tat MainTest$XImpl.foo(MainTest.java)""",
            "Find why 's1' could be null",
-           "import org.jetbrains.annotations.NotNull;\n" +
-           "\n" +
-           "public class MainTest {\n" +
-           "    static void test(X x, String s, String s1) { x.foo(s, s1); }\n" +
-           "    interface X { void foo(String s, String t);}\n" +
-           "    static class XImpl implements X { @Override public void foo(String t, @NotNull String s) {}}" +
-           "    public static void main(String[] args) { test(new XImpl(), \"\", null); }" +
-           "}");
+           """
+             import org.jetbrains.annotations.NotNull;
+
+             public class MainTest {
+                 static void test(X x, String s, String s1) { x.foo(s, s1); }
+                 interface X { void foo(String s, String t);}
+                 static class XImpl implements X { @Override public void foo(String t, @NotNull String s) {}}    public static void main(String[] args) { test(new XImpl(), "", null); }}""");
   }
   
   public void testArrayCopySource() {
@@ -388,10 +394,10 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
     PsiElement leaf = getFile().findElementAt(0);
     PsiElement anchor = null;
     while (leaf != null) {
-      PsiElement candidate = refiner.matchElement(leaf);
+      ExceptionLineRefiner.RefinerMatchResult candidate = refiner.matchElement(leaf);
       if (candidate != null) {
-        if (anchor == null) {
-          anchor = candidate;
+        if (anchor == null || anchor == candidate.reason()) {
+          anchor = candidate.reason();
         }
         else {
           fail("Two candidates found: " + anchor.getText());

@@ -1,0 +1,23 @@
+a instanceof b
+ c?.hashCode()
+-----
+Groovy script
+  Instanceof expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(instanceof)('instanceof')
+    PsiWhiteSpace(' ')
+    Type element
+      Reference element
+        PsiElement(identifier)('b')
+  PsiElement(new line)('\n ')
+  Method call
+    Reference expression
+      Reference expression
+        PsiElement(identifier)('c')
+      PsiElement(?.)('?.')
+      PsiElement(identifier)('hashCode')
+    Arguments
+      PsiElement(()('(')
+      PsiElement())(')')

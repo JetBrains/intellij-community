@@ -1,90 +1,90 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.testFramework.*
+import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.useProject
+import com.intellij.util.application
 import com.intellij.util.io.createDirectories
-import org.junit.ClassRule
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.invariantSeparatorsPathString
 
-@Suppress("UsePropertyAccessSyntax")
-class ProjectOpeningTest {
-  companion object {
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
+class ProjectOpeningTest : BareTestFixtureTestCase() {
+  @Rule @JvmField val inMemoryFs = InMemoryFsRule()
+  @Rule @JvmField val tempDir = TempDirectory()
+
+  @After fun cleanup() {
+    val projects = ProjectUtilCore.getOpenProjects()
+    if (projects.isNotEmpty()) {
+      val message = "Leaked projects: ${projects.toList()}"
+      projects.forEach(PlatformTestUtil::forceCloseProjectWithoutSaving)
+      Assert.fail(message)
+    }
   }
 
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
-
-  @Rule
-  @JvmField
-  val inMemoryFs = InMemoryFsRule()
-
-  @Test
-  fun cancelOnRunPostStartUpActivities() {
-    val activity = MyStartupActivity()
-    val ep = ExtensionPointName<StartupActivity.DumbAware>("com.intellij.startupActivity")
-    ExtensionTestUtil.maskExtensions(ep, listOf(activity), disposableRule.disposable, fireEvents = false)
-    val isCancelled = doOpenProject()
-    // 1 on maskExtensions call, second call our call
-    assertThat(activity.passed.get()).isTrue()
-    assertThat(isCancelled).isTrue()
-  }
-
-  @Test
-  fun cancelOnLoadingModules() {
-    ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
-      override fun projectComponentsInitialized(project: Project) {
-        val indicator = ProgressManager.getInstance().progressIndicator
-        assertThat(indicator).isNotNull()
-        indicator!!.cancel()
-        indicator.checkCanceled()
+  @Test fun cancelOnRunPostStartUpActivities() {
+    val passed = AtomicBoolean()
+    var job: Job? = null
+    val activity = object : InitProjectActivity {
+      override suspend fun run(project: Project) {
+        passed.set(true)
+        job!!.cancel("test")
       }
-    })
-
-    assertThat(doOpenProject()).isTrue()
+    }
+    val ep = ExtensionPointName<InitProjectActivity>("com.intellij.initProjectActivity")
+    ExtensionTestUtil.maskExtensions(ep, listOf(activity), testRootDisposable, fireEvents = false)
+    runBlocking {
+      job = launch {
+        assertProjectOpenIsCancelled(createTestOpenProjectOptions())
+      }
+    }
+    assertThat(passed.get()).isTrue()
   }
 
-  private fun doOpenProject(): Boolean {
-    var cancelled = false
-    ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
-      override fun run(indicator: ProgressIndicator) {
-        val project = ProjectManagerEx.getInstanceEx().openProject(inMemoryFs.fs.getPath("/p"), createTestOpenProjectOptions())
-        if (project != null) {
-          PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-        }
-        assertThat(project).isNull()
+  @Test fun cancelOnLoadingModules() {
+    runBlocking {
+      var job: Job? = null
+      job = launch {
+        assertProjectOpenIsCancelled(createTestOpenProjectOptions(beforeOpen = { job!!.cancel("test") }))
       }
-
-      override fun onCancel() {
-        cancelled = true
-      }
-    })
-    return cancelled
+    }
   }
 
-  @Test
-  fun isSameProjectForDirectoryBasedProject() {
-    val projectDir = inMemoryFs.fs.getPath("/p")
-    projectDir.createDirectories()
+  private suspend fun assertProjectOpenIsCancelled(options: OpenProjectTask) {
+    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(inMemoryFs.fs.getPath("/p"), options)
+    if (project != null) {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+    }
+    assertThat(project).isNull()
+  }
 
+  @Test fun isSameProjectForDirectoryBasedProject() {
+    val projectDir = inMemoryFs.fs.getPath("/p").createDirectories()
     val dirBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir, createTestOpenProjectOptions())!!
-    dirBasedProject.use {
+    dirBasedProject.useProject {
       assertThat(ProjectUtil.isSameProject(projectDir, dirBasedProject)).isTrue()
       assertThat(ProjectUtil.isSameProject(inMemoryFs.fs.getPath("/p2"), dirBasedProject)).isFalse()
       val iprFilePath = projectDir.resolve("project.ipr")
@@ -96,26 +96,49 @@ class ProjectOpeningTest {
     }
   }
 
-  @Test
-  fun isSameProjectForFileBasedProject() {
-    val projectDir = inMemoryFs.fs.getPath("/p")
-    projectDir.createDirectories()
+  @Test fun isSameProjectForFileBasedProject() {
+    val projectDir = inMemoryFs.fs.getPath("/p").createDirectories()
     val fileBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir.resolve("project.ipr"), createTestOpenProjectOptions())!!
-    fileBasedProject.use {
+    fileBasedProject.useProject {
       assertThat(ProjectUtil.isSameProject(projectDir, fileBasedProject)).isTrue()
       assertThat(ProjectUtil.isSameProject(inMemoryFs.fs.getPath("/p2"), fileBasedProject)).isFalse()
       val iprFilePath2 = projectDir.resolve("project2.ipr")
       assertThat(ProjectUtil.isSameProject(iprFilePath2, fileBasedProject)).isFalse()
     }
   }
-}
 
-private class MyStartupActivity : StartupActivity.DumbAware {
-  val passed = AtomicBoolean()
+  @Test fun projectFileLookup() {
+    val projectDir = tempDir.root.toPath()
+    val projectFile = Files.writeString(projectDir.resolve("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
+    val project = runBlocking {
+      ProjectUtil.openOrImportAsync(projectDir, OpenProjectTask())
+    }
+    assertThat(project).isNotNull()
+    val projectFilePath = project!!.useProject { it.projectFilePath }
+    assertThat(projectFilePath).isEqualTo(projectFile.invariantSeparatorsPathString)
+  }
 
-  override fun runActivity(project: Project) {
-    passed.set(true)
+  @Test fun projectFileLookupSync() {
+    val projectDir = tempDir.root.toPath()
+    val projectFile = Files.writeString(projectDir.resolve("project.ipr"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\"/>")
+    val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())
+    assertThat(project).isNotNull()
+    val projectFilePath = project!!.useProject { it.projectFilePath }
+    assertThat(projectFilePath).isEqualTo(projectFile.invariantSeparatorsPathString)
+  }
 
-    ProgressManager.getInstance().progressIndicator!!.cancel()
+  @Suppress("removal")
+  @Test
+  fun `project listener is called under write-intent lock`() {
+    val listenerRunsUnderWriteIntent = AtomicBoolean(false)
+    val projectDir = tempDir.root.toPath()
+    application.messageBus.connect(testRootDisposable).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectOpened(project: Project) {
+        listenerRunsUnderWriteIntent.set(application.isWriteIntentLockAcquired)
+      }
+    })
+    val project = ProjectUtil.openOrImport(projectDir, OpenProjectTask())
+    project?.useProject {  } // closing this project
+    assertThat(listenerRunsUnderWriteIntent.get()).isTrue()
   }
 }

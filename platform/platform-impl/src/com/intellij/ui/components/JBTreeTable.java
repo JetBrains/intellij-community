@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.ui.Divider;
@@ -7,9 +7,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.ui.tree.ui.PlainSelectionTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableModelAdapter;
@@ -20,7 +22,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -29,10 +39,18 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
@@ -64,31 +82,13 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
   private float myColumnProportion = 0.1f;
 
   public JBTreeTable(@NotNull TreeTableModel model) {
+    this(model, null);
+  }
+
+  public JBTreeTable(@NotNull TreeTableModel model, @Nullable Tree tree) {
     setLayout(new BorderLayout());
 
-    myTree = new Tree() {
-      @Override
-      public void repaint(long tm, int x, int y, int width, int height) {
-        if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
-          super.repaint(tm, x, y, width, height);
-        }
-      }
-
-      @Override
-      public void treeDidChange() {
-        super.treeDidChange();
-        if (myTable != null) {
-          myTable.revalidate();
-          myTable.repaint();
-        }
-      }
-
-      @Nullable
-      @Override
-      public Color getPathBackground(@NotNull TreePath path, int row) {
-        return JBTreeTable.this.getPathBackground(path, row);
-      }
-    };
+    myTree = tree == null ? new MyTree() : tree;
     myTable = new Table();
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myTree.setRootVisible(false);
@@ -182,22 +182,24 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     setModel(model);
   }
 
-  @NotNull
-  public Tree getTree() {
+  public @NotNull Tree getTree() {
     return myTree;
   }
 
-  @NotNull
-  public JBTable getTable() {
+  public @NotNull JBTable getTable() {
     return myTable;
+  }
+
+  @ApiStatus.Internal
+  public final @NotNull OnePixelSplitter getSplitter() {
+    return split;
   }
 
   public void setDefaultRenderer(@NotNull Class<?> columnClass, @NotNull TableCellRenderer renderer) {
     myTable.setDefaultRenderer(columnClass,renderer);
   }
 
-  @NotNull
-  public TableCellRenderer getDefaultRenderer(@NotNull Class<?> columnClass) {
+  public @NotNull TableCellRenderer getDefaultRenderer(@NotNull Class<?> columnClass) {
     return myTable.getDefaultRenderer(columnClass);
   }
 
@@ -236,9 +238,22 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     return myModel;
   }
 
-  @Nullable
+  /**
+   * Enable sorting by columns in this tree-table.
+   * Use this method only if this RowSorter or your model support tree sorting.
+   * For example, com.intellij.ui.tree.StructureTreeModel supports sorting via setComparator method,
+   * so in this case a RowSorter may just redirect sorting requests to the StructureTreeModel.
+   */
+  public void setRowSorter(RowSorter<? extends TableModel> sorter) {
+    myTable.setRowSorter(sorter);
+
+    final JTable ref = myTreeTableHeader.getTable();
+    ref.setModel(myTable.getModel());
+    ref.setRowSorter(sorter);
+  }
+
   @Override
-  public Color getPathBackground(@NotNull TreePath path, int row) {
+  public @Nullable Color getPathBackground(@NotNull TreePath path, int row) {
     return null;
   }
 
@@ -259,7 +274,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     return isNeedToRepaintRow;
   }
 
-  private class SelectionSupport extends MouseAdapter implements TreeSelectionListener, ListSelectionListener {
+  private final class SelectionSupport extends MouseAdapter implements TreeSelectionListener, ListSelectionListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -311,10 +326,13 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
           return super.getWidth() + 1;
         }
       };
-      myTreeTableHeader.setTable(ref); // <- we steal table header and need to provide any JTable to handle right ui painting
+      ref.setTableHeader(myTreeTableHeader); // <- we steal table header and need to provide any JTable to handle right ui painting
       myTreeTableHeader.setColumnModel(new TreeColumnModel());
       myTreeTableHeader.setReorderingAllowed(false);
       myTreeTableHeader.setResizingAllowed(false);
+
+      // do not paint hover for table row separately from tree
+      TableHoverListener.DEFAULT.removeFrom(this);
     }
 
     @Override
@@ -326,19 +344,48 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     }
 
     @Override
-    public void repaint(long tm, int x, int y, int width, int height) {
-      if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
-        super.repaint(tm, x, y, width, height);
-      }
-    }
-
-    @Override
     public void updateUI() {
       super.updateUI();
       // dynamically update ui for stolen header
       if (ref != null) {
         ref.updateUI();
       }
+    }
+
+    // Insets support below
+    @Override
+    public Dimension getPreferredSize() {
+      var size = super.getPreferredSize();
+      var insets = getInsets();
+      return new Dimension(size.width + insets.left + insets.right, size.height + insets.top + insets.bottom);
+    }
+
+    @Override
+    public @NotNull Rectangle getCellRect(int row, int column, boolean includeSpacing) {
+      var rect = super.getCellRect(row, column, includeSpacing);
+      var insets = getInsets();
+      return new Rectangle(rect.x + insets.left, rect.y + insets.top, rect.width, rect.height);
+    }
+
+    @Override
+    public int columnAtPoint(@NotNull Point point) {
+      var insets = getInsets();
+      return super.columnAtPoint(new Point(point.x - insets.left, point.y - insets.top));
+    }
+
+    @Override
+    public int rowAtPoint(@NotNull Point point) {
+      var insets = getInsets();
+      return super.rowAtPoint(new Point(point.x - insets.left, point.y - insets.top));
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(@NotNull Rectangle visibleRect, int orientation, int direction) {
+      int increment = super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+      if (increment == 0 && orientation == SwingConstants.VERTICAL && direction < 0) {
+        return visibleRect.y; // To support insets
+      }
+      return increment;
     }
 
     private final class MyAccessibleContext extends AccessibleContextDelegate {
@@ -368,12 +415,12 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
 
         @Override
         public Object getHeaderValue() {
-          return treeColumnIndex < 0 ? " " : ((TreeTableModel) myTree.getModel()).getColumnName(treeColumnIndex);
+          return treeColumnIndex < 0 ? " " : myModel.getColumnName(treeColumnIndex);
         }
       });
       addColumn(new TableColumn(1, 0));
       myTree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, evt -> {
-        TreeTableModel model = (TreeTableModel) myTree.getModel();
+        TreeTableModel model = myModel;
         treeColumnIndex = -1;
         for (int i = 0; i < model.getColumnCount(); i++) {
           if (TreeTableModel.class.isAssignableFrom(model.getColumnClass(i))) {
@@ -388,6 +435,29 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     @Override
     public int getTotalColumnWidth() {
       return myTree.getVisibleRect().width + 1;
+    }
+  }
+
+  private final class MyTree extends Tree implements PlainSelectionTree {
+    @Override
+    public void repaint(long tm, int x, int y, int width, int height) {
+      if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {
+        super.repaint(tm, x, y, width, height);
+      }
+    }
+
+    @Override
+    public void treeDidChange() {
+      super.treeDidChange();
+      if (myTable != null) {
+        myTable.revalidate();
+        myTable.repaint();
+      }
+    }
+
+    @Override
+    public @Nullable Color getPathBackground(@NotNull TreePath path, int row) {
+      return JBTreeTable.this.getPathBackground(path, row);
     }
   }
 }

@@ -1,19 +1,32 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,8 +39,6 @@ import java.util.stream.Stream;
  * @see com.intellij.lang.ASTNode#getElementType()
  */
 public class IElementType {
-  private static final Logger LOG = Logger.getInstance(IElementType.class);
-
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   public static final ArrayFactory<IElementType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new IElementType[count];
 
@@ -43,8 +54,7 @@ public class IElementType {
 
   private static short size; // guarded by lock
   private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
-  private static final Object lock = new String("registry lock");
+  private static final @NonNls Object lock = new String("registry lock");
 
   static {
     IElementType[] init = new IElementType[137];
@@ -53,7 +63,9 @@ public class IElementType {
     push(init);
   }
 
-  static IElementType @NotNull [] push(IElementType @NotNull [] types) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static IElementType @NotNull [] push(IElementType @NotNull [] types) {
     synchronized (lock) {
       IElementType[] oldRegistry = ourRegistry;
       ourRegistry = types;
@@ -62,33 +74,32 @@ public class IElementType {
     }
   }
 
-  public static void unregisterElementTypes(@NotNull ClassLoader loader) {
+  @ApiStatus.Internal
+  public static void unregisterElementTypes(@NotNull ClassLoader loader, @NotNull PluginDescriptor pluginDescriptor) {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
       if (type != null && type.getClass().getClassLoader() == loader) {
-        ourRegistry[i] = new TombstoneElementType("tombstone of " + type.myDebugName);
+        ourRegistry[i] = TombstoneElementType.create(type, pluginDescriptor);
       }
     }
   }
 
-  public static void unregisterElementTypes(@NotNull Language language) {
+  @ApiStatus.Internal
+  public static void unregisterElementTypes(@NotNull Language language, @NotNull PluginDescriptor pluginDescriptor) {
     if (language == Language.ANY) {
       throw new IllegalArgumentException("Trying to unregister Language.ANY");
     }
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
       if (type != null && type.getLanguage().equals(language)) {
-        ourRegistry[i] = new TombstoneElementType("tombstone of " + type.myDebugName);
+        ourRegistry[i] = TombstoneElementType.create(type, pluginDescriptor);
       }
     }
   }
 
   private final short myIndex;
-  @NonNls
-  @NotNull
-  private final String myDebugName;
-  @NotNull
-  private final Language myLanguage;
+  private final @NonNls @NotNull String myDebugName;
+  private final @NotNull Language myLanguage;
 
   /**
    * Creates and registers a new element type for the specified language.
@@ -100,12 +111,12 @@ public class IElementType {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
-      LoadingState.COMPONENTS_LOADED.checkOccurred();
+      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
     }
   }
 
   /**
-   * Allows to construct element types for some temporary purposes without registering them.
+   * Allows constructing element types for some temporary purposes without registering them.
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
@@ -114,20 +125,18 @@ public class IElementType {
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
       synchronized (lock) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myIndex = size++;
-        if (myIndex >= MAX_INDEXED_TYPES) {
-          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
-          Map.Entry<Language, List<IElementType>> max = byLang.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).get();
-          List<IElementType> types = max.getValue();
-          LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
-                    " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));
-        }
-        IElementType[] newRegistry =
-          myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
+
+        IElementType[] newRegistry = myIndex >= ourRegistry.length
+                                     ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY)
+                                     : ourRegistry;
         newRegistry[myIndex] = this;
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourRegistry = newRegistry;
       }
+
+      checkSizeDoesNotExceedLimit();
     }
     else {
       myIndex = -1;
@@ -139,8 +148,7 @@ public class IElementType {
    *
    * @return the associated language.
    */
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
@@ -161,12 +169,21 @@ public class IElementType {
 
   @Override
   public String toString() {
+    return getDebugName();
+  }
+
+  /**
+   * Don't use it directly. Override or call {@link IElementType#toString()}.
+   * Note, it should be used only for testing and logging purposes.
+   */
+  @ApiStatus.Internal
+  public @NonNls @NotNull String getDebugName() {
     return myDebugName;
   }
 
   /**
    * Controls whitespace balancing behavior of PsiBuilder.
-   * <p>By default, empty composite elements (containing no children) are bounded to the right (previous) neighbour, forming following tree:
+   * <p>By default, empty composite elements (containing no children) are bounded to the right (previous) neighbor, forming the following tree:
    * <pre>
    *  [previous_element]
    *  [whitespace]
@@ -174,7 +191,7 @@ public class IElementType {
    *    &lt;empty&gt;
    *  [next_element]
    * </pre>
-   * <p>Left-bound elements are bounded to the left (next) neighbour instead:
+   * <p>Left-bound elements are bounded to the left (next) neighbor instead:
    * <pre>
    *  [previous_element]
    *  [empty_element]
@@ -183,6 +200,7 @@ public class IElementType {
    *  [next_element]
    * </pre>
    * <p>See com.intellij.lang.impl.PsiBuilderImpl.prepareLightTree() for details.
+   *
    * @return true if empty elements of this type should be bound to the left.
    */
   public boolean isLeftBound() {
@@ -196,11 +214,14 @@ public class IElementType {
    * @return the element type at the specified index.
    * @throws IndexOutOfBoundsException if the index is out of registered elements' range.
    */
-  public static IElementType find(short idx) {
+  public static @NotNull IElementType find(short idx) {
     // volatile read; array always grows, never shrinks, never overwritten
     IElementType type = ourRegistry[idx];
     if (type instanceof TombstoneElementType) {
-      throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type.myDebugName);
+      throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type);
+    }
+    if (type == null) {
+      throw new IndexOutOfBoundsException("Element type index " + idx + " is out of range (0.." + (getAllocatedTypesCount() - 1) + ")");
     }
     return type;
   }
@@ -215,8 +236,8 @@ public class IElementType {
     boolean matches(@NotNull IElementType type);
   }
 
-  @TestOnly
-  static short getAllocatedTypesCount() {
+  @ApiStatus.Internal
+  public static short getAllocatedTypesCount() {
     synchronized (lock) {
       return size;
     }
@@ -238,9 +259,96 @@ public class IElementType {
     return matches.toArray(new IElementType[0]);
   }
 
-  public static class TombstoneElementType extends IElementType {
-    public TombstoneElementType(@NotNull @NonNls String debugName) {
+  /**
+   * <p>
+   * Map all registered token types that match the specified predicate.
+   *
+   * @param p the predicate which should be matched by the element types.
+   * @return the list of matching element types.
+   */
+  @ApiStatus.Internal
+  public static <R> @NotNull @Unmodifiable List<@NotNull R> mapNotNull(@NotNull Function<? super IElementType, ? extends R> p) {
+    List<R> matches = new ArrayList<>();
+    for (IElementType value : ourRegistry) {
+      if (value != null) {
+        R result = p.apply(value);
+        if (result != null) {
+          matches.add(result);
+        }
+      }
+    }
+    return matches;
+  }
+
+  private void checkSizeDoesNotExceedLimit() {
+    if (myIndex != MAX_INDEXED_TYPES) {
+      return;
+    }
+
+    Throwable originalTrace = new Throwable();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      int length = MAX_INDEXED_TYPES;
+      IElementType[] registrySnapshot = new IElementType[length];
+      synchronized (lock) {
+        System.arraycopy(ourRegistry, 0, registrySnapshot, 0, length);
+      }
+
+      Throwable error = TooManyElementTypesException.create(registrySnapshot, originalTrace);
+      Logger.getInstance(IElementType.class).error(error);
+    });
+  }
+
+  private static final class TombstoneElementType extends IElementType {
+    private TombstoneElementType(@NotNull @NonNls String debugName) {
       super(debugName, Language.ANY);
+    }
+    private static TombstoneElementType create(@NotNull IElementType type, @NotNull PluginDescriptor pluginDescriptor) {
+      return new TombstoneElementType("tombstone of " + type +" ("+type.getClass()+") belonged to unloaded "+pluginDescriptor);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static boolean isTombstone(@NotNull IElementType type) {
+    return type instanceof TombstoneElementType;
+  }
+
+  private static class TooManyElementTypesException extends IllegalStateException implements ExceptionWithAttachments {
+    private final Attachment[] myAttachments;
+
+    private TooManyElementTypesException(@NotNull String message, @NotNull Throwable cause, Attachment[] attachments) {
+      super(message, cause);
+      myAttachments = attachments;
+    }
+
+    @Override
+    public @NotNull Attachment @NotNull [] getAttachments() {
+      return myAttachments;
+    }
+
+    static @NotNull Throwable create(IElementType @NotNull [] snapshot, @NotNull Throwable cause) {
+      Map<Language, List<IElementType>> byLang = Stream.of(snapshot)
+        .filter(Objects::nonNull)
+        .collect(Collectors.groupingBy(ie -> ie.getLanguage()));
+
+      Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
+
+      List<IElementType> maxTypes = max.getValue();
+      Language maxLanguage = max.getKey();
+      String first300ElementTypes = StringUtil.first(StringUtil.join(maxTypes, ", "), 300, true);
+      String allElementTypes = StringUtil.join(maxTypes, ", ");
+
+      String errorMessage = "Too many element types registered. Out of (short) range. Most of element types (" + maxTypes.size() + ")" +
+                            " were registered for '" + maxLanguage + "': " + first300ElementTypes;
+
+      String langDistributionText = byLang.entrySet().stream()
+        .map(e -> e.getKey() + ": " + e.getValue().size())
+        .collect(Collectors.joining("\n"));
+
+      Attachment langDistributionAttachment = new Attachment("languageDistribution.txt", langDistributionText);
+      Attachment allElementTypesAttachment = new Attachment("allElementTypesOfMaxLanguage.txt", allElementTypes);
+      Attachment[] attachments = {langDistributionAttachment, allElementTypesAttachment};
+
+      return new TooManyElementTypesException(errorMessage, cause, attachments);
     }
   }
 }

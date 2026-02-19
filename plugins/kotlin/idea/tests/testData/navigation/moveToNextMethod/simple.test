@@ -1,0 +1,11 @@
+// FILE: before.kt
+
+fun <caret>fun1() { }
+
+fun fun2() { }
+
+// FILE: after.kt
+
+fun fun1() { }
+
+fun <caret>fun2() { }

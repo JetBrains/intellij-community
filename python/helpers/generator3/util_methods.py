@@ -345,6 +345,10 @@ def report(msg, *data):
 
 def say(msg, *data):
     """Say something at info level (stdout)"""
+    sys.stderr.write(msg)
+    sys.stderr.write("\n")
+    sys.stderr.write(str(data))
+    sys.stderr.write("\n")
     sys.stdout.write(msg % data)
     sys.stdout.write("\n")
     sys.stdout.flush()
@@ -573,58 +577,6 @@ def note(msg, *data):
 
 ##############  plaform-specific methods    #######################################################
 import sys
-if sys.platform == 'cli':
-    #noinspection PyUnresolvedReferences
-    import clr
-
-# http://blogs.msdn.com/curth/archive/2009/03/29/an-ironpython-profiler.aspx
-def print_profile():
-    data = []
-    data.extend(clr.GetProfilerData())
-    data.sort(lambda x, y: -cmp(x.ExclusiveTime, y.ExclusiveTime))
-
-    for pd in data:
-        say('%s\t%d\t%d\t%d', pd.Name, pd.InclusiveTime, pd.ExclusiveTime, pd.Calls)
-
-def is_clr_type(clr_type):
-    if not clr_type: return False
-    try:
-        clr.GetClrType(clr_type)
-        return True
-    except TypeError:
-        return False
-
-def restore_clr(p_name, p_class):
-    """
-    Restore the function signature by the CLR type signature
-    :return (is_static, spec, sig_note)
-    """
-    clr_type = clr.GetClrType(p_class)
-    if p_name == '__new__':
-        methods = [c for c in clr_type.GetConstructors()]
-        if not methods:
-            return False, p_name + '(self, *args)', 'cannot find CLR constructor' # "self" is always first argument of any non-static method
-    else:
-        methods = [m for m in clr_type.GetMethods() if m.Name == p_name]
-        if not methods:
-            bases = p_class.__bases__
-            if len(bases) == 1 and p_name in dir(bases[0]):
-                # skip inherited methods
-                return False, None, None
-            return False, p_name + '(self, *args)', 'cannot find CLR method'
-            # "self" is always first argument of any non-static method
-
-    parameter_lists = []
-    for m in methods:
-        parameter_lists.append([p.Name for p in m.GetParameters()])
-    params = restore_parameters_for_overloads(parameter_lists)
-    is_static = False
-    if not methods[0].IsStatic:
-        params = ['self'] + params
-    else:
-        is_static = True
-    return is_static, build_signature(p_name, params), None
-
 
 def build_pkg_structure(base_dir, qname):
     if not qname:
@@ -824,14 +776,15 @@ def sha256_digest(binary_or_file):
         return acc.hexdigest()
 
 
-def get_relative_path_by_qname(abs_path, qname):
-    abs_path_components = os.path.split(abs_path)
+def get_portable_test_module_path(abs_path, qname):
+    abs_path_components = os.path.normpath(abs_path).split(os.path.sep)
     qname_components_count = len(qname.split('.'))
     if os.path.splitext(abs_path_components[-1])[0] == '__init__':
         rel_path_components_count = qname_components_count + 1
     else:
         rel_path_components_count = qname_components_count
-    return os.path.join(*abs_path_components[-rel_path_components_count:])
+    return '/'.join(abs_path_components[-rel_path_components_count:])
+
 
 def is_text_file(path):
     """

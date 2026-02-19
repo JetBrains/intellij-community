@@ -1,0 +1,74 @@
+### auto-generated section `build kotlin.jps.graphImplementationTests` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "graphImplementationTests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    "//platform/util/trove",
+    "//jps/jps-builders:build-tests",
+    "//libraries/kotlin/reflect",
+  ]
+)
+
+jvm_library(
+  name = "graphImplementationTests_test_lib",
+  module_name = "kotlin.jps.graphImplementationTests",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "@lib//:kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",
+    "@lib//:kotlinc-kotlin-jps-plugin-tests",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/tests-common:common-tests",
+    "//plugins/kotlin/tests-common:common-tests_test_lib",
+    "//plugins/kotlin/base/test",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/util/compiler-dependencies",
+    "//plugins/kotlin/util/compiler-dependencies:compiler-dependencies_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/devkit/jps-plugin:jps",
+    "//plugins/devkit/jps-plugin:jps_test_lib",
+    "//java/testFramework",
+    "//java/testFramework:testFramework_test_lib",
+    "//jps/jps-builders:build-tests",
+    "//jps/jps-builders:build-tests_test_lib",
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//platform/core-api:core",
+    "//platform/core-api:core_test_lib",
+    "//libraries/kotlin/reflect",
+    "//libraries/kotlin/reflect:reflect_test_lib",
+    "//plugins/kotlin/tests-from-compiler",
+    "//plugins/kotlin/tests-from-compiler:tests-from-compiler_test_lib",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ],
+  runtime_deps = [
+    ":graphImplementationTests",
+    "//platform/util/trove:trove_test_lib",
+  ]
+)
+### auto-generated section `build kotlin.jps.graphImplementationTests` end
+
+### auto-generated section `test kotlin.jps.graphImplementationTests` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "graphImplementationTests_test",
+  runtime_deps = [":graphImplementationTests_test_lib"]
+)
+### auto-generated section `test kotlin.jps.graphImplementationTests` end

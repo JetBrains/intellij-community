@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -26,16 +27,14 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
-public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> {
-  @NotNull
+
+@ApiStatus.Internal
+public final class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> {
   @Override
-  public List<IndentTransferableData> collectTransferableData(PsiFile file,
-                                                          Editor editor,
-                                                          int[] startOffsets,
-                                                          int[] endOffsets) {
+  public @NotNull List<IndentTransferableData> collectTransferableData(@NotNull PsiFile file,
+                                                                       @NotNull Editor editor,
+                                                                       int @NotNull [] startOffsets,
+                                                                       int @NotNull [] endOffsets) {
     if (!acceptFileType(file.getFileType())) {
       return Collections.emptyList();
     }
@@ -47,9 +46,8 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
       .anyMatch(bean -> fileType.getName().equals(bean.fileType));
   }
 
-  @NotNull
   @Override
-  public List<IndentTransferableData> extractTransferableData(Transferable content) {
+  public @NotNull List<IndentTransferableData> extractTransferableData(@NotNull Transferable content) {
     IndentTransferableData indentData = new IndentTransferableData(-1);
     try {
       final DataFlavor flavor = IndentTransferableData.getDataFlavorStatic();
@@ -67,12 +65,12 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
   }
 
   @Override
-  public void processTransferableData(final Project project,
-                                      final Editor editor,
-                                      final RangeMarker bounds,
+  public void processTransferableData(final @NotNull Project project,
+                                      final @NotNull Editor editor,
+                                      final @NotNull RangeMarker bounds,
                                       final int caretOffset,
-                                      final Ref<Boolean> indented,
-                                      final List<IndentTransferableData> values) {
+                                      final @NotNull Ref<? super Boolean> indented,
+                                      final @NotNull List<? extends IndentTransferableData> values) {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return;
     }
@@ -91,7 +89,7 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
         final boolean useTabs =
           CodeStyle.getSettings(psiFile).useTabCharacter(psiFile.getFileType());
         CharFilter NOT_INDENT_FILTER = ch -> useTabs ? ch != '\t' : ch != ' ';
-        String pastedText = document.getText(TextRange.create(bounds));
+        String pastedText = document.getText(bounds.getTextRange());
 
         int startLine = document.getLineNumber(bounds.getStartOffset());
         int endLine = document.getLineNumber(bounds.getEndOffset());
@@ -104,7 +102,7 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
         String initialText = document.getText(TextRange.create(0, bounds.getStartOffset())) +
                    document.getText(TextRange.create(bounds.getEndOffset(), document.getTextLength()));
         int toIndent = 0;
-        if (initialText.length() > 0) {
+        if (!initialText.isEmpty()) {
           final DocumentImpl initialDocument = new DocumentImpl(initialText);
           int lineNumber = initialDocument.getTextLength() > caretOffset? initialDocument.getLineNumber(caretOffset)
                                                                         : initialDocument.getLineCount() - 1;

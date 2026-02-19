@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.settings;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -37,7 +23,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class CompilerConfigurationHandler implements ConfigurationHandler {
+public final class CompilerConfigurationHandler implements ConfigurationHandler {
 
   private static final Logger LOG = Logger.getInstance(CompilerConfigurationHandler.class);
 
@@ -110,8 +96,8 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         changed = true;
       }
       Boolean parallelCompilation = getBoolean(configurationMap, "parallelCompilation");
-      if (parallelCompilation != null && workspaceConfiguration.PARALLEL_COMPILATION != parallelCompilation) {
-        workspaceConfiguration.PARALLEL_COMPILATION = parallelCompilation;
+      if (parallelCompilation != null && compilerConfiguration.isParallelCompilationEnabled() != parallelCompilation) {
+        compilerConfiguration.setParallelCompilationEnabled(parallelCompilation);
         changed = true;
       }
       Boolean rebuildOnDependencyChange = getBoolean(configurationMap, "rebuildModuleOnDependencyChange");
@@ -120,7 +106,7 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         changed = true;
       }
       String additionalVmOptions = getString(configurationMap, "additionalVmOptions");
-      if (additionalVmOptions != null && workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS != additionalVmOptions) {
+      if (additionalVmOptions != null && !additionalVmOptions.equals(workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS)) {
         workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = additionalVmOptions;
         changed = true;
       }
@@ -164,33 +150,29 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         }
       }
 
-      if (changed) {
+      if (changed && !project.isDefault()) {
         BuildManager.getInstance().clearState(project);
       }
     });
   }
 
-  @Nullable
-  private static Boolean getBoolean(Map<String, ?> map, String key) {
+  private static @Nullable Boolean getBoolean(Map<String, ?> map, String key) {
     Object o = map.get(key);
     return o instanceof Boolean ? (Boolean)o : null;
   }
 
-  @Nullable
-  private static Number getNumber(Map<String, ?> map, String key) {
+  private static @Nullable Number getNumber(Map<String, ?> map, String key) {
     Object o = map.get(key);
     return o instanceof Number ? (Number)o : null;
   }
 
-  @Nullable
-  private static String getString(Map<String, ?> map, String key) {
+  private static @Nullable String getString(Map<String, ?> map, String key) {
     Object o = map.get(key);
     return o instanceof String ? (String)o : null;
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  private static <T> Map<String, T> getMap(@NotNull Map<String, ?> map, String key) {
+  private static @Nullable <T> Map<String, T> getMap(@NotNull Map<String, ?> map, String key) {
     Object o = map.get(key);
     return o instanceof Map ? (Map<String, T>)o : null;
   }

@@ -15,13 +15,12 @@
  */
 package com.intellij.util.xml.ui;
 
+import javax.swing.JComponent;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 
-/**
- * @author peter
- */
 public class StripeTableCellRenderer implements TableCellRenderer {
   private final TableCellRenderer myRenderer;
   private static final double FACTOR = 0.92;

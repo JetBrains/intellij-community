@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.symbol;
 
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory;
@@ -6,6 +6,7 @@ import com.intellij.model.Symbol;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.rename.api.RenameTarget;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import static org.jetbrains.annotations.ApiStatus.Internal;
  *
  * @see SymbolSearchTargetFactory
  */
+@OverrideOnly
 public interface SymbolRenameTargetFactory {
 
   @Internal ExtensionPointName<SymbolRenameTargetFactory> EP_NAME = ExtensionPointName.create(
@@ -29,7 +31,7 @@ public interface SymbolRenameTargetFactory {
 
   /**
    * @return target to be renamed when rename is invoked on a given {@code symbol}
-   * @see SymbolSearchTargetFactory#createTarget
+   * @see SymbolSearchTargetFactory#searchTarget
    */
   @Nullable RenameTarget renameTarget(@NotNull Project project, @NotNull Symbol symbol);
 }

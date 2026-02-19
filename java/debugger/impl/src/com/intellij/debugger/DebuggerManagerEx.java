@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -19,20 +19,15 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
     return (DebuggerManagerEx)DebuggerManager.getInstance(project);
   }
 
-  @NotNull
-  public abstract BreakpointManager getBreakpointManager();
+  public abstract @NotNull BreakpointManager getBreakpointManager();
 
-  @NotNull
-  public abstract Collection<DebuggerSession> getSessions();
+  public abstract @NotNull Collection<DebuggerSession> getSessions();
 
-  @Nullable
-  public abstract DebuggerSession getSession(DebugProcess debugProcess);
+  public abstract @Nullable DebuggerSession getSession(DebugProcess debugProcess);
 
-  @NotNull
-  public abstract DebuggerContextImpl getContext();
+  public abstract @NotNull DebuggerContextImpl getContext();
 
-  @NotNull
-  public abstract DebuggerStateManager getContextManager();
+  public abstract @NotNull DebuggerStateManager getContextManager();
 
   /**
    * @deprecated Use {@link DebuggerManagerListener#TOPIC}
@@ -47,6 +42,5 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
   @Deprecated
   public abstract void removeDebuggerManagerListener(@NotNull DebuggerManagerListener debuggerManagerListener);
 
-  @Nullable
-  public abstract DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException;
+  public abstract @Nullable DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException;
 }

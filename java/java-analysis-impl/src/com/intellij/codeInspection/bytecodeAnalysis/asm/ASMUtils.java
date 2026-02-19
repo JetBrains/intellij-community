@@ -9,9 +9,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Value;
 
 import java.util.List;
 
-/**
- * @author lambdamix
- */
 public final class ASMUtils {
   public static final Type THIS_TYPE = Type.getObjectType("this");
   public static final Type THROWABLE_TYPE = Type.getObjectType("java/lang/Throwable");
@@ -36,35 +33,26 @@ public final class ASMUtils {
 
   @Contract(pure = true)
   public static int getSizeFast(String desc) {
-    switch (desc.charAt(0)) {
-      case 'J':
-      case 'D':
-        return 2;
-      default:
-        return 1;
-    }
+    return switch (desc.charAt(0)) {
+      case 'J', 'D' -> 2;
+      default -> 1;
+    };
   }
 
   @Contract(pure = true)
   public static int getReturnSizeFast(String methodDesc) {
-    switch (methodDesc.charAt(methodDesc.indexOf(')') + 1)) {
-      case 'J':
-      case 'D':
-        return 2;
-      default:
-        return 1;
-    }
+    return switch (methodDesc.charAt(methodDesc.indexOf(')') + 1)) {
+      case 'J', 'D' -> 2;
+      default -> 1;
+    };
   }
 
   @Contract(pure = true)
   public static boolean isReferenceReturnType(String methodDesc) {
-    switch (methodDesc.charAt(methodDesc.indexOf(')') + 1)) {
-      case 'L':
-      case '[':
-        return true;
-      default:
-        return false;
-    }
+    return switch (methodDesc.charAt(methodDesc.indexOf(')') + 1)) {
+      case 'L', '[' -> true;
+      default -> false;
+    };
   }
 
   public static <V extends Value> Frame<V>[] newFrameArray(int size) {

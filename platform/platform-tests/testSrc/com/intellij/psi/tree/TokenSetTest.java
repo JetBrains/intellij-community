@@ -16,7 +16,8 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -27,7 +28,10 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class TokenSetTest {
   private static IElementType T1, T2, T3, T4, T5, T6;
@@ -110,17 +114,18 @@ public class TokenSetTest {
   }
 
 
+  @PerformanceUnitTest
   @Test
   public void performance() {
     final IElementType[] elementTypes = IElementType.enumerate(IElementType.TRUE);
     final TokenSet set = TokenSet.create();
     final int shift = new Random().nextInt(500000);
 
-    PlatformTestUtil.startPerformanceTest("TokenSet.contains()", 25, () -> {
+    Benchmark.newBenchmark("TokenSet.contains()", () -> {
       for (int i = 0; i < 1000000; i++) {
         final IElementType next = elementTypes[(i + shift) % elementTypes.length];
         assertFalse(set.contains(next));
       }
-    }).useLegacyScaling().assertTiming();
+    }).start();
   }
 }

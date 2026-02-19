@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.Change
@@ -8,30 +9,39 @@ import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.util.containers.addIfNotNull
 import git4idea.index.ContentVersion
 import git4idea.index.createChange
-import git4idea.index.ui.GIT_FILE_STATUS_NODES_STREAM
-import git4idea.index.ui.GIT_STAGE_TRACKER
+import git4idea.index.ui.GitStageDataKeys
 import git4idea.index.ui.NodeKind
-import kotlin.streams.toList
 
 open class GitStageCreatePatchActionProvider private constructor(private val silentClipboard: Boolean) : AnActionExtensionProvider {
   class Dialog : GitStageCreatePatchActionProvider(false)
   class Clipboard : GitStageCreatePatchActionProvider(true)
 
-  override fun isActive(e: AnActionEvent): Boolean = e.getData(GIT_STAGE_TRACKER) != null
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+  override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null &&
-                               e.getData(GIT_FILE_STATUS_NODES_STREAM)?.anyMatch { it.kind == NodeKind.STAGED ||
-                                                                                   it.kind == NodeKind.UNSTAGED } ?: false
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES)
+    e.presentation.isEnabled =
+      e.project != null && nodes != null &&
+      nodes.asSequence().filter {
+        it.kind == NodeKind.STAGED ||
+        it.kind == NodeKind.UNSTAGED ||
+        it.kind == NodeKind.UNTRACKED
+      }.firstOrNull() != null
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val nodes = e.getRequiredData(GIT_FILE_STATUS_NODES_STREAM).toList()
+    val project = e.project ?: return
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES) ?: return
 
-    val stagedNodesMap = nodes.filter { it.kind == NodeKind.STAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
-    val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
+    val stagedNodesMap = nodes.asSequence().filter { it.kind == NodeKind.STAGED }
+      .mapTo(mutableSetOf()) { Pair(it.root, it.status) }
+    val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED || it.kind == NodeKind.UNTRACKED }
+      .mapTo(mutableSetOf()) { Pair(it.root, it.status) }
 
     val changes = mutableListOf<Change>()
     for (pair in (stagedNodesMap + unstagedNodesMap)) {

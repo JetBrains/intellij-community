@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -10,7 +10,13 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -38,11 +44,10 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyTestGenerator implements TestGenerator {
+public final class GroovyTestGenerator implements TestGenerator {
 
-  @Nullable
   @Override
-  public PsiElement generateTest(final Project project, final CreateTestDialog d) {
+  public @Nullable PsiElement generateTest(final Project project, final CreateTestDialog d) {
     return WriteAction.compute(() -> {
       final PsiClass test = (PsiClass)PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
         (Computable<PsiElement>)() -> {
@@ -107,8 +112,7 @@ public class GroovyTestGenerator implements TestGenerator {
     extendsClause.add(superClassRef);
   }
 
-  @Nullable
-  private static PsiClass findClass(Project project, String fqName) {
+  private static @Nullable PsiClass findClass(Project project, String fqName) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     return JavaPsiFacade.getInstance(project).findClass(fqName, scope);
   }
@@ -143,7 +147,7 @@ public class GroovyTestGenerator implements TestGenerator {
                                      Editor editor,
                                      @Nullable String name, Set<? super String> existingNames) {
     GroovyPsiElementFactory f = GroovyPsiElementFactory.getInstance(targetClass.getProject());
-    PsiMethod method = (PsiMethod)targetClass.add(f.createMethod("dummy", PsiType.VOID));
+    PsiMethod method = (PsiMethod)targetClass.add(f.createMethod("dummy", PsiTypes.voidType()));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true, existingNames);
   }

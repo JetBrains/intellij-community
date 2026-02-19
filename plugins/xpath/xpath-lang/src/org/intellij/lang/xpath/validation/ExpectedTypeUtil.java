@@ -24,7 +24,22 @@ import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.Parameter;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
+import org.intellij.lang.xpath.psi.XPath2If;
+import org.intellij.lang.xpath.psi.XPath2QuantifiedExpr;
+import org.intellij.lang.xpath.psi.XPath2SequenceType;
+import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFilterExpression;
+import org.intellij.lang.xpath.psi.XPathFunction;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathLocationPath;
+import org.intellij.lang.xpath.psi.XPathParenthesizedExpression;
+import org.intellij.lang.xpath.psi.XPathPredicate;
+import org.intellij.lang.xpath.psi.XPathPrefixExpression;
+import org.intellij.lang.xpath.psi.XPathStep;
+import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +49,7 @@ public final class ExpectedTypeUtil {
   private ExpectedTypeUtil() {
   }
 
-  @NotNull
-  public static XPathType getExpectedType(XPathExpression expression) {
+  public static @NotNull XPathType getExpectedType(XPathExpression expression) {
 
     final XPathExpression parentExpr = PsiTreeUtil.getParentOfType(expression, XPathExpression.class);
     if (parentExpr != null) {
@@ -100,8 +114,7 @@ public final class ExpectedTypeUtil {
     return expression.getType() == XPathType.NUMBER ? XPathType.NUMBER : XPathType.BOOLEAN;
   }
 
-  @Nullable
-  private static Parameter findParameterDecl(XPathExpression[] argumentList, XPathExpression expr, Parameter[] parameters) {
+  private static @Nullable Parameter findParameterDecl(XPathExpression[] argumentList, XPathExpression expr, Parameter[] parameters) {
     for (int i = 0; i < argumentList.length; i++) {
       XPathExpression arg = argumentList[i];
       if (arg == expr) {
@@ -121,11 +134,10 @@ public final class ExpectedTypeUtil {
   public static boolean isExplicitConversion(XPathExpression expression) {
     expression = unparenthesize(expression);
 
-    if (!(expression instanceof XPathFunctionCall)) {
+    if (!(expression instanceof XPathFunctionCall call)) {
       return false;
     }
 
-    final XPathFunctionCall call = ((XPathFunctionCall)expression);
     if (call.getArgumentList().length != 1) {
       return false;
     } else if (call.getQName().getPrefix() != null) {
@@ -146,8 +158,7 @@ public final class ExpectedTypeUtil {
   }
 
   // TODO: put this somewhere else
-  @Nullable
-  public static XPathExpression unparenthesize(XPathExpression expression) {
+  public static @Nullable XPathExpression unparenthesize(XPathExpression expression) {
     while (expression instanceof XPathParenthesizedExpression) {
       expression = ((XPathParenthesizedExpression)expression).getExpression();
     }

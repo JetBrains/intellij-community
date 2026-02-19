@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteRepositoriesConfiguration">
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Maven Central repository" />
+      <option name="url" value="https://repo1.maven.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="5279c928-8e34-4405-89c7-5d63e2174522" />
+      <option name="name" value="5279c928-8e34-4405-89c7-5d63e2174522" />
+      <option name="url" value="https://oss.sonatype.org/content/repositories/snapshots" />
+    </remote-repository>
+  </component>
+</project>

@@ -1,4 +1,4 @@
-// "Collapse into loop" "true"
+// "Collapse into loop" "true-preview"
 class X {
   void test() {
     <caret>System.out.println(12);

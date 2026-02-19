@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -16,17 +15,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+import static com.intellij.openapi.util.NlsContexts.DialogTitle;
+
 public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>,
                                       Member extends PsiElement> {
   public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.pushDown");
 
-  @Nullable
-  protected static <MemberInfo extends MemberInfoBase<Member>, Member extends PsiElement> PushDownDelegate<MemberInfo, Member> findDelegate(@NotNull PsiElement sourceClass) {
+  protected static @Nullable <MemberInfo extends MemberInfoBase<Member>, Member extends PsiElement> PushDownDelegate<MemberInfo, Member> findDelegate(@NotNull PsiElement sourceClass) {
     return EP_NAME.forLanguage(sourceClass.getLanguage());
   }
 
-  @Nullable
-  protected static PushDownDelegate findDelegateForTarget(@NotNull PsiElement sourceClass, @NotNull PsiElement targetClass) {
+  protected static @Nullable PushDownDelegate findDelegateForTarget(@NotNull PsiElement sourceClass, @NotNull PsiElement targetClass) {
     for (PushDownDelegate delegate : EP_NAME.allForLanguage(targetClass.getLanguage())) {
       if (delegate.isApplicableForSource(sourceClass)) {
         return delegate;
@@ -60,7 +60,8 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
    * Collect conflicts inside sourceClass assuming members would be removed,
    * e.g. check if members remaining in source class do not depend on moved members
    */
-  protected abstract void checkSourceClassConflicts(PushDownData<MemberInfo, Member> pushDownData, MultiMap<PsiElement, String> conflicts);
+  protected abstract void checkSourceClassConflicts(PushDownData<MemberInfo, Member> pushDownData,
+                                                    MultiMap<PsiElement, @DialogMessage String> conflicts);
 
   /**
    * Collect conflicts inside targetClass assuming methods would be pushed,
@@ -71,7 +72,7 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
    */
   protected abstract void checkTargetClassConflicts(@Nullable PsiElement targetClass,
                                                     PushDownData<MemberInfo, Member> pushDownData,
-                                                    MultiMap<PsiElement, String> conflicts,
+                                                    MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                     @Nullable NewSubClassData subClassData);
 
   /**
@@ -97,7 +98,7 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
    *         null to proceed without inheritors (members would be deleted from the source class and not added to the target)
    *         new NewSubClassData(context, name) if new inheritor should be created with {@link #createSubClass(PsiElement, NewSubClassData)}
    */
-  protected NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, @NlsContexts.DialogTitle String conflictDialogTitle) {
+  protected NewSubClassData preprocessNoInheritorsFound(PsiElement sourceClass, @DialogTitle String conflictDialogTitle) {
     final String message = RefactoringBundle.message("class.0.does.not.have.inheritors", DescriptiveNameUtil.getDescriptiveName(sourceClass)) + "\n" +
                            RefactoringBundle.message("push.down.will.delete.members");
     if (!MessageDialogBuilder.yesNo(conflictDialogTitle, message)
@@ -111,8 +112,7 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
   /**
    * Create sub class with {@code subClassData.getNewClassName()} in the specified context if no inheritors were found
    */
-  @Nullable
-  protected PsiElement createSubClass(PsiElement aClass, NewSubClassData subClassData) {
+  protected @Nullable PsiElement createSubClass(PsiElement aClass, NewSubClassData subClassData) {
     return null;
   }
 }

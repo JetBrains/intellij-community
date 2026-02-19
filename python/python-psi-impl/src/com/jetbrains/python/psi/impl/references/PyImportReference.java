@@ -10,7 +10,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -20,10 +25,22 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -31,13 +48,16 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Reference in an import statement:<br/>
  * <code>import <u>foo.name</u></code>
- *
- * @author yole
  */
 public class PyImportReference extends PyReferenceImpl {
   protected final PyReferenceExpressionImpl myElement;
@@ -67,9 +87,8 @@ public class PyImportReference extends PyReferenceImpl {
     return super.getUnresolvedDescription();
   }
 
-  @NotNull
   @Override
-  protected List<RatedResolveResult> resolveInner() {
+  protected @NotNull List<RatedResolveResult> resolveInner() {
     final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final QualifiedName qname = myElement.asQualifiedName();
     return qname == null ? Collections.emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
@@ -110,14 +129,13 @@ public class PyImportReference extends PyReferenceImpl {
   }
 
   private static void replaceInsertHandler(Object[] variants, final InsertHandler<LookupElement> insertHandler) {
-    for (int i=0; i < variants.length; i+=1) {
+    for (int i = 0; i < variants.length; i += 1) {
       Object item = variants[i];
       if (hasChildPackages(item)) continue;
       if (item instanceof LookupElementBuilder) {
         variants[i] = ((LookupElementBuilder)item).withInsertHandler(insertHandler);
       }
-      else if (item instanceof PsiNamedElement) {
-        final PsiNamedElement element = (PsiNamedElement)item;
+      else if (item instanceof PsiNamedElement element) {
         final String name = element.getName();
         assert name != null; // it can't really have null name
         variants[i] = LookupElementBuilder
@@ -131,10 +149,9 @@ public class PyImportReference extends PyReferenceImpl {
   private static boolean hasChildPackages(Object item) {
     PsiElement itemElement = null;
     if (item instanceof PsiElement) {
-      itemElement = (PsiElement) item;
+      itemElement = (PsiElement)item;
     }
-    else if (item instanceof LookupElement) {
-      LookupElement lookupElement = (LookupElement) item;
+    else if (item instanceof LookupElement lookupElement) {
       final PsiElement element = lookupElement.getPsiElement();
       if (element != null) {
         itemElement = element;
@@ -162,7 +179,7 @@ public class PyImportReference extends PyReferenceImpl {
     private final PsiFile myCurrentFile;
     private final Set<String> myNamesAlready;
     private final List<Object> myObjects;
-    @NotNull private final TypeEvalContext myContext;
+    private final @NotNull TypeEvalContext myContext;
 
     ImportVariantCollector(@NotNull TypeEvalContext context) {
       myContext = context;
@@ -186,10 +203,9 @@ public class PyImportReference extends PyReferenceImpl {
           ResolveResult[] resolved = src.getReference().multiResolve(false);
           for (ResolveResult result : resolved) {
             PsiElement modCandidate = result.getElement();
-            if (modCandidate instanceof PyExpression) {
+            if (modCandidate instanceof PyExpression module) {
               addImportedNames(fromImport.getImportElements()); // don't propose already imported items
               // try to collect submodules
-              PyExpression module = (PyExpression)modCandidate;
               PyType qualifierType = myContext.getType(module);
               if (qualifierType != null) {
                 ProcessingContext ctx = new ProcessingContext();
@@ -215,6 +231,7 @@ public class PyImportReference extends PyReferenceImpl {
             }
           }
         }
+        fillFromRootsIfNotRelative(relativeLevel, insertHandler);
       }
       else { // in "import _" or "from _ import"
         PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(myElement);
@@ -235,26 +252,41 @@ public class PyImportReference extends PyReferenceImpl {
             addImportedNames(importStatement.getImportElements());
           }
         }
+        final PsiDirectory containingDirectory = myCurrentFile.getContainingDirectory();
         // look at dir by level
-        if ((relativeLevel >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
-          final PsiDirectory containingDirectory = myCurrentFile.getContainingDirectory();
-          if (containingDirectory != null) {
-            QualifiedName thisQName = QualifiedNameFinder.findShortestImportableQName(containingDirectory);
-            if (thisQName == null || thisQName.getComponentCount() == relativeLevel) {
-              fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relativeLevel), insertHandler);
-            }
-            else if (thisQName.getComponentCount() > relativeLevel) {
-              thisQName = thisQName.removeTail(relativeLevel);
-              fillFromQName(thisQName, insertHandler);
-            }
-          }
+        if (LanguageLevel.forElement(myCurrentFile).isPy3K() && containingDirectory != null &&
+            PyUtil.isExplicitPackage(containingDirectory)) {
+          fillFromRootsIfNotRelative(relativeLevel, insertHandler);
+          fillFromSameDirectoryOrRelative(relativeLevel, insertHandler);
         }
-      }
-      if (relativeLevel == -1) {
-        fillFromQName(QualifiedName.fromComponents(), insertHandler);
+        else {
+          fillFromSameDirectoryOrRelative(relativeLevel, insertHandler);
+          fillFromRootsIfNotRelative(relativeLevel, insertHandler);
+        }
       }
 
       return ArrayUtil.toObjectArray(myObjects);
+    }
+
+    private void fillFromRootsIfNotRelative(int relativeLevel, @Nullable InsertHandler<LookupElement> insertHandler) {
+      if (relativeLevel == -1) {
+        fillFromQName(QualifiedName.fromComponents(), insertHandler);
+      }
+    }
+
+    private void fillFromSameDirectoryOrRelative(int relativeLevel, @Nullable InsertHandler<LookupElement> insertHandler) {
+      if (relativeLevel < 0 && ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile)) return;
+      final PsiDirectory containingDirectory = myCurrentFile.getContainingDirectory();
+      if (containingDirectory != null) {
+        QualifiedName thisQName = QualifiedNameFinder.findShortestImportableQName(containingDirectory);
+        if (thisQName == null || thisQName.getComponentCount() == relativeLevel) {
+          fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relativeLevel), insertHandler);
+        }
+        else if (thisQName.getComponentCount() > relativeLevel) {
+          thisQName = thisQName.removeTail(relativeLevel);
+          fillFromQName(thisQName, insertHandler);
+        }
+      }
     }
 
     private void fillFromQName(QualifiedName thisQName, InsertHandler<LookupElement> insertHandler) {

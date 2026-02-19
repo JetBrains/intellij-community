@@ -16,11 +16,13 @@
 package com.intellij.execution.console;
 
 import com.intellij.openapi.util.ModificationTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface ConsoleHistoryBaseModel extends ModificationTracker {
 
   boolean isEmpty();

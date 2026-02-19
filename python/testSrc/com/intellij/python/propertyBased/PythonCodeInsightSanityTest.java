@@ -7,9 +7,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.propertyBased.*;
+import com.intellij.testFramework.propertyBased.CompletionPolicy;
+import com.intellij.testFramework.propertyBased.DeleteRange;
+import com.intellij.testFramework.propertyBased.IntentionPolicy;
+import com.intellij.testFramework.propertyBased.InvokeCompletion;
+import com.intellij.testFramework.propertyBased.InvokeIntention;
+import com.intellij.testFramework.propertyBased.MadTestingAction;
+import com.intellij.testFramework.propertyBased.MadTestingUtil;
+import com.intellij.testFramework.propertyBased.StripTestDataMarkup;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
@@ -69,7 +77,7 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
   private void runActivity(@Nullable final Pair<Long, Integer> seedToRepeat) {
     runSanityTest(pathAndFixture -> {
       final CodeInsightTestFixture fixture = pathAndFixture.second;
-      MadTestingUtil.enableAllInspections(fixture.getProject());
+      MadTestingUtil.enableAllInspections(fixture.getProject(), PythonLanguage.getInstance());
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
         file -> Generator.sampledFrom(new InvokeIntention(file, new IntentionPolicy()),
                                       new InvokeCompletion(file, new CompletionPolicy()),

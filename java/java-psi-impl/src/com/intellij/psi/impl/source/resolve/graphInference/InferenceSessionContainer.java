@@ -1,21 +1,50 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class InferenceSessionContainer {
   private static final Logger LOG = Logger.getInstance(InferenceSessionContainer.class);
@@ -69,7 +98,7 @@ public class InferenceSessionContainer {
     }
     if (parent instanceof PsiCall) {
       //overload resolution can't depend on outer call => should not traverse to top
-      if (//in order to to avoid caching of candidates's errors on parent (!) , so check for overload resolution is left here
+      if (//in order to avoid caching of candidates' errors on parent (!) , so check for overload resolution is left here
           //But overload resolution can depend on type of lambda parameter. As it can't depend on lambda body,
           //traversing down would stop at lambda level and won't take into account overloaded method
           !MethodCandidateInfo.isOverloadCheck(argumentList)) {
@@ -128,9 +157,9 @@ public class InferenceSessionContainer {
 
   private static PsiSubstitutor inferNested(final PsiParameter @NotNull [] parameters,
                                             final PsiExpression @NotNull [] arguments,
-                                            @NotNull final PsiCall parent,
-                                            @NotNull final MethodCandidateInfo currentMethod,
-                                            @NotNull final InferenceSession parentSession) {
+                                            final @NotNull PsiCall parent,
+                                            final @NotNull MethodCandidateInfo currentMethod,
+                                            final @NotNull InferenceSession parentSession) {
     final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
     if (errorMessages != null && !MethodCandidateInfo.isOverloadCheck()) {
       //for lambda parameter type calculation, the parent inference may contain errors due to skipping that lambda constraints
@@ -224,10 +253,10 @@ public class InferenceSessionContainer {
       }
     }
 
-    Map<PsiTypeParameter, PsiType> map = new THashMap<>();
+    Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     for (InferenceVariable variable : topLevelSession.getInferenceVariables()) {
       final PsiType instantiation = variable.getInstantiation();
-      if (instantiation != PsiType.NULL) {
+      if (instantiation != PsiTypes.nullType()) {
         final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(topInferenceSubstitutor.substitute(variable));
         if (psiClass instanceof InferenceVariable) {
           map.put((PsiTypeParameter)psiClass, instantiation);
@@ -238,10 +267,9 @@ public class InferenceSessionContainer {
     return new CompoundInitialState(PsiSubstitutor.createSubstitutor(map), nestedStates);
   }
 
-  @Nullable
-  private static InferenceSession startTopLevelInference(final PsiCall topLevelCall,
-                                                         final ParameterTypeInferencePolicy policy,
-                                                         MethodCandidateInfo currentMethod) {
+  private static @Nullable InferenceSession startTopLevelInference(final PsiCall topLevelCall,
+                                                                   final ParameterTypeInferencePolicy policy,
+                                                                   MethodCandidateInfo currentMethod) {
     final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(topLevelCall);
     if (result instanceof MethodCandidateInfo) {
       final PsiMethod method = ((MethodCandidateInfo)result).getElement();
@@ -261,10 +289,9 @@ public class InferenceSessionContainer {
     return null;
   }
 
-  @NotNull
-  private static PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
+  private static @NotNull PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
     final List<InferenceVariable> targetVars = new ArrayList<>();
-    Map<PsiTypeParameter, PsiType> map = new THashMap<>();
+    Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[0]);
     for (InferenceVariable variable : oldVars) {
       final InferenceVariable newVariable = new InferenceVariable(variable.getCallContext(), variable.getParameter(), variable.getName());

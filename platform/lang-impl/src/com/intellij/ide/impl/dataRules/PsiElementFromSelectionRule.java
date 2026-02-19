@@ -1,49 +1,48 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.model.Pointer;
+import com.intellij.navigation.PsiElementNavigationItem;
+import com.intellij.openapi.actionSystem.DataMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiAwareObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class PsiElementFromSelectionRule implements GetDataRule {
-  @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
-    Object item = PlatformDataKeys.SELECTED_ITEM.getData(dataProvider);
-    if (item instanceof PsiElement) {
-      PsiElement element = (PsiElement)item;
-      return element.isValid() ? element : null;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PROJECT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEM;
+
+final class PsiElementFromSelectionRule {
+  static @Nullable PsiElement getData(@NotNull DataMap dataProvider) {
+    Object item = dataProvider.get(SELECTED_ITEM);
+    PsiElement element = null;
+    if (item instanceof PsiElement o) {
+      element = o;
     }
-    if (item instanceof PsiAwareObject) {
-      Project project = CommonDataKeys.PROJECT.getData(dataProvider);
-      PsiElement element = project == null ? null : ((PsiAwareObject)item).findElement(project);
-      return element != null && element.isValid() ? element : null;
+    else if (item instanceof PsiAwareObject o) {
+      Project project = dataProvider.get(PROJECT);
+      element = project == null ? null : o.findElement(project);
     }
-    if (item instanceof VirtualFile) {
-      Project project = CommonDataKeys.PROJECT.getData(dataProvider);
-      PsiElement element = project == null ? null : PsiManager.getInstance(project).findFile((VirtualFile)item);
-      return element != null && element.isValid() ? element : null;
+    else if (item instanceof PsiElementNavigationItem o) {
+      element = o.getTargetElement();
     }
-    return null;
+    else if (item instanceof VirtualFile o) {
+      Project project = dataProvider.get(PROJECT);
+      element = project == null || !o.isValid() ? null :
+                PsiManager.getInstance(project).findFile(o);
+    }
+    else if (item instanceof Pointer<?>) {
+      element = getElement((Pointer<?>)item);
+    }
+    return element != null && element.isValid() ? element : null;
+  }
+
+  static @Nullable PsiElement getElement(Pointer<?> item) {
+    Object o = item.dereference();
+    return o instanceof PsiElement ? (PsiElement)o : null;
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -13,7 +14,8 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
@@ -27,6 +29,11 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(enabled(e));
   }
@@ -35,7 +42,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_MASK | InputEvent.CTRL_MASK)), comp);
   }
 
-  private boolean enabled(final AnActionEvent e) {
+  private static boolean enabled(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);

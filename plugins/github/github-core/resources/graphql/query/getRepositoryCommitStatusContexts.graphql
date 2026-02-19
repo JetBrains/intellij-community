@@ -1,0 +1,15 @@
+query($repoOwner: String!, $repoName: String!, $oid: GitObjectID!, $pageSize: Int, $cursor: String) {
+  repository(owner: $repoOwner, name: $repoName) {
+    object(oid: $oid) {
+      ... on Commit {
+        statusCheckRollup {
+          ...commitStatusRollup
+        }
+      }
+    }
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

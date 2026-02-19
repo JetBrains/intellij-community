@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
@@ -39,7 +38,7 @@ import com.intellij.util.xml.stubs.model.Foo;
 public abstract class DomStubTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final String HTTP_FOO_DTD = "http://foo.dtd";
-  private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<Foo>(Foo.class, "foo", HTTP_FOO_DTD) {
+  private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<>(Foo.class, "foo", HTTP_FOO_DTD) {
     @Override
     public boolean hasStubs() {
       return true;
@@ -62,7 +61,7 @@ public abstract class DomStubTest extends LightJavaCodeInsightFixtureTestCase {
     StubTreeLoader loader = StubTreeLoader.getInstance();
     VirtualFile file = psiFile.getVirtualFile();
     assertTrue(loader.canHaveStub(file));
-    ObjectStubTree stubTree = loader.readFromVFile(fixture.getProject(), file);
+    ObjectStubTree<?> stubTree = loader.readFromVFile(fixture.getProject(), file);
     assertNotNull(stubTree);
     ElementStub root = (ElementStub)stubTree.getRoot();
     assertNotNull(root);
@@ -102,10 +101,10 @@ public abstract class DomStubTest extends LightJavaCodeInsightFixtureTestCase {
     assertNotNull(virtualFile);
     XmlFile file = (XmlFile)((PsiManagerEx)getPsiManager()).getFileManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
-    ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
+    ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
     assertNotNull("Can't build stubs for " + path, tree);
 
-    ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
+    ((PsiManagerEx)getPsiManager()).cleanupForNextTest();
 
     file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertNotNull(file);

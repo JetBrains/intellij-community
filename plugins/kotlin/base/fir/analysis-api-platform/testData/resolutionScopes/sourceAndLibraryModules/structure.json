@@ -1,0 +1,11 @@
+{
+    "libraries": [
+        { "name": "library1", "roots": ["library1"] },
+        { "name": "library2", "roots": ["library2"] }
+    ],
+    "modules": [
+        { "name": "dependency1", "dependencies": ["library1"] },
+        { "name": "dependency2", "dependencies": ["library1", "dependency1"] },
+        { "name": "main", "dependencies": ["dependency1", "dependency2", "library1", "library2"] }
+    ]
+}

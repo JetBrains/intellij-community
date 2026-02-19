@@ -1,0 +1,217 @@
+*:com.intellij.platform.searchEverywhere.SeCommandInfo
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeCommandInfo$Companion
+- a:getCommand():java.lang.String
+- a:getDefinition():java.lang.String
+- a:getProviderId():java.lang.String
+*f:com.intellij.platform.searchEverywhere.SeCommandInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeCommandInfoFactory
+- <init>():V
+- f:create(com.intellij.ide.actions.searcheverywhere.SearchEverywhereCommandInfo,java.lang.String):com.intellij.platform.searchEverywhere.SeCommandInfo
+- f:create(java.lang.String,java.lang.String,java.lang.String):com.intellij.platform.searchEverywhere.SeCommandInfo
+*:com.intellij.platform.searchEverywhere.SeCommandsProviderInterface
+- a:getSupportedCommands():java.util.List
+*:com.intellij.platform.searchEverywhere.SeExtendedInfo
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeExtendedInfo$Companion
+- a:getActionDescription():java.lang.String
+- a:getActionText():java.lang.String
+- a:getKeyCode():java.lang.Integer
+- a:getModifiers():java.lang.Integer
+- a:getText():java.lang.String
+*f:com.intellij.platform.searchEverywhere.SeExtendedInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- <init>():V
+- f:build():com.intellij.platform.searchEverywhere.SeExtendedInfo
+- f:getActionDescription():java.lang.String
+- f:getActionText():java.lang.String
+- f:getKeyCode():java.lang.Integer
+- f:getModifiers():java.lang.Integer
+- f:getText():java.lang.String
+- f:setActionDescription(java.lang.String):V
+- f:setActionText(java.lang.String):V
+- f:setKeyCode(java.lang.Integer):V
+- f:setModifiers(java.lang.Integer):V
+- f:setText(java.lang.String):V
+- f:withActionDescription(java.lang.String):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withActionText(java.lang.String):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withExtendedInfo(com.intellij.ide.actions.searcheverywhere.ExtendedInfo,java.lang.Object):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withKeyCode(java.lang.Integer):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withModifiers(java.lang.Integer):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+- f:withText(java.lang.String):com.intellij.platform.searchEverywhere.SeExtendedInfoBuilder
+*:com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
+*a:com.intellij.platform.searchEverywhere.SeFilterState
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeFilterState$Companion
+- b:<init>(I,kotlinx.serialization.internal.SerializationConstructorMarker):V
+- a:get(java.lang.String):java.util.List
+- f:getBoolean(java.lang.String):java.lang.Boolean
+- f:getOne(java.lang.String):java.lang.String
+- bsf:write$Self(com.intellij.platform.searchEverywhere.SeFilterState,kotlinx.serialization.encoding.CompositeEncoder,kotlinx.serialization.descriptors.SerialDescriptor):V
+*f:com.intellij.platform.searchEverywhere.SeFilterState$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeFilterState$Data
+- com.intellij.platform.searchEverywhere.SeFilterState
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeFilterState$Data$Companion
+- <init>(java.util.Map):V
+- get(java.lang.String):java.util.List
+*bf:com.intellij.platform.searchEverywhere.SeFilterState$Data$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.searchEverywhere.SeFilterState$Data$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.searchEverywhere.SeFilterState$Data
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.searchEverywhere.SeFilterState$Data):V
+*f:com.intellij.platform.searchEverywhere.SeFilterState$Data$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeFilterState$Empty
+- com.intellij.platform.searchEverywhere.SeFilterState
+- sf:INSTANCE:com.intellij.platform.searchEverywhere.SeFilterState$Empty
+- get(java.lang.String):java.util.List
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.platform.searchEverywhere.SeItem
+- getRawObject():java.lang.Object
+- a:presentation(kotlin.coroutines.Continuation):java.lang.Object
+- a:weight():I
+*:com.intellij.platform.searchEverywhere.SeItemData
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeItemData$Companion
+- a:fetchItemIfExists():com.intellij.platform.searchEverywhere.SeItem
+- a:getAdditionalInfo():java.util.Map
+- a:getPresentation():com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+- a:getProviderId():com.intellij.platform.searchEverywhere.SeProviderId
+- a:getUuid():java.lang.String
+- a:getUuidsToReplace():java.util.List
+- a:getWeight():I
+*f:com.intellij.platform.searchEverywhere.SeItemData$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeItemDataFactory
+- <init>():V
+- f:createItemData(com.intellij.platform.searchEverywhere.SeSession,java.lang.String,com.intellij.platform.searchEverywhere.SeItem,com.intellij.platform.searchEverywhere.SeProviderId,java.util.Map,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.searchEverywhere.SeItemsPreviewProvider
+- a:getPreviewInfo(com.intellij.platform.searchEverywhere.SeItem,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.searchEverywhere.SeItemsProvider
+- com.intellij.openapi.Disposable
+- addDataForItem(com.intellij.platform.searchEverywhere.SeItem,com.intellij.openapi.actionSystem.DataSink):V
+- a:canBeShownInFindResults(kotlin.coroutines.Continuation):java.lang.Object
+- a:collectItems(com.intellij.platform.searchEverywhere.SeParams,com.intellij.platform.searchEverywhere.SeItemsProvider$Collector,kotlin.coroutines.Continuation):java.lang.Object
+- a:getDisplayName():java.lang.String
+- a:getId():java.lang.String
+- getNavigatableForItem(com.intellij.platform.searchEverywhere.SeItem):com.intellij.pom.Navigatable
+- getPsiElementForItem(com.intellij.platform.searchEverywhere.SeItem):com.intellij.psi.PsiElement
+- getVirtualFileForItem(com.intellij.platform.searchEverywhere.SeItem):com.intellij.openapi.vfs.VirtualFile
+- a:itemSelected(com.intellij.platform.searchEverywhere.SeItem,I,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- performExtendedAction(com.intellij.platform.searchEverywhere.SeItem,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.searchEverywhere.SeItemsProvider$Collector
+- a:put(com.intellij.platform.searchEverywhere.SeItem,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.searchEverywhere.SeItemsProviderFactory
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeItemsProviderFactory$Companion
+- a:getId():java.lang.String
+- a:getItemsProvider(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.SeItemsProviderFactory$Companion
+*:com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider$Companion
+- a:getId():java.lang.String
+- a:getPresentation(java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.searchEverywhere.SeLegacyItemPresentationProvider$Companion
+*f:com.intellij.platform.searchEverywhere.SeParams
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeParams$Companion
+- <init>(java.lang.String,com.intellij.platform.searchEverywhere.SeFilterState):V
+- f:getFilter():com.intellij.platform.searchEverywhere.SeFilterState
+- f:getInputQuery():java.lang.String
+*bf:com.intellij.platform.searchEverywhere.SeParams$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.searchEverywhere.SeParams$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.searchEverywhere.SeParams
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.searchEverywhere.SeParams):V
+*f:com.intellij.platform.searchEverywhere.SeParams$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.platform.searchEverywhere.SePreviewInfo
+- *sf:Companion:com.intellij.platform.searchEverywhere.SePreviewInfo$Companion
+- a:getFileUrl():com.intellij.ide.vfs.VirtualFileId
+- a:getNavigationRanges():java.util.List
+*f:com.intellij.platform.searchEverywhere.SePreviewInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SePreviewInfoFactory
+- <init>():V
+- f:create(com.intellij.ide.vfs.VirtualFileId,java.util.List):com.intellij.platform.searchEverywhere.SePreviewInfo
+*f:com.intellij.platform.searchEverywhere.SeProviderId
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeProviderId$Companion
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.searchEverywhere.SeProviderId
+- bs:copy$default(com.intellij.platform.searchEverywhere.SeProviderId,java.lang.String,I,java.lang.Object):com.intellij.platform.searchEverywhere.SeProviderId
+- equals(java.lang.Object):Z
+- f:getValue():java.lang.String
+- hashCode():I
+*bf:com.intellij.platform.searchEverywhere.SeProviderId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.searchEverywhere.SeProviderId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.searchEverywhere.SeProviderId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.searchEverywhere.SeProviderId):V
+*f:com.intellij.platform.searchEverywhere.SeProviderId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeResultAddedEvent
+- com.intellij.platform.searchEverywhere.SeResultEvent
+- <init>(com.intellij.platform.searchEverywhere.SeItemData):V
+- f:getItemData():com.intellij.platform.searchEverywhere.SeItemData
+*f:com.intellij.platform.searchEverywhere.SeResultEndEvent
+- com.intellij.platform.searchEverywhere.SeResultEvent
+- <init>(com.intellij.platform.searchEverywhere.SeProviderId):V
+- f:getProviderId():com.intellij.platform.searchEverywhere.SeProviderId
+*:com.intellij.platform.searchEverywhere.SeResultEvent
+*f:com.intellij.platform.searchEverywhere.SeResultReplacedEvent
+- com.intellij.platform.searchEverywhere.SeResultEvent
+- <init>(java.util.List,com.intellij.platform.searchEverywhere.SeItemData):V
+- f:getNewItemData():com.intellij.platform.searchEverywhere.SeItemData
+- f:getUuidsToReplace():java.util.List
+*:com.intellij.platform.searchEverywhere.SeSession
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeSession$Companion
+*f:com.intellij.platform.searchEverywhere.SeSession$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentation
+- com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+*f:com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- <init>():V
+- f:build():com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentation
+- f:withAccessibleAdditionToText(java.lang.String):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- f:withDescription(java.lang.String):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- f:withExtendedInfo(com.intellij.platform.searchEverywhere.SeExtendedInfo):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- f:withIcon(javax.swing.Icon):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- f:withMultiSelectionSupported(Z):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- f:withSelectedTextAttributes(com.intellij.ui.SimpleTextAttributes):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- f:withText(java.lang.String):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+- f:withTextAttributes(com.intellij.ui.SimpleTextAttributes):com.intellij.platform.searchEverywhere.presentations.SeBasicItemPresentationBuilder
+*:com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+- *sf:Companion:com.intellij.platform.searchEverywhere.presentations.SeItemPresentation$Companion
+- getExtendedInfo():com.intellij.platform.searchEverywhere.SeExtendedInfo
+- a:getText():java.lang.String
+- a:isMultiSelectionSupported():Z
+*f:com.intellij.platform.searchEverywhere.presentations.SeItemPresentation$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentation
+- com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+- *sf:Companion:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentation$Companion
+*f:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentation$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- *sf:Companion:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder$Companion
+- <init>():V
+- f:build():com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentation
+- f:locationIcon(javax.swing.Icon):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withBackgroundColor(java.awt.Color):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withContainerText(java.lang.String):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withContainerTextMatchedRanges(java.util.List):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withExtendedInfo(com.intellij.platform.searchEverywhere.SeExtendedInfo):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withIcon(javax.swing.Icon):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withLocationText(java.lang.String):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withMultiSelectionSupported(Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withPresentableText(java.lang.String):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withPresentableTextErrorHighlight(Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withPresentableTextFgColor(java.awt.Color):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withPresentableTextMatchedRanges(java.util.List):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withPresentableTextStrikethrough(Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+- f:withTargetPresentation(com.intellij.platform.backend.presentation.TargetPresentation,com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers,com.intellij.platform.searchEverywhere.SeExtendedInfo,Z):com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder
+*f:com.intellij.platform.searchEverywhere.presentations.SeTargetItemPresentationBuilder$Companion

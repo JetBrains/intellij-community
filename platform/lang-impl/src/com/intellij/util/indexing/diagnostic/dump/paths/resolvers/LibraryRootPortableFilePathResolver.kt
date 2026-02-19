@@ -16,7 +16,7 @@ object LibraryRootPortableFilePathResolver : PortableFilePathResolver {
       return runReadAction {
         when (portableFilePath.libraryType) {
           PortableFilePath.LibraryRoot.LibraryType.APPLICATION -> {
-            findInLibraryTable(LibraryTablesRegistrar.getInstance().libraryTable, portableFilePath)
+            findInLibraryTable(LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(project), portableFilePath)
           }
           PortableFilePath.LibraryRoot.LibraryType.PROJECT -> {
             findInLibraryTable(LibraryTablesRegistrar.getInstance().getLibraryTable(project), portableFilePath)

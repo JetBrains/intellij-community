@@ -27,7 +27,7 @@ Groovy script
           Annotation member value pair
             Annotation array initializer
               PsiElement([)('[')
-              PsiWhiteSpace('\n')
+              PsiElement(new line)('\n')
               PsiElement(])(']')
           PsiElement())(')')
       PsiElement(new line)('\n')

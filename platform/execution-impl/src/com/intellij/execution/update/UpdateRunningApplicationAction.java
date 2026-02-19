@@ -1,12 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.update;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -16,20 +20,21 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UpdateRunningApplicationAction extends AnAction {
-  UpdateRunningApplicationAction() {
-    super(ExecutionBundle.messagePointer("action.AnAction.text.update.running.application"),
-          ExecutionBundle.messagePointer("action.AnAction.description.update.running.application"), AllIcons.Javaee.UpdateRunningApplication);
+final class UpdateRunningApplicationAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+    final Project project = e.getProject();
     final RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     final Presentation presentation = e.getPresentation();
     if (contentDescriptor != null && project != null) {
@@ -58,8 +63,7 @@ public class UpdateRunningApplicationAction extends AnAction {
     }
   }
 
-  @Nullable
-  private static RunningApplicationUpdater findUpdater(@NotNull Project project, @Nullable ProcessHandler processHandler) {
+  private static @Nullable RunningApplicationUpdater findUpdater(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     if (processHandler == null) return null;
 
     for (RunningApplicationUpdaterProvider provider : RunningApplicationUpdaterProvider.EP_NAME.getExtensions()) {
@@ -106,11 +110,10 @@ public class UpdateRunningApplicationAction extends AnAction {
 
     if (updaters.size() > 1) {
       final ListPopup popup =
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<RunningApplicationUpdater>(
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
           ExecutionBundle.message("popup.title.select.process.to.update"), updaters) {
-          @NotNull
           @Override
-          public String getTextFor(RunningApplicationUpdater value) {
+          public @NotNull String getTextFor(RunningApplicationUpdater value) {
             return value.getShortName();
           }
 
@@ -120,7 +123,7 @@ public class UpdateRunningApplicationAction extends AnAction {
           }
 
           @Override
-          public PopupStep onChosen(final RunningApplicationUpdater selectedValue, boolean finalChoice) {
+          public PopupStep<?> onChosen(final RunningApplicationUpdater selectedValue, boolean finalChoice) {
             return doFinalStep(() -> selectedValue.performUpdate(e));
           }
         });

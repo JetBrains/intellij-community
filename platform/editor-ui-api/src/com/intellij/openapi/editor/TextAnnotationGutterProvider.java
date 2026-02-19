@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ public interface TextAnnotationGutterProvider {
    */
   @Nullable String getLineText(int line, Editor editor);
 
-  @Nullable String getToolTip(int line, Editor editor);
+  @Nullable @NlsContexts.Tooltip String getToolTip(int line, Editor editor);
 
   EditorFontType getStyle(int line, Editor editor);
 
@@ -59,5 +60,13 @@ public interface TextAnnotationGutterProvider {
    */
   default boolean useMargin() {
     return true;
+  }
+
+  default int getLeftMargin() {
+    return -1;
+  }
+
+  interface Filler extends TextAnnotationGutterProvider {
+    int getWidth();
   }
 }

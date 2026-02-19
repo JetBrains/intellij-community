@@ -1,25 +1,52 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.openapi.components.*
+import com.intellij.execution.wsl.WslPath
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelResult.Error
+import com.intellij.platform.eel.EelResult.Ok
+import com.intellij.platform.eel.fs.EelFileInfo
+import com.intellij.platform.eel.fs.stat
+import com.intellij.platform.eel.isMac
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.util.PathUtil
+import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Property
-import java.io.File
+import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
+import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
+import java.nio.file.Files
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
+@Service(Service.Level.PROJECT)
 @State(name = "TerminalProjectNonSharedOptionsProvider", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
 
   private val state = State()
 
-  override fun getState(): State? {
+  override fun getState(): State {
     return state
   }
 
@@ -41,96 +68,151 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     var startingDirectory: String? = null
     var shellPath: String? = null
     @get:Property(surroundWithTag = false, flat = true)
-    var envDataOptions = EnvironmentVariablesDataOptions()
+    var envDataOptions: EnvironmentVariablesDataOptions = EnvironmentVariablesDataOptions()
   }
 
   var startingDirectory: String? by ValueWithDefault(state::startingDirectory) { defaultStartingDirectory }
 
   val defaultStartingDirectory: String?
     get() {
-      var directory: String? = null
-      for (customizer in LocalTerminalCustomizer.EP_NAME.extensions) {
+      for (customizer in ShellExecOptionsCustomizer.EP_NAME.extensionList) {
         try {
-          directory = customizer.getDefaultFolder(project)
+          val dir = customizer.getDefaultStartWorkingDirectory(project)
+          if (dir != null) {
+            return dir.toString()
+          }
+        }
+        catch (e: Throwable) {
+          rethrowControlFlowException(e)
+          LOG.error(PluginException.createByClass(
+            "Exception during getting start directory by ${customizer::class.java}",
+            e,
+            customizer::class.java
+          ))
+        }
+      }
+      @Suppress("DEPRECATION")
+      for (customizer in LocalTerminalCustomizer.EP_NAME.extensionList) {
+        try {
+          val directory = customizer.getDefaultFolder(project)
           if (directory != null) {
-            break
+            return PathUtil.toSystemDependentName(directory)
           }
         }
         catch (e: Exception) {
           LOG.error("Exception during getting default folder", e)
         }
       }
-      if (directory == null) {
-        directory = getDefaultWorkingDirectory()
-      }
-      return if (directory != null) FileUtil.toSystemDependentName(directory) else null
+      return PathUtil.toSystemDependentName(getDefaultWorkingDirectory())
     }
 
   private fun getDefaultWorkingDirectory(): String? {
-    val roots = ProjectRootManager.getInstance(project).contentRoots
-    @Suppress("DEPRECATION")
-    val dir = if (roots.size == 1 && roots[0] != null && roots[0].isDirectory) roots[0] else project.baseDir
-    return dir?.canonicalPath
+    return project.guessProjectDir()?.canonicalPath
   }
 
   var shellPath: String
     get() {
-      val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
-      val shellPath = if (isProjectLevelShellPath(workingDirectoryLazy::value)) {
-        state.shellPath
+      return runBlockingMaybeCancellable {
+        shellPathWithoutDefault ?: defaultShellPath()
       }
-      else {
-        TerminalOptionsProvider.instance.shellPath
-      }
-      if (shellPath.isNullOrBlank()) {
-        return findDefaultShellPath(workingDirectoryLazy::value)
-      }
-      return shellPath
     }
     set(value) {
-      val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
-      val valueToStore = Strings.nullize(value, findDefaultShellPath(workingDirectoryLazy::value))
-      if (isProjectLevelShellPath((workingDirectoryLazy::value))) {
+      return runBlockingMaybeCancellable {
+        shellPathWithoutDefault = Strings.nullize(value, defaultShellPath())
+      }
+    }
+
+  internal var shellPathWithoutDefault: String?
+    get() {
+      val workingDirectory = startingDirectory
+      val shellPath = when {
+        isProjectLevelShellPath(workingDirectory) && TrustedProjects.isProjectTrusted(project) -> state.shellPath
+        else -> TerminalLocalOptions.getInstance().shellPath
+      }
+      return shellPath.nullize(nullizeSpaces = true)
+    }
+    set(value) {
+      val valueToStore = value.nullize(nullizeSpaces = true)
+      val workingDirectory = startingDirectory
+      if (isProjectLevelShellPath(workingDirectory)) {
         state.shellPath = valueToStore
       }
       else {
-        TerminalOptionsProvider.instance.shellPath = valueToStore
+        TerminalLocalOptions.getInstance().shellPath = valueToStore
       }
     }
 
-  private fun isProjectLevelShellPath(workingDirectory: () -> String?): Boolean {
-    return SystemInfo.isWindows && findWslDistribution(workingDirectory()) != null
+  private fun isProjectLevelShellPath(workingDirectory: String?): Boolean {
+    val eelDescriptor = toEelDescriptor(workingDirectory)
+    return eelDescriptor !== LocalEelDescriptor
   }
 
-  fun defaultShellPath(): String = findDefaultShellPath { startingDirectory }
+  private fun toEelDescriptor(workingDirectory: String?): EelDescriptor {
+    val path = workingDirectory?.let {
+      NioFiles.toPath(it)
+    }
+    return path?.getEelDescriptor() ?: LocalEelDescriptor
+  }
 
-  private fun findDefaultShellPath(workingDirectory: () -> String?): String {
+  suspend fun defaultShellPath(): String = findDefaultShellPath { startingDirectory }
+
+  private suspend fun findDefaultShellPath(workingDirectory: () -> String?): String {
+    if (shouldUseEelApi()) {
+      return findDefaultShellPath(toEelDescriptor(workingDirectory()))
+    }
     if (SystemInfo.isWindows) {
-      val wslDistribution = findWslDistribution(workingDirectory())
-      if (wslDistribution != null) {
-        return "wsl.exe --distribution $wslDistribution"
+      val wslDistributionName = findWslDistributionName(workingDirectory())
+      if (wslDistributionName != null) {
+        return "wsl.exe --distribution $wslDistributionName"
       }
     }
-    val shell = System.getenv("SHELL")
-    if (shell != null && File(shell).canExecute()) {
-      return shell
+    val shell = System.getenv("SHELL")?.let { NioFiles.toPath(it) }
+    if (shell != null && Files.exists(shell)) {
+      return shell.toString()
     }
     if (SystemInfo.isUnix) {
-      val bashPath = "/bin/bash"
-      if (File(bashPath).exists()) {
-        return bashPath
+      val bashPath = NioFiles.toPath("/bin/bash")
+      if (bashPath != null && Files.exists(bashPath)) {
+        return bashPath.toString()
       }
       return "/bin/sh"
     }
-    return "cmd.exe"
+    return "powershell.exe"
   }
 
-  private fun findWslDistribution(directory: String?): String? {
-    if (directory == null) return null
-    val prefix = "\\\\wsl$\\"
-    if (!directory.startsWith(prefix)) return null
-    val endInd = directory.indexOf('\\', prefix.length)
-    return if (endInd >= 0) directory.substring(prefix.length, endInd) else null
+  private fun findWslDistributionName(directory: String?): String? {
+    return if (directory == null) null else WslPath.parseWindowsUncPath(directory)?.distributionId
+  }
+
+  private suspend fun findDefaultShellPath(eelDescriptor: EelDescriptor): String {
+    if (eelDescriptor.osFamily.isWindows) {
+      return "powershell.exe"
+    }
+    val eelApi = eelDescriptor.toEelApi()
+    val envs = eelApi.fetchMinimalEnvironmentVariables()
+    val candidates = listOfNotNull(
+      envs["SHELL"],
+      "/bin/zsh".takeIf { eelApi.platform.isMac },
+      "/bin/bash"
+    ).distinct()
+    return candidates.firstOrNull { isFile(it, eelApi) } ?: "/bin/sh"
+  }
+
+  /**
+   * Tests whether a file is a regular file, symlinks are followed.
+   * Similar to `Files.isRegularFile(Path.of(absoluteFilePath))`.
+   */
+  private suspend fun isFile(absoluteFilePath: String, eelApi: EelApi): Boolean {
+    val path = try {
+      EelPath.parse(absoluteFilePath, eelApi.descriptor)
+    }
+    catch (_: EelPathException) {
+      return false
+    }
+    return when (val result = eelApi.fs.stat(path).resolveAndFollow().eelIt()) {
+      is Ok -> result.value.type is EelFileInfo.Type.Regular
+      is Error -> false
+    }
   }
 
   companion object {
@@ -138,15 +220,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
-      val provider = project.getService(TerminalProjectOptionsProvider::class.java)
-      val oldState = project.getService(TerminalProjectOptionsProviderOld::class.java).getAndClear()
-      if (oldState != null &&
-          provider.state.startingDirectory == null &&
-          provider.state.envDataOptions.get() == EnvironmentVariablesData.DEFAULT) {
-        provider.state.startingDirectory = oldState.myStartingDirectory
-        provider.state.envDataOptions.set(oldState.envDataOptions.get())
-      }
-      return provider
+      return project.getService(TerminalProjectOptionsProvider::class.java)
     }
   }
 

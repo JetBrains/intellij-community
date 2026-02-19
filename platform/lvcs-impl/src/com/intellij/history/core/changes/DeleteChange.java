@@ -17,8 +17,8 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 
@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeleteChange extends StructuralChange {
+public final class DeleteChange extends StructuralChange {
   private final Entry myDeletedEntry;
 
   public DeleteChange(long id, String path, Entry deletedEntry) {
@@ -38,13 +38,13 @@ public class DeleteChange extends StructuralChange {
 
   public DeleteChange(DataInput in) throws IOException {
     super(in);
-    myDeletedEntry = StreamUtil.readEntry(in);
+    myDeletedEntry = DataStreamUtil.readEntry(in);
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
     super.write(out);
-    StreamUtil.writeEntry(out, myDeletedEntry);
+    DataStreamUtil.writeEntry(out, myDeletedEntry);
   }
 
   public Entry getDeletedEntry() {
@@ -75,7 +75,7 @@ public class DeleteChange extends StructuralChange {
     return result;
   }
 
-  private void collectContentsRecursively(Entry e, List<? super Content> result) {
+  private static void collectContentsRecursively(Entry e, List<? super Content> result) {
     if (e.isDirectory()) {
       for (Entry child : e.getChildren()) {
         collectContentsRecursively(child, result);

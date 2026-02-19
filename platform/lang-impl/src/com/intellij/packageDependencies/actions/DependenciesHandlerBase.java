@@ -1,48 +1,37 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesToolWindow;
+import com.intellij.packageDependencies.DependencyAnalysisResult;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public abstract class DependenciesHandlerBase {
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   private final List<? extends AnalysisScope> myScopes;
   private final Set<PsiFile> myExcluded;
 
@@ -53,44 +42,32 @@ public abstract class DependenciesHandlerBase {
   }
 
   public void analyze() {
-    final List<DependenciesBuilder> builders = new ArrayList<>();
+    final DependencyAnalysisResult result = createAnalysisResult();
 
-    final Task task;
-    if (canStartInBackground()) {
-      task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
-        @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
-          indicator.setIndeterminate(false);
-          perform(builders, indicator);
-        }
+    final Task task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
+      @Override
+      public void run(final @NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        perform(result, indicator);
+      }
 
-        @Override
-        public void onSuccess() {
-          DependenciesHandlerBase.this.onSuccess(builders);
-        }
-      };
-    } else {
-      task = new Task.Modal(myProject, getProgressTitle(), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(false);
-          perform(builders, indicator);
-        }
-
-        @Override
-        public void onSuccess() {
-          DependenciesHandlerBase.this.onSuccess(builders);
-        }
-      };
-    }
+      @Override
+      public void onSuccess() {
+        DependenciesHandlerBase.this.onSuccess(result);
+      }
+    }.toModalIfNeeded(!canStartInBackground());
     ProgressManager.getInstance().run(task);
+  }
+
+  protected @NotNull DependencyAnalysisResult createAnalysisResult() {
+    return new DependencyAnalysisResult();
   }
 
   protected boolean canStartInBackground() {
     return true;
   }
 
-  protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
+  protected boolean shouldShowDependenciesPanel(@NotNull DependencyAnalysisResult result) {
     return true;
   }
 
@@ -100,31 +77,36 @@ public abstract class DependenciesHandlerBase {
 
   protected abstract DependenciesBuilder createDependenciesBuilder(AnalysisScope scope);
 
-  private void perform(List<DependenciesBuilder> builders, @NotNull ProgressIndicator indicator) {
+  private void perform(DependencyAnalysisResult result, @NotNull ProgressIndicator indicator) {
     try {
       PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
       for (AnalysisScope scope : myScopes) {
-        builders.add(createDependenciesBuilder(scope));
+        result.addBuilder(createDependenciesBuilder(scope));
       }
-      for (DependenciesBuilder builder : builders) {
+      for (DependenciesBuilder builder : result.getBuilders()) {
         builder.analyze();
       }
+      bgtPostAnalyze(result);
       snapshot.logResponsivenessSinceCreation("Dependency analysis");
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(myProject).showDumbModeNotification(
-        CodeInsightBundle.message("analyze.dependencies.not.available.notification.indexing"));
+      DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("analyze.dependencies.not.available.notification.indexing"), DumbModeBlockedFunctionality.PackageDependencies);
       throw new ProcessCanceledException();
     }
   }
 
-  private void onSuccess(final List<DependenciesBuilder> builders) {
+  protected void bgtPostAnalyze(DependencyAnalysisResult result) {
+    result.panelDisplayName = ReadAction.compute(() -> getPanelDisplayName(result.getBuilders().get(0).getScope()));
+  }
+
+  private void onSuccess(final DependencyAnalysisResult result) {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      if (shouldShowDependenciesPanel(builders)) {
-        final String displayName = getPanelDisplayName(builders);
-        DependenciesPanel panel = new DependenciesPanel(myProject, builders, myExcluded);
-        Content content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, false);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (shouldShowDependenciesPanel(result)) {
+        final String displayName = result.getPanelDisplayName();
+        DependenciesPanel panel = new DependenciesPanel(myProject, result.getBuilders(), myExcluded);
+        Content content = ContentFactory.getInstance().createContent(panel, displayName, false);
         content.setDisposer(panel);
         panel.setContent(content);
         DependenciesToolWindow.getInstance(myProject).addContent(content);
@@ -132,7 +114,4 @@ public abstract class DependenciesHandlerBase {
     });
   }
 
-  protected @NlsContexts.TabTitle String getPanelDisplayName(List<? extends DependenciesBuilder> builders) {
-    return getPanelDisplayName(builders.get(0).getScope());
-  }
 }

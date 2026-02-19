@@ -1,0 +1,15 @@
+// COMPILER_ARGUMENTS: -Xnon-local-break-continue
+
+fun main() {
+    while (true) {
+        for (i in 1..10) {
+            break
+        }
+    }
+
+    while (true) {
+        for (i in 1..10) {
+            continue
+        }
+    }
+}

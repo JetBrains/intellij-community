@@ -1,18 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.ArtifactId;
+import com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.ComplexPackagingElement;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.util.xmlb.annotations.Attribute;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +35,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   private static final Logger LOG = Logger.getInstance(ArtifactPackagingElement.class);
   private final Project myProject;
   private ArtifactPointer myArtifactPointer;
-  @NonNls public static final String ARTIFACT_NAME_ATTRIBUTE = "artifact-name";
+  public static final @NonNls String ARTIFACT_NAME_ATTRIBUTE = "artifact-name";
 
   public ArtifactPackagingElement(@NotNull Project project) {
     super(ArtifactElementType.ARTIFACT_ELEMENT_TYPE);
@@ -60,8 +71,7 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
   }
 
   @Override
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ArtifactElementPresentation(myArtifactPointer, context));
   }
 
@@ -91,16 +101,35 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
            && myArtifactPointer.equals(((ArtifactPackagingElement)element).myArtifactPointer);
   }
 
-  @Nullable
-  public Artifact findArtifact(@NotNull PackagingElementResolvingContext context) {
+  public @Nullable Artifact findArtifact(@NotNull PackagingElementResolvingContext context) {
     return myArtifactPointer != null ? myArtifactPointer.findArtifact(context.getArtifactModel()) : null;
   }
 
-  @Nullable
-  public String getArtifactName() {
+  public @Nullable String getArtifactName() {
     return myArtifactPointer != null ? myArtifactPointer.getArtifactName() : null;
   }
 
+  @Override
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
+
+    ArtifactId id;
+    if (this.myArtifactPointer != null) {
+      id = new ArtifactId(this.myArtifactPointer.getArtifactName());
+    }
+    else {
+      id = null;
+    }
+    ArtifactOutputPackagingElementEntity entity = diff.addEntity(ArtifactOutputPackagingElementEntity.create(source, entityBuilder -> {
+      entityBuilder.setArtifact(id);
+      return Unit.INSTANCE;
+    }));
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
+    return getBuilder(diff, entity);
+  }
 
   public static class ArtifactPackagingElementState {
     private String myArtifactName;

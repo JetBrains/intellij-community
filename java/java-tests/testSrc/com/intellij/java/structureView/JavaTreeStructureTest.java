@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.structureView;
 
 import com.intellij.JavaTestUtil;
@@ -15,7 +15,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 
-import javax.swing.*;
+import javax.swing.JTree;
 
 public class JavaTreeStructureTest extends TestSourceBasedTestCase {
   @Override
@@ -24,158 +24,164 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
   }
 
   public void testJavaClassStructure() {
-    doTest(new CheckAction() {
-      @Override
-      public void testClassStructure(StructureViewComponent svc) {
-        svc.setActionActive(InheritedMembersNodeProvider.ID, true);
+    doTest(svc -> {
+      svc.setActionActive(InheritedMembersNodeProvider.ID, true);
 
-        PlatformTestUtil.assertTreeEqual(
-          svc.getTree(),
-          "-Class1.java\n" +
-          " -Class1\n" +
-          "  getValue(): int\n" +
-          "  getClass(): Class<?>\n" +
-          "  hashCode(): int\n" +
-          "  equals(Object): boolean\n" +
-          "  clone(): Object\n" +
-          "  toString(): String\n" +
-          "  notify(): void\n" +
-          "  notifyAll(): void\n" +
-          "  wait(long): void\n" +
-          "  wait(long, int): void\n" +
-          "  wait(): void\n" +
-          "  finalize(): void\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n");
+      PlatformTestUtil.assertTreeEqual(
+        svc.getTree(),
+        """
+          -Class1.java
+           -Class1
+            myField1: boolean
+            myField2: boolean
+            getValue(): int
+            getClass(): Class<?>
+            hashCode(): int
+            equals(Object): boolean
+            clone(): Object
+            toString(): String
+            notify(): void
+            notifyAll(): void
+            wait(long): void
+            wait(long, int): void
+            wait(): void
+            finalize(): void
+          """);
 
-        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
-        svc.setActionActive(InheritedMembersNodeProvider.ID, true);
-        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
+      svc.setActionActive(InheritedMembersNodeProvider.ID, false);
+      svc.setActionActive(InheritedMembersNodeProvider.ID, true);
+      svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
 
-        PlatformTestUtil.assertTreeEqual(
-          svc.getTree(),
-          "-Class1.java\n" +
-          " -Class1\n" +
-          "  getValue(): int\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n");
+      PlatformTestUtil.assertTreeEqual(
+        svc.getTree(),
+        """
+          -Class1.java
+           -Class1
+            myField1: boolean
+            myField2: boolean
+            getValue(): int
+          """);
 
-        svc.setActionActive(PublicElementsFilter.ID, true);
+      svc.setActionActive(PublicElementsFilter.ID, true);
 
-        PlatformTestUtil.assertTreeEqual(
-          svc.getTree(),
-          "-Class1.java\n" +
-          " -Class1\n" +
-          "  getValue(): int\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n");
+      PlatformTestUtil.assertTreeEqual(
+        svc.getTree(),
+        """
+          -Class1.java
+           -Class1
+            myField1: boolean
+            myField2: boolean
+            getValue(): int
+          """);
 
-        svc.setActionActive(PublicElementsFilter.ID, false);
+      svc.setActionActive(PublicElementsFilter.ID, false);
 
-        PlatformTestUtil.assertTreeEqual(
-          svc.getTree(),
-          "-Class1.java\n" +
-          " -Class1\n" +
-          "  getValue(): int\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n");
-      }
+      PlatformTestUtil.assertTreeEqual(
+        svc.getTree(),
+        """
+          -Class1.java
+           -Class1
+            myField1: boolean
+            myField2: boolean
+            getValue(): int
+          """);
     });
   }
 
   public void testShowClassMembers() {
-    doTest(new CheckAction() {
-      @Override
-      public void testClassStructure(StructureViewComponent svc) {
-        svc.setActionActive(InheritedMembersNodeProvider.ID, true);
+    doTest(svc -> {
+      svc.setActionActive(InheritedMembersNodeProvider.ID, true);
 
-        JTree tree = svc.getTree();
-        tree.collapseRow(2);
-        PlatformTestUtil.assertTreeEqual(
-          tree,
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  +InnerClass1\n" +
-          "  +InnerClass2\n" +
-          "  getValue(): int\n" +
-          "  getClass(): Class<?>\n" +
-          "  hashCode(): int\n" +
-          "  equals(Object): boolean\n" +
-          "  clone(): Object\n" +
-          "  toString(): String\n" +
-          "  notify(): void\n" +
-          "  notifyAll(): void\n" +
-          "  wait(long): void\n" +
-          "  wait(long, int): void\n" +
-          "  wait(): void\n" +
-          "  finalize(): void\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n" +
-          "  myField3: boolean\n" +
-          "  myField4: boolean\n");
+      JTree tree = svc.getTree();
+      tree.collapseRow(2);
+      PlatformTestUtil.assertTreeEqual(
+        tree,
+        """
+          -Class2.java
+           -Class2
+            myField1: boolean
+            myField2: boolean
+            myField3: boolean
+            myField4: boolean
+            getValue(): int
+            +InnerClass1
+            +InnerClass2
+            getClass(): Class<?>
+            hashCode(): int
+            equals(Object): boolean
+            clone(): Object
+            toString(): String
+            notify(): void
+            notifyAll(): void
+            wait(long): void
+            wait(long, int): void
+            wait(): void
+            finalize(): void
+          """);
 
-        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
+      svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
-        PlatformTestUtil.assertTreeEqual(
-          svc.getTree(),
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  +InnerClass1\n" +
-          "  +InnerClass2\n" +
-          "  getValue(): int\n" +
-          "  myField1: boolean\n" +
-          "  myField2: boolean\n" +
-          "  myField3: boolean\n" +
-          "  myField4: boolean\n");
-      }
+      PlatformTestUtil.assertTreeEqual(
+        svc.getTree(),
+        """
+          -Class2.java
+           -Class2
+            myField1: boolean
+            myField2: boolean
+            myField3: boolean
+            myField4: boolean
+            getValue(): int
+            +InnerClass1
+            +InnerClass2
+          """);
     });
   }
 
   public void testVisibilitySorter() {
-    doTest(new CheckAction() {
-      @Override
-      public void testClassStructure(StructureViewComponent svc) {
-        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
+    doTest(svc -> {
+      svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
-        PlatformTestUtil.assertTreeEqual(
-          svc.getTree(),
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  __myPrivateFiield: int\n" +
-          "  _myProtectedField: int\n" +
-          "  myPublicField: int\n");
+      PlatformTestUtil.assertTreeEqual(
+        svc.getTree(),
+        """
+          -Class2.java
+           -Class2
+            __myPrivateFiield: int
+            _myProtectedField: int
+            myPublicField: int
+          """);
 
-        svc.setActionActive(VisibilitySorter.ID, true);
+      svc.setActionActive(VisibilitySorter.ID, true);
 
-        PlatformTestUtil.assertTreeEqual(
-          svc.getTree(),
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  myPublicField: int\n" +
-          "  _myProtectedField: int\n" +
-          "  __myPrivateFiield: int\n");
-      }
+      PlatformTestUtil.assertTreeEqual(
+        svc.getTree(),
+        """
+          -Class2.java
+           -Class2
+            myPublicField: int
+            _myProtectedField: int
+            __myPrivateFiield: int
+          """);
     });
   }
 
   public void testMembersOrder() {
-    doTest(new CheckAction() {
-      @Override
-      public void testClassStructure(StructureViewComponent svc) {
-        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
+    doTest(svc -> {
+      svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
-        PlatformTestUtil.assertTreeEqual(
-          svc.getTree(),
-          "-Class2.java\n" +
-          " -Class2\n" +
-          "  Class2()\n" +
-          "  af(): void\n" +
-          "  zf(): void\n" +
-          "  ab: int\n" +
-          "  z: int\n"
-        );
-      }
+      PlatformTestUtil.assertTreeEqual(
+        svc.getTree(),
+        """
+          -Class2.java
+           -Class2
+            ab: int
+            z: int
+            af(): void
+            zf(): void
+            Class2()
+          """
+      );
     });
   }
 

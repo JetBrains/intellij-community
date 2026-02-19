@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messager;
 
 
@@ -11,9 +11,35 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.paint.LinePainter2D;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+import java.awt.AWTEvent;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.AWTEventListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.event.WindowStateListener;
 import java.awt.geom.Line2D;
 
 /**
@@ -35,7 +61,7 @@ public class CalloutComponent {
 
   protected JComponent myTargetComponent;
   protected Window myTargetWindow;
-  protected Pointer myPointerComponent;
+  private Pointer myPointerComponent;
   private final KeyboardFocusManager myKeyboardFocusManager;
 
   public CalloutComponent(JComponent component) {
@@ -48,7 +74,7 @@ public class CalloutComponent {
     myFrame = new JDialog();
     myFrame.setUndecorated(true);
     myFrame.setFocusable(false);
-    myFrame.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+    myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     myFrame.setFocusableWindowState(false);
 
     myFrame.getContentPane().setLayout(new BorderLayout());
@@ -63,22 +89,22 @@ public class CalloutComponent {
     Point framePoint = new Point();
 
     switch (location) {
-      case Callout.NORTH_WEST:
+      case Callout.NORTH_WEST -> {
         framePoint.x = targetScreenPoint.x - frameSize.width - getPointerShift();
         framePoint.y = targetScreenPoint.y - frameSize.height - getPointerShift();
-        break;
-      case Callout.NORTH_EAST:
+      }
+      case Callout.NORTH_EAST -> {
         framePoint.x = targetScreenPoint.x + getPointerShift();
         framePoint.y = targetScreenPoint.y - frameSize.height - getPointerShift();
-        break;
-      case Callout.SOUTH_EAST:
+      }
+      case Callout.SOUTH_EAST -> {
         framePoint.x = targetScreenPoint.x + getPointerShift();
         framePoint.y = targetScreenPoint.y + getPointerShift();
-        break;
-      case Callout.SOUTH_WEST:
+      }
+      case Callout.SOUTH_WEST -> {
         framePoint.x = targetScreenPoint.x - frameSize.width - getPointerShift();
         framePoint.y = targetScreenPoint.y + getPointerShift();
-        break;
+      }
     }
 
     myPointerComponent = new Pointer(location);
@@ -98,38 +124,38 @@ public class CalloutComponent {
       boolean y = outside[1];
 
       switch (location) {
-        case Callout.NORTH_WEST:
+        case Callout.NORTH_WEST -> {
           if (x) {
             frameBounds.x = layeredBounds.x - frameBounds.width;
           }
           if (y) {
             frameBounds.y = layeredBounds.y - frameBounds.height;
           }
-          break;
-        case Callout.NORTH_EAST:
-          if (x) {
-            frameBounds.x = (int) layeredBounds.getMaxX();
-          }
-          if (y) {
-            frameBounds.y = layeredBounds.y - frameBounds.height;
-          }
-          break;
-        case Callout.SOUTH_EAST:
+        }
+        case Callout.NORTH_EAST -> {
           if (x) {
             frameBounds.x = (int)layeredBounds.getMaxX();
           }
           if (y) {
-            frameBounds.y = (int) layeredBounds.getMaxY();
+            frameBounds.y = layeredBounds.y - frameBounds.height;
           }
-          break;
-        case Callout.SOUTH_WEST:
+        }
+        case Callout.SOUTH_EAST -> {
+          if (x) {
+            frameBounds.x = (int)layeredBounds.getMaxX();
+          }
+          if (y) {
+            frameBounds.y = (int)layeredBounds.getMaxY();
+          }
+        }
+        case Callout.SOUTH_WEST -> {
           if (x) {
             frameBounds.x = layeredBounds.x - frameBounds.width;
           }
           if (y) {
-            frameBounds.y = (int) layeredBounds.getMaxY();
+            frameBounds.y = (int)layeredBounds.getMaxY();
           }
-          break;
+        }
       }
     }
 
@@ -140,30 +166,30 @@ public class CalloutComponent {
     Rectangle pointerBounds = new Rectangle();
     final int extraPoint = 1;
     switch (location) {
-      case Callout.NORTH_WEST:
-        pointerBounds.x = (int) frameLayeredBounds.getMaxX() - extraPoint;
-        pointerBounds.y = (int) frameLayeredBounds.getMaxY() - extraPoint;
+      case Callout.NORTH_WEST -> {
+        pointerBounds.x = (int)frameLayeredBounds.getMaxX() - extraPoint;
+        pointerBounds.y = (int)frameLayeredBounds.getMaxY() - extraPoint;
         pointerBounds.width = targetLayeredPoint.x - pointerBounds.x;
         pointerBounds.height = targetLayeredPoint.y - pointerBounds.y;
-        break;
-      case Callout.NORTH_EAST:
+      }
+      case Callout.NORTH_EAST -> {
         pointerBounds.x = targetLayeredPoint.x;
-        pointerBounds.y = (int) frameLayeredBounds.getMaxY() - extraPoint;
+        pointerBounds.y = (int)frameLayeredBounds.getMaxY() - extraPoint;
         pointerBounds.width = frameLayeredBounds.x + extraPoint - targetLayeredPoint.x;
         pointerBounds.height = targetLayeredPoint.y - pointerBounds.y;
-        break;
-      case Callout.SOUTH_EAST:
+      }
+      case Callout.SOUTH_EAST -> {
         pointerBounds.x = targetLayeredPoint.x;
         pointerBounds.y = targetLayeredPoint.y;
         pointerBounds.width = frameLayeredBounds.x + extraPoint - targetLayeredPoint.x;
         pointerBounds.height = (int)frameLayeredBounds.getMaxY() + extraPoint - targetLayeredPoint.y - frameLayeredBounds.height;
-        break;
-      case Callout.SOUTH_WEST:
-        pointerBounds.x = (int) frameLayeredBounds.getMaxX() - extraPoint;
+      }
+      case Callout.SOUTH_WEST -> {
+        pointerBounds.x = (int)frameLayeredBounds.getMaxX() - extraPoint;
         pointerBounds.y = targetLayeredPoint.y;
         pointerBounds.width = targetLayeredPoint.x - pointerBounds.x;
         pointerBounds.height = frameLayeredBounds.y + extraPoint - targetLayeredPoint.y;
-        break;
+      }
     }
 
     layered.add(myPointerComponent, JLayeredPane.POPUP_LAYER);
@@ -353,18 +379,10 @@ public class CalloutComponent {
 
       Line2D line = new Line2D.Double();
       switch (myOrientation) {
-        case Callout.NORTH_WEST:
-          line.setLine(0, 0, getWidth() - 1, getHeight() - 1);
-          break;
-        case Callout.NORTH_EAST:
-          line.setLine(getWidth() - 1, 0, 0, getHeight() -1);
-          break;
-        case Callout.SOUTH_EAST:
-          line.setLine(getWidth() - 1, getHeight() - 1, 0, 0);
-          break;
-        case Callout.SOUTH_WEST:
-          line.setLine(0, getHeight() - 1, getWidth() - 1, 0);
-          break;
+        case Callout.NORTH_WEST -> line.setLine(0, 0, getWidth() - 1, getHeight() - 1);
+        case Callout.NORTH_EAST -> line.setLine(getWidth() - 1, 0, 0, getHeight() - 1);
+        case Callout.SOUTH_EAST -> line.setLine(getWidth() - 1, getHeight() - 1, 0, 0);
+        case Callout.SOUTH_WEST -> line.setLine(0, getHeight() - 1, getWidth() - 1, 0);
       }
 
       LinePainter2D.paint(g2, (int)line.getX1(), (int)line.getY1(), (int)line.getX2(), (int)line.getY2());

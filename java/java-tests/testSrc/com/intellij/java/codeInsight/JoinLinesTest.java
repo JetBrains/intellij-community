@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -21,10 +7,8 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,11 +37,15 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testDeclarationAndCall() { doTest(); }
   public void testDeclarationAndCallSelfRef() { doTest(); }
   public void testAssignmentAndCall() { doTest(); }
+  public void testLambdaExpression() { doTest(); }
+  public void testSwitchLabeledRule() { doTest(); }
 
   public void testDeclarationAndReassignmentWithCall() { doTest(); }
   public void testAssignmentAndReassignmentWithCall() { doTest(); }
 
   public void testIfChain() { doTest(); }
+  public void testIfChainIncomplete() { doTest(); }
+  public void testIfChainCorrectIndent() { doTest(); }
   public void testIfChainPolyadic() { doTest(); }
   public void testIfChainNoBraces() { doTest(); }
   public void testIfChainElse() { doTest(); }
@@ -154,6 +142,8 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testLocalVarImplicit() { doTest(); }
 
   public void testSlashComment() { doTest(); }
+  public void testSlashCommentFollowedByBlockComment() { doTest(); }
+  public void testSlashCommentFollowedByBlockCommentAndCode() { doTest(); }
   public void testDocComment() { doTest(); }
 
   public void testOnEmptyLine() { doTest(); }
@@ -180,21 +170,24 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
 
   public void testUnwrapCodeBlock2() {
     CommonCodeStyleSettings settings = getJavaSettings();
-    boolean use_tab_character = settings.getIndentOptions().USE_TAB_CHARACTER;
-    boolean smart_tabs = settings.getIndentOptions().SMART_TABS;
-    int old = settings.IF_BRACE_FORCE;
-    try {
-      settings.getIndentOptions().USE_TAB_CHARACTER = true;
-      settings.getIndentOptions().SMART_TABS = true;
-      settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
-      doTest();
-    } finally {
-      settings.getIndentOptions().USE_TAB_CHARACTER = use_tab_character;
-      settings.getIndentOptions().SMART_TABS = smart_tabs;
-      settings.IF_BRACE_FORCE = old;
-    }
+    settings.getIndentOptions().USE_TAB_CHARACTER = true;
+    settings.getIndentOptions().SMART_TABS = true;
+    settings.SPACE_WITHIN_BRACES = true;
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    doTest();
+  }
+  
+  public void testUnwrapCodeBlockIfElse() {
+    getJavaSettings().SPACE_WITHIN_BRACES = true;
+    doTest();
   }
 
+  public void testUnwrapCodeBlockIfElse2() {
+    getJavaSettings().SPACE_WITHIN_BRACES = true;
+    doTest();
+  }
+
+  public void testIfBlockWithComment() { doTest(); }
   public void testAssignmentExpression() { doTest(); }
   public void testAssignmentExpression2() { doTest(); }
   public void testAssignmentExpressionPrecedence() { doTest(); }
@@ -202,17 +195,12 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
 
   public void testReformatInsertsNewlines() {
     CommonCodeStyleSettings settings = getJavaSettings();
-    final Element root = new Element("fake");
-    settings.writeExternal(root);
-    try {
-      settings.getIndentOptions().USE_TAB_CHARACTER = true;
-      settings.getIndentOptions().SMART_TABS = true;
-      settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
-      settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
-      doTest();
-    } finally {
-      settings.readExternal(root);
-    }
+    settings.getIndentOptions().USE_TAB_CHARACTER = true;
+    settings.getIndentOptions().SMART_TABS = true;
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    settings.SPACE_WITHIN_BRACES = true;
+    doTest();
   }
   
   public void testForceBrace() {
@@ -239,6 +227,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
     CommonCodeStyleSettings settings = getJavaSettings();
     settings.RIGHT_MARGIN = 50;
     settings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    settings.SPACE_WITHIN_BRACES = true;
     doTest(2);
   }
   
@@ -279,6 +268,46 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testJoinLocals1() {doTest();}
+  public void testJoinLocals2() {doTest();}
+  public void testJoinLocals3() {doTest();}
+  public void testJoinLocals4() {doTest();}
+  public void testJoinLocals5() {doTest();}
+  public void testJoinLocals6() {doTest();}
+  public void testJoinFields1() {doTest();}
+  public void testJoinFields2() {doTest(3);}
+  public void testJoinFields3() {doTest();}
+
+  public void testCaseLabels() {doTest();}
+  public void testCaseLabels2() {
+    CommonCodeStyleSettings settings = getJavaSettings();
+    settings.SPACE_AFTER_COMMA = false;
+    doTest();
+  }
+  public void testCaseLabels3() {doTest();}
+  
+  public void testJoinTextBlock() {doTest();}
+  public void testJoinTextBlockAtStartLine() {doTest();}
+  public void testJoinTextBlockAtStartLineNonEmpty() {doTest();}
+  public void testJoinTextBlockAtStartLineFinalStep() {doTest();}
+  public void testJoinTextBlockAtStartLineComplete() {doTest();}
+  public void testJoinTextBlockAtStartLineComplete2() {doTest();}
+  public void testJoinTextBlockAtStartLineCompleteWithEscapes() {doTest();}
+  public void testJoinTextBlockBackSlash() {doTest();}
+  public void testJoinTextBlockBackSlash2() {doTest();}
+  public void testJoinTextBlockBackDoubleSlash() {doTest();}
+  public void testJoinTextBlockBackTripleSlash() {doTest();}
+  public void testJoinTextBlockBackSlashEmptyLineAfter() {doTest();}
+  public void testJoinTextBlockBackSlashLastLine() {doTest();}
+  public void testJoinTextBlockSlashS() {doTest();}
+  public void testJoinTextBlockSlashSFake() {doTest();}
+  public void testJoinTextBlockSlashS2() {doTest();}
+  public void testJoinTextBlockSlashSComplete() {doTest();}
+  public void testJoinTextBlockSlashSAtTheEnd() {doTest();}
+  public void testJoinStringTemplateBackSlash() {doTest();}
+  public void testJoinStringTemplateBackSlash2() {doTest();}
+  public void testJoinOutsideOfTextBlock() { doTest(); }
+
   private void doTest() {
     doTest(".java");
   }
@@ -310,6 +339,6 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
 
   @NotNull
   private CommonCodeStyleSettings getJavaSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
   }
 }

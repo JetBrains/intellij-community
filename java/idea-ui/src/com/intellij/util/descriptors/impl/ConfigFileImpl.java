@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -34,14 +21,14 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 
-public class ConfigFileImpl extends SimpleModificationTracker implements ConfigFile {
-  @NotNull private ConfigFileInfo myInfo;
+public final class ConfigFileImpl extends SimpleModificationTracker implements ConfigFile {
+  private @NotNull ConfigFileInfo myInfo;
   private final VirtualFilePointer myFilePointer;
   private volatile Reference<PsiFile> myPsiFile;
   private final ConfigFileContainerImpl myContainer;
   private final Project myProject;
 
-  public ConfigFileImpl(@NotNull final ConfigFileContainerImpl container, @NotNull final ConfigFileInfo configuration) {
+  public ConfigFileImpl(final @NotNull ConfigFileContainerImpl container, final @NotNull ConfigFileInfo configuration) {
     myContainer = container;
     myInfo = configuration;
     final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
@@ -49,7 +36,7 @@ public class ConfigFileImpl extends SimpleModificationTracker implements ConfigF
       @Override
       public void validityChanged(final VirtualFilePointer @NotNull [] pointers) {
         myPsiFile = null;
-        onChange();
+        VfsThreadingUtil.runActionOnEdtRegardlessOfCurrentThread(ConfigFileImpl.this::onChange);
       }
     });
     onChange();
@@ -66,19 +53,17 @@ public class ConfigFileImpl extends SimpleModificationTracker implements ConfigF
     return myFilePointer.getUrl();
   }
 
-  public void setInfo(@NotNull final ConfigFileInfo info) {
+  public void setInfo(final @NotNull ConfigFileInfo info) {
     myInfo = info;
   }
 
   @Override
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return myFilePointer.isValid() ? myFilePointer.getFile() : null;
   }
 
   @Override
-  @Nullable
-  public PsiFile getPsiFile() {
+  public @Nullable PsiFile getPsiFile() {
     PsiFile psiFile = com.intellij.reference.SoftReference.dereference(myPsiFile);
 
     if (psiFile != null && psiFile.isValid()) {
@@ -96,8 +81,7 @@ public class ConfigFileImpl extends SimpleModificationTracker implements ConfigF
   }
 
   @Override
-  @Nullable
-  public XmlFile getXmlFile() {
+  public @Nullable XmlFile getXmlFile() {
     final PsiFile file = getPsiFile();
     return file instanceof XmlFile ? (XmlFile)file : null;
   }
@@ -107,8 +91,7 @@ public class ConfigFileImpl extends SimpleModificationTracker implements ConfigF
   }
 
   @Override
-  @NotNull
-  public ConfigFileInfo getInfo() {
+  public @NotNull ConfigFileInfo getInfo() {
     return myInfo;
   }
 
@@ -127,8 +110,7 @@ public class ConfigFileImpl extends SimpleModificationTracker implements ConfigF
 
 
   @Override
-  @NotNull
-  public ConfigFileMetaData getMetaData() {
+  public @NotNull ConfigFileMetaData getMetaData() {
     return myInfo.getMetaData();
   }
 }

@@ -1,0 +1,33 @@
+<component name="libraryTable">
+  <library name="kaml" type="repository">
+    <properties maven-id="com.charleskorn.kaml:kaml-jvm:0.99.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0.jar">
+          <sha256sum>bbb3901429952d8b0c5a11776262509142006d3e7e19001946c0393991dd7e10</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1.jar">
+          <sha256sum>e85b667e909e0b9eaee7ad0f0b36f47ba3a3a8824f1782718ec2f73d5f3ed741</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0.jar">
+          <sha256sum>8d0fd2aeb48d19dc49c563ebc00f274947e45f716c107535c12ead63decd688d</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="com.squareup.okio:okio-jvm" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0.99.0/kaml-jvm-0.99.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/3.2.1/snakeyaml-engine-kmp-jvm-3.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1.6.0/urlencoder-lib-jvm-1.6.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.python.community.impl.uv.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "common_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
+  module_name = "intellij.python.community.impl.uv.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":common_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//python/openapi:community",
+    "//python/common",
+    "//python/python-process-output:processOutput",
+  ]
+)
+
+jvm_library(
+  name = "common_test_lib",
+  module_name = "intellij.python.community.impl.uv.common",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":common",
+    "//platform/util:util_test_lib",
+    "//python/openapi:community_test_lib",
+    "//python/common:common_test_lib",
+    "//python/python-process-output:processOutput_test_lib",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl.uv.common` end

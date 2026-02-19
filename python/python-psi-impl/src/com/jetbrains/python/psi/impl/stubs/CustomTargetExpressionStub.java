@@ -18,10 +18,8 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public interface CustomTargetExpressionStub extends PyCustomStub<CustomTargetExpressionStubType> {
+
+public interface CustomTargetExpressionStub extends PyCustomStub {
 
   @Nullable
   QualifiedName getCalleeName();

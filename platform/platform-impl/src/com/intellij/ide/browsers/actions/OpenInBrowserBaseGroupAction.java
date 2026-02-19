@@ -1,56 +1,106 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.browsers.WebBrowserXmlService;
+import com.intellij.ide.trustedProjects.TrustedProjects;
+import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.ui.jcef.JBCefApp;
+import com.intellij.util.CachedValueImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup {
-  private OpenFileInDefaultBrowserAction myDefaultBrowserAction;
+public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implements DumbAware {
+  private CachedValue<AnAction[]> myChildren;
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
-    super(popup);
-
     Presentation p = getTemplatePresentation();
-    p.setText(IdeBundle.message("open.in.browser"));
-    p.setDescription(IdeBundle.message("open.selected.file.in.browser"));
-    p.setIcon(AllIcons.Nodes.PpWeb);
+    p.setPopupGroup(popup);
+    p.setHideGroupIfEmpty(true);
+    p.setText(IdeBundle.messagePointer("open.in.browser"));
+    p.setDescription(IdeBundle.messagePointer("open.selected.file.in.browser"));
+    p.setIconSupplier(() -> AllIcons.Nodes.PpWeb);
   }
 
-  @NotNull
   @Override
-  protected final CachedValueProvider<AnAction[]> createChildrenProvider(@NotNull final ActionManager actionManager) {
-    return () -> {
-      List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
-      boolean addDefaultBrowser = isPopup();
-      int offset = addDefaultBrowser ? 1 : 0;
-      AnAction[] actions = new AnAction[browsers.size() + offset];
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project != null && TrustedProjects.isProjectTrusted(project));
+  }
 
-      if (addDefaultBrowser) {
-        if (myDefaultBrowserAction == null) {
-          myDefaultBrowserAction = new OpenFileInDefaultBrowserAction();
-          myDefaultBrowserAction.getTemplatePresentation().setText(IdeBundle.message("default"));
-          myDefaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
-        }
-        actions[0] = myDefaultBrowserAction;
-      }
+  @Override
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    CachedValue<AnAction[]> children = myChildren;
+    if (children == null) {
+      children = new CachedValueImpl<>(() -> {
+        AnAction[] actions = computeChildren();
+        return CachedValueProvider.Result.create(actions, WebBrowserManager.getInstance());
+      });
+      myChildren = children;
+    }
+    return children.getValue();
+  }
 
-      for (int i = 0, size = browsers.size(); i < size; i++) {
-        actions[i + offset] = new BaseOpenInBrowserAction(browsers.get(i));
-      }
+  private AnAction @NotNull [] computeChildren() {
+    List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
+    boolean addDefaultBrowser = isPopup();
+    boolean hasLocalBrowser = hasLocalBrowser();
+    int offset = 0;
+    if (addDefaultBrowser) offset++;
+    if (hasLocalBrowser) offset++;
+    AnAction[] actions = new AnAction[browsers.size() + offset];
 
-      return CachedValueProvider.Result.create(actions, WebBrowserManager.getInstance());
-    };
+    if (hasLocalBrowser) {
+      actions[0] = new OpenHtmlInEmbeddedBrowserAction();
+    }
+
+    if (addDefaultBrowser) {
+      OpenFileInDefaultBrowserAction defaultBrowserAction = new OpenFileInDefaultBrowserAction();
+      defaultBrowserAction.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
+      defaultBrowserAction.getTemplatePresentation().setIconSupplier(() -> AllIcons.Nodes.PpWeb);
+      actions[hasLocalBrowser ? 1 : 0] = defaultBrowserAction;
+    }
+
+    for (int i = 0, size = browsers.size(); i < size; i++) {
+      actions[i + offset] = new BaseOpenInBrowserAction(browsers.get(i));
+    }
+    return actions;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  public static boolean hasLocalBrowser() {
+    return JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled", true);
   }
 
   public static final class OpenInBrowserGroupAction extends OpenInBrowserBaseGroupAction {
@@ -59,7 +109,35 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     }
   }
 
-  public static final class OpenInBrowserEditorContextBarGroupAction extends OpenInBrowserBaseGroupAction {
+  public static class OpenInBrowserFloatingToolbarProvider extends AbstractFloatingToolbarProvider {
+    private static final String ACTION_GROUP = "OpenInBrowserEditorContextBarGroup";
+
+    public OpenInBrowserFloatingToolbarProvider() {
+      super(ACTION_GROUP);
+    }
+
+    @Override
+    public boolean isApplicable(@NotNull DataContext dataContext) {
+      boolean suppressed = ContainerUtil.exists(
+        OpenInBrowserFloatingToolbarSuppressor.EP_NAME.getExtensionList(),
+        suppressor -> suppressor.isSuppressed(this, dataContext)
+      );
+
+      return !suppressed && super.isApplicable(dataContext);
+    }
+  }
+
+  public interface OpenInBrowserFloatingToolbarSuppressor {
+    /**
+     * Determines if the floating toolbar should be suppressed.
+     */
+    boolean isSuppressed(FloatingToolbarProvider provider, DataContext dataContext);
+
+    ExtensionPointName<OpenInBrowserFloatingToolbarSuppressor> EP_NAME =
+      ExtensionPointName.create("com.intellij.openInBrowserFloatingToolbarSuppressor");
+  }
+
+  public static class OpenInBrowserEditorContextBarGroupAction extends OpenInBrowserBaseGroupAction {
     public OpenInBrowserEditorContextBarGroupAction() {
       super(false);
     }
@@ -69,11 +147,21 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       final WebBrowserManager browserManager = WebBrowserManager.getInstance();
       PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-      boolean needShowOnHover = psiFile != null && WebBrowserXmlService.getInstance().isXmlLanguage(psiFile.getViewProvider().getBaseLanguage())
+      Language language = psiFile != null ? psiFile.getViewProvider().getBaseLanguage() : null;
+      if (language == null || language == Language.ANY || language == PlainTextLanguage.INSTANCE) {
+        VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+        if (virtualFile != null && virtualFile.getFileType() instanceof LanguageFileType fileType) {
+          language = fileType.getLanguage();
+        }
+      }
+
+      boolean needShowOnHover = language != null && WebBrowserXmlService.getInstance().isXmlLanguage(language)
               ? browserManager.isShowBrowserHoverXml()
               : browserManager.isShowBrowserHover();
-      e.getPresentation().setVisible(needShowOnHover && !browserManager.getActiveBrowsers().isEmpty() &&
-                                     editor != null && !DiffUtil.isDiffEditor(editor));
+      boolean enabled = needShowOnHover &&
+                        (!browserManager.getActiveBrowsers().isEmpty() || hasLocalBrowser())
+                        && editor != null && !DiffUtil.isDiffEditor(editor);
+      e.getPresentation().setEnabledAndVisible(enabled);
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
@@ -38,16 +38,23 @@ import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import com.intellij.ui.BadgeIconSupplier;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
-import icons.RemoteServersIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author michael.golubev
@@ -86,14 +93,12 @@ public final class ServersTreeStructure {
       myNodeProducer = nodeProducer;
     }
 
-    @NotNull
-    public RemoteServer<?> getServer() {
+    public @NotNull RemoteServer<?> getServer() {
       return getValue();
     }
 
-    @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode<?>> getChildren() {
+    public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
       final ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return Collections.emptyList();
@@ -113,13 +118,31 @@ public final class ServersTreeStructure {
       RemoteServer<?> server = getServer();
       ServerConnection<?> connection = getConnection();
       presentation.setPresentableText(server.getName());
-      presentation
-        .setIcon(getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null));
+
+      Icon icon;
+
+      if (ExperimentalUI.isNewUI()) {
+        if (connection == null) {
+          icon = server.getType().getIcon();
+        }
+        else {
+          icon = switch (connection.getStatus()) {
+            case CONNECTED -> new BadgeIconSupplier(server.getType().getIcon()).getLiveIndicatorIcon();
+            case DISCONNECTED -> LayeredIcon.layeredIcon(new Icon[]{server.getType().getIcon(), AllIcons.RunConfigurations.InvalidConfigurationLayer});
+            default -> server.getType().getIcon();
+          };
+        }
+      }
+      else {
+        icon = getServerNodeIcon(server.getType().getIcon(), connection != null ? getStatusIcon(connection.getStatus()) : null);
+      }
+
+      presentation.setIcon(icon);
+
       presentation.setTooltip(connection != null ? connection.getStatusText() : null);
     }
 
-    @Nullable
-    private ServerConnection<?> getConnection() {
+    private @Nullable ServerConnection<?> getConnection() {
       return ServerConnectionManager.getInstance().getConnection(getServer());
     }
 
@@ -159,15 +182,14 @@ public final class ServersTreeStructure {
       }
 
       ListPopup popup =
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Object>(popupTitle, runConfigsAndTypes) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(popupTitle, runConfigsAndTypes) {
           @Override
           public Icon getIconFor(Object runConfigOrSourceType) {
             return runConfigOrSourceType != null ? serverType.getIcon() : null;
           }
 
-          @NotNull
           @Override
-          public String getTextFor(Object runConfigOrSourceType) {
+          public @NotNull String getTextFor(Object runConfigOrSourceType) {
             if (runConfigOrSourceType instanceof RunnerAndConfigurationSettings) {
               return ((RunnerAndConfigurationSettings)runConfigOrSourceType).getName();
             }
@@ -184,8 +206,7 @@ public final class ServersTreeStructure {
               if (selectedRunConfigOrSourceType instanceof RunnerAndConfigurationSettings) {
                 ProgramRunnerUtil.executeConfiguration((RunnerAndConfigurationSettings)selectedRunConfigOrSourceType, executor);
               }
-              else if (selectedRunConfigOrSourceType instanceof SingletonDeploymentSourceType) {
-                SingletonDeploymentSourceType sourceType = (SingletonDeploymentSourceType)selectedRunConfigOrSourceType;
+              else if (selectedRunConfigOrSourceType instanceof SingletonDeploymentSourceType sourceType) {
                 configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue(), sourceType);
               }
               else {
@@ -207,16 +228,12 @@ public final class ServersTreeStructure {
       ShowSettingsUtil.getInstance().editConfigurable(myProject, new SingleRemoteServerConfigurable(getValue(), null, false));
     }
 
-    @Nullable
-    private static Icon getStatusIcon(final ConnectionStatus status) {
-      switch (status) {
-        case CONNECTED:
-          return RemoteServersIcons.ResumeScaled;
-        case DISCONNECTED:
-          return RemoteServersIcons.SuspendScaled;
-        default:
-          return null;
-      }
+    private static @Nullable Icon getStatusIcon(final ConnectionStatus status) {
+      return switch (status) {
+        case CONNECTED -> AllIcons.RemoteServers.ResumeScaled;
+        case DISCONNECTED -> AllIcons.RemoteServers.SuspendScaled;
+        default -> null;
+      };
     }
   }
 
@@ -236,14 +253,12 @@ public final class ServersTreeStructure {
       myNodeProducer = nodeProducer;
     }
 
-    @NotNull
-    public Deployment getDeployment() {
+    public @NotNull Deployment getDeployment() {
       return getValue();
     }
 
-    @NotNull
     @Override
-    public RemoteServerNode getServerNode() {
+    public @NotNull RemoteServerNode getServerNode() {
       return myServerNode;
     }
 
@@ -327,17 +342,16 @@ public final class ServersTreeStructure {
       return myConnection;
     }
 
-    @Nullable
     @Override
-    public JComponent getComponent() {
+    public @Nullable JComponent getComponent() {
       DeploymentLogManagerImpl logManager = getLogManager();
       return logManager != null && logManager.isMainHandlerVisible()
              ? logManager.getMainLoggingHandler().getConsole().getComponent()
              : null;
     }
 
-    @Nullable
-    protected DeploymentLogManagerImpl getLogManager() {
+    @ApiStatus.Internal
+    protected @Nullable DeploymentLogManagerImpl getLogManager() {
       return (DeploymentLogManagerImpl)myConnection.getLogManager(myProject, getDeployment());
     }
 
@@ -345,22 +359,20 @@ public final class ServersTreeStructure {
       return myServerNode.getName() + ";deployment" + getDeployment().getName();
     }
 
-    @NotNull
     @Override
-    public String getLogId() {
+    public @NotNull String getLogId() {
       return getId() + ";main-log";
     }
 
-    @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode<?>> getChildren() {
+    public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
       List<AbstractTreeNode<?>> result = new ArrayList<>();
       collectDeploymentChildren(result);
       collectLogChildren(result);
       return result;
     }
 
-    protected void collectDeploymentChildren(List<AbstractTreeNode<?>> children) {
+    protected void collectDeploymentChildren(List<? super AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;
@@ -373,7 +385,7 @@ public final class ServersTreeStructure {
       }
     }
 
-    protected void collectLogChildren(List<AbstractTreeNode<?>> children) {
+    protected void collectLogChildren(List<? super AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;
@@ -395,17 +407,17 @@ public final class ServersTreeStructure {
     }
   }
 
+  @ApiStatus.Internal
   public static class DeploymentLogNode extends AbstractTreeNode<LoggingHandlerBase> implements ServersTreeNode, LogProvidingNode {
-    @NotNull private final DeploymentNodeImpl myDeploymentNode;
+    private final @NotNull DeploymentNodeImpl myDeploymentNode;
 
     public DeploymentLogNode(Project project, @NotNull LoggingHandlerBase value, @NotNull DeploymentNodeImpl deploymentNode) {
       super(project, value);
       myDeploymentNode = deploymentNode;
     }
 
-    @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode<?>> getChildren() {
+    public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
       return Collections.emptyList();
     }
 
@@ -419,15 +431,13 @@ public final class ServersTreeStructure {
       return getValue().getPresentableName();
     }
 
-    @Nullable
     @Override
-    public JComponent getComponent() {
+    public @Nullable JComponent getComponent() {
       return getValue().getComponent();
     }
 
-    @NotNull
     @Override
-    public String getLogId() {
+    public @NotNull String getLogId() {
       return myDeploymentNode.getId() + ";log:" + getLogName();
     }
   }

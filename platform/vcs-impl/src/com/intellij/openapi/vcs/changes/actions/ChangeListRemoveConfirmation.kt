@@ -20,12 +20,14 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object ChangeListRemoveConfirmation {
   fun checkCanDeleteChangelist(project: Project,
                                list: LocalChangeList,
                                explicitly: Boolean): ThreeState {
-    val activeVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    val activeVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()
 
     var confirmationAsked = false
     var removeVetoed = false

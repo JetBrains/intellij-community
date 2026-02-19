@@ -1,14 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.rt.execution;
+
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class ForkedDebuggerHelper {
 
   public static final String JVM_DEBUG_SETUP_PREFIX = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=";
@@ -19,7 +24,29 @@ public final class ForkedDebuggerHelper {
   public static final String PARAMETERS_SEPARATOR = ";";
 
   public static final String FINISH_PARAMS = "FINISH_PARAMS";
+
+  /**
+   * The port on the IDEA side that should be used to communicate between the debugger-related tooling and IDEA.
+   * On this port an instance of Forked Debugger will wait for the tooling to establish the connection.
+   * This port is not used for the debugging itself.
+   * See com.intellij.openapi.externalSystem.service.execution.ForkedDebuggerThread.run for more details.
+   */
   public static final String DISPATCH_PORT_SYS_PROP = "idea.debugger.dispatch.port";
+
+  /**
+   * The address of the IDEA instance that initiated the debugging session and is waiting for a callback.
+   * On a local environment it could be different from `127.0.0.1` because the address is chosen based on a NIC address.
+   */
+  public static final String DISPATCH_ADDR_SYS_PROP = "idea.debugger.dispatch.addr";
+
+  /**
+   * The port on which the IDEA instance will expect a session with the debugger itself,
+   * tooling should configure the debugger to use this port for data-transfer.
+   * The value should be sent back onto IDEA's side and then processed by ForkedDebuggerThread#attachRemoteDebugger.
+   * It can be used when the set of available ports differs on the host running IDEA and on the machine running the application (e.g. Proxy).
+   * If no value is specified, the port must be allocated automatically by the debugger tooling.
+   */
+  public static final String DEBUGGER_AGENT_SINK_PORT_SYS_PROP = "idea.debugger.agent.sink.port";
 
   // returns port at which debugger is supposed to communicate with debuggee process
   public static int setupDebugger(String debuggerId, String processName, String processParameters, String moduleDir) {
@@ -41,6 +68,20 @@ public final class ForkedDebuggerHelper {
     return port;
   }
 
+  public static HashMap<String, String> splitParameters(@NotNull String processParameters) {
+    HashMap<String, String> result = new HashMap<>();
+
+    final String[] envVars = processParameters.split(PARAMETERS_SEPARATOR);
+    for (String envVar : envVars) {
+      final int idx = envVar.indexOf('=');
+      if (idx > -1) {
+        result.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
+      }
+    }
+
+    return result;
+  }
+
   public static void signalizeFinish(String debuggerId, String processName) {
     signalizeFinish(debuggerId, processName, getPortFromProperty());
   }
@@ -56,29 +97,25 @@ public final class ForkedDebuggerHelper {
   }
 
   private static void send(String debuggerId, String processName, String processParameters, int dispatchPort) throws IOException {
-    Socket socket = new Socket("127.0.0.1", dispatchPort);
-    try {
-      DataOutputStream stream = new DataOutputStream(socket.getOutputStream());
-      try {
+    String dispatchAddr = getAddrFromProperty();
+    try (Socket socket = new Socket(dispatchAddr, dispatchPort)) {
+      try (DataOutputStream stream = new DataOutputStream(socket.getOutputStream())) {
         stream.writeUTF(debuggerId);
         stream.writeUTF(processName);
         stream.writeUTF(processParameters);
         // wait for the signal handling
         int read = socket.getInputStream().read();
       }
-      finally {
-        stream.close();
-      }
-    }
-    finally {
-      socket.close();
     }
   }
 
   // copied from NetUtils
-  protected static int findAvailableSocketPort() throws IOException {
-    final ServerSocket serverSocket = new ServerSocket(0);
-    try {
+  private static int findAvailableSocketPort() throws IOException {
+    String sinkPortValue = System.getProperty(DEBUGGER_AGENT_SINK_PORT_SYS_PROP);
+    if (sinkPortValue != null) {
+      return Integer.parseInt(sinkPortValue);
+    }
+    try (ServerSocket serverSocket = new ServerSocket(0)) {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
       // may result that socket is not closed
@@ -99,9 +136,10 @@ public final class ForkedDebuggerHelper {
 
       return port;
     }
-    finally {
-      serverSocket.close();
-    }
+  }
+
+  public static String getAddrFromProperty() {
+    return System.getProperty(DISPATCH_ADDR_SYS_PROP, "127.0.0.1");
   }
 
   private static int getPortFromProperty() {

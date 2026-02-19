@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -11,12 +11,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 
 public final class ContentRootData extends AbstractExternalEntityData {
-  @NotNull private final Map<ExternalSystemSourceType, Collection<SourceRoot>> data = new HashMap<>();
+  private final @NotNull Map<ExternalSystemSourceType, Collection<SourceRoot>> data = new HashMap<>();
 
-  @NotNull private final String rootPath;
+  private final @NotNull String rootPath;
 
   /**
    * Creates new {@code GradleContentRootImpl} object.
@@ -33,8 +38,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
    * @param type      target dir type
    * @return          directories of the target type configured for the current content root
    */
-  @NotNull
-  public Collection<SourceRoot> getPaths(@NotNull ExternalSystemSourceType type) {
+  public @NotNull Collection<SourceRoot> getPaths(@NotNull ExternalSystemSourceType type) {
     final Collection<SourceRoot> result = data.get(type);
     return result == null ? Collections.emptyList() : result;
   }
@@ -53,7 +57,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
    *                                    under the {@link #getRootPath() content root}
    */
   public void storePath(@NotNull ExternalSystemSourceType type, @NotNull String path, @Nullable String packagePrefix) throws IllegalArgumentException {
-    if (FileUtil.isAncestor(new File(getRootPath()), new File(path), false)) {
+    if (FileUtil.isAncestor(getRootPath(), path, false)) {
       Collection<SourceRoot> paths = data.get(type);
       if (paths == null) {
         data.put(type, paths = new TreeSet<>(SourceRootComparator.INSTANCE));
@@ -73,8 +77,7 @@ public final class ContentRootData extends AbstractExternalEntityData {
     }
   }
 
-  @NotNull
-  public String getRootPath() {
+  public @NotNull String getRootPath() {
     return rootPath;
   }
 
@@ -91,11 +94,9 @@ public final class ContentRootData extends AbstractExternalEntityData {
   }
 
   public static class SourceRoot implements Serializable {
-    @NotNull
-    private final String path;
+    private final @NotNull String path;
 
-    @Nullable
-    private final String packagePrefix;
+    private final @Nullable String packagePrefix;
 
     public SourceRoot(@NotNull String path, @Nullable String prefix) {
       this.path = path;
@@ -108,21 +109,18 @@ public final class ContentRootData extends AbstractExternalEntityData {
       packagePrefix = "";
     }
 
-    @NotNull
-    public String getPath() {
+    public @NotNull String getPath() {
       return path;
     }
 
-    @Nullable
-    public String getPackagePrefix() {
+    public @Nullable String getPackagePrefix() {
       return packagePrefix;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SourceRoot)) return false;
-      SourceRoot root = (SourceRoot)o;
+      if (!(o instanceof SourceRoot root)) return false;
       if (packagePrefix != null ? !packagePrefix.equals(root.packagePrefix) : root.packagePrefix != null) return false;
       if (!path.equals(root.path)) return false;
       return true;

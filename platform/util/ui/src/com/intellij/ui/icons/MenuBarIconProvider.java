@@ -3,7 +3,7 @@ package com.intellij.ui.icons;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 // todo: remove and use DarkIconProvider when JBSDK supports scalable icons in menu
 public interface MenuBarIconProvider {

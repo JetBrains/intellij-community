@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -15,20 +15,22 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class OptionsPanelImpl extends JPanel implements OptionsPanel {
+public final class OptionsPanelImpl extends JPanel implements OptionsPanel {
   public static final String SELECTED_COLOR_OPTION_PROPERTY = "selected.color.option.type";
 
   private final ColorOptionsTree myOptionsTree;

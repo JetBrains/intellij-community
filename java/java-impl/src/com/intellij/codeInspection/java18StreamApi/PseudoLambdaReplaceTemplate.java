@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
@@ -20,7 +6,31 @@ import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiDiamondType;
+import com.intellij.psi.PsiDiamondTypeImpl;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLambdaExpressionType;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiMethodReferenceType;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -37,8 +47,8 @@ import java.util.Map;
 /**
  * @author Dmitry Batkovich
  */
-public class PseudoLambdaReplaceTemplate {
-  private final static Logger LOG = Logger.getInstance(PseudoLambdaReplaceTemplate.class);
+public final class PseudoLambdaReplaceTemplate {
+  private static final Logger LOG = Logger.getInstance(PseudoLambdaReplaceTemplate.class);
 
   public enum LambdaRole {
     PREDICATE,
@@ -93,7 +103,7 @@ public class PseudoLambdaReplaceTemplate {
   }
 
   public static List<PseudoLambdaReplaceTemplate> getAllTemplates() {
-    return ContainerUtil.newArrayList(MAP, FILTER, FIND, ALL_MATCH, ANY_MATCH);
+    return List.of(MAP, FILTER, FIND, ALL_MATCH, ANY_MATCH);
   }
 
   public ValidationInfo validate(final PsiMethod method) {
@@ -103,7 +113,7 @@ public class PseudoLambdaReplaceTemplate {
     final PsiType returnType = method.getReturnType();
 
     if (StreamApiConstants.FAKE_FIND_MATCHED.equals(myStreamApiMethodName)) {
-      if (!PsiType.BOOLEAN.equals(returnType)) {
+      if (!PsiTypes.booleanType().equals(returnType)) {
         return null;
       }
     } else {
@@ -135,8 +145,8 @@ public class PseudoLambdaReplaceTemplate {
           }
         }
       }
-      else if (PsiType.BOOLEAN.equals(expectedReturnType)) {
-        if (!PsiType.BOOLEAN.equals(returnType)) {
+      else if (PsiTypes.booleanType().equals(expectedReturnType)) {
+        if (!PsiTypes.booleanType().equals(returnType)) {
           return null;
         }
       }
@@ -145,8 +155,7 @@ public class PseudoLambdaReplaceTemplate {
     return validate(parameterTypes, returnType, null, method);
   }
 
-  @Nullable
-  public ValidationInfo validate(final PsiMethodCallExpression expression) {
+  public @Nullable ValidationInfo validate(final PsiMethodCallExpression expression) {
     final PsiType[] argumentTypes = expression.getArgumentList().getExpressionTypes();
     final PsiType methodReturnType = expression.getType();
     if (methodReturnType == null) {
@@ -273,8 +282,8 @@ public class PseudoLambdaReplaceTemplate {
       return false;
     }
     if (myLambdaRole == LambdaRole.PREDICATE) {
-      final PsiClassType boxedBoolean = PsiType.BOOLEAN.getBoxedType(context);
-      if (!(PsiType.BOOLEAN.equals(lambdaReturnType) || (boxedBoolean != null && boxedBoolean.equals(lambdaReturnType)))) {
+      final PsiClassType boxedBoolean = PsiTypes.booleanType().getBoxedType(context);
+      if (!(PsiTypes.booleanType().equals(lambdaReturnType) || (boxedBoolean != null && boxedBoolean.equals(lambdaReturnType)))) {
         return false;
       }
     }
@@ -355,8 +364,7 @@ public class PseudoLambdaReplaceTemplate {
     return false;
   }
 
-  @NotNull
-  public PsiExpression convertToStream(@NotNull final PsiMethodCallExpression expression, @Nullable PsiMethod method, boolean force) {
+  public @NotNull PsiExpression convertToStream(final @NotNull PsiMethodCallExpression expression, @Nullable PsiMethod method, boolean force) {
     if (method == null) {
       method = expression.resolveMethod();
       if (method == null) {
@@ -400,7 +408,7 @@ public class PseudoLambdaReplaceTemplate {
       lambdaExpressionText = null;
     }
     final String pipelineTail =
-      StreamApiConstants.STREAM_STREAM_API_METHODS.getValue().contains(myStreamApiMethodName)
+      StreamApiConstants.STREAM_STREAM_API_METHODS.get().contains(myStreamApiMethodName)
       ? findSuitableTailMethodForCollection(method)
       : null;
 
@@ -426,15 +434,14 @@ public class PseudoLambdaReplaceTemplate {
     return JavaPsiFacade.getElementFactory(project).createExpressionFromText(sb.toString(), null);
   }
 
-  @Nullable
-  private static String findSuitableTailMethodForCollection(PsiMethod lambdaHandler) {
+  private static @Nullable String findSuitableTailMethodForCollection(PsiMethod lambdaHandler) {
     final PsiType type = lambdaHandler.getReturnType();
-    if (type instanceof PsiArrayType) {
-      final PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
+    if (type instanceof PsiArrayType arrayType) {
+      final PsiType arrayComponentType = arrayType.getComponentType();
       return "toArray(" + arrayComponentType.getCanonicalText() + "[]::new)";
     }
-    else if (type instanceof PsiClassType) {
-      final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+    else if (type instanceof PsiClassType classType) {
+      final PsiClass resolvedClass = classType.resolve();
       if (resolvedClass == null) {
         return null;
       }
@@ -442,17 +449,13 @@ public class PseudoLambdaReplaceTemplate {
       if (qName == null) {
         return null;
       }
-      if (qName.equals(CommonClassNames.JAVA_UTIL_LIST)
-          || qName.equals(CommonClassNames.JAVA_UTIL_COLLECTION)
-          || qName.equals(CommonClassNames.JAVA_LANG_ITERABLE)) {
-        return "collect(" + StreamApiConstants.JAVA_UTIL_STREAM_COLLECTORS + ".toList())";
-      }
-      else if (qName.equals(CommonClassNames.JAVA_UTIL_SET)) {
-        return "collect(" + StreamApiConstants.JAVA_UTIL_STREAM_COLLECTORS + ".toSet())";
-      }
-      else if (qName.equals(CommonClassNames.JAVA_UTIL_ITERATOR)) {
-        return "iterator()";
-      }
+      return switch (qName) {
+        case CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_LANG_ITERABLE ->
+          "collect(" + StreamApiConstants.JAVA_UTIL_STREAM_COLLECTORS + ".toList())";
+        case CommonClassNames.JAVA_UTIL_SET -> "collect(" + StreamApiConstants.JAVA_UTIL_STREAM_COLLECTORS + ".toSet())";
+        case CommonClassNames.JAVA_UTIL_ITERATOR -> "iterator()";
+        default -> null;
+      };
     }
     return null;
   }
@@ -464,16 +467,16 @@ public class PseudoLambdaReplaceTemplate {
     if (expression instanceof PsiLambdaExpression) {
       return expression;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+    if (expression instanceof PsiMethodCallExpression call) {
+      final PsiMethod method = call.resolveMethod();
       if (method == null) {
         return null;
       }
       final PsiType type = method.getReturnType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return null;
       }
-      final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+      final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
       final PsiClass lambdaClass = result.getElement();
       if (lambdaClass == null) {
         return null;
@@ -497,8 +500,7 @@ public class PseudoLambdaReplaceTemplate {
     return null;
   }
 
-  @NotNull
-  private static PsiExpression convertClassTypeExpression(PsiExpression expression) {
+  private static @NotNull PsiExpression convertClassTypeExpression(PsiExpression expression) {
     final PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       final PsiClass resolvedClass = ((PsiClassType)type).resolve();

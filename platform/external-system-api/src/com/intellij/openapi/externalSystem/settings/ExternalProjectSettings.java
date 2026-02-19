@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,18 +13,15 @@ import java.util.Set;
 
 /**
  * Holds settings specific to a particular project imported from an external system.
- *
- * @author Denis Zhdanov
  */
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
   private static final Logger LOG = Logger.getInstance(ExternalProjectSettings.class);
 
   private String myExternalProjectPath;
-  @Nullable private Set<String> myModules = new HashSet<>();
+  private @Nullable Set<String> myModules = new HashSet<>();
 
-  @NotNull
-  public Set<String> getModules() {
+  public @NotNull Set<String> getModules() {
     return myModules == null ? Collections.emptySet() : myModules;
   }
 
@@ -56,22 +52,11 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   }
 
   /**
-   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
-   */
-  @Transient
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public boolean isUseAutoImport() {
-    return true;
-  }
-
-  /**
    * @deprecated Auto-import cannot be disabled
-   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker for details
+   * @see com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
    */
   @Transient
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   public void setUseAutoImport(@SuppressWarnings("unused") boolean useAutoImport) {
     LOG.warn(new Throwable("Auto-import cannot be disabled"));
   }
@@ -79,7 +64,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   /**
    * @deprecated left for settings backward-compatibility
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isCreateEmptyContentRootDirectories() {
     return myCreateEmptyContentRootDirectories;
   }
@@ -87,7 +72,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   /**
    * @deprecated left for settings backward-compatibility
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
     myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
   }
@@ -96,6 +81,13 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     return myUseQualifiedModuleNames;
   }
 
+  /**
+   * @deprecated qualified module names are used by default, so there is no need to call with method with {@code true}; and {@code false}
+   * shouldn't be used as a parameter as well, because all plugins are supposed to use qualified module names for grouping (see IDEA-166061 
+   * for details). 
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
     myUseQualifiedModuleNames = useQualifiedModuleNames;
   }
@@ -126,8 +118,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   }
 
   @Override
-  @NotNull
-  public abstract ExternalProjectSettings clone();
+  public abstract @NotNull ExternalProjectSettings clone();
 
   protected void copyTo(@NotNull ExternalProjectSettings receiver) {
     receiver.myExternalProjectPath = myExternalProjectPath;

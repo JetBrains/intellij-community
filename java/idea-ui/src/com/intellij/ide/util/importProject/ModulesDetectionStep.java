@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.CommonBundle;
@@ -14,9 +14,14 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -142,8 +147,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   }
 
   @Override
-  @NonNls
-  public String getHelpId() {
+  public @NonNls String getHelpId() {
     return myHelpId;
   }
 

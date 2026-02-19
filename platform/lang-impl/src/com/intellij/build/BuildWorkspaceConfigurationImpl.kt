@@ -5,5 +5,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class BuildWorkspaceConfigurationImpl : BuildWorkspaceConfiguration {
-  override fun isShowFirstErrorInEditor() = true
+  override fun isShowFirstErrorInEditor(): Boolean = true
 }

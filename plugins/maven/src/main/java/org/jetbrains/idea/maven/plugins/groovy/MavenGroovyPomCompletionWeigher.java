@@ -27,11 +27,11 @@ import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 /**
  * @author Vladislav.Soroka
  */
-public class MavenGroovyPomCompletionWeigher extends CompletionWeigher {
+public final class MavenGroovyPomCompletionWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    PsiFile containingFile = location.getCompletionParameters().getPosition().getContainingFile();
+    PsiFile containingFile = location.getBaseCompletionParameters().getPosition().getContainingFile();
     if (!(containingFile instanceof GroovyFileBase)) {
       return null;
     }

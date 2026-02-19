@@ -1,8 +1,19 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
@@ -42,7 +53,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
 
     final PsiParameter[] lambdaParameters = myExpression.getParameterList().getParameters();
     if (lambdaParameters.length != parameters.length) {
-      session.registerIncompatibleErrorMessage(JavaPsiBundle.message("error.incompatible.type.incompatible.parameter.types.in.lambda"));
+      session.registerIncompatibleErrorMessage(JavaPsiBundle.message("error.incompatible.type.incompatible.parameter.types.in.lambda", parameters.length, lambdaParameters.length));
       return false;
     }
     if (myExpression.hasFormalParameterTypes()) {
@@ -65,7 +76,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     if (returnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(myExpression);
       final PsiElement lambdaBody = myExpression.getBody();
-      if (returnType.equals(PsiType.VOID)) {
+      if (returnType.equals(PsiTypes.voidType())) {
         if (!(lambdaBody instanceof PsiCodeBlock && myExpression.isVoidCompatible()) && !LambdaUtil.isExpressionStatementExpression(lambdaBody)) {
           session.registerIncompatibleErrorMessage(JavaPsiBundle.message("error.incompatible.type.incompatible.types.expected.void.lambda"));
           return false;

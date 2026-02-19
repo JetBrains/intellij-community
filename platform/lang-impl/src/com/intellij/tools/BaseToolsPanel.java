@@ -1,14 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tools;
 
-import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -16,11 +21,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
-import java.awt.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultTreeSelectionModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -145,6 +157,11 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     }).createPanel(), BorderLayout.CENTER);
 
     myAddButton = ToolbarDecorator.findAddButton(this);
@@ -204,13 +221,8 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       Object object = ((CheckedTreeNode)value).getUserObject();
 
       if (object instanceof ToolsGroup) {
-        final String groupName = ((ToolsGroup)object).getName();
-        if (groupName != null) {
-          getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
-        else {
-          getTextRenderer().append(ToolsBundle.message("tools.node.group.name.unnamed.group"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
+        final String groupName = ((ToolsGroup<?>)object).getName();
+        getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else if (object instanceof Tool) {
         getTextRenderer().append(((Tool)object).getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -219,8 +231,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   }
 
 
-  @NotNull
-  private CheckedTreeNode addGroupNode(@NotNull ToolsGroup<T> group) {
+  private @NotNull CheckedTreeNode addGroupNode(@NotNull ToolsGroup<T> group) {
     CheckedTreeNode groupNode = new CheckedTreeNode(group);
     getTreeRoot().add(groupNode);
     for (T tool : group.getElements()) {
@@ -246,8 +257,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     myIsModified = false;
   }
 
-  @NotNull
-  private List<ToolsGroup<T>> getGroupList() {
+  private @NotNull List<ToolsGroup<T>> getGroupList() {
     MutableTreeNode root = (MutableTreeNode)myTree.getModel().getRoot();
     List<ToolsGroup<T>> result = new ArrayList<>(root.getChildCount());
     for (int i = 0; i < root.getChildCount(); i++) {
@@ -272,9 +282,8 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     if (node != null) {
       if (isMovingAvailable(node, direction)) {
         moveNode(node, direction);
-        if (node.getUserObject() instanceof Tool) {
+        if (node.getUserObject() instanceof Tool tool) {
           ToolsGroup group = (ToolsGroup)(((CheckedTreeNode)node.getParent()).getUserObject());
-          Tool tool = (Tool)node.getUserObject();
           moveElementInsideGroup(tool, group, direction);
         }
         TreePath path = new TreePath(node.getPath());
@@ -350,15 +359,13 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     return null;
   }
 
-  @Nullable
-  public Tool getSelectedTool() {
+  public @Nullable Tool getSelectedTool() {
     CheckedTreeNode node = getSelectedToolNode();
     if (node == null) return null;
     return node.getUserObject() instanceof Tool ? (Tool)node.getUserObject() : null;
   }
 
-  @Nullable
-  private ToolsGroup getSelectedToolGroup() {
+  private @Nullable ToolsGroup getSelectedToolGroup() {
     CheckedTreeNode node = getSelectedToolNode();
     if (node == null) return null;
     return node.getUserObject() instanceof ToolsGroup ? (ToolsGroup)node.getUserObject() : null;
@@ -412,8 +419,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         return;
       }
       myIsModified = true;
-      if (node.getUserObject() instanceof Tool) {
-        Tool tool = (Tool)node.getUserObject();
+      if (node.getUserObject() instanceof Tool tool) {
         CheckedTreeNode parentNode = (CheckedTreeNode)node.getParent();
         ((ToolsGroup)parentNode.getUserObject()).removeElement(tool);
         removeNodeFromParent(node);

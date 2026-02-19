@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.classMembers;
 
 import com.intellij.icons.AllIcons;
@@ -15,7 +15,7 @@ import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 /**
@@ -33,13 +33,11 @@ public class GrMemberSelectionTable extends AbstractMemberSelectionTable<GrMembe
     super(memberInfos, memberInfoModel, abstractColumnHeader);
   }
 
-  @Nullable
   @Override
-  protected Object getAbstractColumnValue(GrMemberInfo memberInfo) {
-    if (!(memberInfo.getMember() instanceof PsiMethod)) return null;
+  protected @Nullable Object getAbstractColumnValue(GrMemberInfo memberInfo) {
+    if (!(memberInfo.getMember() instanceof PsiMethod method)) return null;
     if (memberInfo.isStatic()) return null;
 
-    PsiMethod method = (PsiMethod)memberInfo.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final Boolean fixedAbstract = myMemberInfoModel.isFixedAbstract(memberInfo);
       if (fixedAbstract != null) return fixedAbstract;
@@ -56,10 +54,9 @@ public class GrMemberSelectionTable extends AbstractMemberSelectionTable<GrMembe
   @Override
   protected boolean isAbstractColumnEditable(int rowIndex) {
     GrMemberInfo info = myMemberInfos.get(rowIndex);
-    if (!(info.getMember() instanceof PsiMethod)) return false;
+    if (!(info.getMember() instanceof PsiMethod method)) return false;
     if (info.isStatic()) return false;
 
-    PsiMethod method = (PsiMethod)info.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       if (myMemberInfoModel.isFixedAbstract(info) != null) {
         return false;

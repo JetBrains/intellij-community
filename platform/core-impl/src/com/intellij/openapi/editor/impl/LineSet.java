@@ -1,15 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.MergingCharSequence;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
+import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
 
@@ -19,28 +25,30 @@ import java.util.Arrays;
  * <p/>
  * Immutable.
  */
+@ApiStatus.Internal
 public final class LineSet {
   private static final int MODIFIED_MASK = 0x4;
   private static final int SEPARATOR_MASK = 0x3;
 
-  private final int[] myStarts;
-  private final byte[] myFlags; // MODIFIED_MASK bit is for is/setModified(line); SEPARATOR_MASK 2 bits stores line separator length: 0..2
+  private final int @NotNull [] myStarts;
+  private final byte @NotNull [] myFlags; // MODIFIED_MASK bit is for is/setModified(line); SEPARATOR_MASK 2 bits stores line separator length: 0..2
   private final int myLength;
 
-  private LineSet(int[] starts, byte[] flags, int length) {
+  private LineSet(int @NotNull [] starts, byte @NotNull [] flags, int length) {
     myStarts = starts;
     myFlags = flags;
     myLength = length;
   }
 
-  public static LineSet createLineSet(CharSequence text) {
+  @Contract("_ -> new")
+  public static @NotNull LineSet createLineSet(@NotNull CharSequence text) {
     return createLineSet(text, false);
   }
 
-  @NotNull
-  private static LineSet createLineSet(@NotNull CharSequence text, boolean markModified) {
-    IntArrayList starts = new IntArrayList();
-    ByteArrayList flags = new ByteArrayList();
+  private static @NotNull LineSet createLineSet(@NotNull CharSequence text, boolean markModified) {
+    int approxLineCount = text.length() / 20;
+    IntList starts = new IntArrayList(approxLineCount);
+    ByteList flags = new ByteArrayList(approxLineCount);
 
     LineTokenizer lineTokenizer = new LineTokenizer(text);
     while (!lineTokenizer.atEnd()) {
@@ -51,8 +59,8 @@ public final class LineSet {
     return new LineSet(starts.toIntArray(), flags.toByteArray(), text.length());
   }
 
-  @NotNull
-  LineSet update(@NotNull CharSequence prevText, int start, int end, @NotNull CharSequence replacement, boolean wholeTextReplaced) {
+  @VisibleForTesting
+  public @NotNull LineSet update(@NotNull CharSequence prevText, int start, int end, @NotNull CharSequence replacement, boolean wholeTextReplaced) {
     if (myLength == 0) {
       return createLineSet(replacement, !wholeTextReplaced);
     }
@@ -89,8 +97,7 @@ public final class LineSet {
     return startLine == findLineIndex(end) && !CharArrayUtil.containLineBreaks(replacement) && !isLastEmptyLine(startLine);
   }
 
-  @NotNull
-  private LineSet updateInsideOneLine(int line, int lengthDelta) {
+  private @NotNull LineSet updateInsideOneLine(int line, int lengthDelta) {
     int[] starts = myStarts.clone();
     for (int i = line + 1; i < starts.length; i++) {
       starts[i] += lengthDelta;
@@ -101,7 +108,8 @@ public final class LineSet {
     return new LineSet(starts, flags, myLength + lengthDelta);
   }
 
-  private LineSet genericUpdate(int startOffset, int endOffset, CharSequence replacement) {
+  @Contract("_, _, _ -> new")
+  private @NotNull LineSet genericUpdate(int startOffset, int endOffset, @NotNull CharSequence replacement) {
     int startLine = findLineIndex(startOffset);
     int endLine = findLineIndex(endOffset);
 
@@ -116,8 +124,8 @@ public final class LineSet {
                        Math.max(patch.myStarts.length - 1, 0) +
                        (addEndLine ? 1 : 0) + Math.max(myStarts.length - endLine - 1, 0);
 
-    int[] starts = new int[newLineCount];
-    byte[] flags = new byte[newLineCount];
+    int[] starts = ArrayUtil.newIntArray(newLineCount);
+    byte[] flags = ArrayUtil.newByteArray(newLineCount);
 
     if (startLine > 0) {
       System.arraycopy(myStarts, 0, starts, 0, startLine);
@@ -148,7 +156,7 @@ public final class LineSet {
     return new LineSet(starts, flags, myLength + lengthShift);
   }
 
-  private int shiftData(int[] dstStarts, byte[] dstFlags, int srcOffset, int dstOffset, int count, int offsetDelta) {
+  private int shiftData(int @NotNull [] dstStarts, byte @NotNull [] dstFlags, int srcOffset, int dstOffset, int count, int offsetDelta) {
     if (count < 0) return dstOffset;
 
     System.arraycopy(myFlags, srcOffset, dstFlags, dstOffset, count);
@@ -169,12 +177,11 @@ public final class LineSet {
     return bsResult >= 0 ? bsResult : -bsResult - 2;
   }
 
-  @NotNull
-  public LineIterator createIterator() {
+  public @NotNull LineIterator createIterator() {
     return new LineIteratorImpl(this);
   }
 
-  public final int getLineStart(int index) {
+  public int getLineStart(int index) {
     checkLineIndex(index);
     return isLastEmptyLine(index) ? myLength : myStarts[index];
   }
@@ -187,7 +194,7 @@ public final class LineSet {
     return lineIndex >= 0 && getSeparatorLengthUnsafe(lineIndex) > 0;
   }
 
-  public final int getLineEnd(int index) {
+  public int getLineEnd(int index) {
     checkLineIndex(index);
     return index >= myStarts.length - 1 ? myLength : myStarts[index + 1];
   }
@@ -198,13 +205,12 @@ public final class LineSet {
     }
   }
 
-  final boolean isModified(int index) {
+  boolean isModified(int index) {
     checkLineIndex(index);
     return !isLastEmptyLine(index) && BitUtil.isSet(myFlags[index], MODIFIED_MASK);
   }
 
-  @NotNull
-  final LineSet setModified(@NotNull IntArrayList indices) {
+  @NotNull LineSet setModified(@NotNull IntList indices) {
     if (indices.isEmpty()) {
       return this;
     }
@@ -244,7 +250,8 @@ public final class LineSet {
     return getLineCount() == 0 ? this : clearModificationFlags(0, getLineCount());
   }
 
-  final int getSeparatorLength(int index) {
+  @VisibleForTesting
+  public int getSeparatorLength(int index) {
     checkLineIndex(index);
     return getSeparatorLengthUnsafe(index);
   }
@@ -253,11 +260,11 @@ public final class LineSet {
     return index < myFlags.length ? myFlags[index] & SEPARATOR_MASK : 0;
   }
 
-  final int getLineCount() {
+  public int getLineCount() {
     return myStarts.length + (isLastEmptyLine(myStarts.length) ? 1 : 0);
   }
 
-  int getLength() {
+  public int getLength() {
     return myLength;
   }
 }

@@ -8,4 +8,10 @@ public class TryWithResources {
         }
 
     }
+    public fun foo(br: java.io.BufferedReader) : void {
+        try (br){
+            return br.readLine()
+        }
+
+    }
 }

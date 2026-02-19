@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,14 +17,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class TestModuleProperties {
   public static TestModuleProperties getInstance(@NotNull Module module) {
-    return module.getService(TestModuleProperties.class);
+    return module.getProject().getService(TestModulePropertiesProvider.class).getTestModuleProperties(module);
   }
 
-  @Nullable
-  public abstract String getProductionModuleName();
+  @ApiStatus.Internal
+  protected TestModuleProperties() {
+  }
 
-  @Nullable
-  public abstract Module getProductionModule();
+  public abstract @Nullable String getProductionModuleName();
+
+  public abstract @Nullable Module getProductionModule();
 
   public abstract void setProductionModuleName(@Nullable String moduleName);
 }

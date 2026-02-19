@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -39,23 +27,38 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckboxTreeBase;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Query;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrapper {
   private final M myMethod;
@@ -77,13 +80,11 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   protected abstract M[] findDeepestSuperMethods(M method);
 
-  @NlsContexts.Label
-  protected String getEmptyCalleeText() {
+  protected @NlsContexts.Label String getEmptyCalleeText() {
     return "";
   }
 
-  @NlsContexts.Label
-  protected String getEmptyCallerText() {
+  protected @NlsContexts.Label String getEmptyCallerText() {
     return "";
   }
 
@@ -121,7 +122,11 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         if (path != null) {
           final MemberNodeBase<M> node = (MemberNodeBase)path.getLastPathComponent();
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(() -> updateEditorTexts(node), 300);
+          myAlarm.addRequest(() -> {
+            try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162969")) {
+              updateEditorTexts(node);
+            }
+          }, 300);
         }
       }
     };
@@ -184,9 +189,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return node;
   }
 
-  protected Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
+  protected @Unmodifiable Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
     Query<PsiReference> references = ReferencesSearch.search(callee, new LocalSearchScope(caller), false);
-    return ContainerUtil.mapNotNull(references, psiReference -> psiReference.getElement());
+    return ContainerUtil.mapNotNull(references.asIterable(), psiReference -> psiReference.getElement());
   }
 
   @Override
@@ -204,14 +209,17 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final PsiFile file = method.getContainingFile();
     Document document = file != null ? PsiDocumentManager.getInstance(myProject).getDocument(file) : null;
     if (document != null) {
-      final int start = document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
-      final int end = document.getLineEndOffset(document.getLineNumber(method.getTextRange().getEndOffset()));
-      return document.getText().substring(start, end);
+      TextRange textRange = method.getTextRange();
+      if (textRange != null) {
+        final int start = document.getLineStartOffset(document.getLineNumber(textRange.getStartOffset()));
+        final int end = document.getLineEndOffset(document.getLineNumber(textRange.getEndOffset()));
+        return document.getText().substring(start, end);
+      }
     }
     return "";
   }
 
-  private int getStartOffset(@NotNull final M method) {
+  private int getStartOffset(final @NotNull M method) {
     final PsiFile file = method.getContainingFile();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
     return document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
@@ -233,13 +241,11 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return splitter;
   }
 
-  @NotNull
-  @Nls
-  protected String getCalleeEditorTitle() {
+  protected @NotNull @Nls String getCalleeEditorTitle() {
     return RefactoringBundle.message("caller.chooser.callee.method");
   }
 
-  private Editor createEditor() {
+  protected Editor createEditor() {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     final Document document = editorFactory.createDocument("");
     final Editor editor = editorFactory.createViewer(document, myProject);
@@ -269,7 +275,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
                                     int row,
                                     boolean hasFocus) {
         if (value instanceof MemberNodeBase) {
-          ((MemberNodeBase<?>)value).customizeRenderer(getTextRenderer());
+          WriteIntentReadAction.run(() -> {
+            ((MemberNodeBase<?>)value).customizeRenderer(getTextRenderer());
+          });
         }
       }
     };
@@ -337,9 +345,8 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return myTree;
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "caller.chooser.dialog";
   }
 }

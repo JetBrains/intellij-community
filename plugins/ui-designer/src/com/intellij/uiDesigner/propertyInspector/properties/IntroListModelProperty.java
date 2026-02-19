@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
@@ -14,16 +15,14 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
 import java.lang.reflect.Method;
 
-/**
- * @author yole
- */
+
 public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   private LabelPropertyRenderer<String[]> myRenderer;
   private ListModelEditor myEditor;
-  @NonNls private static final String CLIENT_PROPERTY_KEY_PREFIX = "IntroListModelProperty_";
+  private static final @NonNls String CLIENT_PROPERTY_KEY_PREFIX = "IntroListModelProperty_";
 
   public IntroListModelProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient) {
     super(name, readMethod, writeMethod, storeAsClient);
@@ -39,8 +38,7 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<String[]> getRenderer() {
+  public @NotNull PropertyRenderer<String[]> getRenderer() {
     if (myRenderer == null) {
       myRenderer = new MyRenderer();
     }
@@ -66,7 +64,7 @@ public class IntroListModelProperty extends IntrospectedProperty<String[]> {
   @Override protected void setValueImpl(final RadComponent component, final String[] value) throws Exception {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), value);
     DefaultComboBoxModel model = new DefaultComboBoxModel();
-    for(String s: value) {
+    for(@NlsSafe String s: value) {
       model.addElement(s);
     }
     invokeSetter(component, model);

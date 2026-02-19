@@ -1,7 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -13,9 +20,8 @@ public class PsiJavaModuleReferenceElementImpl extends CompositePsiElement imple
     super(JavaElementType.MODULE_REFERENCE);
   }
 
-  @NotNull
   @Override
-  public String getReferenceText() {
+  public @NotNull String getReferenceText() {
     StringBuilder sb = new StringBuilder();
     for (PsiElement e = getFirstChild(); e != null; e = e.getNextSibling()) {
       if (!(e instanceof PsiWhiteSpace) && !(e instanceof PsiComment)) {

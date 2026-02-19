@@ -1,28 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.ActualCodeInsightContextInfo;
+import com.intellij.psi.search.CodeInsightContextFileInfo;
+import com.intellij.psi.search.CodeInsightContextInfo;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 // Tests only (module plus dependencies) scope
 // Delegates to ModuleWithDependentsScope with extra flag testOnly to reduce memory for holding modules and CPU for traversing dependencies.
-class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope {
+final class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope implements ActualCodeInsightContextInfo {
   ModuleWithDependentsTestScope(@NotNull Module module) {
     // the additional equality argument allows to distinguish ModuleWithDependentsTestScope from ModuleWithDependentsScope
     super(new ModuleWithDependentsScope(module), true);
@@ -30,11 +22,34 @@ class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return getBaseScope().contains(file, true);
+    ModuleWithDependentsScope scope = getBaseScope();
+    return scope.contains(file, CodeInsightContexts.anyContext(), true);
   }
 
-  @NotNull
-  ModuleWithDependentsScope getBaseScope() {
-    return (ModuleWithDependentsScope)myBaseScope;
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
+    return this;
+  }
+
+  @Override
+  public boolean contains(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+    ModuleWithDependentsScope scope = getBaseScope();
+    return scope.contains(file, context, true);
+  }
+
+  @Override
+  public @NotNull CodeInsightContextFileInfo getFileInfo(@NotNull VirtualFile file) {
+    ModuleWithDependentsScope scope = getBaseScope();
+    return scope.getFileInfo(file, true);
+  }
+
+  private @NotNull ModuleWithDependentsScope getBaseScope() {
+    return (ModuleWithDependentsScope)getDelegate();
+  }
+
+  @Override
+  public String toString() {
+    return "Restricted by tests: (" + myBaseScope + ")";
   }
 }

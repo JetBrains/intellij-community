@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -6,17 +6,26 @@ import com.intellij.util.ui.MultiRowFlowPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Allows to build controls that show target user text with 'reach info' (e.g. inline icon button).
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class RichTextControlBuilder {
   
@@ -125,13 +134,8 @@ public class RichTextControlBuilder {
             rowComponents.add(component);
           }
           metaDataProcessor = null;
-          if (end < s.length()) {
-            // Handle situation like '{@key}text', i.e. there is no white space between the meta-data and the text that follows it.
-            s = s.substring(end);
-          }
-          else {
-            continue;
-          }
+          // Handle situation like '{@key}text', i.e. there is no white space between the meta-data and the text that follows it.
+          s = s.substring(end);
         }
         else {
           ignoreNext = true;
@@ -181,8 +185,7 @@ public class RichTextControlBuilder {
   /**
    * @return    component built within the provided information
    */
-  @NotNull
-  public JComponent build() {
+  public @NotNull JComponent build() {
     for (JComponent component : myComponents) {
       component.setForeground(myForegroundColor);
       component.setBackground(myBackgroundColor);

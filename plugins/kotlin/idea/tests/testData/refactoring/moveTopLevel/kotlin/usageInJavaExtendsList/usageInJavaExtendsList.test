@@ -1,0 +1,7 @@
+{
+  "mainFile": "one/KotlinWithCtor.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "three",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
+}

@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.codeInsight.AnnotationUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiLiteral
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter.Companion.createInferenceResult
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure.compose
@@ -72,7 +76,7 @@ class ClosureParameterAugmenter : TypeAugmenter() {
     val completeContextSubstitutor = virtualToActualSubstitutor.putAll(annotationBasedSubstitutor) compose resolveResult.substitutor
     val annotatedClosureParameter = findAnnotatedClosureParameter(resolveResult, closureBlock, virtualMethod) ?: return null
     val anno = annotatedClosureParameter.modifierList.annotations.find { it.shortName == closureParamsShort } ?: return null
-    return getSignatures(anno, completeContextSubstitutor, virtualMethod) ?: return null
+    return getSignatures(anno, completeContextSubstitutor, virtualMethod)
   }
 
 
@@ -82,7 +86,7 @@ class ClosureParameterAugmenter : TypeAugmenter() {
     val method = resolveResult.candidate?.method ?: return null
     val methodParameter = (resolveResult.candidate?.argumentMapping?.targetParameter(
       ExpressionArgument(closureBlock))?.psi as? GrParameter)?.takeIf { it.eligibleForExtendedInference() } ?: return null
-    return virtualMethod.parameters.getOrNull(method.parameterList.getParameterIndex(methodParameter)) ?: return null
+    return virtualMethod.parameters.getOrNull(method.parameterList.getParameterIndex(methodParameter))
   }
 
   private fun getSignatures(anno: PsiAnnotation, substitutor: PsiSubstitutor, virtualMethod: GrMethod): List<Array<out PsiType>>? {

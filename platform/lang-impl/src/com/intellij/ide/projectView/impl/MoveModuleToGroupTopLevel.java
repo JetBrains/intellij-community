@@ -1,21 +1,34 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.actions.MoveModulesOutsideGroupAction;
 import com.intellij.ide.projectView.actions.MoveModulesToSubGroupAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class MoveModuleToGroupTopLevel extends ActionGroup {
+public final class MoveModuleToGroupTopLevel extends ActionGroup {
   @Override
   public void update(@NotNull AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
@@ -23,6 +36,11 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     boolean active = project != null && modules != null && modules.length != 0 && !ModuleGrouperKt.isQualifiedModuleNamesEnabled(project);
     e.getPresentation().setVisible(active);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -34,8 +52,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
 
     ModifiableModuleModel moduleModel = e.getData(LangDataKeys.MODIFIABLE_MODULE_MODEL);
     ModuleGrouper grouper = ModuleGrouper.instanceFor(project, moduleModel);
-    List<String> topLevelGroupNames = new ArrayList<>(getTopLevelGroupNames(grouper));
-    Collections.sort(topLevelGroupNames);
+    List<String> topLevelGroupNames = ContainerUtil.sorted(getTopLevelGroupNames(grouper));
 
     List<AnAction> result = new ArrayList<>();
     result.add(new MoveModulesOutsideGroupAction());

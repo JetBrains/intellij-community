@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jediterm-ui" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.jediterm:jediterm-ui:3.63">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.63/jediterm-ui-3.63.jar">
+              <sha256sum>f3c217238cb57452e1a4a8dd63233abe9b67a82bcff10891c41b3f38c0e9465e</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.63/jediterm-ui-3.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/jediterm/jediterm-ui/3.63/jediterm-ui-3.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

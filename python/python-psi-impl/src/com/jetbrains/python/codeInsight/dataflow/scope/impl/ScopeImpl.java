@@ -9,19 +9,47 @@ import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.PyImportedNameDefiner;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyNonlocalStatement;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyTypeCheckedElementVisitor;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ScopeImpl implements Scope {
   private volatile Instruction[] myFlow;
@@ -46,9 +74,10 @@ public class ScopeImpl implements Scope {
   }
 
   @Override
-  public ScopeVariable getDeclaredVariable(@NotNull final PsiElement anchorElement,
-                                           @NotNull final String name) throws DFALimitExceededException {
-    computeScopeVariables();
+  public ScopeVariable getDeclaredVariable(final @NotNull PsiElement anchorElement,
+                                           final @NotNull String name,
+                                           final @NotNull TypeEvalContext typeEvalContext) throws DFALimitExceededException {
+    computeScopeVariables(typeEvalContext);
     for (int i = 0; i < myFlow.length; i++) {
       Instruction instruction = myFlow[i];
       final PsiElement element = instruction.getElement();
@@ -59,10 +88,10 @@ public class ScopeImpl implements Scope {
     return null;
   }
 
-  private synchronized void computeScopeVariables() throws DFALimitExceededException {
+  private synchronized void computeScopeVariables(@NotNull TypeEvalContext typeEvalContext) throws DFALimitExceededException {
     computeFlow();
     if (myCachedScopeVariables == null) {
-      final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
+      final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance(typeEvalContext);
       final PyReachingDefsSemilattice semilattice = new PyReachingDefsSemilattice();
       final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<>(myFlow, dfaInstance, semilattice);
       myCachedScopeVariables = engine.performDFA();
@@ -111,14 +140,6 @@ public class ScopeImpl implements Scope {
     return myNonlocals.contains(name);
   }
 
-  @Override
-  public boolean hasNestedScopes() {
-    if (myNestedScopes == null) {
-      collectDeclarations();
-    }
-    return !myNestedScopes.isEmpty();
-  }
-
   private boolean isAugAssignment(final String name) {
     if (myAugAssignments == null || myNestedScopes == null) {
       collectDeclarations();
@@ -131,12 +152,10 @@ public class ScopeImpl implements Scope {
     if (myNamedElements == null || myImportedNameDefiners == null) {
       collectDeclarations();
     }
-    // Check for isGlobal is omitted intentionally, since it visits nested scopes.
-    // Thus, containsDeclaration would always return false for globals.
     if (isNonlocal(name)) {
       return false;
     }
-    if (!getNamedElements(name, true).isEmpty()) {
+    if (!getNamedElements(name, myFlowOwner instanceof PyFile).isEmpty()) {
       return true;
     }
     if (isAugAssignment(name)) {
@@ -150,41 +169,43 @@ public class ScopeImpl implements Scope {
     return false;
   }
 
-  @NotNull
   @Override
-  public List<PyImportedNameDefiner> getImportedNameDefiners() {
+  public @NotNull List<PyImportedNameDefiner> getImportedNameDefiners() {
     if (myImportedNameDefiners == null) {
       collectDeclarations();
     }
     return myImportedNameDefiners;
   }
 
-  @NotNull
   @Override
-  public Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
-    if (myNamedElements == null) {
+  public @NotNull Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
+    if (myNamedElements == null || myNestedScopes == null) {
       collectDeclarations();
     }
-    if (myNamedElements.containsKey(name)) {
-      final Collection<PsiNamedElement> elements = myNamedElements.get(name);
-      elements.forEach(PyPsiUtils::assertValid);
-      return elements;
-    }
-    if (includeNestedGlobals && isGlobal(name)) {
+    final Collection<PsiNamedElement> elements = new ArrayList<>(myNamedElements.getOrDefault(name, List.of()));
+    if (includeNestedGlobals) {
       for (Scope scope : myNestedScopes) {
-        final Collection<PsiNamedElement> globals = scope.getNamedElements(name, true);
-        if (!globals.isEmpty()) {
-          globals.forEach(PyPsiUtils::assertValid);
-          return globals;
-        }
+        ((ScopeImpl)scope).collectGlobals(name, elements);
       }
     }
-    return Collections.emptyList();
+    elements.forEach(PyPsiUtils::assertValid);
+    return elements;
   }
 
-  @NotNull
+  private void collectGlobals(String name, @NotNull Collection<PsiNamedElement> results) {
+    if (myGlobals == null || myNamedElements == null || myNestedScopes == null) {
+      collectDeclarations();
+    }
+    if (myGlobals.contains(name)) {
+      results.addAll(myNamedElements.getOrDefault(name, List.of()));
+    }
+    for (Scope scope : myNestedScopes) {
+      ((ScopeImpl)scope).collectGlobals(name, results);
+    }
+  }
+
   @Override
-  public Collection<PsiNamedElement> getNamedElements() {
+  public @NotNull Collection<PsiNamedElement> getNamedElements() {
     if (myNamedElements == null) {
       collectDeclarations();
     }
@@ -195,13 +216,20 @@ public class ScopeImpl implements Scope {
     return results;
   }
 
-  @NotNull
   @Override
-  public Collection<PyTargetExpression> getTargetExpressions() {
+  public @NotNull Collection<PyTargetExpression> getTargetExpressions() {
     if (myTargetExpressions == null) {
       collectDeclarations();
     }
     return myTargetExpressions;
+  }
+
+  @Override
+  public @NotNull Set<String> getGlobals() {
+    if (myGlobals == null) {
+      collectDeclarations();
+    }
+    return myGlobals;
   }
 
   private void collectDeclarations() {
@@ -212,7 +240,31 @@ public class ScopeImpl implements Scope {
     final Set<String> nonlocals = new HashSet<>();
     final Set<String> augAssignments = new HashSet<>();
     final List<PyTargetExpression> targetExpressions = new ArrayList<>();
-    myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
+    final LanguageLevel languageLevel;
+    if (myFlowOwner instanceof PyFile pyFile) {
+      languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(pyFile);
+    }
+    else if (myFlowOwner instanceof PyClass pyClass) {
+      languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(pyClass.getContainingFile());
+    }
+    else {
+      languageLevel = null;
+    }
+    if (myFlowOwner instanceof PyCodeFragmentWithHiddenImports fragment) {
+      var pseudoImports = fragment.getPseudoImports();
+      for (PyImportStatementBase importStmt : pseudoImports) {
+        importStmt.accept(new PyTypeCheckedElementVisitor(languageLevel) {
+          @Override
+          public void visitPyElement(@NotNull PyElement node) {
+            if (node instanceof PyImportedNameDefiner definer) {
+              importedNameDefiners.add(definer);
+            }
+            super.visitPyElement(node);
+          }
+        });
+      }
+    }
+    myFlowOwner.acceptChildren(new PyTypeCheckedElementVisitor(languageLevel) {
       @Override
       public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
         targetExpressions.add(node);
@@ -300,7 +352,7 @@ public class ScopeImpl implements Scope {
       }
 
       private void processNamedElement(@NotNull PsiNamedElement element) {
-        namedElements.computeIfAbsent(element.getName(), __ -> new LinkedHashSet<PsiNamedElement>()).add(element);
+        namedElements.computeIfAbsent(element.getName(), __ -> new LinkedHashSet<>()).add(element);
       }
     });
 

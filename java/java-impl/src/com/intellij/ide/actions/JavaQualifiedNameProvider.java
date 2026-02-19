@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -11,9 +11,38 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiJavaModuleReference;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -24,43 +53,39 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class JavaQualifiedNameProvider implements QualifiedNameProvider {
+
+public final class JavaQualifiedNameProvider implements QualifiedNameProvider {
   private static final Logger LOG = Logger.getInstance(JavaQualifiedNameProvider.class);
 
   @Override
-  @Nullable
-  public PsiElement adjustElementToCopy(final PsiElement element) {
+  public @Nullable PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     if (element instanceof PsiPackage) return element;
     if (element instanceof PsiDirectory) {
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
       if (psiPackage != null) return psiPackage;
     }
-    if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
+    if (!(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
       return element.getParent();
     }
     return null;
   }
 
   @Override
-  @Nullable
-  public String getQualifiedName(PsiElement element) {
-    if (element instanceof PsiPackage) {
-      return ((PsiPackage)element).getQualifiedName();
+  public @Nullable String getQualifiedName(@NotNull PsiElement element) {
+    if (element instanceof PsiPackage pkg) {
+      return pkg.getQualifiedName();
     }
 
-    if (element instanceof PsiJavaModule) {
-      return ((PsiJavaModule)element).getName();
+    if (element instanceof PsiJavaModule module) {
+      return module.getName();
     }
 
-    if (element instanceof PsiJavaModuleReferenceElement) {
-      PsiReference reference = element.getReference();
+    if (element instanceof PsiJavaModuleReferenceElement ref) {
+      PsiJavaModuleReference reference = ref.getReference();
       if (reference != null) {
-        PsiElement target = reference.resolve();
-        if (target instanceof PsiJavaModule) {
-          return ((PsiJavaModule)target).getName();
+        PsiJavaModule target = reference.resolve();
+        if (target != null) {
+          return target.getName();
         }
       }
     }
@@ -69,12 +94,11 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getQualifiedName();
     }
-    else if (element instanceof PsiMember) {
-      final PsiMember member = (PsiMember)element;
+    else if (element instanceof PsiMember member) {
       String memberFqn = getMethodOrFieldQualifiedName(member);
       if (memberFqn == null) return null;
-      if (member instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)member)) {
-        return memberFqn + getParameterString((PsiMethod)member);
+      if (member instanceof PsiMethod method && MethodSignatureUtil.hasOverloads(method)) {
+        return memberFqn + getParameterString(method);
       }
       return memberFqn;
     }
@@ -92,7 +116,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   @Override
-  public PsiElement qualifiedNameToElement(final String fqn, final Project project) {
+  public PsiElement qualifiedNameToElement(@NotNull String fqn, @NotNull Project project) {
     final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(fqn);
     if (psiPackage != null) {
       return psiPackage;
@@ -152,7 +176,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   @Override
-  public void insertQualifiedName(String fqn, final PsiElement element, final Editor editor, final Project project) {
+  public void insertQualifiedName(@NotNull String fqn, @NotNull PsiElement element, @NotNull Editor editor, @NotNull Project project) {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = editor.getDocument();
 
@@ -174,7 +198,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       PsiClass aClass = member.getContainingClass();
       String className = aClass == null ? "" : aClass.getQualifiedName();
       toInsert = className == null ? "" : className;
-      if (toInsert.length() != 0) toInsert += "#";
+      if (!toInsert.isEmpty()) toInsert += "#";
       toInsert += member.getName();
       if (member instanceof PsiMethod) {
         toInsert += getParameterString((PsiMethod)member, true);
@@ -207,7 +231,8 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
           // pasting reference to default constructor of the class after new
           suffix = "()";
         }
-        else if (toInsert != null && toInsert.length() != 0 && Character.isJavaIdentifierPart(toInsert.charAt(toInsert.length()-1)) && Character.isJavaIdentifierPart(elementAtCaret.getText().charAt(0))) {
+        else if (toInsert != null &&
+                 !toInsert.isEmpty() && Character.isJavaIdentifierPart(toInsert.charAt(toInsert.length()-1)) && Character.isJavaIdentifierPart(elementAtCaret.getText().charAt(0))) {
           //separate identifiers with space
           suffix = " ";
         }
@@ -302,8 +327,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     return resolved == targetElement;
   }
 
-  @Nullable
-  private static PsiElement getMember(PsiElement element) {
+  private static @Nullable PsiElement getMember(PsiElement element) {
     if (element instanceof PsiMember) return element;
 
     if (element instanceof PsiReference) {
@@ -336,8 +360,14 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   private static void shortenReference(PsiElement element) throws IncorrectOperationException {
-    while (element.getParent() instanceof PsiJavaCodeReferenceElement) {
-      element = element.getParent();
+    PsiDocMethodOrFieldRef javadocRef = PsiTreeUtil.getParentOfType(element, PsiDocMethodOrFieldRef.class);
+    if (javadocRef != null) {
+      element = javadocRef;
+    }
+    else {
+      while (element.getParent() instanceof PsiJavaCodeReferenceElement) {
+        element = element.getParent();
+      }
     }
     JavaCodeStyleManager codeStyleManagerEx = JavaCodeStyleManager.getInstance(element.getProject());
     codeStyleManagerEx.shortenClassReferences(element, JavaCodeStyleManager.INCOMPLETE_CODE);

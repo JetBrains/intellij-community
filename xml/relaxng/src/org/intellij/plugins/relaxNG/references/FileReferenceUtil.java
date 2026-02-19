@@ -19,7 +19,9 @@ package org.intellij.plugins.relaxNG.references;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PsiFilePattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.NotNullFunction;
@@ -27,9 +29,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.patterns.XmlPatterns.*;
+import static com.intellij.patterns.XmlPatterns.string;
+import static com.intellij.patterns.XmlPatterns.xmlFile;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
-public class FileReferenceUtil {
+public final class FileReferenceUtil {
 
   public static PsiReference[] restrict(FileReferenceSet set, final Condition<? super PsiFile> cond) {
     return restrict(set, cond, null);

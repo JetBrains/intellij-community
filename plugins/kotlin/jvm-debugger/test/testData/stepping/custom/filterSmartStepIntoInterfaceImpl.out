@@ -1,0 +1,9 @@
+LineBreakpoint created at filterSmartStepIntoInterfaceImpl.kt:17
+Run Java
+Connected to the target VM
+filterSmartStepIntoInterfaceImpl.kt:17
+filterSmartStepIntoInterfaceImpl.kt:9
+filterSmartStepIntoInterfaceImpl.kt:17
+Disconnected from the target VM
+
+Process finished with exit code 0

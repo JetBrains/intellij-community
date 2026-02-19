@@ -1,0 +1,7 @@
+// IGNORE_K1
+interface A
+
+class ClassProperty {
+    val a1 = object : A {}
+    val a: A = a1
+}

@@ -15,7 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.AutoCompletionContext;
+import com.intellij.codeInsight.completion.AutoCompletionDecision;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaMethodMergingContributor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -29,7 +35,7 @@ import java.util.ArrayList;
 /**
  * @author Maxim.Medvedev
  */
-public class GrMethodMergingContributor extends CompletionContributor {
+public final class GrMethodMergingContributor extends CompletionContributor {
   @Override
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     final CompletionParameters parameters = context.getParameters();
@@ -47,11 +53,10 @@ public class GrMethodMergingContributor extends CompletionContributor {
       final ArrayList<PsiMethod> allMethods = new ArrayList<>();
       for (LookupElement item : items) {
         Object o = item.getPsiElement();
-        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
+        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod method)) {
           return AutoCompletionDecision.SHOW_LOOKUP;
         }
 
-        PsiMethod method = (PsiMethod)o;
         String name = JavaMethodMergingContributor.joinLookupStrings(item);
 
         if (commonName != null && !commonName.equals(name)) {

@@ -1,0 +1,90 @@
+### auto-generated section `build intellij.repository.search` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_repository-search",
+  opt_in = [
+    "kotlinx.serialization.InternalSerializationApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+  ]
+)
+
+resourcegroup(
+  name = "repository-search_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "repository-search",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":repository-search_resources"],
+  exports = ["@lib//:package-search-api-client"],
+  runtime_deps = [
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/maven-model",
+    "//platform/statistics",
+    "//libraries/gson",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/coroutines/slf4j",
+    "//libraries/io",
+    "//libraries/ktor/client",
+    "@lib//:package-search-api-client",
+    "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
+    "//libraries/mvstore",
+    "//platform/eel",
+  ]
+)
+
+jvm_library(
+  name = "repository-search_test_lib",
+  module_name = "intellij.repository.search",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = ":custom_repository-search",
+  exports = ["@lib//:package-search-api-client"],
+  runtime_deps = [
+    ":repository-search",
+    "//platform/core-api:core_test_lib",
+    "//platform/core-ui",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/lang-api:lang_test_lib",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/maven-model:maven-model_test_lib",
+    "//platform/statistics:statistics_test_lib",
+    "//libraries/gson:gson_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/kotlinx/serialization/core:core_test_lib",
+    "//libraries/kotlinx/serialization/json:json_test_lib",
+    "//libraries/kotlinx/coroutines/slf4j:slf4j_test_lib",
+    "@lib//:ktor-client-mock",
+    "//libraries/kotlinx/coroutines/test",
+    "//libraries/kotlinx/coroutines/test:test_test_lib",
+    "//libraries/io:io_test_lib",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore_test_lib",
+    "//libraries/mvstore:mvstore_test_lib",
+    "//platform/eel:eel_test_lib",
+  ]
+)
+### auto-generated section `build intellij.repository.search` end

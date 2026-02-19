@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
@@ -9,7 +9,20 @@ import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,16 +33,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 final class ClosureFolding {
-  @NotNull private final PsiAnonymousClass myAnonymousClass;
-  @NotNull private final PsiNewExpression myNewExpression;
-  @Nullable private final PsiClass myBaseClass;
-  @NotNull private final JavaFoldingBuilderBase myBuilder;
-  @NotNull private final PsiMethod myMethod;
-  @NotNull final PsiCodeBlock methodBody;
+  private final @NotNull PsiAnonymousClass myAnonymousClass;
+  private final @NotNull PsiNewExpression myNewExpression;
+  private final @Nullable PsiClass myBaseClass;
+  private final @NotNull JavaFoldingBuilderBase myBuilder;
+  private final @NotNull PsiMethod myMethod;
+  final @NotNull PsiCodeBlock methodBody;
   private final boolean myQuick;
 
   private ClosureFolding(@NotNull PsiAnonymousClass anonymousClass,
@@ -105,12 +115,11 @@ final class ClosureFolding {
     return myNewExpression.getTextRange().getStartOffset();
   }
 
-  @Nullable
-  private List<FoldingDescriptor> createDescriptors(@NotNull PsiElement classRBrace,
-                                                    int rangeStart,
-                                                    int rangeEnd,
-                                                    @NotNull String header,
-                                                    @NotNull String footer) {
+  private @Nullable List<FoldingDescriptor> createDescriptors(@NotNull PsiElement classRBrace,
+                                                              int rangeStart,
+                                                              int rangeEnd,
+                                                              @NotNull String header,
+                                                              @NotNull String footer) {
     if (rangeStart >= rangeEnd) return null;
 
     FoldingGroup group = FoldingGroup.newGroup("lambda");
@@ -124,8 +133,7 @@ final class ClosureFolding {
     return foldElements;
   }
 
-  @Nullable
-  private static String getClosureContents(int rangeStart, int rangeEnd, @NotNull CharSequence seq) {
+  private static @Nullable String getClosureContents(int rangeStart, int rangeEnd, @NotNull CharSequence seq) {
     int firstLineStart = CharArrayUtil.shiftForward(seq, rangeStart, " \t");
     if (firstLineStart < seq.length() - 1 && seq.charAt(firstLineStart) == '\n') firstLineStart++;
 
@@ -135,16 +143,14 @@ final class ClosureFolding {
     return seq.subSequence(firstLineStart, lastLineEnd).toString();
   }
 
-  @NotNull
-  private String getFoldingHeader() {
+  private @NotNull String getFoldingHeader() {
     String methodName = shouldShowMethodName() ? myMethod.getName() : "";
     String type = myQuick ? "" : getOptionalLambdaType();
     String params = StringUtil.join(myMethod.getParameterList().getParameters(), psiParameter -> psiParameter.getName(), ", ");
     return type + methodName + "(" + params + ") " + myBuilder.rightArrow() + " {";
   }
 
-  @Nullable
-  static ClosureFolding prepare(@NotNull PsiAnonymousClass anonymousClass, boolean quick, @NotNull JavaFoldingBuilderBase builder) {
+  static @Nullable ClosureFolding prepare(@NotNull PsiAnonymousClass anonymousClass, boolean quick, @NotNull JavaFoldingBuilderBase builder) {
     PsiElement parent = anonymousClass.getParent();
     if (parent instanceof PsiNewExpression && hasNoArguments((PsiNewExpression)parent)) {
       PsiClass baseClass = quick ? null : anonymousClass.getBaseClassType().resolve();
@@ -195,11 +201,10 @@ final class ClosureFolding {
   static boolean seemsLikeLambda(@Nullable PsiClass baseClass, @NotNull PsiElement context) {
     if (baseClass == null || !PsiUtil.hasDefaultConstructor(baseClass, true)) return false;
 
-    return !PsiUtil.isLanguageLevel8OrHigher(context) || !LambdaUtil.isFunctionalClass(baseClass);
+    return !PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, context) || !LambdaUtil.isFunctionalClass(baseClass);
   }
 
-  @NotNull
-  private String getOptionalLambdaType() {
+  private @NotNull String getOptionalLambdaType() {
     if (myBuilder.shouldShowExplicitLambdaType(myAnonymousClass, myNewExpression)) {
       String baseClassName = Objects.requireNonNull(myAnonymousClass.getBaseClassType().resolve()).getName();
       if (baseClassName != null) {

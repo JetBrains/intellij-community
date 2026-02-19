@@ -1,0 +1,25 @@
+================ Step #1 =================
+Cleaning output files:
+  module-info.class
+End of files
+Compiling files:
+  java/java9-features/removeTransitiveModuleRequires/b/module-info.java
+End of files
+Cleaning output files:
+  module-info.class
+  qqq/Client.class
+End of files
+Compiling files:
+  java/java9-features/removeTransitiveModuleRequires/b/module-info.java
+  java/java9-features/removeTransitiveModuleRequires/b/qqq/Client.java
+End of files
+Cleaning output files:
+  module-info.class
+  qqq2/ClientC.class
+End of files
+Compiling files:
+  java/java9-features/removeTransitiveModuleRequires/c/module-info.java
+  java/java9-features/removeTransitiveModuleRequires/c/qqq2/ClientC.java
+End of files
+------------------------------------------
+Exit code: ERROR

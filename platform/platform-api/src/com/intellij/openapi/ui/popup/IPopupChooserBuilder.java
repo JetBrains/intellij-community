@@ -1,21 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
-import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnknownNullability;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.util.Set;
+
+import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
+import static javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION;
+import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
+import static javax.swing.SwingConstants.CENTER;
+import static javax.swing.SwingConstants.LEADING;
+import static javax.swing.SwingConstants.LEFT;
+import static javax.swing.SwingConstants.RIGHT;
+import static javax.swing.SwingConstants.TRAILING;
 
 public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> setRenderer(ListCellRenderer<? super T> renderer);
@@ -48,6 +64,8 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setNamerForFiltering(Function<? super T, String> namer);
 
+  IPopupChooserBuilder<T> setFilterAlwaysVisible(boolean state);
+
   IPopupChooserBuilder<T> setAutoPackHeightOnFiltering(boolean autoPackHeightOnFiltering);
 
   IPopupChooserBuilder<T> setModalContext(boolean modalContext);
@@ -70,17 +88,23 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setAdText(@PopupAdvertisement String ad);
 
-  IPopupChooserBuilder<T> setAdText(@PopupAdvertisement String ad, int alignment);
+  IPopupChooserBuilder<T> setAdText(@PopupAdvertisement String ad,
+                                    @MagicConstant(intValues = {LEFT, RIGHT, CENTER, LEADING, TRAILING}) int alignment);
+
+  IPopupChooserBuilder<T> setAdvertiser(@Nullable JComponent advertiser);
 
   IPopupChooserBuilder<T> setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
 
-  IPopupChooserBuilder<T> setSelectionMode(int selection);
+  IPopupChooserBuilder<T> setCancelOnOtherWindowOpen(boolean cancelOnWindow);
+
+  IPopupChooserBuilder<T> setSelectionMode(
+    @MagicConstant(intValues = {SINGLE_SELECTION, SINGLE_INTERVAL_SELECTION, MULTIPLE_INTERVAL_SELECTION}) int selection);
 
   IPopupChooserBuilder<T> setSelectedValue(T preselection, boolean shouldScroll);
 
-  IPopupChooserBuilder<T> setAccessibleName(String title);
+  IPopupChooserBuilder<T> setAccessibleName(@Nls String title);
 
-  IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super T> c);
+  IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<? super @UnknownNullability T> c);
 
   IPopupChooserBuilder<T> withHintUpdateSupply();
 
@@ -88,7 +112,9 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount);
 
+  IPopupChooserBuilder<T> withFixedRendererSize(@NotNull Dimension dimension);
+
   @NotNull JBPopup createPopup();
 
-  ListComponentUpdater getBackgroundUpdater();
+  GenericListComponentUpdater<T> getBackgroundUpdater();
 }

@@ -1,44 +1,42 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
-import gnu.trove.THashMap;
+import com.intellij.util.containers.CanonicalFileHashStrategy;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-/**
-* @author Eugene Zhuravlev
-*/
-class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
+final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
   private final CompileContext myContext;
-  private final Map<BuildTarget<?>, BuildOutputConsumerImpl> myTarget2Consumer = new THashMap<>();
-  private final Map<String, CompiledClass> myClasses = new THashMap<>();
-  private final Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new THashMap<>();
-
+  private final Map<BuildTarget<?>, BuildOutputConsumerImpl> targetToConsumer = new HashMap<>();
+  private final Map<String, CompiledClass> myClasses = new HashMap<>();
+  private final Map<BuildTarget<?>, Collection<CompiledClass>> myTargetToClassesMap = new HashMap<>();
+  private final Object2ObjectMap<File, String> myOutputToBuilderNameMap =
+    Object2ObjectMaps.synchronize(new Object2ObjectOpenCustomHashMap<>(CanonicalFileHashStrategy.INSTANCE));
+  private volatile String myCurrentBuilderName;
+  
   ChunkBuildOutputConsumerImpl(CompileContext context) {
     myContext = context;
+  }
+
+  public void setCurrentBuilderName(String builderName) {
+    myCurrentBuilderName = builderName;
   }
 
   @Override
@@ -47,18 +45,16 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
     if (classes != null) {
       return Collections.unmodifiableCollection(classes);
     }
-    return Collections.emptyList();
+    return List.of();
   }
 
-  @NotNull
   @Override
-  public Map<String, CompiledClass> getCompiledClasses() {
+  public @NotNull Map<String, CompiledClass> getCompiledClasses() {
     return Collections.unmodifiableMap(myClasses);
   }
 
   @Override
-  @Nullable
-  public BinaryContent lookupClassBytes(String className) {
+  public @Nullable BinaryContent lookupClassBytes(String className) {
     final CompiledClass object = myClasses.get(className);
     return object != null ? object.getContent() : null;
   }
@@ -83,31 +79,43 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
 
   @Override
   public void registerOutputFile(@NotNull BuildTarget<?> target, File outputFile, Collection<String> sourcePaths) throws IOException {
-    BuildOutputConsumerImpl consumer = myTarget2Consumer.get(target);
+    final String currentBuilder = myCurrentBuilderName;
+    if (currentBuilder != null) {
+      final String previousBuilder = myOutputToBuilderNameMap.put(outputFile, currentBuilder);
+      if (previousBuilder != null && !previousBuilder.equals(currentBuilder)) {
+        final String source = sourcePaths.isEmpty() ? null : sourcePaths.iterator().next();
+        myContext.processMessage(new CompilerMessage(
+          currentBuilder, BuildMessage.Kind.ERROR,
+          JpsBuildBundle.message("build.message.conflicting.outputs.error", outputFile.getAbsolutePath(), previousBuilder), source
+        ));
+      }
+    }
+    BuildOutputConsumerImpl consumer = targetToConsumer.get(target);
     if (consumer == null) {
       consumer = new BuildOutputConsumerImpl(target, myContext);
-      myTarget2Consumer.put(target, consumer);
+      targetToConsumer.put(target, consumer);
     }
     consumer.registerOutputFile(outputFile, sourcePaths);
   }
 
   public void fireFileGeneratedEvents() {
-    for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
+    for (BuildOutputConsumerImpl consumer : targetToConsumer.values()) {
       consumer.fireFileGeneratedEvent();
     }
   }
 
   public int getNumberOfProcessedSources() {
     int total = 0;
-    for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
+    for (BuildOutputConsumerImpl consumer : targetToConsumer.values()) {
       total += consumer.getNumberOfProcessedSources();
     }
     return total;
   }
 
   public void clear() {
-    myTarget2Consumer.clear();
+    targetToConsumer.clear();
     myClasses.clear();
     myTargetToClassesMap.clear();
+    myOutputToBuilderNameMap.clear();
   }
 }

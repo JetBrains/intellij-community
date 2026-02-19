@@ -31,7 +31,7 @@ class GrazieLanguagesPopupElementRenderer(list: ListPopupImpl) : PopupListElemen
   }
 
   override fun customizeComponent(list: JList<out Lang>, lang: Lang, isSelected: Boolean) {
-    @NlsSafe val size = lang.remote.size.takeUnless { lang.isAvailable() } ?: ""
+    @NlsSafe val size = lang.size.toString().takeUnless { lang.isAvailable() } ?: ""
     mySizeLabel.configure {
       text = size
       foreground = myTextLabel.foreground.takeIf { isSelected } ?: Color.GRAY

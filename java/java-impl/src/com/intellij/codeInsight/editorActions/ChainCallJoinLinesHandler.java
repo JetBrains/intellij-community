@@ -1,9 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -21,9 +30,9 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * sb.append(a).append(b);
  * }</pre>
  */
-public class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
-  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
+  public int tryJoinLines(final @NotNull Document document, final @NotNull PsiFile psiFile, final int start, final int end) {
     PsiJavaToken elementAtStartLineEnd = tryCast(psiFile.findElementAt(start), PsiJavaToken.class);
     if (elementAtStartLineEnd == null || !elementAtStartLineEnd.getTokenType().equals(JavaTokenType.SEMICOLON)) return CANNOT_JOIN;
     PsiExpressionStatement secondStatement = PsiTreeUtil.getParentOfType(psiFile.findElementAt(end), PsiExpressionStatement.class);
@@ -42,8 +51,7 @@ public class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
         result = joinAssignmentAndCall((PsiAssignmentExpression)firstExpression, secondCall);
       }
     }
-    else if (firstStatement instanceof PsiLocalVariable) {
-      PsiLocalVariable var = (PsiLocalVariable)firstStatement;
+    else if (firstStatement instanceof PsiLocalVariable var) {
       result = joinExpressionAndCall(var, var.getInitializer(), secondCall);
     }
     if (!result) return CANNOT_JOIN;
@@ -88,8 +96,7 @@ public class ChainCallJoinLinesHandler implements JoinLinesHandlerDelegate {
     return true;
   }
 
-  @Nullable
-  static PsiExpression getDeepQualifier(PsiMethodCallExpression firstCall) {
+  static @Nullable PsiExpression getDeepQualifier(PsiMethodCallExpression firstCall) {
     PsiExpression firstQualifier = firstCall;
     while (firstQualifier instanceof PsiMethodCallExpression) {
       firstQualifier = ((PsiMethodCallExpression)firstQualifier).getMethodExpression().getQualifierExpression();

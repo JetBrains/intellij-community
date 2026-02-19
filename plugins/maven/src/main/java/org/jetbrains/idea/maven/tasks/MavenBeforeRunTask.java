@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.BeforeRunTask;
-import com.intellij.util.PathUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -47,7 +47,7 @@ public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
 
   public boolean isFor(MavenProject project, String goal) {
     if (myProjectPath == null || myGoal == null) return false;
-    return PathUtil.pathEqualsTo(project.getFile(), myProjectPath) && goal.equals(myGoal);
+    return VfsUtilCore.pathEqualsTo(project.getFile(), myProjectPath) && goal.equals(myGoal);
   }
 
   @Override
@@ -64,6 +64,7 @@ public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
     myGoal = element.getAttributeValue("goal");
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -77,6 +78,7 @@ public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (myProjectPath != null ? myProjectPath.hashCode() : 0);

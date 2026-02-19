@@ -1,0 +1,9 @@
+- name: dist.all/lib/intellij.xml.xmlbeans.jar
+  modules:
+  - name: intellij.xml.xmlbeans
+    libraries:
+      XmlBeans:
+      - name: $MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/5/xmlbeans-5.jar
+      apache.logging.log4j.to.slf4j:
+      - name: $MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-to-slf4j/2/log4j-to-slf4j-2.jar
+      - name: $MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2/log4j-api-2.jar

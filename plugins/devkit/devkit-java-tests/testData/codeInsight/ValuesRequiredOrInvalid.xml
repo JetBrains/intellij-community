@@ -1,0 +1,21 @@
+<idea-plugin url="<error descr="Must be a valid link to the website using https:// or http:// scheme">mywebsite.com</error>">
+  <id>test</id>
+  <vendor url="<error descr="Must be a valid link to the website using https:// or http:// scheme">mywebsite.com</error>">JetBrains</vendor>
+  <version>1.0</version>
+
+  <<error descr="Value must not be empty">name</error>></name>
+
+  <module value=<error descr="Value must not be empty">""</error>/>
+
+  <description><error descr="Value must have minimum length of 40">
+  <![CDATA[
+   Not enough text <a href="https://jetbrains.com">short</a>
+  ]]>
+  </error></description>
+
+  <change-notes>
+  <![CDATA[
+   No minimum text length <a href="https://jetbrains.com">link</a>
+  ]]>
+  </change-notes>
+</idea-plugin>

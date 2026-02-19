@@ -1,0 +1,8 @@
+{
+
+  <warning descr="Validates against 'not' schema" textAttributesKey="WARNING_ATTRIBUTES">"a": "a"</warning>,
+  "x": "a",
+  "c": "a",
+  "cx": "a"
+}
+ 

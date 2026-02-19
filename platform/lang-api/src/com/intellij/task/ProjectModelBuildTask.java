@@ -2,7 +2,6 @@
 package com.intellij.task;
 
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
   * An {@link ProjectModelBuildTask} represents an IDE task to build {@link ProjectModelBuildableElement}s, e.g. IDE artifacts.

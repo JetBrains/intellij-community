@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="7c064" class="com.intellij.openapi.ui.LabeledComponent" binding="settingsFileComponent">
+      <component id="7c064" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="settingsFileComponent">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -31,7 +31,7 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <component id="fa492" class="com.intellij.openapi.ui.LabeledComponent" binding="localRepositoryComponent">
+      <component id="fa492" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="localRepositoryComponent">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -49,7 +49,7 @@
           <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.override"/>
         </properties>
       </component>
-      <component id="5d3e4" class="com.intellij.openapi.ui.LabeledComponent" binding="mavenHomeComponent" custom-create="true">
+      <component id="5d3e4" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="mavenHomeComponent" custom-create="true">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -58,7 +58,7 @@
           <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.environment.home.directory"/>
         </properties>
       </component>
-      <component id="c53d3" class="com.intellij.openapi.ui.LabeledComponent" binding="mavenVersionLabelComponent" custom-create="true">
+      <component id="c53d3" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="mavenVersionLabelComponent" custom-create="true">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

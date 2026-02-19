@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.idea.TestFor
@@ -6,16 +6,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.CoreProgressManager.shouldEnterModalityState
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
-import org.junit.Ignore
 import java.util.concurrent.atomic.AtomicInteger
 
 class ProgressManagerContractsTest : LightPlatformTestCase() {
   @TestFor(issues = ["IDEA-241785"])
-  fun `test leaked exception from backgroundable task`() {
+  fun `test leaked exception from backgroundable task`(): Unit = rethrowLoggedErrorsIn {
     DefaultLogger.disableStderrDumping(testRootDisposable)
     val message = "this is test exception message to ignore"
     try {
@@ -32,7 +34,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
   }
 
   @TestFor(issues = ["IDEA-241785"])
-  fun `test leaked invokeLater exception from backgroundable task`() {
+  fun `test leaked invokeLater exception from backgroundable task`(): Unit = rethrowLoggedErrorsIn {
     DefaultLogger.disableStderrDumping(testRootDisposable)
     val message = "this is test exception message to ignore"
     try {
@@ -125,7 +127,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     }.queue()
 
     flushEdtEvents { taskCompleted.get() < 3 }
-    assertThat(callbackResult).isEqualTo("fromProgress.1.fromProgress.2.fromPool.")
+    assertThat(callbackResult).isEqualTo("fromProgress.1.fromPool.fromProgress.2.")
   }
 
   @TestFor(issues = ["IDEA-241785"])
@@ -141,7 +143,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     val taskCompleted = AtomicInteger(0)
 
     //we start a BACKGROUNDABLE task
-    object : Task.Backgroundable(project, "mock", true) {
+    object : Task.Backgroundable(project, "Mock", true) {
       override fun run(indicator: ProgressIndicator) {
         // ensure the messages queue is flushed
         ApplicationManager.getApplication().invokeAndWait {
@@ -185,17 +187,54 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     UIUtil.dispatchAllInvocationEvents()
   }
 
-  private inline fun <Y> runWithGuiTasksMode(action: () -> Y): Y {
-    val key = "intellij.progress.task.ignoreHeadless"
-    val prev = System.setProperty(key, "true")
-    try {
-      return action()
-    } finally {
-      if (prev != null) {
-        System.setProperty(key, prev)
-      } else {
-        System.clearProperty(key)
+  @TestFor(issues = ["IDEA-307428"])
+  fun `test should enter modality state`() {
+    fun modalTask(): Task = object : Task.Modal(null, "", true) {
+      override fun run(indicator: ProgressIndicator) = fail()
+    }
+
+    fun bgTask(startInBackground: Boolean): Task = object : Task.Backgroundable(null, "", true, { startInBackground }) {
+      override fun run(indicator: ProgressIndicator) = fail()
+    }
+
+    fun cmTask(startInBackground: Boolean): Task = object : Task.ConditionalModal(null, "", true, { startInBackground }) {
+      override fun run(indicator: ProgressIndicator) = fail()
+    }
+
+    fun doTest(vararg data: Pair<Boolean, Task>) {
+      for ((expected, task) in data) {
+        assertThat(shouldEnterModalityState(task)).isEqualTo(expected)
       }
     }
+
+    val baselineData = arrayOf(
+      true to modalTask(),
+      false to bgTask(false),
+      false to bgTask(true),
+      false to cmTask(false),
+      false to cmTask(true),
+    )
+
+    ApplicationManager.getApplication().executeOnPooledThread {
+      doTest(*baselineData)
+      runWithGuiTasksMode {
+        doTest(*baselineData)
+      }
+    }.get()
+
+    doTest(*baselineData)
+    runWithGuiTasksMode {
+      doTest(
+        true to modalTask(),
+        false to bgTask(false),
+        false to bgTask(true),
+        true to cmTask(false), // this is the only difference with baseline
+        false to cmTask(true),
+      )
+    }
+  }
+
+  private fun runWithGuiTasksMode(action: () -> Unit) {
+    PlatformTestUtil.withSystemProperty<Nothing>("intellij.progress.task.ignoreHeadless", "true", action)
   }
 }

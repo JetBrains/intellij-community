@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.remoteServer.agent.util.log.TerminalListener;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class TerminalHandlerBase extends LoggingHandlerBase implements TerminalHandler {
   private boolean myClosed = false;
@@ -33,8 +33,7 @@ public abstract class TerminalHandlerBase extends LoggingHandlerBase implements 
     myResizeHandler = resizeHandler;
   }
 
-  @NotNull
-  protected TerminalListener.TtyResizeHandler getResizeHandler() {
+  protected @NotNull TerminalListener.TtyResizeHandler getResizeHandler() {
     return myResizeHandler;
   }
 }

@@ -1,15 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
+/**
+ * Please avoid using spinners in new code. This component is marked as obsolete as it no longer aligns with current design guidelines.
+ * <p>
+ * The simplest replacement is a text field with validation — it is both more flexible and easier to maintain.
+ * Typical use cases (e.g., port inputs) do not benefit from increment/decrement buttons; range validation is sufficient.
+ */
+@ApiStatus.Obsolete(since = "2025.3")
 public class JBIntSpinner extends JSpinner {
   public JBIntSpinner(UINumericRange range) {
     this(range.initial, range.min, range.max);
@@ -43,8 +61,7 @@ public class JBIntSpinner extends JSpinner {
     super.setEditor(editor);
   }
 
-  @NotNull
-  private JTextField getTextField() {
+  private @NotNull JTextField getTextField() {
     return ((NumberEditor)getEditor()).getTextField();
   }
 

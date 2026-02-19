@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
@@ -14,14 +15,18 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.Dimension
 import java.awt.Font
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JTextPane
+import javax.swing.ScrollPaneConstants
+import javax.swing.SwingConstants
 import javax.swing.text.StyleConstants
 
 /**
  * @throws IllegalStateException if [project] is not `null` and it is disposed
  */
 fun showProcessExecutionErrorDialog(project: Project?,
-                                    dialogTitle: String,
+                                    @NlsContexts.DialogTitle dialogTitle: String,
                                     command: String,
                                     stdout: String,
                                     stderr: String,

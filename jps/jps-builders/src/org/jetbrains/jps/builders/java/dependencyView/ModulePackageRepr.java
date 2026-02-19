@@ -1,22 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ModulePackageRepr extends Proto {
-  private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<Integer>() {
+final class ModulePackageRepr extends Proto {
+  private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<>() {
     @Override
     public void save(@NotNull DataOutput out, Integer value) throws IOException {
       DataInputOutputUtil.writeINT(out, value);
@@ -27,16 +28,16 @@ public class ModulePackageRepr extends Proto {
       return DataInputOutputUtil.readINT(in);
     }
   };
-  private final Set<Integer> myModuleNames = new THashSet<>();
+  private final Set<Integer> myModuleNames = new HashSet<>();
 
-  protected ModulePackageRepr(DependencyContext context, int name, Collection<String> modules) {
+  ModulePackageRepr(DependencyContext context, int name, Collection<String> modules) {
     super(0, context.get(null), name, Collections.emptySet());
     for (String module : modules) {
       myModuleNames.add(context.get(module));
     }
   }
 
-  protected ModulePackageRepr(DependencyContext context, DataInput in) {
+  private ModulePackageRepr(DependencyContext context, DataInput in) {
     super(context, in);
     RW.read(INT_EXTERNALIZER, myModuleNames, in);
   }
@@ -55,6 +56,7 @@ public class ModulePackageRepr extends Proto {
     RW.save(myModuleNames, INT_EXTERNALIZER, out);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -65,11 +67,12 @@ public class ModulePackageRepr extends Proto {
     return name == ((ModulePackageRepr)o).name;
   }
 
+  @Override
   public int hashCode() {
     return 31 * name;
   }
 
-  public abstract static class Diff extends DifferenceImpl {
+  abstract static class Diff extends DifferenceImpl {
 
     public abstract Specifier<Integer, Difference> targetModules();
 
@@ -99,7 +102,7 @@ public class ModulePackageRepr extends Proto {
     final StringBuilder sb = new StringBuilder();
     sb.append("Module package: ").append(context.getValue(name));
     final Set<Integer> moduleNames = myModuleNames;
-    if (moduleNames != null && !moduleNames.isEmpty()) {
+    if (!moduleNames.isEmpty()) {
       final List<String> names = new ArrayList<>();
       for (Integer moduleName : moduleNames) {
         names.add(context.getValue(moduleName));
@@ -114,7 +117,7 @@ public class ModulePackageRepr extends Proto {
   }
 
   public static DataExternalizer<ModulePackageRepr> externalizer(final DependencyContext context) {
-    return new DataExternalizer<ModulePackageRepr>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, ModulePackageRepr value) {
         value.save(out);

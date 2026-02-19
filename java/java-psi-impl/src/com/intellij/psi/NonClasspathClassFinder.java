@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.PackageDirectoryCache;
+import com.intellij.openapi.roots.PackageDirectoryCache;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,9 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
   private static final Logger LOG = Logger.getInstance(NonClasspathClassFinder.class);
   private static final EverythingGlobalScope ALL_SCOPE = new EverythingGlobalScope();
@@ -52,15 +49,14 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     final MessageBusConnection connection = project.getMessageBus().connect(extensionDisposable);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         clearCache();
       }
     });
     LowMemoryWatcher.register(() -> clearCache(), extensionDisposable);
   }
 
-  @NotNull
-  protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
+  protected @NotNull PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     PackageDirectoryCache cache = myCache;
     if (cache == null) {
       List<VirtualFile> roots = calcClassRoots();
@@ -78,15 +74,6 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return cache;
   }
 
-  /**
-   * @deprecated use {@link PackageDirectoryCache#createCache(List)}
-   */
-  @NotNull
-  @Deprecated
-  protected static PackageDirectoryCache createCache(@NotNull final List<? extends VirtualFile> roots) {
-    return PackageDirectoryCache.createCache(roots);
-  }
-
   public void clearCache() {
     myCache = null;
   }
@@ -101,7 +88,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   @Override
-  public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public PsiClass findClass(final @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final Ref<PsiClass> result = Ref.create();
     processDirectories(StringUtil.getPackageName(qualifiedName), scope, dir -> {
       VirtualFile virtualFile = findChild(dir, StringUtil.getShortName(qualifiedName), myFileExtensions);
@@ -138,9 +125,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
 
-  @NotNull
   @Override
-  public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public @NotNull Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     final Set<String> result = new HashSet<>();
     processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       for (final VirtualFile file : dir.getChildren()) {
@@ -165,9 +151,9 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   @Override
-  public boolean processPackageDirectories(@NotNull final PsiPackage psiPackage,
+  public boolean processPackageDirectories(final @NotNull PsiPackage psiPackage,
                                            @NotNull GlobalSearchScope scope,
-                                           @NotNull final Processor<? super PsiDirectory> consumer,
+                                           final @NotNull Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
     return processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       final PsiDirectory psiDirectory = psiPackage.getManager().findDirectory(dir);
@@ -176,16 +162,21 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   private boolean processDirectories(@NotNull String qualifiedName,
-                                     @NotNull final GlobalSearchScope scope,
-                                     @NotNull final Processor<? super VirtualFile> processor) {
+                                     @NotNull GlobalSearchScope scope,
+                                     final @NotNull Processor<? super VirtualFile> processor) {
+    //TODO use some generic approach
+    if (scope instanceof EverythingGlobalScope) {
+      scope = ALL_SCOPE;
+    }
+    @NotNull GlobalSearchScope finalScope = scope;
     return ContainerUtil.process(getCache(scope).getDirectoriesByPackageName(qualifiedName),
-                                 file -> !scope.contains(file) || processor.process(file));
+                                 file -> !finalScope.contains(file) || processor.process(file));
   }
 
   @Override
   public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     final String pkgName = psiPackage.getQualifiedName();
-    final Set<String> names = getCache(scope).getSubpackageNames(pkgName);
+    final Set<String> names = getCache(scope).getSubpackageNames(pkgName, scope);
     if (names.isEmpty()) {
       return super.getSubPackages(psiPackage, scope);
     }
@@ -203,12 +194,14 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return psiClass == null ? PsiClass.EMPTY_ARRAY : new PsiClass[]{psiClass};
   }
 
-  @NotNull
-  public static GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
+  public static @NotNull GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
     List<GlobalSearchScope> nonClasspathScopes = new SmartList<>();
     for (PsiElementFinder finder : EP.getExtensions(project)) {
       if (finder instanceof NonClasspathClassFinder) {
-        nonClasspathScopes.add(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
+        GlobalSearchScope scope = NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots());
+        if (scope != GlobalSearchScope.EMPTY_SCOPE) {
+          nonClasspathScopes.add(scope);
+        }
       }
     }
     if (nonClasspathScopes.isEmpty()) {
@@ -221,10 +214,9 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return myManager;
   }
 
-  @Nullable
-  private static VirtualFile findChild(@NotNull VirtualFile root,
-                                       @NotNull String relPath,
-                                       String @NotNull [] extensions) {
+  private static @Nullable VirtualFile findChild(@NotNull VirtualFile root,
+                                                 @NotNull String relPath,
+                                                 String @NotNull [] extensions) {
     VirtualFile file = null;
     for (String extension : extensions) {
       file = root.findChild(relPath + '.' + extension);

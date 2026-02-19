@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import org.jetbrains.annotations.NotNull;
 
-class XPathInsertHandler {
+final class XPathInsertHandler {
     private static final Logger LOG = Logger.getInstance(XPathInsertHandler.class.getName());
 
     static void handleInsert(@NotNull InsertionContext context, @NotNull AbstractLookup item) {

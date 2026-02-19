@@ -1,28 +1,52 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.wayland.WaylandUtilKt;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JMenuBar;
+import javax.swing.JPopupMenu;
+import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.plaf.basic.DefaultMenuLayout;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -47,6 +71,48 @@ public class JBPopupMenu extends JPopupMenu {
     myLayout = new MyLayout(this);
     setLayout(myLayout);
     setLightWeightPopupEnabled(false);
+    setOpaque(false);
+  }
+
+  @Override
+  public void show(Component invoker, int x, int y) {
+    if (LOG.isDebugEnabled()) logMenuPosition(invoker, x, y);
+    super.show(invoker, x, y);
+  }
+
+  /**
+   * Logs enough information to be able to reason about what {@link JPopupMenu#adjustPopupLocationToFitScreen(int, int)} does.
+   *
+   * @param invoker as passed to {@code show}
+   * @param x as passed to {@code show}
+   * @param y as passed to {@code show}
+   */
+  private void logMenuPosition(@Nullable Component invoker, int x, int y) {
+    if (GraphicsEnvironment.isHeadless()) return;
+    LOG.debug(
+      "Showing popup menu at " +
+      "x=" + x + ", y=" + y +
+      ", preferredSize=" + getPreferredSize() +
+      ", invokerOrigin=" + (invoker == null ? "null" : invoker.getLocationOnScreen())
+    );
+    LOG.debug("Available raster screens are");
+    var lge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    var tk = Toolkit.getDefaultToolkit();
+    for (GraphicsDevice device : lge.getScreenDevices()) {
+      if (device.getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
+        GraphicsConfiguration dgc = device.getDefaultConfiguration();
+        LOG.debug("bounds=" + dgc.getBounds().toString() + ", insets=" + tk.getScreenInsets(dgc));
+      }
+    }
+    if (invoker != null) {
+      var igc = invoker.getGraphicsConfiguration();
+      LOG.debug("Invoker's screen: " + "bounds=" + igc.getBounds().toString() + ", insets=" + tk.getScreenInsets(igc));
+    }
+    var defGc = lge.getDefaultScreenDevice().getDefaultConfiguration();
+    LOG.debug("Default graphics configuration: " + "bounds=" + defGc.getBounds().toString() + ", insets=" + tk.getScreenInsets(defGc));
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("The menu was invoked from here"));
+    }
   }
 
   @Override
@@ -92,7 +158,7 @@ public class JBPopupMenu extends JPopupMenu {
     // Let's show it somewhere, and once it's shown, move it to the desired location.
     menu.show(component, 0, 0);
     UiNotifyConnector.doWhenFirstShown(menu, () -> {
-      Window window = UIUtil.getWindow(menu);
+      Window window = ComponentUtil.getWindow(menu);
       if (window == null) {
         LOG.error("Cannot find window for menu popup " + menu + ", " + menu.isShowing());
       }
@@ -137,6 +203,12 @@ public class JBPopupMenu extends JPopupMenu {
     menu.show(event.getComponent(), event.getX(), event.getY());
   }
 
+  public static void showByEditor(@NotNull Editor editor, @NotNull JPopupMenu menu) {
+    Component invoker = editor.getContentComponent();
+    Point caretPoint = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
+    menu.show(invoker, caretPoint.x, caretPoint.y);
+  }
+
   /**
    * @param event the mouse event that specifies a popup position
    * @param place the place used for {@link AnActionEvent}
@@ -157,12 +229,21 @@ public class JBPopupMenu extends JPopupMenu {
 
   private static class MyLayout extends DefaultMenuLayout implements ActionListener {
     private final JPopupMenu myTarget;
+    private Point mouseLocation = null;
     int myShift = 0;
     int myScrollDirection = 0;
     Timer myTimer;
+    private final AWTEventListener toolkitListener = new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event instanceof MouseEvent mouseEvent) {
+          mouseLocation = SwingUtilities.convertPoint(mouseEvent.getComponent(), mouseEvent.getPoint(), myTarget);
+        }
+      }
+    };
 
     MyLayout(final JPopupMenu target) {
-      super(target, BoxLayout.PAGE_AXIS);
+      super(target, PAGE_AXIS);
       myTarget = target;
       myTimer = TimerUtil.createNamedTimer("PopupTimer", 40, this);
       myTarget.addPopupMenuListener(new PopupMenuListener() {
@@ -193,33 +274,31 @@ public class JBPopupMenu extends JPopupMenu {
     private void switchTimer(boolean on) {
       if (on && !myTimer.isRunning()) {
         myTimer.start();
+        Toolkit.getDefaultToolkit().addAWTEventListener(toolkitListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
       }
       if (!on && myTimer.isRunning()) {
         myTimer.stop();
+        Toolkit.getDefaultToolkit().removeAWTEventListener(toolkitListener);
       }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
       if (!myTarget.isShowing()) return;
-      PointerInfo info = MouseInfo.getPointerInfo();
-      if (info == null) return;
-      Point mouseLocation = info.getLocation();
-      Point targetLocation = myTarget.getLocationOnScreen();
-      if (mouseLocation.x < targetLocation.x || mouseLocation.x > targetLocation.x + myTarget.getWidth()) {
+      if (mouseLocation == null) return;
+      if (mouseLocation.x < 0 || mouseLocation.x > myTarget.getWidth()) {
         return;
       }
-      if (Math.abs(mouseLocation.y - targetLocation.y - getMaxHeight()) < 10) {
+      if (Math.abs(mouseLocation.y - getMaxHeight()) < 10) {
         myScrollDirection = 1;
       }
-      else if (Math.abs(mouseLocation.y - targetLocation.y) < 10) {
+      else if (Math.abs(mouseLocation.y) < 10) {
         myScrollDirection = -1;
       }
       else {
         return;
       }
 
-      SwingUtilities.convertPointFromScreen(mouseLocation, myTarget);
       myTarget.dispatchEvent(
         new MouseEvent(myTarget, MouseEvent.MOUSE_ENTERED, System.currentTimeMillis(), 0, mouseLocation.x, mouseLocation.y, 0, false));
 
@@ -281,6 +360,14 @@ public class JBPopupMenu extends JPopupMenu {
       Component[] components = target.getComponents();
       int y = -myShift + insets.top;
       for (Component component : components) {
+        if (!component.isVisible()) {
+          String place = target instanceof PlaceProvider ? ((PlaceProvider)target).getPlace() : null;
+          String itemText = component instanceof AbstractButton ?
+                            "\"" + ((AbstractButton)component).getText() + "\"" : component.getClass().getName();
+          LOG.error("Invisible menu item " + itemText + (place != null ? " in '" + place + "'" : "") +
+                    " ("  + component.getClass().getName() + " in " + target.getClass().getName() + ")");
+          continue;
+        }
         int height = component.getPreferredSize().height;
         component.setBounds(insets.left, y, width, height);
         y += height;
@@ -289,17 +376,32 @@ public class JBPopupMenu extends JPopupMenu {
 
     private int getMaxHeight() {
       GraphicsConfiguration configuration = myTarget.getGraphicsConfiguration();
-      if (configuration == null && myTarget.getInvoker() != null) {
-        configuration = myTarget.getInvoker().getGraphicsConfiguration();
+      Component invoker = myTarget.getInvoker();
+      if (configuration == null && invoker != null) {
+        configuration = invoker.getGraphicsConfiguration();
       }
       if (configuration == null) return Short.MAX_VALUE;
       Rectangle screenRectangle = ScreenUtil.getScreenRectangle(configuration);
+      if (ClientSystemInfo.isWaylandToolkit()) {
+        var screenHeight = WaylandUtilKt.getFakeScreenHeight(invoker);
+        if (screenHeight != null) {
+          screenRectangle.height = screenHeight;
+        }
+        else {
+          screenRectangle.height = 600;
+        }
+      }
+
+      if (invoker != null && invoker.getParent() instanceof JMenuBar) {
+        var menuItemHeight = invoker.getSize().height;
+        var y = invoker.getLocationOnScreen().y - screenRectangle.y;
+        return Math.max(y, screenRectangle.height - y - menuItemHeight);
+      }
       return screenRectangle.height;
     }
 
-    @NotNull
     @Override
-    public Dimension preferredLayoutSize(Container target) {
+    public @NotNull Dimension preferredLayoutSize(Container target) {
       Dimension dimension = super.preferredLayoutSize(target);
       int maxHeight = getMaxHeight();
       switchTimer(dimension.height > maxHeight);

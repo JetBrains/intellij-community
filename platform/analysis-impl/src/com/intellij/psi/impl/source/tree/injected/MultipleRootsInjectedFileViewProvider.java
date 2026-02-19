@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.AbstractFileViewProvider;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -28,6 +18,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -80,24 +72,21 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
     return isPhysicalImpl();
   }
 
-  @NotNull
   @Override
-  public Language getBaseLanguage() {
+  public @NotNull Language getBaseLanguage() {
     return myLanguage;
   }
 
-  @NotNull
   @Override
-  public Set<Language> getLanguages() {
+  public @Unmodifiable @NotNull Set<Language> getLanguages() {
     FileViewProvider original = myOriginalProvider;
     Set<Language> languages = original.getLanguages();
     Language base = original.getBaseLanguage();
     return ContainerUtil.map2Set(languages, (language) -> language == base ? myLanguage : language);
   }
 
-  @NotNull
   @Override
-  protected MultiplePsiFilesPerDocumentFileViewProvider cloneInner(@NotNull VirtualFile fileCopy) {
+  protected @NotNull MultiplePsiFilesPerDocumentFileViewProvider cloneInner(@NotNull VirtualFile fileCopy) {
     FileViewProvider originalProvider = getManager().getFileManager().createFileViewProvider(fileCopy, false);
     assert originalProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider :
       "Original provider " + originalProvider + " is not multi-root for " + fileCopy + ", cached provider: " + myOriginalProvider;
@@ -105,14 +94,12 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
   }
 
   @Override
-  @NotNull
-  public DocumentWindowImpl getDocument() {
+  public @NotNull DocumentWindowImpl getDocument() {
     return myDocumentWindow;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "Multi root injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (isPhysical() ? "" : " nonphysical");
   }
 
@@ -142,14 +129,13 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
       assert myOriginalProvider instanceof TemplateLanguageFileViewProvider;
     }
 
-    @NotNull
     @Override
-    public Language getTemplateDataLanguage() {
+    public @NotNull Language getTemplateDataLanguage() {
       return ((TemplateLanguageFileViewProvider)myOriginalProvider).getTemplateDataLanguage();
     }
 
     @Override
-    public IElementType getContentElementType(@NotNull Language language) {
+    public @Nullable IElementType getContentElementType(@NotNull Language language) {
       return ((TemplateLanguageFileViewProvider)myOriginalProvider).getContentElementType(language);
     }
   }

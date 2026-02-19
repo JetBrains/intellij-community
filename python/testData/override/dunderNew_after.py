@@ -5,5 +5,5 @@ class BaseMeta(type):
 
 class MyMeta(BaseMeta):
     def __new__(cls, name, bases, namespace):
-        return super(MyMeta, cls).__new__(cls, name, bases, namespace)
+        return super().__new__(cls, name, bases, namespace)
 

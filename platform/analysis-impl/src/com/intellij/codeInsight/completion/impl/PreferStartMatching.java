@@ -6,9 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.codeInsight.lookup.WeighingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author Peter
-*/
 public class PreferStartMatching extends LookupElementWeigher {
 
   public PreferStartMatching() {

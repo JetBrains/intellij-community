@@ -15,16 +15,25 @@
  */
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.util.Consumer;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsAnnotationRootType;
+import org.jetbrains.jps.model.java.JpsJavaDependenciesRootsEnumerator;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.module.*;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.module.impl.JpsDependenciesRootsEnumeratorBase;
 
-public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRootsEnumeratorBase<JpsJavaDependenciesEnumeratorImpl> implements JpsJavaDependenciesRootsEnumerator {
+import java.util.function.Consumer;
+
+class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRootsEnumeratorBase<JpsJavaDependenciesEnumeratorImpl> implements JpsJavaDependenciesRootsEnumerator {
   private boolean myWithoutSelfModuleOutput;
 
-  public JpsJavaDependenciesRootsEnumeratorImpl(JpsJavaDependenciesEnumeratorImpl dependenciesEnumerator, JpsOrderRootType rootType) {
+  JpsJavaDependenciesRootsEnumeratorImpl(JpsJavaDependenciesEnumeratorImpl dependenciesEnumerator, JpsOrderRootType rootType) {
     super(dependenciesEnumerator, rootType);
   }
 
@@ -45,14 +54,15 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
     }
     else {
       includeProduction = true;
-      includeTests = !myDependenciesEnumerator.isProductionOnly();
+      includeTests = !myDependenciesEnumerator.isProductionOnly() 
+                     && (myDependenciesEnumerator.shouldIncludeTestsFromDependentModulesToTestClasspath() || myDependenciesEnumerator.isEnumerationRootModule(module));
     }
 
     if (myRootType == JpsOrderRootType.SOURCES) {
       for (JpsModuleSourceRoot root : module.getSourceRoots()) {
         JpsModuleSourceRootType<?> type = root.getRootType();
         if (type.equals(JavaSourceRootType.SOURCE) && includeProduction || type.equals(JavaSourceRootType.TEST_SOURCE) && includeTests) {
-          urlConsumer.consume(root.getUrl());
+          urlConsumer.accept(root.getUrl());
         }
       }
     }
@@ -62,7 +72,7 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
         if (includeProduction && includeTests) {
           String url = extensionService.getOutputUrl(module, false);
           if (url != null) {
-            urlConsumer.consume(url);
+            urlConsumer.accept(url);
           }
         }
       }
@@ -71,11 +81,11 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
         if (includeTests) {
           String testsOutputUrl = extensionService.getOutputUrl(module, true);
           if (testsOutputUrl != null && !testsOutputUrl.equals(outputUrl)) {
-            urlConsumer.consume(testsOutputUrl);
+            urlConsumer.accept(testsOutputUrl);
           }
         }
         if (includeProduction && outputUrl != null) {
-          urlConsumer.consume(outputUrl);
+          urlConsumer.accept(outputUrl);
         }
       }
     }
@@ -83,7 +93,7 @@ public class JpsJavaDependenciesRootsEnumeratorImpl extends JpsDependenciesRoots
       JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
       if (extension != null) {
         for (String url : extension.getAnnotationRoots().getUrls()) {
-          urlConsumer.consume(url);
+          urlConsumer.accept(url);
         }
       }
     }

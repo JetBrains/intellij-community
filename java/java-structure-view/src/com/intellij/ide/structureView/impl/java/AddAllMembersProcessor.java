@@ -1,7 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
@@ -35,8 +43,7 @@ class AddAllMembersProcessor implements PsiScopeProcessor {
     if (!isInteresting(element)) return true;
     if (myPsiClass.isInterface() && isObjectMember(element)) return true;
     if (!myAllMembers.contains(member) && isVisible(member, myPsiClass)) {
-      if (member instanceof PsiMethod) {
-        PsiMethod psiMethod = (PsiMethod)member;
+      if (member instanceof PsiMethod psiMethod) {
         if (shouldAdd(psiMethod)) {
           mapMethodBySignature(psiMethod);
           myAllMembers.add(PsiImplUtil.handleMirror(psiMethod));
@@ -92,17 +99,11 @@ class AddAllMembersProcessor implements PsiScopeProcessor {
     return method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  private boolean isVisible(@NotNull PsiMember element, PsiClass psiClass) {
+  private static boolean isVisible(@NotNull PsiMember element, PsiClass psiClass) {
     return !isInheritedConstructor(element, psiClass) && PsiUtil.isAccessible(element, psiClass, null);
   }
 
   private static boolean isInheritedConstructor(PsiMember member, PsiClass psiClass) {
-    if (!(member instanceof PsiMethod))
-      return false;
-    PsiMethod method = (PsiMethod)member;
-    return method.isConstructor() && method.getContainingClass() != psiClass;
+    return member instanceof PsiMethod method && method.isConstructor() && method.getContainingClass() != psiClass;
   }
-
-
-
 }

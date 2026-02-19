@@ -20,21 +20,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectNode;
+import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import java.awt.event.ActionEvent;
 
 public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
   private MavenProject myResult;
 
   public SelectMavenProjectDialog(Project project, final MavenProject current) {
-    super(project, MavenProjectBundle.message("dialog.title.select.maven.project"), MavenProjectsStructure.ProjectNode.class, new NodeSelector() {
+    super(project, MavenProjectBundle.message("dialog.title.select.maven.project"), MavenProjectsStructure.MavenStructureDisplayMode.SHOW_PROJECTS, new NodeSelector() {
       @Override
       public boolean shouldSelect(SimpleNode node) {
-        if (node instanceof MavenProjectsStructure.ProjectNode) {
-          return ((MavenProjectsStructure.ProjectNode)node).getMavenProject() == current;
+        if (node instanceof MavenProjectNode) {
+          return ((MavenProjectNode)node).getMavenProject() == current;
         }
         return false;
       }
@@ -60,7 +63,7 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
     SimpleNode node = getSelectedNode();
     if (node instanceof NullNode) node = null;
 
-    myResult = node instanceof MavenProjectsStructure.ProjectNode ? ((MavenProjectsStructure.ProjectNode)node).getMavenProject() : null;
+    myResult = node instanceof MavenProjectNode ? ((MavenProjectNode)node).getMavenProject() : null;
     super.doOKAction();
   }
 

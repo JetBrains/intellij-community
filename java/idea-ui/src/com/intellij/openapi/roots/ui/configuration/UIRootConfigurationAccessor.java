@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.Module;
@@ -7,25 +7,34 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
-public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
-  private final Project myProject;
 
-  public UIRootConfigurationAccessor(final Project project) {
+public class UIRootConfigurationAccessor extends RootConfigurationAccessor implements RootConfigurationAccessorForWorkspaceModel {
+  private final Project myProject;
+  private final MutableEntityStorage myActualDiffBuilder;
+
+  public UIRootConfigurationAccessor(@NotNull Project project) {
+    this(project, null);
+  }
+
+  public UIRootConfigurationAccessor(@NotNull Project project, @Nullable MutableEntityStorage actualDiffBuilder) {
     myProject = project;
+    myActualDiffBuilder = actualDiffBuilder;
   }
 
   @Override
-  @Nullable
-  public Library getLibrary(Library library, final String libraryName, final String libraryLevel) {
+  public MutableEntityStorage getActualDiffBuilder() {
+    return myActualDiffBuilder;
+  }
+
+  @Override
+  public @Nullable Library getLibrary(Library library, final String libraryName, final String libraryLevel) {
     final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(myProject).getContext();
     if (library == null) {
       if (libraryName != null) {
@@ -42,8 +51,7 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
   }
 
   @Override
-  @Nullable
-  public Sdk getSdk(final Sdk sdk, final String sdkName) {
+  public @Nullable Sdk getSdk(final Sdk sdk, final String sdkName) {
     final ProjectSdksModel model = ProjectStructureConfigurable.getInstance(myProject).getJdkConfig().getJdksTreeModel();
     return sdkName != null ? model.findSdk(sdkName) : sdk;
   }
@@ -51,19 +59,18 @@ public class UIRootConfigurationAccessor extends RootConfigurationAccessor {
   @Override
   public Module getModule(final Module module, final String moduleName) {
     if (module == null) {
-      return ModuleStructureConfigurable.getInstance(myProject).getModule(moduleName);
+      return ProjectStructureConfigurable.getInstance(myProject).getModulesConfig().getModule(moduleName);
     }
     return module;
   }
 
   @Override
-  public Sdk getProjectSdk(@NotNull final Project project) {
+  public Sdk getProjectSdk(final @NotNull Project project) {
     return ProjectStructureConfigurable.getInstance(project).getProjectJdksModel().getProjectSdk();
   }
 
   @Override
-  @Nullable
-  public String getProjectSdkName(@NotNull final Project project) {
+  public @Nullable String getProjectSdkName(final @NotNull Project project) {
     final Sdk projectJdk = getProjectSdk(project);
     if (projectJdk != null) {
       return projectJdk.getName();

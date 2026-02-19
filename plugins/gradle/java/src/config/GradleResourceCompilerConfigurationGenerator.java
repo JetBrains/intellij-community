@@ -1,14 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.ProjectTopics;
+import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
@@ -23,14 +27,19 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.JdomKt;
+import com.intellij.util.PathMapper;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.gradle.model.impl.*;
+import org.jetbrains.jps.gradle.model.impl.GradleModuleResourceConfiguration;
+import org.jetbrains.jps.gradle.model.impl.GradleProjectConfiguration;
+import org.jetbrains.jps.gradle.model.impl.ModuleVersion;
+import org.jetbrains.jps.gradle.model.impl.ResourceRootConfiguration;
+import org.jetbrains.jps.gradle.model.impl.ResourceRootFilter;
 import org.jetbrains.plugins.gradle.model.ExternalFilter;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
@@ -41,39 +50,38 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Vladislav.Soroka
- */
-public class GradleResourceCompilerConfigurationGenerator {
-
+@SuppressWarnings("SSBasedInspection")
+@Service(Service.Level.PROJECT)
+public final class GradleResourceCompilerConfigurationGenerator {
   private static final Logger LOG = Logger.getInstance(GradleResourceCompilerConfigurationGenerator.class);
 
   private final @NotNull Project myProject;
-  private final @NotNull Map<String, Integer> myModulesConfigurationHash;
+  private final @NotNull Map<String, Long> modulesConfigurationHash = new ConcurrentHashMap<>();
   private final ExternalProjectDataCache externalProjectDataCache;
 
   public GradleResourceCompilerConfigurationGenerator(final @NotNull Project project) {
     myProject = project;
-    myModulesConfigurationHash = new ConcurrentHashMap<>();
     externalProjectDataCache = ExternalProjectDataCache.getInstance(project);
     assert externalProjectDataCache != null;
 
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    project.getMessageBus().connect().subscribe(ModuleListener.TOPIC, new ModuleListener() {
       @Override
       public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
-        myModulesConfigurationHash.remove(module.getName());
+        modulesConfigurationHash.remove(module.getName());
       }
 
       @Override
       public void modulesRenamed(@NotNull Project project,
-                                 @NotNull List<Module> modules,
-                                 @NotNull Function<Module, String> oldNameProvider) {
+                                 @NotNull List<? extends Module> modules,
+                                 @NotNull Function<? super Module, String> oldNameProvider) {
         for (Module module : modules) {
           moduleRemoved(project, module);
         }
@@ -81,49 +89,48 @@ public class GradleResourceCompilerConfigurationGenerator {
     });
   }
 
-  public void generateBuildConfiguration(final @NotNull CompileContext context) {
+  public void generateBuildConfiguration(@NotNull CompileContext context) {
+    if (shouldBeBuiltByExternalSystem(myProject) || !hasGradleModules(context)) {
+      return;
+    }
 
-    if (shouldBeBuiltByExternalSystem(myProject)) return;
+    BuildManager buildManager = BuildManager.getInstance();
+    File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
 
-    if (!hasGradleModules(context)) return;
+    File gradleConfigFile = new File(projectSystemDir, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
 
-    final BuildManager buildManager = BuildManager.getInstance();
-    final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
-    if (projectSystemDir == null) return;
-
-    final File gradleConfigFile = new File(projectSystemDir, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
-
-    final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations =
-      generateAffectedGradleModulesConfiguration(context);
+    Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = generateAffectedGradleModulesConfiguration(context);
 
     if (affectedGradleModuleConfigurations.isEmpty()) return;
 
     boolean configurationUpdateRequired = context.isRebuild() || !gradleConfigFile.exists();
 
-    final Map<String, Integer> affectedConfigurationHash = new THashMap<>();
+    Object2LongOpenHashMap<String> affectedConfigurationHash = new Object2LongOpenHashMap<>();
     for (Map.Entry<String, GradleModuleResourceConfiguration> entry : affectedGradleModuleConfigurations.entrySet()) {
-      Integer moduleLastConfigurationHash = myModulesConfigurationHash.get(entry.getKey());
-      int moduleCurrentConfigurationHash = entry.getValue().computeConfigurationHash();
-      if (moduleLastConfigurationHash == null || moduleLastConfigurationHash.intValue() != moduleCurrentConfigurationHash) {
+      Long moduleLastConfigurationHash = modulesConfigurationHash.get(entry.getKey());
+      HashStream64 hash = Hashing.komihash5_0().hashStream();
+      entry.getValue().computeConfigurationHash(hash);
+      long moduleCurrentConfigurationHash = hash.getAsLong();
+      if (moduleLastConfigurationHash == null || moduleLastConfigurationHash.longValue() != moduleCurrentConfigurationHash) {
         configurationUpdateRequired = true;
       }
       affectedConfigurationHash.put(entry.getKey(), moduleCurrentConfigurationHash);
     }
 
-    final GradleProjectConfiguration projectConfig = loadLastConfiguration(gradleConfigFile);
+    GradleProjectConfiguration projectConfig = loadLastConfiguration(gradleConfigFile);
     projectConfig.moduleConfigurations.putAll(affectedGradleModuleConfigurations);
 
-    final Element element = new Element("gradle-project-configuration");
+    Element element = new Element("gradle-project-configuration");
     XmlSerializer.serializeInto(projectConfig, element);
-    final boolean finalConfigurationUpdateRequired = configurationUpdateRequired;
+    boolean finalConfigurationUpdateRequired = configurationUpdateRequired;
     buildManager.runCommand(() -> {
       if (finalConfigurationUpdateRequired) {
         buildManager.clearState(myProject);
       }
       FileUtil.createIfDoesntExist(gradleConfigFile);
       try {
-        JdomKt.write(element, gradleConfigFile.toPath());
-        myModulesConfigurationHash.putAll(affectedConfigurationHash);
+        JDOMUtil.write(element, gradleConfigFile.toPath());
+        modulesConfigurationHash.putAll(affectedConfigurationHash);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -132,13 +139,13 @@ public class GradleResourceCompilerConfigurationGenerator {
   }
 
   private @NotNull GradleProjectConfiguration loadLastConfiguration(@NotNull File gradleConfigFile) {
-    final GradleProjectConfiguration projectConfig = new GradleProjectConfiguration();
+    GradleProjectConfiguration projectConfig = new GradleProjectConfiguration();
     if (gradleConfigFile.exists()) {
       try {
         XmlSerializer.deserializeInto(projectConfig, JDOMUtil.load(gradleConfigFile));
 
         // filter orphan modules
-        final Set<String> actualModules = myModulesConfigurationHash.keySet();
+        Set<String> actualModules = modulesConfigurationHash.keySet();
         for (Iterator<Map.Entry<String, GradleModuleResourceConfiguration>> iterator =
              projectConfig.moduleConfigurations.entrySet().iterator(); iterator.hasNext(); ) {
           Map.Entry<String, GradleModuleResourceConfiguration> configurationEntry = iterator.next();
@@ -156,7 +163,7 @@ public class GradleResourceCompilerConfigurationGenerator {
   }
 
   private @NotNull Map<String, GradleModuleResourceConfiguration> generateAffectedGradleModulesConfiguration(@NotNull CompileContext context) {
-    final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = new THashMap<>();
+    final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = new HashMap<>();
 
     final Map<String, ExternalProject> lazyExternalProjectMap = FactoryMap.create(
       gradleProjectPath1 -> externalProjectDataCache.getRootExternalProject(gradleProjectPath1));
@@ -172,7 +179,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
         String message = GradleBundle.message("compiler.build.messages.gradle.configuration.not.found", module.getName());
-        context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1);
+        context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1, null, Collections.singleton(module.getName()));
         continue;
       }
 
@@ -191,23 +198,35 @@ public class GradleResourceCompilerConfigurationGenerator {
         ExternalSystemApiUtil.getExternalProjectId(module),
         ExternalSystemApiUtil.getExternalProjectVersion(module));
 
-      for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
-        addResources(resourceConfig.resources, sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE),
-                     sourceSet.getSources().get(ExternalSystemSourceType.SOURCE));
-        addResources(resourceConfig.testResources, sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE),
-                     sourceSet.getSources().get(ExternalSystemSourceType.TEST));
+      PathMapper pathMapper = null;
+      for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
+        TargetEnvironmentConfigurationProvider provider = executionAware
+          .getEnvironmentConfigurationProvider(gradleProjectPath, false, context.getProject());
+        if (provider != null) {
+          pathMapper = provider.getPathMapper();
+          break;
+        }
       }
 
+      for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
+        addResources(resourceConfig.resources, sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE),
+                     sourceSet.getSources().get(ExternalSystemSourceType.SOURCE), pathMapper);
+        addResources(resourceConfig.testResources, sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE),
+                     sourceSet.getSources().get(ExternalSystemSourceType.TEST), pathMapper);
+      }
+
+      boolean useCompilerOutputForResources = PlatformUtils.isFleetBackend();
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      if (compilerModuleExtension != null && compilerModuleExtension.isCompilerOutputPathInherited()) {
+      if (compilerModuleExtension != null &&
+          (useCompilerOutputForResources || compilerModuleExtension.isCompilerOutputPathInherited())) {
         String outputPath = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrl());
         for (ResourceRootConfiguration resource : resourceConfig.resources) {
-          resource.targetPath = outputPath;
+          resource.targetPath = toRemote(pathMapper, outputPath);
         }
 
         String testOutputPath = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrlForTests());
         for (ResourceRootConfiguration resource : resourceConfig.testResources) {
-          resource.targetPath = testOutputPath;
+          resource.targetPath = toRemote(pathMapper, testOutputPath);
         }
       }
 
@@ -215,6 +234,10 @@ public class GradleResourceCompilerConfigurationGenerator {
     }
 
     return affectedGradleModuleConfigurations;
+  }
+
+  private static String toRemote(PathMapper pathMapper, String outputPath) {
+    return pathMapper != null ? pathMapper.convertToRemote(outputPath) : outputPath;
   }
 
   private static boolean shouldBeBuiltByExternalSystem(@NotNull Project project) {
@@ -226,7 +249,7 @@ public class GradleResourceCompilerConfigurationGenerator {
   }
 
   private static boolean shouldBeBuiltByExternalSystem(@NotNull Module module) {
-    for (Facet facet : FacetManager.getInstance(module).getAllFacets()) {
+    for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
       if (ArrayUtil.contains(facet.getName(), "Android", "Android-Gradle", "Java-Gradle")) return true;
     }
     return false;
@@ -241,15 +264,16 @@ public class GradleResourceCompilerConfigurationGenerator {
 
   private static void addResources(@NotNull List<ResourceRootConfiguration> container,
                                    final @Nullable ExternalSourceDirectorySet directorySet,
-                                   final @Nullable ExternalSourceDirectorySet sourcesDirectorySet) {
+                                   final @Nullable ExternalSourceDirectorySet sourcesDirectorySet,
+                                   @Nullable PathMapper pathMapper) {
     if (directorySet == null) return;
 
     for (File file : directorySet.getSrcDirs()) {
       final String dir = file.getPath();
       final ResourceRootConfiguration rootConfiguration = new ResourceRootConfiguration();
-      rootConfiguration.directory = FileUtil.toSystemIndependentName(dir);
+      rootConfiguration.directory = toRemote(pathMapper, FileUtil.toSystemIndependentName(dir));
       final String target = directorySet.getOutputDir().getPath();
-      rootConfiguration.targetPath = FileUtil.toSystemIndependentName(target);
+      rootConfiguration.targetPath = toRemote(pathMapper, FileUtil.toSystemIndependentName(target));
 
       rootConfiguration.includes.clear();
       for (String include : directorySet.getPatterns().getIncludes()) {

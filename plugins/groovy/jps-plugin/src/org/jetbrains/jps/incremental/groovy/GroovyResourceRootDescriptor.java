@@ -1,19 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
-import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.file.Path;
 import java.util.Set;
 
-/**
- * @author peter
- */
-class GroovyResourceRootDescriptor extends BuildRootDescriptor {
+final class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   private final CheckResourcesTarget myTarget;
   private final ResourceRootDescriptor myDescriptor;
 
@@ -22,15 +19,13 @@ class GroovyResourceRootDescriptor extends BuildRootDescriptor {
     myTarget = target;
   }
 
-  @NotNull
   @Override
-  public CheckResourcesTarget getTarget() {
+  public @NotNull CheckResourcesTarget getTarget() {
     return myTarget;
   }
 
   @Override
-  @NotNull
-  public FileFilter createFileFilter() {
+  public @NotNull FileFilter createFileFilter() {
     return myDescriptor.createFileFilter();
   }
 
@@ -45,28 +40,17 @@ class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public boolean canUseFileCache() {
-    return myDescriptor.canUseFileCache();
-  }
-
-  @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return myDescriptor.getRootId();
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myDescriptor.getRootFile();
   }
 
   @Override
-  public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
-    return myDescriptor.createFileFilter(descriptor);
-  }
-
-  @NotNull
-  @Override
-  public Set<File> getExcludedRoots() {
+  public @NotNull Set<Path> getExcludedRoots() {
     return myDescriptor.getExcludedRoots();
   }
 }

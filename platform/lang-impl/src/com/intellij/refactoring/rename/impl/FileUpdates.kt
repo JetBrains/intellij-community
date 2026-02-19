@@ -1,26 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.refactoring.suggested.range
+import com.intellij.refactoring.rename.api.FileOperation
 import com.intellij.util.DocumentUtil
 import com.intellij.util.io.write
 import com.intellij.util.text.StringOperation
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-internal class FileUpdates(
-  private val filesToAdd: List<Pair<Path, CharSequence>>,
-  private val filesToMove: List<Pair<VirtualFile, Path>>,
-  private val filesToRemove: List<VirtualFile>,
-  private val documentModifications: List<Pair<RangeMarker, CharSequence>>
+@ApiStatus.Internal
+class FileUpdates(
+  val filesToAdd: List<Pair<Path, CharSequence>>,
+  val filesToMove: List<Pair<VirtualFile, Path>>,
+  val filesToRemove: List<VirtualFile>,
+  val filesToRename: List<Pair<VirtualFile, String>>,
+  val documentModifications: List<Pair<RangeMarker, CharSequence>>
 ) {
-
   fun doUpdate() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
@@ -36,7 +40,7 @@ internal class FileUpdates(
       rangeMarker.document
     }
     for ((document: Document, modifications: List<Pair<RangeMarker, CharSequence>>) in byDocument) {
-      DocumentUtil.executeInBulk(document, true) {
+      DocumentUtil.executeInBulk(document) {
         for ((rangeMarker: RangeMarker, replacement: CharSequence) in modifications) {
           if (!rangeMarker.isValid) {
             LOG.warn("Cannot apply rename patch: invalid range marker. Document: $document, marker: $rangeMarker")
@@ -55,15 +59,25 @@ internal class FileUpdates(
       }
       val parentPath: Path = path.parent ?: continue
       val parentFile: VirtualFile = VfsUtil.findFile(parentPath, false) ?: continue
-      virtualFile.move(this, parentFile)
+      if (parentFile != virtualFile.parent) {
+        virtualFile.move(this, parentFile)
+      }
       val newFileName: String = path.fileName.toString()
       if (virtualFile.name != newFileName) {
         virtualFile.rename(this, newFileName)
       }
     }
 
+    for ((virtualFile: VirtualFile, newName: String) in filesToRename) {
+      if (!virtualFile.isValid) {
+        LOG.warn("Cannot apply rename patch: invalid file to rename. File: $virtualFile")
+        continue
+      }
+      virtualFile.rename(this, newName)
+    }
+
     for ((path: Path, content: CharSequence) in filesToAdd) {
-      path.write(content, Charsets.UTF_8)
+      path.write(content)
     }
   }
 
@@ -75,7 +89,7 @@ internal class FileUpdates(
     val documentOperations = HashMap<Document, MutableList<StringOperation>>(byDocument.size)
     for ((document: Document, modifications: List<Pair<RangeMarker, CharSequence>>) in byDocument) {
       val operations: List<StringOperation> = modifications.mapNotNull { (rangeMarker: RangeMarker, replacement: CharSequence) ->
-        rangeMarker.range?.let { range ->
+        rangeMarker.asTextRange?.let { range ->
           StringOperation.replace(range, replacement)
         }
       }
@@ -99,6 +113,7 @@ internal class FileUpdates(
   }
 
   companion object {
+    internal val LOG: Logger = Logger.getInstance(FileUpdates::class.java)
 
     fun merge(left: FileUpdates?, right: FileUpdates?): FileUpdates? {
       return when {
@@ -108,9 +123,39 @@ internal class FileUpdates(
           filesToAdd = left.filesToAdd + right.filesToAdd,
           filesToMove = left.filesToMove + right.filesToMove,
           filesToRemove = left.filesToRemove + right.filesToRemove,
+          filesToRename = left.filesToRename + right.filesToRename,
           documentModifications = left.documentModifications + right.documentModifications
         )
       }
+    }
+
+    fun createFileUpdates(fileOperations: Collection<FileOperation>): FileUpdates {
+      ApplicationManager.getApplication().assertReadAccessAllowed()
+
+      val filesToAdd = ArrayList<Pair<Path, CharSequence>>()
+      val filesToMove = ArrayList<Pair<VirtualFile, Path>>()
+      val filesToRemove = ArrayList<VirtualFile>()
+      val filesToRename = ArrayList<Pair<VirtualFile, String>>()
+      val fileModifications = ArrayList<Pair<RangeMarker, CharSequence>>()
+
+      loop@
+      for (fileOperation: FileOperation in fileOperations) {
+        when (fileOperation) {
+          is FileOperation.Add -> filesToAdd += Pair(fileOperation.path, fileOperation.content)
+          is FileOperation.Move -> filesToMove += Pair(fileOperation.file, fileOperation.path)
+          is FileOperation.Remove -> filesToRemove += fileOperation.file
+          is FileOperation.Rename -> filesToRename += Pair(fileOperation.file, fileOperation.newName)
+          is FileOperation.Modify -> {
+            val document: Document = FileDocumentManager.getInstance().getDocument(fileOperation.file.virtualFile) ?: continue@loop
+            for (stringOperation: StringOperation in fileOperation.modifications) {
+              val rangeMarker: RangeMarker = document.createRangeMarker(stringOperation.range)
+              fileModifications += Pair(rangeMarker, stringOperation.replacement)
+            }
+          }
+        }
+      }
+
+      return FileUpdates(filesToAdd, filesToMove, filesToRemove, filesToRename, fileModifications)
     }
   }
 }

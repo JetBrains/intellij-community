@@ -6,20 +6,26 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import org.jetbrains.annotations.NonNls;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JScrollPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +33,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteProvider {
+public class CaptionPanel extends JBLayeredPane implements UiDataProvider {
   private static final int SIZE = 16;
 
   private final boolean myHorizontal;
@@ -46,6 +52,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
       setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
     }
 
+    setFullOverlayLayout(true);
     setFocusable(true);
 
     myHorizontal = horizontal;
@@ -163,14 +170,6 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
   }
 
   @Override
-  public void doLayout() {
-    for (int i = getComponentCount() - 1; i >= 0; i--) {
-      Component component = getComponent(i);
-      component.setBounds(0, 0, getWidth(), getHeight());
-    }
-  }
-
-  @Override
   public Dimension getPreferredSize() {
     return new Dimension(SIZE, SIZE);
   }
@@ -181,21 +180,8 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return this;
-    }
-    return null;
-  }
-
-  @Override
-  public boolean canDeleteElement(@NotNull DataContext dataContext) {
-    return myActionsProvider.canDeleteElement(dataContext);
-  }
-
-  @Override
-  public void deleteElement(@NotNull DataContext dataContext) {
-    myActionsProvider.deleteElement(dataContext);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myActionsProvider);
   }
 
   public void update() {
@@ -214,7 +200,7 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
 
     boolean update = !myRootChildren.isEmpty();
 
-    IntArrayList oldSelection = null;
+    IntList oldSelection = null;
     if (myCaption != null) {
       oldSelection = new IntArrayList();
       for (RadComponent component : myArea.getSelection()) {

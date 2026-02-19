@@ -1,0 +1,312 @@
+package com.intellij.grazie.ide.language.xml;
+
+import com.intellij.application.options.CodeStyle;
+import com.intellij.grazie.text.TextContent;
+import com.intellij.grazie.text.TextContent.Exclusion;
+import com.intellij.grazie.text.TextContent.ExclusionKind;
+import com.intellij.grazie.text.TextContentBuilder;
+import com.intellij.grazie.text.TextExtractor;
+import com.intellij.grazie.utils.HtmlUtilsKt;
+import com.intellij.grazie.utils.Text;
+import com.intellij.lang.Language;
+import com.intellij.lang.dtd.DTDLanguage;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+
+import static com.intellij.grazie.text.TextContent.TextDomain.COMMENTS;
+import static com.intellij.grazie.text.TextContent.TextDomain.LITERALS;
+import static com.intellij.grazie.text.TextContent.TextDomain.PLAIN_TEXT;
+
+public class XmlTextExtractor extends TextExtractor {
+  private static final Pattern ESCAPE_EXCLUSIONS = Pattern.compile("\\\\[nt]");
+  private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t").removingLineSuffixes(" \t");
+
+  private final Set<Class<? extends Language>> myEnabledDialects;
+
+  protected XmlTextExtractor(Class<? extends Language>... enabledDialects) {
+    myEnabledDialects = Set.of(enabledDialects);
+  }
+
+  protected Function<XmlTag, TagKind> tagClassifier(@NotNull PsiElement context) {
+    return __ -> TagKind.Unknown;
+  }
+
+  protected boolean shouldMaskEscapeSymbols() {
+    return false;
+  }
+
+  @Override
+  protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element, @NotNull Set<TextContent.TextDomain> allowedDomains) {
+    if (isText(element) && hasSuitableDialect(element)) {
+      var classifier = tagClassifier(element);
+      PsiElement container = SyntaxTraverser.psiApi().parents(element)
+        .find(e -> e instanceof XmlDocument || e instanceof XmlTag && classifier.apply((XmlTag)e) != TagKind.Inline);
+      if (container != null) {
+        Map<PsiElement, List<TextContent>> contentsInside = CachedValuesManager.getCachedValue(container, () ->
+          CachedValueProvider.Result.create(calcContents(container), container));
+        return contentsInside.getOrDefault(element, List.of());
+      }
+    }
+
+    IElementType type = PsiUtilCore.getElementType(element);
+    if (type == XmlTokenType.XML_COMMENT_CHARACTERS && allowedDomains.contains(COMMENTS) && hasSuitableDialect(element)) {
+      return ContainerUtil.createMaybeSingletonList(builder.build(element, COMMENTS));
+    }
+
+    if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS) && hasSuitableDialect(element)) {
+      return ContainerUtil.createMaybeSingletonList(builder.build(element, LITERALS));
+    }
+
+    return List.of();
+  }
+
+  private @NotNull Map<PsiElement, List<TextContent>> calcContents(PsiElement container) {
+    if (container instanceof XmlTag && isNonText((XmlTag)container)) {
+      return Collections.emptyMap();
+    }
+
+    var classifier = tagClassifier(container);
+    var unknownContainer = container instanceof XmlTag && classifier.apply((XmlTag) container) == TagKind.Unknown;
+
+    var fullContent = NotNullLazyValue.lazy(() -> TextContent.psiFragment(PLAIN_TEXT, container));
+
+    var visitor = new PsiRecursiveElementWalkingVisitor() {
+      final Map<PsiElement, List<TextContent>> result = new HashMap<>();
+      final List<PsiElement> group = new ArrayList<>();
+      final Set<Integer> markupIndices = new HashSet<>();
+      final Set<Integer> unknownIndices = new HashSet<>();
+      final Set<XmlTag> inlineTags = new HashSet<>();
+      boolean unknownBefore = unknownContainer;
+
+      @Override
+      public void visitElement(@NotNull PsiElement each) {
+        if (each instanceof XmlTag tag) {
+          TagKind kind = classifier.apply(tag);
+          if (kind != TagKind.Inline) {
+            boolean unknown = kind == TagKind.Unknown;
+            flushGroup(unknown);
+            unknownBefore = unknown;
+            return;
+          }
+
+          if (isInlineNonTextTag(tag.getName())) {
+            unknownIndices.add(group.size());
+            return; // skip the tag's contents
+          }
+
+          inlineTags.add(tag);
+          markupIndices.add(group.size());
+        }
+        if (each instanceof OuterLanguageElement) {
+          flushGroup(true);
+          unknownBefore = true;
+        }
+        if (each instanceof XmlEntityRef) {
+          if (HtmlUtilsKt.isShyEntity(each.getText())) {
+            unknownIndices.add(group.size());
+          } else {
+            flushGroup(true);
+            unknownBefore = true;
+          }
+        }
+
+        if (isText(each)) {
+          if (isCdata(each.getParent())) {
+            List<TextContent> contents = HtmlUtilsKt.excludeHtml(
+              extractRange(each.getTextRange().shiftLeft(container.getTextRange().getStartOffset())));
+            if (!contents.isEmpty()) { // isolate CDATA into its own TextContent set for now; maybe glue to the surrounding texts later
+              flushGroup(false);
+              result.put(each, contents);
+              unknownBefore = false;
+            }
+          } else {
+            group.add(each);
+          }
+        }
+        else if (PsiUtilCore.getElementType(each) == XmlTokenType.XML_CHAR_ENTITY_REF) {
+          if (HtmlUtilsKt.isSpaceEntity(each.getText())) {
+            group.add(each);
+          } else {
+            unknownIndices.add(group.size());
+          }
+        }
+        super.visitElement(each);
+      }
+
+      private TextContent extractRange(TextRange range) {
+        TextContent full = fullContent.getValue();
+        return full.excludeRange(new TextRange(range.getEndOffset(), full.length())).excludeRange(new TextRange(0, range.getStartOffset()));
+      }
+
+      @Override
+      protected void elementFinished(PsiElement element) {
+        super.elementFinished(element);
+        if (inlineTags.contains(element)) {
+          markupIndices.add(group.size());
+        }
+      }
+
+      private void flushGroup(boolean unknownAfter) {
+        int containerStart = container.getTextRange().getStartOffset();
+        List<TextContent> components = new ArrayList<>(group.size());
+        int i = 0;
+        while (i < group.size() && group.get(i) instanceof PsiWhiteSpace) i++;
+        while (i < group.size()) {
+          PsiElement e = group.get(i);
+          TextContent component = extractRange(e.getTextRange().shiftLeft(containerStart));
+          component = applyExclusions(i, component, markupIndices, ExclusionKind.markup);
+          component = applyExclusions(i, component, unknownIndices, ExclusionKind.unknown);
+          component = maskEscapeSymbols(component);
+          components.add(component);
+          i++;
+        }
+        unknownIndices.clear();
+        markupIndices.clear();
+        inlineTags.clear();
+        TextContent content = TextContent.join(components);
+        if (content != null) {
+          if (unknownBefore) content = content.markUnknown(TextRange.from(0, 0));
+          if (unknownAfter) content = content.markUnknown(TextRange.from(content.length(), 0));
+          content = HtmlUtilsKt.inlineSpaceEntities(content.removeIndents(Set.of(' ', '\t')));
+          if (content != null) {
+            for (PsiElement e : group) {
+              result.put(e, List.of(content));
+            }
+          }
+        }
+        group.clear();
+      }
+
+      private static TextContent applyExclusions(int index, TextContent component, Set<Integer> indices, ExclusionKind kind) {
+        if (indices.contains(index)) {
+          component = component.excludeRanges(List.of(new Exclusion(0, 0, kind)));
+        }
+        if (indices.contains(index + 1)) {
+          component = component.excludeRanges(List.of(new Exclusion(component.length(), component.length(), kind)));
+        }
+        return component;
+      }
+    };
+    container.acceptChildren(visitor);
+    visitor.flushGroup(unknownContainer);
+    return visitor.result;
+  }
+
+  private TextContent maskEscapeSymbols(TextContent component) {
+    if (!shouldMaskEscapeSymbols()) return component;
+    return component.excludeRanges(ContainerUtil.map(Text.allOccurrences(ESCAPE_EXCLUSIONS, component), Exclusion::markUnknown));
+  }
+
+  private static boolean isText(PsiElement leaf) {
+    PsiElement parent = leaf.getParent();
+    if (!(parent instanceof XmlText) && !isCdata(parent) && !(parent instanceof XmlDocument)) {
+      return false;
+    }
+
+    IElementType type = PsiUtilCore.getElementType(leaf);
+    return type == XmlTokenType.XML_WHITE_SPACE || type == TokenType.WHITE_SPACE ||
+           type == XmlTokenType.XML_DATA_CHARACTERS;
+  }
+
+  private static boolean isCdata(PsiElement element) {
+    return PsiUtilCore.getElementType(element) == XmlElementType.XML_CDATA;
+  }
+
+  private boolean hasSuitableDialect(@NotNull PsiElement element) {
+    return myEnabledDialects.contains(element.getContainingFile().getLanguage().getClass());
+  }
+
+  private static boolean isNonText(XmlTag tag) {
+    return tag instanceof HtmlTag && (isInlineNonTextTag(tag.getName()) || isBlockNonTextTag(tag.getName())) || isAuthorTag(tag.getName());
+  }
+
+  private static boolean isBlockNonTextTag(String name) {
+    return "pre".equals(name);
+  }
+
+  private static boolean isInlineNonTextTag(String name) {
+    return "code".equals(name) || "wbr".equals(name);
+  }
+
+  private static boolean isAuthorTag(String name) {
+    return "author".equals(name) || "authors".equals(name);
+  }
+
+  public static class Xml extends XmlTextExtractor {
+    public Xml() {
+      super(XMLLanguage.class, XHTMLLanguage.class, DTDLanguage.class);
+    }
+
+    @Override
+    protected boolean shouldMaskEscapeSymbols() {
+      return true;
+    }
+  }
+
+  public static class Html extends XmlTextExtractor {
+    public Html() {
+      super(HTMLLanguage.class);
+    }
+
+    @Override
+    protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
+                                                           @NotNull Set<TextContent.TextDomain> allowedDomains) {
+      if (HtmlSpellcheckingStrategy.shouldParentAttributeBeIgnored(element)) return List.of();
+      return super.buildTextContents(element, allowedDomains);
+    }
+
+    @Override
+    protected Function<XmlTag, TagKind> tagClassifier(@NotNull PsiElement context) {
+      if (!Registry.is("grazie.html.concatenate.inline.tag.contents")) {
+        return super.tagClassifier(context);
+      }
+
+      HtmlCodeStyleSettings settings = CodeStyle.getCustomSettings(context.getContainingFile(), HtmlCodeStyleSettings.class);
+      Set<String> inlineTags = ContainerUtil.newHashSet(settings.HTML_INLINE_ELEMENTS.split(","));
+      inlineTags.add("wbr");
+      return tag -> {
+        String name = tag.getName();
+        if (HtmlUtilsKt.commonBlockElements.contains(name) || isBlockNonTextTag(name)) return TagKind.Block;
+        if (inlineTags.contains(name) || isInlineNonTextTag(name)) return TagKind.Inline;
+        return TagKind.Unknown;
+      };
+    }
+  }
+
+  protected enum TagKind { Block, Inline, Unknown }
+}

@@ -1,13 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
-import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,7 +24,7 @@ public class SearchConfiguration extends Configuration {
     matchOptions = configuration.getMatchOptions().copy();
   }
 
-  public SearchConfiguration(@NotNull String name, @NotNull String category) {
+  public SearchConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name, @NotNull String category) {
     super(name, category);
     matchOptions = new MatchOptions();
   }
@@ -39,13 +37,6 @@ public class SearchConfiguration extends Configuration {
   @Override
   public @NotNull SearchConfiguration copy() {
     return new SearchConfiguration(this);
-  }
-
-  @Override
-  public @NlsSafe String getTailText() {
-    final String fileType = StringUtil.toLowerCase(matchOptions.getFileType().getName());
-    return isPredefined() ? SSRBundle.message("predefined.configuration.search.tail.text", fileType)
-                          : SSRBundle.message("predefined.configuration.search.tail.text.user.defined", fileType);
   }
 
   @Override

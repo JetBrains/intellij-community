@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -7,11 +7,21 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,27 +47,37 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.typing.FunctionalSignature;
+import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author ven
- */
-public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GroovyPsiElement, Object, GroovyPsiElement> {
+public final class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GroovyPsiElement, Object, GroovyPsiElement> {
   private static final Logger LOG = Logger.getInstance(GroovyParameterInfoHandler.class);
 
   private static final Set<Class<?>> ourStopSearch = Collections.singleton(GrMethod.class);
 
-  @NotNull
   @Override
-  public Set<? extends Class<?>> getArgListStopSearchClasses() {
+  public @NotNull Set<? extends Class<?>> getArgListStopSearchClasses() {
     return ourStopSearch;
   }
 
 
   @Override
   public GroovyPsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
-    return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    GroovyPsiElement place = findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
+    if (place == null) {
+      return null;
+    }
+    final List<Object> itemsToShow = collectParameterInfo(place);
+    context.setItemsToShow(ArrayUtil.toObjectArray(itemsToShow));
+    return place;
   }
 
   @Override
@@ -65,8 +85,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
 
-  @Nullable
-  private static GroovyPsiElement findAnchorElement(int offset, PsiFile file) {
+  private static @Nullable GroovyPsiElement findAnchorElement(int offset, PsiFile file) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
@@ -87,20 +106,21 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public void showParameterInfo(@NotNull GroovyPsiElement place, @NotNull CreateParameterInfoContext context) {
+    context.showHint(place, place.getTextRange().getStartOffset(), this);
+  }
+
+  @RequiresBackgroundThread
+  private static @NotNull List<Object> collectParameterInfo(@NotNull GroovyPsiElement place) {
     GroovyResolveResult[] variants = ResolveUtil.getCallVariants(place);
 
-    final List elementToShow = new ArrayList();
+    final List<Object> elementToShow = new ArrayList<>();
     final PsiElement parent = place.getParent();
     if (parent instanceof GrMethodCall) {
       final GrExpression invoked = ((GrMethodCall)parent).getInvokedExpression();
       if (isPropertyOrVariableInvoked(invoked)) {
         final PsiType type = invoked.getType();
-        if (type instanceof GrClosureType) {
-          addSignatureVariant(elementToShow, (GrClosureType)type);
-        }
-        else if (type != null) {
+        if (type != null && !tryAddSignatureVariant(elementToShow, type)) {
           addMethodAndClosureVariants(elementToShow,
                                       ResolveUtil.getMethodCandidates(type, "call", invoked, PsiUtil.getArgumentTypes(place, true)));
         }
@@ -112,10 +132,9 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     else {
       elementToShow.addAll(Arrays.asList(variants));
     }
-    
+
     filterOutReflectedMethods(elementToShow);
-    context.setItemsToShow(ArrayUtil.toObjectArray(elementToShow));
-    context.showHint(place, place.getTextRange().getStartOffset(), this);
+    return elementToShow;
   }
 
   private static void addMethodAndClosureVariants(@NotNull List<Object> elementToShow, GroovyResolveResult @NotNull [] variants) {
@@ -126,15 +145,20 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
       else if (element instanceof GrVariable) {
         final PsiType type = ((GrVariable)element).getTypeGroovy();
-        if (type instanceof GrClosureType) {
-          addSignatureVariant(elementToShow, (GrClosureType)type);
-        }
+        tryAddSignatureVariant(elementToShow, type);
       }
     }
   }
 
-  private static void addSignatureVariant(@NotNull final List<Object> elementToShow, @NotNull GrClosureType type) {
-    elementToShow.addAll(type.getSignatures());
+  private static boolean tryAddSignatureVariant(final @NotNull List<Object> elementToShow, @Nullable PsiType type) {
+    if (type instanceof GrClosureType closureType) {
+      elementToShow.addAll(closureType.getSignatures());
+      return true;
+    } else if (type instanceof GroovyClosureType closureType) {
+      elementToShow.addAll(closureType.getSignatures());
+      return true;
+    }
+    return false;
   }
 
   private static void filterOutReflectedMethods(List toShow) {
@@ -174,8 +198,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiType[] parameterTypes = null;
       PsiType[] argTypes = null;
       PsiSubstitutor substitutor = null;
-      if (objects[i] instanceof GroovyResolveResult) {
-        final GroovyResolveResult resolveResult = (GroovyResolveResult)objects[i];
+      if (objects[i] instanceof GroovyResolveResult resolveResult) {
         PsiNamedElement namedElement = (PsiNamedElement)resolveResult.getElement();
         if (namedElement instanceof GrReflectedMethod) namedElement = ((GrReflectedMethod)namedElement).getBaseMethod();
 
@@ -185,8 +208,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           context.setUIComponentEnabled(i, false);
           continue Outer;
         }
-        if (namedElement instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)namedElement;
+        if (namedElement instanceof PsiMethod method) {
           PsiParameter[] parameters = method.getParameterList().getParameters();
           parameters = updateConstructorParams(method, parameters, context.getParameterOwner());
           parameterTypes = PsiType.createArray(parameters.length);
@@ -197,8 +219,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         }
         if (argTypes == null) continue;
       }
-      else if (objects[i] instanceof GrSignature) {
-        final GrSignature signature = (GrSignature)objects[i];
+      else if (objects[i] instanceof GrSignature signature) {
         argTypes = PsiUtil.getArgumentTypes(place, false);
         parameterTypes = PsiType.createArray(signature.getParameterCount());
         int j = 0;
@@ -233,8 +254,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static int getCurrentParameterIndex(GroovyPsiElement place, int offset) {
-    if (place instanceof GrArgumentList) {
-      GrArgumentList list = (GrArgumentList)place;
+    if (place instanceof GrArgumentList list) {
 
       int idx = (list.getNamedArguments().length > 0) ? 1 : 0;
       for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -270,12 +290,14 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         return;
       }
     }
-    else if (o instanceof GrSignature) {
-      if (!((GrSignature)o).isValid()) {
+    else if (o instanceof GrSignature signature) {
+      if (!signature.isValid()) {
         context.setUIComponentEnabled(false);
         return;
       }
-      element = o;
+      element = new GrSignatureWrapper(signature);
+    } else if (o instanceof FunctionalSignature signature) {
+      element = new GrSignatureWrapper(signature);
     }
     else {
       return;
@@ -289,8 +311,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     StringBuilder buffer = new StringBuilder();
 
 
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
+    if (element instanceof PsiMethod method) {
       if (method instanceof GrReflectedMethod) method = ((GrReflectedMethod)method).getBaseMethod();
 
       if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO) {
@@ -343,31 +364,33 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     } else if (element instanceof PsiClass) {
       buffer.append("no parameters");
     }
-    else if (element instanceof GrSignature) {
-      GrClosureParameter[] parameters = ((GrSignature)element).getParameters();
-      if (parameters.length > 0) {
-        for (int i = 0; i < parameters.length; i++) {
+    else if (element instanceof GrSignatureWrapper signatureWrapper) {
+      List<GrParameterWrapper> parameters = signatureWrapper.getParameterList();
+      if (!parameters.isEmpty()) {
+        int length = parameters.size();
+        for (int i = 0; i < length; i++) {
           if (i > 0) buffer.append(", ");
 
           int startOffset = buffer.length();
-          final PsiType psiType = parameters[i].getType();
+          final PsiType psiType = parameters.get(i).getType();
           if (psiType == null) {
             buffer.append("def");
           }
           else {
             buffer.append(psiType.getPresentableText());
           }
-          buffer.append(' ').append(parameters[i].getName() != null ? parameters[i].getName() : "<unknown>");
+          String name = parameters.get(i).getName();
+          buffer.append(' ').append(name != null ? name : "<unknown>");
 
           int endOffset = buffer.length();
 
           if (context.isUIComponentEnabled() &&
-              (i == currentParameter || (i == parameters.length - 1 && ((GrSignature)element).isVarargs() && currentParameter >= parameters.length))) {
+              (i == currentParameter || (i == length - 1 && signatureWrapper.isVararg() && currentParameter >= length))) {
             highlightStartOffset = startOffset;
             highlightEndOffset = endOffset;
           }
 
-          final GrExpression initializer = parameters[i].getDefaultInitializer();
+          final GrExpression initializer = parameters.get(i).getDefaultInitializer();
           if (initializer != null) {
             buffer.append(" = ").append(initializer.getText());
           }
@@ -401,9 +424,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static void appendParameterText(PsiParameter param, PsiSubstitutor substitutor, StringBuilder buffer) {
-    if (param instanceof GrParameter) {
-      GrParameter grParam = (GrParameter)param;
-      GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, TypePresentation.PRESENTABLE, buffer);
+    if (param instanceof GrParameter grParam) {
+      GroovyPresentationUtil.appendParameterPresentation(grParam, substitutor, TypePresentation.PRESENTABLE, buffer, false);
 
       final GrExpression initializer = grParam.getInitializerGroovy();
       if (initializer != null) {
@@ -429,29 +451,25 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return GroovyPsiElement.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public IElementType getActualParameterDelimiterType() {
+  public @NotNull IElementType getActualParameterDelimiterType() {
     return GroovyTokenTypes.mCOMMA;
   }
 
-  @NotNull
   @Override
-  public IElementType getActualParametersRBraceType() {
+  public @NotNull IElementType getActualParametersRBraceType() {
     return GroovyTokenTypes.mRPAREN;
   }
 
   private static final Set<Class<?>> ALLOWED_PARAM_CLASSES = Collections.singleton(GroovyPsiElement.class);
 
-  @NotNull
   @Override
-  public Set<Class<?>> getArgumentListAllowedParentClasses() {
+  public @NotNull Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ALLOWED_PARAM_CLASSES;
   }
 
-  @NotNull
   @Override
-  public Class<GroovyPsiElement> getArgumentListClass() {
+  public @NotNull Class<GroovyPsiElement> getArgumentListClass() {
     return GroovyPsiElement.class;
   }
 }

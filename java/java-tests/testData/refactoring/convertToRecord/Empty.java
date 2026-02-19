@@ -1,5 +1,0 @@
-class <caret>R {
-  /**
-   * Empty
-   */
-}

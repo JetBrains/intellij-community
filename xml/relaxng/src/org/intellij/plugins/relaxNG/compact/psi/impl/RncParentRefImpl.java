@@ -50,8 +50,7 @@ public class RncParentRefImpl extends RncRefImpl implements RncParentRef {
   }
 
   @Override
-  @Nullable
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     return new PatternReference(this) {
       @Override
       protected RncGrammar getScope() {

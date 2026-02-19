@@ -1,32 +1,48 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefJavaElement;
+import com.intellij.codeInspection.reference.RefJavaModule;
+import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiPackageAccessibilityStatement;
+import com.intellij.psi.PsiProvidesStatement;
+import com.intellij.psi.PsiUsesStatement;
+import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
-public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
+public final class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   public static final String ID = "moduleInfo";
 
   public boolean ADD_EXPORTED_PACKAGES_AND_SERVICES_TO_ENTRIES = true;
@@ -36,9 +52,8 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
     return ID;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return JavaAnalysisBundle.message("html.classes.exposed.with.code.module.info.code.html");
   }
 
@@ -54,23 +69,19 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiClass) {
-      return isServiceOrExported((PsiClass)psiElement);
+    if (psiElement instanceof PsiClass psiClass) {
+      return isServiceOrExported(psiClass);
     }
-    if (psiElement instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)psiElement;
-      if (isDefaultConstructor(method) || isProviderMethod(method)) {
-        return isServiceOrExported(method.getContainingClass());
-      }
-    }
-    return false;
+    return psiElement instanceof PsiMethod method &&
+           (isDefaultConstructor(method) || JavaServiceProviderUtil.isServiceProviderMethod(method)) &&
+           isServiceOrExported(method.getContainingClass());
   }
 
   @Override
   public int getMinVisibilityLevel(PsiMember member) {
-    if (member instanceof PsiClass) {
-      PsiJavaModule javaModule = getJavaModule(member);
-      if (javaModule != null && !isServiceClass((PsiClass)member, javaModule) && isInExportedPackage((PsiClass)member, javaModule)) {
+    if (member instanceof PsiClass psiClass) {
+      PsiJavaModule javaModule = getJavaModule(psiClass);
+      if (javaModule != null && !isServiceClass(psiClass, javaModule) && isInExportedPackage(psiClass, javaModule)) {
         return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
       }
     }
@@ -79,8 +90,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public boolean keepVisibilityLevel(boolean entryPointEnabled, @NotNull RefJavaElement refJavaElement) {
-    if (refJavaElement instanceof RefClass) {
-      RefClass refClass = (RefClass)refJavaElement;
+    if (refJavaElement instanceof RefClass refClass) {
       RefModule refModule = refClass.getModule();
       if (refModule != null) {
         RefJavaModule refJavaModule = RefJavaModule.JAVA_MODULE.get(refModule);
@@ -94,9 +104,9 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   private static boolean isInExportedPackage(@Nullable RefClass refClass, @NotNull RefJavaModule refJavaModule) {
     RefEntity refOwner = refClass;
-    while (refOwner instanceof RefClass) {
-      String modifier = ((RefClass)refOwner).getAccessModifier();
-      refOwner = PsiModifier.PUBLIC.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ? refOwner.getOwner() : null;
+    final List<String> accessModifiers = List.of(PsiModifier.PUBLIC, PsiModifier.PROTECTED);
+    while (refOwner instanceof RefClass clazz) {
+      refOwner = accessModifiers.contains(clazz.getAccessModifier()) ? clazz.getOwner() : null;
     }
     if (refOwner instanceof RefPackage) {
       Map<String, List<String>> exportedPackageNames = refJavaModule.getExportedPackageNames();
@@ -119,20 +129,13 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
            method.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
-  private static boolean isProviderMethod(@NotNull PsiMethod method) {
-    return "provider".equals(method.getName()) &&
-           method.getParameterList().isEmpty() &&
-           method.hasModifierProperty(PsiModifier.PUBLIC) &&
-           method.hasModifierProperty(PsiModifier.STATIC);
-  }
-
   private static boolean isServiceOrExported(@Nullable PsiClass psiClass) {
     PsiJavaModule javaModule = getJavaModule(psiClass);
     return javaModule != null && (isServiceClass(psiClass, javaModule) || isInExportedPackage(psiClass, javaModule));
   }
 
   private static @Nullable PsiJavaModule getJavaModule(@Nullable PsiElement element) {
-    return element != null && PsiUtil.isLanguageLevel9OrHigher(element) ? JavaModuleGraphUtil.findDescriptorByElement(element) : null;
+    return element != null && PsiUtil.isAvailable(JavaFeature.MODULES, element) ? JavaPsiModuleUtil.findDescriptorByElement(element) : null;
   }
 
   private static boolean isInExportedPackage(@NotNull PsiClass psiClass, @NotNull PsiJavaModule javaModule) {
@@ -148,27 +151,33 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   private static @Nullable String getPublicApiPackageName(@NotNull PsiClass psiClass) {
     if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) || psiClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       PsiElement parent = psiClass.getParent();
-      if (parent instanceof PsiClass) {
-        return getPublicApiPackageName((PsiClass)parent);
+      if (parent instanceof PsiClass clazz) {
+        return getPublicApiPackageName(clazz);
       }
-      if (parent instanceof PsiJavaFile) {
-        return ((PsiJavaFile)parent).getPackageName();
+      if (parent instanceof PsiJavaFile file) {
+        return file.getPackageName();
       }
     }
     return null;
   }
 
   private static Set<String> getExportedPackageNames(@NotNull PsiJavaModule javaModule) {
+    if (javaModule instanceof LightJavaModule) {
+      return Collections.emptySet();
+    }
     return CachedValuesManager.getCachedValue(javaModule, () -> {
       Set<String> packages = StreamEx.of(javaModule.getExports().spliterator())
         .map(PsiPackageAccessibilityStatement::getPackageName)
         .nonNull()
-        .toCollection(THashSet::new);
+        .toCollection(HashSet::new);
       return CachedValueProvider.Result.create(packages, javaModule);
     });
   }
 
   private static Set<String> getServiceClassNames(@NotNull PsiJavaModule javaModule) {
+    if (javaModule instanceof LightJavaModule) {
+      return Collections.emptySet();
+    }
     return CachedValuesManager.getCachedValue(javaModule, () -> {
       Set<String> classes = StreamEx.of(javaModule.getProvides().spliterator())
         .map(PsiProvidesStatement::getImplementationList)
@@ -179,7 +188,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
         .nonNull()
         .map(PsiClass::getQualifiedName)
         .nonNull()
-        .toCollection(THashSet::new);
+        .toCollection(HashSet::new);
       return CachedValueProvider.Result.create(classes, javaModule);
     });
   }
@@ -196,12 +205,14 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    XmlSerializer.deserializeInto(this, element);
+    DefaultJDOMExternalizer.readExternal(this, element);
   }
 
   @Override
   @SuppressWarnings("deprecation")
   public void writeExternal(Element element) throws WriteExternalException {
-    XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
+    if (!ADD_EXPORTED_PACKAGES_AND_SERVICES_TO_ENTRIES) {
+      DefaultJDOMExternalizer.writeExternal(this, element);
+    }
   }
 }

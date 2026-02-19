@@ -1,34 +1,37 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.PersistentOrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsManager {
-  @Nullable private Set<VirtualFile> myAnnotationsRoots;
+  private @Nullable Set<VirtualFile> myAnnotationsRoots;
 
   public ReadableExternalAnnotationsManager(PsiManager psiManager) {
     super(psiManager);
@@ -39,8 +42,7 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
     return !initRoots().isEmpty();
   }
 
-  @NotNull
-  private synchronized Set<VirtualFile> initRoots() {
+  private synchronized @NotNull Set<VirtualFile> initRoots() {
     if (myAnnotationsRoots == null) {
       myAnnotationsRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
@@ -57,18 +59,46 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   }
 
   @Override
-  @NotNull
-  protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
+  protected @NotNull List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
+    if (!hasAnyAnnotationsRoots()) {
+      return Collections.emptyList();
+    }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
     Set<VirtualFile> result = new LinkedHashSet<>();
-    for (OrderEntry entry : fileIndex.getOrderEntriesForFile(libraryFile)) {
-      ProgressManager.checkCanceled();
-      if (!(entry instanceof ModuleOrderEntry)) {
-        Collections.addAll(result, AnnotationOrderRootType.getFiles(entry));
-      }
+    var libraryRootType = LibraryBridgeImpl.Companion.toLibraryRootType(AnnotationOrderRootType.getInstance());
+    var sdkRootName = ((PersistentOrderRootType) AnnotationOrderRootType.getInstance()).getSdkRootName();
+
+    var module = fileIndex.getModuleForFile(libraryFile);
+
+    if (module != null) {
+      Collections.addAll(result, ModuleRootManager.getInstance(module).getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsRoots());
     }
+
+    for (var library : fileIndex.findContainingLibraries(libraryFile)) {
+      library.getRoots().stream()
+        .filter((root) -> root.getType().equals(libraryRootType))
+        .map((root) -> root.getUrl())
+        .map((url) -> VirtualFileUrls.getVirtualFile(url))
+        .filter(Objects::nonNull)
+        .forEach(result::add);
+    }
+
+    for (var sdk : fileIndex.findContainingSdks(libraryFile)) {
+      sdk.getRoots().stream()
+        .filter((root) -> root.getType().getName().equals(sdkRootName))
+        .map((root) -> root.getUrl())
+        .map((url) -> VirtualFileUrls.getVirtualFile(url))
+        .filter(Objects::nonNull)
+        .forEach(result::add);
+    }
+    ContainerUtil.addIfNotNull(result, getAdditionalAnnotationRoot());
     return new ArrayList<>(result);
   }
+
+  protected @Nullable VirtualFile getAdditionalAnnotationRoot() {
+    return null;
+  }
+
 
   @Override
   protected synchronized void dropCache() {
@@ -79,4 +109,20 @@ public class ReadableExternalAnnotationsManager extends BaseExternalAnnotationsM
   public boolean isUnderAnnotationRoot(VirtualFile file) {
     return VfsUtilCore.isUnder(file, initRoots());
   }
+
+  @Override
+  public boolean hasConfiguredAnnotationRoot(@NotNull PsiModifierListOwner owner) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(owner);
+    if (file == null) {
+      return false;
+    }
+    final List<OrderEntry> entries = 
+     ProjectRootManager.getInstance(owner.getProject())
+       .getFileIndex()
+       .getOrderEntriesForFile(file);
+
+    return ContainerUtil.exists(entries, entry -> entry instanceof LibraryOrSdkOrderEntry &&
+                                                  ContainerUtil.filter(AnnotationOrderRootType.getFiles(entry),
+                                                                       VirtualFile::isInLocalFileSystem).size() == 1);
+ }
 }

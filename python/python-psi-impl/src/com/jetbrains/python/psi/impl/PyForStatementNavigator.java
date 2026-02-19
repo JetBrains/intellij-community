@@ -26,23 +26,21 @@ public final class PyForStatementNavigator {
   private PyForStatementNavigator() {
   }
 
-  @Nullable
-  public static PyForStatement getPyForStatementByIterable(final PsiElement element){
+  public static @Nullable PyForStatement getPyForStatementByIterable(final PsiElement element) {
     final PyForStatement forStatement = PsiTreeUtil.getParentOfType(element, PyForStatement.class, false);
-    if (forStatement == null){
+    if (forStatement == null) {
       return null;
     }
     final PyExpression target = forStatement.getForPart().getTarget();
-    if (target != null && PsiTreeUtil.isAncestor(target, element, false)){
+    if (target != null && PsiTreeUtil.isAncestor(target, element, false)) {
       return forStatement;
     }
     return null;
   }
 
-  @Nullable
-  public static Object getPyForStatementByBody(final PsiElement element) {
+  public static @Nullable Object getPyForStatementByBody(final PsiElement element) {
     final PyForStatement forStatement = PsiTreeUtil.getParentOfType(element, PyForStatement.class, false);
-    if (forStatement == null){
+    if (forStatement == null) {
       return null;
     }
     final PyForPart forPart = forStatement.getForPart();

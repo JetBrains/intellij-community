@@ -13,9 +13,16 @@ import git4idea.push.GitPushSupport
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitSubmoduleInfo
-import git4idea.test.*
+import git4idea.repo.getDirectSubmodules
+import git4idea.test.cd
+import git4idea.test.git
+import git4idea.test.makePushSpec
+import git4idea.test.registerRepo
+import git4idea.test.setupDefaultUsername
+import git4idea.test.tac
+import git4idea.test.tacp
 import java.nio.file.Path
-import java.util.*
+import java.util.Collections
 
 /**
  * Main project with 3 submodules, one of which is a submodule of another.
@@ -147,7 +154,7 @@ class GitComplexSubmoduleTest : GitSubmoduleTestBase() {
   private fun assertSubmodules(repo: GitRepository, expectedSubmodules: List<GitRepository>) {
     assertSubmodulesInfo(repo, expectedSubmodules)
     assertSameElements("Submodules identified incorrectly for ${getShortRepositoryName(repo)}",
-                       repositoryManager.getDirectSubmodules(repo), expectedSubmodules)
+                       repo.getDirectSubmodules(), expectedSubmodules)
   }
 
   private fun assertSubmodulesInfo(repo: GitRepository, expectedSubmodules: List<GitRepository>) {

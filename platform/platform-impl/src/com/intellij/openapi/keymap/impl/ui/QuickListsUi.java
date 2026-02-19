@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
@@ -14,11 +15,13 @@ import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.ListModelEditor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.CardLayout;
 import java.util.List;
 
 final class QuickListsUi implements ConfigurableUi<List<QuickList>> {
@@ -35,7 +38,7 @@ final class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     @Override
     public QuickList clone(@NotNull QuickList item, boolean forInPlaceEditing) {
-      return new QuickList(item.getName(), item.getDescription(), item.getActionIds());
+      return new QuickList(item);
     }
 
     @Override
@@ -67,6 +70,7 @@ final class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     // doesn't make any sense (and in any case scheme manager cannot preserve order)
     editor.disableUpDownActions();
+    editor.getList().setEmptyText(KeyMapBundle.message("no.quick.lists"));
     editor.getList().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {

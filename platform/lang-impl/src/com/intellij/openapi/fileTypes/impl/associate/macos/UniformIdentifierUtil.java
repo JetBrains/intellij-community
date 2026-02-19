@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.macos;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -19,15 +20,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-class UniformIdentifierUtil {
+final class UniformIdentifierUtil {
   /**
    * Known system file types
    * See <a href="https://developer.apple.com/library/archive/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html>System-Declared Uniform Type Identifiers</a>
    */
-  private final static Map<String,String[]> TYPE_MAP          = new HashMap<>();
+  private static final Map<String,String[]> TYPE_MAP          = new HashMap<>();
   public static final String                CONTENT_TYPE_ATTR = "kMDItemContentType";
 
   static {
@@ -58,16 +61,19 @@ class UniformIdentifierUtil {
       return uris;
     }
     try {
-      String uri = getUriByExtension(fileType.getDefaultExtension());
-      return uri != null ? new String[] {uri} : ArrayUtil.EMPTY_STRING_ARRAY;
+      List<String> uriList = new ArrayList<>();
+      for (String ext : OSAssociateFileTypesUtil.getExtensions(fileType)) {
+        String uri = getUriByExtension(ext);
+        if (uri != null) uriList.add(uri);
+      }
+      return ArrayUtil.toStringArray(uriList);
     }
     catch (IOException | ExecutionException e) {
       throw new OSFileAssociationException(e.getMessage());
     }
   }
 
-  @Nullable
-  private static String getUriByExtension(@NotNull String extension) throws IOException, ExecutionException, OSFileAssociationException {
+  private static @Nullable String getUriByExtension(@NotNull String extension) throws IOException, ExecutionException, OSFileAssociationException {
     File file = FileUtil.createTempFile("content_", "." + extension);
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath("/usr/bin/mdls");
@@ -77,7 +83,7 @@ class UniformIdentifierUtil {
     Ref<String> contentTypeValue = Ref.create();
     OSProcessHandler handler = new OSProcessHandler(commandLine);
     StringBuilder errMessage = new StringBuilder();
-    handler.addProcessListener(new ProcessAdapter() {
+    handler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event,
                                   @NotNull Key outputType) {
@@ -103,8 +109,7 @@ class UniformIdentifierUtil {
     return contentTypeValue.get();
   }
 
-  @Nullable
-  private static String extractContentTypeValue(@NotNull String contentType) {
+  private static @Nullable String extractContentTypeValue(@NotNull String contentType) {
     int eqPos = contentType.indexOf("=");
     if (eqPos > 0) {
       String result = contentType.substring(eqPos + 1).trim();

@@ -5,8 +5,8 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
-import com.intellij.openapi.vcs.changes.ui.isCommitToolWindow
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.vcs.commit.CommitModeManager
 
 private const val VERTICAL_PROPORTION_KEY = "ChangesViewManager.COMMIT_SPLITTER_PROPORTION"
 private const val HORIZONTAL_PROPORTION_KEY = "ChangesViewManager.COMMIT_SPLITTER_PROPORTION.HORIZONTAL"
@@ -19,12 +19,12 @@ private const val COMMIT_TOOL_WINDOW_PROPORTION_KEY = "CommitToolWindow.COMMIT_S
 private const val COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION = 0.6f
 
 private fun getVerticalProportionKey(project: Project) =
-  if (project.isCommitToolWindow) COMMIT_TOOL_WINDOW_PROPORTION_KEY else VERTICAL_PROPORTION_KEY
+  if (CommitModeManager.isCommitToolWindowEnabled(project)) COMMIT_TOOL_WINDOW_PROPORTION_KEY else VERTICAL_PROPORTION_KEY
 
 private fun getDefaultVerticalProportion(project: Project) =
-  if (project.isCommitToolWindow) COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION else DEFAULT_VERTICAL_PROPORTION
+  if (CommitModeManager.isCommitToolWindowEnabled(project)) COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION else DEFAULT_VERTICAL_PROPORTION
 
-private class ChangesViewCommitPanelSplitter(private val project: Project) :
+internal class ChangesViewCommitPanelSplitter(private val project: Project) :
   OnePixelSplitter(true, "", getDefaultVerticalProportion(project)),
   ChangesViewContentManagerListener,
   Disposable {
@@ -38,7 +38,8 @@ private class ChangesViewCommitPanelSplitter(private val project: Project) :
     project.messageBus.connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this)
   }
 
-  private fun isVerticalProportionSet() = project.isCommitToolWindow || propertiesComponent.isValueSet(getVerticalProportionKey(project))
+  private fun isVerticalProportionSet() =
+    CommitModeManager.isCommitToolWindowEnabled(project) || propertiesComponent.isValueSet(getVerticalProportionKey(project))
 
   override fun toolWindowMappingChanged() {
     isVerticalProportionSet = isVerticalProportionSet()
@@ -47,7 +48,7 @@ private class ChangesViewCommitPanelSplitter(private val project: Project) :
   }
 
   override fun doLayout() {
-    if (project.isCommitToolWindow) {
+    if (CommitModeManager.isCommitToolWindowEnabled(project)) {
       super.doLayout()
     }
     else {

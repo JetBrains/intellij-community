@@ -1,0 +1,41 @@
+PsiJavaFile:IncompleteClass.java
+  PsiImportList
+    <empty list>
+  PsiClass:T
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:T('T')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiMethod:test
+      PsiModifierList:
+        <empty list>
+      PsiTypeParameterList
+        <empty list>
+      PsiTypeElement:void
+        PsiKeyword:void('void')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:test('test')
+      PsiParameterList:()
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiErrorElement:'}' expected
+          <empty list>
+        PsiWhiteSpace('\n    ')
+        PsiComment(END_OF_LINE_COMMENT)('//')
+    PsiErrorElement:'}' expected
+      <empty list>

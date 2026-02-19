@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.uiDesigner.ModuleProvider;
@@ -6,21 +6,25 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.designSurface.ComponentDragObject;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
+import com.intellij.uiDesigner.designSurface.EventProcessor;
+import com.intellij.uiDesigner.designSurface.FeedbackLayer;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwSplitPane;
 import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JSplitPane;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadSplitPane extends RadContainer {
   public static class Factory extends RadComponentFactory {
     @Override
@@ -38,7 +42,7 @@ public final class RadSplitPane extends RadContainer {
     super(module, componentClass, id);
   }
 
-  public RadSplitPane(Class componentClass, @NotNull final String id, final Palette palette) {
+  public RadSplitPane(Class componentClass, final @NotNull String id, final Palette palette) {
     super(componentClass, id, palette);
   }
 
@@ -75,8 +79,8 @@ public final class RadSplitPane extends RadContainer {
     return (JSplitPane)getDelegee();
   }
 
-  @Override @Nullable
-  public EventProcessor getEventProcessor(final MouseEvent event) {
+  @Override
+  public @Nullable EventProcessor getEventProcessor(final MouseEvent event) {
     final JSplitPane splitPane = getSplitPane();
     Point pnt = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), splitPane);
     int pos = (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) ? pnt.y : pnt.x;
@@ -113,7 +117,7 @@ public final class RadSplitPane extends RadContainer {
   private class RadSplitPaneLayoutManager extends RadLayoutManager {
 
     @Override
-    @Nullable public String getName() {
+    public @Nullable String getName() {
       return null;
     }
 
@@ -147,8 +151,8 @@ public final class RadSplitPane extends RadContainer {
       }
     }
 
-    @Override @NotNull
-    public ComponentDropLocation getDropLocation(RadContainer container, @Nullable final Point location) {
+    @Override
+    public @NotNull ComponentDropLocation getDropLocation(RadContainer container, final @Nullable Point location) {
       if (location == null) {
         return new MyDropLocation(isEmptySplitComponent(getSplitPane().getLeftComponent()));
       }
@@ -222,8 +226,7 @@ public final class RadSplitPane extends RadContainer {
     }
 
     @Override
-    @Nullable
-    public ComponentDropLocation getAdjacentLocation(Direction direction) {
+    public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;
     }
   }

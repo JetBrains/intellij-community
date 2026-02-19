@@ -1,0 +1,10 @@
+// FILE: build.gradle.kts
+// "NO-EXPECTED-FIND_USAGE"
+val prop<caret>erty = "property"
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+

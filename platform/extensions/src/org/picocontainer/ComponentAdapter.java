@@ -7,6 +7,8 @@
 */
 package org.picocontainer;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A component adapter is responsible for providing a specific component instance. An instance of an implementation of
  * this interface is used inside a {@link PicoContainer} for every registered component or instance.  Each
@@ -16,8 +18,6 @@ package org.picocontainer;
  * @author Jon Tirs&eacute;n
  * @author Paul Hammant
  * @author Aslak Helles&oslash;y
- * @see MutablePicoContainer an extension of the PicoContainer interface which allows you to modify the contents of the
- * container.
  */
 public interface ComponentAdapter {
   /**
@@ -26,6 +26,7 @@ public interface ComponentAdapter {
    * @return the component's key. Should either be a class type (normally an interface) or an identifier that is
    * unique (within the scope of the current PicoContainer).
    */
+  @NotNull
   Object getComponentKey();
 
   /**
@@ -34,22 +35,9 @@ public interface ComponentAdapter {
    * @return the component's implementation class. Should normally be a concrete class (ie, a class that can be
    * instantiated).
    */
+  @NotNull
   Class<?> getComponentImplementation();
 
-  /**
-   * @param container the {@link PicoContainer}, that is used to resolve any possible dependencies of the instance.
-   * @return the component instance.
-   * @throws PicoInitializationException if the component could not be instantiated.
-   * @throws PicoIntrospectionException  if the component has dependencies which could not be resolved, or
-   *                                     instantiation of the component lead to an ambiguous situation within the
-   *                                     container.
-   */
-  Object getComponentInstance(PicoContainer container);
-
-  /**
-   * @deprecated Not used anymore.
-   */
-  @Deprecated
-  default void verify(@SuppressWarnings("unused") PicoContainer container) {
-  }
+  @NotNull
+  Object getComponentInstance();
 }

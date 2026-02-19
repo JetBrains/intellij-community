@@ -1,31 +1,34 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.JBIntSpinner;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.KeyStroke;
+import javax.swing.LayoutFocusTraversalPolicy;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.text.DateFormatSymbols;
 import java.text.ParseException;
@@ -37,8 +40,21 @@ import java.util.Locale;
  * author: lesya
  */
 public class CalendarView extends JPanel {
+  public enum Mode {
+    DATE,
+    TIME,
+    DATETIME;
 
-  private final static int[] DAYS_IN_THE_MONTH = new int[]{
+    boolean hasDate() {
+      return this == DATE || this == DATETIME;
+    }
+
+    boolean hasTime() {
+      return this == TIME || this == DATETIME;
+    }
+  }
+
+  private static final int[] DAYS_IN_THE_MONTH = new int[]{
     31,
     -1,
     31,
@@ -52,18 +68,28 @@ public class CalendarView extends JPanel {
     30,
     31
   };
+  private static final String INCREASE_NUMBER_ID = "IncreaseNumber";
+  private static final String DECREASE_NUMBER_ID = "DecreaseNumber";
 
-  private final JComboBox myDays = new ComboBox();
-  private final JComboBox myMonths = new ComboBox();
-  private final JSpinner myYears = new JSpinner(new SpinnerNumberModel(2013, 0, Integer.MAX_VALUE, 1));
+  private final JComboBox<String> myDays = new ComboBox<>();
+  private final JComboBox<String> myMonths = new ComboBox<>();
+  private final JSpinner myYears = new JBIntSpinner(2022, 0, Integer.MAX_VALUE);
 
-  private final JSpinner myHours = new JSpinner(new SpinnerNumberModel(23, 0, 23, 1));
-  private final JSpinner myMinutes = new JSpinner(new SpinnerNumberModel(59, 0, 59, 1));
-  private final JSpinner mySeconds = new JSpinner(new SpinnerNumberModel(59, 0, 59, 1));
+  private final JSpinner myHours = new JBIntSpinner(23, 0, 23);
+  private final JSpinner myMinutes = new JBIntSpinner(59, 0, 59);
+  private final JSpinner mySeconds = new JBIntSpinner(59, 0, 59);
   private final Calendar myCalendar = Calendar.getInstance();
 
+  private final Mode myMode;
+
   public CalendarView() {
-    super(new GridLayout(2, 0));
+    this(Mode.DATETIME);
+  }
+
+  public CalendarView(@NotNull Mode mode) {
+    super(new GridLayout(mode == Mode.DATETIME ? 2 : 1, 0));
+
+    myMode = mode;
 
     fillMonths();
 
@@ -79,8 +105,12 @@ public class CalendarView extends JPanel {
 
     setDate(new Date());
 
-    addDateFields();
-    addTimeFields();
+    if (myMode.hasDate()) {
+      addDateFields();
+    }
+    if (myMode.hasTime()) {
+      addTimeFields();
+    }
 
     int height = Math.max(myYears.getPreferredSize().height, myDays.getPreferredSize().height);
     height = Math.max(myMonths.getPreferredSize().height, height);
@@ -92,10 +122,61 @@ public class CalendarView extends JPanel {
     Dimension preferredSize = getPreferredSize();
     setMaximumSize(preferredSize);
     setMaximumSize(preferredSize);
+
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    selectAllOnFocusGained(myYears);
+    selectAllOnFocusGained(myHours);
+    selectAllOnFocusGained(myMinutes);
+    selectAllOnFocusGained(mySeconds);
+    registerUpAndDownKeys(myYears);
+    registerUpAndDownKeys(myHours);
+    registerUpAndDownKeys(myMinutes);
+    registerUpAndDownKeys(mySeconds);
   }
 
-  @NotNull
-  public Calendar getCalendar() {
+  private static void registerUpAndDownKeys(@NotNull JSpinner spinner) {
+    JSpinner.DefaultEditor editor = ObjectUtils.tryCast(spinner.getEditor(), JSpinner.DefaultEditor.class);
+    if (editor == null) return;
+    JFormattedTextField field = editor.getTextField();
+    field.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), INCREASE_NUMBER_ID);
+    field.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), DECREASE_NUMBER_ID);
+
+    field.getActionMap().put(INCREASE_NUMBER_ID, getIncAction(spinner, field, 1));
+    field.getActionMap().put(DECREASE_NUMBER_ID, getIncAction(spinner, field, -1));
+  }
+
+  private static @NotNull AbstractAction getIncAction(@NotNull JSpinner spinner, @NotNull JFormattedTextField field, int inc) {
+    return new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        int newValue = getIntValue(spinner) + inc;
+        SpinnerNumberModel model = (SpinnerNumberModel)spinner.getModel();
+        if (newValue <= (Integer)model.getMaximum() && newValue >= (Integer)model.getMinimum()) {
+          boolean hasSelection = field.getSelectionStart() != field.getSelectionEnd();
+          model.setValue(newValue);
+          if (hasSelection) field.selectAll();
+        }
+      }
+    };
+  }
+
+  private static void selectAllOnFocusGained(@NotNull JSpinner spinner) {
+    JSpinner.DefaultEditor editor = ObjectUtils.tryCast(spinner.getEditor(), JSpinner.DefaultEditor.class);
+    if (editor == null) return;
+    editor.getTextField().addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          editor.getTextField().selectAll();
+        });
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) { }
+    });
+  }
+
+  public @NotNull Calendar getCalendar() {
     return myCalendar;
   }
 
@@ -115,13 +196,13 @@ public class CalendarView extends JPanel {
 
   public void setDate(Date date) {
     myCalendar.setTime(date);
-    myYears.setValue(new Integer(myCalendar.get(Calendar.YEAR)));
+    myYears.setValue(Integer.valueOf(myCalendar.get(Calendar.YEAR)));
     myMonths.setSelectedIndex(myCalendar.get(Calendar.MONTH));
     myDays.setSelectedIndex(myCalendar.get(Calendar.DAY_OF_MONTH) - 1);
 
-    myHours.setValue(new Integer(myCalendar.get(Calendar.HOUR_OF_DAY)));
-    myMinutes.setValue(new Integer(myCalendar.get(Calendar.MINUTE)));
-    mySeconds.setValue(new Integer(myCalendar.get(Calendar.SECOND)));
+    myHours.setValue(Integer.valueOf(myCalendar.get(Calendar.HOUR_OF_DAY)));
+    myMinutes.setValue(Integer.valueOf(myCalendar.get(Calendar.MINUTE)));
+    mySeconds.setValue(Integer.valueOf(myCalendar.get(Calendar.SECOND)));
   }
 
   public JComponent getDaysCombo() {
@@ -193,6 +274,10 @@ public class CalendarView extends JPanel {
         e.getPresentation().setEnabled(!myMonths.isPopupVisible() && !myDays.isPopupVisible());
       }
 
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         runnable.run();

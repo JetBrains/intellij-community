@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.agent.workbench.json` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "json_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "json",
+  module_name = "intellij.agent.workbench.json",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":json_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//libraries/jackson/jackson",
+  ]
+)
+
+jvm_library(
+  name = "json_test_lib",
+  module_name = "intellij.agent.workbench.json",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":json",
+    "//libraries/jackson/jackson:jackson_test_lib",
+  ]
+)
+### auto-generated section `build intellij.agent.workbench.json` end

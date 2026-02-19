@@ -1,4 +1,5 @@
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class Test {
   void bar(@Nullable String str) {
@@ -11,20 +12,17 @@ class Test {
     return str;
   }
 
-  @Nullable
-  String foo1(@Nullable String str) {
+  @NotNull String foo1(@Nullable String str) {
     if (str == null) return "null";
     return (str);
   }
 
-  @NotNull
-  String foo2(@Nullable String str) {
+  @NotNull String foo2(@Nullable String str) {
     if (str == null) return "null";
     return ((String)str);
   }
 
-  @NotNull
-  String fram(@Nullable String str, boolean b) {
+  @NotNull String fram(@Nullable String str, boolean b) {
     if (str != null) {
       return b ? str : "not null strimg";
     }

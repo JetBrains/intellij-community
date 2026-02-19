@@ -3,7 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.ui.components.labels.LinkLabel;
 
-import java.awt.*;
+import java.awt.Color;
 
 /**
  * @author Alexander Lobas

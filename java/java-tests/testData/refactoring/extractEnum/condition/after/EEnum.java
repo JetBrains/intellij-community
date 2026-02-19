@@ -1,12 +1,12 @@
 public enum EEnum {
     STATE_STARTED(0), STATE_STOPPED(1);
-    private int value;
-
-    public int getValue() {
-        return value;
-    }
+    private final int value;
 
     EEnum(int value) {
         this.value = value;
+    }
+
+    public int getValue() {
+        return value;
     }
 }

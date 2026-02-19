@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.IntFunction;
 import java.util.regex.Pattern;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Title;
@@ -21,30 +20,32 @@ public class UsageViewPresentation {
   private static final Logger LOG = Logger.getInstance(UsageViewPresentation.class);
 
   private @NlsContexts.TabTitle String myTabText;
-  private String myScopeText = ""; // Default value. to be overwritten in most cases.
+  private @NlsSafe String myScopeText = ""; // Default value. to be overwritten in most cases.
   private @NlsSafe String myUsagesString;
   private @NlsSafe String mySearchString;
-  private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
-  private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
+  private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets");
+  // Default value. to be overwritten in most cases.
   private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
-  private @NlsContexts.ListItem String myUsagesInGeneratedCodeString = UsageViewBundle.message("node.usages.in.generated.code");
-  private boolean myShowReadOnlyStatusAsRed = false;
-  private boolean myShowCancelButton = false;
+  private @NlsContexts.ListItem String myDynamicCodeUsagesString = UsageViewBundle.message("list.item.dynamic.usages");
+  private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
+  private boolean myShowReadOnlyStatusAsRed;
+  private boolean myShowCancelButton;
   private boolean myOpenInNewTab = true;
-  private int myRerunHash = 0;//this value shouldn't be copied and doesn't affect equals/hashcode methods
+  private int myRerunHash;//this value shouldn't be copied and doesn't affect equals/hashcode methods
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
-  private IntFunction<@Nls String> myUsagesWordSupplier = count -> UsageViewBundle.message("usage.name", count);
 
   private @NlsContexts.TabTitle String myTabName;
   private @NlsContexts.TabTitle String myToolwindowTitle;
 
   private boolean myDetachedMode; // no UI will be shown
-  private @NlsContexts.ListItem String myDynamicCodeUsagesString;
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
+  private boolean myNonCodeUsageAvailable = true;
   private Pattern mySearchPattern;
-  private Pattern myReplacePattern;
+  private boolean myCaseSensitive;
+  private boolean myPreserveCase;
+  private String myReplaceString;
   private boolean myReplaceMode;
 
   public @NlsContexts.TabTitle String getTabText() {
@@ -55,12 +56,11 @@ public class UsageViewPresentation {
     myTabText = tabText;
   }
 
-  @NotNull
-  public String getScopeText() {
+  public @NotNull @NlsSafe String getScopeText() {
     return myScopeText;
   }
 
-  public void setScopeText(@NotNull String scopeText) {
+  public void setScopeText(@NotNull @NlsSafe String scopeText) {
     myScopeText = scopeText;
   }
 
@@ -73,18 +73,10 @@ public class UsageViewPresentation {
   }
 
   /**
-   * @deprecated use {@link #getSearchString}
-   */
-  @Deprecated
-  public String getUsagesString() {
-    return myUsagesString;
-  }
-
-  /**
    * @deprecated use {@link #setSearchString}
    */
   @Deprecated
-  public void setUsagesString(String usagesString) {
+  public void setUsagesString(@Nls String usagesString) {
     myUsagesString = usagesString;
   }
 
@@ -105,9 +97,7 @@ public class UsageViewPresentation {
     mySearchString = searchString;
   }
 
-  @NlsContexts.ListItem
-  @Nullable("null means the targets node must not be visible")
-  public String getTargetsNodeText() {
+  public @NlsContexts.ListItem @Nullable("null means the targets node must not be visible") String getTargetsNodeText() {
     return myTargetsNodeText;
   }
 
@@ -123,8 +113,7 @@ public class UsageViewPresentation {
     myShowCancelButton = showCancelButton;
   }
 
-  @NotNull
-  public @NlsContexts.ListItem String getNonCodeUsagesString() {
+  public @NotNull @NlsContexts.ListItem String getNonCodeUsagesString() {
     return myNonCodeUsagesString;
   }
 
@@ -132,8 +121,7 @@ public class UsageViewPresentation {
     myNonCodeUsagesString = nonCodeUsagesString;
   }
 
-  @NotNull
-  public @NlsContexts.ListItem String getCodeUsagesString() {
+  public @NotNull @NlsContexts.ListItem String getCodeUsagesString() {
     return myCodeUsagesString;
   }
 
@@ -165,26 +153,6 @@ public class UsageViewPresentation {
     myCodeUsages = codeUsages;
   }
 
-  /**
-   * Please avoid using this method in string concatenations that are shown in UI
-   */
-  @NotNull
-  public @Nls String getUsagesWord() {
-    return myUsagesWordSupplier.apply(1);
-  }
-
-  /**
-   * Use {@link #setUsagesWord(IntFunction)} instead
-   */
-  @Deprecated
-  public void setUsagesWord(@NotNull @Nls String usagesWord) {
-    myUsagesWordSupplier = count -> usagesWord;
-  }
-
-  public void setUsagesWord(@NotNull IntFunction<@Nls String> usagesWordSupplier) {
-    myUsagesWordSupplier = usagesWordSupplier;
-  }
-
   public @NlsContexts.TabTitle String getTabName() {
     return myTabName;
   }
@@ -209,21 +177,12 @@ public class UsageViewPresentation {
     myDetachedMode = detachedMode;
   }
 
-  public void setDynamicUsagesString(@NlsContexts.ListItem String dynamicCodeUsagesString) {
+  public void setDynamicUsagesString(@NotNull @NlsContexts.ListItem String dynamicCodeUsagesString) {
     myDynamicCodeUsagesString = dynamicCodeUsagesString;
   }
 
-  public @NlsContexts.ListItem String getDynamicCodeUsagesString() {
+  public @NotNull @NlsContexts.ListItem String getDynamicCodeUsagesString() {
     return myDynamicCodeUsagesString;
-  }
-
-  @NotNull
-  public @NlsContexts.ListItem String getUsagesInGeneratedCodeString() {
-    return myUsagesInGeneratedCodeString;
-  }
-
-  public void setUsagesInGeneratedCodeString(@NotNull @NlsContexts.ListItem String usagesInGeneratedCodeString) {
-    myUsagesInGeneratedCodeString = usagesInGeneratedCodeString;
   }
 
   public boolean isMergeDupLinesAvailable() {
@@ -249,6 +208,19 @@ public class UsageViewPresentation {
   public void setExcludeAvailable(boolean excludeAvailable) {
     myExcludeAvailable = excludeAvailable;
   }
+  
+  public boolean isNonCodeUsageAvailable() {
+    return myNonCodeUsageAvailable;
+  }
+
+  /**
+   * Allows disabling the grouping by Code/Non Code/Dynamic usage type, i.e., the root node of the usages tree
+   * @see com.intellij.usages.impl.rules.NonCodeUsageGroupingRule
+   * @param nonCodeUsageAvailable  set to false to hide the usage type node
+   */
+  public void setNonCodeUsageAvailable(boolean nonCodeUsageAvailable) {
+    myNonCodeUsageAvailable = nonCodeUsageAvailable;
+  }
 
   public void setSearchPattern(Pattern searchPattern) {
     mySearchPattern = searchPattern;
@@ -258,12 +230,28 @@ public class UsageViewPresentation {
     return mySearchPattern;
   }
 
-  public void setReplacePattern(Pattern replacePattern) {
-    myReplacePattern = replacePattern;
+  public void setCaseSensitive(boolean caseSensitive) {
+    myCaseSensitive = caseSensitive;
   }
 
-  public Pattern getReplacePattern() {
-    return myReplacePattern;
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
+  }
+
+  public void setPreserveCase(boolean preserveCase) {
+    myPreserveCase = preserveCase;
+  }
+
+  public boolean isPreserveCase() {
+    return myPreserveCase;
+  }
+
+  public void setReplaceString(String replaceString) {
+    myReplaceString = replaceString;
+  }
+
+  public String getReplaceString() {
+    return myReplaceString;
   }
 
   public boolean isReplaceMode() {
@@ -296,13 +284,10 @@ public class UsageViewPresentation {
            && Objects.equals(myTabText, that.myTabText)
            && Objects.equals(myTargetsNodeText, that.myTargetsNodeText)
            && Objects.equals(myToolwindowTitle, that.myToolwindowTitle)
-           && Objects.equals(myUsagesInGeneratedCodeString, that.myUsagesInGeneratedCodeString)
            && Objects.equals(myUsagesString, that.myUsagesString)
            && Objects.equals(mySearchString, that.mySearchString)
-           && Objects.equals(myUsagesWordSupplier.apply(1), that.myUsagesWordSupplier.apply(1))
-           && Objects.equals(myUsagesWordSupplier.apply(2), that.myUsagesWordSupplier.apply(2))
            && arePatternsEqual(mySearchPattern, that.mySearchPattern)
-           && arePatternsEqual(myReplacePattern, that.myReplacePattern);
+           && Objects.equals(myReplaceString, that.myReplaceString);
   }
 
   public static boolean arePatternsEqual(Pattern p1, Pattern p2) {
@@ -327,24 +312,21 @@ public class UsageViewPresentation {
       myTargetsNodeText,
       myNonCodeUsagesString,
       myCodeUsagesString,
-      myUsagesInGeneratedCodeString,
       myShowReadOnlyStatusAsRed,
       myShowCancelButton,
       myOpenInNewTab,
       myCodeUsages,
       myUsageTypeFilteringAvailable,
       myExcludeAvailable,
-      myUsagesWordSupplier.apply(1),
-      myUsagesWordSupplier.apply(2),
       myTabName,
       myToolwindowTitle,
       myDetachedMode,
       myDynamicCodeUsagesString,
       myMergeDupLinesAvailable,
-      myReplaceMode
+      myReplaceMode,
+      myReplaceString
     );
     result = 31 * result + getHashCode(mySearchPattern);
-    result = 31 * result + getHashCode(myReplacePattern);
     return result;
   }
 
@@ -357,13 +339,11 @@ public class UsageViewPresentation {
     copyInstance.myTargetsNodeText = myTargetsNodeText;
     copyInstance.myNonCodeUsagesString = myNonCodeUsagesString;
     copyInstance.myCodeUsagesString = myCodeUsagesString;
-    copyInstance.myUsagesInGeneratedCodeString = myUsagesInGeneratedCodeString;
     copyInstance.myShowReadOnlyStatusAsRed = myShowReadOnlyStatusAsRed;
     copyInstance.myShowCancelButton = myShowCancelButton;
     copyInstance.myOpenInNewTab = myOpenInNewTab;
     copyInstance.myCodeUsages = myCodeUsages;
     copyInstance.myUsageTypeFilteringAvailable = myUsageTypeFilteringAvailable;
-    copyInstance.myUsagesWordSupplier = myUsagesWordSupplier;
     copyInstance.myTabName = myTabName;
     copyInstance.myToolwindowTitle = myToolwindowTitle;
     copyInstance.myDetachedMode = myDetachedMode;
@@ -371,7 +351,7 @@ public class UsageViewPresentation {
     copyInstance.myMergeDupLinesAvailable = myMergeDupLinesAvailable;
     copyInstance.myExcludeAvailable = myExcludeAvailable;
     copyInstance.mySearchPattern = mySearchPattern;
-    copyInstance.myReplacePattern = myReplacePattern;
+    copyInstance.myReplaceString = myReplaceString;
     copyInstance.myReplaceMode = myReplaceMode;
     return copyInstance;
   }

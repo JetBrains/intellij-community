@@ -8,4 +8,6 @@ import javax.swing.Icon
 class GradleIconProvider : ExternalSystemIconProvider {
 
   override val reloadIcon: Icon = GradleIcons.GradleLoadChanges
+
+  override val projectIcon: Icon = GradleIcons.GradleFile
 }

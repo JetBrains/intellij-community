@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -22,10 +22,9 @@ import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.VcsLogUtil
 
-class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
-                              vcsLogProgress: VcsLogProgress) : Disposable {
-  private val LOG = Logger.getInstance(VcsLogStatusBarProgress::class.java)
-  private val roots = VcsLogPersistentIndex.getRootsForIndexing(logProviders)
+internal class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>, private val roots: Set<VirtualFile>,
+                                       vcsLogProgress: VcsLogProgress) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val vcsName = VcsLogUtil.getVcsDisplayName(project, roots.mapNotNull { logProviders[it] })
   private val statusBar: StatusBarEx by lazy {
     (WindowManager.getInstance() as WindowManagerEx).findFrameFor(project)!!.statusBar as StatusBarEx
@@ -35,13 +34,17 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
 
   init {
     vcsLogProgress.addProgressIndicatorListener(MyProgressListener(), this)
+    Disposer.register(this, disposableFlag)
   }
 
   @RequiresEdt
   fun start() {
     alarm.value.addRequest(Runnable {
       if (progress == null) {
-        progress = MyProgressIndicator().also { statusBar.addProgress(it, it.taskInfo) }
+        progress = MyProgressIndicator().also { p ->
+          p.start()
+          statusBar.addProgress(p, p.taskInfo)
+        }
       }
     }, Registry.intValue("vcs.log.index.progress.delay.millis"))
   }
@@ -49,7 +52,10 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
   @RequiresEdt
   fun stop() {
     if (alarm.isInitialized()) alarm.value.cancelAllRequests()
-    progress?.let { it.finish(it.taskInfo) }
+    progress?.let { p ->
+      p.stop()
+      p.finish(p.taskInfo)
+    }
     progress = null
   }
 
@@ -58,20 +64,8 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
   }
 
   inner class MyProgressListener : VcsLogProgress.ProgressListener {
-    override fun progressStarted(keys: MutableCollection<out VcsLogProgress.ProgressKey>) {
-      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
-      if (keys.contains(VcsLogPersistentIndex.INDEXING)) {
-        start()
-      }
-    }
-
-    override fun progressStopped() {
-      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
-      stop()
-    }
-
-    override fun progressChanged(keys: MutableCollection<out VcsLogProgress.ProgressKey>) {
-      if (Disposer.isDisposed(this@VcsLogStatusBarProgress)) return
+    override fun progressChanged(keys: Collection<VcsLogProgress.ProgressKey>) {
+      if (disposableFlag.isDisposed) return
       if (keys.contains(VcsLogPersistentIndex.INDEXING)) {
         start()
       }
@@ -81,24 +75,25 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     }
   }
 
-  inner class MyProgressIndicator : AbstractProgressIndicatorExBase() {
+  inner class MyProgressIndicator : ProgressIndicatorBase() {
     internal val taskInfo = MyTaskInfo()
 
     init {
       setOwnerTask(taskInfo)
       dontStartActivity()
-    }
 
-    override fun cancel() {
-      val bigRepositoriesList = service<VcsLogBigRepositoriesList>()
-      roots.forEach { bigRepositoriesList.addRepository(it) }
-      text2 = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.cancelling")
-      LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
-      super.cancel()
+      addStateDelegate(object : AbstractProgressIndicatorExBase() {
+        override fun cancel() {
+          val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
+          roots.forEach { bigRepositoriesList.addRepository(it) }
+          text2 = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.cancelling")
+          LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
+        }
+      })
     }
   }
 
-  inner class MyTaskInfo : TaskInfo {
+  internal inner class MyTaskInfo : TaskInfo {
     override fun getTitle(): String = VcsLogBundle.message("vcs.log.status.bar.indexing", vcsName.capitalize())
 
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
@@ -106,5 +101,11 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     override fun getCancelTooltipText(): String = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.tooltip", vcsName.capitalize())
 
     override fun isCancellable(): Boolean = true
+
+    override fun getStatusBarIndicatorWeight(): Int = 1500
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(VcsLogStatusBarProgress::class.java)
   }
 }

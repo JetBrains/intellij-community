@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl.dtd;
 
 import com.intellij.openapi.util.FieldCache;
@@ -47,22 +33,24 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   protected abstract XmlElementDescriptor[] doCollectXmlDescriptors(final XmlTag context);
 
   static final FieldCache<XmlElementDescriptor[],BaseXmlElementDescriptorImpl,Object, XmlTag> myElementDescriptorsCache =
-    new FieldCache<XmlElementDescriptor[], BaseXmlElementDescriptorImpl, Object, XmlTag>() {
-    @Override
-    protected final XmlElementDescriptor[] compute(final BaseXmlElementDescriptorImpl xmlElementDescriptor, XmlTag tag) {
-      return xmlElementDescriptor.doCollectXmlDescriptors(tag);
-    }
+    new FieldCache<>() {
+      @Override
+      protected XmlElementDescriptor[] compute(final BaseXmlElementDescriptorImpl xmlElementDescriptor, XmlTag tag) {
+        return xmlElementDescriptor.doCollectXmlDescriptors(tag);
+      }
 
-    @Override
-    protected final XmlElementDescriptor[] getValue(final BaseXmlElementDescriptorImpl xmlElementDescriptor, Object o) {
-      return xmlElementDescriptor.myElementDescriptors;
-    }
+      @Override
+      protected XmlElementDescriptor[] getValue(final BaseXmlElementDescriptorImpl xmlElementDescriptor, Object o) {
+        return xmlElementDescriptor.myElementDescriptors;
+      }
 
-    @Override
-    protected final void putValue(final XmlElementDescriptor[] xmlElementDescriptors, final BaseXmlElementDescriptorImpl xmlElementDescriptor,Object o) {
-      xmlElementDescriptor.myElementDescriptors = xmlElementDescriptors;
-    }
-  };
+      @Override
+      protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
+                              final BaseXmlElementDescriptorImpl xmlElementDescriptor,
+                              Object o) {
+        xmlElementDescriptor.myElementDescriptors = xmlElementDescriptors;
+      }
+    };
 
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
@@ -70,22 +58,23 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   }
 
   private static final SimpleFieldCache<XmlAttributeDescriptor[],BaseXmlElementDescriptorImpl> myAttributeDescriptorsCache =
-    new SimpleFieldCache<XmlAttributeDescriptor[], BaseXmlElementDescriptorImpl>() {
-    @Override
-    protected final XmlAttributeDescriptor[] compute(final BaseXmlElementDescriptorImpl xmlElementDescriptor) {
-      return xmlElementDescriptor.collectAttributeDescriptors(null);
-    }
+    new SimpleFieldCache<>() {
+      @Override
+      protected XmlAttributeDescriptor[] compute(final BaseXmlElementDescriptorImpl xmlElementDescriptor) {
+        return xmlElementDescriptor.collectAttributeDescriptors(null);
+      }
 
-    @Override
-    protected final XmlAttributeDescriptor[] getValue(final BaseXmlElementDescriptorImpl xmlElementDescriptor) {
-      return xmlElementDescriptor.myAttributeDescriptors;
-    }
+      @Override
+      protected XmlAttributeDescriptor[] getValue(final BaseXmlElementDescriptorImpl xmlElementDescriptor) {
+        return xmlElementDescriptor.myAttributeDescriptors;
+      }
 
-    @Override
-    protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors, final BaseXmlElementDescriptorImpl xmlElementDescriptor) {
-      xmlElementDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
-    }
-  };
+      @Override
+      protected void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
+                              final BaseXmlElementDescriptorImpl xmlElementDescriptor) {
+        xmlElementDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
+      }
+    };
 
   @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
@@ -96,19 +85,20 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   protected abstract XmlAttributeDescriptor[] collectAttributeDescriptors(final XmlTag context);
 
   private static final SimpleFieldCache<HashMap<String,XmlAttributeDescriptor>, BaseXmlElementDescriptorImpl> attributeDescriptorsMapCache =
-    new SimpleFieldCache<HashMap<String, XmlAttributeDescriptor>, BaseXmlElementDescriptorImpl>() {
+    new SimpleFieldCache<>() {
       @Override
-      protected final HashMap<String, XmlAttributeDescriptor> compute(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor) {
+      protected HashMap<String, XmlAttributeDescriptor> compute(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor) {
         return baseXmlElementDescriptor.collectAttributeDescriptorsMap(null);
       }
 
       @Override
-      protected final HashMap<String, XmlAttributeDescriptor> getValue(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor) {
+      protected HashMap<String, XmlAttributeDescriptor> getValue(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor) {
         return baseXmlElementDescriptor.attributeDescriptorsMap;
       }
 
       @Override
-      protected final void putValue(final HashMap<String, XmlAttributeDescriptor> hashMap, final BaseXmlElementDescriptorImpl baseXmlElementDescriptor) {
+      protected void putValue(final HashMap<String, XmlAttributeDescriptor> hashMap,
+                              final BaseXmlElementDescriptorImpl baseXmlElementDescriptor) {
         baseXmlElementDescriptor.attributeDescriptorsMap = hashMap;
       }
     };
@@ -122,23 +112,25 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   protected abstract HashMap<String, XmlAttributeDescriptor> collectAttributeDescriptorsMap(final XmlTag context);
 
   private static final FieldCache<HashMap<String,XmlElementDescriptor>,BaseXmlElementDescriptorImpl,Object,XmlTag> myElementDescriptorsMapCache =
-    new FieldCache<HashMap<String, XmlElementDescriptor>, BaseXmlElementDescriptorImpl, Object, XmlTag>() {
-    @Override
-    protected final HashMap<String, XmlElementDescriptor> compute(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor, final XmlTag p) {
-      return baseXmlElementDescriptor.collectElementDescriptorsMap(p);
-    }
+    new FieldCache<>() {
+      @Override
+      protected HashMap<String, XmlElementDescriptor> compute(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor,
+                                                              final XmlTag p) {
+        return baseXmlElementDescriptor.collectElementDescriptorsMap(p);
+      }
 
-    @Override
-    protected final HashMap<String, XmlElementDescriptor> getValue(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor, final Object p) {
-      return baseXmlElementDescriptor.myElementDescriptorsMap;
-    }
+      @Override
+      protected HashMap<String, XmlElementDescriptor> getValue(final BaseXmlElementDescriptorImpl baseXmlElementDescriptor,
+                                                               final Object p) {
+        return baseXmlElementDescriptor.myElementDescriptorsMap;
+      }
 
-    @Override
-    protected final void putValue(final HashMap<String, XmlElementDescriptor> hashMap,
-                            final BaseXmlElementDescriptorImpl baseXmlElementDescriptor, final Object p) {
-      baseXmlElementDescriptor.myElementDescriptorsMap = hashMap;
-    }
-  };
+      @Override
+      protected void putValue(final HashMap<String, XmlElementDescriptor> hashMap,
+                              final BaseXmlElementDescriptorImpl baseXmlElementDescriptor, final Object p) {
+        baseXmlElementDescriptor.myElementDescriptorsMap = hashMap;
+      }
+    };
 
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag) {

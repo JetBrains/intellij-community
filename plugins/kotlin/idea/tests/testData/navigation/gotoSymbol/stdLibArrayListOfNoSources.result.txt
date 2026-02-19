@@ -1,0 +1,35 @@
+NavigationItem:
+    name: arrayListOf
+ItemPresentation:
+    presentableText: arrayListOf()
+    locationString: (in kotlin.collections.CollectionsKt)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: @kotlin.SinceKotlin @kotlin.internal.InlineOnly public inline fun <T> arrayListOf(): java.util.ArrayList<T> /* from: kotlin.collections.ArrayList<T> */ { /* compiled code */ }
+QualifiedName: kotlin.collections.CollectionsKt.arrayListOf
+
+NavigationItem:
+    name: arrayListOf
+ItemPresentation:
+    presentableText: arrayListOf()
+    locationString: (kotlin.collections)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: @kotlin.SinceKotlin @kotlin.internal.InlineOnly public inline fun <T> arrayListOf(): java.util.ArrayList<T> /* from: kotlin.collections.ArrayList<T> */ { /* compiled code */ }
+QualifiedName: (kotlin.collections).arrayListOf
+
+NavigationItem:
+    name: arrayListOf
+ItemPresentation:
+    presentableText: arrayListOf(vararg T)
+    locationString: (in kotlin.collections.CollectionsKt)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: public fun <T> arrayListOf(vararg elements: T): java.util.ArrayList<T> /* from: kotlin.collections.ArrayList<T> */ { /* compiled code */ }
+QualifiedName: kotlin.collections.CollectionsKt.arrayListOf
+
+NavigationItem:
+    name: arrayListOf
+ItemPresentation:
+    presentableText: arrayListOf(vararg T)
+    locationString: (kotlin.collections)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: public fun <T> arrayListOf(vararg elements: T): java.util.ArrayList<T> /* from: kotlin.collections.ArrayList<T> */ { /* compiled code */ }
+QualifiedName: (kotlin.collections).arrayListOf

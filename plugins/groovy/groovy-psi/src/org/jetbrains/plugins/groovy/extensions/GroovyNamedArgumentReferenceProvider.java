@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 
-/**
- * @author Sergey Evdokimov
- */
 public interface GroovyNamedArgumentReferenceProvider {
 
   PsiReference[] createRef(@NotNull PsiElement element,

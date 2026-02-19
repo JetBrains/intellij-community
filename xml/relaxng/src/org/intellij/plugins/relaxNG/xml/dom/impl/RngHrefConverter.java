@@ -20,7 +20,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
 import org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor;
 import org.intellij.plugins.relaxNG.references.FileReferenceUtil;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RngHrefConverter extends Converter<XmlFile> implements CustomReferenceConverter<XmlFile> {
   @Override
-  public XmlFile fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public XmlFile fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s != null) {
       final GenericAttributeValue<XmlFile> element = (GenericAttributeValue<XmlFile>)context.getInvocationElement();
       final PsiReference[] references = createReferences(element, element.getXmlAttributeValue(), context);
@@ -44,7 +48,7 @@ public class RngHrefConverter extends Converter<XmlFile> implements CustomRefere
   }
 
   @Override
-  public String toString(@Nullable XmlFile psiFile, ConvertContext context) {
+  public String toString(@Nullable XmlFile psiFile, @NotNull ConvertContext context) {
     return psiFile == null ? null : psiFile.getName();
   }
 
@@ -55,10 +59,6 @@ public class RngHrefConverter extends Converter<XmlFile> implements CustomRefere
       return PsiReference.EMPTY_ARRAY;
     }
     final FileReferenceSet set = FileReferenceSet.createSet(element, false, false, false);
-    if (set != null) {
-      return FileReferenceUtil.restrict(set, FileReferenceUtil.byNamespace(RelaxNgMetaDataContributor.RNG_NAMESPACE), true);
-    } else {
-      return PsiReference.EMPTY_ARRAY;
-    }
+    return FileReferenceUtil.restrict(set, FileReferenceUtil.byNamespace(RelaxNgMetaDataContributor.RNG_NAMESPACE), true);
   }
 }

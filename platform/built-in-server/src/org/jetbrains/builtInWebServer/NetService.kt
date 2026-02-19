@@ -1,11 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.filters.TextConsoleBuilder
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -16,7 +16,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
 import com.intellij.util.net.NetUtils
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.concurrency.*
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.AsyncValueLoader
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.errorIfNotMessage
+import org.jetbrains.concurrency.isRejected
 import javax.swing.Icon
 
 abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
@@ -104,7 +108,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
 
   open fun getConsoleToolWindowActions(): ActionGroup = DefaultActionGroup()
 
-  private inner class MyProcessAdapter(private val osProcessHandler: OSProcessHandler?) : ProcessAdapter(), Consumer<String> {
+  private inner class MyProcessAdapter(private val osProcessHandler: OSProcessHandler?) : ProcessListener, Consumer<String> {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
       print(event.text, ConsoleViewContentType.getConsoleViewType(outputType))
     }
@@ -118,7 +122,6 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
       if (result != null && result == osProcessHandler) {
         processHandler.reset()
       }
-      @Suppress("HardCodedStringLiteral")
       print("${getConsoleToolWindowId()} terminated\n", ConsoleViewContentType.SYSTEM_OUTPUT)
     }
 

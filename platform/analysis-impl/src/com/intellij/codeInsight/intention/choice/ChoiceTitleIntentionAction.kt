@@ -12,7 +12,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.Nls
 
 /**
  * Intention action that is used as a title of [IntentionActionWithChoice].
@@ -30,7 +29,7 @@ open class ChoiceTitleIntentionAction(@IntentionFamilyName private val family: S
 
   override fun getFamilyName(): String = family
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean = true
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {}
 

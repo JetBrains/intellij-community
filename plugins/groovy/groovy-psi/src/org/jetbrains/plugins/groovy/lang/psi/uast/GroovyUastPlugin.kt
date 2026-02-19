@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.lang.Language
-import com.intellij.psi.*
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.NonNls
@@ -10,14 +14,28 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.uast.*
+import org.jetbrains.uast.LazyParentUIdentifier
+import org.jetbrains.uast.UAnchorOwner
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UAnnotationEx
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UIdentifier
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UNamedExpression
+import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.util.ClassSet
+import org.jetbrains.uast.util.classSetOf
 
 /**
  * This is a very limited implementation of UastPlugin for Groovy,
@@ -47,7 +65,7 @@ class GroovyUastPlugin : UastLanguagePlugin {
     }?.takeIf { requiredType?.isAssignableFrom(it.javaClass) ?: true }
 
   private fun makeUParent(element: PsiElement) =
-    element.parents.mapNotNull { convertElementWithParent(it, null) }.firstOrNull()
+    element.parents(false).mapNotNull { convertElementWithParent(it, null) }.firstOrNull()
 
   override fun getMethodCallExpression(element: PsiElement,
                                        containingClassFqName: String?,
@@ -64,13 +82,15 @@ class GroovyUastPlugin : UastLanguagePlugin {
 
   override val language: Language = GroovyLanguage
 
+  override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
+    classSetOf(GroovyPsiElement::class.java)
 }
 
-class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression, UInjectionHost {
+class GrULiteral(private val grElement: GrLiteral, private val parentProvider: () -> UElement?) : ULiteralExpression, UInjectionHost {
   override val value: Any? get() = grElement.value
   override fun evaluate(): Any? = value
   override val uastParent: UElement? by lazy(parentProvider)
-  override val psi: PsiElement? = grElement
+  override val psi: PsiElement = grElement
   override val uAnnotations: List<UAnnotation> = emptyList() //not implemented
   override val isString: Boolean
     get() = super<UInjectionHost>.isString
@@ -78,7 +98,7 @@ class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) 
     get() = grElement
 }
 
-class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentProvider: () -> UElement?) : UNamedExpression {
+class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, private val parentProvider: () -> UElement?) : UNamedExpression {
   override val name: String?
     get() = grElement.name
   override val expression: UExpression
@@ -97,8 +117,8 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
   override fun hashCode(): Int = grElement.hashCode()
 }
 
-class GrUAnnotation(val grElement: GrAnnotation,
-                    val parentProvider: () -> UElement?) : UAnnotationEx, UAnchorOwner, UMultiResolvable {
+class GrUAnnotation(private val grElement: GrAnnotation,
+                    private val parentProvider: () -> UElement?) : UAnnotationEx, UAnchorOwner, UMultiResolvable {
 
   override val javaPsi: PsiAnnotation = grElement
 
@@ -118,14 +138,17 @@ class GrUAnnotation(val grElement: GrAnnotation,
     }
   }
 
-  override fun findAttributeValue(name: String?): UExpression? = null //not implemented
+  override fun findAttributeValue(name: String?): UExpression? = findDeclaredAttributeValue(name)
 
-  override fun findDeclaredAttributeValue(name: String?): UExpression? = null //not implemented
+  override fun findDeclaredAttributeValue(name: String?): UExpression? {
+    return grElement.parameterList.attributes.asSequence()
+      .find { it.name == name || it.name == null && "value" == name }
+      ?.let { GrUNamedExpression(it) { this } }
+  }
 
   override val uastParent: UElement? by lazy(parentProvider)
 
-  override val psi: PsiElement? = grElement
-
+  override val psi: PsiElement = grElement
 }
 
 class GrUnknownUExpression(override val psi: PsiElement?, override val uastParent: UElement?) : UExpression {

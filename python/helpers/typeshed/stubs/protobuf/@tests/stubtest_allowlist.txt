@@ -1,0 +1,37 @@
+# Generated pb2 methods diverge for a variety of reasons. They are tested
+# carefully in mypy-protobuf which internally runs stubtest. Skip those here.
+google.protobuf\..*_pb2\..*
+
+# While Message and Descriptor are both defined with a null DESCRIPTOR,
+# subclasses of Message and instances of EnumTypeWrapper require this value to
+# be set, and since these type stubs are intended for use with protoc-generated
+# python it's more accurate to make them non-nullable.
+google.protobuf.internal.enum_type_wrapper.EnumTypeWrapper.DESCRIPTOR
+google.protobuf.message.Message.DESCRIPTOR
+
+# Exists at runtime, but via a __getitem__/__setitem__ hack
+# See https://github.com/protocolbuffers/protobuf/blob/3ea30d80847cd9561db570ae7f673afc15523545/python/google/protobuf/message.py#L67
+google.protobuf.message.Message.Extensions
+
+# Has *args that would fail at runtime with any positional argument
+google.protobuf.internal.containers.BaseContainer.sort
+
+# These are deliberately omitted in the stub.
+# The classes can't be constructed directly anyway,
+# so the signatures of their constructors are somewhat irrelevant.
+google.protobuf.descriptor.Descriptor.__new__
+google.protobuf.descriptor.ServiceDescriptor.__new__
+
+# Set to None at runtime - which doesn't match the Sequence base class.
+# It's a hack - just allow it.
+google.protobuf.internal.containers.BaseContainer.__hash__
+
+# Metaclass differs:
+google.protobuf.descriptor.OneofDescriptor
+
+# Runtime does not have __iter__ (yet...): hack in spirit of https://github.com/python/typeshed/issues/7813
+google.protobuf.internal.well_known_types.ListValue.__iter__
+
+# It's a list at runtime, but if we do that pyright complains about incompatible overrides
+# in subclasses that use a tuple for __slots__.
+google.protobuf.message.Message.__slots__

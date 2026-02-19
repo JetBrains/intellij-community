@@ -1,42 +1,75 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInspection.*;
+import com.ibm.icu.text.MessagePattern;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.NlsCapitalizationUtil;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.references.PropertyReference;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UQualifiedReferenceExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UResolvable;
+import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
-import java.text.ChoiceFormat;
-import java.text.Format;
-import java.text.MessageFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.IntStream;
 
-public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
+      @SuppressWarnings("unchecked") 
+      private static final Class<? extends UExpression>[] uExpressionClasses = new Class[] 
+        {UInjectionHost.class, UCallExpression.class, UReferenceExpression.class};
+      
       @Override
       public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
-        UExpression uElement =
-          UastContextKt.toUElementOfExpectedTypes(element, UInjectionHost.class, UCallExpression.class, UReferenceExpression.class);
-        Value titleValue = getTitleValue(uElement, new HashSet<>());
+        UExpression uElement = UastContextKt.toUElementOfExpectedTypes(element, uExpressionClasses);
+        if (uElement == null) return;
+        Value titleValue = getTitleValue(uElement, null);
         if (titleValue == null) return;
         List<UExpression> usages = I18nInspection.findIndirectUsages(uElement, false);
         if (usages.isEmpty()) {
@@ -60,16 +93,18 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                                titleValue, getCapitalizationName(capitalization));
             }
             else {
-              fix = titleValue.canFix() && element instanceof PsiExpression ? new TitleCapitalizationFix(titleValue, capitalization) : null;
+              fix = titleValue.canFix() &&
+                    (element instanceof PsiExpression || uElement instanceof UCallExpression call && getPropertyArgument(call) != null) ? 
+                    new TitleCapitalizationFix(titleValue, capitalization) : null;
               message = JavaI18nBundle.message("inspection.title.capitalization.description",
                                                titleValue, getCapitalizationName(capitalization));
             }
-            holder.registerProblem(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+            holder.registerProblem(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, LocalQuickFix.notNullElements(fix));
           }
         }
       }
 
-      private Nls.Capitalization getCapitalization(UExpression usage) {
+      private static Nls.Capitalization getCapitalization(UExpression usage) {
         Nls.Capitalization capitalization = Nls.Capitalization.NotSpecified;
         NlsInfo info = NlsInfo.forExpression(usage, false);
         if (info instanceof NlsInfo.Localized) {
@@ -82,12 +117,9 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           }
           UCallExpression call = ObjectUtils.tryCast(parent, UCallExpression.class);
           if (call != null) {
-            PsiMethod method = call.resolve();
-            if (method != null) {
-              PsiParameter parameter = AnnotationContext.getParameter(method, call, usage);
-              if (parameter != null) {
-                capitalization = getSupplierCapitalization(parameter);
-              }
+            PsiParameter parameter = AnnotationContext.getParameter(call, usage);
+            if (parameter != null) {
+              capitalization = getSupplierCapitalization(parameter);
             }
           }
         }
@@ -97,33 +129,29 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static @Nls String getCapitalizationName(Nls.Capitalization capitalization) {
-    switch (capitalization) {
-      case Title:
-        return JavaI18nBundle.message("capitalization.kind.title");
-      case Sentence:
-        return JavaI18nBundle.message("capitalization.kind.sentence");
-      default:
-        throw new IllegalArgumentException();
-    }
+    return switch (capitalization) {
+      case Title -> JavaI18nBundle.message("capitalization.kind.title");
+      case Sentence -> JavaI18nBundle.message("capitalization.kind.sentence");
+      default -> throw new IllegalArgumentException();
+    };
   }
 
-  @Nullable
-  private static Value getTitleValue(@Nullable UExpression arg, Set<? super UExpression> processed) {
+  private static @Nullable Value getTitleValue(@Nullable UExpression arg, @Nullable Set<? super UExpression> processed) {
     if (arg instanceof UInjectionHost) {
       return Value.of((UInjectionHost)arg);
     }
-    if (arg instanceof UCallExpression) {
-      UCallExpression call = (UCallExpression)arg;
-      PsiMethod psiMethod = call.resolve();
-      UExpression returnValue = UastContextKt.toUElement(PropertyUtilBase.getGetterReturnExpression(psiMethod), UExpression.class);
-      if (returnValue instanceof UQualifiedReferenceExpression) {
-        returnValue = ((UQualifiedReferenceExpression)returnValue).getSelector();
-      }
+    if (arg instanceof UCallExpression call) {
+      UExpression returnValue = StringFlowUtil.getReturnValue(call);
       if (arg.equals(returnValue)) {
         return null;
       }
-      if (returnValue != null && processed.add(returnValue)) {
-        return getTitleValue(returnValue, processed);
+      if (returnValue != null) {
+        if (processed == null) {
+          processed = new HashSet<>();
+        }
+        if (processed.add(returnValue)) {
+          return getTitleValue(returnValue, processed);
+        }
       }
       Value fromProperty = Value.of(getPropertyArgument(call), call.getValueArgumentCount() > 1);
       if (fromProperty != null) {
@@ -140,50 +168,21 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       }
       PsiType type = arg.getExpressionType();
       if (type != null) {
-        Value value = Value.of(NlsInfo.forType(type));
-        if (value != null) {
-          return value;
-        }
+        return Value.of(NlsInfo.forType(type));
       }
     }
     return null;
   }
 
-  @Nullable
-  private static Property getPropertyArgument(UCallExpression arg) {
+  private static @Nullable Property getPropertyArgument(UCallExpression arg) {
     List<UExpression> args = arg.getValueArguments();
     if (!args.isEmpty()) {
-      PsiElement psi = args.get(0).getSourcePsi();
-      if (psi != null) {
-        if (args.get(0).equals(UastContextKt.toUElement(psi.getParent()))) {
-          // In Kotlin, we should go one level up (from KtLiteralStringTemplateEntry to KtStringTemplateExpression) 
-          // to find the property reference
-          psi = psi.getParent();
-        }
-        return getProperty(psi);
-      }
+      return JavaI18nUtil.resolveProperty(args.get(0));
     }
     return null;
   }
 
-  @Nullable
-  private static Property getProperty(PsiElement psi) {
-    PsiReference[] references = psi.getReferences();
-    for (PsiReference reference : references) {
-      if (reference instanceof PropertyReference) {
-        ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
-        if (resolveResults.length == 1 && resolveResults[0].isValidResult()) {
-          PsiElement element = resolveResults[0].getElement();
-          if (element instanceof Property) {
-            return (Property)element;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static class TitleCapitalizationFix implements LocalQuickFix {
+  private static class TitleCapitalizationFix extends PsiUpdateModCommandQuickFix {
     private final Value myTitleValue;
     private final Nls.Capitalization myCapitalization;
 
@@ -192,90 +191,83 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       myCapitalization = capitalization;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return JavaI18nBundle.message("quickfix.text.title.capitalization", myTitleValue);
     }
 
     @Override
-    public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement problemElement = descriptor.getPsiElement();
-      if (problemElement == null) return;
-      doFix(project, problemElement);
-    }
-
-    protected void doFix(Project project, PsiElement element) throws IncorrectOperationException {
-      if (element instanceof PsiLiteralExpression) {
-        Value value = Value.of((PsiLiteralExpression)element);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement problemElement, @NotNull ModPsiUpdater updater) {
+      PsiLiteralExpression literal = updater.getWritable(getTargetLiteral(problemElement));
+      if (literal != null) {
+        Value value = Value.of(literal);
         if (value == null) return;
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final PsiExpression newExpression =
-          factory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"', element);
-        element.replace(newExpression);
+          factory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"',
+                                           problemElement);
+        literal.replace(newExpression);
       }
-      else if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
-        final PsiMethod method = call.resolveMethod();
-        final PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(method);
-        if (returnValue != null) {
-          doFix(project, returnValue);
-        }
-        final Property property = getPropertyArgument(call);
-        Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
+      UElement uElement = UastContextKt.toUElement(problemElement);
+      if (uElement instanceof UQualifiedReferenceExpression ref) {
+        uElement = ref.getSelector();
+      }
+      if (uElement instanceof UCallExpression call) {
+        final Property property = updater.getWritable(getPropertyArgument(call));
+        Value value = Value.of(property, call.getValueArgumentCount() > 1);
         if (value == null) return;
         property.setValue(value.fixCapitalization(myCapitalization));
       }
-      else if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiVariable)) {
-          return;
-        }
-        final PsiVariable variable = (PsiVariable)target;
-        if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-          doFix(project, variable.getInitializer());
-        }
-      }
     }
 
-    @Nullable
-    private static Property getPropertyArgument(PsiMethodCallExpression arg) {
-      PsiExpression[] args = arg.getArgumentList().getExpressions();
-      if (args.length > 0) {
-        return getProperty(args[0]);
+    private static @Nullable PsiLiteralExpression getTargetLiteral(@NotNull PsiElement element) {
+      if (element instanceof PsiLiteralExpression) {
+        return (PsiLiteralExpression)element;
+      }
+      if (element instanceof PsiMethodCallExpression call) {
+        final PsiMethod method = call.resolveMethod();
+        final PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(method);
+        if (returnValue != null) {
+          return ObjectUtils.tryCast(returnValue, PsiLiteralExpression.class);
+        }
+      }
+      if (element instanceof PsiReferenceExpression referenceExpression) {
+        final PsiVariable variable = ObjectUtils.tryCast(referenceExpression.resolve(), PsiVariable.class);
+        if (variable == null) return null;
+        if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+          return ObjectUtils.tryCast(variable.getInitializer(), PsiLiteralExpression.class);
+        }
       }
       return null;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaI18nBundle.message("quickfix.family.title.capitalization.fix");
     }
   }
 
   interface Value {
+    @Override
     @NotNull String toString();
     boolean isSatisfied(@NotNull Nls.Capitalization capitalization);
 
-    @NotNull
-    default String fixCapitalization(@NotNull Nls.Capitalization capitalization) {
+    default @NotNull String fixCapitalization(@NotNull Nls.Capitalization capitalization) {
       return NlsCapitalizationUtil.fixValue(toString(), capitalization);
     }
 
     default boolean canFix() { return true; }
 
     @Contract("null, _ -> null")
-    @Nullable
-    static Value of(@Nullable Property property, boolean useFormat) {
+    static @Nullable Value of(@Nullable Property property, boolean useFormat) {
       if (property == null) return null;
       String value = property.getUnescapedValue();
       if (value == null) return null;
       if (useFormat) {
         try {
-          MessageFormat format = new MessageFormat(value);
-          return new PropertyValue(value, format);
+          MessagePattern pattern = new MessagePattern(MessagePattern.ApostropheMode.DOUBLE_REQUIRED);
+          pattern.parse(value);
+          return new PropertyValue(value, pattern);
         }
         catch (IllegalArgumentException ignore) {
         }
@@ -288,14 +280,12 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       return value == null ? null : new TextValue(value);
     }
 
-    @Nullable
-    static Value of(@NotNull PsiLiteralExpression literal) {
+    static @Nullable Value of(@NotNull PsiLiteralExpression literal) {
       Object value = literal.getValue();
       return value instanceof String ? new TextValue((String)value) : null;
     }
 
-    @Nullable
-    static Value of(NlsInfo info) {
+    static @Nullable Value of(NlsInfo info) {
       if (info instanceof NlsInfo.Localized) {
         Nls.Capitalization capitalization = ((NlsInfo.Localized)info).getCapitalization();
         if (capitalization != Nls.Capitalization.NotSpecified) {
@@ -311,9 +301,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
 
     TextValue(String text) { myText = text; }
 
-    @NotNull
     @Override
-    public String toString() { return myText;}
+    public @NotNull String toString() { return myText;}
 
     @Override
     public boolean isSatisfied(@NotNull Nls.Capitalization capitalization) {
@@ -338,51 +327,97 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       return false;
     }
 
-    @NotNull
     @Override
-    public String toString() { return getCapitalizationName(myDeclared);}
+    public @NotNull String toString() { return getCapitalizationName(myDeclared);}
   }
 
   static class PropertyValue implements Value {
     private final String myPresentation;
-    private final MessageFormat myFormat;
+    private final MessagePattern myPattern;
 
-    PropertyValue(String presentation, MessageFormat format) {
+    PropertyValue(String presentation, MessagePattern pattern) {
       myPresentation = presentation;
-      myFormat = format;
+      myPattern = pattern;
     }
 
-    @NotNull @Override
-    public String toString() {
+    @Override
+    public @NotNull String toString() {
       return myPresentation;
+    }
+    
+    private int getMessagesForPart(int index) {
+      MessagePattern.Part part = myPattern.getPart(index);
+      if (part.getType() != MessagePattern.Part.Type.ARG_START) return 0;
+      int limitPart = myPattern.getLimitPartIndex(index);
+      int msgCount = 0;
+      int nesting = -1;
+      for (int i = index + 1; i < limitPart; i++) {
+        part = myPattern.getPart(i);
+        if (part.getType() == MessagePattern.Part.Type.MSG_START) {
+          if (nesting == -1) {
+            nesting = part.getValue();
+          }
+          else if (nesting != part.getValue()) {
+            continue;
+          }
+          msgCount++;
+        }
+      }
+      return msgCount;
     }
 
     @Override
     public boolean isSatisfied(@NotNull Nls.Capitalization capitalization) {
       if (capitalization == Nls.Capitalization.NotSpecified) return true;
-      Format[] formats = myFormat.getFormats();
-      MessageFormat clone = (MessageFormat)myFormat.clone();
-      clone.setFormats(new Format[formats.length]);
-      if (!NlsCapitalizationUtil.isCapitalizationSatisfied(StringUtil.stripHtml(clone.toPattern(), true), capitalization)) return false;
-      boolean startsWithFormat = myFormat.toPattern().startsWith("{");
-      for (int i = 0; i < formats.length; i++) {
-        Format format = formats[i];
-        if (format instanceof ChoiceFormat) {
-          for (Object subValue : ((ChoiceFormat)format).getFormats()) {
-            String str = subValue.toString();
-            if (capitalization == Nls.Capitalization.Sentence && (i > 0 || !startsWithFormat)) {
-              str = "The " + str;
+      int parts = myPattern.countParts();
+      int maxMsgCount = IntStreamEx.range(parts).map(this::getMessagesForPart).append(1).max().orElse(1);
+      String string = myPattern.getPatternString();
+      // The idea is to replace ordinary parameters with _ (which is not reported in any case) 
+      // and choice/plural with one of the possible options in a loop till maximal option number is reached. 
+      // If all the artificial strings satisfy the capitalization, we assume that it's satisfied for the pattern as well.
+      for (int curIndex = 0; curIndex < maxMsgCount; curIndex++) {
+        StringBuilder sample = new StringBuilder();
+        int msgIndex = 0;
+        int nestingLevel = 0;
+        int curMsgCount = 0;
+        boolean inMsg = false;
+        for (int i = 1; i < parts; i++) {
+          MessagePattern.Part part = myPattern.getPart(i);
+          boolean shouldCopyPart = nestingLevel == 0 || inMsg && msgIndex == curIndex % curMsgCount + 1;
+          if (shouldCopyPart) {
+            sample.append(string, myPattern.getPart(i - 1).getLimit(), myPattern.getPatternIndex(i));
+          }
+          if (part.getType() == MessagePattern.Part.Type.ARG_START) {
+            nestingLevel++;
+            MessagePattern.ArgType argType = part.getArgType();
+            if ((argType == MessagePattern.ArgType.SIMPLE || argType == MessagePattern.ArgType.NONE) && shouldCopyPart) {
+              sample.append("_");
             }
-            if (!NlsCapitalizationUtil.isCapitalizationSatisfied(str, capitalization)) return false;
+            msgIndex = 0;
+            curMsgCount = Math.max(1, getMessagesForPart(i));
+          }
+          else if (part.getType() == MessagePattern.Part.Type.MSG_START) {
+            msgIndex++;
+            inMsg = true;
+          }
+          else if (part.getType() == MessagePattern.Part.Type.MSG_LIMIT) {
+            inMsg = false;
+          }
+          else if (part.getType() == MessagePattern.Part.Type.ARG_LIMIT) {
+            nestingLevel--;
           }
         }
+        if (!NlsCapitalizationUtil.isCapitalizationSatisfied(sample.toString(), capitalization)) return false;
       }
       return true;
     }
 
     @Override
     public boolean canFix() {
-      return ContainerUtil.findInstance(myFormat.getFormats(), ChoiceFormat.class) == null;
+      return IntStream.range(0, myPattern.countParts()).anyMatch(idx -> {
+        MessagePattern.ArgType type = myPattern.getPart(idx).getArgType();
+        return type == MessagePattern.ArgType.NONE || type == MessagePattern.ArgType.SIMPLE;
+      });
     }
   }
 

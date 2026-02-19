@@ -1,21 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.util.PsiTreeUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -25,31 +31,35 @@ import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
-public class WordCompletionContributor extends CompletionContributor implements DumbAware {
-
-  public static final Key<String> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
-
+public final class WordCompletionContributor extends CompletionContributor implements DumbAware {
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
     return (DumbService.isDumb(file.getProject()) &&
             LanguageWordCompletion.INSTANCE.isWordCompletionInDumbModeEnabled(file.getLanguage())) ||
            file instanceof PsiPlainTextFile && file.getViewProvider().getLanguages().size() == 1;
   }
 
+  @ApiStatus.Internal
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC && shouldPerformWordCompletion(parameters)) {
       addWordCompletionVariants(result, parameters, Collections.emptySet());
     }
   }
 
-  public static void addWordCompletionVariants(CompletionResultSet result, final CompletionParameters parameters, Set<String> excludes) {
+  public static void addWordCompletionVariants(@NotNull CompletionResultSet result,
+                                               @NotNull CompletionParameters parameters,
+                                               @NotNull Set<String> excludes) {
     addWordCompletionVariants(result, parameters, excludes, false);
   }
 
-  public static void addWordCompletionVariants(CompletionResultSet result, final CompletionParameters parameters, Set<String> excludes, boolean allowEmptyPrefix) {
+  public static void addWordCompletionVariants(@NotNull CompletionResultSet result,
+                                               @NotNull CompletionParameters parameters,
+                                               @NotNull Set<String> excludes,
+                                               boolean allowEmptyPrefix) {
+    if (Boolean.TRUE.equals(((CompletionProcessEx)parameters.getProcess()).getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
+      return;
+    }
+
     final Set<String> realExcludes = new HashSet<>(excludes);
     for (String exclude : excludes) {
       String[] words = exclude.split("[ .-]");
@@ -64,7 +74,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
     final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findAlphanumericPrefix(parameters));
     consumeAllWords(position, startOffset, word -> {
       if (!realExcludes.contains(word)) {
-        final LookupElement item = LookupElementBuilder.create(word);
+        final LookupElement item = createWordSuggestion(word);
         javaResultSet.addElement(item);
         plainResultSet.addElement(item);
       }
@@ -73,9 +83,10 @@ public class WordCompletionContributor extends CompletionContributor implements 
     addValuesFromOtherStringLiterals(result, parameters, realExcludes, position);
   }
 
-  private static void addValuesFromOtherStringLiterals(CompletionResultSet result,
-                                                       CompletionParameters parameters,
-                                                       final Set<String> realExcludes, PsiElement position) {
+  private static void addValuesFromOtherStringLiterals(@NotNull CompletionResultSet result,
+                                                       @NotNull CompletionParameters parameters,
+                                                       @NotNull Set<String> realExcludes,
+                                                       @NotNull PsiElement position) {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(position.getLanguage());
     if (definition == null) {
       return;
@@ -108,7 +119,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
             public void visitElement(@NotNull PsiElement each) {
               String valueText = ElementManipulators.getValueText(each);
               if (StringUtil.isNotEmpty(valueText) && !realExcludes.contains(valueText)) {
-                final LookupElement item = LookupElementBuilder.create(valueText);
+                final LookupElement item = createWordSuggestion(valueText);
                 fullStringResult.addElement(item);
               }
             }
@@ -120,12 +131,21 @@ public class WordCompletionContributor extends CompletionContributor implements 
     });
   }
 
-  private static boolean shouldPerformWordCompletion(CompletionParameters parameters) {
+  private static LookupElement createWordSuggestion(@NotNull String word) {
+    return LookupElementBuilder.create(word)
+      .withIcon(AllIcons.Nodes.Word);
+  }
+
+  private static boolean shouldPerformWordCompletion(@NotNull CompletionParameters parameters) {
     if (parameters.getInvocationCount() == 0) {
       return false;
     }
 
-    if (parameters.getOriginalFile().getUserData(FORBID_WORD_COMPLETION) != null) {
+    if (Boolean.TRUE.equals(parameters.getOriginalFile().getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
+      return false;
+    }
+
+    if (Boolean.TRUE.equals(((CompletionProcessEx)parameters.getProcess()).getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
       return false;
     }
 
@@ -172,7 +192,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
                                       boolean allowEmptyPrefix) {
     if (!allowEmptyPrefix && StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) return;
     CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
-    Set<CharSequence> words = new THashSet<>(chars.length()/8);
+    Set<CharSequence> words = new HashSet<>(chars.length()/8);
     IdTableBuilding.scanWords((charSeq, charsArray, start, end) -> {
       if (start > offset || offset > end) {
         CharSequence sequence = charSeq.subSequence(start, end);

@@ -1,16 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.breakpoints.ui;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Collection;
+import javax.swing.Icon;
 import java.util.Comparator;
 
 public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
+  public static final ExtensionPointName<XBreakpointGroupingRule> EP =
+    ExtensionPointName.create("com.intellij.xdebugger.breakpointGroupingRule");
+
   public static final Comparator<XBreakpointGroupingRule> PRIORITY_COMPARATOR = (o1, o2) -> {
     final int res = o2.getPriority() - o1.getPriority();
     return res != 0 ? res : (o1.getId().compareTo(o2.getId()));
@@ -28,14 +31,11 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
     myPresentableName = presentableName;
   }
 
-  @NotNull
-  @Nls
-  public String getPresentableName() {
+  public @NotNull @Nls String getPresentableName() {
     return myPresentableName;
   }
 
-  @NotNull 
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
@@ -43,11 +43,9 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
     return XBreakpointsGroupingPriorities.DEFAULT;
   }
 
-  @Nullable
-  public abstract G getGroup(@NotNull B breakpoint, @NotNull Collection<? extends G> groups);
+  public abstract @Nullable G getGroup(@NotNull B breakpoint);
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 }

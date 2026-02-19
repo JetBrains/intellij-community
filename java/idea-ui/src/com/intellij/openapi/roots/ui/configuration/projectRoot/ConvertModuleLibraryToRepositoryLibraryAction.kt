@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.jarRepository.RepositoryLibraryType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -33,6 +34,10 @@ class ConvertModuleLibraryToRepositoryLibraryAction(private val classpathPanel: 
     val entry = classpathPanel.selectedEntry as? LibraryOrderEntry
     if (entry == null || !entry.isModuleLevel) return null
     return entry.library as? LibraryEx
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun replaceLibrary(library: Library, configureNewLibrary: (LibraryEditorBase) -> Unit) {

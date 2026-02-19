@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class FormTypeRegistrar implements CompilableFileTypesProvider {
+public final class FormTypeRegistrar implements CompilableFileTypesProvider {
   @Override
   public @NotNull Set<FileType> getCompilableFileTypes() {
     return Collections.singleton(GuiFormFileType.INSTANCE);

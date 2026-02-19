@@ -1,0 +1,7 @@
+// EXPECT_VARIANT_IN_ORDER "public operator fun foo.Foo.getValue(thisRef: kotlin.Any?, property: kotlin.Any?): kotlin.Int defined in foo in file operatorGetValueExtension.dependency.kt"
+
+import foo.Foo
+
+fun main() {
+    val x b<caret>y Foo()
+}

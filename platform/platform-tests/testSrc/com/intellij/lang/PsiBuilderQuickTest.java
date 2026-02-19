@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.lang.impl.PsiBuilderImpl;
@@ -9,8 +9,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
-import com.intellij.psi.tree.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.ILightLazyParseableElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.DiffTree;
@@ -24,7 +29,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   private static final IFileElementType ROOT = new IFileElementType("ROOT", Language.ANY);
@@ -45,36 +52,40 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testPlain() {
     doTest("a<<b",
-           "Element(ROOT)\n" +
-           "  PsiElement(LETTER)('a')\n" +
-           "  PsiElement(OTHER)('<')\n" +
-           "  PsiElement(OTHER)('<')\n" +
-           "  PsiElement(LETTER)('b')\n", builder -> { while (builder.getTokenType() != null) builder.advanceLexer(); }
+           """
+             Element(ROOT)
+               PsiElement(LETTER)('a')
+               PsiElement(OTHER)('<')
+               PsiElement(OTHER)('<')
+               PsiElement(LETTER)('b')
+             """, builder -> { while (builder.getTokenType() != null) builder.advanceLexer(); }
     );
   }
 
   @Test
   public void testComposites() {
     doTest("1(a(b)c)2(d)3",
-           "Element(ROOT)\n" +
-           "  PsiElement(DIGIT)('1')\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(OTHER)('(')\n" +
-           "    PsiElement(LETTER)('a')\n" +
-           "    Element(OTHER)\n" +
-           "      PsiElement(OTHER)('(')\n" +
-           "      PsiElement(LETTER)('b')\n" +
-           "      PsiElement(OTHER)(')')\n" +
-           "    PsiElement(LETTER)('c')\n" +
-           "    PsiElement(OTHER)(')')\n" +
-           "  PsiElement(DIGIT)('2')\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(OTHER)('(')\n" +
-           "    Element(OTHER)\n" +
-           "      <empty list>\n" +
-           "    PsiElement(LETTER)('d')\n" +
-           "    PsiElement(OTHER)(')')\n" +
-           "  PsiElement(DIGIT)('3')\n", builder -> {
+           """
+             Element(ROOT)
+               PsiElement(DIGIT)('1')
+               Element(OTHER)
+                 PsiElement(OTHER)('(')
+                 PsiElement(LETTER)('a')
+                 Element(OTHER)
+                   PsiElement(OTHER)('(')
+                   PsiElement(LETTER)('b')
+                   PsiElement(OTHER)(')')
+                 PsiElement(LETTER)('c')
+                 PsiElement(OTHER)(')')
+               PsiElement(DIGIT)('2')
+               Element(OTHER)
+                 PsiElement(OTHER)('(')
+                 Element(OTHER)
+                   <empty list>
+                 PsiElement(LETTER)('d')
+                 PsiElement(OTHER)(')')
+               PsiElement(DIGIT)('3')
+             """, builder -> {
              PsiBuilderUtil.advance(builder, 1);
              PsiBuilder.Marker marker1 = builder.mark();
              PsiBuilderUtil.advance(builder, 2);
@@ -90,6 +101,9 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
              PsiBuilderUtil.advance(builder, 2);
              marker3.done(OTHER);
              PsiBuilderUtil.advance(builder, 1);
+             assertEquals("(a(b)c)", ((LighterASTSyntaxTreeBuilderBackedNode)marker1).getText());
+             assertEquals("(b)", ((LighterASTSyntaxTreeBuilderBackedNode)marker2).getText());
+             assertEquals("(d)", ((LighterASTSyntaxTreeBuilderBackedNode)marker3).getText());
            }
     );
   }
@@ -97,11 +111,13 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testCollapse() {
     doTest("a<<>>b",
-           "Element(ROOT)\n" +
-           "  PsiElement(LETTER)('a')\n" +
-           "  PsiElement(COLLAPSED)('<<')\n" +
-           "  PsiElement(COLLAPSED)('>>')\n" +
-           "  PsiElement(LETTER)('b')\n", builder -> {
+           """
+             Element(ROOT)
+               PsiElement(LETTER)('a')
+               PsiElement(COLLAPSED)('<<')
+               PsiElement(COLLAPSED)('>>')
+               PsiElement(LETTER)('b')
+             """, builder -> {
              PsiBuilderUtil.advance(builder, 1);
              PsiBuilder.Marker marker1 = builder.mark();
              PsiBuilderUtil.advance(builder, 2);
@@ -117,13 +133,15 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testDoneAndError() {
     doTest("a2b",
-           "Element(ROOT)\n" +
-           "  Element(LETTER)\n" +
-           "    PsiElement(LETTER)('a')\n" +
-           "  PsiErrorElement:no digits allowed\n" +
-           "    PsiElement(DIGIT)('2')\n" +
-           "  Element(LETTER)\n" +
-           "    PsiElement(LETTER)('b')\n", builder -> {
+           """
+             Element(ROOT)
+               Element(LETTER)
+                 PsiElement(LETTER)('a')
+               PsiErrorElement:no digits allowed
+                 PsiElement(DIGIT)('2')
+               Element(LETTER)
+                 PsiElement(LETTER)('b')
+             """, builder -> {
              IElementType tokenType;
              while ((tokenType = builder.getTokenType()) != null) {
                PsiBuilder.Marker marker = builder.mark();
@@ -137,15 +155,17 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testPrecedeAndDoneBefore() {
     doTest("ab",
-           "Element(ROOT)\n" +
-           "  Element(COLLAPSED)\n" +
-           "    PsiElement(LETTER)('a')\n" +
-           "    Element(COLLAPSED)\n" +
-           "      <empty list>\n" +
-           "    PsiErrorElement:with error\n" +
-           "      <empty list>\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(LETTER)('b')\n", builder -> {
+           """
+             Element(ROOT)
+               Element(COLLAPSED)
+                 PsiElement(LETTER)('a')
+                 Element(COLLAPSED)
+                   <empty list>
+                 PsiErrorElement:with error
+                   <empty list>
+               Element(OTHER)
+                 PsiElement(LETTER)('b')
+             """, builder -> {
              PsiBuilder.Marker marker1 = builder.mark();
              builder.advanceLexer();
              PsiBuilder.Marker marker2 = builder.mark();
@@ -160,13 +180,15 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testErrorBefore() {
     doTest("a1",
-           "Element(ROOT)\n" +
-           "  Element(LETTER)\n" +
-           "    PsiElement(LETTER)('a')\n" +
-           "  PsiErrorElement:something lost\n" +
-           "    <empty list>\n" +
-           "  Element(DIGIT)\n" +
-           "    PsiElement(DIGIT)('1')\n", builder -> {
+           """
+             Element(ROOT)
+               Element(LETTER)
+                 PsiElement(LETTER)('a')
+               PsiErrorElement:something lost
+                 <empty list>
+               Element(DIGIT)
+                 PsiElement(DIGIT)('1')
+             """, builder -> {
              PsiBuilder.Marker letter = builder.mark();
              builder.advanceLexer();
              letter.done(LETTER);
@@ -179,7 +201,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnDone() {
+  public void testValidityChecksOnDone() throws Exception {
     doFailTest("a",
                "Another not done marker added after this one. Must be done before this.", builder -> {
                  PsiBuilder.Marker first = builder.mark();
@@ -191,7 +213,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnDoneBefore1() {
+  public void testValidityChecksOnDoneBefore1() throws Exception {
     doFailTest("a",
                "Another not done marker added after this one. Must be done before this.", builder -> {
                  PsiBuilder.Marker first = builder.mark();
@@ -204,7 +226,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnDoneBefore2() {
+  public void testValidityChecksOnDoneBefore2() throws Exception {
     doFailTest("a",
                "'Before' marker precedes this one.", builder -> {
                  PsiBuilder.Marker first = builder.mark();
@@ -216,16 +238,16 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnTreeBuild1() {
+  public void testValidityChecksOnTreeBuild1() throws Exception {
     doFailTest("aa",
                "Parser produced no markers. Text:\naa", builder -> { while(!builder.eof()) builder.advanceLexer(); }
     );
   }
 
   @Test
-  public void testValidityChecksOnTreeBuild2() {
+  public void testValidityChecksOnTreeBuild2() throws Exception {
     doFailTest("aa",
-               "Tokens [LETTER] were not inserted into the tree. Text:\naa", builder -> {
+               "Tokens [LETTER] were not inserted into the tree. \nDetails:\nmissedTokensFragment.txt\naa", builder -> {
                  PsiBuilder.Marker marker = builder.mark();
                  builder.advanceLexer();
                  marker.done(LETTER);
@@ -234,9 +256,9 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnTreeBuild3() {
+  public void testValidityChecksOnTreeBuild3() throws Exception {
     doFailTest("a ",
-               "Tokens [WHITE_SPACE] are outside of root element \"LETTER\". Text:\na ", builder -> {
+               "Tokens [WHITE_SPACE] are outside of root element \"LETTER\".\nDetails:\noutsideTokensFragment.txt\na ", builder -> {
                  PsiBuilder.Marker marker = builder.mark();
                  builder.advanceLexer();
                  marker.done(LETTER);
@@ -248,14 +270,16 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testWhitespaceTrimming() {
     doTest(" a b ",
-           "Element(ROOT)\n" +
-           "  PsiWhiteSpace(' ')\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(LETTER)('a')\n" +
-           "  PsiWhiteSpace(' ')\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(LETTER)('b')\n" +
-           "  PsiWhiteSpace(' ')\n", builder -> {
+           """
+             Element(ROOT)
+               PsiWhiteSpace(' ')
+               Element(OTHER)
+                 PsiElement(LETTER)('a')
+               PsiWhiteSpace(' ')
+               Element(OTHER)
+                 PsiElement(LETTER)('b')
+               PsiWhiteSpace(' ')
+             """, builder -> {
              PsiBuilder.Marker marker = builder.mark();
              builder.advanceLexer();
              marker.done(OTHER);
@@ -270,19 +294,21 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testWhitespaceBalancingByErrors() {
     doTest("a b c",
-           "Element(ROOT)\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(LETTER)('a')\n" +
-           "    PsiErrorElement:error 1\n" +
-           "      <empty list>\n" +
-           "  PsiWhiteSpace(' ')\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(LETTER)('b')\n" +
-           "    PsiErrorElement:error 2\n" +
-           "      <empty list>\n" +
-           "  PsiWhiteSpace(' ')\n" +
-           "  PsiErrorElement:error 3\n" +
-           "    PsiElement(LETTER)('c')\n", builder -> {
+           """
+             Element(ROOT)
+               Element(OTHER)
+                 PsiElement(LETTER)('a')
+                 PsiErrorElement:error 1
+                   <empty list>
+               PsiWhiteSpace(' ')
+               Element(OTHER)
+                 PsiElement(LETTER)('b')
+                 PsiErrorElement:error 2
+                   <empty list>
+               PsiWhiteSpace(' ')
+               PsiErrorElement:error 3
+                 PsiElement(LETTER)('c')
+             """, builder -> {
              PsiBuilder.Marker marker = builder.mark();
              builder.advanceLexer();
              builder.error("error 1");
@@ -301,18 +327,20 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testWhitespaceBalancingByEmptyComposites() {
     doTest("a b c",
-           "Element(ROOT)\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(LETTER)('a')\n" +
-           "    PsiWhiteSpace(' ')\n" +
-           "    Element(OTHER)\n" +
-           "      <empty list>\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(LETTER)('b')\n" +
-           "    Element(LEFT_BOUND)\n" +
-           "      <empty list>\n" +
-           "  PsiWhiteSpace(' ')\n" +
-           "  PsiElement(LETTER)('c')\n", builder -> {
+           """
+             Element(ROOT)
+               Element(OTHER)
+                 PsiElement(LETTER)('a')
+                 PsiWhiteSpace(' ')
+                 Element(OTHER)
+                   <empty list>
+               Element(OTHER)
+                 PsiElement(LETTER)('b')
+                 Element(LEFT_BOUND)
+                   <empty list>
+               PsiWhiteSpace(' ')
+               PsiElement(LETTER)('c')
+             """, builder -> {
              PsiBuilder.Marker marker = builder.mark();
              builder.advanceLexer();
              builder.mark().done(OTHER);
@@ -330,7 +358,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   public void testCustomEdgeProcessors() {
     WhitespacesAndCommentsBinder leftEdgeProcessor = new WhitespacesAndCommentsBinder() {
       @Override
-      public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+      public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = tokens.size() - 1;
         while (tokens.get(pos) != COMMENT && pos > 0) pos--;
         return pos;
@@ -338,7 +366,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     };
     WhitespacesAndCommentsBinder rightEdgeProcessor = new WhitespacesAndCommentsBinder() {
       @Override
-      public int getEdgePosition(List<IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
+      public int getEdgePosition(List<? extends IElementType> tokens, boolean atStreamEdge, TokenTextGetter getter) {
         int pos = 0;
         while (tokens.get(pos) != COMMENT && pos < tokens.size()-1) pos++;
         return pos + 1;
@@ -346,17 +374,19 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     };
 
     doTest("{ # i # }",
-           "Element(ROOT)\n" +
-           "  PsiElement(OTHER)('{')\n" +
-           "  PsiWhiteSpace(' ')\n" +
-           "  Element(OTHER)\n" +
-           "    PsiElement(COMMENT)('#')\n" +
-           "    PsiWhiteSpace(' ')\n" +
-           "    PsiElement(LETTER)('i')\n" +
-           "    PsiWhiteSpace(' ')\n" +
-           "    PsiElement(COMMENT)('#')\n" +
-           "  PsiWhiteSpace(' ')\n" +
-           "  PsiElement(OTHER)('}')\n", builder -> {
+           """
+             Element(ROOT)
+               PsiElement(OTHER)('{')
+               PsiWhiteSpace(' ')
+               Element(OTHER)
+                 PsiElement(COMMENT)('#')
+                 PsiWhiteSpace(' ')
+                 PsiElement(LETTER)('i')
+                 PsiWhiteSpace(' ')
+                 PsiElement(COMMENT)('#')
+               PsiWhiteSpace(' ')
+               PsiElement(OTHER)('}')
+             """, builder -> {
              while (builder.getTokenType() != LETTER) builder.advanceLexer();
              PsiBuilder.Marker marker = builder.mark();
              builder.advanceLexer();
@@ -373,29 +403,31 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     IElementType CHAMELEON_1 = new MyChameleon1Type(CHAMELEON_2);
 
     doTest("ab{12[.?]}cd{x}",
-           "Element(ROOT)\n" +
-           "  PsiElement(LETTER)('a')\n" +
-           "  PsiElement(LETTER)('b')\n" +
-           "  Element(CHAMELEON_1)\n" +
-           "    PsiElement(OTHER)('{')\n" +
-           "    PsiElement(DIGIT)('1')\n" +
-           "    PsiElement(DIGIT)('2')\n" +
-           "    Element(OTHER)\n" +
-           "      Element(CHAMELEON_2)\n" +
-           "        PsiElement(OTHER)('[')\n" +
-           "        PsiElement(OTHER)('.')\n" +
-           "        PsiErrorElement:test error 2\n" +
-           "          PsiElement(OTHER)('?')\n" +
-           "        PsiElement(OTHER)(']')\n" +
-           "    PsiErrorElement:test error 1\n" +
-           "      <empty list>\n" +
-           "    PsiElement(OTHER)('}')\n" +
-           "  PsiElement(LETTER)('c')\n" +
-           "  PsiElement(LETTER)('d')\n" +
-           "  Element(CHAMELEON_1)\n" +
-           "    PsiElement(OTHER)('{')\n" +
-           "    PsiElement(LETTER)('x')\n" +
-           "    PsiElement(OTHER)('}')\n", builder -> {
+           """
+             Element(ROOT)
+               PsiElement(LETTER)('a')
+               PsiElement(LETTER)('b')
+               Element(CHAMELEON_1)
+                 PsiElement(OTHER)('{')
+                 PsiElement(DIGIT)('1')
+                 PsiElement(DIGIT)('2')
+                 Element(OTHER)
+                   Element(CHAMELEON_2)
+                     PsiElement(OTHER)('[')
+                     PsiElement(OTHER)('.')
+                     PsiErrorElement:test error 2
+                       PsiElement(OTHER)('?')
+                     PsiElement(OTHER)(']')
+                 PsiErrorElement:test error 1
+                   <empty list>
+                 PsiElement(OTHER)('}')
+               PsiElement(LETTER)('c')
+               PsiElement(LETTER)('d')
+               Element(CHAMELEON_1)
+                 PsiElement(OTHER)('{')
+                 PsiElement(LETTER)('x')
+                 PsiElement(OTHER)('}')
+             """, builder -> {
              PsiBuilderUtil.advance(builder, 2);
              PsiBuilder.Marker chameleon = builder.mark();
              PsiBuilderUtil.advance(builder, 8);
@@ -425,31 +457,35 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     });
     rootMarker.done(ROOT);
 
-    String treeString = "Element(ROOT)\n" +
-                        "  Element(CHAMELEON_2)\n" +
-                        "    PsiElement(OTHER)('{')\n" +
-                        "    PsiElement(LETTER)('x')\n" +
-                        "    PsiElement(OTHER)('}')\n";
+    String treeString = """
+      Element(ROOT)
+        Element(CHAMELEON_2)
+          PsiElement(OTHER)('{')
+          PsiElement(LETTER)('x')
+          PsiElement(OTHER)('}')
+      """;
     FlyweightCapableTreeStructure<LighterASTNode> tree = builder.getLightTree();
-    assertEquals(treeString, DebugUtil.lightTreeToString(tree, false));
+    assertEquals(treeString, DebugUtil.lightTreeToString(tree, true));
     assertEquals(1, parserInvocations.get());
 
-    assertEquals(treeString, DebugUtil.lightTreeToString(tree, false));
+    assertEquals(treeString, DebugUtil.lightTreeToString(tree, true));
     assertEquals(1, parserInvocations.get());
 
     // new tree
-    assertEquals(treeString, DebugUtil.lightTreeToString(builder.getLightTree(), false));
+    assertEquals(treeString, DebugUtil.lightTreeToString(builder.getLightTree(), true));
     assertEquals(1, parserInvocations.get());
   }
 
   @Test
   public void testEndMarkersOverlapping() {
     doTest("a ",
-           "Element(ROOT)\n" +
-           "  Element(OTHER)\n" +
-           "    Element(OTHER)\n" +
-           "      PsiElement(LETTER)('a')\n" +
-           "      PsiWhiteSpace(' ')\n", builder -> {
+           """
+             Element(ROOT)
+               Element(OTHER)
+                 Element(OTHER)
+                   PsiElement(LETTER)('a')
+                   PsiWhiteSpace(' ')
+             """, builder -> {
              PsiBuilder.Marker e1 = builder.mark();
              PsiBuilder.Marker e2 = builder.mark();
              builder.advanceLexer();
@@ -465,18 +501,73 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   @Test
   public void testEmptyCollapsedNode() {
     doTest("a<<b",
-           "Element(ROOT)\n" +
-           "  PsiElement(LETTER)('a')\n" +
-           "  PsiElement(COLLAPSED)('')\n" +
-           "  PsiElement(OTHER)('<')\n" +
-           "  PsiElement(OTHER)('<')\n" +
-           "  PsiElement(LETTER)('b')\n", builder -> {
+           """
+             Element(ROOT)
+               PsiElement(LETTER)('a')
+               PsiElement(COLLAPSED)('')
+               PsiElement(OTHER)('<')
+               PsiElement(OTHER)('<')
+               PsiElement(LETTER)('b')
+             """, builder -> {
              builder.advanceLexer();
              builder.mark().collapse(COLLAPSED);
              while (builder.getTokenType() != null) {
                builder.advanceLexer();
              }
            }
+    );
+  }
+
+  @Test
+  public void testRemapNoRestore() {
+    doTest(
+      "ab",
+      """
+        Element(ROOT)
+          Element(OTHER)
+            PsiElement(LETTER)('a')
+          Element(OTHER)
+            PsiElement(DIGIT)('b')
+        """,
+      builder -> {
+        var a = builder.mark();
+        builder.advanceLexer();
+        a.done(OTHER);
+
+        var b = builder.mark();
+        builder.remapCurrentTokenAndRestoreOnRollback(DIGIT);
+        builder.advanceLexer();
+        b.done(OTHER);
+      }
+    );
+  }
+
+  @Test
+  public void testRemapAndRestore() {
+    doTest(
+      "ab",
+      """
+        Element(ROOT)
+          Element(OTHER)
+            PsiElement(LETTER)('a')
+          Element(OTHER)
+            PsiElement(LETTER)('b')
+        """,
+      builder -> {
+        var a = builder.mark();
+        builder.advanceLexer();
+        a.done(OTHER);
+
+        var b = builder.mark();
+        builder.remapCurrentTokenAndRestoreOnRollback(DIGIT);
+        builder.remapCurrentTokenAndRestoreOnRollback(OTHER);
+        builder.advanceLexer();
+
+        var b1 = b.precede();
+        b.rollbackTo();
+        builder.advanceLexer();
+        b1.done(OTHER);
+      }
     );
   }
 
@@ -488,14 +579,16 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
 
     // check light tree composition
     FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
-    assertEquals(expected, DebugUtil.lightTreeToString(lightTree, false));
+    assertTrue(lightTree.getRoot() instanceof LighterASTSyntaxTreeBuilderBackedNode);
+    assertEquals(text, ((LighterASTSyntaxTreeBuilderBackedNode)lightTree.getRoot()).getText());
+    assertEquals(expected, DebugUtil.lightTreeToString(lightTree, true));
     // verify that light tree can be taken multiple times
     FlyweightCapableTreeStructure<LighterASTNode> lightTree2 = builder.getLightTree();
-    assertEquals(expected, DebugUtil.lightTreeToString(lightTree2, false));
+    assertEquals(expected, DebugUtil.lightTreeToString(lightTree2, true));
 
     // check heavy tree composition
     ASTNode root = builder.getTreeBuilt();
-    assertEquals(expected, DebugUtil.nodeTreeToString(root, false));
+    assertEquals(expected, DebugUtil.nodeTreeToString(root, true));
 
     // check heavy vs. light tree merging
     PsiBuilder builder2 = createBuilder(text);
@@ -504,30 +597,34 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     rootMarker2.done(ROOT);
     DiffTree.diff(
       new ASTStructure(root), builder2.getLightTree(),
-      new ShallowNodeComparator<ASTNode, LighterASTNode>() {
+      new ShallowNodeComparator<>() {
         @NotNull
         @Override
         public ThreeState deepEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return ThreeState.UNSURE;
-  }
+        }
+
         @Override
         public boolean typesEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return true;
         }
+
         @Override
         public boolean hashCodesEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return true;
         }
       },
-      new DiffTreeChangeBuilder<ASTNode, LighterASTNode>() {
+      new DiffTreeChangeBuilder<>() {
         @Override
         public void nodeReplaced(@NotNull ASTNode oldChild, @NotNull LighterASTNode newChild) {
           fail("replaced(" + oldChild + "," + newChild.getTokenType() + ")");
         }
+
         @Override
         public void nodeDeleted(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
           fail("deleted(" + oldParent + "," + oldNode + ")");
         }
+
         @Override
         public void nodeInserted(@NotNull ASTNode oldParent, @NotNull LighterASTNode newNode, int pos) {
           fail("inserted(" + oldParent + "," + newNode.getTokenType() + ")");
@@ -536,18 +633,20 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
       root.getText());
   }
 
-  private static void doFailTest(String text, String expected, Consumer<? super PsiBuilder> parser) {
-    PlatformTestUtil.withStdErrSuppressed(() -> {
-      try {
-        PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(new PlainTextParserDefinition(), new MyTestLexer(), text);
-        builder.setDebugMode(true);
-        parser.accept(builder);
-        builder.getLightTree();
-        fail("should fail");
-      }
-      catch (AssertionError e) {
-        assertEquals(expected, e.getMessage());
-      }
+  private static void doFailTest(String text, String expected, Consumer<? super PsiBuilder> parser) throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      PlatformTestUtil.withStdErrSuppressed(() -> {
+        try {
+          PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(new PlainTextParserDefinition(), new MyTestLexer(), text);
+          builder.setDebugMode(true);
+          parser.accept(builder);
+          builder.getLightTree();
+          fail("should fail");
+        }
+        catch (AssertionError e) {
+          assertEquals(expected, e.getMessage());
+        }
+      });
     });
   }
 
@@ -643,7 +742,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     }
 
     @Override
-    public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+    public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(@NotNull LighterLazyParseableNode chameleon) {
       PsiBuilder builder = createBuilder(chameleon.getText());
       parse(builder);
       return builder.getLightTree();
@@ -683,7 +782,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
     }
 
     @Override
-    public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
+    public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(@NotNull LighterLazyParseableNode chameleon) {
       PsiBuilder builder = createBuilder(chameleon.getText());
       parse(builder);
       return builder.getLightTree();

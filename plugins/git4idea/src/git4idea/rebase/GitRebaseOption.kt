@@ -10,13 +10,14 @@ import org.jetbrains.annotations.NonNls
 enum class GitRebaseOption(@NonNls private val option: String,
                            @Nls val description: String) {
 
-  SWITCH_BRANCH(GitBundle.message("rebase.option.switch.to.branch"), ""),
-
+  SWITCH_BRANCH("", GitBundle.message("rebase.option.switch.to.branch")),
   ONTO("--onto", GitBundle.message("rebase.option.onto")),
-  INTERACTIVE("--interactive", GitBundle.message("rebase.option.interactive")),
   REBASE_MERGES("--rebase-merges", GitBundle.message("rebase.option.rebase.merges")),
   KEEP_EMPTY("--keep-empty", GitBundle.message("rebase.option.keep.empty")),
-  ROOT("--root", GitBundle.message("rebase.option.root"));
+  ROOT("--root", GitBundle.message("rebase.option.root")),
+  INTERACTIVE("--interactive", GitBundle.message("rebase.option.interactive")),
+  UPDATE_REFS("--update-refs", GitBundle.message("rebase.option.update.refs")),
+  AUTOSQUASH("--autosquash", GitBundle.message("rebase.option.autosquash"));
 
   fun getOption(gitVersion: GitVersion): String {
     if (this != REBASE_MERGES) return option
@@ -34,4 +35,6 @@ enum class GitRebaseOption(@NonNls private val option: String,
 val REBASE_FLAGS = setOf(GitRebaseOption.INTERACTIVE,
                          GitRebaseOption.REBASE_MERGES,
                          GitRebaseOption.KEEP_EMPTY,
-                         GitRebaseOption.ROOT)
+                         GitRebaseOption.ROOT,
+                         GitRebaseOption.UPDATE_REFS,
+                         GitRebaseOption.AUTOSQUASH)

@@ -2,8 +2,10 @@
 package com.intellij.compiler.server;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,7 +21,7 @@ public abstract class BuildProcessParametersProvider {
    * Override this method to include additional jars to the build process classpath
    * @return list of paths to additional jars to be included to the build process classpath
    */
-  public @NotNull List<String> getClassPath() {
+  public @NotNull Iterable<String> getClassPath() {
     return Collections.emptyList();
   }
 
@@ -28,11 +30,23 @@ public abstract class BuildProcessParametersProvider {
    * custom implementation of Java compiler which must be loaded by the same classloader as tools.jar
    * @return list of paths to additional jars to be included to the build process launcher classpath
    */
-  public @NotNull List<String> getLauncherClassPath() {
+  public @NotNull Iterable<String> getLauncherClassPath() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * Override this method to specify list of files that are required for the build to work but shouldn't be added to the
+   * build process classpath.
+   */
+  public @NotNull Iterable<String> getAdditionalPluginPaths() {
     return Collections.emptyList();
   }
 
   public @NotNull List<String> getVMArguments() {
+    return Collections.emptyList();
+  }
+
+  public @NotNull List<Pair<String, Path>> getPathParameters() {
     return Collections.emptyList();
   }
 

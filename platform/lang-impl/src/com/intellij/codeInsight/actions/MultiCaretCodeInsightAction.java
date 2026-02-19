@@ -1,15 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -30,8 +35,13 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see MultiCaretCodeInsightActionHandler
  */
-public abstract class MultiCaretCodeInsightAction extends AnAction {
+public abstract class MultiCaretCodeInsightAction extends AnAction implements PerformWithDocumentsCommitted {
   private static final Logger LOG = Logger.getInstance(MultiCaretCodeInsightAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -69,12 +79,6 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
   }
 
   @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
-    super.beforeActionPerformedUpdate(e);
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
 
@@ -107,9 +111,19 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
     presentation.setEnabled(enabled.get());
   }
 
-  private static void iterateOverCarets(@NotNull final Project project,
-                                 @NotNull final Editor hostEditor,
-                                 @NotNull final MultiCaretCodeInsightActionHandler handler) {
+  protected abstract @NotNull MultiCaretCodeInsightActionHandler getHandler();
+
+  /**
+   * During action status update this method is invoked for each caret in editor. If at least for a single caret it returns
+   * {@code true}, action is considered enabled.
+   */
+  protected boolean isValidFor(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
+    return true;
+  }
+
+  private static void iterateOverCarets(final @NotNull Project project,
+                                        final @NotNull Editor hostEditor,
+                                        final @NotNull MultiCaretCodeInsightActionHandler handler) {
     PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
 
     hostEditor.getCaretModel().runForEachCaret(caret -> {
@@ -127,17 +141,6 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
       }
     });
   }
-
-  /**
-   * During action status update this method is invoked for each caret in editor. If at least for a single caret it returns
-   * {@code true}, action is considered enabled.
-   */
-  protected boolean isValidFor(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
-    return true;
-  }
-
-  @NotNull
-  protected abstract MultiCaretCodeInsightActionHandler getHandler();
 
   protected @NlsContexts.Command String getCommandName() {
     String text = getTemplatePresentation().getText();

@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
@@ -14,38 +16,45 @@ import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.designSurface.GridCaptionPanel;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
-import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.uiDesigner.radComponents.ButtonGroupPropertiesPanel;
+import com.intellij.uiDesigner.radComponents.CustomPropertiesPanel;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
+import java.awt.CardLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class PropertyInspector extends JPanel{
   private final PropertyInspectorTable myInspectorTable;
   private final ComponentTree myComponentTree;
   private final QuickFixManager myQuickFixManager;
   private GuiEditor myEditor;
   private final PropertyInspector.MyComponentSelectionListener myComponentSelectionListener;
-  @NonNls private static final String INSPECTOR_CARD = "inspector";
-  @NonNls private static final String EMPTY_CARD = "empty";
-  @NonNls private static final String CUSTOM_CARD = "column";
+  private static final @NonNls String INSPECTOR_CARD = "inspector";
+  private static final @NonNls String EMPTY_CARD = "empty";
+  private static final @NonNls String CUSTOM_CARD = "column";
   private final JScrollPane myCustomPropertiesScrollPane = ScrollPaneFactory.createScrollPane();
   private CustomPropertiesPanel myCustomPropertiesPanel;
   private final ChangeListener myCustomPropertiesChangeListener;
   private RadContainer myPropertiesPanelContainer;
 
-  public PropertyInspector(Project project, @NotNull final ComponentTree componentTree) {
+  public PropertyInspector(Project project, final @NotNull ComponentTree componentTree) {
     super(new CardLayout());
 
     myInspectorTable = new PropertyInspectorTable(project, componentTree);
@@ -67,7 +76,9 @@ public final class PropertyInspector extends JPanel{
       new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
-          myInspectorTable.setShowExpertProperties(chkShowExpertProperties.isSelected());
+          WriteIntentReadAction.run(() -> {
+            myInspectorTable.setShowExpertProperties(chkShowExpertProperties.isSelected());
+          });
         }
       }
     );
@@ -129,20 +140,22 @@ public final class PropertyInspector extends JPanel{
   }
 
   public void synchWithTree(final boolean forceSynch) {
-    final CardLayout cardLayout = (CardLayout)getLayout();
-    if (!showSelectedColumnProperties()) {
-      final RadComponent[] selectedComponents = myComponentTree.getSelectedComponents();
-      if(selectedComponents.length >= 1){
-        cardLayout.show(this, INSPECTOR_CARD);
-        myInspectorTable.synchWithTree(forceSynch);
-      }
-      else{
-        List<RadButtonGroup> buttonGroups = myComponentTree.getSelectedElements(RadButtonGroup.class);
-        if (buttonGroups.size() > 0) {
-          showButtonGroupProperties(buttonGroups.get(0));
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701")) {
+      final CardLayout cardLayout = (CardLayout)getLayout();
+      if (!showSelectedColumnProperties()) {
+        final RadComponent[] selectedComponents = myComponentTree.getSelectedComponents();
+        if (selectedComponents.length >= 1) {
+          cardLayout.show(this, INSPECTOR_CARD);
+          myInspectorTable.synchWithTree(forceSynch);
         }
         else {
-          cardLayout.show(this, EMPTY_CARD);
+          List<RadButtonGroup> buttonGroups = myComponentTree.getSelectedElements(RadButtonGroup.class);
+          if (!buttonGroups.isEmpty()) {
+            showButtonGroupProperties(buttonGroups.get(0));
+          }
+          else {
+            cardLayout.show(this, EMPTY_CARD);
+          }
         }
       }
     }
@@ -203,8 +216,10 @@ public final class PropertyInspector extends JPanel{
    */
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     @Override
-    public void selectedComponentChanged(@NotNull final GuiEditor source){
-      synchWithTree(false);
+    public void selectedComponentChanged(final @NotNull GuiEditor source){
+      WriteIntentReadAction.run(() -> {
+        synchWithTree(false);
+      });
     }
   }
 }

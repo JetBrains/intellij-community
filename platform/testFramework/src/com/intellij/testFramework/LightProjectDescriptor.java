@@ -1,25 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -30,6 +29,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Defines requirements for a light test's project environment (SDK, module, libraries, ...).
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/light-and-heavy-tests.html#lightprojectdescriptor">LightProjectDescriptor</a> in IntelliJ Platform Plugin SDK Docs
+ */
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
@@ -47,6 +51,10 @@ public class LightProjectDescriptor {
     });
   }
 
+  public @NotNull OpenProjectTask getOpenProjectOptions() {
+    return OpenProjectTask.build();
+  }
+
   public void registerSdk(Disposable disposable) {
     Sdk sdk = getSdk();
     if (sdk != null) {
@@ -54,8 +62,7 @@ public class LightProjectDescriptor {
     }
   }
 
-  @NotNull
-  public Module createMainModule(@NotNull Project project) {
+  public @NotNull Module createMainModule(@NotNull Project project) {
     return createModule(project, Paths.get(FileUtil.getTempDirectory(), TEST_MODULE_NAME + ".iml"));
   }
 
@@ -72,13 +79,14 @@ public class LightProjectDescriptor {
       throw new RuntimeException(e);
     }
 
-    return WriteAction.compute(() -> {
+    Module module = WriteAction.compute(() -> {
       return ModuleManager.getInstance(project).newModule(moduleFile, getModuleTypeId());
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return module;
   }
 
-  @NotNull
-  public String getModuleTypeId() {
+  public @NotNull String getModuleTypeId() {
     return EmptyModuleType.EMPTY_MODULE;
   }
 
@@ -86,10 +94,10 @@ public class LightProjectDescriptor {
    * Creates in-memory directory {@code temp:///some/path} where sources for test project will be placed.
    * Please keep in mind that this directory will be marked as "Source root". If you want to disable this
    * behaviour use {@link #markDirForSourcesAsSourceRoot()}.
+   *
    * @see #markDirForSourcesAsSourceRoot()
    */
-  @Nullable
-  public VirtualFile createDirForSources(@NotNull Module module) {
+  public @Nullable VirtualFile createDirForSources(@NotNull Module module) {
     return createSourceRoot(module, "src");
   }
 
@@ -106,9 +114,7 @@ public class LightProjectDescriptor {
     VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
     assert dummyRoot != null;
     dummyRoot.refresh(false, false);
-    VirtualFile srcRoot = doCreateSourceRoot(dummyRoot, srcPath);
-    registerSourceRoot(module.getProject(), srcRoot);
-    return srcRoot;
+    return doCreateSourceRoot(dummyRoot, srcPath);
   }
 
   protected VirtualFile doCreateSourceRoot(VirtualFile root, String srcPath) {
@@ -122,17 +128,6 @@ public class LightProjectDescriptor {
     }
 
     return srcRoot;
-  }
-
-  protected void registerSourceRoot(Project project, VirtualFile srcRoot) {
-    IndexableFileSet indexableFileSet = new IndexableFileSet() {
-      @Override
-      public boolean isInSet(@NotNull VirtualFile file) {
-        return file.getFileSystem() == srcRoot.getFileSystem() && project.isOpen();
-      }
-    };
-    FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, project);
-    Disposer.register(project, () -> FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet));
   }
 
   protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
@@ -149,22 +144,19 @@ public class LightProjectDescriptor {
 
       configureModule(module, model, contentEntry);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
   }
 
   private static void registerJdk(Sdk jdk, Disposable parentDisposable) {
-    WriteAction.run(() -> {
-      ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-      ((ProjectJdkTableImpl)jdkTable).addTestJdk(jdk, parentDisposable);
-    });
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, parentDisposable));
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
   }
 
-  @NotNull
-  protected JpsModuleSourceRootType<?> getSourceRootType() {
+  protected @NotNull JpsModuleSourceRootType<?> getSourceRootType() {
     return JavaSourceRootType.SOURCE;
   }
 
-  @Nullable
-  public Sdk getSdk() {
+  public @Nullable Sdk getSdk() {
     return null;
   }
 
@@ -176,6 +168,10 @@ public class LightProjectDescriptor {
       }
       child.delete(this);
     }
+  }
+
+  public @NotNull Path generateProjectPath() {
+    return TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
   }
 
   protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) { }

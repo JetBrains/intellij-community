@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.application.Application;
@@ -19,11 +18,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -35,19 +36,27 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
  * This class contains utility methods for guessing test data files location and name patterns from existing one.
- *
- * @author Denis Zhdanov
  */
+@ApiStatus.Internal
 public final class TestDataGuessByExistingFilesUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);
 
@@ -62,8 +71,8 @@ public final class TestDataGuessByExistingFilesUtil {
    * @param testDataPath test data path if present (e.g. obtained from @TestDataPath annotation value)
    * @return List of existing test data files for the given test if it's possible to guess them; empty List otherwise
    */
-  @NotNull
-  static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
+  @VisibleForTesting
+  public static @NotNull List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode() && application.isHeadlessEnvironment()) {
       // shouldn't be invoked under these conditions anyway, just for additional safety
@@ -74,8 +83,8 @@ public final class TestDataGuessByExistingFilesUtil {
     return ReadAction.compute(() -> buildDescriptorFromExistingTestData(psiMethod, testDataPath).restoreFiles());
   }
 
-  @NotNull
-  static List<TestDataFile> guessTestDataName(PsiMethod method) {
+  @VisibleForTesting
+  public static @NotNull List<TestDataFile> guessTestDataName(PsiMethod method) {
     String testName = getTestName(method);
     if (testName == null) return Collections.emptyList();
     PsiClass psiClass = method.getContainingClass();
@@ -98,13 +107,11 @@ public final class TestDataGuessByExistingFilesUtil {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static List<TestDataFile> guessTestDataBySiblingTest(PsiMethod psiMethod, String testDataBasePath, String testName) {
+  private static @NotNull List<TestDataFile> guessTestDataBySiblingTest(PsiMethod psiMethod, String testDataBasePath, String testName) {
     return buildDescriptorFromExistingTestData(psiMethod, testDataBasePath).generateByTemplates(testName, null);
   }
 
-  @Nullable
-  private static String getTestName(@NotNull PsiMethod method) {
+  private static @Nullable String getTestName(@NotNull PsiMethod method) {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
     if (psiClass == null) {
       return null;
@@ -112,46 +119,25 @@ public final class TestDataGuessByExistingFilesUtil {
 
     TestFramework framework = TestFrameworks.detectFramework(psiClass);
 
-    if (framework == null || isUtilityMethod(method, psiClass, framework)) {
+    if (framework == null || !framework.isTestMethod(method)) {
       return null;
     }
 
     return getTestName(method.getName());
   }
 
-  private static boolean isUtilityMethod(@NotNull PsiMethod method, @NotNull PsiClass psiClass, @NotNull TestFramework framework) {
-    if (method == framework.findSetUpMethod(psiClass) || method == framework.findTearDownMethod(psiClass)) {
-      return true;
-    }
-
-    // JUnit3
-    if (framework.getClass().getName().contains("JUnit3")) {
-      return !method.getName().startsWith("test");
-    }
-
-    // JUnit4
-    if (framework.getClass().getName().contains("JUnit4")) {
-      return !AnnotationUtil.isAnnotated(method, "org.junit.Test", 0);
-    }
-
-    return false;
-  }
-
-  @NotNull
-  public static String getTestName(@NotNull String methodName) {
+  public static @NotNull String getTestName(@NotNull String methodName) {
     return StringUtil.trimStart(methodName, "test");
   }
 
-  @NotNull
-  private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiMethod method, @Nullable String testDataPath) {
+  private static @NotNull TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiMethod method, @Nullable String testDataPath) {
     return CachedValuesManager.getCachedValue(method,
                                               () -> new CachedValueProvider.Result<>(
                                                 buildDescriptor(method, testDataPath),
                                                 PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @NotNull
-  private static TestDataDescriptor buildDescriptor(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
+  private static @NotNull TestDataDescriptor buildDescriptor(@NotNull PsiMethod psiMethod, @Nullable String testDataPath) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
     String testName = getTestName(psiMethod);
     if (testName == null || psiClass == null) return TestDataDescriptor.NOTHING_FOUND;
@@ -164,10 +150,9 @@ public final class TestDataGuessByExistingFilesUtil {
     return buildDescriptor(testName, psiClass, testDataPath).restoreFiles();
   }
 
-  @NotNull
-  private static TestDataDescriptor buildDescriptor(@NotNull String testName,
-                                                    @NotNull PsiClass psiClass,
-                                                    @Nullable String testDataPath) {
+  private static @NotNull TestDataDescriptor buildDescriptor(@NotNull String testName,
+                                                             @NotNull PsiClass psiClass,
+                                                             @Nullable String testDataPath) {
     String normalizedTestDataPath = testDataPath == null ? null : StringUtil.trimEnd(StringUtil.trimEnd(testDataPath, "/"), "\\");
 
     // PhpStorm has tests that use '$' symbol as a file path separator, e.g. 'test$while_stmt$declaration' test
@@ -193,11 +178,10 @@ public final class TestDataGuessByExistingFilesUtil {
       ProgressManager.checkCanceled();
       Object[] elements = gotoModel.getElementsByName(name, false, name);
       for (Object element : elements) {
-        if (!(element instanceof PsiFileSystemItem)) {
+        if (!(element instanceof PsiFileSystemItem psiFile)) {
           continue;
         }
 
-        PsiFileSystemItem psiFile = (PsiFileSystemItem)element;
         if (normalizedTestDataPath != null) {
           PsiFileSystemItem containingDirectory = psiFile.getParent();
           if (containingDirectory != null) {
@@ -253,7 +237,7 @@ public final class TestDataGuessByExistingFilesUtil {
     }
 
     List<TestLocationDescriptor> descriptors = ContainerUtil.flatten(descriptorsByFileNames.values());
-    filterDirsFromOtherModules(descriptors);
+    descriptors = filterDirsFromOtherModules(descriptors);
     return new TestDataDescriptor(descriptors);
   }
 
@@ -269,18 +253,17 @@ public final class TestDataGuessByExistingFilesUtil {
     return processor.getResults();
   }
 
-  private static void filterDirsFromOtherModules(List<TestLocationDescriptor> descriptorsByFileNames) {
+  private static @Unmodifiable @NotNull List<TestLocationDescriptor> filterDirsFromOtherModules(@Unmodifiable List<TestLocationDescriptor> descriptorsByFileNames) {
     if (descriptorsByFileNames.size() < 2) {
-      return;
+      return descriptorsByFileNames;
     }
-    if (descriptorsByFileNames.stream().noneMatch(descriptor -> descriptor.isFromCurrentModule)) {
-      return;
+    if (!ContainerUtil.exists(descriptorsByFileNames, descriptor -> descriptor.isFromCurrentModule)) {
+      return descriptorsByFileNames;
     }
-    descriptorsByFileNames.removeIf(d -> !d.isFromCurrentModule);
+    return ContainerUtil.filter(descriptorsByFileNames, d -> d.isFromCurrentModule);
   }
 
-  @Nullable
-  private static String getSimpleClassName(@NotNull PsiClass psiClass) {
+  private static @Nullable String getSimpleClassName(@NotNull PsiClass psiClass) {
     String result = psiClass.getQualifiedName();
     if (result == null) {
       return null;
@@ -331,15 +314,15 @@ public final class TestDataGuessByExistingFilesUtil {
     }
 
     // By class name words and their position. More words + greater position = better.
-    String[] words = NameUtil.nameToWords(simpleName);
+    List<@NotNull String> words = NameUtil.nameToWordList(simpleName);
     int candidateWordsMatched = 0;
     int currentWordsMatched = 0;
     int candidateMatchPosition = -1;
     int currentMatchPosition = -1;
 
     StringBuilder currentNameSubstringSb = new StringBuilder();
-    for (int i = 0; i < words.length; i++) {
-      currentNameSubstringSb.append(words[i]);
+    for (int i = 0; i < words.size(); i++) {
+      currentNameSubstringSb.append(words.get(i));
       String currentNameLcSubstring = StringUtil.toLowerCase(currentNameSubstringSb.toString());
 
       int candidateWordsIndex = candidateLcDir.lastIndexOf(currentNameLcSubstring);
@@ -370,14 +353,14 @@ public final class TestDataGuessByExistingFilesUtil {
     final String pathSuffix;
     final boolean startWithLowerCase;
     final boolean isFromCurrentModule;
-    final int matchedVFileId;
+    private final SmartPsiElementPointer<PsiFile> filePointer;
 
-    private TestLocationDescriptor(String pathPrefix, String pathSuffix, boolean startWithLowerCase, boolean isFromCurrentModule, int id) {
+    private TestLocationDescriptor(String pathPrefix, String pathSuffix, boolean startWithLowerCase, boolean isFromCurrentModule, SmartPsiElementPointer<PsiFile> filePointer) {
       this.pathPrefix = pathPrefix;
       this.pathSuffix = pathSuffix;
       this.startWithLowerCase = startWithLowerCase;
       this.isFromCurrentModule = isFromCurrentModule;
-      matchedVFileId = id;
+      this.filePointer = filePointer;
     }
 
     static TestLocationDescriptor create(@NotNull String testName, @NotNull VirtualFile matched, @NotNull Project project, @Nullable Module module) {
@@ -402,8 +385,13 @@ public final class TestDataGuessByExistingFilesUtil {
       if (module != null) {
         isFromCurrentModule = module.equals(ModuleUtilCore.findModuleForFile(matched, project));
       }
-      int matchedVFileId = ((VirtualFileWithId)matched).getId();
-      return new TestLocationDescriptor(pathPrefix, pathSuffix, startWithLowerCase, isFromCurrentModule, matchedVFileId);
+      PsiFile file = PsiManager.getInstance(project).findFile(matched);
+      if (file == null) return null;
+      return new TestLocationDescriptor(pathPrefix,
+                                        pathSuffix,
+                                        startWithLowerCase,
+                                        isFromCurrentModule,
+                                        SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file));
     }
 
     @Override
@@ -434,25 +422,23 @@ public final class TestDataGuessByExistingFilesUtil {
     }
   }
 
-  private static class TestDataDescriptor {
+  private static final class TestDataDescriptor {
     private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.emptyList());
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<>();
 
-    TestDataDescriptor(Collection<TestLocationDescriptor> descriptors) {
+    TestDataDescriptor(@Unmodifiable Collection<TestLocationDescriptor> descriptors) {
       myDescriptors.addAll(descriptors);
     }
 
-    @NotNull
-    public List<TestDataFile> restoreFiles() {
+    public @NotNull @Unmodifiable List<TestDataFile> restoreFiles() {
       return ContainerUtil.mapNotNull(myDescriptors, d -> {
-        VirtualFile file = ReadAction.compute(() -> VirtualFileManager.getInstance().findFileById(d.matchedVFileId));
-        return file == null ? null : new TestDataFile.Existing(file);
+        PsiFile file = ReadAction.compute(() -> d.filePointer.getElement());
+        return file == null ? null : new TestDataFile.Existing(file.getVirtualFile());
       });
     }
 
-    @NotNull
-    public List<TestDataFile> generateByTemplates(@NotNull String testName, @Nullable String root) {
+    public @NotNull List<TestDataFile> generateByTemplates(@NotNull String testName, @Nullable String root) {
       List<TestDataFile> result = new ArrayList<>();
       if (StringUtil.isEmpty(testName)) {
         return result;

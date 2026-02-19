@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.libraries.cli.parser` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "cli-parser_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "cli-parser",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":cli-parser_resources"],
+  exports = ["@lib//:libraries-cli-parser-cli-parser"],
+  runtime_deps = ["@lib//:libraries-cli-parser-cli-parser"]
+)
+
+jvm_library(
+  name = "cli-parser_test_lib",
+  module_name = "intellij.libraries.cli.parser",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = ["@lib//:libraries-cli-parser-cli-parser"],
+  runtime_deps = [":cli-parser"]
+)
+### auto-generated section `build intellij.libraries.cli.parser` end

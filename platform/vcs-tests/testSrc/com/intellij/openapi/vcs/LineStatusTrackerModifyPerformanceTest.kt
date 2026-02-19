@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
+import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
+@PerformanceUnitTest
 class LineStatusTrackerModifyPerformanceTest : BaseLineStatusTrackerTestCase() {
   fun testInitialUnfreeze() {
     val sb1 = StringBuilder()
@@ -16,13 +19,13 @@ class LineStatusTrackerModifyPerformanceTest : BaseLineStatusTrackerTestCase() {
     val text1 = sb1.toString()
     val text2 = sb2.toString()
 
-    PlatformTestUtil.startPerformanceTest(PlatformTestUtil.getTestName(name, true), 7000) {
+    Benchmark.newBenchmark(PlatformTestUtil.getTestName(name, true)) {
       test(text1) {
         tracker.doFrozen(Runnable {
           simpleTracker.setBaseRevision(text2)
         })
       }
-    }.assertTiming()
+    }.start()
   }
 
   fun testDirtyUnfreeze() {
@@ -41,12 +44,12 @@ class LineStatusTrackerModifyPerformanceTest : BaseLineStatusTrackerTestCase() {
     val text2 = sb2.toString()
     val text3 = sb3.toString()
 
-    PlatformTestUtil.startPerformanceTest(PlatformTestUtil.getTestName(name, true), 10000) {
+    Benchmark.newBenchmark(PlatformTestUtil.getTestName(name, true)) {
       test(text1, text2) {
         tracker.doFrozen(Runnable {
           simpleTracker.setBaseRevision(text3)
         })
       }
-    }.assertTiming()
+    }.start()
   }
 }

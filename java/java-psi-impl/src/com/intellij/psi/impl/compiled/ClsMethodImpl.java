@@ -1,15 +1,32 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -26,37 +43,30 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 import java.util.Objects;
 
-public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAnnotationMethod {
+import static com.intellij.openapi.util.NotNullLazyValue.atomicLazy;
+import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
+
+public final class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAnnotationMethod {
   private final NotNullLazyValue<PsiTypeElement> myReturnType;
   private final NullableLazyValue<PsiAnnotationMemberValue> myDefaultValue;
 
   public ClsMethodImpl(final PsiMethodStub stub) {
     super(stub);
 
-    myReturnType = isConstructor() ? null : new AtomicNotNullLazyValue<PsiTypeElement>() {
-      @NotNull
-      @Override
-      protected PsiTypeElement compute() {
-        return new ClsTypeElementImpl(ClsMethodImpl.this, getStub().getReturnTypeText(false));
-      }
-    };
+    myReturnType = isConstructor() ? null : atomicLazy(() -> new ClsTypeElementImpl(this, getStub().getReturnTypeText()));
 
-    final String text = getStub().getDefaultValueText();
-    myDefaultValue = StringUtil.isEmptyOrSpaces(text) ? null : new VolatileNullableLazyValue<PsiAnnotationMemberValue>() {
-      @Override
-      protected PsiAnnotationMemberValue compute() {
-        return ClsParsingUtil.createMemberValueFromText(text, getManager(), ClsMethodImpl.this);
-      }
-    };
+    String text = getStub().getDefaultValueText();
+    myDefaultValue =
+      StringUtil.isEmptyOrSpaces(text) ? null : volatileLazyNullable(() -> ClsParsingUtil.createMemberValueFromText(text, getManager(), this));
   }
 
   @Override
@@ -86,8 +96,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
+  public @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
   }
 
@@ -102,8 +111,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+  public @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
@@ -119,9 +127,8 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
+  public @NotNull PsiModifierList getModifierList() {
+    return (PsiModifierList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
   @Override
@@ -130,20 +137,18 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public PsiParameterList getParameterList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.PARAMETER_LIST)).getPsi();
+  public @NotNull PsiParameterList getParameterList() {
+    return (PsiParameterList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.PARAMETER_LIST)).getPsi();
   }
 
   @Override
-  @NotNull
-  public PsiReferenceList getThrowsList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.THROWS_LIST)).getPsi();
+  public @NotNull PsiReferenceList getThrowsList() {
+    return (PsiReferenceList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.THROWS_LIST)).getPsi();
   }
 
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
+    return (PsiTypeParameterList)Objects.requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
   }
 
   @Override
@@ -172,8 +177,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+  public @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
@@ -209,7 +213,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiMethod mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
@@ -259,13 +263,11 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
     return true;
   }
 
-  @Nullable
-  public PsiMethod getSourceMirrorMethod() {
+  public @Nullable PsiMethod getSourceMirrorMethod() {
     return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calcSourceMirrorMethod());
   }
 
-  @Nullable
-  private PsiMethod calcSourceMirrorMethod() {
+  private @Nullable PsiMethod calcSourceMirrorMethod() {
     PsiClass mirrorClass = ((ClsClassImpl)getParent()).getSourceMirrorClass();
     if (mirrorClass != null) {
       for (PsiMethod sourceMethod: mirrorClass.findMethodsByName(getName(), false)) {
@@ -278,8 +280,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
         PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
@@ -313,10 +314,16 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  public Icon getElementIcon(final int flags) {
-    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.ABSTRACT_METHOD_ICON : PlatformIcons.METHOD_ICON;
-    RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(this, methodIcon, ElementPresentationUtil.getFlags(this, false));
+  public Icon getElementIcon(int flags) {
+    IconManager iconManager = IconManager.getInstance();
+    RowIcon baseIcon = iconManager.createLayeredIcon(this, getBaseIcon(), ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  }
+
+  @Override
+  protected @NotNull Icon getBaseIcon() {
+    PlatformIcons iconId = hasModifierProperty(PsiModifier.ABSTRACT) ? PlatformIcons.AbstractMethod : PlatformIcons.Method;
+    return IconManager.getInstance().getPlatformIcon(iconId);
   }
 
   @Override
@@ -325,8 +332,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
 

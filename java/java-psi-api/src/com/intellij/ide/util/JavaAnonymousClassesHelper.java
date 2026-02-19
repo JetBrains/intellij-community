@@ -1,9 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +26,7 @@ public final class JavaAnonymousClassesHelper {
   private static final Key<ParameterizedCachedValue<Map<PsiAnonymousClass, String>, PsiClass>> ANONYMOUS_CLASS_NAME = Key.create("ANONYMOUS_CLASS_NAME");
   private static final AnonClassProvider ANON_CLASS_PROVIDER = new AnonClassProvider();
 
-  @Nullable
-  public static String getName(@NotNull PsiAnonymousClass cls) {
+  public static @Nullable String getName(@NotNull PsiAnonymousClass cls) {
     final PsiClass upper = PsiTreeUtil.getParentOfType(cls, PsiClass.class);
     if (upper == null) {
       return null;
@@ -39,7 +47,7 @@ public final class JavaAnonymousClassesHelper {
         int index;
 
         @Override
-        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
           if (upper == aClass) {
             super.visitAnonymousClass(aClass);
             return;
@@ -49,7 +57,7 @@ public final class JavaAnonymousClassesHelper {
             for (PsiExpression expression : arguments.getExpressions()) {
               expression.acceptChildren(new JavaRecursiveElementVisitor() {
                 @Override
-                public void visitAnonymousClass(PsiAnonymousClass aClass) {
+                public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
                   index++;
                   map.put(aClass, "$" + index);
                 }
@@ -62,7 +70,7 @@ public final class JavaAnonymousClassesHelper {
         }
 
         @Override
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
           if (aClass == upper) {
             super.visitClass(aClass);
           }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -10,10 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class SelectionWatcher {
   private final MyPropertyChangeListener myChangeListener;
   private RadRootContainer myRootContainer;
@@ -24,7 +20,6 @@ public abstract class SelectionWatcher {
     myEditor = editor;
     myChangeListener = new MyPropertyChangeListener();
     myRootContainer = editor.getRootContainer();
-    install(myRootContainer);
 
     myHierarchyChangeListener = new HierarchyChangeListener() {
       @Override
@@ -36,7 +31,11 @@ public abstract class SelectionWatcher {
         }
       }
     };
-    editor.addHierarchyChangeListener(myHierarchyChangeListener);
+  }
+
+  public void setupListeners() {
+    install(myRootContainer);
+    myEditor.addHierarchyChangeListener(myHierarchyChangeListener);
   }
 
   public void dispose() {
@@ -44,20 +43,18 @@ public abstract class SelectionWatcher {
     myEditor.removeHierarchyChangeListener(myHierarchyChangeListener);
   }
 
-  private void install(@NotNull final RadComponent component){
+  private void install(final @NotNull RadComponent component){
     component.addPropertyChangeListener(myChangeListener);
-    if(component instanceof RadContainer){
-      final RadContainer container = (RadContainer)component;
+    if(component instanceof RadContainer container){
       for(int i = container.getComponentCount() - 1; i>= 0; i--){
         install(container.getComponent(i));
       }
     }
   }
 
-  private void deinstall(@NotNull final RadComponent component){
+  private void deinstall(final @NotNull RadComponent component){
     component.removePropertyChangeListener(myChangeListener);
-    if(component instanceof RadContainer){
-      final RadContainer container = (RadContainer)component;
+    if(component instanceof RadContainer container){
       for(int i = container.getComponentCount() - 1; i>= 0; i--){
         deinstall(container.getComponent(i));
       }

@@ -15,10 +15,13 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.tree.DefaultMutableTreeNode;
 
 class CanItBeNullAction extends GroupByNullnessActionBase {
   CanItBeNullAction(@NotNull SliceTreeBuilder treeBuilder) {
@@ -27,16 +30,14 @@ class CanItBeNullAction extends GroupByNullnessActionBase {
 
   @Override
   protected boolean isAvailable() {
-    DefaultMutableTreeNode root = myTreeBuilder.getRootNode();
-    if (root == null) return false;
-    SliceRootNode rootNode = (SliceRootNode)root.getUserObject();
-    PsiElement element = rootNode == null ? null : rootNode.getRootUsage().getUsageInfo().getElement();
+    SliceRootNode rootNode = myTreeBuilder.getRootSliceNode();
+    PsiElement element = rootNode.getRootUsage().getUsageInfo().getElement();
     PsiType type;
-    if (element instanceof PsiVariable) {
-      type = ((PsiVariable)element).getType();
+    if (element instanceof PsiVariable variable) {
+      type = variable.getType();
     }
-    else if (element instanceof PsiExpression) {
-      type = ((PsiExpression)element).getType();
+    else if (element instanceof PsiExpression expression) {
+      type = expression.getType();
     }
     else {
       type = null;

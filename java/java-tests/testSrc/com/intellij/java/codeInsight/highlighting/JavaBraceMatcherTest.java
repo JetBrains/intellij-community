@@ -16,7 +16,6 @@
 package com.intellij.java.codeInsight.highlighting;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -36,7 +35,7 @@ public class JavaBraceMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                                         "class A {" +
                                         "  ArrayList<caret><String");
     final Editor editor = myFixture.getEditor();
-    final EditorHighlighter editorHighlighter = ((EditorEx)editor).getHighlighter();
+    final EditorHighlighter editorHighlighter = editor.getHighlighter();
     final HighlighterIterator iterator = editorHighlighter.createIterator(editor.getCaretModel().getOffset());
     boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), myFixture.getFile().getFileType(), iterator,
                                                    true);
@@ -49,7 +48,7 @@ public class JavaBraceMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                                         "  int i = 3 <caret>< 4 ? 5 > 6 : 1 : 1 : 1;" +
                                         "}");
     final Editor editor = myFixture.getEditor();
-    final EditorHighlighter editorHighlighter = ((EditorEx)editor).getHighlighter();
+    final EditorHighlighter editorHighlighter = editor.getHighlighter();
     final HighlighterIterator iterator = editorHighlighter.createIterator(editor.getCaretModel().getOffset());
     boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), myFixture.getFile().getFileType(), iterator, true);
     assertFalse(matched);

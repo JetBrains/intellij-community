@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
@@ -19,45 +19,22 @@ public class ArtifactDependencyNodeImpl extends AbstractDependencyNode implement
   }
 
   @Override
-  @NotNull
-  public String getGroup() {
+  public @NotNull String getGroup() {
     return group;
   }
 
   @Override
-  @NotNull
-  public String getModule() {
+  public @NotNull String getModule() {
     return module;
   }
 
   @Override
-  @NotNull
-  public String getVersion() {
+  public @NotNull String getVersion() {
     return version;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
-    return group + ':' + module + ':' + version;
-  }
-
-  @Override
-  public boolean match(AbstractDependencyNode dependencyNode) {
-    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
-    ArtifactDependencyNodeImpl node = (ArtifactDependencyNodeImpl)dependencyNode;
-    if (!group.equals(node.group)) return false;
-    if (!module.equals(node.module)) return false;
-    if (!version.equals(node.version)) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + group.hashCode();
-    result = 31 * result + module.hashCode();
-    result = 31 * result + version.hashCode();
-    return result;
+  public @NotNull String getDisplayName() {
+    return group + ':' + module + ':' + version; //NON-NLS
   }
 }

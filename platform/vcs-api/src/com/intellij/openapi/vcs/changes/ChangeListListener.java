@@ -29,13 +29,42 @@ public interface ChangeListListener extends EventListener {
     defaultListChanged(oldDefaultList, newDefaultList);
   }
 
-  default void changesAdded(Collection<Change> changes, ChangeList toList) {}
-  default void changesRemoved(Collection<Change> changes, ChangeList fromList) {}
-  default void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {}
+  default void changesAdded(Collection<? extends Change> changes, ChangeList toList) {}
+  default void changesRemoved(Collection<? extends Change> changes, ChangeList fromList) {}
+  default void changesMoved(Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {}
   default void allChangeListsMappingsChanged() {}
 
+
+  default void changedFileStatusChanged() {}
+
+  /**
+   * Notifies that VCS finished updating added/deleted/modified files.
+   *
+   * @param upToDate true if no pending refreshes are scheduled
+   */
+  default void changedFileStatusChanged(boolean upToDate) {
+    changedFileStatusChanged();
+  }
+
   default void unchangedFileStatusChanged() {}
+
+  /**
+   * Notifies that VCS finished updating misc vcs-managed file statuses. Ex: ignored, unversioned, switched, etc.
+   *
+   * @param upToDate true if no pending refreshes are scheduled
+   */
+  default void unchangedFileStatusChanged(boolean upToDate) {
+    unchangedFileStatusChanged();
+  }
+
+  /**
+   * Combined event for {@link #changedFileStatusChanged()} and {@link #unchangedFileStatusChanged()}.
+   */
   default void changeListUpdateDone() {}
 
+
+  /**
+   * @see ChangeListManager#areChangeListsEnabled
+   */
   default void changeListAvailabilityChanged() {}
 }

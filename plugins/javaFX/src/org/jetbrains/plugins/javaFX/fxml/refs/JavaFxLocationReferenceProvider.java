@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
@@ -32,9 +20,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
-  private boolean mySupportCommaInValue = false;
-  private final Set<FileType> myAcceptedFileTypes;
+final class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
+  private final boolean mySupportCommaInValue;
+  private final Set<String> myAcceptedFileTypes;
 
   JavaFxLocationReferenceProvider() {
     this(false);
@@ -42,12 +30,11 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
 
   JavaFxLocationReferenceProvider(boolean supportCommaInValue, String... acceptedFileExtensions) {
     mySupportCommaInValue = supportCommaInValue;
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    myAcceptedFileTypes = ContainerUtil.map2Set(acceptedFileExtensions, fileTypeManager::getFileTypeByExtension);
+    myAcceptedFileTypes = ContainerUtil.newHashSet(acceptedFileExtensions);
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element,
+  public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element,
                                                          @NotNull ProcessingContext context) {
     final String value = ((XmlAttributeValue)element).getValue();
     if (mySupportCommaInValue && value.contains(",")) {
@@ -82,8 +69,7 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
           if (item instanceof PsiDirectory) return true;
           final VirtualFile virtualFile = item.getVirtualFile();
           if (virtualFile == null) return false;
-          final FileType fileType = virtualFile.getFileType();
-          return myAcceptedFileTypes.contains(fileType);
+          return myAcceptedFileTypes.contains(virtualFile.getExtension());
         };
       }
     };

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmParameter;
@@ -24,11 +24,13 @@ public interface PsiParameter extends PsiVariable, JvmParameter, PsiJvmModifiers
    *
    * @return the declaration scope for the parameter.
    */
-  @NotNull
-  PsiElement getDeclarationScope();
+  @NotNull PsiElement getDeclarationScope();
 
   /**
-   * Checks if the parameter accepts a variable number of arguments.
+   * Checks if the parameter is declared as a variable arity parameter (using ellipsis).
+   * If a malformed method is declared where ellipsis is used on non-last parameter (e.g. {@code void test(int... a, int[] b) {}}),
+   * then the parameter is still considered as a variable arity parameter, despite the method is not considered to be 
+   * a variable arity method.
    *
    * @return true if the parameter is a vararg, false otherwise
    */
@@ -38,14 +40,12 @@ public interface PsiParameter extends PsiVariable, JvmParameter, PsiJvmModifiers
    * {@inheritDoc}
    */
   @Override
-  @Nullable
-  PsiTypeElement getTypeElement();
+  @Nullable PsiTypeElement getTypeElement();
 
-  /* This explicit declaration is required to force javac generate bridge method 'JvmType getType()'; without it calling
-  JvmParameter#getType() method on instances which weren't recompiled against the new API will cause AbstractMethodError. */
-  @NotNull
+  // This explicit declaration is required to force javac to generate a bridge method 'JvmType getType()'; without it calling
+  // JvmParameter#getType() method on instances which weren't recompiled against the new API will cause AbstractMethodError.
   @Override
-  PsiType getType();
+  @NotNull PsiType getType();
 
   // binary compatibility
   @Override
@@ -53,8 +53,6 @@ public interface PsiParameter extends PsiVariable, JvmParameter, PsiJvmModifiers
     return PsiJvmModifiersOwner.super.getAnnotations();
   }
 
-  @NotNull
   @Override
-  @NlsSafe
-  String getName();
+  @NotNull @NlsSafe String getName();
 }

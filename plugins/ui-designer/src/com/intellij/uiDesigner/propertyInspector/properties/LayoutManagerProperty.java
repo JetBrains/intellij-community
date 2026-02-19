@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
@@ -15,16 +16,15 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class LayoutManagerProperty extends Property<RadContainer, String> {
-  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<String>() {
+  private final PropertyRenderer<String> myRenderer = new LabelPropertyRenderer<>() {
     @Override
-    protected void customize(@NotNull final String value) {
+    protected void customize(final @NotNull String value) {
       setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
     }
   };
@@ -35,7 +35,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
     }
 
     @Override
-    public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
+    public JComponent getComponent(RadComponent component, @NlsSafe String value, InplaceContext inplaceContext) {
       if (UIFormXmlConstants.LAYOUT_XY.equals(value)) {
         myCbx.setModel(new DefaultComboBoxModel<>(LayoutManagerRegistry.getLayoutManagerNames()));
       }
@@ -78,7 +78,7 @@ public class LayoutManagerProperty extends Property<RadContainer, String> {
   }
 
   @Override
-  @NotNull public PropertyRenderer<String> getRenderer() {
+  public @NotNull PropertyRenderer<String> getRenderer() {
     return myRenderer;
   }
 

@@ -21,11 +21,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
 
 public class ExpressionCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
     private final Project project;
@@ -39,7 +40,7 @@ public class ExpressionCellRenderer extends DefaultTableCellRenderer implements 
         super.getTableCellRendererComponent(jtable, "", flag, flag1, i, j);
 
         Expression expression = (Expression)obj;
-        if (expression != null && expression.getExpression().length() != 0) {
+        if (expression != null && !expression.getExpression().isEmpty()) {
             final Document document = PsiDocumentManager.getInstance(project).getDocument(expression.getFile());
             return new MyEditorTextField(document, project, expression.getFileType());
         } else {
@@ -59,7 +60,7 @@ public class ExpressionCellRenderer extends DefaultTableCellRenderer implements 
         }
 
         @Override
-        protected EditorEx createEditor() {
+        protected @NotNull EditorEx createEditor() {
             final EditorEx editor = super.createEditor();
             editor.setBackgroundColor(ExpressionCellRenderer.this.getBackground());
             return editor;

@@ -1,14 +1,33 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.CommaTailType;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -24,14 +43,11 @@ import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
-* @author peter
-*/
 class TypeArgumentCompletionProvider {
   static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance(TypeArgumentCompletionProvider.class);
   private final boolean mySmart;
-  @Nullable private final JavaCompletionSession mySession;
+  private final @Nullable JavaCompletionSession mySession;
 
   TypeArgumentCompletionProvider(boolean smart, @Nullable JavaCompletionSession session) {
     mySmart = smart;
@@ -88,7 +104,7 @@ class TypeArgumentCompletionProvider {
                            List<? extends PsiType> expectedArgs,
                            PsiTypeParameterListOwner paramOwner) {
     List<PsiTypeLookupItem> typeItems = ContainerUtil.map(expectedArgs, arg -> PsiTypeLookupItem.createLookupItem(arg, context));
-    TailType globalTail = mySmart ? info.getTailType() : TailType.NONE;
+    TailType globalTail = mySmart ? info.getTailType() : TailTypes.noneType();
     TypeArgsLookupElement element = new TypeArgsLookupElement(typeItems, globalTail, hasParameters(paramOwner, context));
     element.registerSingleClass(mySession);
     resultSet.consume(element);
@@ -115,18 +131,16 @@ class TypeArgumentCompletionProvider {
   }
 
   private static TailType getTail(boolean last) {
-    return last ? new CharTailType('>') : CommaTailType.INSTANCE;
+    return last ? TailTypes.charType('>') : CommaTailType.INSTANCE;
   }
 
-  @Nullable
-  static Pair<PsiTypeParameterListOwner, Integer> getTypeParameterInfo(PsiElement context) {
+  static @Nullable Pair<PsiTypeParameterListOwner, Integer> getTypeParameterInfo(PsiElement context) {
     final PsiReferenceParameterList parameterList = PsiTreeUtil.getContextOfType(context, PsiReferenceParameterList.class, true);
     if (parameterList == null) return null;
 
     PsiElement parent = parameterList.getParent();
-    if (!(parent instanceof PsiJavaCodeReferenceElement)) return null;
+    if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) return null;
 
-    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
     final int parameterIndex;
 
     int index = 0;
@@ -164,9 +178,8 @@ class TypeArgumentCompletionProvider {
       myLookupString = StringUtil.join(myTypeItems, item -> item.getType().getPresentableText(), ", ");
     }
 
-    @NotNull
     @Override
-    public Object getObject() {
+    public @NotNull Object getObject() {
       return myTypeItems.get(0).getObject();
     }
 
@@ -181,14 +194,13 @@ class TypeArgumentCompletionProvider {
       }
     }
 
-    @NotNull
     @Override
-    public String getLookupString() {
+    public @NotNull String getLookupString() {
       return myLookupString;
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       myTypeItems.get(0).renderElement(presentation);
       presentation.setItemText(getLookupString());
       if (myTypeItems.size() > 1) {

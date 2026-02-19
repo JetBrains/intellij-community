@@ -1,14 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,10 +24,9 @@ import java.util.List;
 /**
  * An implementation of {@link PlainTextSymbolCompletionContributor} which is suitable for JVM languages.
  */
-public class JvmPlainTextSymbolCompletionContributor implements PlainTextSymbolCompletionContributor {
-  @NotNull
+public final class JvmPlainTextSymbolCompletionContributor implements PlainTextSymbolCompletionContributor {
   @Override
-  public Collection<LookupElement> getLookupElements(@NotNull PsiFile file, int invocationCount, @NotNull String prefix) {
+  public @NotNull @Unmodifiable Collection<LookupElement> getLookupElements(@NotNull PsiFile file, int invocationCount, @NotNull String prefix) {
     PsiClassOwner jvmFile = ObjectUtils.tryCast(file, PsiClassOwner.class);
     if (jvmFile == null) return Collections.emptyList();
     List<LookupElement> result = new ArrayList<>();
@@ -93,8 +99,7 @@ public class JvmPlainTextSymbolCompletionContributor implements PlainTextSymbolC
     }
   }
 
-  @Nullable
-  private static String getInfix(String currentPrefix, String className) {
+  private static @Nullable String getInfix(String currentPrefix, String className) {
     if (!currentPrefix.startsWith(className)) return null;
     for (String infix : new String[]{".", "#", "::"}) {
       if (currentPrefix.startsWith(infix, className.length())) {

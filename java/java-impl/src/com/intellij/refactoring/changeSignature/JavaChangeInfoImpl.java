@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
@@ -21,45 +7,65 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-/**
- * @author Jeka
- */
 public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance(JavaChangeInfoImpl.class);
 
-  @PsiModifier.ModifierConstant
-  @NotNull
-  private final String newVisibility;
-  @NotNull
-  private PsiMethod method;
-  @NotNull
-  private final String oldName;
+  @PsiModifier.ModifierConstant private final @NotNull String newVisibility;
+  private boolean propagateVisibility;
+  
+  private @NotNull PsiMethod method;
+  private final @NotNull String oldName;
   private final String oldType;
-  String[] oldParameterNames;
-  String[] oldParameterTypes;
-  @NotNull
-  private final String newName;
-  final CanonicalTypes.Type newReturnType;
-  final ParameterInfoImpl[] newParms;
+  @ApiStatus.Internal
+  public String[] oldParameterNames;
+  @ApiStatus.Internal
+  public String[] oldParameterTypes;
+  private final @NotNull String newName;
+  @ApiStatus.Internal
+  public final CanonicalTypes.Type newReturnType;
+  @ApiStatus.Internal
+  public final ParameterInfoImpl[] newParms;
   private ThrownExceptionInfo[] newExceptions;
   private final boolean[] toRemoveParm;
   private final boolean isVisibilityChanged;
   private final boolean isNameChanged;
-  boolean isReturnTypeChanged;
+  @ApiStatus.Internal
+  public boolean isReturnTypeChanged;
   private boolean isParameterSetOrOrderChanged;
   private boolean isExceptionSetChanged;
   private boolean isExceptionSetOrOrderChanged;
   private boolean isParameterNamesChanged;
   private boolean isParameterTypesChanged;
-  boolean isPropagationEnabled = true;
+  @ApiStatus.Internal
+  public boolean isPropagationEnabled = true;
   private final boolean wasVararg;
   private final boolean retainsVarargs;
   private final boolean obtainsVarags;
@@ -68,10 +74,55 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   private final PsiExpression[] defaultValues;
 
   private final boolean isGenerateDelegate;
-  final Set<PsiMethod> propagateParametersMethods;
-  final Set<PsiMethod> propagateExceptionsMethods;
+  private boolean isFixFieldConflicts = true;
+  @ApiStatus.Internal
+  public final Set<PsiMethod> propagateParametersMethods;
+  @ApiStatus.Internal
+  public final Set<PsiMethod> propagateExceptionsMethods;
 
   private boolean myCheckUnusedParameter;
+  
+  public static JavaChangeInfo generateChangeInfo(PsiMethod method,
+                                                  boolean generateDelegate,
+                                                  boolean fixFieldConflicts,
+                                                  @Nullable("Null means unchanged") @PsiModifier.ModifierConstant String newVisibility,
+                                                  @NotNull String newName,
+                                                  CanonicalTypes.Type newType,
+                                                  ParameterInfoImpl @NotNull [] parameterInfo,
+                                                  ThrownExceptionInfo[] thrownExceptions,
+                                                  Set<PsiMethod> propagateParametersMethods,
+                                                  Set<PsiMethod> propagateExceptionsMethods) {
+    LOG.assertTrue(method.isValid());
+
+    if (propagateParametersMethods == null) {
+      propagateParametersMethods = new HashSet<>();
+    }
+
+    if (propagateExceptionsMethods == null) {
+      propagateExceptionsMethods = new HashSet<>();
+    }
+
+    if (newVisibility == null) {
+      newVisibility = VisibilityUtil.getVisibilityModifier(method.getModifierList());
+    }
+
+    final JavaChangeInfoImpl javaChangeInfo =
+      new JavaChangeInfoImpl(newVisibility, method, newName, newType, parameterInfo, thrownExceptions, generateDelegate,
+                             propagateParametersMethods, propagateExceptionsMethods);
+    javaChangeInfo.setCheckUnusedParameter();
+    javaChangeInfo.setFixFieldConflicts(fixFieldConflicts);
+    return javaChangeInfo;
+  }
+
+  @ApiStatus.Internal
+  public boolean isPropagateVisibility() {
+    return propagateVisibility;
+  }
+
+  @ApiStatus.Internal
+  public void setPropagateVisibility(boolean value) {
+    propagateVisibility = value;
+  }
 
   /**
    * @param newExceptions null if not changed
@@ -136,6 +187,11 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
       isParameterSetOrOrderChanged = true;
     }
     else {
+      boolean isVararg = newParms.length > 0 && newParms[newParms.length - 1].isVarargType();
+      if (wasVararg != isVararg) {
+        // Need to trigger possible argument changes
+        isParameterSetOrOrderChanged = true;
+      }
       for(int i = 0; i < newParms.length; i++){
         ParameterInfoImpl parmInfo = newParms[i];
 
@@ -163,9 +219,11 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
 
     toRemoveParm = new boolean[oldParameterNames.length];
     Arrays.fill(toRemoveParm, true);
-    for (ParameterInfoImpl info : newParms) {
-      if (info.oldParameterIndex < 0) continue;
-      toRemoveParm[info.oldParameterIndex] = false;
+    if (toRemoveParm.length > 0) {
+      for (ParameterInfoImpl info : newParms) {
+        if (info.oldParameterIndex < 0) continue;
+        toRemoveParm[info.oldParameterIndex] = false;
+      }
     }
 
     defaultValues = new PsiExpression[newParms.length];
@@ -209,6 +267,15 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     myCheckUnusedParameter = true;
   }
 
+  @Override
+  public boolean isFixFieldConflicts() {
+    return isFixFieldConflicts;
+  }
+
+  public void setFixFieldConflicts(boolean fixFieldConflicts) {
+    isFixFieldConflicts = fixFieldConflicts;
+  }
+
   protected void fillOldParams(PsiMethod method) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     oldParameterNames = new String[parameters.length];
@@ -222,7 +289,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     }
     if (!method.isConstructor()){
       try {
-        isReturnTypeChanged = !ChangeSignatureUtil.deepTypeEqual(newReturnType.getType(this.method), this.method.getReturnType());
+        isReturnTypeChanged = !CommonJavaRefactoringUtil.deepTypeEqual(newReturnType.getType(this.method), this.method.getReturnType());
       }
       catch (IncorrectOperationException e) {
         isReturnTypeChanged = true;
@@ -235,10 +302,9 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     return newParms;
   }
 
-  @NotNull
   @Override
   @PsiModifier.ModifierConstant
-  public String getNewVisibility() {
+  public @NotNull String getNewVisibility() {
     return newVisibility;
   }
 
@@ -259,7 +325,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     if (!isExceptionSetChanged) {
       for (int i = 0; i < newExceptions.length; i++) {
         try {
-          if (newExceptions[i].getOldIndex() < 0 || !ChangeSignatureUtil.deepTypeEqual(types[i], newExceptions[i].createType(method, method.getManager()))) {
+          if (newExceptions[i].getOldIndex() < 0 || !CommonJavaRefactoringUtil.deepTypeEqual(types[i], newExceptions[i].createType(method, method.getManager()))) {
             isExceptionSetChanged = true;
             break;
           }
@@ -321,8 +387,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  @Nullable
-  public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
+  public @Nullable PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
     if (defaultValues[i] != null) return defaultValues[i];
     final PsiElement valueAtCallSite = newParms[i].getActualValue(expr, PsiSubstitutor.EMPTY);
     return valueAtCallSite instanceof PsiExpression ? (PsiExpression)valueAtCallSite : null;
@@ -344,8 +409,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  @NotNull
-  public String getNewName() {
+  public @NotNull String getNewName() {
     return newName;
   }
 
@@ -390,6 +454,11 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
+  public @Nullable String getOldReturnType() {
+    return oldType;
+  }
+
+  @Override
   public ThrownExceptionInfo[] getNewExceptions() {
     return newExceptions;
   }
@@ -415,8 +484,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  @NotNull
-  public String getOldName() {
+  public @NotNull String getOldName() {
     return oldName;
   }
 
@@ -437,9 +505,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof JavaChangeInfoImpl)) return false;
-
-    JavaChangeInfoImpl that = (JavaChangeInfoImpl)o;
+    if (!(o instanceof JavaChangeInfoImpl that)) return false;
 
     if (arrayToVarargs != that.arrayToVarargs) return false;
     if (isExceptionSetChanged != that.isExceptionSetChanged) return false;
@@ -459,7 +525,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     if (checkMethodEquality() && !method.equals(that.method)) return false;
     if (!Arrays.equals(newExceptions, that.newExceptions)) return false;
     if (!newName.equals(that.newName)) return false;
-    if (newNameIdentifier != null ? !newNameIdentifier.equals(that.newNameIdentifier) : that.newNameIdentifier != null) return false;
+    if (!Objects.equals(newNameIdentifier, that.newNameIdentifier)) return false;
     if (!Arrays.equals(newParms, that.newParms)) return false;
     if (newReturnType != null
         ? that.newReturnType == null || !Comparing.strEqual(newReturnType.getTypeText(), that.newReturnType.getTypeText())
@@ -470,7 +536,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     if (!oldName.equals(that.oldName)) return false;
     if (!Arrays.equals(oldParameterNames, that.oldParameterNames)) return false;
     if (!Arrays.equals(oldParameterTypes, that.oldParameterTypes)) return false;
-    if (oldType != null ? !oldType.equals(that.oldType) : that.oldType != null) return false;
+    if (!Objects.equals(oldType, that.oldType)) return false;
     if (!propagateExceptionsMethods.equals(that.propagateExceptionsMethods)) return false;
     if (!propagateParametersMethods.equals(that.propagateParametersMethods)) return false;
     if (!Arrays.equals(toRemoveParm, that.toRemoveParm)) return false;

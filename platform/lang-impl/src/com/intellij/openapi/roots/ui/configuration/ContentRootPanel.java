@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -26,6 +26,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -35,11 +36,26 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Stroke;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
@@ -51,11 +67,11 @@ import java.util.Map;
  */
 public abstract class ContentRootPanel extends JPanel {
   private static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);
-  private static final Color SELECTED_HEADER_COLOR = new JBColor(
+  private static final Color SELECTED_HEADER_COLOR = JBColor.lazy(
     () -> StartupUiUtil.isUnderDarcula() ? UIUtil.getPanelBackground().darker() : new Color(0xDEF2FF));
   private static final Color HEADER_COLOR = new JBColor(new Color(0xF5F5F5), Gray._82);
   private static final Color SELECTED_CONTENT_COLOR = new Color(0xF0F9FF);
-  private static final Color CONTENT_COLOR = new JBColor(() -> StartupUiUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Gray._255);
+  private static final Color CONTENT_COLOR = JBColor.lazy(() -> StartupUiUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Gray._255);
   private static final Color UNSELECTED_TEXT_COLOR = Gray._51;
 
   protected final ActionCallback myCallback;
@@ -77,8 +93,7 @@ public abstract class ContentRootPanel extends JPanel {
     myModuleSourceRootEditHandlers = moduleSourceRootEditHandlers;
   }
 
-  @Nullable
-  protected abstract ContentEntry getContentEntry();
+  protected abstract @Nullable ContentEntry getContentEntry();
 
   public void initUI() {
     myHeader = createHeader();
@@ -91,7 +106,7 @@ public abstract class ContentRootPanel extends JPanel {
     myBottom = new JPanel(new BorderLayout());
     myBottom.add(Box.createVerticalStrut(3), BorderLayout.NORTH);
     this.add(myBottom, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                              JBUI.emptyInsets(), 0, 0));
+                                              JBInsets.emptyInsets(), 0, 0));
 
     setSelected(false);
   }
@@ -172,7 +187,7 @@ public abstract class ContentRootPanel extends JPanel {
     }
 
     final JLabel titleLabel = new JLabel(title);
-    final Font labelFont = UIUtil.getLabelFont();
+    final Font labelFont = StartupUiUtil.getLabelFont();
     titleLabel.setFont(labelFont.deriveFont(Font.BOLD));
     titleLabel.setOpaque(false);
     titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
@@ -186,8 +201,7 @@ public abstract class ContentRootPanel extends JPanel {
     return groupPanel;
   }
 
-  @Nullable
-  protected JComponent createRootPropertiesEditor(ModuleSourceRootEditHandler<?> editor, SourceFolder folder) {
+  protected @Nullable JComponent createRootPropertiesEditor(ModuleSourceRootEditHandler<?> editor, SourceFolder folder) {
     return null;
   }
 
@@ -291,7 +305,7 @@ public abstract class ContentRootPanel extends JPanel {
     }
   }
 
-  private static class UnderlinedPathLabel extends ResizingWrapper {
+  private static final class UnderlinedPathLabel extends ResizingWrapper {
     private static final float[] DASH = {0, 2, 0, 2};
     private static final Color DASH_LINE_COLOR = new JBColor(Gray._201, Gray._100);
 
@@ -315,7 +329,7 @@ public abstract class ContentRootPanel extends JPanel {
       }
     }
 
-    private void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2) {
+    private static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2) {
       /*
       // TODO!!!
       final Color color = g.getColor();

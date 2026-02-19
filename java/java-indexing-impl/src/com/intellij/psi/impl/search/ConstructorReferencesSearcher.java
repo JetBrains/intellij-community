@@ -1,22 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull Processor<? super PsiReference> consumer) {
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement element = p.getElementToSearch();
-    if (!(element instanceof PsiMethod)) {
+    if (!(element instanceof PsiMethod method)) {
       return;
     }
-    final PsiMethod method = (PsiMethod)element;
     final PsiManager[] manager = new PsiManager[1];
     PsiClass aClass = ReadAction.compute(() -> {
       if (!method.isConstructor()) return null;

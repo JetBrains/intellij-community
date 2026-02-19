@@ -1,4 +1,4 @@
-// "Convert to 'new Color(0x256478)'" "true"
+// "Convert to 'new Color(0x256478)'" "true-preview"
 
 package java.awt;
 

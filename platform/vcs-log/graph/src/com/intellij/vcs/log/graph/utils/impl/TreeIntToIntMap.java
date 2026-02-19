@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.utils.impl;
 
-import com.intellij.util.BooleanFunction;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Predicate;
+
+@ApiStatus.Internal
 public final class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
 
-  public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<? super Integer> thisIsVisible, final int longSize) {
+  public static UpdatableIntToIntMap newInstance(final @NotNull Predicate<? super Integer> thisIsVisible, final int longSize) {
     if (longSize < 0) throw new NegativeArraySizeException("size < 0: " + longSize);
 
     if (longSize == 0) return IDIntToIntMap.EMPTY;
@@ -36,13 +39,13 @@ public final class TreeIntToIntMap extends AbstractIntToIntMap implements Updata
     return count;
   }
 
-  @NotNull private final BooleanFunction<? super Integer> myThisIsVisible;
+  private final @NotNull Predicate<? super Integer> myThisIsVisible;
 
   private final int myLongSize;
   private final int myCountLevels;
   private final int[] myTree;
 
-  private TreeIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize, int countLevels, int[] tree) {
+  private TreeIntToIntMap(@NotNull Predicate<? super Integer> thisIsVisible, int longSize, int countLevels, int[] tree) {
     myThisIsVisible = thisIsVisible;
     myLongSize = longSize;
     myCountLevels = countLevels;
@@ -109,7 +112,7 @@ public final class TreeIntToIntMap extends AbstractIntToIntMap implements Updata
 
   private int getCountInLastLevel(int node) {
     node -= myTree.length;
-    if (node < myLongSize && myThisIsVisible.fun(node)) {
+    if (node < myLongSize && myThisIsVisible.test(node)) {
       return 1;
     }
     else {

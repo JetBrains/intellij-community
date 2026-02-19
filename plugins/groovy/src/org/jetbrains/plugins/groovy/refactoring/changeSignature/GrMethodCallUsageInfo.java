@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.psi.PsiClass;
@@ -14,7 +14,11 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -43,8 +47,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     if (resolveResult == null || resolveResult.getElement() == null) {
       mySubstitutor = PsiSubstitutor.EMPTY;
     }
-    else if (resolveResult.getElement() instanceof PsiMethod) {
-      PsiMethod resolved = (PsiMethod)resolveResult.getElement();
+    else if (resolveResult.getElement() instanceof PsiMethod resolved) {
       mySubstitutor = resolveResult.getSubstitutor();
       if (!element.getManager().areElementsEquivalent(method, resolved)) {
         final PsiClass baseClass = method.getContainingClass();
@@ -72,8 +75,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     }
   }
 
-  @Nullable
-  public PsiMethod getReferencedMethod() {
+  public @Nullable PsiMethod getReferencedMethod() {
     final GroovyResolveResult result = resolveMethod(getElement());
     if (result == null) return null;
 
@@ -81,8 +83,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     return element instanceof PsiMethod ? (PsiMethod)element : null;
   }
 
-  @Nullable
-  private static GroovyResolveResult resolveMethod(final PsiElement ref) {
+  private static @Nullable GroovyResolveResult resolveMethod(final PsiElement ref) {
     if (ref instanceof GrEnumConstant) return ((GrEnumConstant)ref).advancedResolve();
     PsiElement parent = ref.getParent();
     if (parent instanceof GrMethodCall) {

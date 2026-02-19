@@ -22,7 +22,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.GenericAttributeValue;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -92,8 +96,9 @@ public abstract class AntDomElement implements DomElement {
       return Collections.emptyIterator();
     }
     final Iterator<DomElement> it = children.iterator();
-    return new Iterator<AntDomElement>() {
+    return new Iterator<>() {
       private DomElement myUnprocessedElement;
+
       @Override
       public boolean hasNext() {
         findNextAntElement();
@@ -123,11 +128,6 @@ public abstract class AntDomElement implements DomElement {
         }
         while (!(myUnprocessedElement instanceof AntDomElement));
       }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException("remove");
-      }
     };
   }
 
@@ -139,6 +139,7 @@ public abstract class AntDomElement implements DomElement {
     return Role.DATA_TYPE == getChildDescription().getUserData(ROLE);
   }
 
+  @Override
   public String toString() {
     final XmlTag tag = getXmlTag();
     if (tag == null) {

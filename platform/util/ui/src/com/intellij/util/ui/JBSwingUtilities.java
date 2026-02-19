@@ -2,11 +2,17 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.LazyInitializer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +28,7 @@ public final class JBSwingUtilities {
   /**
    * @deprecated Use {@link SwingUtilities#isLeftMouseButton}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isLeftMouseButton(MouseEvent anEvent) {
     return SwingUtilities.isLeftMouseButton(anEvent);
   }
@@ -30,7 +36,7 @@ public final class JBSwingUtilities {
   /**
    * @deprecated Use {@link SwingUtilities#isRightMouseButton}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isRightMouseButton(MouseEvent anEvent) {
     return SwingUtilities.isRightMouseButton(anEvent);
   }
@@ -55,4 +61,25 @@ public final class JBSwingUtilities {
     }
     return gg;
   }
+
+  public static boolean hasCGTransform(@NotNull JComponent c) {
+    Graphics2D dummyGraphics = DUMMY_GRAPHICS.get();
+    return runGlobalCGTransform(c, dummyGraphics) != dummyGraphics;
+  }
+
+  private static final LazyInitializer.LazyValue<Graphics2D> DUMMY_GRAPHICS = LazyInitializer.create(() -> {
+    var image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+    return image.createGraphics();
+  });
+
+  /**
+   * A rendering hint for explicit alpha value setting of the background image drawn by IdeBackgroundUtils
+   */
+  @ApiStatus.Internal
+  public static final RenderingHints.Key ADJUSTED_BACKGROUND_ALPHA = new RenderingHints.Key(1) {
+    @Override
+    public boolean isCompatibleValue(Object val) {
+      return val instanceof Float;
+    }
+  };
 }

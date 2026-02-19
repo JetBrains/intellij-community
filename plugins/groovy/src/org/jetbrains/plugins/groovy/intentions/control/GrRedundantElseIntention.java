@@ -1,28 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.control;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -36,13 +21,16 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.Objects;
+
 /**
  * @author Max Medvedev
  */
-public class GrRedundantElseIntention extends Intention {
+public final class GrRedundantElseIntention extends GrPsiUpdateIntention {
   public static final String HINT = "Remove redundant 'else' keyword";
+
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof GrIfStatement)) return;
 
@@ -53,20 +41,22 @@ public class GrRedundantElseIntention extends Intention {
     final GrStatement branch = ifStatement.getElseBranch();
     if (branch == null) return;
 
-    final PsiElement pos;
     if (branch instanceof GrBlockStatement) {
       final GrOpenBlock block = ((GrBlockStatement)branch).getBlock();
 
       final PsiElement first = inferFirst(block.getLBrace());
       final PsiElement last = inferLast(block.getRBrace());
-      pos = statementOwner.addRangeAfter(first, last, ifStatement);
+      if (!Objects.equals(first, block.getRBrace()) && !Objects.equals(last, block.getLBrace())) {
+        // else block is not empty
+        statementOwner.addRangeAfter(first, last, ifStatement);
+      }
     }
     else {
-      pos = statementOwner.addAfter(branch, ifStatement);
+      statementOwner.addAfter(branch, ifStatement);
     }
     branch.delete();
 
-    editor.getCaretModel().moveToOffset(pos.getTextRange().getStartOffset());
+    updater.moveCaretTo(ifStatement.getTextRange().getEndOffset());
   }
 
   private static PsiElement inferFirst(PsiElement lbrace) {
@@ -77,18 +67,15 @@ public class GrRedundantElseIntention extends Intention {
     return PsiUtil.skipWhitespaces(rbrace.getPrevSibling(), false);
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
         if (!(element.getNode().getElementType() == GroovyTokenTypes.kELSE)) return false;
 
         final PsiElement parent = element.getParent();
-        if (!(parent instanceof GrIfStatement)) return false;
-
-        final GrIfStatement ifStatement = (GrIfStatement)parent;
+        if (!(parent instanceof GrIfStatement ifStatement)) return false;
 
         final GrStatement branch = ifStatement.getThenBranch();
         final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(ifStatement);

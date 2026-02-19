@@ -4,21 +4,24 @@ package com.intellij.util.ui.tree;
 import com.intellij.ui.TreeExpandCollapse;
 import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Assertion;
 import com.intellij.util.ExceptionUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.tree.*;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.EventQueue;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class TreeUtilTest extends TestCase {
-  private final Assertion CHECK = new Assertion();
+import static org.assertj.core.api.Assertions.assertThat;
 
+public class TreeUtilTest extends TestCase {
   public void testFindNodeWithObject() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
@@ -105,34 +108,6 @@ public class TreeUtilTest extends TestCase {
     assertSame(middle, tree.getSelectionPath().getLastPathComponent());
   }
 
-  public void testFindCommonPath() {
-    TreePath rootPath = new TreePath("root");
-    TreePath path1 = rootPath.pathByAddingChild("1");
-    TreePath path1_1 = path1.pathByAddingChild("1_1");
-    TreePath path1_2 = path1.pathByAddingChild("1_2");
-    TreePath path2_1 = rootPath.pathByAddingChild("2").pathByAddingChild("2_1");
-    assertEquals(path1, TreeUtil.findCommonPath(new TreePath[]{path1_1, path1_2}));
-    assertEquals(path1, TreeUtil.findCommonPath(new TreePath[]{path1, path1_1}));
-    assertEquals(rootPath, TreeUtil.findCommonPath(new TreePath[]{path1_1, path1_2, path2_1}));
-  }
-
-  public void testSelectMaximals() {
-    String e1 = "a";
-    String e2 = "b";
-    TreePath path1 = new TreePath(new Object[]{e1, e2, "c"});
-    TreePath path2 = new TreePath(new Object[]{e1, e2});
-    TreePath path2a = new TreePath(new Object[]{e1, e2});
-    TreePath path3 = new TreePath("d");
-    TreePath[] maximals = TreeUtil.selectMaximals(new TreePath[]{path1, path2, path3});
-    Assertion.compareUnordered(maximals, new TreePath[]{path2, path3});
-    assertEquals(1, TreeUtil.selectMaximals(new TreePath[]{path2, path2a}).length);
-  }
-
-  public void testSelectMaximalsWhenNone() {
-    CHECK.empty(TreeUtil.selectMaximals(null));
-    CHECK.empty(TreeUtil.selectMaximals(new TreePath[0]));
-  }
-
   public void testSorting() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
     DefaultMutableTreeNode node2 = new DefaultMutableTreeNode("2");
@@ -170,7 +145,7 @@ public class TreeUtilTest extends TestCase {
       order.add(node1.toString());
       return true;
     });
-    CHECK.compareAll(new String[]{"0", "00", "000", "001","01"}, order);
+    assertThat(order).containsExactly("0", "00", "000", "001","01");
   }
 
   public static void waitForTestOnEDT(@NotNull Runnable test) {

@@ -1,0 +1,6 @@
+JsonFile: y_array_with_trailing_space.json
+  JsonArray
+    PsiElement([)('[')
+    JsonNumberLiteral
+      PsiElement(NUMBER)('2')
+    PsiElement(])(']')

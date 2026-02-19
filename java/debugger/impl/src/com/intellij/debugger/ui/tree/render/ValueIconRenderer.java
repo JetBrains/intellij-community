@@ -6,10 +6,19 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public interface ValueIconRenderer {
   @Nullable
   Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
     throws EvaluateException;
+
+  /**
+   * @return icon that will be shown inside an editor in the debugger inlays
+   */
+  @Nullable
+  default Icon calcInlayIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+    throws EvaluateException {
+    return null;
+  }
 }

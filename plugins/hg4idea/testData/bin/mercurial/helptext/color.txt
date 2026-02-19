@@ -1,0 +1,150 @@
+Mercurial colorizes output from several commands.
+
+For example, the diff command shows additions in green and deletions
+in red, while the status command shows modified files in magenta. Many
+other commands have analogous colors. It is possible to customize
+these colors.
+
+To enable color (default) whenever possible use::
+
+  [ui]
+  color = yes
+
+To disable color use::
+
+  [ui]
+  color = no
+
+See :hg:`help config.ui.color` for details.
+
+.. container:: windows
+
+  The default pager on Windows does not support color, so enabling the pager
+  will effectively disable color.  See :hg:`help config.ui.paginate` to disable
+  the pager.  Alternately, MSYS and Cygwin shells provide `less` as a pager,
+  which can be configured to support ANSI color mode.  Windows 10 natively
+  supports ANSI color mode.
+
+Mode
+====
+
+Mercurial can use various systems to display color. The supported modes are
+``ansi``, ``win32``, and ``terminfo``.  See :hg:`help config.color` for details
+about how to control the mode.
+
+Effects
+=======
+
+Other effects in addition to color, like bold and underlined text, are
+also available. By default, the terminfo database is used to find the
+terminal codes used to change color and effect.  If terminfo is not
+available, then effects are rendered with the ECMA-48 SGR control
+function (aka ANSI escape codes).
+
+The available effects in terminfo mode are 'blink', 'bold', 'dim',
+'inverse', 'invisible', 'italic', 'standout', and 'underline'; in
+ECMA-48 mode, the options are 'bold', 'inverse', 'italic', and
+'underline'.  How each is rendered depends on the terminal emulator.
+Some may not be available for a given terminal type, and will be
+silently ignored.
+
+If the terminfo entry for your terminal is missing codes for an effect
+or has the wrong codes, you can add or override those codes in your
+configuration::
+
+  [color]
+  terminfo.dim = \E[2m
+
+where '\E' is substituted with an escape character.
+
+Labels
+======
+
+Text receives color effects depending on the labels that it has. Many
+default Mercurial commands emit labelled text. You can also define
+your own labels in templates using the label function, see :hg:`help
+templates`. In order to receive effects, labels must have a dot, such
+as `log.secret` or `branch.active`. A single portion of text may have
+more than one label. In that case, effects given to the last label
+will override any other effects. This includes the special "none"
+effect, which nullifies other effects.
+
+Labels are normally invisible. In order to see these labels and their
+position in the text, use the global --color=debug option. The same
+anchor text may be associated to multiple labels, e.g.
+
+  [log.changeset changeset.secret|changeset:   22611:6f0a53c8f587]
+
+The following are the default effects for some default labels. Default
+effects may be overridden from your configuration file::
+
+  [color]
+  status.modified = blue bold underline red_background
+  status.added = green bold
+  status.removed = red bold blue_background
+  status.deleted = cyan bold underline
+  status.unknown = magenta bold underline
+  status.ignored = black bold
+
+  # 'none' turns off all effects
+  status.clean = none
+  status.copied = none
+
+  qseries.applied = blue bold underline
+  qseries.unapplied = black bold
+  qseries.missing = red bold
+
+  diff.diffline = bold
+  diff.extended = cyan bold
+  diff.file_a = red bold
+  diff.file_b = green bold
+  diff.hunk = magenta
+  diff.deleted = red
+  diff.inserted = green
+  diff.changed = white
+  diff.tab =
+  diff.trailingwhitespace = bold red_background
+
+  # Blank so it inherits the style of the surrounding label
+  changeset.public =
+  changeset.draft =
+  changeset.secret =
+
+  resolve.unresolved = red bold
+  resolve.resolved = green bold
+
+  bookmarks.active = green
+
+  branches.active = none
+  branches.closed = black bold
+  branches.current = green
+  branches.inactive = none
+
+  tags.normal = green
+  tags.local = black bold
+
+  rebase.rebased = blue
+  rebase.remaining = red bold
+
+  shelve.age = cyan
+  shelve.newest = green bold
+  shelve.name = blue bold
+
+  histedit.remaining = red bold
+
+Custom colors
+=============
+
+Because there are only eight standard colors, Mercurial allows you
+to define color names for other color slots which might be available
+for your terminal type, assuming terminfo mode.  For instance::
+
+  color.brightblue = 12
+  color.pink = 207
+  color.orange = 202
+
+to set 'brightblue' to color slot 12 (useful for 16 color terminals
+that have brighter colors defined in the upper eight) and, 'pink' and
+'orange' to colors in 256-color xterm's default color cube.  These
+defined colors may then be used as any of the pre-defined eight,
+including appending '_background' to set the background to that color.

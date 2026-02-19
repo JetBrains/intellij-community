@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileTypeBraceMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -42,12 +43,12 @@ public final class BraceMatchingUtil {
   }
 
   @TestOnly
-  public static int getMatchedBraceOffset(@NotNull Editor editor, boolean forward, @NotNull PsiFile file) {
+  public static int getMatchedBraceOffset(@NotNull Editor editor, boolean forward, @NotNull PsiFile psiFile) {
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
-    EditorHighlighter editorHighlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
+    EditorHighlighter editorHighlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(psiFile.getProject(), editor, psiFile);
     HighlighterIterator iterator = editorHighlighter.createIterator(offset);
-    boolean matched = matchBrace(document.getCharsSequence(), file.getFileType(), iterator, forward);
+    boolean matched = matchBrace(document.getCharsSequence(), psiFile.getFileType(), iterator, forward);
     if (!matched) throw new AssertionError();
     return iterator.getStart();
   }
@@ -55,10 +56,9 @@ public final class BraceMatchingUtil {
   /**
    * @see #computeHighlightingAndNavigationContext(Editor, PsiFile, int)
    */
-  @Nullable
-  public static BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
-                                                                                              @NotNull PsiFile file) {
-    return computeHighlightingAndNavigationContext(editor, file, editor.getCaretModel().getOffset());
+  public static @Nullable BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
+                                                                                                        @NotNull PsiFile psiFile) {
+    return computeHighlightingAndNavigationContext(editor, psiFile, editor.getCaretModel().getOffset());
   }
 
   /**
@@ -67,28 +67,27 @@ public final class BraceMatchingUtil {
    * @param offset offset we are computing for. Some implementations may need to compute this not only for caret position, but for other offsets, e.g. skipping spaces behind or ahead.
    * @return a context should be used or null if there is no matching braces at offset
    * @apiNote this method contains a logic for selecting braces in different complicated situations, like {@code (<caret>(} and so on.
-   * It does not looks forward/behind skipping spaces, like highlighting does.
+   * It does not look forward/behind skipping spaces, like highlighting does.
    */
-  @Nullable
-  public static BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
-                                                                                              @NotNull PsiFile file,
-                                                                                              int offset) {
-    EditorHighlighter highlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
+  static @Nullable BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
+                                                                                                 @NotNull PsiFile psiFile,
+                                                                                                 int offset) {
+    EditorHighlighter highlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(psiFile.getProject(), editor, psiFile);
     CharSequence text = editor.getDocument().getCharsSequence();
 
     HighlighterIterator iterator = highlighter.createIterator(offset);
-    FileType fileType = iterator.atEnd() ? null : getFileType(file, iterator.getStart());
+    FileType fileType = iterator.atEnd() ? null : ReadAction.compute(() -> psiFile.isValid() ? getFileType(psiFile, iterator.getStart()) : null);
 
     boolean isBeforeOrInsideLeftBrace = fileType != null && isLBraceToken(iterator, text, fileType);
-    boolean isBeforeOrInsideRightBrace = !isBeforeOrInsideLeftBrace && fileType != null && isRBraceToken(iterator, text, fileType);
+    boolean isBeforeOrInsideRightBrace = fileType != null && !isBeforeOrInsideLeftBrace && isRBraceToken(iterator, text, fileType);
     boolean isInsideBrace = (isBeforeOrInsideLeftBrace || isBeforeOrInsideRightBrace) && iterator.getStart() < offset;
 
     HighlighterIterator preOffsetIterator = offset > 0 && !isInsideBrace ? highlighter.createIterator(offset - 1) : null;
-    FileType preOffsetFileType = preOffsetIterator != null ? getFileType(file, preOffsetIterator.getStart()) : null;
+    FileType preOffsetFileType = preOffsetIterator == null ? null : ReadAction.compute(() -> psiFile.isValid() ? getFileType(psiFile, preOffsetIterator.getStart()) : null);
 
-    boolean isAfterLeftBrace = preOffsetIterator != null &&
+    boolean isAfterLeftBrace = preOffsetIterator != null && preOffsetFileType != null &&
                                isLBraceToken(preOffsetIterator, text, preOffsetFileType);
-    boolean isAfterRightBrace = !isAfterLeftBrace && preOffsetIterator != null &&
+    boolean isAfterRightBrace = !isAfterLeftBrace && preOffsetIterator != null && preOffsetFileType != null &&
                                 isRBraceToken(preOffsetIterator, text, preOffsetFileType);
 
     int offsetTokenStart = iterator.atEnd() ? -1 : iterator.getStart();
@@ -125,12 +124,11 @@ public final class BraceMatchingUtil {
     return null;
   }
 
-  @NotNull
-  public static FileType getFileType(PsiFile file, int offset) {
-    return PsiUtilBase.getPsiFileAtOffset(file, offset).getFileType();
+  public static @NotNull FileType getFileType(PsiFile psiFile, int offset) {
+    return PsiUtilBase.getPsiFileAtOffset(psiFile, offset).getFileType();
   }
 
-  private static class MatchBraceContext {
+  private static final class MatchBraceContext {
     private final CharSequence fileText;
     private final FileType fileType;
     private final HighlighterIterator iterator;
@@ -141,8 +139,7 @@ public final class BraceMatchingUtil {
     private final String brace1TagName;
     private final boolean isStrict;
     private final boolean isCaseSensitive;
-    @NotNull
-    private final BraceMatcher myMatcher;
+    private final @NotNull BraceMatcher myMatcher;
 
     private final Stack<IElementType> myBraceStack = new Stack<>();
     private final Stack<String> myTagNameStack = new Stack<>();
@@ -355,7 +352,6 @@ public final class BraceMatchingUtil {
    * @param stopOnFirstFinishedGroup are we searching for the last corresponding brace in a line of wrapped braces?
    *                                   Examples: `<caret>[{}]()(){}()` if stopOnFirstFinishedGroup == true
    *                                                            ^
-   *
    *                                             `<caret>[{}]()(){}()` if stopOnFirstFinishedGroup == true
    *                                                          ^
    * @return the offset of the found parenth or -1
@@ -411,23 +407,20 @@ public final class BraceMatchingUtil {
     }
   }
 
-  private static class BraceMatcherHolder {
+  private static final class BraceMatcherHolder {
     private static final BraceMatcher ourDefaultBraceMatcher = new DefaultBraceMatcher();
   }
 
-  @NotNull
-  public static BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull HighlighterIterator iterator) {
+  public static @NotNull BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull HighlighterIterator iterator) {
     IElementType tokenType = iterator.getTokenType();
     return tokenType == null ? BraceMatcherHolder.ourDefaultBraceMatcher : getBraceMatcher(fileType, tokenType);
   }
 
-  @NotNull
-  public static BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull IElementType type) {
+  public static @NotNull BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull IElementType type) {
     return getBraceMatcher(fileType, type.getLanguage());
   }
 
-  @NotNull
-  public static BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull Language lang) {
+  public static @NotNull BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull Language lang) {
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(lang);
     if (matcher != null) {
       if (matcher instanceof XmlAwareBraceMatcher) {
@@ -465,8 +458,7 @@ public final class BraceMatchingUtil {
     return BraceMatcherHolder.ourDefaultBraceMatcher;
   }
 
-  @Nullable
-  private static BraceMatcher getBraceMatcherByFileType(@NotNull FileType fileType) {
+  private static @Nullable BraceMatcher getBraceMatcherByFileType(@NotNull FileType fileType) {
     BraceMatcher matcher = FileTypeBraceMatcher.getInstance().forFileType(fileType);
     if (matcher != null) return matcher;
 
@@ -488,13 +480,12 @@ public final class BraceMatchingUtil {
     return matcher instanceof XmlAwareBraceMatcher && ((XmlAwareBraceMatcher)matcher).areTagsCaseSensitive(fileType, tokenGroup);
   }
 
-  @Nullable
-  private static String getTagName(@NotNull BraceMatcher matcher, @NotNull CharSequence fileText, @NotNull HighlighterIterator iterator) {
+  private static @Nullable String getTagName(@NotNull BraceMatcher matcher, @NotNull CharSequence fileText, @NotNull HighlighterIterator iterator) {
     if (matcher instanceof XmlAwareBraceMatcher) return ((XmlAwareBraceMatcher)matcher).getTagName(fileText, iterator);
     return null;
   }
 
-  private static class DefaultBraceMatcher implements BraceMatcher {
+  private static final class DefaultBraceMatcher implements BraceMatcher {
     @Override
     public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
       return UNDEFINED_TOKEN_GROUP;
@@ -531,23 +522,14 @@ public final class BraceMatchingUtil {
     }
 
     @Override
-    public int getCodeConstructStart(@NotNull PsiFile file, int openingBraceOffset) {
+    public int getCodeConstructStart(@NotNull PsiFile psiFile, int openingBraceOffset) {
       return openingBraceOffset;
     }
   }
 
   /**
-   * Describes a brace matching/navigation context computed by {@link #computeHighlightingAndNavigationContext}
-   */
-  public static final class BraceHighlightingAndNavigationContext {
-    public final int currentBraceOffset;
-    public final int navigationOffset;
-    public final boolean isCaretAfterBrace;
-
-    public BraceHighlightingAndNavigationContext(int currentBraceOffset, int navigationOffset, boolean isCaretAfterBrace) {
-      this.currentBraceOffset = currentBraceOffset;
-      this.navigationOffset = navigationOffset;
-      this.isCaretAfterBrace = isCaretAfterBrace;
-    }
+     * Describes a brace matching/navigation context computed by {@link #computeHighlightingAndNavigationContext}
+     */
+    public record BraceHighlightingAndNavigationContext(int currentBraceOffset, int navigationOffset, boolean isCaretAfterBrace) {
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.execution.actions
 
 import com.intellij.execution.Location
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.Nls
 
 /**
  * Allows to provide provide alternative locations that context run configurations will be created from.
@@ -20,6 +21,7 @@ abstract class MultipleRunLocationsProvider {
    * @return Display name for [locationCreatedFrom] that will be presented to the user
    * so they can distinguish between run configurations created from a single place in code.
    */
+  @Nls
   abstract fun getLocationDisplayName(
     locationCreatedFrom: Location<*>,
     originalLocation: Location<*>

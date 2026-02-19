@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.projectView;
 
@@ -23,15 +23,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
- * @author yole
- */
-public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
+
+public final class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
-  @Nullable
-  public Collection<AbstractTreeNode<?>> getFavoriteNodes(DataContext context, @NotNull final ViewSettings viewSettings) {
+  public @Nullable Collection<AbstractTreeNode<?>> getFavoriteNodes(DataContext context, final @NotNull ViewSettings viewSettings) {
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
     Form[] forms = Form.DATA_KEY.getData(context);
@@ -78,8 +79,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
-    if (element instanceof Form){
-      Form form = (Form) element;
+    if (element instanceof Form form){
       return form.containsFile(vFile);
     }
     return false;
@@ -92,8 +92,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  @Nullable
-  public String getElementLocation(final Object element) {
+  public @Nullable String getElementLocation(final Object element) {
     if (element instanceof Form) {
       final PsiFile[] psiFiles = ((Form)element).getFormFiles();
       VirtualFile vFile = null;
@@ -116,16 +115,15 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  @NotNull @NonNls
-  public String getFavoriteTypeId() {
+  public @NotNull
+  @NonNls String getFavoriteTypeId() {
     return "form";
   }
 
   @Override
-  @Nullable @NonNls
-  public String getElementUrl(Object element) {
-    if (element instanceof Form) {
-      Form form = (Form)element;
+  public @Nullable
+  @NonNls String getElementUrl(Object element) {
+    if (element instanceof Form form) {
       return form.getClassToBind().getQualifiedName();
     }
     return null;
@@ -133,8 +131,7 @@ public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public String getElementModuleName(final Object element) {
-    if (element instanceof Form) {
-      Form form = (Form)element;
+    if (element instanceof Form form) {
       final Module module = ModuleUtil.findModuleForPsiElement(form.getClassToBind());
       return module != null ? module.getName() : null;
     }

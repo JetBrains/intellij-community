@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.openapi.module.Module;
@@ -22,12 +22,13 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import gnu.trove.THashSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
 
 /**
  * Copyright 2006 Sascha Weinreuter
@@ -74,25 +75,17 @@ public final class SearchScope {
     myCustomScope = customScope;
   }
 
-  @NotNull
-  public String getName() {
-    switch (getScopeType()) {
-      case PROJECT:
-        return "Project";
-      case MODULE:
-        return "Module '" + getModuleName() + "'";
-      case DIRECTORY:
-        return "Directory '" + getPath() + "'";
-      case CUSTOM:
-        return getScopeName();
-    }
-    assert false;
-    return null;
+  public @NotNull String getName() {
+    return switch (getScopeType()) {
+      case PROJECT -> "Project";
+      case MODULE -> "Module '" + getModuleName() + "'";
+      case DIRECTORY -> "Directory '" + getPath() + "'";
+      case CUSTOM -> getScopeName();
+    };
   }
 
-  @NotNull
   @Attribute("type")
-  public ScopeType getScopeType() {
+  public @NotNull ScopeType getScopeType() {
     return myScopeType;
   }
 
@@ -111,9 +104,8 @@ public final class SearchScope {
     myModuleName = moduleName;
   }
 
-  @Nullable
   @Attribute("scope-name")
-  public String getScopeName() {
+  public @Nullable String getScopeName() {
     return myScopeName;
   }
 
@@ -122,9 +114,8 @@ public final class SearchScope {
     myScopeName = scopeName;
   }
 
-  @Nullable
   @Tag
-  public String getPath() {
+  public @Nullable String getPath() {
     return myPath;
   }
 
@@ -146,30 +137,24 @@ public final class SearchScope {
     final String dirName = getPath();
     final String moduleName = getModuleName();
 
-    switch (getScopeType()) {
-      case MODULE:
-        return moduleName != null && !moduleName.isEmpty();
-      case DIRECTORY:
-        return dirName != null && !dirName.isEmpty() && findFile(dirName) != null;
-      case CUSTOM:
-        return myCustomScope != null;
-      case PROJECT:
-        return true;
-    }
-    return false;
+    return switch (getScopeType()) {
+      case MODULE -> moduleName != null && !moduleName.isEmpty();
+      case DIRECTORY -> dirName != null && !dirName.isEmpty() && findFile(dirName) != null;
+      case CUSTOM -> myCustomScope != null;
+      case PROJECT -> true;
+    };
   }
 
-  void iterateContent(@NotNull final Project project, @NotNull Processor<? super VirtualFile> processor) {
+  void iterateContent(final @NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
     switch (getScopeType()) {
-      case PROJECT:
+      case PROJECT ->
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
-        break;
-      case MODULE:
+      case MODULE -> {
         final Module module = ModuleManager.getInstance(project).findModuleByName(getModuleName());
         assert module != null;
         ModuleRootManager.getInstance(module).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
-        break;
-      case DIRECTORY:
+      }
+      case DIRECTORY -> {
         final String dirName = getPath();
         assert dirName != null;
 
@@ -177,17 +162,16 @@ public final class SearchScope {
         if (virtualFile != null) {
           iterateRecursively(virtualFile, processor, isRecursive());
         }
-        break;
-      case CUSTOM:
+      }
+      case CUSTOM -> {
         assert myCustomScope != null;
 
         final ContentIterator iterator;
-        if (myCustomScope instanceof GlobalSearchScope) {
-          final GlobalSearchScope searchScope = (GlobalSearchScope)myCustomScope;
+        if (myCustomScope instanceof GlobalSearchScope searchScope) {
           iterator = new MyFileIterator(processor, virtualFile13 -> searchScope.contains(virtualFile13));
           if (searchScope.isSearchInLibraries()) {
             final OrderEnumerator enumerator = OrderEnumerator.orderEntries(project).withoutModuleSourceEntries().withoutDepModules();
-            final Collection<VirtualFile> libraryFiles = new THashSet<>();
+            final Collection<VirtualFile> libraryFiles = new HashSet<>();
             Collections.addAll(libraryFiles, enumerator.getClassesRoots());
             Collections.addAll(libraryFiles, enumerator.getSourceRoots());
             final Processor<VirtualFile> adapter = virtualFile1 -> iterator.processFile(virtualFile1);
@@ -205,6 +189,7 @@ public final class SearchScope {
         }
 
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
+      }
     }
   }
 
@@ -237,8 +222,7 @@ public final class SearchScope {
     return result;
   }
 
-  @Nullable
-  private static VirtualFile findFile(String dirName) {
+  private static @Nullable VirtualFile findFile(String dirName) {
     return LocalFileSystem.getInstance().findFileByPath(dirName.replace('\\', '/'));
   }
 

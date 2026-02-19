@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -18,19 +18,37 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind;
 import org.jetbrains.plugins.groovy.lang.psi.util.StringUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.GSTRING_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.REGEX;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_BEGIN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_END;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SLASHY_LITERAL;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_INJECTION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TDQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TSQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_DOLLAR;
 
-public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProcessor {
+public final class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProcessor {
 
-  @Nullable
   @Override
-  protected TextRange getEscapedRange(@NotNull PsiElement token) {
+  protected @Nullable TextRange getEscapedRange(@NotNull PsiElement token) {
     final ASTNode node = token.getNode();
     if (node == null) return null;
 
@@ -46,16 +64,18 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     return null;
   }
 
-  @Nullable
   @Override
-  protected String unescape(String s, PsiElement token) {
+  protected @Nullable String unescape(String s, PsiElement token) {
     StringKind stringKind = getStringKindByToken(token);
     return stringKind == null ? null : stringKind.unescape(s);
   }
 
-  @NotNull
   @Override
-  public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+  public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+    if (!isSupportedFile(file)) {
+      return text;
+    }
+
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -89,6 +109,11 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     return buffer.toString();
   }
 
+  @Override
+  protected boolean isSupportedFile(PsiFile file) {
+    return file instanceof GroovyFile;
+  }
+
   private static boolean canPasteRaw(String text, String rawText, StringKind kind) {
     if (!text.equals(kind.unescape(rawText))) {
       return false;
@@ -104,8 +129,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
   }
 
-  @NotNull
-  private static String escape(@NotNull StringKind kind, @NotNull String s) {
+  private static @NotNull String escape(@NotNull StringKind kind, @NotNull String s) {
     if (s.isEmpty()) {
       return s;
     }
@@ -131,8 +155,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   }
 
   @VisibleForTesting
-  @Nullable
-  public static StringKind findStringKind(PsiFile file, int startOffset, int endOffset) {
+  public static @Nullable StringKind findStringKind(PsiFile file, int startOffset, int endOffset) {
     if (startOffset == endOffset) {
       return findStringKind(file, startOffset);
     }
@@ -144,8 +167,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     return null;
   }
 
-  @Nullable
-  private static StringKind findStringKind(@NotNull PsiFile file, int offset) {
+  private static @Nullable StringKind findStringKind(@NotNull PsiFile file, int offset) {
     final PsiElement leaf = file.findElementAt(offset);
     if (leaf == null) {
       return null;
@@ -240,8 +262,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     return getStringKindByContentTokenType(leaf, leafType);
   }
 
-  @Nullable
-  private static StringKind getStringKindByStringElement(@NotNull PsiElement templateStringElement) {
+  private static @Nullable StringKind getStringKindByStringElement(@NotNull PsiElement templateStringElement) {
     IElementType elementType = templateStringElement.getNode().getElementType();
     if (elementType == GSTRING) {
       return isMultiline(templateStringElement) ? StringKind.TRIPLE_DOUBLE_QUOTED : StringKind.DOUBLE_QUOTED;
@@ -261,8 +282,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
   }
 
-  @Nullable
-  private static StringKind getStringKindByContentTokenType(PsiElement leaf, IElementType contentTokenType) {
+  private static @Nullable StringKind getStringKindByContentTokenType(PsiElement leaf, IElementType contentTokenType) {
     if (contentTokenType == GSTRING_CONTENT) {
       PsiElement parent = leaf.getParent(); // template string content
       PsiElement gParent = parent.getParent(); // template string element
@@ -290,8 +310,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     return templateStringElement.getFirstChild().textMatches("\"\"\"");
   }
 
-  @Nullable
-  private static StringKind getStringKindByToken(@NotNull PsiElement token) {
+  private static @Nullable StringKind getStringKindByToken(@NotNull PsiElement token) {
     IElementType leafType = token.getNode().getElementType();
     if (leafType == STRING_SQ) {
       return StringKind.SINGLE_QUOTED;
@@ -313,9 +332,8 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     throw new IllegalStateException("must not be called");
   }
 
-  @NotNull
   @Override
-  protected String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
+  protected @NotNull String escapeCharCharacters(@NotNull String s, @NotNull PsiElement token) {
     throw new IllegalStateException("must not be called");
   }
 
@@ -324,9 +342,8 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     throw new IllegalStateException("must not be called");
   }
 
-  @NotNull
   @Override
-  protected String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
+  protected @NotNull String escapeTextBlock(@NotNull String text, int offset, boolean escapeStartQuote, boolean escapeEndQuote) {
     throw new IllegalStateException("must not be called");
   }
 
@@ -346,8 +363,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   }
 
   @Override
-  @Nullable
-  protected PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
+  protected @Nullable PsiElement findLiteralTokenType(PsiFile file, int selectionStart, int selectionEnd) {
     throw new IllegalStateException("must not be called");
   }
 }

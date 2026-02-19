@@ -15,16 +15,25 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.*;
-import com.jetbrains.python.PyElementTypes;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
+import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import org.jetbrains.annotations.NonNls;
@@ -42,24 +51,23 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   }
 
   @Override
-  @NotNull
-  public PsiElement createElement(@NotNull final ASTNode node) {
+  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
     return new PyFunctionImpl(node);
   }
 
   @Override
-  public PyFunction createPsi(@NotNull final PyFunctionStub stub) {
+  public PyFunction createPsi(final @NotNull PyFunctionStub stub) {
     return new PyFunctionImpl(stub);
   }
 
   @Override
-  @NotNull
-  public PyFunctionStub createStub(@NotNull final PyFunction psi, final StubElement parentStub) {
+  public @NotNull PyFunctionStub createStub(final @NotNull PyFunction psi, final StubElement parentStub) {
     final PyFunctionImpl function = (PyFunctionImpl)psi;
     final String message = function.extractDeprecationMessage();
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     final String typeComment = function.getTypeCommentAnnotation();
     final String annotationContent = function.getAnnotationValue();
+    final RangeSet<Version> versions = PyVersionSpecificStubBaseKt.evaluateVersionsForElement(psi);
     return new PyFunctionStubImpl(psi.getName(),
                                   PyPsiUtils.strValue(docStringExpression),
                                   message,
@@ -69,11 +77,12 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   typeComment,
                                   annotationContent,
                                   parentStub,
-                                  getStubElementType());
+                                  getStubElementType(),
+                                  versions);
   }
 
   @Override
-  public void serialize(@NotNull final PyFunctionStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(final @NotNull PyFunctionStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeUTFFast(StringUtil.notNullize(stub.getDocString()));
     dataStream.writeName(stub.getDeprecationMessage());
@@ -82,11 +91,11 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     dataStream.writeBoolean(stub.onlyRaisesNotImplementedError());
     dataStream.writeName(stub.getTypeComment());
     dataStream.writeName(stub.getAnnotation());
+    PyVersionSpecificStubBaseKt.serializeVersions(stub.getVersions(), dataStream);
   }
 
   @Override
-  @NotNull
-  public PyFunctionStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PyFunctionStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     String docString = dataStream.readUTFFast();
     String deprecationMessage = dataStream.readNameString();
@@ -95,6 +104,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final boolean onlyRaisesNotImplementedError = dataStream.readBoolean();
     String typeComment = dataStream.readNameString();
     String annotationContent = dataStream.readNameString();
+    RangeSet<Version> versions = PyVersionSpecificStubBaseKt.deserializeVersions(dataStream);
     return new PyFunctionStubImpl(name,
                                   StringUtil.nullize(docString),
                                   deprecationMessage,
@@ -104,18 +114,22 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   typeComment,
                                   annotationContent,
                                   parentStub,
-                                  getStubElementType());
+                                  getStubElementType(),
+                                  versions);
   }
 
   @Override
-  public void indexStub(@NotNull final PyFunctionStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(final @NotNull PyFunctionStub stub, final @NotNull IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyFunctionNameIndex.KEY, name);
+      if (stub.getParentStub() instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
+        sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
+      }
     }
   }
 
   protected IStubElementType getStubElementType() {
-    return PyElementTypes.FUNCTION_DECLARATION;
+    return PyStubElementTypes.FUNCTION_DECLARATION;
   }
 }

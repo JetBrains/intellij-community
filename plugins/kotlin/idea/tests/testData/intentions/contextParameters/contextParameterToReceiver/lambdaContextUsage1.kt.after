@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+fun String.foo() {
+}
+
+fun baz(fn: context(String)() -> Unit) {
+}
+
+fun bar() {
+    baz {
+        contextOf<String>().foo()
+    }
+}

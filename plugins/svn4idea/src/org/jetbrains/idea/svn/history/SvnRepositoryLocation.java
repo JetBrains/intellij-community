@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -11,11 +11,11 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 public final class SvnRepositoryLocation implements RepositoryLocation {
   private final String myUrlValue;
-  @Nullable private final Url myUrl;
-  @Nullable private final Url myRepositoryUrl;
-  @Nullable private final FilePath myRoot;
+  private final @Nullable Url myUrl;
+  private final @Nullable Url myRepositoryUrl;
+  private final @Nullable FilePath myRoot;
 
-  public SvnRepositoryLocation(final String url) {
+  public SvnRepositoryLocation(@NotNull String url) {
     myUrl = null;
     myUrlValue = url;
     myRepositoryUrl = null;
@@ -33,12 +33,13 @@ public final class SvnRepositoryLocation implements RepositoryLocation {
     myRoot = root;
   }
 
+  @Override
   public String toString() {
     return myUrlValue;
   }
 
   @Override
-  public String toPresentableString() {
+  public @NotNull String toPresentableString() {
     return myUrlValue;
   }
 
@@ -51,18 +52,15 @@ public final class SvnRepositoryLocation implements RepositoryLocation {
     return myUrlValue;
   }
 
-  @Nullable
-  public FilePath getRoot() {
+  public @Nullable FilePath getRoot() {
     return myRoot;
   }
 
-  @Nullable
-  public Url getRepositoryUrl() {
+  public @Nullable Url getRepositoryUrl() {
     return myRepositoryUrl;
   }
 
-  @NotNull
-  public Url toSvnUrl() throws SvnBindException {
+  public @NotNull Url toSvnUrl() throws SvnBindException {
     return myUrl != null ? myUrl : SvnUtil.createUrl(myUrlValue);
   }
 }

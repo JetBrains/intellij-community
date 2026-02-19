@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
@@ -10,8 +10,8 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,8 +39,7 @@ public final class ModuleUtil extends ModuleUtilCore {
 
   private ModuleUtil() {}
 
-  @NotNull
-  public static Collection<Module> getModulesOfType(@NotNull Project project, @NotNull ModuleType<?> moduleType) {
+  public static @NotNull @Unmodifiable Collection<Module> getModulesOfType(@NotNull Project project, @NotNull ModuleType<?> moduleType) {
     return CachedValuesManager.getManager(project)
       .getParameterizedCachedValue(project, MODULES_BY_TYPE_KEY, MODULE_BY_TYPE_VALUE_PROVIDER, false, project)
       .get(moduleType);
@@ -55,8 +54,7 @@ public final class ModuleUtil extends ModuleUtilCore {
   }
 
   /** @deprecated use {@link ModuleType#get(Module)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static ModuleType<?> getModuleType(@NotNull Module module) {
     return ModuleType.get(module);
   }

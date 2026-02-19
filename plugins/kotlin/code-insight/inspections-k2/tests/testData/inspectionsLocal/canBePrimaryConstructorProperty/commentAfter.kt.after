@@ -1,0 +1,4 @@
+// FIX: Move to constructor
+class Complex(x: Int, // Duplicating
+              val y: Double, z: String) {
+}

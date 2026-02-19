@@ -1,0 +1,2 @@
+Function call 11 a.invoke()
+Implicit 'invoke' 10 a()

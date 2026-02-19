@@ -1,23 +1,26 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEllipsisType;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlow;
@@ -32,7 +35,15 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class InputVariables {
   private final List<VariableData> myInputVariables;
@@ -44,8 +55,7 @@ public class InputVariables {
   private final ParametersFolder myFolding;
   private boolean myFoldingAvailable;
 
-  @NotNull
-  private final Set<? extends PsiField> myUsedInstanceFields;
+  private final @NotNull Set<? extends PsiField> myUsedInstanceFields;
   private boolean myPassFields;
 
   public InputVariables(@NotNull List<? extends PsiVariable> inputVariables,
@@ -99,8 +109,7 @@ public class InputVariables {
     return myPassFields;
   }
 
-  @NotNull
-  private List<VariableData> wrapInputVariables(@NotNull List<? extends PsiVariable> inputVariables) {
+  private @NotNull List<VariableData> wrapInputVariables(@NotNull List<? extends PsiVariable> inputVariables) {
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     List<VariableData> inputData = new ArrayList<>(inputVariables.size());
     for (PsiVariable var : inputVariables) {
@@ -108,7 +117,7 @@ public class InputVariables {
       String name = nameGenerator.generateUniqueName(defaultName);
       PsiType type = GenericsUtil.getVariableTypeByExpressionType(var.getType());
       final Map<PsiCodeBlock, PsiType> casts = new HashMap<>();
-      for (PsiReference reference : ReferencesSearch.search(var, myScope)) {
+      for (PsiReference reference : ReferencesSearch.search(var, myScope).asIterable()) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         final PsiCodeBlock block = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class);
@@ -171,8 +180,7 @@ public class InputVariables {
     return inputData;
   }
 
-  @NotNull
-  private String getParameterName(@NotNull PsiVariable var) {
+  private @NotNull String getParameterName(@NotNull PsiVariable var) {
     if (var instanceof PsiParameter) {
       return ((PsiParameter)var).getName();
     }
@@ -183,8 +191,7 @@ public class InputVariables {
     return name;
   }
 
-  @Nullable
-  private static PsiType checkTopLevelInstanceOf(PsiType currentType, @NotNull LocalSearchScope localSearchScope) {
+  private static @Nullable PsiType checkTopLevelInstanceOf(PsiType currentType, @NotNull LocalSearchScope localSearchScope) {
     final PsiElement[] scope = localSearchScope.getScope();
     if (scope.length == 1 && scope[0] instanceof PsiIfStatement) {
       final PsiExpression condition = ((PsiIfStatement)scope[0]).getCondition();
@@ -208,8 +215,7 @@ public class InputVariables {
     return checkType != null && checkType.getType().equals(currentType);
   }
 
-  @Nullable
-  private static PsiType getBroaderType(PsiType currentType, PsiType castType) {
+  private static @Nullable PsiType getBroaderType(PsiType currentType, PsiType castType) {
     if (currentType != null) {
       if (castType != null) {
         if (TypeConversionUtil.isAssignable(castType, currentType)) {
@@ -231,8 +237,7 @@ public class InputVariables {
     return currentType;
   }
 
-  @NotNull
-  public List<VariableData> getInputVariables() {
+  public @NotNull List<VariableData> getInputVariables() {
     return myInputVariables;
   }
 
@@ -270,7 +275,7 @@ public class InputVariables {
     Variables:
     for (Iterator<VariableData> iterator = myInputVariables.iterator(); iterator.hasNext();) {
       final VariableData data = iterator.next();
-      for (PsiReference ref : ReferencesSearch.search(data.variable, scope)) {
+      for (PsiReference ref : ReferencesSearch.search(data.variable, scope).asIterable()) {
         PsiElement element = ref.getElement();
         int elementOffset = controlFlow.getStartOffset(element);
         if (elementOffset >= startOffset && elementOffset <= endOffset) {
@@ -289,13 +294,11 @@ public class InputVariables {
   }
 
 
-  @NotNull
-  public InputVariables copy() {
+  public @NotNull InputVariables copy() {
     return new InputVariables(myInputVariables, myProject, myScope, myFoldingAvailable, myFolding, myInitialParameters, Collections.emptySet());
   }
 
-  @NotNull
-  public InputVariables copyWithoutFolding() {
+  public @NotNull InputVariables copyWithoutFolding() {
     return new InputVariables(myInitialParameters, myProject, myScope, false, Collections.emptySet());
   }
 
@@ -311,8 +314,7 @@ public class InputVariables {
     }
   }
 
-  @NotNull
-  public ParametersFolder getFolding() {
+  public @NotNull ParametersFolder getFolding() {
     return myFolding;
   }
 

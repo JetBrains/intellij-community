@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
@@ -5,27 +6,39 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 
-public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
+public final class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
   private final TextAttributesKey myAttributesKey;
   private final int myThickness;
   private final int myDepth;
   private final Position myPosition;
 
   private final Color myColor;
+  private final boolean myIsSticky;
 
   public DefaultLineMarkerRenderer(@NotNull TextAttributesKey myAttributesKey, int thickness) {
     this(myAttributesKey, thickness, 0, Position.RIGHT);
   }
 
   public DefaultLineMarkerRenderer(@NotNull TextAttributesKey attributesKey, int thickness, int depth, @NotNull Position position) {
+    this(attributesKey, thickness, depth, position, false);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public DefaultLineMarkerRenderer(@NotNull TextAttributesKey attributesKey, int thickness, int depth, @NotNull Position position, boolean isSticky) {
     myAttributesKey = attributesKey;
     myThickness = thickness;
     myDepth = depth;
     myPosition = position;
+    myIsSticky = isSticky;
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = scheme.getAttributes(myAttributesKey);
@@ -42,7 +55,7 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
 
   @Override
   public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-    if (myColor == null) return;
+    if (myColor == null || ExperimentalUI.isNewUI()) return;
 
     g.setColor(myColor);
     g.fillRect(r.x, r.y, myThickness, r.height);
@@ -65,5 +78,14 @@ public class DefaultLineMarkerRenderer implements LineMarkerRendererEx {
   @Override
   public @NotNull Position getPosition() {
     return myPosition;
+  }
+
+  public Color getColor() {
+    return myColor;
+  }
+
+  @Override
+  public boolean isSticky() {
+    return myIsSticky;
   }
 }

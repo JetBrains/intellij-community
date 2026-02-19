@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.copyright"/>
+    <module name="intellij.python.community.impl"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij.copyright">
+    <updater filetype="Python" implementationClass="com.intellij.python.copyright.PyUpdateCopyrightsProvider"/>
+  </extensions>
+</idea-plugin>

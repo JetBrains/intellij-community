@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.ui;
 
@@ -9,9 +9,10 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll{
+  public static final String ID = "copyright";
   private final Project project;
   private ProjectSettingsPanel myOptionsPanel = null;
   private final CopyrightProfilesPanel myProfilesPanel;
@@ -72,13 +73,12 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   }
 
   @Override
-  @NotNull
-  public String getId() {
-    return "copyright";
+  public @NotNull String getId() {
+    return ID;
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     return new Configurable[]{myProfilesPanel, new CopyrightFormattingConfigurable(project)};
   }
 
@@ -88,4 +88,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     }
   }
 
+  public boolean hasAnyCopyrights() {
+    return myOptionsPanel.hasAnyCopyrights();
+  }
 }

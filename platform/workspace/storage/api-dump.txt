@@ -1,0 +1,422 @@
+f:com.intellij.platform.workspace.storage.ConnectionId
+- sf:Companion:com.intellij.platform.workspace.storage.ConnectionId$Companion
+- f:canRemoveParent():Z
+- f:debugStr():java.lang.String
+- equals(java.lang.Object):Z
+- f:getChildClass():I
+- f:getConnectionType():com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- f:getParentClass():I
+- hashCode():I
+- f:isParentNullable():Z
+f:com.intellij.platform.workspace.storage.ConnectionId$Companion
+- f:create(java.lang.Class,java.lang.Class,com.intellij.platform.workspace.storage.ConnectionId$ConnectionType,Z):com.intellij.platform.workspace.storage.ConnectionId
+e:com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- java.lang.Enum
+- sf:ABSTRACT_ONE_TO_ONE:com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- sf:ONE_TO_ABSTRACT_MANY:com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- sf:ONE_TO_MANY:com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- sf:ONE_TO_ONE:com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- s:values():com.intellij.platform.workspace.storage.ConnectionId$ConnectionType[]
+a:com.intellij.platform.workspace.storage.EntityChange
+- a:getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
+f:com.intellij.platform.workspace.storage.EntityChange$Added
+- com.intellij.platform.workspace.storage.EntityChange
+- <init>(com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- f:copy(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.EntityChange$Added
+- bs:copy$default(com.intellij.platform.workspace.storage.EntityChange$Added,com.intellij.platform.workspace.storage.WorkspaceEntity,I,java.lang.Object):com.intellij.platform.workspace.storage.EntityChange$Added
+- equals(java.lang.Object):Z
+- getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
+- getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
+- hashCode():I
+f:com.intellij.platform.workspace.storage.EntityChange$Removed
+- com.intellij.platform.workspace.storage.EntityChange
+- <init>(com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- f:copy(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.EntityChange$Removed
+- bs:copy$default(com.intellij.platform.workspace.storage.EntityChange$Removed,com.intellij.platform.workspace.storage.WorkspaceEntity,I,java.lang.Object):com.intellij.platform.workspace.storage.EntityChange$Removed
+- equals(java.lang.Object):Z
+- getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
+- getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
+- hashCode():I
+f:com.intellij.platform.workspace.storage.EntityChange$Replaced
+- com.intellij.platform.workspace.storage.EntityChange
+- <init>(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- f:component1():com.intellij.platform.workspace.storage.WorkspaceEntity
+- f:component2():com.intellij.platform.workspace.storage.WorkspaceEntity
+- f:copy(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.EntityChange$Replaced
+- bs:copy$default(com.intellij.platform.workspace.storage.EntityChange$Replaced,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.platform.workspace.storage.WorkspaceEntity,I,java.lang.Object):com.intellij.platform.workspace.storage.EntityChange$Replaced
+- equals(java.lang.Object):Z
+- getNewEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
+- getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
+- hashCode():I
+com.intellij.platform.workspace.storage.EntityPointer
+- a:isPointerTo(com.intellij.platform.workspace.storage.WorkspaceEntity):Z
+- a:resolve(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity
+com.intellij.platform.workspace.storage.EntitySource
+- getVirtualFileUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+com.intellij.platform.workspace.storage.EntityStorage
+- a:contains(com.intellij.platform.workspace.storage.SymbolicEntityId):Z
+- a:entities(java.lang.Class):kotlin.sequences.Sequence
+- a:entitiesBySource(kotlin.jvm.functions.Function1):kotlin.sequences.Sequence
+- a:getExternalMapping(com.intellij.platform.workspace.storage.ExternalMappingKey):com.intellij.platform.workspace.storage.ExternalEntityMapping
+- a:getVirtualFileUrlIndex():com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
+- a:referrers(com.intellij.platform.workspace.storage.SymbolicEntityId,java.lang.Class):kotlin.sequences.Sequence
+- a:resolve(com.intellij.platform.workspace.storage.SymbolicEntityId):com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+f:com.intellij.platform.workspace.storage.EntityStorageKt
+- sf:toBuilder(com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.MutableEntityStorage
+com.intellij.platform.workspace.storage.EntityStorageSerializer
+- a:deserializeCache-IoAF18A(java.nio.file.Path):java.lang.Object
+- a:getSerializerDataFormatVersion():java.lang.String
+- a:serializeCache(java.nio.file.Path,com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.SerializationResult
+a:com.intellij.platform.workspace.storage.EntityType
+- <init>():V
+- <init>(com.intellij.platform.workspace.storage.EntityType):V
+- b:<init>(com.intellij.platform.workspace.storage.EntityType,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- pf:builder():com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- p:getEntityClass():java.lang.Class
+com.intellij.platform.workspace.storage.ExternalEntityMapping
+- a:forEach(kotlin.jvm.functions.Function2):V
+- a:getDataByEntity(com.intellij.platform.workspace.storage.WorkspaceEntity):java.lang.Object
+- a:getEntities(java.lang.Object):kotlin.sequences.Sequence
+- a:getFirstEntity(java.lang.Object):com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:size():I
+f:com.intellij.platform.workspace.storage.ExternalMappingKey
+- sf:Companion:com.intellij.platform.workspace.storage.ExternalMappingKey$Companion
+f:com.intellij.platform.workspace.storage.ExternalMappingKey$Companion
+- f:create(java.lang.String):com.intellij.platform.workspace.storage.ExternalMappingKey
+@:com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+- java.lang.annotation.Annotation
+- a:version():I
+@:com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+- java.lang.annotation.Annotation
+- a:version():I
+com.intellij.platform.workspace.storage.ImmutableEntityStorage
+- com.intellij.platform.workspace.storage.EntityStorage
+- sf:Companion:com.intellij.platform.workspace.storage.ImmutableEntityStorage$Companion
+f:com.intellij.platform.workspace.storage.ImmutableEntityStorage$Companion
+- f:empty():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+com.intellij.platform.workspace.storage.MutableEntityStorage
+- com.intellij.platform.workspace.storage.EntityStorage
+- sf:Companion:com.intellij.platform.workspace.storage.MutableEntityStorage$Companion
+- a:addEntity(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:applyChangesFrom(com.intellij.platform.workspace.storage.MutableEntityStorage):V
+- s:create():com.intellij.platform.workspace.storage.MutableEntityStorage
+- s:from(com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.MutableEntityStorage
+- a:getMutableExternalMapping(com.intellij.platform.workspace.storage.ExternalMappingKey):com.intellij.platform.workspace.storage.MutableExternalEntityMapping
+- a:modifyEntity(java.lang.Class,com.intellij.platform.workspace.storage.WorkspaceEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:removeEntity(com.intellij.platform.workspace.storage.WorkspaceEntity):Z
+- a:replaceBySource(kotlin.jvm.functions.Function1,com.intellij.platform.workspace.storage.EntityStorage):V
+- a:toSnapshot():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+f:com.intellij.platform.workspace.storage.MutableEntityStorage$Companion
+- f:create():com.intellij.platform.workspace.storage.MutableEntityStorage
+- f:from(com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.MutableEntityStorage
+com.intellij.platform.workspace.storage.MutableExternalEntityMapping
+- com.intellij.platform.workspace.storage.ExternalEntityMapping
+- a:addIfAbsent(com.intellij.platform.workspace.storage.WorkspaceEntity,java.lang.Object):Z
+- a:addMapping(com.intellij.platform.workspace.storage.WorkspaceEntity,java.lang.Object):V
+- a:getOrPutDataByEntity(com.intellij.platform.workspace.storage.WorkspaceEntity,kotlin.jvm.functions.Function0):java.lang.Object
+- a:removeMapping(com.intellij.platform.workspace.storage.WorkspaceEntity):java.lang.Object
+a:com.intellij.platform.workspace.storage.SerializationResult
+f:com.intellij.platform.workspace.storage.SerializationResult$Fail
+- com.intellij.platform.workspace.storage.SerializationResult
+- <init>(java.lang.Throwable):V
+- f:getProblem():java.lang.Throwable
+f:com.intellij.platform.workspace.storage.SerializationResult$Success
+- com.intellij.platform.workspace.storage.SerializationResult
+- <init>(J):V
+- f:getSize():J
+com.intellij.platform.workspace.storage.SymbolicEntityId
+- a:getPresentableName():java.lang.String
+- resolve(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- a:toString():java.lang.String
+com.intellij.platform.workspace.storage.VersionedStorageChange
+- a:getChanges(java.lang.Class):java.util.List
+- a:getStorageAfter():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+- a:getStorageBefore():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+com.intellij.platform.workspace.storage.WorkspaceEntity
+- sf:Companion:com.intellij.platform.workspace.storage.WorkspaceEntity$Companion
+- a:createPointer():com.intellij.platform.workspace.storage.EntityPointer
+- a:getEntityInterface():java.lang.Class
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
+- a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
+f:com.intellij.platform.workspace.storage.WorkspaceEntity$Companion
+@:com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+- java.lang.annotation.Annotation
+com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+- com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:getSymbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
+@:com.intellij.platform.workspace.storage.annotations.Abstract
+- java.lang.annotation.Annotation
+@:com.intellij.platform.workspace.storage.annotations.Child
+- java.lang.annotation.Annotation
+@:com.intellij.platform.workspace.storage.annotations.Default
+- java.lang.annotation.Annotation
+@:com.intellij.platform.workspace.storage.annotations.Open
+- java.lang.annotation.Annotation
+@:com.intellij.platform.workspace.storage.annotations.Parent
+- java.lang.annotation.Annotation
+f:com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt
+- sf:toVirtualFileUrl(java.io.File,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- sf:toVirtualFileUrl(java.nio.file.Path,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+- com.intellij.platform.workspace.storage.EntityStorage
+- a:getManyChildren(com.intellij.platform.workspace.storage.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):kotlin.sequences.Sequence
+- a:getOneChild(com.intellij.platform.workspace.storage.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:getParent(com.intellij.platform.workspace.storage.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:initializeEntity(J,kotlin.jvm.functions.Function0):com.intellij.platform.workspace.storage.WorkspaceEntity
+- a:resolveReference(com.intellij.platform.workspace.storage.EntityPointer):com.intellij.platform.workspace.storage.WorkspaceEntity
+@:com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+- java.lang.annotation.Annotation
+com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
+- com.intellij.platform.workspace.storage.ImmutableEntityStorage
+- com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+- com.intellij.platform.workspace.storage.MutableEntityStorage
+- com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+- a:addChild(com.intellij.platform.workspace.storage.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):V
+- a:getManyChildrenBuilders(com.intellij.platform.workspace.storage.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):kotlin.sequences.Sequence
+- a:getOneChildBuilder(com.intellij.platform.workspace.storage.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:getParentBuilder(com.intellij.platform.workspace.storage.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
+- a:replaceChildren(com.intellij.platform.workspace.storage.ConnectionId,com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.util.List):V
+com.intellij.platform.workspace.storage.metadata.MetadataStorage
+- getMetadataByTypeFqn(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+- a:getMetadataByTypeFqnOrNull(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+- getMetadataHashByTypeFqn(java.lang.String):I
+- a:getMetadataHashByTypeFqnOrNull(java.lang.String):java.lang.Integer
+a:com.intellij.platform.workspace.storage.metadata.MetadataStorageBridge
+- com.intellij.platform.workspace.storage.metadata.MetadataStorage
+- <init>(com.intellij.platform.workspace.storage.metadata.MetadataStorage):V
+- getMetadataByTypeFqn(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+- getMetadataByTypeFqnOrNull(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+- getMetadataHashByTypeFqn(java.lang.String):I
+- getMetadataHashByTypeFqnOrNull(java.lang.String):java.lang.Integer
+- f:getMetadataStorage():com.intellij.platform.workspace.storage.metadata.MetadataStorage
+com.intellij.platform.workspace.storage.metadata.StorageMetadata
+a:com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
+- com.intellij.platform.workspace.storage.metadata.MetadataStorage
+- <init>():V
+- <init>(java.util.Map,java.util.Map):V
+- b:<init>(java.util.Map,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- pf:addMetadata(com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata):V
+- pf:addMetadataHash(java.lang.String,I):V
+- f:getMetadataByTypeFqnOrNull(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+- f:getMetadataHashByTypeFqnOrNull(java.lang.String):java.lang.Integer
+- pa:initializeMetadata():V
+- pa:initializeMetadataHash():V
+f:com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+- com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+- <init>(java.lang.String,java.util.List,java.util.List,java.util.List,java.lang.String,Z):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component3():java.util.List
+- f:component4():java.util.List
+- f:component5():java.lang.String
+- f:component6():Z
+- f:copy(java.lang.String,java.util.List,java.util.List,java.util.List,java.lang.String,Z):com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.EntityMetadata,java.lang.String,java.util.List,java.util.List,java.util.List,java.lang.String,Z,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+- equals(java.lang.Object):Z
+- f:getEntityDataFqName():java.lang.String
+- f:getExtProperties():java.util.List
+- getFqName():java.lang.String
+- getProperties():java.util.List
+- getSupertypes():java.util.List
+- hashCode():I
+- f:isAbstract():Z
+f:com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
+- com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
+- <init>(java.lang.String,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference,Z,Z,Z,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference
+- f:component3():Z
+- f:component4():Z
+- f:component5():Z
+- f:component6():java.lang.String
+- f:copy(java.lang.String,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference,Z,Z,Z,java.lang.String):com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata,java.lang.String,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference,Z,Z,Z,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.ExtPropertyMetadata
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- f:getReceiverFqn():java.lang.String
+- getValueType():com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference
+- getWithDefault():Z
+- hashCode():I
+- isComputable():Z
+- isOpen():Z
+a:com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata
+- com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
+- getProperties():java.util.List
+- a:getSubclasses():java.util.List
+f:com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata$AbstractClassMetadata
+- com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata
+- <init>(java.lang.String,java.util.List,java.util.List):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component3():java.util.List
+- f:copy(java.lang.String,java.util.List,java.util.List):com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata$AbstractClassMetadata
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata$AbstractClassMetadata,java.lang.String,java.util.List,java.util.List,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.ExtendableClassMetadata$AbstractClassMetadata
+- equals(java.lang.Object):Z
+- getFqName():java.lang.String
+- getSubclasses():java.util.List
+- getSupertypes():java.util.List
+- hashCode():I
+a:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+- com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
+f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ClassMetadata
+- com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+- <init>(java.lang.String,java.util.List,java.util.List):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component3():java.util.List
+- f:copy(java.lang.String,java.util.List,java.util.List):com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ClassMetadata
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ClassMetadata,java.lang.String,java.util.List,java.util.List,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ClassMetadata
+- equals(java.lang.Object):Z
+- getFqName():java.lang.String
+- getProperties():java.util.List
+- getSupertypes():java.util.List
+- hashCode():I
+f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$EnumClassMetadata
+- com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+- <init>(java.lang.String,java.util.List,java.util.List,java.util.List):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component3():java.util.List
+- f:component4():java.util.List
+- f:copy(java.lang.String,java.util.List,java.util.List,java.util.List):com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$EnumClassMetadata
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$EnumClassMetadata,java.lang.String,java.util.List,java.util.List,java.util.List,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$EnumClassMetadata
+- equals(java.lang.Object):Z
+- getFqName():java.lang.String
+- getProperties():java.util.List
+- getSupertypes():java.util.List
+- f:getValues():java.util.List
+- hashCode():I
+f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$KnownClass
+- com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$KnownClass
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$KnownClass,java.lang.String,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$KnownClass
+- equals(java.lang.Object):Z
+- getFqName():java.lang.String
+- getProperties():java.util.List
+- getSupertypes():java.util.List
+- hashCode():I
+f:com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ObjectMetadata
+- com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+- <init>(java.lang.String,java.util.List,java.util.List):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component3():java.util.List
+- f:copy(java.lang.String,java.util.List,java.util.List):com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ObjectMetadata
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ObjectMetadata,java.lang.String,java.util.List,java.util.List,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata$ObjectMetadata
+- equals(java.lang.Object):Z
+- getFqName():java.lang.String
+- getProperties():java.util.List
+- getSupertypes():java.util.List
+- hashCode():I
+f:com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
+- com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
+- <init>(java.lang.String,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata,Z,Z,Z,Z):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+- f:component3():Z
+- f:component4():Z
+- f:component5():Z
+- f:component6():Z
+- f:copy(java.lang.String,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata,Z,Z,Z,Z):com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata,java.lang.String,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata,Z,Z,Z,Z,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- getValueType():com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+- getWithDefault():Z
+- hashCode():I
+- isComputable():Z
+- f:isKey():Z
+- isOpen():Z
+com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
+- com.intellij.platform.workspace.storage.metadata.StorageMetadata
+- a:getName():java.lang.String
+- a:getValueType():com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+- a:getWithDefault():Z
+- a:isComputable():Z
+- a:isOpen():Z
+com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
+- com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+- com.intellij.platform.workspace.storage.metadata.StorageMetadata
+- a:getFqName():java.lang.String
+- a:getProperties():java.util.List
+- a:getSupertypes():java.util.List
+a:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+- com.intellij.platform.workspace.storage.metadata.StorageMetadata
+f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference
+- com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+- com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$NullableType
+- <init>(java.lang.String,Z,com.intellij.platform.workspace.storage.ConnectionId$ConnectionType,Z):V
+- f:component1():java.lang.String
+- f:component2():Z
+- f:component3():com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- f:component4():Z
+- f:copy(java.lang.String,Z,com.intellij.platform.workspace.storage.ConnectionId$ConnectionType,Z):com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference,java.lang.String,Z,com.intellij.platform.workspace.storage.ConnectionId$ConnectionType,Z,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$EntityReference
+- equals(java.lang.Object):Z
+- f:getConnectionType():com.intellij.platform.workspace.storage.ConnectionId$ConnectionType
+- f:getEntityFqName():java.lang.String
+- hashCode():I
+- f:isChild():Z
+- isNullable():Z
+com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$NullableType
+- a:isNullable():Z
+f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$ParameterizedType
+- com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+- <init>(com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType,java.util.List):V
+- f:component1():com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType
+- f:component2():java.util.List
+- f:copy(com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType,java.util.List):com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$ParameterizedType
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$ParameterizedType,com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType,java.util.List,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$ParameterizedType
+- equals(java.lang.Object):Z
+- f:getGenerics():java.util.List
+- f:getPrimitive():com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType
+- hashCode():I
+a:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType
+- com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
+- com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$NullableType
+f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$CustomType
+- com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType
+- <init>(com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata,Z):V
+- f:component1():com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
+- f:component2():Z
+- f:copy(com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata,Z):com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$CustomType
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$CustomType,com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata,Z,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$CustomType
+- equals(java.lang.Object):Z
+- f:getTypeMetadata():com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
+- hashCode():I
+- isNullable():Z
+f:com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$PrimitiveType
+- com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType
+- <init>(java.lang.String,Z):V
+- f:component1():java.lang.String
+- f:component2():Z
+- f:copy(java.lang.String,Z):com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$PrimitiveType
+- bs:copy$default(com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$PrimitiveType,java.lang.String,Z,I,java.lang.Object):com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata$SimpleType$PrimitiveType
+- equals(java.lang.Object):Z
+- f:getType():java.lang.String
+- hashCode():I
+- isNullable():Z
+com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
+- com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
+- a:index(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,java.lang.String,com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
+com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:append(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getFileName():java.lang.String
+- a:getParent():com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getPresentableUrl():java.lang.String
+- a:getUrl():java.lang.String
+com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
+- a:findEntitiesByUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):kotlin.sequences.Sequence
+com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+- a:findByUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:fromPath(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
+- a:getOrCreateFromUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl

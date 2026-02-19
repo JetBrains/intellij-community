@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -33,7 +33,7 @@ public abstract class DirectoryRenameHandlerBase implements RenameHandler, Title
   }
 
   @Override
-  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
+  public boolean isAvailableOnDataContext(final @NotNull DataContext dataContext) {
     PsiDirectory directory = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     if (directory != null) {
       final VirtualFile virtualFile = directory.getVirtualFile();
@@ -48,7 +48,7 @@ public abstract class DirectoryRenameHandlerBase implements RenameHandler, Title
 
   protected PsiDirectory adjustForRename(DataContext dataContext, PsiElement element) {
     if (element instanceof PsiDirectoryContainer) {
-      final Module module = LangDataKeys.MODULE.getData(dataContext);
+      final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
       if (module != null) {
         PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
         Optional<PsiDirectory> directoryWithPackage = Arrays.stream(directories).filter(this::isSuitableDirectory).findFirst();
@@ -61,7 +61,7 @@ public abstract class DirectoryRenameHandlerBase implements RenameHandler, Title
   protected abstract boolean isSuitableDirectory(PsiDirectory directory);
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
@@ -69,7 +69,7 @@ public abstract class DirectoryRenameHandlerBase implements RenameHandler, Title
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
     final PsiElement nameSuggestionContext = element;

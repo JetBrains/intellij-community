@@ -1,11 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.ElementPatternCondition;
+import com.intellij.patterns.InitialPatternCondition;
+import com.intellij.patterns.InitialPatternConditionPlus;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PatternConditionPlus;
+import com.intellij.patterns.ValuePatternCondition;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -13,9 +19,8 @@ import java.util.Set;
  * @author Gregory.Shrago
  */
 public final class PatternValuesIndex {
-
   public static Set<String> buildStringIndex(Collection<? extends ElementPattern<?>> patterns) {
-    final THashSet<String> result = new THashSet<>();
+    final Set<String> result = new HashSet<>();
     processStringValues(patterns, (elementPattern, value) -> {
       for (Object o : value) {
         if (o instanceof String) {
@@ -40,7 +45,7 @@ public final class PatternValuesIndex {
         }
         for (PatternCondition<?> condition : patternCondition.getConditions()) {
           if (condition instanceof PatternConditionPlus) {
-            stack.add(((PatternConditionPlus)condition).getValuePattern());
+            stack.add(((PatternConditionPlus<?, ?>)condition).getValuePattern());
           }
           else if (condition instanceof ValuePatternCondition) {
             Collection<Object> values = ((ValuePatternCondition)condition).getValues();

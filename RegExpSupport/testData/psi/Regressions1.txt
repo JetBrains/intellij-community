@@ -6,5 +6,5 @@ REGEXP_FILE
         RegExpPatternImpl: <>
           RegExpBranchImpl: <>
             <empty list>
-        PsiErrorElement:Unclosed group
+        PsiErrorElement:')' expected
           <empty list>

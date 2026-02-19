@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -13,15 +13,27 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.FunctionUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
@@ -40,16 +52,22 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.Icon;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author ilyas
- * Same logic as for Java LMP
- */
-final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
+@ApiStatus.Internal
+public final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   @Override
-  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
+    if (DumbService.isDumb(element.getProject())) {
+      // Groovy line markers are not dumb-aware yet
+      return null;
+    }
+
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiNameIdentifierOwner) {
       if (parent instanceof GrField && element == ((GrField)parent).getNameIdentifierGroovy()) {
@@ -161,6 +179,8 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(final @NotNull List<? extends PsiElement> elements, final @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    PsiElement first = ContainerUtil.getFirstItem(elements);
+    if (first != null && DumbService.isDumb(first.getProject())) return;
     Set<PsiMethod> methods = new HashSet<>();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
@@ -186,7 +206,7 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   private static void collectOverridingMethods(final @NotNull Set<? extends PsiMethod> methods, @NotNull Collection<? super LineMarkerInfo<?>> result) {
     final Set<PsiElement> overridden = new HashSet<>();
 
-    Set<PsiClass> classes = new THashSet<>();
+    Set<PsiClass> classes = new HashSet<>();
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       final PsiClass parentClass = method.getContainingClass();

@@ -1,25 +1,14 @@
-# Some PEP8 deviations are considered irrelevant to stub files:
-#       E301 expected 1 blank line
-#       E302 expected 2 blank lines
-#       E305 expected 2 blank lines
-#       E701 multiple statements on one line (colon)
-#       E741 ambiguous variable name
-#       F401 imported but unused
-#       F403 import *' used; unable to detect undefined names
-#       F405 defined from star imports
-#       F822 undefined name in __all__
-
-# Nice-to-haves ignored for now
-#       E501 line too long
-
 [flake8]
+# Y: Flake8 is only used to run flake8-pyi, everything else is in Ruff
+select = Y
+# Ignore rules normally excluded by default
+extend-ignore = Y090,Y091
 per-file-ignores =
-  *.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822
-  # Since typing.pyi defines "overload" this is not recognized by flake8 as typing.overload.
-  # Unfortunately, flake8 does not allow to "noqa" just a specific error inside the file itself.
-  typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822
+  # Generated protobuf files:
+  # Y021: Include docstrings
+  # Y023: Alias typing as typing_extensions
+  # Y026: Have implicit type aliases
+  # Y053: have literals >50 characters long
+  stubs/*_pb2.pyi: Y021, Y023, Y026, Y053
 
-# We are checking with Python 3 but many of the stubs are Python 2 stubs.
-builtins = StandardError,apply,basestring,buffer,cmp,coerce,execfile,file,intern,long,raw_input,reduce,reload,unichr,unicode,xrange
-exclude = .venv*,@*,.git
-max-line-length = 130
+exclude = .venv*,.git

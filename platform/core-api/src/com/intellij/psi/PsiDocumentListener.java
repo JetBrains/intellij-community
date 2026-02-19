@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.editor.Document;
@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiDocumentListener {
+
+  @Topic.ProjectLevel
   Topic<PsiDocumentListener> TOPIC = new Topic<>(PsiDocumentListener.class, Topic.BroadcastDirection.NONE);
 
   /**
@@ -22,10 +24,10 @@ public interface PsiDocumentListener {
   /**
    * Called when a file instance is created for a document.
    *
-   * @param file the created file instance.
+   * @param psiFile the created file instance.
    * @param document the document for which the file was created.
    * @see PsiDocumentManager#getDocument(PsiFile)
    */
-  default void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
+  default void fileCreated(@NotNull PsiFile psiFile, @NotNull Document document) {
   }
 }

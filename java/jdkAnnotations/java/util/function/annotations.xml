@@ -230,13 +230,28 @@
     <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; and(java.util.function.Predicate&lt;? super T&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; isEqual(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+      <annotation name='org.jetbrains.annotations.Contract'>
+        <val name="pure" val="true"/>
+      </annotation>
+    </item>
     <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; negate()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; or(java.util.function.Predicate&lt;? super T&gt;)'>
+  <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; not(java.util.function.Predicate&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; not(java.util.function.Predicate&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.function.Predicate java.util.function.Predicate&lt;T&gt; or(java.util.function.Predicate&lt;? super T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

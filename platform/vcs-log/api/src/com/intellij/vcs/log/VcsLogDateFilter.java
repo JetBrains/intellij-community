@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
-import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,39 +26,8 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
   @Nullable
   Date getBefore();
 
-  @NotNull
   @Override
-  default VcsLogFilterCollection.FilterKey<VcsLogDateFilter> getKey() {
+  default @NotNull VcsLogFilterCollection.FilterKey<VcsLogDateFilter> getKey() {
     return DATE_FILTER;
-  }
-
-  @NotNull
-  @Override
-  default String getDisplayText() {
-    if (getBefore() != null && getAfter() != null) {
-      return DateFormatUtil.formatBetweenDates(getAfter().getTime(), getBefore().getTime());
-    }
-    else if (getAfter() != null) {
-      return VcsLogBundle.message("vcs.log.filter.date.display.name.after", DateFormatUtil.formatDate(getAfter()));
-    }
-    else if (getBefore() != null) {
-      return VcsLogBundle.message("vcs.log.filter.date.display.name.before", DateFormatUtil.formatDate(getBefore()));
-    }
-    return "";
-  }
-
-  @NotNull
-  default String getDisplayTextWithPrefix() {
-    if (getBefore() != null && getAfter() != null) {
-      String betweenDates = DateFormatUtil.formatBetweenDates(getAfter().getTime(), getBefore().getTime());
-      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made", betweenDates);
-    }
-    else if (getAfter() != null) {
-      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.after", DateFormatUtil.formatDate(getAfter()));
-    }
-    else if (getBefore() != null) {
-      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.before", DateFormatUtil.formatDate(getBefore()));
-    }
-    return "";
   }
 }

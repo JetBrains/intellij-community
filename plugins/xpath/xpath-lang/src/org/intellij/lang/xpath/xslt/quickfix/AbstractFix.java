@@ -20,11 +20,11 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -49,36 +49,33 @@ public abstract class AbstractFix implements IntentionAction {
 
   protected static TemplateBuilderImpl createTemplateBuilder(XmlTag xmlTag) {
     final PsiFile psiFile = PsiFileFactory.getInstance(xmlTag.getProject())
-      .createFileFromText("dummy.xml", StdFileTypes.XML, xmlTag.getText(), LocalTimeCounter.currentTime(), true, false);
+      .createFileFromText("dummy.xml", XmlFileType.INSTANCE, xmlTag.getText(), LocalTimeCounter.currentTime(), true, false);
     return new TemplateBuilderImpl(psiFile);
   }
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (requiresEditor() && editor == null) return false;
 
-    return isAvailableImpl(project, editor, file);
+    return isAvailableImpl(project, editor, psiFile);
   }
 
   protected abstract boolean isAvailableImpl(@NotNull Project project, @Nullable Editor editor, PsiFile file);
 
   protected abstract boolean requiresEditor();
 
-  @Nullable
-  public LocalQuickFix createQuickFix(boolean isOnTheFly) {
+  public @Nullable LocalQuickFix createQuickFix(boolean isOnTheFly) {
     final boolean requiresEditor = requiresEditor();
     if (requiresEditor && !isOnTheFly) return null;
 
     return new LocalQuickFix() {
       @Override
-      @NotNull
-      public String getName() {
+      public @NotNull String getName() {
         return AbstractFix.this.getText();
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return AbstractFix.this.getFamilyName();
       }
 
@@ -108,8 +105,8 @@ public abstract class AbstractFix implements IntentionAction {
     };
   }
 
-  public static LocalQuickFix[] createFixes(LocalQuickFix... fixes) {
-    final List<LocalQuickFix> result = ContainerUtil.findAll(fixes, localQuickFix -> localQuickFix != null);
+  public static @NotNull LocalQuickFix @NotNull [] createFixes(@Nullable LocalQuickFix @NotNull ... fixes) {
+    List<LocalQuickFix> result = ContainerUtil.findAll(fixes, localQuickFix -> localQuickFix != null);
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }

@@ -22,7 +22,7 @@ class AmbiguityVarargs {
 
     void test() {
         foo(()->{});
-        <error descr="Ambiguous method call: both 'AmbiguityVarargs.foo(I1<String>)' and 'AmbiguityVarargs.foo(IV<String>)' match">foo</error>((a1) -> {});
+        foo<error descr="Ambiguous method call: both 'AmbiguityVarargs.foo(I1<String>)' and 'AmbiguityVarargs.foo(IV<String>)' match">((a1) -> {})</error>;
         foo((a1, a2)->{});
     }
 }

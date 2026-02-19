@@ -1,32 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.util.List;
 
 /**
- * @author Irina Chernushina
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutter {
   private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
-  private final ActiveAnnotationGutter myDelegate;
+  final ActiveAnnotationGutter myDelegate;
 
   public AnnotationGutterLineConvertorProxy(final UpToDateLineNumberProvider getUpToDateLineNumber, final ActiveAnnotationGutter delegate) {
     myGetUpToDateLineNumber = getUpToDateLineNumber;
     myDelegate = delegate;
   }
 
-  @NotNull
-  public ActiveAnnotationGutter getDelegate() {
+  public @NotNull ActiveAnnotationGutter getDelegate() {
     return myDelegate;
   }
 
@@ -56,6 +58,16 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
     int currentLine = myGetUpToDateLineNumber.getLineNumber(line);
     if (!canBeAnnotated(currentLine)) return AnnotationSource.LOCAL.getColor();
     return myDelegate.getColor(currentLine, editor);
+  }
+
+  @Override
+  public boolean useMargin() {
+    return myDelegate.useMargin();
+  }
+
+  @Override
+  public int getLeftMargin() {
+    return myDelegate.getLeftMargin();
   }
 
   @Override
@@ -91,5 +103,16 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
 
   private static boolean canBeAnnotated(int currentLine) {
     return currentLine >= 0;
+  }
+
+  static class Filler extends AnnotationGutterLineConvertorProxy implements TextAnnotationGutterProvider.Filler {
+    public Filler(UpToDateLineNumberProvider getUpToDateLineNumber, ActiveAnnotationGutter delegate) {
+      super(getUpToDateLineNumber, delegate);
+    }
+
+    @Override
+    public int getWidth() {
+      return ((TextAnnotationGutterProvider.Filler)myDelegate).getWidth();
+    }
   }
 }

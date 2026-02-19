@@ -2,6 +2,7 @@
 package git4idea.commands
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -9,13 +10,19 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPasswordField
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.selected
 import com.intellij.util.AuthData
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -27,9 +34,9 @@ import javax.swing.JComponent
 
 
 class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
-                                                   url: String,
+                                                   url: @NlsSafe String,
                                                    rememberPassword: Boolean = true,
-                                                   username: String? = null,
+                                                   username: @NlsSafe String? = null,
                                                    editableUsername: Boolean = true,
                                                    private val showActionForCredHelper: Boolean = false) : DialogWrapper(project, true) {
   private val usernameField = JBTextField(username, 20).apply { isEditable = editableUsername }
@@ -61,13 +68,15 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     }
     else {
       dialogPanel = panel {
-        buttonGroup(::useCredentialHelper) {
+        buttonsGroup {
+          lateinit var rbCredentials: JBRadioButton
           row {
-            radioButton(GitBundle.message("login.dialog.select.login.way.credentials"), false)
-            row {
-              buildCredentialsPanel()
-            }
+            rbCredentials = radioButton(GitBundle.message("login.dialog.select.login.way.credentials"), false)
+              .component
           }
+          indent {
+            buildCredentialsPanel()
+          }.enabledIf(rbCredentials.selected)
           row {
             radioButton(GitBundle.message("login.dialog.select.login.way.use.helper"), true).also {
               it.component.addActionListener {
@@ -75,16 +84,28 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
               }
             }
           }
-        }
+        }.bind(::useCredentialHelper)
       }
     }
     return dialogPanel
   }
 
-  private fun RowBuilder.buildCredentialsPanel() {
-    row(GitBundle.message("login.dialog.username.label")) { usernameField(growX) }
-    row(GitBundle.message("login.dialog.password.label")) { passwordField(growX) }
-    row { rememberCheckbox() }
+  private fun Panel.buildCredentialsPanel() {
+    row(GitBundle.message("login.dialog.username.label")) {
+      cell(usernameField)
+        .align(AlignX.FILL)
+        .errorOnApply(GitBundle.message("login.dialog.error.username.cant.be.empty")) {
+          !useCredentialHelper && username.isBlank()
+        }
+    }
+    row(GitBundle.message("login.dialog.password.label")) {
+      cell(passwordField)
+        .align(AlignX.FILL)
+        .errorOnApply(GitBundle.message("login.dialog.error.password.cant.be.empty")) {
+          !useCredentialHelper && password.isBlank()
+        }
+    }
+    row("") { cell(rememberCheckbox) }
   }
 
   override fun doOKAction() {
@@ -98,17 +119,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
 
   override fun doValidateAll(): List<ValidationInfo> {
     dialogPanel.apply()
-    if (useCredentialHelper) {
-      return emptyList()
-    }
-    return listOfNotNull(
-      if (username.isBlank())
-        ValidationInfo(GitBundle.message("login.dialog.error.username.cant.be.empty"), usernameField)
-      else null,
-      if (passwordField.password.isEmpty())
-        ValidationInfo(GitBundle.message("login.dialog.error.password.cant.be.empty"), passwordField)
-      else null
-    )
+    return super.doValidateAll()
   }
 
   override fun createSouthAdditionalPanel(): Wrapper = Wrapper(additionalProvidersButton)
@@ -171,11 +182,15 @@ class TestGitHttpLoginDialogAction : AnAction() {
       val gitHttpLoginDialog = GitHttpLoginDialog(it, "http://google.com", showActionForCredHelper = true)
       gitHttpLoginDialog.show()
       if (gitHttpLoginDialog.exitCode == GitHttpLoginDialog.USE_CREDENTIAL_HELPER_CODE) {
-        Messages.showMessageDialog(e.project,"Credential selected", "Git login test", null)
+        Messages.showMessageDialog(e.project, "Credential selected", "Git login test", null)
       }
       else {
         Messages.showMessageDialog(e.project, "Regular login", "Git login test", null)
       }
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

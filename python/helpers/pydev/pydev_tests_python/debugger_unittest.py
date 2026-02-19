@@ -1,6 +1,9 @@
 from collections import namedtuple
 from contextlib import contextmanager
 import json
+
+from _pydevd_bundle.pydevd_constants import GET_FRAME_NORMAL_GROUP
+
 try:
     from urllib import quote, quote_plus, unquote_plus
 except ImportError:
@@ -9,7 +12,6 @@ except ImportError:
 import re
 import socket
 import subprocess
-import sys
 import threading
 import time
 import traceback
@@ -72,6 +74,7 @@ CMD_STEP_INTO_MY_CODE = 144
 CMD_GET_CONCURRENCY_EVENT = 145
 CMD_SHOW_RETURN_VALUES = 146
 
+CMD_LOAD_FULL_VALUE = 151
 CMD_GET_THREAD_STACK = 152
 CMD_THREAD_DUMP_TO_STDERR = 153  # This is mostly for unit-tests to diagnose errors on ci.
 CMD_STOP_ON_START = 154
@@ -183,7 +186,7 @@ class ReaderThread(threading.Thread):
         except ImportError:
             from Queue import Queue
 
-        self.setDaemon(True)
+        self.daemon = True
         self.sock = sock
         self._queue = Queue()
         self.all_received = []
@@ -247,7 +250,16 @@ class ReaderThread(threading.Thread):
     def do_kill(self):
         self._kill = True
         if hasattr(self, 'sock'):
-            self.sock.close()
+            from socket import SHUT_RDWR
+
+            try:
+                self.sock.shutdown(SHUT_RDWR)
+            except:
+                pass
+            try:
+                self.sock.close()
+            except:
+                pass
 
 
 def read_process(stream, buffer, debug_stream, stream_name, finish):
@@ -269,7 +281,7 @@ def read_process(stream, buffer, debug_stream, stream_name, finish):
 
 def start_in_daemon_thread(target, args):
     t0 = threading.Thread(target=target, args=args)
-    t0.setDaemon(True)
+    t0.daemon = True
     t0.start()
 
 
@@ -349,6 +361,7 @@ class DebuggerRunner(object):
             args,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
             cwd=writer.get_cwd() if writer is not None else '.',
             env=writer.get_environ() if writer is not None else None,
         )
@@ -361,6 +374,7 @@ class DebuggerRunner(object):
         stderr = []
         finish = [False]
         dct_with_stdout_stder = {}
+        fail_with_message = False
 
         try:
             start_in_daemon_thread(read_process, (process.stdout, stdout, sys.stdout, 'stdout', finish))
@@ -375,9 +389,22 @@ class DebuggerRunner(object):
             shown_intermediate = False
             dumped_threads = False
 
-            dct_with_stdout_stder['stdout'] = stdout
-            dct_with_stdout_stder['stderr'] = stderr
-            yield dct_with_stdout_stder
+            dct_with_stdout_stder["stdout"] = stdout
+            dct_with_stdout_stder["stderr"] = stderr
+            try:
+                yield dct_with_stdout_stder
+            except:
+                fail_with_message = True
+                # Let's print the actuayl exception here (it doesn't appear properly on Python 2 and
+                # on Python 3 it's hard to find because pytest output is too verbose).
+                sys.stderr.write("***********\n")
+                sys.stderr.write("***********\n")
+                sys.stderr.write("***********\n")
+                traceback.print_exc()
+                sys.stderr.write("***********\n")
+                sys.stderr.write("***********\n")
+                sys.stderr.write("***********\n")
+                raise
 
             if not writer.finished_ok:
                 self.fail_with_message(
@@ -437,10 +464,21 @@ class DebuggerRunner(object):
                         time.sleep(.1)
 
         except TimeoutError:
+            msg = "TimeoutError"
             writer.write_dump_threads()
             time.sleep(.2)
-            raise
+            self.fail_with_message(msg, stdout, stderr, writer)
+        except Exception as e:
+            if fail_with_message:
+                self.fail_with_message(str(e), stdout, stderr, writer)
+            else:
+                raise
         finally:
+            try:
+                if process.poll() is None:
+                    process.kill()
+            except:
+                traceback.print_exc()
             finish[0] = True
 
     def fail_with_message(self, msg, stdout, stderr, writerThread):
@@ -448,6 +486,30 @@ class DebuggerRunner(object):
             "\n\n===========================\nStdout: \n" + ''.join(stdout) +
             "\n\n===========================\nStderr:" + ''.join(stderr) +
             "\n\n===========================\nLog:\n" + '\n'.join(getattr(writerThread, 'log', [])))
+
+
+# noinspection PyProtectedMember
+def _create_socket(port=None):
+    if hasattr(_create_socket, '_used_ports'):
+        assert port not in _create_socket._used_ports, 'Socket already initialized.'
+    else:
+        _create_socket._used_ports = set()
+
+    if port is not None:
+        _create_socket._used_ports.add(port)
+
+    from _pydev_bundle.pydev_localhost import get_socket_name
+    if SHOW_WRITES_AND_READS:
+        print('start_socket')
+
+    if port is None:
+        socket_name = get_socket_name(close=True)
+    else:
+        socket_name = (pydev_localhost.get_localhost(), port)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(socket_name)
+    return sock
 
 
 #=======================================================================================================================
@@ -462,7 +524,7 @@ class AbstractWriterThread(threading.Thread):
 
     def __init__(self, *args, **kwargs):
         threading.Thread.__init__(self, *args, **kwargs)
-        self.setDaemon(True)
+        self.daemon = True
         self.finished_ok = False
         self.finished_initialization = False
         self._next_breakpoint_id = 0
@@ -485,7 +547,16 @@ class AbstractWriterThread(threading.Thread):
             'warning: Debugger speedups',
             'pydev debugger: New process is launching',
             'pydev debugger: To debug that process',
-            )):
+            'pydev debugger: process',
+            'warning: PYDEVD_USE_CYTHON environment variable is set to \'NO\'',
+            'Unable to set tracing',
+            'Suspending all threads',
+            'Sending suspend',
+            'Sending resume',
+            'Suspend not sent',
+            'Resume not sent',
+            'Connected to:'
+        )):
             return True
 
         if re.match(r'^(\d+)\t(\d)+', line):
@@ -526,7 +597,7 @@ class AbstractWriterThread(threading.Thread):
             line = line.strip()
             if not line:
                 continue
-            if not self._ignore_stderr_line(line):
+            if not self._ignore_stderr_line(line) and sys.version_info.major >= 3:
                 lines_with_error.append(line)
 
         if lines_with_error:
@@ -542,9 +613,9 @@ class AbstractWriterThread(threading.Thread):
         return os.path.abspath(os.path.join(dirname, 'pydevd.py'))
 
     def get_line_index_with_content(self, line_content):
-        '''
+        """
         :return the line index which has the given content (1-based).
-        '''
+        """
         with open(self.TEST_FILE, 'r') as stream:
             for i_line, line in enumerate(stream):
                 if line_content in line:
@@ -592,20 +663,9 @@ class AbstractWriterThread(threading.Thread):
         return self.reader_thread.get_next_message(context_message, timeout=timeout)
 
     def start_socket(self, port=None):
-        assert not hasattr(self, 'port'), 'Socket already initialized.'
-        from _pydev_bundle.pydev_localhost import get_socket_name
-        if SHOW_WRITES_AND_READS:
-            print('start_socket')
-
         self._sequence = -1
-        if port is None:
-            socket_name = get_socket_name(close=True)
-        else:
-            socket_name = (pydev_localhost.get_localhost(), port)
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_socket.bind(socket_name)
-        self.port = socket_name[1]
+        server_socket = _create_socket(port)
+        self.port = server_socket.getsockname()[1]
         server_socket.listen(1)
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')
@@ -614,9 +674,20 @@ class AbstractWriterThread(threading.Thread):
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Socket:', new_sock, addr)
 
+        curr_socket = getattr(self, "sock", None)
+        if curr_socket:
+            try:
+                curr_socket.shutdown(socket.SHUT_WR)
+            except:
+                pass
+            try:
+                curr_socket.close()
+            except:
+                pass
+
         reader_thread = self.reader_thread = ReaderThread(new_sock)
-        reader_thread.start()
         self.sock = new_sock
+        reader_thread.start()
 
         # initial command is always the version
         self.write_version()
@@ -913,13 +984,15 @@ class AbstractWriterThread(threading.Thread):
         self.write("%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
             CMD_CHANGE_VARIABLE, self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))
 
-    def write_get_frame(self, thread_id, frame_id):
-        self.write("%s\t%s\t%s\t%s\tFRAME" % (CMD_GET_FRAME, self.next_seq(), thread_id, frame_id))
+    def write_get_frame(self, thread_id, frame_id, group_type=GET_FRAME_NORMAL_GROUP):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s" % (CMD_GET_FRAME, self.next_seq(), thread_id, frame_id, group_type, ))
         self.log.append('write_get_frame')
 
-    def write_get_variable(self, thread_id, frame_id, var_attrs):
-        self.write("%s\t%s\t%s\t%s\tFRAME\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, var_attrs))
+    def write_get_variable(self, thread_id, frame_id, var_attrs, group_type=GET_FRAME_NORMAL_GROUP):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, group_type, var_attrs, ))
 
+    def write_load_full_value(self, thread_id, frame_id, var_name):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s\t__pydev_val__" % (CMD_LOAD_FULL_VALUE, self.next_seq(), thread_id, frame_id, var_name))
     def write_step_over(self, thread_id):
         self.write("%s\t%s\t%s" % (CMD_STEP_OVER, self.next_seq(), thread_id,))
 
@@ -1000,7 +1073,6 @@ class AbstractWriterThread(threading.Thread):
             def accept_message(msg):
                 return msg.startswith(msg_starts_with)
 
-        import untangle
         from io import StringIO
         prev = None
         while True:
@@ -1010,11 +1082,15 @@ class AbstractWriterThread(threading.Thread):
             if accept_message(last):
                 if expect_xml:
                     # Extract xml and return untangled.
+                    xml = ""
                     try:
                         xml = last[last.index('<xml>'):]
                         if isinstance(xml, bytes):
                             xml = xml.decode('utf-8')
+                        import untangle
                         xml = untangle.parse(StringIO(xml))
+                    except ImportError:
+                        pass
                     except:
                         traceback.print_exc()
                         raise AssertionError('Unable to parse:\n%s\nxml:\n%s' % (last, xml))
@@ -1048,6 +1124,38 @@ class AbstractWriterThread(threading.Thread):
             return 'Found stack: %s' % (self.get_frame_names(main_thread_id),)
 
         wait_for_condition(condition, msg, timeout=5, sleep=.5)
+
+
+class AbstractDispatcherThread(AbstractWriterThread):
+    """For using with the ``--multiproc`` option. Allocates new writers and dispatches breakpoints to them."""
+    def __init__(self):
+        super(AbstractDispatcherThread, self).__init__()
+        self.writers = []
+        self._sequence = -1
+        self._breakpoints = []
+
+    def run(self):
+        server_socket = _create_socket()
+        server_socket.listen(1)
+        self.port = server_socket.getsockname()[1]
+        self.finished_initialization = True
+
+        while True:
+            self.sock, addr = server_socket.accept()
+            new_writer = AbstractWriterThread()
+            new_writer.TEST_FILE = self.TEST_FILE
+            new_writer.start()
+            wait_for_condition(lambda: hasattr(new_writer, 'port'))
+            self.write('99\t-1\t%d' % new_writer.port)
+            wait_for_condition(lambda: new_writer.finished_initialization)
+
+            for args, kwargs in self._breakpoints:
+                new_writer.write_add_breakpoint(*args, **kwargs)
+
+            self.writers.append(new_writer)
+
+    def write_add_breakpoint(self, *args, **kwargs):
+        self._breakpoints.append((args, kwargs))
 
 
 def _get_debugger_test_file(filename):

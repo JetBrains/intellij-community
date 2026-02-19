@@ -1,0 +1,6 @@
+<time>: Executing 'run --quiet'…
+main function in main.kt executed
+
+<time>: Execution finished 'run --quiet'.
+
+<exitCode: 0>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -8,24 +8,22 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaRefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
-/**
- * @author ven
- */
-public class RenameLocalTest extends LightRefactoringTestCase {
+public class RenameLocalTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameLocal/";
 
   @NotNull
@@ -67,6 +65,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTest("Bar1");
   }
 
+  public void testMethodNameUsedInMethodRefs() {
+    doTest("bar1");
+  }
+
   public void testRenameParamUniqueName() {
     configureByFile();
     final HashSet<String> result = new HashSet<>();
@@ -103,6 +105,30 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   public void testRenameFieldWithConstructorParamAutomatic() {
     doTest("pp");
   }
+  
+  public void testConflictWithPattern() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+                 "An existing pattern variable <b><code>s</code></b> has the same name",
+                 () -> doTest("s"));
+  }
+
+  public void testConflictWithPatternInline() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+                 "Variable 's' Already Exists",
+                 () -> doTestInplaceRename("s"));
+  }
+  
+  public void testConflictInLambdaParameter() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class,
+                 "Variable 'o' Already Exists",
+                 () -> doTestInplaceRename("o"));
+  }
+
+  public void testConflictWithFutureVar() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+                 "An existing local variable <b><code>y</code></b> has the same name",
+                 () -> doTest("y"));
+  }
 
   public void testRenameInPlaceParamInOverriderAutomaticRenamerConflict() {
     doTestInplaceRename("pp");
@@ -110,6 +136,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
 
   public void testRenameResource() {
     doTest("r1");
+  }
+  
+  public void testRecordCanonicalConstructor() {
+    doTest("Bar");
   }
 
   public void testRenameResourceInPlace() {
@@ -122,6 +152,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
 
   public void testRenameInPlaceInStaticContextWithConflictingField() {
     doTestInplaceRename("s");
+  }
+
+  public void testUnnamedVariableInLambda() {
+    doTestInplaceRename("pp");
   }
 
   public void testUndoAfterEditingOutsideOfTemplate() {
@@ -167,9 +201,7 @@ public class RenameLocalTest extends LightRefactoringTestCase {
 
     PsiElement element = getTargetElement();
     assertInPlaceRenameAllowedFor(element);
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
-    }, null, null);
+    CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
 
     checkResultByFile();
   }

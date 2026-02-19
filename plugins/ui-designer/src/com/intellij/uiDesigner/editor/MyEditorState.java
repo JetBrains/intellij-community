@@ -34,11 +34,10 @@ final class MyEditorState implements FileEditorState{
     return mySelectedComponentIds;
   }
 
+  @Override
   public boolean equals(final Object o){
     if (this == o) return true;
-    if (!(o instanceof MyEditorState)) return false;
-
-    final MyEditorState state = (MyEditorState)o;
+    if (!(o instanceof MyEditorState state)) return false;
 
     if (myDocumentModificationStamp != state.myDocumentModificationStamp) return false;
     if (!Arrays.equals(mySelectedComponentIds, state.mySelectedComponentIds)) return false;
@@ -46,12 +45,13 @@ final class MyEditorState implements FileEditorState{
     return true;
   }
 
+  @Override
   public int hashCode(){
-    return (int)(myDocumentModificationStamp ^ (myDocumentModificationStamp >>> 32));
+    return Long.hashCode(myDocumentModificationStamp);
   }
 
   @Override
-  public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+  public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
     return otherState instanceof MyEditorState;
   }
 }

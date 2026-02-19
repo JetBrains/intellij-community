@@ -5,7 +5,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import junit.framework.TestCase;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -13,7 +18,7 @@ public class KeyFMapTest extends TestCase {
   private static final List<Key<Object>> KEYS =
     IntStream.range(0, 20).mapToObj(i -> Key.create("Key#"+i)).collect(Collectors.toList());
 
-  private static KeyFMap createKeyFMap(List<Key<Object>> keys, List<Object> values) {
+  private static KeyFMap createKeyFMap(List<? extends Key<Object>> keys, List<Object> values) {
     KeyFMap map = KeyFMap.EMPTY_MAP;
 
     for (int i = 0; i < keys.size(); i++) {

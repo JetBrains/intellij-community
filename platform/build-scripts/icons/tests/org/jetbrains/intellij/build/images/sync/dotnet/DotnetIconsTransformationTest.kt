@@ -2,13 +2,17 @@
 package org.jetbrains.intellij.build.images.sync.dotnet
 
 import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconsTransformation.dotnetDarkSuffices
+import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconsTransformation.dotnetExpUiDaySuffix
+import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconsTransformation.dotnetExpUiNightSuffix
 import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconsTransformation.dotnetLightSuffices
 import org.jetbrains.intellij.build.images.sync.dotnet.DotnetIconsTransformation.ideaDarkSuffix
+import org.jetbrains.intellij.build.images.sync.isAncestorOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.io.File
 
 @RunWith(Parameterized::class)
 internal class DotnetIconsTransformationTest(private val braces: DotnetIcon.Braces) {
@@ -27,7 +31,7 @@ internal class DotnetIconsTransformationTest(private val braces: DotnetIcon.Brac
 
   private fun String.brace() : String = if (isNotEmpty()) "${braces.start}$this${braces.end}" else this
 
-  private data class Suffix(val after: String, val before: String)
+  private data class Suffix(val after: String, val before: String, val isExpUi: Boolean = false)
 
   private fun `icons test`(suffices: List<String>, expected: List<Suffix>) {
     val name = "icon"
@@ -43,7 +47,7 @@ internal class DotnetIconsTransformationTest(private val braces: DotnetIcon.Brac
       }
     }.forEach { result ->
       val suffix = expected.singleOrNull {
-        result.name == "$name${it.after}.$ext"
+        result.name == "$name${it.after}.$ext" && it.isExpUi == result.isInExpUi()
       }
       assert(suffix != null) {
         "$result doesn't have expected suffix: $expected"
@@ -55,6 +59,8 @@ internal class DotnetIconsTransformationTest(private val braces: DotnetIcon.Brac
     }
   }
 
+  private fun File.isInExpUi() = iconsRepo.root.resolve("expui").toPath().isAncestorOf(this.toPath())
+
   @Test
   fun `light icons test`() = `icons test`(
     dotnetLightSuffices + "unknown",
@@ -64,8 +70,39 @@ internal class DotnetIconsTransformationTest(private val braces: DotnetIcon.Brac
   @Test
   fun `dark icons test`() = `icons test`(
     dotnetDarkSuffices + "unknown",
-    listOf(Suffix(ideaDarkSuffix, dotnetDarkSuffices.first().brace()))
+    // expect anything because we don't have basic light icons
+    listOf()
   )
+
+  @Test
+  fun `expui day icons test`() = `icons test`(
+  dotnetLightSuffices + dotnetExpUiDaySuffix,
+    listOf(
+      Suffix("", dotnetLightSuffices.first().brace()),
+      Suffix("", dotnetExpUiDaySuffix.brace(), true),
+    )
+  )
+
+  @Test
+  fun `expui night icons test`() = `icons test`(
+    dotnetLightSuffices + dotnetExpUiNightSuffix,
+    listOf(
+      Suffix("", dotnetLightSuffices.first().brace()),
+      Suffix(ideaDarkSuffix, dotnetExpUiNightSuffix.brace(), true),
+    )
+  )
+
+  @Test
+  fun `mixed expui icons test`() = `icons test`(
+    dotnetDarkSuffices + dotnetLightSuffices + dotnetExpUiNightSuffix + dotnetExpUiDaySuffix + "unknown",
+    listOf(
+      Suffix("", dotnetLightSuffices.first().brace()),
+      Suffix(ideaDarkSuffix, dotnetDarkSuffices.first().brace()),
+      Suffix(ideaDarkSuffix, dotnetExpUiNightSuffix.brace(), true),
+      Suffix("", dotnetExpUiDaySuffix.brace(), true),
+    )
+  )
+
 
   @Test
   fun `mixed icons test`() = `icons test`(

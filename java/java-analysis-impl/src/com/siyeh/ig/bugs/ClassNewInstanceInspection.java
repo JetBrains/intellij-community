@@ -1,0 +1,165 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.siyeh.ig.bugs;
+
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * @author Bas Leijdekkers
+ */
+public final class ClassNewInstanceInspection extends BaseInspection {
+
+  @Override
+  protected @NotNull String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "class.new.instance.problem.descriptor");
+  }
+
+  @Override
+  protected LocalQuickFix buildFix(Object... infos) {
+    return new ClassNewInstanceFix();
+  }
+
+  private static class ClassNewInstanceFix extends PsiUpdateModCommandQuickFix {
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Class.getConstructor().newInstance()");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiReferenceExpression methodExpression)) {
+        return;
+      }
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
+        return;
+      }
+      final PsiElement parentOfType = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiTryStatement.class, PsiLambdaExpression.class);
+      if (parentOfType instanceof PsiTryStatement tryStatement) {
+        addCatchBlock(tryStatement, "java.lang.NoSuchMethodException", "java.lang.reflect.InvocationTargetException");
+      }
+      else if (parentOfType instanceof PsiLambdaExpression) {
+        final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(parentOfType);
+        if (FileModificationService.getInstance().preparePsiElementsForWrite(method)) {
+          addThrowsClause(method, "java.lang.NoSuchMethodException",
+                          "java.lang.reflect.InvocationTargetException");
+        }
+      }
+      else if (parentOfType instanceof PsiMethod method){
+        addThrowsClause(method, "java.lang.NoSuchMethodException", "java.lang.reflect.InvocationTargetException");
+      }
+      final @NonNls String newExpression = qualifier.getText() + ".getConstructor().newInstance()";
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, new CommentTracker());
+    }
+
+    private static void addThrowsClause(PsiMethod method, String... exceptionNames) {
+      final PsiReferenceList throwsList = method.getThrowsList();
+      final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
+      final Set<String> presentExceptionNames = new HashSet<>();
+      for (PsiClassType referencedType : referencedTypes) {
+        final String exceptionName = referencedType.getCanonicalText();
+        presentExceptionNames.add(exceptionName);
+      }
+      final Project project = method.getProject();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      final GlobalSearchScope scope = method.getResolveScope();
+      for (String exceptionName : exceptionNames) {
+        if (presentExceptionNames.contains(exceptionName)) {
+          continue;
+        }
+        final PsiJavaCodeReferenceElement throwsReference = factory.createReferenceElementByFQClassName(exceptionName, scope);
+        final PsiElement element = throwsList.add(throwsReference);
+        codeStyleManager.shortenClassReferences(element);
+      }
+    }
+
+    protected static void addCatchBlock(PsiTryStatement tryStatement, String... exceptionNames) {
+      final Project project = tryStatement.getProject();
+      final PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
+      final Set<PsiType> presentExceptions = Arrays.stream(parameters).map(PsiParameter::getType).collect(Collectors.toSet());
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      final String name = codeStyleManager.suggestUniqueVariableName("e", tryStatement.getTryBlock(), false);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      for (String exceptionName : exceptionNames) {
+        final PsiClassType type = (PsiClassType)factory.createTypeFromText(exceptionName, tryStatement);
+        if (ContainerUtil.exists(presentExceptions, e -> e.isAssignableFrom(type))) {
+          continue;
+        }
+        final PsiCatchSection section = factory.createCatchSection(type, name, tryStatement);
+        final PsiCatchSection element = (PsiCatchSection)tryStatement.add(section);
+        codeStyleManager.shortenClassReferences(element);
+      }
+    }
+  }
+
+  @Override
+  public @NotNull BaseInspectionVisitor buildVisitor() {
+    return new ClassNewInstanceVisitor();
+  }
+
+  private static class ClassNewInstanceVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final @NonNls String methodName = methodExpression.getReferenceName();
+      if (!"newInstance".equals(methodName)) {
+        return;
+      }
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      if (!CommonClassNames.JAVA_LANG_CLASS.equals(TypeUtils.resolvedClassName(qualifier.getType()))) {
+        return;
+      }
+      registerMethodCallError(expression);
+    }
+  }
+}

@@ -1,13 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.CompositeParameterTargetedValue;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.impl.*;
+import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
+import com.intellij.lang.ant.config.impl.AntConfigurationImpl;
+import com.intellij.lang.ant.config.impl.AntInstallation;
+import com.intellij.lang.ant.config.impl.BuildFileProperty;
+import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.project.Project;
@@ -17,9 +22,6 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.rt.ant.execution.AntMain2;
-import com.intellij.rt.ant.execution.IdeaAntLogger2;
-import com.intellij.rt.ant.execution.IdeaInputHandler;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.config.AbstractProperty;
@@ -33,15 +35,15 @@ import java.util.List;
 
 public class AntCommandLineBuilder {
   private final List<@NlsSafe String> myTargets = new ArrayList<>();
-  private final JavaParameters myCommandLine = new JavaParameters();
+  private final SimpleJavaParameters myCommandLine = new SimpleJavaParameters();
   private @NlsSafe String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;
-  @NonNls private final List<String> myExpandedProperties = new ArrayList<>();
-  @NonNls private static final String INPUT_HANDLER_PARAMETER = "-inputhandler";
-  @NonNls private static final String LOGFILE_PARAMETER = "-logfile";
-  @NonNls private static final String LOGFILE_SHORT_PARAMETER = "-l";
-  @NonNls private static final String LOGGER_PARAMETER = "-logger";
+  private final @NonNls List<String> myExpandedProperties = new ArrayList<>();
+  private static final @NonNls String INPUT_HANDLER_PARAMETER = "-inputhandler";
+  private static final @NonNls String LOGFILE_PARAMETER = "-logfile";
+  private static final @NonNls String LOGFILE_SHORT_PARAMETER = "-l";
+  private static final @NonNls String LOGGER_PARAMETER = "-logger";
 
   public void calculateProperties(final DataContext dataContext, Project project, List<BuildFileProperty> additionalProperties) throws Macro.ExecutionCancelledException {
     for (BuildFileProperty property : myProperties) {
@@ -70,7 +72,7 @@ public class AntCommandLineBuilder {
     Sdk jdk;
     if (jdkName == null || jdkName.length() <= 0) {
       jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(container);
-      if (jdkName == null || jdkName.length() == 0) {
+      if (jdkName == null || jdkName.isEmpty()) {
         throw new CantRunException(AntBundle.message("project.jdk.not.specified.error.message"));
       }
     }
@@ -94,13 +96,13 @@ public class AntCommandLineBuilder {
     }
 
     final String antHome = AntInstallation.HOME_DIR.get(antInstallation.getProperties());
-    vmParametersList.add("-Dant.home=" + antHome);
+    vmParametersList.add(new CompositeParameterTargetedValue("-Dant.home=").addPathPart(antHome));
     final String libraryDir = antHome + (antHome.endsWith("/") || antHome.endsWith(File.separator) ? "" : File.separator) + "lib";
-    vmParametersList.add("-Dant.library.dir=" + libraryDir);
+    vmParametersList.add(new CompositeParameterTargetedValue("-Dant.library.dir=").addPathPart(libraryDir));
 
     String[] urls = jdk.getRootProvider().getUrls(OrderRootType.CLASSES);
     final String jdkHome = homeDirectory.getPath().replace('/', File.separatorChar);
-    @NonNls final String pathToJre = jdkHome + File.separator + "jre" + File.separator;
+    final @NonNls String pathToJre = jdkHome + File.separator + "jre" + File.separator;
     for (String url : urls) {
       final String path = PathUtil.toPresentableUrl(url);
       if (!path.startsWith(pathToJre)) {
@@ -121,7 +123,7 @@ public class AntCommandLineBuilder {
     }
     AntPathUtil.addRtJar(myCommandLine.getClassPath());
 
-    myCommandLine.setMainClass(AntMain2.class.getName());
+    myCommandLine.setMainClass("com.intellij.rt.ant.execution.AntMain2");
     final ParametersList programParameters = myCommandLine.getProgramParametersList();
 
     final String additionalParams = AntBuildFileImpl.ANT_COMMAND_LINE_PARAMETERS.get(container);
@@ -129,7 +131,7 @@ public class AntCommandLineBuilder {
       for (String param : ParametersList.parse(additionalParams)) {
         if (param.startsWith("-J")) {
           final String cutParam = param.substring("-J".length());
-          if (cutParam.length() > 0) {
+          if (!cutParam.isEmpty()) {
             vmParametersList.add(cutParam);
           }
         }
@@ -140,10 +142,10 @@ public class AntCommandLineBuilder {
     }
 
     if (!(programParameters.getList().contains(LOGGER_PARAMETER))) {
-      programParameters.add(LOGGER_PARAMETER, IdeaAntLogger2.class.getName());
+      programParameters.add(LOGGER_PARAMETER, "com.intellij.rt.ant.execution.IdeaAntLogger2");
     }
     if (!programParameters.getList().contains(INPUT_HANDLER_PARAMETER)) {
-      programParameters.add(INPUT_HANDLER_PARAMETER, IdeaInputHandler.class.getName());
+      programParameters.add(INPUT_HANDLER_PARAMETER, "com.intellij.rt.ant.execution.IdeaInputHandler");
     }
 
     myProperties = AntBuildFileImpl.ANT_PROPERTIES.get(container);
@@ -152,7 +154,7 @@ public class AntCommandLineBuilder {
     myCommandLine.setWorkingDirectory(buildFile.getParent());
   }
 
-  public JavaParameters getCommandLine() {
+  public SimpleJavaParameters getCommandLine() {
     if (myDone) return myCommandLine;
     ParametersList programParameters = myCommandLine.getProgramParametersList();
     for (final String property : myExpandedProperties) {
@@ -160,7 +162,8 @@ public class AntCommandLineBuilder {
         programParameters.add(property);
       }
     }
-    programParameters.add("-buildfile", myBuildFilePath);
+    programParameters.add("-buildfile");
+    programParameters.add(new CompositeParameterTargetedValue().addPathPart(myBuildFilePath));
     for (final String target : myTargets) {
       if (target != null) {
         programParameters.add(target);

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.apache.maven.shared</groupId>
+    <artifactId>maven-shared-components</artifactId>
+    <version>15</version>
+  </parent>
+
+  <groupId>org.apache.maven.reporting</groupId>
+  <artifactId>maven-reporting-impl</artifactId>
+  <version>2.0.5</version>
+
+  <name>Maven Reporting Implementation</name>
+  <description>Abstract classes to manage report generation.</description>
+
+  <developers>
+    <developer>
+      <id>vsiveton</id>
+      <name>Vincent Siveton</name>
+      <email>vincent.siveton@gmail.com</email>
+      <roles>
+        <role>Java Developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:svn:http://svn.apache.org/repos/asf/maven/shared/tags/maven-reporting-impl-2.0.5</connection>
+    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/maven/shared/tags/maven-reporting-impl-2.0.5</developerConnection>
+    <url>http://svn.apache.org/viewvc/maven/shared/tags/maven-reporting-impl-2.0.5</url>
+  </scm>
+
+  <issueManagement>
+    <system>jira</system>
+    <url>http://jira.codehaus.org/browse/MSHARED/component/13274</url>
+  </issueManagement>
+
+  <properties>
+    <mavenVersion>2.0.6</mavenVersion>
+    <doxiaVersion>1.0</doxiaVersion>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven.reporting</groupId>
+      <artifactId>maven-reporting-api</artifactId>
+      <version>3.0</version>
+    </dependency>
+
+    <!-- maven -->
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-project</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${mavenVersion}</version>
+    </dependency>
+
+    <!-- doxia -->
+    <dependency>
+      <groupId>org.apache.maven.doxia</groupId>
+      <artifactId>doxia-core</artifactId>
+      <version>${doxiaVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.doxia</groupId>
+      <artifactId>doxia-site-renderer</artifactId>
+      <version>${doxiaVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.shared</groupId>
+      <artifactId>maven-doxia-tools</artifactId>
+      <version>1.0.2</version>
+    </dependency>
+
+    <!-- misc -->
+    <dependency>
+      <groupId>commons-validator</groupId>
+      <artifactId>commons-validator</artifactId>
+      <version>1.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-utils</artifactId>
+      <version>1.5.8</version>
+    </dependency>
+
+    <!-- test -->
+    <dependency>
+      <groupId>junit-addons</groupId>
+      <artifactId>junit-addons</artifactId>
+      <version>1.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>2.0.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.unwrap;
 
@@ -13,9 +13,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -30,13 +28,15 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.ListSelectionModel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public class UnwrapHandler implements CodeInsightActionHandler {
   public static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
 
@@ -46,14 +46,13 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    List<MyUnwrapAction> options = collectOptions(project, editor, file);
-    selectOption(options, editor, file);
+    List<MyUnwrapAction> options = collectOptions(project, editor, psiFile);
+    selectOption(options, editor, psiFile);
   }
 
-  @NotNull
-  private static List<MyUnwrapAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  private static @NotNull List<MyUnwrapAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     List<MyUnwrapAction> result = new ArrayList<>();
 
     UnwrapDescriptor descriptor = getUnwrapDescription(file);
@@ -123,38 +122,20 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       .createPopup().showInBestPositionFor(editor);
   }
 
-  private static class MyItem {
-    final String name;
-    final int index;
-    MyItem(String name, int index) {
-      this.name = name;
-      this.index = index;
-    }
-
+  private record MyItem(String name, int index) {
     @Override
     public String toString() {
       return name;
     }
   }
 
-  /**
-   * @deprecated operate with
-   * {@link EditorColors#SEARCH_RESULT_ATTRIBUTES} directly
-   */
-  @Deprecated
-  public static TextAttributes getTestAttributesForExtract() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    return manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-  }
-
-  protected static class MyUnwrapAction extends AnAction {
+  protected static final class MyUnwrapAction extends AnAction {
     private static final Key<Integer> CARET_POS_KEY = new Key<>("UNWRAP_HANDLER_CARET_POSITION");
 
     private final Project myProject;
     private final Editor myEditor;
     private final Unwrapper myUnwrapper;
-    @NotNull
-    private final PsiElement myElement;
+    private final @NotNull PsiElement myElement;
 
     MyUnwrapAction(@NotNull Project project, @NotNull Editor editor, @NotNull Unwrapper unwrapper, @NotNull PsiElement element) {
       super(unwrapper.getDescription(element));
@@ -218,7 +199,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       });
     }
 
-    private void highlightExtractedElements(final List<PsiElement> extractedElements) {
+    private void highlightExtractedElements(final List<? extends PsiElement> extractedElements) {
       for (PsiElement each : extractedElements) {
         final TextRange textRange = each.getTextRange();
         HighlightManager.getInstance(myProject).addRangeHighlight(
@@ -236,7 +217,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       return myUnwrapper.getDescription(myElement);
     }
 
-    PsiElement collectAffectedElements(@NotNull List<PsiElement> toExtract) {
+    PsiElement collectAffectedElements(@NotNull List<? super PsiElement> toExtract) {
       return myUnwrapper.collectAffectedElements(myElement, toExtract);
     }
   }

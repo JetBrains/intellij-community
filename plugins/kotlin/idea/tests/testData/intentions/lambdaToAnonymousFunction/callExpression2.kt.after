@@ -1,0 +1,3 @@
+val y = fun(): String {
+    return "OK"
+}()

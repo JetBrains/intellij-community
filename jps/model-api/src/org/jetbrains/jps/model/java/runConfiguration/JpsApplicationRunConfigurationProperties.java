@@ -15,9 +15,11 @@
  */
 package org.jetbrains.jps.model.java.runConfiguration;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.jps.model.JpsElement;
 
 public interface JpsApplicationRunConfigurationProperties extends JpsElement {
   String getMainClass();
+  @ApiStatus.Internal
   void setMainClass(String value);
 }

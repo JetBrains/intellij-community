@@ -1,0 +1,13 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <plugin id="training"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.services.systemPython"/>
+  </dependencies>
+  <extensions defaultExtensionNs="training">
+    <ift.language.extension language="Python" defaultProductName="PyCharm"
+                            implementationClass="com.intellij.python.featuresTrainer.ift.PythonLangSupport"/>
+    <ift.learning.course language="Python" implementationClass="com.intellij.python.featuresTrainer.ift.PythonLearningCourse"/>
+    <ifs.suggesterSupport language="Python" implementationClass="com.intellij.python.featuresTrainer.ifs.PythonSuggesterSupport"/>
+  </extensions>
+</idea-plugin>

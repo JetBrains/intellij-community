@@ -1,0 +1,20 @@
+// "Replace with 'newFun()'" "true"
+// WITH_STDLIB
+
+class C {
+    @Deprecated("", ReplaceWith("newFun()"))
+    fun oldFun(): Int {
+        return newFun()
+    }
+}
+
+fun newFun(): Int = 0
+
+fun foo(): Int? {
+    return getC()?.<caret>let { newFun() }
+}
+
+fun getC(): C? = null
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

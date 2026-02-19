@@ -1,0 +1,10 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<idea-plugin visibility="internal">
+  <!--Community only, never professional: both plugin and DS -->
+  <dependencies>
+    <module name="intellij.python.community.impl"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.jetbrains.python.console">
+    <runnerFactory implementation="com.intellij.python.community.communityOnly.CommunityPydevConsoleRunnerFactory"/>
+  </extensions>
+</idea-plugin>

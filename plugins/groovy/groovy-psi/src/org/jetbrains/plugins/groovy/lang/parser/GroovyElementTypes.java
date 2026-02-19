@@ -1,26 +1,49 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.APPLICATION_ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_DECLARATION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_TYPE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BAND_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BOR_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CLOSURE_SWITCH_AWARE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CODE_REFERENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CONSTRUCTOR_BLOCK;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.INDEX_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LAND_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LEFT_SHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LOR_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.METHOD_CALL_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PRIMITIVE_TYPE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.PROPERTY_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.RIGHT_SHIFT_UNSIGNED_SIGN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_CONTENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_INJECTION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TERNARY_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TRADITIONAL_FOR_CLAUSE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TYPE_ARGUMENT_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.WILDCARD_TYPE_ELEMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.XOR_EXPRESSION;
 
 /**
  * Utility interface that contains all Groovy non-token element types
  *
- * @author Dmitry.Krasilschikov, ilyas
+ * @author Dmitry.Krasilschikov
  */
 public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyStubElementTypes {
-
-  @Deprecated
-  GrMethodElementType METHOD_DEFINITION = METHOD;
 
   GroovyElementType LITERAL = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LITERAL;
 
   GrCodeBlockElementType CLOSABLE_BLOCK = CLOSURE;
+  GrCodeBlockElementType CLOSABLE_BLOCK_SWITCH_AWARE = CLOSURE_SWITCH_AWARE;
   GrCodeBlockElementType OPEN_BLOCK = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK;
+  GrCodeBlockElementType OPEN_BLOCK_SWITCH_AWARE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.OPEN_BLOCK_SWITCH_AWARE;
   GrCodeBlockElementType CONSTRUCTOR_BODY = CONSTRUCTOR_BLOCK;
 
   IElementType BLOCK_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_STATEMENT;
@@ -28,7 +51,6 @@ public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyS
   IElementType ASSERT_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ASSERT_STATEMENT;
   // Expression statements
   IElementType LABELED_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.LABELED_STATEMENT;
-  @Deprecated GroovyElementType CALL_EXPRESSION = APPLICATION_EXPRESSION;
   IElementType COMMAND_ARGUMENTS = APPLICATION_ARGUMENT_LIST;
   IElementType CONDITIONAL_EXPRESSION = TERNARY_EXPRESSION;
   IElementType ELVIS_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ELVIS_EXPRESSION;
@@ -53,6 +75,7 @@ public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyS
   IElementType POWER_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.POWER_EXPRESSION;
   IElementType POWER_EXPRESSION_SIMPLE = new GroovyElementType("Simple power expression");
   IElementType PATH_PROPERTY_REFERENCE = PROPERTY_EXPRESSION;
+  IElementType SWITCH_EXPRESSION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SWITCH_EXPRESSION;
 
   GroovyElementType PATH_METHOD_CALL = METHOD_CALL_EXPRESSION;
 
@@ -89,8 +112,8 @@ public interface GroovyElementTypes extends GroovyStubElementTypes, GroovyEmptyS
   IElementType IF_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IF_STATEMENT;
   IElementType SWITCH_STATEMENT = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.SWITCH_STATEMENT;
   IElementType CASE_SECTION = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CASE_SECTION;
+  IElementType EXPRESSION_LIST = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.EXPRESSION_LIST;
 
-  IElementType CASE_LABEL = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CASE_LABEL;
   //for clauses
   IElementType FOR_IN_CLAUSE = org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.FOR_IN_CLAUSE;
   IElementType FOR_TRADITIONAL_CLAUSE = TRADITIONAL_FOR_CLAUSE;

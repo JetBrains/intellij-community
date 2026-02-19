@@ -9,15 +9,15 @@ class MyClass(object):
 
 # Unbound methods are still treated as __method in Python 2
 MyClass.method.__func__
-MyClass.method.<warning descr="Cannot find reference '__defaults__' in 'function'">__defaults__</warning>
+MyClass.method.<warning descr="Cannot find reference '__defaults__' in '(self: MyClass) -> None'">__defaults__</warning>
 
 # Bound method with qualifier
 inst = MyClass()
 inst.method.__func__
-inst.method.<warning descr="Cannot find reference '__defaults__' in 'function'">__defaults__</warning>
+inst.method.<warning descr="Cannot find reference '__defaults__' in '() -> Any'">__defaults__</warning>
 
 # Static method
-inst.static_method.<warning descr="Cannot find reference '__func__' in 'function'">__func__</warning>
+inst.static_method.<warning descr="Cannot find reference '__func__' in '() -> Any'">__func__</warning>
 inst.static_method.__defaults__
-MyClass.static_method.<warning descr="Cannot find reference '__func__' in 'function'">__func__</warning>
+MyClass.static_method.<warning descr="Cannot find reference '__func__' in '() -> Any'">__func__</warning>
 MyClass.static_method.__defaults__

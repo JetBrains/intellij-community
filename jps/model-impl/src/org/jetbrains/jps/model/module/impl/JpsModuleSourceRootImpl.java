@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,88 +11,97 @@ import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 
-public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsModuleSourceRootImpl<P>> implements JpsTypedModuleSourceRoot<P> {
-  private final JpsModuleSourceRootType<P> myRootType;
-  private final String myUrl;
+public final class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsModuleSourceRootImpl<P>> implements JpsTypedModuleSourceRoot<P> {
+  private final JpsModuleSourceRootType<P> rootType;
+  private final String url;
 
   public JpsModuleSourceRootImpl(String url, JpsModuleSourceRootType<P> type, P properties) {
     super();
-    myRootType = type;
+    rootType = type;
     myContainer.setChild(type.getPropertiesRole(), properties);
-    myUrl = url;
+    this.url = url;
   }
 
+  @SuppressWarnings("deprecation")
   private JpsModuleSourceRootImpl(JpsModuleSourceRootImpl<P> original) {
     super(original);
-    myRootType = original.myRootType;
-    myUrl = original.myUrl;
+    rootType = original.rootType;
+    url = original.url;
   }
 
   @Override
-  public <P extends JpsElement> P getProperties(@NotNull JpsModuleSourceRootType<P> type) {
-    if (myRootType.equals(type)) {
+  public <T extends JpsElement> T getProperties(@NotNull JpsModuleSourceRootType<T> type) {
+    if (rootType.equals(type)) {
       //noinspection unchecked
-      return (P)myContainer.getChild(myRootType.getPropertiesRole());
+      return (T)myContainer.getChild(rootType.getPropertiesRole());
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public <P extends JpsElement> P getProperties(@NotNull Set<? extends JpsModuleSourceRootType<P>> types) {
-    if (types.contains(myRootType)) {
-      return (P)getProperties();
+  public @Nullable <T extends JpsElement> T getProperties(@NotNull Set<? extends JpsModuleSourceRootType<T>> types) {
+    if (types.contains(rootType)) {
+      //noinspection unchecked
+      return (T)getProperties();
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public <P extends JpsElement> JpsTypedModuleSourceRoot<P> asTyped(@NotNull JpsModuleSourceRootType<P> type) {
+  public @Nullable <T extends JpsElement> JpsTypedModuleSourceRoot<T> asTyped(@NotNull JpsModuleSourceRootType<T> type) {
     //noinspection unchecked
-    return myRootType.equals(type) ? (JpsTypedModuleSourceRoot<P>)this : null;
+    return rootType.equals(type) ? (JpsTypedModuleSourceRoot<T>)this : null;
   }
 
-  @NotNull
   @Override
-  public JpsTypedModuleSourceRoot<?> asTyped() {
+  public @NotNull JpsTypedModuleSourceRoot<?> asTyped() {
     return this;
   }
 
   @Override
   public JpsElementType<?> getType() {
-    return myRootType;
-  }
-
-  @NotNull
-  @Override
-  public P getProperties() {
-    return myContainer.getChild(myRootType.getPropertiesRole());
-  }
-
-  @NotNull
-  @Override
-  public JpsModuleSourceRootType<P> getRootType() {
-    return myRootType;
+    return rootType;
   }
 
   @Override
-  @NotNull
-  public String getUrl() {
-    return myUrl;
+  public @NotNull P getProperties() {
+    return myContainer.getChild(rootType.getPropertiesRole());
   }
 
-  @NotNull
   @Override
-  public File getFile() {
-    return JpsPathUtil.urlToFile(myUrl);
+  public @NotNull JpsModuleSourceRootType<P> getRootType() {
+    return rootType;
   }
 
-  @NotNull
   @Override
-  public JpsModuleSourceRootImpl<P> createCopy() {
+  public @NotNull String getUrl() {
+    return url;
+  }
+
+  @Override
+  public @NotNull File getFile() {
+    return JpsPathUtil.urlToFile(url);
+  }
+
+  @Override
+  public @NotNull Path getPath() {
+    return Path.of(JpsPathUtil.urlToPath(url));
+  }
+
+  @SuppressWarnings("removal")
+  @Override
+  public @NotNull JpsModuleSourceRootImpl<P> createCopy() {
     return new JpsModuleSourceRootImpl<>(this);
+  }
+
+  @Override
+  public String toString() {
+    return "JpsModuleSourceRootImpl(" +
+           "rootType=" + rootType +
+           ", url='" + url + '\'' +
+           ')';
   }
 }

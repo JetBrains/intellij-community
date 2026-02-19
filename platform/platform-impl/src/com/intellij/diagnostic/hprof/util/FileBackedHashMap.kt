@@ -15,9 +15,12 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import kotlin.math.min
 
+@ApiStatus.Internal
 class FileBackedHashMap(
   private val buffer: ByteBuffer,
   private val keySize: Int,
@@ -67,7 +70,7 @@ class FileBackedHashMap(
       val emptyBuf = ByteBuffer.allocateDirect(bufferSize)
       var remaining = size
       while (remaining > 0) {
-        val toWrite = Math.min(emptyBuf.remaining().toLong(), remaining)
+        val toWrite = min(emptyBuf.remaining().toLong(), remaining)
         if (toWrite == emptyBuf.remaining().toLong()) {
           channel.write(emptyBuf)
           emptyBuf.rewind()

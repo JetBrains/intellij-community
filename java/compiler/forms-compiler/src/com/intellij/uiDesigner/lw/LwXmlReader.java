@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Insets;
 import java.lang.reflect.Method;
 
 public final class LwXmlReader {
@@ -36,7 +23,7 @@ public final class LwXmlReader {
   /**
    * @return never {@code null}.
    */
-  public static Element getRequiredChild(final Element element, final String childName) {
+  static Element getRequiredChild(final Element element, final String childName) {
     final Element child = getChild(element, childName);
     if(child == null){
       throw new IllegalArgumentException("subtag '" + childName + "' is required: "+element);
@@ -65,7 +52,7 @@ public final class LwXmlReader {
     }
   }
 
-  public static String getOptionalString(final Element element, final String attributeName, final String defaultValue) {
+  static String getOptionalString(final Element element, final String attributeName, final String defaultValue) {
     final String value = element.getAttributeValue(attributeName);
     return value != null ? value.trim() : defaultValue;
   }
@@ -80,7 +67,7 @@ public final class LwXmlReader {
     }
   }
 
-  public static int getOptionalInt(final Element element, final String attributeName, final int defaultValue) {
+  static int getOptionalInt(final Element element, final String attributeName, final int defaultValue) {
     final String str = element.getAttributeValue(attributeName);
     if (str == null) {
       return defaultValue;
@@ -111,7 +98,7 @@ public final class LwXmlReader {
     }
   }
 
-  public static double getOptionalDouble(final Element element, final String attributeName, double defaultValue) {
+  static double getOptionalDouble(final Element element, final String attributeName, double defaultValue) {
     final String str = element.getAttributeValue(attributeName);
     if (str == null) {
       return defaultValue;
@@ -134,7 +121,7 @@ public final class LwXmlReader {
     }
   }
 
-  public static Object getRequiredPrimitiveTypeValue(final Element element, final String attributeName, final Class valueClass) {
+  static Object getRequiredPrimitiveTypeValue(final Element element, final String attributeName, final Class valueClass) {
     final String str = getRequiredString(element, attributeName);
     try {
       final Method method = valueClass.getMethod("valueOf", String.class);
@@ -148,8 +135,8 @@ public final class LwXmlReader {
     }
   }
 
-  public static StringDescriptor getStringDescriptor(final Element element, final String valueAttr,
-                                                     final String bundleAttr, final String keyAttr) {
+  static StringDescriptor getStringDescriptor(final Element element, final String valueAttr,
+                                              final String bundleAttr, final String keyAttr) {
     final String title = element.getAttributeValue(valueAttr);
     if (title != null) {
       StringDescriptor descriptor = StringDescriptor.create(title);
@@ -167,7 +154,7 @@ public final class LwXmlReader {
     return null;
   }
 
-  public static FontDescriptor getFontDescriptor(final Element element) {
+  static FontDescriptor getFontDescriptor(final Element element) {
     String swingFont = element.getAttributeValue(UIFormXmlConstants.ATTRIBUTE_SWING_FONT);
     if (swingFont != null) {
       return FontDescriptor.fromSwingFont(swingFont);
@@ -179,7 +166,7 @@ public final class LwXmlReader {
     return new FontDescriptor(fontName, fontStyle, fontSize);
   }
 
-  public static ColorDescriptor getColorDescriptor(final Element element) throws Exception {
+  static ColorDescriptor getColorDescriptor(final Element element) throws Exception {
     Attribute attr = element.getAttribute(UIFormXmlConstants.ATTRIBUTE_COLOR);
     if (attr != null) {
       return new ColorDescriptor(new Color(attr.getIntValue()));
@@ -199,7 +186,7 @@ public final class LwXmlReader {
     return new ColorDescriptor(null);
   }
 
-  public static ColorDescriptor getOptionalColorDescriptor(final Element element) {
+  static ColorDescriptor getOptionalColorDescriptor(final Element element) {
     if (element == null) return null;
     try {
       return getColorDescriptor(element);
@@ -209,7 +196,7 @@ public final class LwXmlReader {
     }
   }
 
-  public static Insets readInsets(final Element element) {
+  static Insets readInsets(final Element element) {
     final int top = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_TOP);
     final int left = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_LEFT);
     final int bottom = getRequiredInt(element, UIFormXmlConstants.ATTRIBUTE_BOTTOM);

@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,19 +10,22 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 public final class FoldingUtil {
-  private FoldingUtil() {}
+  private FoldingUtil() { }
 
-  @Nullable
-  public static FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
+  public static @Nullable FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     FoldRegion region = editor.getFoldingModel().getFoldRegion(startOffset, endOffset);
     return region != null && region.isValid() ? region : null;
   }
 
-  @Nullable
-  public static FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
+  public static @Nullable FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line) {
     if (line < 0 || line >= editor.getDocument().getLineCount()) {
       return null;
     }
@@ -41,11 +43,11 @@ public final class FoldingUtil {
     return result;
   }
 
-  public static FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset){
+  public static @NotNull FoldRegion @NotNull [] getFoldRegionsAtOffset(@NotNull Editor editor, int offset) {
     List<FoldRegion> list = new ArrayList<>();
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : allRegions) {
-      if (region.getStartOffset() <= offset && offset <= region.getEndOffset()) {
+      if (region.getTextRange().containsInclusive(offset)) {
         list.add(region);
       }
     }
@@ -55,18 +57,12 @@ public final class FoldingUtil {
     return regions;
   }
 
-  static boolean caretInsideRange(final Editor editor, final TextRange range) {
-    final int offset = editor.getCaretModel().getOffset();
-    return range.contains(offset) && range.getStartOffset() != offset;
-  }
-
   public static boolean isHighlighterFolded(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
-    int startOffset = highlighter instanceof RangeHighlighterEx ?
-                      ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset() :
-                      highlighter.getStartOffset();
-    int endOffset = highlighter instanceof RangeHighlighterEx ?
-                    ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset() :
-                    highlighter.getEndOffset();
+    int startOffset = highlighter instanceof RangeHighlighterEx
+                      ? ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset()
+                      : highlighter.getStartOffset();
+    int endOffset =
+      highlighter instanceof RangeHighlighterEx ? ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset() : highlighter.getEndOffset();
     return isTextRangeFolded(editor, new TextRange(startOffset, endOffset));
   }
 
@@ -76,11 +72,11 @@ public final class FoldingUtil {
   }
 
   /**
-   * Iterates fold regions tree in a depth-first order (pre-order)
+   * Iterates fold region tree in a depth-first order (pre-order)
    */
-  public static Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
-    final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    return new Iterator<FoldRegion>() {
+  public static @NotNull Iterator<FoldRegion> createFoldTreeIterator(@NotNull Editor editor) {
+    FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+    return new Iterator<>() {
       private int sectionStart;
       private int current;
       private int sectionEnd;
@@ -94,7 +90,8 @@ public final class FoldingUtil {
         //noinspection StatementWithEmptyBody
         for (sectionEnd = sectionStart + 1;
              sectionEnd < allRegions.length && allRegions[sectionEnd].getStartOffset() == allRegions[sectionStart].getStartOffset();
-             sectionEnd++);
+             sectionEnd++) {
+        }
         current = sectionEnd;
       }
 
@@ -120,6 +117,4 @@ public final class FoldingUtil {
       }
     };
   }
-
-
 }

@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiElement;
@@ -11,17 +15,13 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public final class CastingLookupElementDecorator extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   public static final ClassConditionKey<CastingLookupElementDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(CastingLookupElementDecorator.class);
 
   private final LookupElement myCastItem;
   private final PsiType myCastType;
 
-  @Nullable
-  private static String getItemText(LookupElementPresentation base, LookupElement castItem) {
+  private static @Nullable String getItemText(LookupElementPresentation base, LookupElement castItem) {
     final LookupElementPresentation castPresentation = new LookupElementPresentation();
     castItem.renderElement(castPresentation);
     return castPresentation.getItemText();
@@ -44,7 +44,7 @@ public final class CastingLookupElementDecorator extends LookupElementDecorator<
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     getDelegate().renderElement(presentation);
     final String castType = getItemText(presentation, getCastItem());
     presentation.setItemText("(" + castType + ")" + presentation.getItemText());

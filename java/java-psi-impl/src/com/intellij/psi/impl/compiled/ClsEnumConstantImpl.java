@@ -1,21 +1,20 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -24,12 +23,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author ven
- */
 public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant {
   public ClsEnumConstantImpl(@NotNull PsiFieldStub stub) {
     super(stub);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitEnumConstant(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
@@ -40,7 +46,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiField mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
@@ -60,8 +66,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult resolveMethodGenerics() {
+  public @NotNull JavaResolveResult resolveMethodGenerics() {
     return JavaResolveResult.EMPTY;
   }
 
@@ -70,9 +75,8 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+  public @NotNull PsiEnumConstantInitializer getOrCreateInitializingClass() {
     throw new IncorrectOperationException("cannot create initializing class in cls enum constant");
   }
 
@@ -82,8 +86,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return JavaPsiFacade.getElementFactory(getProject()).createType(getContainingClass());
   }
 

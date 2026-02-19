@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * Extension point to provide a spellchecker with additional non file-based dictionaries.
+ * Extension point to provide a spellchecker with additional non-file-based dictionaries.
  * <p>
  * Unlike {@link CustomDictionaryProvider} and {@link com.intellij.spellchecker.BundledDictionaryProvider}
  * that require {@link Dictionary} to have a file representation {@link RuntimeDictionaryProvider} supports
- * non file-based dictionaries.
+ * non-file-based dictionaries.
  * <p>
  * It means that dictionary may be even generated at a runtime, or downloaded from remote server.
  * <p>
@@ -20,7 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  */
 public interface RuntimeDictionaryProvider {
   ExtensionPointName<RuntimeDictionaryProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.spellchecker.dictionary.runtimeDictionaryProvider");
+    new ExtensionPointName<>("com.intellij.spellchecker.dictionary.runtimeDictionaryProvider");
 
   Dictionary[] getDictionaries();
 }

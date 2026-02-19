@@ -30,8 +30,11 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 import static com.intellij.util.ui.UIUtil.ComponentStyle.SMALL;
 import static com.intellij.util.ui.UIUtil.FontColor.BRIGHTER;
@@ -72,8 +75,7 @@ class RestoreReferencesDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     Object[] values = myList.getSelectedValues();
-    mySelectedElements = new Object[values.length];
-    System.arraycopy(values, 0, mySelectedElements, 0, values.length);
+    mySelectedElements = values.clone();
     super.doOKAction();
   }
 

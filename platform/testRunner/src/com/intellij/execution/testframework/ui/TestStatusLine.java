@@ -1,49 +1,53 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.TestRunnerBundle;
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.progress.util.ColorProgressBar;
+import com.intellij.ide.nls.NlsMessages;
+import com.intellij.openapi.progress.util.ProgressBarUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.HtmlToSimpleColoredComponentConverter;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.text.html.HTML;
+import java.awt.BorderLayout;
+import java.awt.GridBagLayout;
+import java.util.function.Supplier;
 
-/**
- * @author yole
- */
+
 public class TestStatusLine extends NonOpaquePanel {
-  private static final SimpleTextAttributes IGNORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
-  private static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED_TEXT);
+  private static final SimpleTextAttributes IGNORED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Label.warningForeground());
+  private static final SimpleTextAttributes FAILED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Label.errorForeground());
+  private final HtmlToSimpleColoredComponentConverter myConverter;
 
   protected final JProgressBar myProgressBar = new JProgressBar();
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
+  private final SimpleColoredComponent myStateDescription = new SimpleColoredComponent();
   private final JPanel myProgressPanel;
+
+  @TestOnly
+  @ApiStatus.Internal
+  public SimpleColoredComponent getStateDescription() {
+    return myStateDescription;
+  }
+
   private final JLabel myWarning = new JLabel();
 
   public TestStatusLine() {
@@ -52,23 +56,37 @@ public class TestStatusLine extends NonOpaquePanel {
     add(myProgressPanel, BorderLayout.SOUTH);
     myProgressBar.setMaximum(100);
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
-    myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
-    setStatusColor(ColorProgressBar.GREEN);
+    myProgressBar.putClientProperty(ProgressBarUtil.STATUS_KEY, ProgressBarUtil.PASSED_VALUE);
 
-    JPanel stateWrapper = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    JPanel stateWrapper = new NonOpaquePanel(new GridBagLayout());
+    stateWrapper.setBorder(JBUI.Borders.emptyLeft(2));
+    final var constraint = new GridBag();
     myState.setOpaque(false);
-    stateWrapper.add(myState);
+    stateWrapper.add(myState, constraint.next());
+    myStateDescription.setOpaque(false);
+    stateWrapper.add(myStateDescription, constraint.next().insetLeft(6));
 
     myWarning.setOpaque(false);
     myWarning.setVisible(false);
     myWarning.setIcon(AllIcons.General.Warning);
-    myWarning.setBorder(JBUI.Borders.emptyLeft(10));
-    stateWrapper.add(myWarning);
+    stateWrapper.add(myWarning, constraint.next().insetLeft(12));
 
-    add(stateWrapper, BorderLayout.CENTER);
-    myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
+    add(stateWrapper, BorderLayout.WEST);
+    myState.append(ExecutionBundle.message("junit.running.info.starting.label"));
+
+    myConverter = new HtmlToSimpleColoredComponentConverter((tag, attr) -> {
+      final String className = (String) attr.getAttribute(HTML.Attribute.CLASS);
+      return switch (className) {
+        case "failed" -> FAILED_ATTRIBUTES;
+        case "ignored" -> IGNORED_ATTRIBUTES;
+        case null, default -> SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      };
+    });
   }
 
+  /// Updates the test status count.
+  /// The number of passed tests is inferred from `finishedTestsCount`, `failuresCount` and `ignoredTestsCount`.
+  /// @param testsTotal total amount of tests. -1 if the amount of tests is unknown.
   public void formatTestMessage(final int testsTotal,
                                 final int finishedTestsCount,
                                 final int failuresCount,
@@ -82,7 +100,7 @@ public class TestStatusLine extends NonOpaquePanel {
   }
 
   private void updateWarningVisibility() {
-    myWarning.setVisible(myState.getCharSequence(false).length() > 0 && StringUtil.isNotEmpty(myWarning.getText()));
+    myWarning.setVisible(!myState.getCharSequence(false).isEmpty() && StringUtil.isNotEmpty(myWarning.getText()));
   }
 
   private void doFormatTestMessage(int testsTotal,
@@ -92,57 +110,49 @@ public class TestStatusLine extends NonOpaquePanel {
                                    Long duration,
                                    long endTime) {
     myState.clear();
+    myStateDescription.clear();
+
     if (testsTotal == 0) {
       testsTotal = finishedTestsCount;
       if (testsTotal == 0) return;
     }
-    int passedCount = finishedTestsCount - failuresCount - ignoredTestsCount;
-    if (duration == null || endTime == 0) {
-      //running tests
-      formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
-      return;
+
+    int passedCount = Math.max(finishedTestsCount - failuresCount - ignoredTestsCount, 0);
+
+    final boolean ongoing = finishedTestsCount != testsTotal;
+    final boolean finished = endTime != 0;
+    final boolean indefinite = testsTotal < 0;
+
+    if (ongoing && finished) {
+      myState.append(TestRunnerBundle.message("test.result.stopped"));
+      myState.append(" ");
     }
 
-    //finished tests
-    boolean stopped = finishedTestsCount != testsTotal;
-    if (stopped) {
-      myState.append(TestRunnerBundle.message("test.stopped") + " ");
+    if (failuresCount == 0 && ignoredTestsCount == 0) myState.append(TestRunnerBundle.message("test.result.all.passed", finishedTestsCount));
+    else if (passedCount == 0 && ignoredTestsCount == 0) appendColored(TestRunnerBundle.message("test.result.all.failed", failuresCount));
+    else if (failuresCount == 0 && passedCount == 0) appendColored(TestRunnerBundle.message("test.result.all.ignored", ignoredTestsCount));
+    else if (ignoredTestsCount == 0) appendColored(TestRunnerBundle.message("test.result.failed.passed", failuresCount, passedCount));
+    else if (passedCount == 0) appendColored(TestRunnerBundle.message("test.result.failed.ignored", failuresCount, ignoredTestsCount));
+    else if (failuresCount == 0) appendColored(TestRunnerBundle.message("test.result.passed.ignored", passedCount, ignoredTestsCount));
+    else appendColored(TestRunnerBundle.message("test.result.failed.passed.ignored", failuresCount, passedCount, ignoredTestsCount));
+
+    final int count = failuresCount + passedCount + ignoredTestsCount;
+
+    if (ongoing && finished && !indefinite && duration != null) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description.and.duration", count, testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    } else if (finished && indefinite && duration != null) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", count, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    } else if (ongoing && !indefinite) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description", count, testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    } else if (!indefinite && duration != null) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-
-    formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
-
-    myState.append(" – " + StringUtil.formatDuration(duration, "\u2009"), SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
-  private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
-    boolean something = false;
-    if (failuresCount > 0) {
-      myState.append(TestRunnerBundle.message("tests.result.prefix") + " ", ERROR_ATTRIBUTES);
-      myState.append(TestRunnerBundle.message("tests.result.failed.count", failuresCount), ERROR_ATTRIBUTES);
-      something = true;
-    }
-    else {
-      myState.append(TestRunnerBundle.message("tests.result.prefix")+" ");
-    }
-
-    if (passedCount > 0 || ignoredTestsCount + failuresCount == 0) {
-      if (something) {
-        myState.append(", ");
-      }
-      something = true;
-      myState.append(TestRunnerBundle.message("tests.result.passed.count", passedCount));
-    }
-
-    if (ignoredTestsCount > 0) {
-      if (something) {
-        myState.append(", ");
-      }
-      myState.append(TestRunnerBundle.message("tests.result.ignored.count", ignoredTestsCount), IGNORE_ATTRIBUTES);
-    }
-
-    if (testsTotal > 0) {
-      myState.append(TestRunnerBundle.message("tests.result.total.count", testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    }
+  private void appendColored(@Nls String text) {
+    myConverter
+      .convert(text, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      .forEach(frag -> myState.append(frag.getText(), frag.getAttributes()));
   }
 
   public void setIndeterminate(boolean flag) {
@@ -150,22 +160,23 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setIndeterminate(flag);
   }
 
-  public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
+  public void onTestsDone(@Nullable Supplier<? extends Icon> toolbarIconSupplier) {
     EdtInvocationManager.getInstance().invokeLater(() -> {
-      myProgressPanel.remove(myProgressBar);
-      if (info != null) {
-        myState.setIcon(TestIconMapper.getToolbarIcon(info));
+      if (toolbarIconSupplier != null) {
+        myState.setIcon(toolbarIconSupplier.get());
       }
     });
-    
   }
 
-  public void setStatusColor(Color color) {
-    myProgressBar.setForeground(color);
+  @ApiStatus.Internal
+  public String getStatus() {
+    final var property = myProgressBar.getClientProperty(ProgressBarUtil.STATUS_KEY);
+    if (property == null) return null;
+    return (String)property;
   }
 
-  public Color getStatusColor() {
-    return myProgressBar.getForeground();
+  public void setStatus(@NotNull String status) {
+    myProgressBar.putClientProperty(ProgressBarUtil.STATUS_KEY, status);
   }
 
   public void setFraction(double v) {
@@ -173,31 +184,33 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setValue(fraction);
   }
 
-  /**
-   * @deprecated Usages should be deleted as progress is now incorporated into console
-   */
-  @Deprecated
-  public void setPreferredSize(boolean orientation) {
-    final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
-    myProgressPanel.setMaximumSize(size);
-    myProgressPanel.setMinimumSize(size);
-    myProgressPanel.setPreferredSize(size);
+  @ApiStatus.Internal
+  public void showProgressBar() {
+    myProgressBar.setVisible(true);
+  }
+
+  @ApiStatus.Internal
+  public void hideProgressBar() {
+    myProgressBar.setVisible(false);
   }
 
   public void setText(@Nls String progressStatus_text) {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
       myState.append(progressStatus_text);
-      myWarning.setVisible(!progressStatus_text.isEmpty());
     });
   }
 
-  @TestOnly
-  @NotNull
-  public String getStateText() {
+  public @NlsSafe @NotNull String getStateText() {
     return myState.toString();
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull SimpleColoredComponent.ColoredIterator getStateIterator() {
+    return myState.iterator();
+  }
+  
   @ApiStatus.Internal
   public void setWarning(@Nls @NotNull String suffix) {
     myWarning.setText(suffix);

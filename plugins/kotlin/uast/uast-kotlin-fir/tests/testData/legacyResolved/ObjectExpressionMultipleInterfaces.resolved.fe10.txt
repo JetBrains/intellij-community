@@ -1,0 +1,8 @@
+UField (name = field) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+UField (name = field) -> UObjectLiteralExpression -> Kotlin_Light_Method:
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = AClass) -> Kotlin_Light_Class:abstract class AClass {
+}: AClass
+UTypeReferenceExpression (name = I1) -> USimpleNameReferenceExpression (identifier = I1) -> Kotlin_Light_Class:interface I1 {
+}: I1
+UTypeReferenceExpression (name = I2) -> USimpleNameReferenceExpression (identifier = I2) -> Kotlin_Light_Class:interface I2 {
+}: I2

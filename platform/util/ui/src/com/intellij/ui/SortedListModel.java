@@ -1,10 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
 
-import javax.swing.*;
-import java.util.*;
+import javax.swing.AbstractListModel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
 public class SortedListModel<T> extends AbstractListModel<T> {
   private List<T> myItems = new ArrayList<>();
@@ -72,6 +78,13 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     if (index >= 0) remove(index);
   }
 
+  public void update(T item) {
+    int index = indexOf(item);
+    if (index >= 0) {
+      fireContentsChanged(this, index, index);
+    }
+  }
+
   public int indexOf(T item) {
     int index = Collections.binarySearch(myItems, item, myComparator);
     return index >= 0 ? index : -1;
@@ -122,7 +135,7 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     return new MyIterator();
   }
 
-  private class MyIterator implements Iterator<T> {
+  private final class MyIterator implements Iterator<T> {
     private final Iterator<T> myIterator;
     private int myCounter = -1;
 

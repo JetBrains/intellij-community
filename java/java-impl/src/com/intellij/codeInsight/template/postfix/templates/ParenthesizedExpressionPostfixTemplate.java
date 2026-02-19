@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.openapi.project.DumbAware;
+
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
-public class ParenthesizedExpressionPostfixTemplate extends ParenthesizedPostfixTemplate {
+public class ParenthesizedExpressionPostfixTemplate extends ParenthesizedPostfixTemplate implements DumbAware {
   public ParenthesizedExpressionPostfixTemplate() {
     super(JAVA_PSI_INFO, selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }

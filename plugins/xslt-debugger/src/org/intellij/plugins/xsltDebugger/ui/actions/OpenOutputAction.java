@@ -19,6 +19,7 @@ import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -46,9 +47,8 @@ public class OpenOutputAction extends AnAction {
     if (editor != null) {
       final String extension = "xml"; // TODO: get from output type
       final VirtualFile file = new LightVirtualFile("XSLT Output." + extension, editor.getDocument().getText()) {
-        @NotNull
         @Override
-        public Charset getCharset() {
+        public @NotNull Charset getCharset() {
           return StandardCharsets.UTF_8;
         }
       };
@@ -60,5 +60,10 @@ public class OpenOutputAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

@@ -15,13 +15,21 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
+import com.jetbrains.python.ast.impl.ParamHelperCore;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.PySingleStarParameter;
+import com.jetbrains.python.psi.PySlashParameter;
+import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +49,7 @@ public final class ParamHelper {
   /**
    * Runs a {@link ParamWalker ParamWalker} down the array of parameters, recursively descending into tuple parameters.
    * If the array is from PyParamaterList.getParameters(), parameters are visited in the order of textual appearance
+   *
    * @param params where to walk
    * @param walker the walker with callbacks.
    */
@@ -55,8 +64,7 @@ public final class ParamHelper {
       final boolean first = i == 0;
       final boolean last = i == parameters.size() - 1;
 
-      if (psi instanceof PyTupleParameter) {
-        final PyTupleParameter tupleParameter = (PyTupleParameter)psi;
+      if (psi instanceof PyTupleParameter tupleParameter) {
         walker.enterTupleParameter(tupleParameter, first, last);
         walkDownParamArray(tupleParameter.getContents(), walker);
         walker.leaveTupleParameter(tupleParameter, first, last);
@@ -77,17 +85,15 @@ public final class ParamHelper {
     }
   }
 
-  @NotNull
-  public static String getPresentableText(PyParameter @NotNull [] parameters,
-                                          boolean includeDefaultValue,
-                                          @Nullable TypeEvalContext context) {
+  public static @NotNull String getPresentableText(PyParameter @NotNull [] parameters,
+                                                   boolean includeDefaultValue,
+                                                   @Nullable TypeEvalContext context) {
     return getPresentableText(ContainerUtil.map(parameters, PyCallableParameterImpl::psi), includeDefaultValue, context);
   }
 
-  @NotNull
-  public static String getPresentableText(@NotNull List<? extends PyCallableParameter> parameters,
-                                          boolean includeDefaultValue,
-                                          @Nullable TypeEvalContext context) {
+  public static @NotNull String getPresentableText(@NotNull List<? extends PyCallableParameter> parameters,
+                                                   boolean includeDefaultValue,
+                                                   @Nullable TypeEvalContext context) {
     final StringBuilder result = new StringBuilder();
     result.append("(");
 
@@ -112,13 +118,13 @@ public final class ParamHelper {
 
         @Override
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
-          result.append(PySlashParameter.TEXT);
+          result.append(PyAstSlashParameter.TEXT);
           if (!last) result.append(", ");
         }
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          result.append(PySingleStarParameter.TEXT);
+          result.append(PyAstSingleStarParameter.TEXT);
           if (!last) result.append(", ");
         }
 
@@ -134,11 +140,12 @@ public final class ParamHelper {
     return result.toString();
   }
 
-  @NotNull
-  public static String getNameInSignature(@NotNull PyCallableParameter parameter) {
+  public static @NotNull String getNameInSignature(@NotNull PyCallableParameter parameter) {
     final StringBuilder sb = new StringBuilder();
 
-    if (parameter.isPositionalContainer()) sb.append("*");
+    if (parameter.isPositionalContainer()) {
+      sb.append("*");
+    }
     else if (parameter.isKeywordContainer()) sb.append("**");
 
     final String name = parameter.getName();
@@ -147,17 +154,8 @@ public final class ParamHelper {
     return sb.toString();
   }
 
-  @NotNull
-  public static String getNameInSignature(@NotNull PyNamedParameter parameter) {
-    final StringBuilder sb = new StringBuilder();
-
-    if (parameter.isPositionalContainer()) sb.append("*");
-    else if (parameter.isKeywordContainer()) sb.append("**");
-
-    final String name = parameter.getName();
-    sb.append(name != null ? name : "...");
-
-    return sb.toString();
+  public static @NotNull String getNameInSignature(@NotNull PyNamedParameter parameter) {
+    return ParamHelperCore.getNameInSignature(parameter);
   }
 
   /**
@@ -166,48 +164,13 @@ public final class ParamHelper {
    * @return equal sign (surrounded with spaces if {@code parameterRenderedAsTyped}) +
    * {@code defaultValue} (with body escaped if it is a string literal)
    */
-  @Nullable
   @Contract("null, _->null")
-  public static String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
-    if (defaultValue == null) return null;
-
-    final StringBuilder sb = new StringBuilder();
-
-    // According to PEP 8 equal sign should be surrounded by spaces if annotation is present
-    sb.append(parameterRenderedAsTyped ? " = " : "=");
-
-    final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue);
-    if (quotes != null) {
-      final String value = defaultValue.substring(quotes.getFirst().length(), defaultValue.length() - quotes.getSecond().length());
-      sb.append(quotes.getFirst());
-      StringUtil.escapeStringCharacters(value.length(), value, sb);
-      sb.append(quotes.getSecond());
-    }
-    else {
-      sb.append(defaultValue);
-    }
-
-    return sb.toString();
-  }
-
-  /**
-   * @param defaultValue expression returned by {@link PyCallableParameter#getDefaultValue()} or {@link PyParameter#getDefaultValue()}.
-   * @return {@code defaultValue} value surrounded by quotes if it is a multi-line string literal, {@code defaultValue} text otherwise.
-   */
-  @Nullable
-  public static String getDefaultValueText(@Nullable PyExpression defaultValue) {
-    if (defaultValue instanceof PyStringLiteralExpression) {
-      final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
-      if (quotes != null) {
-        return quotes.getFirst() + ((PyStringLiteralExpression)defaultValue).getStringValue() + quotes.getSecond();
-      }
-    }
-
-    return defaultValue == null ? null : defaultValue.getText();
+  public static @Nullable String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
+    return ParamHelperCore.getDefaultValuePartInSignature(defaultValue, parameterRenderedAsTyped);
   }
 
   public static boolean couldHaveDefaultValue(@NotNull String parameterName) {
-    return !parameterName.startsWith("*") && !parameterName.equals(PySlashParameter.TEXT);
+    return !parameterName.startsWith("*") && !parameterName.equals(PyAstSlashParameter.TEXT);
   }
 
   public static boolean isSelfArgsKwargsCallable(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
@@ -222,28 +185,54 @@ public final class ParamHelper {
     return false;
   }
 
+  public static boolean isSelfArgsKwargsCallable(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = type.getParameters(context);
+    return parameters != null && isSelfArgsKwargsSignature(parameters);
+  }
+
+  public static boolean isSelfArgsKwargsSignature(@NotNull List<PyCallableParameter> parameters) {
+    return parameters.size() == 3 &&
+           parameters.get(0).isSelf() &&
+           parameters.get(1).isPositionalContainer() &&
+           parameters.get(2).isKeywordContainer();
+  }
+
+  public static boolean isArgsKwargsCallable(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = type.getParameters(context);
+    return parameters != null && isArgsKwargsSignature(parameters);
+  }
+
+  public static boolean isArgsKwargsSignature(@NotNull List<PyCallableParameter> parameters) {
+    return parameters.size() == 2 &&
+           parameters.get(0).isPositionalContainer() &&
+           parameters.get(1).isKeywordContainer();
+  }
+
   public interface ParamWalker {
     /**
      * Is called when a tuple parameter is encountered, before visiting any parameters nested in it.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void enterTupleParameter(PyTupleParameter param, boolean first, boolean last);
 
     /**
      * Is called when all nested parameters of a given tuple parameter are visited.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last);
 
     /**
      * Is called when a named parameter is encountered.
+     *
      * @param param the parameter
      * @param first true iff it is the first in the list
-     * @param last true it is the last in the list
+     * @param last  true it is the last in the list
      */
     void visitNamedParameter(PyNamedParameter param, boolean first, boolean last);
 
@@ -254,7 +243,7 @@ public final class ParamHelper {
     void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last);
   }
 
-  public static abstract class ParamVisitor implements ParamWalker {
+  public abstract static class ParamVisitor implements ParamWalker {
 
     @Override
     public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) { }
@@ -288,5 +277,4 @@ public final class ParamHelper {
     );
     return result;
   }
-
 }

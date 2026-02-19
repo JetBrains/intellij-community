@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.safeDelete;
 
@@ -6,15 +6,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
-public class SafeDeleteUsageViewDescriptor implements UsageViewDescriptor {
-  private final PsiElement[] myElementsToDelete;
+@ApiStatus.Internal
+public final class SafeDeleteUsageViewDescriptor implements UsageViewDescriptor {
+  private final PsiElement @NotNull [] myElementsToDelete;
 
-  public SafeDeleteUsageViewDescriptor(PsiElement[] elementsToDelete) {
+  SafeDeleteUsageViewDescriptor(PsiElement @NotNull [] elementsToDelete) {
     myElementsToDelete = elementsToDelete;
   }
 
@@ -28,9 +27,8 @@ public class SafeDeleteUsageViewDescriptor implements UsageViewDescriptor {
     return RefactoringBundle.message("items.to.be.deleted");
   }
 
-  @NotNull
   @Override
-  public String getCodeReferencesText(int usagesCount, int filesCount) {
+  public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.in.code", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 

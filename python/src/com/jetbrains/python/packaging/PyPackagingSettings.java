@@ -1,30 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
-
+@ApiStatus.Internal
 @State(name = "PyPackaging")
-public class PyPackagingSettings implements PersistentStateComponent<PyPackagingSettings> {
+public class PyPackagingSettings implements PersistentStateComponent<PyPackagingSettings>, Disposable {
 
   public volatile boolean earlyReleasesAsUpgrades = false;
 
   public static PyPackagingSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, PyPackagingSettings.class);
+    return project.getService(PyPackagingSettings.class);
   }
 
-  @Nullable
   @Override
-  public PyPackagingSettings getState() {
+  public @Nullable PyPackagingSettings getState() {
     return this;
   }
 
@@ -38,8 +39,7 @@ public class PyPackagingSettings implements PersistentStateComponent<PyPackaging
    * @return first item in {@code versions} if {@link PyPackagingSettings#earlyReleasesAsUpgrades} is true,
    * first non-pre- and non-developmental release otherwise.
    */
-  @Nullable
-  public String selectLatestVersion(@NotNull List<String> versions) {
+  public @Nullable String selectLatestVersion(@NotNull @Unmodifiable List<String> versions) {
     if (!earlyReleasesAsUpgrades) {
       return StreamEx
         .of(versions)
@@ -54,5 +54,9 @@ public class PyPackagingSettings implements PersistentStateComponent<PyPackaging
     }
 
     return ContainerUtil.getFirstItem(versions);
+  }
+
+  @Override
+  public void dispose() {
   }
 }

@@ -1,5 +1,7 @@
 class Test {
-    void test(boolean foo) {
-        while(<selection>foo</selection>)
+    void test() {
+        while(<selection>foo()</selection>)
     }
+    
+    native boolean foo();
 }

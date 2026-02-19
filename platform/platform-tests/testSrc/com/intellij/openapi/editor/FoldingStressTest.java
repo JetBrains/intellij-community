@@ -19,7 +19,8 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 public class FoldingStressTest extends LightPlatformTestCase {
 
@@ -81,19 +82,20 @@ public class FoldingStressTest extends LightPlatformTestCase {
     foldRegion.setExpanded(false);
   }
 
+  @PerformanceUnitTest
   public void testRestoreManyFoldRegionsPerformance() {
     int N = 100_000;
     DocumentImpl doc = new DocumentImpl(StringUtil.repeat("x", N));
     Editor editor = EditorFactory.getInstance().createEditor(doc);
     try {
     FoldingModelEx model = (FoldingModelEx)editor.getFoldingModel();
-    PlatformTestUtil.startPerformanceTest("restoring many fold regions", 1500, () -> model.runBatchFoldingOperation(() -> {
+    Benchmark.newBenchmark("restoring many fold regions", () -> model.runBatchFoldingOperation(() -> {
       for (int i = 0; i < N; i++) {
         addAndCollapseFoldRegion(model, i, i+1, "/*...*/");
       }
     }))
       .setup(()-> model.runBatchFoldingOperation(model::clearFoldRegions))
-      .assertTiming();
+      .start();
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);

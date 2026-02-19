@@ -1,33 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.inline.InlineConstantFieldHandler;
 import com.intellij.refactoring.inline.InlineConstantFieldProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InlineConstantFieldTest extends LightRefactoringTestCase {
+public class InlineConstantFieldTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -88,11 +78,11 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   }
 
   public void testFieldInitializedWithParameter() {
-    doTestConflict("Field initializer refers to parameter <b><code>a</code></b> which is not accessible in method <b><code>Test.test()</code></b>");
+    doTestConflict("Field initializer refers to parameter <b><code>a</code></b>, which is not accessible in method <b><code>Test.test()</code></b>");
   }
 
   public void testFieldInitializedLocalClass() {
-    doTestConflict("Field initializer refers to class <b><code>Local</code></b> which is not accessible in method <b><code>Test.test()</code></b>");
+    doTestConflict("Field initializer refers to local class <b><code>Local</code></b>, which is not accessible in method <b><code>Test.test()</code></b>");
   }
 
   public void testFieldInitializedWithParameter1() {

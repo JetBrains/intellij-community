@@ -1,0 +1,302 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.refactoring.move.moveClassesOrPackages;
+
+import com.intellij.lang.java.JavaFindUsagesProvider;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.file.PsiPackageImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
+import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public final class MoveClassesOrPackagesUtil {
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesUtil.class);
+
+  private MoveClassesOrPackagesUtil() {
+  }
+
+  /** @deprecated Use {@link #findUsages(PsiElement, SearchScope, boolean, boolean, String)} */
+  @Deprecated
+  public static UsageInfo[] findUsages(final PsiElement element,
+                                       boolean searchInStringsAndComments,
+                                       boolean searchInNonJavaFiles,
+                                       final String newQName) {
+    return findUsages(element, GlobalSearchScope.projectScope(element.getProject()),
+                      searchInStringsAndComments, searchInNonJavaFiles, newQName);
+  }
+
+  public static UsageInfo @NotNull [] findUsages(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInStringsAndComments,
+                                                 boolean searchInNonJavaFiles,
+                                                 String newQName) {
+    List<UsageInfo> results = Collections.synchronizedList(new ArrayList<>());
+    Set<PsiReference> foundReferences = new HashSet<>();
+
+    for (PsiReference reference : ReferencesSearch.search(element, searchScope, false).asIterable()) {
+      TextRange range = reference.getRangeInElement();
+      if (foundReferences.contains(reference)) continue;
+      results.add(new MoveRenameUsageInfo(reference.getElement(), reference, range.getStartOffset(), range.getEndOffset(), element, false));
+      foundReferences.add(reference);
+    }
+
+    findNonCodeUsages(element, searchScope, searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
+    preprocessUsages(results);
+    return results.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  private static void preprocessUsages(@NotNull List<UsageInfo> results) {
+    for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+      handler.preprocessUsages(results);
+    }
+  }
+
+  /**
+   * @param results must be thread-safe
+   */
+  public static void findNonCodeUsages(@NotNull PsiElement element,
+                                       @NotNull SearchScope searchScope,
+                                       boolean searchInStringsAndComments,
+                                       boolean searchInNonJavaFiles,
+                                       String newQName,
+                                       @NotNull Collection<? super UsageInfo> results) {
+    final String stringToSearch = getStringToSearch(element);
+    if (stringToSearch == null) return;
+    TextOccurrencesUtil.findNonCodeUsages(element, searchScope, stringToSearch,
+                                          searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
+  }
+
+  private static String getStringToSearch(@Nullable PsiElement element) {
+    return switch (element) {
+      case PsiPackage aPackage -> aPackage.getQualifiedName();
+      case PsiClass aClass -> aClass.getQualifiedName();
+      case PsiDirectory directory -> getStringToSearch(JavaDirectoryService.getInstance().getPackage(directory));
+      case PsiClassOwner owner -> owner.getName();
+      case null, default -> throw new IllegalArgumentException("Unknown element: " + (element == null ? null : element.getClass().getName()));
+    };
+  }
+
+  // Does not process non-code usages!
+  static @NotNull PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
+                                  @NotNull GlobalSearchScope scope,
+                                  @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
+    final PackageWrapper targetPackage = moveDestination.getTargetPackage();
+
+    final String newPrefix;
+    if (targetPackage.getQualifiedName().isEmpty()) {
+      newPrefix = "";
+    }
+    else {
+      newPrefix = targetPackage.getQualifiedName() + ".";
+    }
+
+    final String newPackageQualifiedName = newPrefix + aPackage.getName();
+
+    // do actual move
+    PsiDirectory[] dirs = aPackage.getDirectories(scope);
+    for (PsiDirectory dir : dirs) {
+      final PsiDirectory targetDirectory = moveDestination.getTargetDirectory(dir);
+      if (targetDirectory != null) {
+        moveDirectoryRecursively(dir, targetDirectory);
+      }
+    }
+
+    return new PsiPackageImpl(aPackage.getManager(), newPackageQualifiedName);
+  }
+
+  public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)
+    throws IncorrectOperationException {
+    if ( dir.getParentDirectory() == destination ) return;
+    moveDirectoryRecursively(dir, destination, new HashSet<>());
+  }
+
+  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<? super VirtualFile> movedPaths) throws IncorrectOperationException {
+    final VirtualFile destVFile = destination.getVirtualFile();
+    final VirtualFile sourceVFile = dir.getVirtualFile();
+    if (movedPaths.contains(sourceVFile)) return;
+    String targetName = dir.getName();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
+    if (aPackage != null) {
+      final String sourcePackageName = aPackage.getName();
+      if (sourcePackageName != null && !sourcePackageName.equals(targetName)) {
+        targetName = sourcePackageName;
+      }
+    }
+    final PsiDirectory subdirectoryInDest;
+    final boolean isSourceRoot = RefactoringUtil.isSourceRoot(dir);
+    if (VfsUtilCore.isAncestor(sourceVFile, destVFile, false) || isSourceRoot) {
+      PsiDirectory existingSubdir = destination.findSubdirectory(targetName);
+      if (existingSubdir == null) {
+        subdirectoryInDest = destination.createSubdirectory(targetName);
+        movedPaths.add(subdirectoryInDest.getVirtualFile());
+      }
+      else {
+        subdirectoryInDest = existingSubdir;
+      }
+    }
+    else {
+      subdirectoryInDest = destination.findSubdirectory(targetName);
+    }
+
+    if (subdirectoryInDest == null) {
+      VirtualFile virtualFile = dir.getVirtualFile();
+      MoveFilesOrDirectoriesUtil.doMoveDirectory(dir, destination);
+      movedPaths.add(virtualFile);
+    }
+    else {
+      final PsiFile[] files = dir.getFiles();
+      for (PsiFile file : files) {
+        try {
+          subdirectoryInDest.checkAdd(file);
+        }
+        catch (IncorrectOperationException e) {
+          continue;
+        }
+        MoveFilesOrDirectoriesUtil.doMoveFile(file, subdirectoryInDest);
+      }
+
+      final PsiDirectory[] subdirectories = dir.getSubdirectories();
+      for (PsiDirectory subdirectory : subdirectories) {
+        if (!subdirectory.equals(subdirectoryInDest)) {
+          moveDirectoryRecursively(subdirectory, subdirectoryInDest, movedPaths);
+        }
+      }
+      if (!isSourceRoot && dir.getFiles().length == 0 && dir.getSubdirectories().length == 0) {
+        dir.delete();
+      }
+    }
+  }
+
+  public static void prepareMoveClass(PsiClass aClass) {
+    for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+      handler.prepareMove(aClass);
+    }
+  }
+
+  public static void finishMoveClass(PsiClass aClass) {
+    for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+      handler.finishMoveClass(aClass);
+    }
+  }
+
+  // Does not process non-code usages!
+  public static PsiClass doMoveClass(PsiClass aClass, PsiDirectory moveDestination) throws IncorrectOperationException {
+    return doMoveClass(aClass, moveDestination, true);
+  }
+
+  // Does not process non-code usages!
+  public static PsiClass doMoveClass(PsiClass aClass, PsiDirectory moveDestination, boolean moveAllClassesInFile) throws IncorrectOperationException {
+    PsiClass newClass;
+    if (!moveAllClassesInFile) {
+      for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+        newClass = handler.doMoveClass(aClass, moveDestination);
+        if (newClass != null) return newClass;
+      }
+    }
+
+    PsiFile file = aClass.getContainingFile();
+    Project project = moveDestination.getProject();
+    VirtualFile dstDir = moveDestination.getVirtualFile();
+    String pkgName = PackageIndex.getInstance(project).getPackageNameByDirectory(dstDir);
+    PsiPackage newPackage = pkgName == null ? null : new PsiPackageImpl(moveDestination.getManager(), pkgName);
+
+    newClass = aClass;
+    final PsiDirectory containingDirectory = file.getContainingDirectory();
+    if (!Comparing.equal(dstDir, containingDirectory != null ? containingDirectory.getVirtualFile() : null)) {
+      MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
+
+      DumbService.getInstance(project).completeJustSubmittedTasks();
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      Document document = documentManager.getCachedDocument(file);
+      if (document != null) {
+        documentManager.commitDocument(document);
+      }
+
+      file = moveDestination.findFile(file.getName());
+
+    }
+
+    if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) &&
+        !PsiUtil.isModuleFile(file)) {
+      String qualifiedName = newPackage.getQualifiedName();
+      if (!Comparing.strEqual(qualifiedName, ((PsiClassOwner)file).getPackageName()) &&
+          (qualifiedName.isEmpty() || PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName))) {
+        // Do not rely on class instance identity retention after setPackageName (Scala)
+        String aClassName = aClass.getName();
+        if (!(aClass instanceof PsiImplicitClass)) {
+          ((PsiClassOwner)file).setPackageName(qualifiedName);
+          newClass = findClassByName((PsiClassOwner)file, aClassName);
+        }
+        LOG.assertTrue(newClass != null, "name:" + aClassName + " file:" + file + " classes:" + Arrays.toString(((PsiClassOwner)file).getClasses()));
+      }
+    }
+    return newClass;
+  }
+
+  private static @Nullable PsiClass findClassByName(PsiClassOwner file, String name) {
+    PsiClass[] classes = file.getClasses();
+    for (PsiClass aClass : classes) {
+      if (name.equals(aClass.getName())) {
+        return aClass;
+      }
+    }
+    return null;
+  }
+
+  public static @NotNull String getPackageName(@NotNull PackageWrapper aPackage) {
+    String name = aPackage.getQualifiedName();
+    if (!name.isEmpty()) {
+      return name;
+    }
+    return JavaFindUsagesProvider.getDefaultPackageName();
+  }
+
+  /**
+   * @deprecated use CommonMoveClassesOrPackagesUtil.chooseSourceRoot
+   */
+  @Deprecated
+  public static @Nullable VirtualFile chooseSourceRoot(@NotNull PackageWrapper targetPackage,
+                                             @NotNull List<? extends VirtualFile> contentSourceRoots,
+                                             @Nullable PsiDirectory initialDirectory) {
+    return CommonMoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, contentSourceRoots, initialDirectory);
+  }
+}

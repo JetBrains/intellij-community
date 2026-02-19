@@ -13,8 +13,8 @@ class SwitchExpressions {
     };
 
     double d = v1;
-    <error descr="Incompatible types. Found: 'double', required: 'float'">float f = v1;</error>
-    <error descr="Incompatible types. Found: 'double', required: 'int'">int in = v1;</error>
+    float f = <error descr="Incompatible types. Found: 'double', required: 'float'">v1</error>;
+    int in = <error descr="Incompatible types. Found: 'double', required: 'int'">v1</error>;
 
     var v2 = switch (i) {
       case 1 -> C;
@@ -22,8 +22,8 @@ class SwitchExpressions {
     };
 
     in = v2;
-    <error descr="Incompatible types. Found: 'char', required: 'byte'">byte b = v2;</error>
-    <error descr="Incompatible types. Found: 'char', required: 'short'">short s = v2;</error>
+    byte b = <error descr="Incompatible types. Found: 'char', required: 'byte'">v2</error>;
+    short s = <error descr="Incompatible types. Found: 'char', required: 'short'">v2</error>;
     char c = v2;
 
     var v3 = switch (i) {

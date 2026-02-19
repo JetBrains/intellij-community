@@ -11,12 +11,20 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
-import gnu.trove.THashMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 
 public final class SliceTestUtil {
 
@@ -59,7 +67,7 @@ public final class SliceTestUtil {
   }
 
   public static Map<String, RangeMarker> extractSliceOffsetsFromDocuments(final List<? extends Document> documents) {
-    Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<>();
+    Map<String, RangeMarker> sliceUsageName2Offset = new HashMap<>();
 
     extract(documents, sliceUsageName2Offset, "");
 
@@ -111,7 +119,7 @@ public final class SliceTestUtil {
 
     int size = expectedChildren.size();
     assertEquals(message(startOffset, usage), size, children.size());
-    children.sort(Comparator.naturalOrder());
+    children.sort(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
 
     for (int i = 0; i < children.size(); i++) {
       checkUsages(children.get(i), expectedChildren.get(i));

@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.EmptyStackException;
 import java.util.Iterator;
@@ -18,7 +20,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class TestSuiteStack {
   private static final Logger LOG = Logger.getInstance(TestSuiteStack.class.getName());
 
-  @NonNls private static final String EMPTY = "empty";
+  private static final @NonNls String EMPTY = "empty";
 
   private final ConcurrentLinkedDeque<SMTestProxy> myStack = new ConcurrentLinkedDeque<>();
   private final String myTestFrameworkName;
@@ -27,15 +29,14 @@ public class TestSuiteStack {
     myTestFrameworkName = testFrameworkName;
   }
 
-  public void pushSuite(@NotNull final SMTestProxy suite) {
+  public void pushSuite(final @NotNull SMTestProxy suite) {
     myStack.push(suite);
   }
 
   /**
    * @return Top element of non stack or null for empty stack
    */
-  @Nullable
-  public SMTestProxy getCurrentSuite() {
+  public @Nullable SMTestProxy getCurrentSuite() {
     return myStack.peek();
   }
 
@@ -43,8 +44,7 @@ public class TestSuiteStack {
    * Pop element form stack and checks consistency
    * @param suiteName Predictable name of top suite in stack. May be null if 
    */
-  @Nullable
-  public SMTestProxy popSuite(final String suiteName) throws EmptyStackException {
+  public @Nullable SMTestProxy popSuite(final String suiteName) throws EmptyStackException {
     if (myStack.isEmpty()) {
       if (SMTestRunnerConnectionUtil.isInDebugMode()) {
         LOG.error(
@@ -100,11 +100,15 @@ public class TestSuiteStack {
     return getStackSize() == 0;
   }
   
-  protected int getStackSize() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public int getStackSize() {
     return myStack.size();
   }
 
-  protected String[] getSuitePath() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public String[] getSuitePath() {
     final int stackSize = getStackSize();
     final String[] names = new String[stackSize];
     int i = 0;
@@ -114,7 +118,9 @@ public class TestSuiteStack {
     return names;
   }
 
-  protected String getSuitePathPresentation() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public String getSuitePathPresentation() {
     final String[] names = getSuitePath();
     if (names.length == 0) {
       return EMPTY;

@@ -24,8 +24,8 @@ internal class ModuleGroupsTree private constructor(private val grouper: ModuleG
       val groupPath = grouper.getGroupPath(module)
       if (groupPath.isNotEmpty()) {
         val group = ModuleGroup(groupPath)
-        val moduleNamePrefixLen = (1 .. groupPath.size).firstOrNull { groupPath.subList(0, it) in moduleAsGroupPaths }
-        val parentGroupForModule = if (moduleNamePrefixLen != null && moduleNamePrefixLen > 1) {
+        val moduleNamePrefixLen = (2 .. groupPath.size).firstOrNull { groupPath.subList(0, it) in moduleAsGroupPaths }
+        val parentGroupForModule = if (moduleNamePrefixLen != null) {
           //if there are modules with names 'a.foo' and 'a.foo.bar.baz' the both should be shown as children of module group 'a' to avoid
           // nodes with same text in the tree
           ModuleGroup(groupPath.subList(0, moduleNamePrefixLen - 1))

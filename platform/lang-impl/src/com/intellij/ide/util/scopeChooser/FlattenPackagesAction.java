@@ -17,12 +17,15 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class FlattenPackagesAction extends ToggleAction {
   private final Runnable myUpdate;
 
@@ -34,6 +37,11 @@ public final class FlattenPackagesAction extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

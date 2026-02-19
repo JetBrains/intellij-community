@@ -1,7 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.PsiWhileStatement;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -30,8 +44,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     myIterator = iterator;
   }
 
-  @NotNull
-  public PsiLocalVariable getIterator() {
+  public @NotNull PsiLocalVariable getIterator() {
     return myIterator;
   }
 
@@ -39,8 +52,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     return isIteratorMethodCall(condition, "hasNext");
   }
 
-  @Nullable
-  public PsiElement findOnlyIteratorRef(PsiExpression parent) {
+  public @Nullable PsiElement findOnlyIteratorRef(PsiExpression parent) {
     PsiElement element = PsiUtil.getVariableCodeBlock(myIterator, null);
     PsiCodeBlock block =
       element instanceof PsiCodeBlock ? (PsiCodeBlock)element : PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
@@ -54,8 +66,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     while (candidate instanceof PsiParenthesizedExpression) {
       candidate = ((PsiParenthesizedExpression)candidate).getExpression();
     }
-    if (!(candidate instanceof PsiMethodCallExpression)) return false;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)candidate;
+    if (!(candidate instanceof PsiMethodCallExpression call)) return false;
     if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression expression = call.getMethodExpression();
     return method.equals(expression.getReferenceName()) && ExpressionUtils.isReferenceTo(expression.getQualifierExpression(), myIterator);
@@ -72,10 +83,8 @@ public final class IteratorDeclaration extends IterableTraversal {
     return var;
   }
 
-  @Nullable
-  private static PsiLocalVariable getDeclaredVariable(PsiStatement statement) {
-    if (!(statement instanceof PsiDeclarationStatement)) return null;
-    PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
+  public static @Nullable PsiLocalVariable getDeclaredVariable(PsiStatement statement) {
+    if (!(statement instanceof PsiDeclarationStatement declaration)) return null;
     PsiElement[] elements = declaration.getDeclaredElements();
     if (elements.length != 1) return null;
     return ObjectUtils.tryCast(elements[0], PsiLocalVariable.class);
@@ -86,8 +95,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     PsiLocalVariable variable = getDeclaredVariable(statement);
     if (variable == null) return null;
     PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
-    if (!(initializer instanceof PsiMethodCallExpression)) return null;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
+    if (!(initializer instanceof PsiMethodCallExpression call)) return null;
     if (!call.getArgumentList().isEmpty()) return null;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
     boolean listIterator = "listIterator".equals(methodExpression.getReferenceName());
@@ -106,8 +114,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     return new IteratorDeclaration(variable, methodExpression.getQualifierExpression(), isCollection);
   }
 
-  @Nullable
-  private static IteratorDeclaration fromForLoop(PsiForStatement statement) {
+  private static @Nullable IteratorDeclaration fromForLoop(PsiForStatement statement) {
     if (statement.getUpdate() != null) return null;
     PsiStatement initialization = statement.getInitialization();
     IteratorDeclaration declaration = extract(initialization);
@@ -115,8 +122,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     return declaration;
   }
 
-  @Nullable
-  private static IteratorDeclaration fromWhileLoop(PsiWhileStatement statement) {
+  private static @Nullable IteratorDeclaration fromWhileLoop(PsiWhileStatement statement) {
     PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
     if (!(previous instanceof PsiDeclarationStatement)) return null;
     IteratorDeclaration declaration = extract((PsiStatement)previous);

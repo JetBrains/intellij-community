@@ -1,16 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 /**
  * @author Alexander Lobas
  */
-public class TwoLineProgressIndicator extends OneLineProgressIndicator {
+@ApiStatus.Internal
+public final class TwoLineProgressIndicator extends OneLineProgressIndicator {
   public TwoLineProgressIndicator() {
     this(true);
   }
@@ -20,16 +23,15 @@ public class TwoLineProgressIndicator extends OneLineProgressIndicator {
   }
 
   @Override
-  protected void createCompactTextAndProgress() {
+  protected void createCompactTextAndProgress(@NotNull JPanel component) {
     JPanel textWrapper = new NonOpaquePanel(new BorderLayout());
-    textWrapper.add(myText, BorderLayout.CENTER);
-    myText.recomputeSize();
+    textWrapper.add(text, BorderLayout.CENTER);
+    text.recomputeSize();
 
     NonOpaquePanel progressWrapper = new NonOpaquePanel(new BorderLayout());
     progressWrapper.setBorder(JBUI.Borders.emptyRight(4));
-    progressWrapper.add(myProgress, BorderLayout.CENTER);
+    progressWrapper.add(progress, BorderLayout.CENTER);
 
-    JComponent component = getComponent();
     component.add(textWrapper, BorderLayout.NORTH);
     component.add(progressWrapper, BorderLayout.CENTER);
   }

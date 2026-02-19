@@ -2,7 +2,7 @@
 package com.intellij.stats.completion.sender
 
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 class DailyLimitSendingWatcher(private val dailyLimit: Int, private val info: SentDataInfo) {
 

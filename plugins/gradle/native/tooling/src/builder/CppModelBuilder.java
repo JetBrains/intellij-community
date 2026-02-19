@@ -1,6 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.RegularFileProperty;
@@ -8,9 +10,13 @@ import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
-import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
 import org.gradle.internal.os.OperatingSystem;
-import org.gradle.language.cpp.*;
+import org.gradle.language.cpp.CppBinary;
+import org.gradle.language.cpp.CppComponent;
+import org.gradle.language.cpp.CppPlatform;
+import org.gradle.language.cpp.CppSharedLibrary;
+import org.gradle.language.cpp.CppStaticLibrary;
+import org.gradle.language.cpp.ProductionCppComponent;
 import org.gradle.language.cpp.plugins.CppBasePlugin;
 import org.gradle.language.cpp.plugins.CppPlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
@@ -36,44 +42,50 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.SourceFile;
-import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CompilationDetailsImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppBinaryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppComponentImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppExecutableImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppProjectImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppSharedLibraryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppStaticLibraryImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.CppTestSuiteImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.LinkageDetailsImpl;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.SourceFileImpl;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The prototype of the C++ project gradle tooling model builder.
  * This implementation should be moved or replaced with the similar model builder from the Gradle distribution.
  *
  * @author Vladislav.Soroka
- * @deprecated to be removed in 2019.1, use built-in 'org.gradle.tooling.model.cpp.CppComponent' available since Gradle 4.10
+ * @deprecated use built-in {@link org.gradle.tooling.model.cpp.CppComponent} available since Gradle 4.10
  */
 @Deprecated
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class CppModelBuilder implements ModelBuilderService {
-  private static final boolean IS_51_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.1")) >= 0;
-  private static final boolean IS_410_OR_BETTER = IS_51_OR_BETTER ||
-                                                  GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.10")) >= 0;
-  private static final boolean IS_48_OR_BETTER = IS_410_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.8")) >= 0;
-  private static final boolean IS_47_OR_BETTER = IS_48_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.7")) >= 0;
-  private static final boolean IS_41_OR_BETTER = IS_47_OR_BETTER ||
-                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.1")) >= 0;
 
   @Override
   public boolean canBuild(String modelName) {
     return CppProject.class.getName().equals(modelName);
   }
 
-  @Nullable
   @Override
-  public Object buildAll(final String modelName, final Project project) {
-    if (!IS_41_OR_BETTER || IS_410_OR_BETTER) {
+  public @Nullable Object buildAll(final String modelName, final Project project) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
       return null;
     }
     PluginContainer pluginContainer = project.getPlugins();
@@ -93,7 +105,7 @@ public class CppModelBuilder implements ModelBuilderService {
         String cppComponentName = cppComponent.getName();
         String cppComponentBaseName = cppComponent.getBaseName().get();
 
-        Set<File> headerDirs = new LinkedHashSet<File>(cppComponent.getPrivateHeaderDirs().getFiles());
+        Set<File> headerDirs = new LinkedHashSet<>(cppComponent.getPrivateHeaderDirs().getFiles());
 
         CppComponentImpl ideCppComponent;
         if (cppComponent instanceof ProductionCppComponent) {
@@ -142,19 +154,19 @@ public class CppModelBuilder implements ModelBuilderService {
             compileTask.setQName(compileTaskName);
             compilationDetails.setCompileTask(compileTask);
 
-            Set<File> compileIncludePath = new LinkedHashSet<File>(cppBinary.getCompileIncludePath().getFiles());
-            Set<File> systemIncludes = new LinkedHashSet<File>();
+            Set<File> compileIncludePath = new LinkedHashSet<>(cppBinary.getCompileIncludePath().getFiles());
+            Set<File> systemIncludes = new LinkedHashSet<>();
             //Since Gradle 4.8, system header include directories should be accessed separately via the systemIncludes property
             //see https://github.com/gradle/gradle-native/blob/master/docs/RELEASE-NOTES.md#better-control-over-system-include-path-for-native-compilation---583
-            if (IS_48_OR_BETTER) {
+            if (GradleVersionUtil.isCurrentGradleAtLeast("4.8")) {
               compileIncludePath.addAll(cppCompile.getIncludes().getFiles());
               systemIncludes.addAll(cppCompile.getSystemIncludes().getFiles());
             }
             else {
               systemIncludes.addAll(cppCompile.getIncludes().getFiles());
             }
-            compilationDetails.setSystemHeaderSearchPaths(new ArrayList<File>(systemIncludes));
-            compilationDetails.setUserHeaderSearchPaths(new ArrayList<File>(compileIncludePath));
+            compilationDetails.setSystemHeaderSearchPaths(new ArrayList<>(systemIncludes));
+            compilationDetails.setUserHeaderSearchPaths(new ArrayList<>(compileIncludePath));
             compilationDetails.setHeaderDirs(headerDirs);
 
             Set<SourceFile> sources = getSources(project, cppBinary, cppCompile);
@@ -165,7 +177,7 @@ public class CppModelBuilder implements ModelBuilderService {
             File cppCompilerExecutable = findCppCompilerExecutable(project, cppBinary);
             compilationDetails.setCompilerExecutable(cppCompilerExecutable);
 
-            List<String> compilerArgs = new ArrayList<String>(cppCompile.getCompilerArgs().getOrElse(Collections.<String>emptyList()));
+            List<String> compilerArgs = new ArrayList<>(cppCompile.getCompilerArgs().getOrElse(Collections.emptyList()));
             compilationDetails.setAdditionalArgs(compilerArgs);
           }
 
@@ -193,7 +205,7 @@ public class CppModelBuilder implements ModelBuilderService {
   }
 
   private static Set<SourceFile> getSources(Project project, CppBinary cppBinary, CppCompile cppCompile) {
-    Set<SourceFile> sources = new LinkedHashSet<SourceFile>();
+    Set<SourceFile> sources = new LinkedHashSet<>();
     for (File file : cppBinary.getCppSource().getFiles()) {
       sources.add(new SourceFileImpl(file, null));
     }
@@ -203,7 +215,7 @@ public class CppModelBuilder implements ModelBuilderService {
         ((DefaultProject)project).getServices().getAll(CompilerOutputFileNamingSchemeFactory.class).iterator();
       if (it.hasNext()) {
         CompilerOutputFileNamingSchemeFactory outputFileNamingSchemeFactory = it.next();
-        boolean isTargetWindows = IS_51_OR_BETTER
+        boolean isTargetWindows = GradleVersionUtil.isCurrentGradleAtLeast("5.1")
                                   ? cppBinary.getTargetPlatform().getTargetMachine().getOperatingSystemFamily().isWindows()
                                   : isWindowsOld(cppBinary.getTargetPlatform());
         String objectFileExtension = isTargetWindows ? ".obj" : ".o";
@@ -228,11 +240,10 @@ public class CppModelBuilder implements ModelBuilderService {
     return Boolean.TRUE.equals(isWindowsNullable);
   }
 
-  @Nullable
-  private static File getExecutableFile(LinkExecutable linkExecutable) {
+  private static @Nullable File getExecutableFile(LinkExecutable linkExecutable) {
     File executableFile;
     RegularFileProperty binaryFile = null;
-    if (IS_47_OR_BETTER) {
+    if (GradleVersionUtil.isCurrentGradleAtLeast("4.7")) {
       binaryFile = linkExecutable.getLinkedFile();
     }
     else {
@@ -251,14 +262,13 @@ public class CppModelBuilder implements ModelBuilderService {
     return executableFile;
   }
 
-  @Nullable
-  private static File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
+  private static @Nullable File findCppCompilerExecutable(Project project, CppBinary cppBinary) {
     Throwable throwable = null;
     try {
       if (cppBinary instanceof ConfigurableComponentWithExecutable) {
         PlatformToolProvider toolProvider = ((ConfigurableComponentWithExecutable)cppBinary).getPlatformToolProvider();
         ToolSearchResult toolSearchResult;
-        if (IS_410_OR_BETTER) {
+        if (GradleVersionUtil.isCurrentGradleAtLeast("4.10")) {
           toolSearchResult = toolProvider.locateTool(ToolType.CPP_COMPILER);
         }
         else {
@@ -310,7 +320,7 @@ public class CppModelBuilder implements ModelBuilderService {
       }
     }
 
-    if (!IS_47_OR_BETTER) {
+    if (!GradleVersionUtil.isCurrentGradleAtLeast("4.7")) {
       project.getLogger().error(
         "[sync error] Unable to resolve compiler executable. " +
         "The project uses '" + GradleVersion.current() + "' try to update the gradle version");
@@ -321,16 +331,23 @@ public class CppModelBuilder implements ModelBuilderService {
     return null;
   }
 
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "C++ project import errors"
-    ).withDescription("Unable to import C++ project");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(this)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("C++ project import errors")
+      .withText("Unable to import C++ project")
+      .withException(exception)
+      .reportMessage(project);
   }
 
-  @Nullable
-  private static Object callByReflection(@NotNull Object receiver, @NotNull String methodName) {
+  private static @Nullable Object callByReflection(@NotNull Object receiver, @NotNull String methodName) {
     Object result = null;
     try {
       Method getMethod = receiver.getClass().getMethod(methodName);
@@ -340,11 +357,7 @@ public class CppModelBuilder implements ModelBuilderService {
       Logging.getLogger(CppModelBuilder.class)
         .warn("Can not find `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current() , e);
     }
-    catch (IllegalAccessException e) {
-      Logging.getLogger(CppModelBuilder.class)
-        .warn("Can not call `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current(), e);
-    }
-    catch (InvocationTargetException e) {
+    catch (IllegalAccessException | InvocationTargetException e) {
       Logging.getLogger(CppModelBuilder.class)
         .warn("Can not call `" + methodName + "` for receiver [" + receiver + "], gradle version " + GradleVersion.current(), e);
     }

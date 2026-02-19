@@ -1,0 +1,10 @@
+LineBreakpoint created at runToCursorSuspendSameLambda.kt:19
+Run Java
+Connected to the target VM
+runToCursorSuspendSameLambda.kt:19
+runToCursorSuspendSameLambda.kt:26
+Compile bytecode for i
+Compile bytecode for k
+Disconnected from the target VM
+
+Process finished with exit code 0

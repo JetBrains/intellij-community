@@ -1,7 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
-import com.intellij.psi.*;
+import com.intellij.psi.OriginInfoAwareElement;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMirrorElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -27,9 +37,9 @@ import java.util.Objects;
  * @author Max Medvedev
  */
 public final class MixinMemberContributor {
-  public static boolean processClassMixins(@NotNull final PsiType qualifierType,
+  public static boolean processClassMixins(final @NotNull PsiType qualifierType,
                                            @NotNull PsiScopeProcessor processor,
-                                           @NotNull final PsiElement place,
+                                           final @NotNull PsiElement place,
                                            @NotNull ResolveState state) {
     if (isInAnnotation(place)) return true;
 
@@ -65,8 +75,7 @@ public final class MixinMemberContributor {
     return true;
   }
 
-  @NonNls
-  public static String getOriginInfoForCategory(PsiMethod element) {
+  public static @NonNls String getOriginInfoForCategory(PsiMethod element) {
     PsiClass aClass = element.getContainingClass();
     if (aClass != null && aClass.getName() != null) {
       return "mixed in from " + aClass.getName();
@@ -74,8 +83,7 @@ public final class MixinMemberContributor {
     return "mixed in";
   }
 
-  @NonNls
-  public static String getOriginInfoForMixin(@NotNull PsiType subjectType) {
+  public static @NonNls String getOriginInfoForMixin(@NotNull PsiType subjectType) {
     return "mixed in " + subjectType.getPresentableText();
   }
 
@@ -112,15 +120,13 @@ public final class MixinMemberContributor {
       myPrototype = method;
     }
 
-    @Nullable
     @Override
-    public String getOriginInfo() {
+    public @Nullable String getOriginInfo() {
       return myOriginInfo;
     }
 
-    @NotNull
     @Override
-    public PsiElement getPrototype() {
+    public @NotNull PsiElement getPrototype() {
       return myPrototype;
     }
   }
@@ -137,8 +143,7 @@ public final class MixinMemberContributor {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (element instanceof PsiMethod && GdkMethodUtil.isCategoryMethod((PsiMethod)element, myType, myPlace, state.get(PsiSubstitutor.KEY))) {
-        PsiMethod method = (PsiMethod)element;
+      if (element instanceof PsiMethod method && GdkMethodUtil.isCategoryMethod(method, myType, myPlace, state.get(PsiSubstitutor.KEY))) {
         String originInfo = getOriginInfoForCategory(method);
         return super.execute(GrGdkMethodImpl.createGdkMethod(method, false, originInfo), state);
       }

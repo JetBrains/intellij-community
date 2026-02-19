@@ -1,0 +1,15 @@
+// FIR_IDENTICAL
+open class A {
+    open fun foo(`object` : Any): Int = 0
+}
+
+class C : A() {
+    override fun foo(`object`: Any): Int {
+        <selection><caret>return super.foo(`object`)</selection>
+    }
+}
+
+// MEMBER: "foo(`object`: Any): Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

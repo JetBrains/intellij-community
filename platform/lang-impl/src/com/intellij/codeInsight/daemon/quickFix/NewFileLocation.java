@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.util.ArrayUtil;
@@ -12,7 +12,7 @@ import java.util.List;
  * @see CreateFilePathFix
  * @see CreateDirectoryPathFix
  */
-public class NewFileLocation {
+public final class NewFileLocation {
   private final List<TargetDirectory> myDirectories;
   private final String[] mySubPath;
   private final String myNewFileName;
@@ -32,8 +32,7 @@ public class NewFileLocation {
   /**
    * @return target directories where sub path and new file can be created
    */
-  @NotNull
-  public List<TargetDirectory> getDirectories() {
+  public @NotNull List<TargetDirectory> getDirectories() {
     return myDirectories;
   }
 
@@ -47,8 +46,7 @@ public class NewFileLocation {
   /**
    * @return new file name
    */
-  @NotNull
-  public String getNewFileName() {
+  public @NotNull String getNewFileName() {
     return myNewFileName;
   }
 }

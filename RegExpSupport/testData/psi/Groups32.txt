@@ -8,7 +8,7 @@ REGEXP_FILE
         PsiElement(COLON)(':')
         RegExpPatternImpl: <*>
           RegExpBranchImpl: <*>
-            PsiErrorElement:Dangling metacharacter
+            PsiErrorElement:Dangling quantifier '*'
               <empty list>
             PsiElement(STAR)('*')
         PsiElement(GROUP_END)(')')

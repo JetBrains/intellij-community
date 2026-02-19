@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.roots.libraries.Library;
@@ -11,7 +12,7 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
 public class UsageInArtifact extends ProjectStructureElementUsage {
   private final Artifact myOriginalArtifact;
@@ -79,9 +80,8 @@ public class UsageInArtifact extends ProjectStructureElementUsage {
     return myOriginalArtifact.getArtifactType().getIcon();
   }
 
-  @Nullable
   @Override
-  public String getPresentableLocationInElement() {
+  public @Nullable String getPresentableLocationInElement() {
     return "[" + myParentPath + "]";
   }
 

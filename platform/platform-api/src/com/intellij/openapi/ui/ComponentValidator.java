@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
+import com.intellij.execution.ui.TagButton;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,19 +16,29 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextComponent;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
-import javax.swing.*;
+import javax.accessibility.Accessible;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JRadioButton;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkListener;
@@ -37,15 +49,31 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.View;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.util.ui.JBUI.CurrentTheme.Validator.*;
+import static com.intellij.util.ui.JBUI.CurrentTheme.Validator.errorBackgroundColor;
+import static com.intellij.util.ui.JBUI.CurrentTheme.Validator.errorBorderColor;
+import static com.intellij.util.ui.JBUI.CurrentTheme.Validator.warningBackgroundColor;
+import static com.intellij.util.ui.JBUI.CurrentTheme.Validator.warningBorderColor;
 
 public class ComponentValidator {
   private static final String PROPERTY_NAME = "JComponent.componentValidator";
@@ -56,7 +84,7 @@ public class ComponentValidator {
    * ComponentWithBrowseButton isn't a {@link ErrorBorderCapable} component so it needs a special provider.
    * Suitable for {@link ComponentWithBrowseButton} and it's descendants.
    */
-  public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton)c).getChildComponent();
+  public static final Function<JComponent, JComponent> CWBB_PROVIDER = c -> ((ComponentWithBrowseButton<?>)c).getChildComponent();
 
   private final Disposable parentDisposable;
   private Supplier<? extends ValidationInfo> validator;
@@ -66,7 +94,8 @@ public class ComponentValidator {
   private HyperlinkListener hyperlinkListener;
 
   private ValidationInfo validationInfo;
-  private final Alarm popupAlarm = new Alarm();
+  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private SingleEdtTaskScheduler popupAnnouncementAlarm;
   private boolean isOverPopup;
 
   private ComponentPopupBuilder popupBuilder;
@@ -74,21 +103,10 @@ public class ComponentValidator {
   private RelativePoint popupLocation;
   private Dimension popupSize;
   private boolean disableValidation;
+  private JEditorPane tipComponent;
 
   public ComponentValidator(@NotNull Disposable parentDisposable) {
     this.parentDisposable = parentDisposable;
-  }
-
-  /**
-   * @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
-   */
-  @Deprecated
-  public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
-    this.validator = () -> {
-      validator.accept(this);
-      return validationInfo;
-    };
-    return this;
   }
 
   public ComponentValidator withValidator(@NotNull Supplier<? extends ValidationInfo> validator) {
@@ -159,24 +177,24 @@ public class ComponentValidator {
         w.removeComponentListener(componentListener);
       }
 
-      validator = null;
-      focusValidator = null;
-      hyperlinkListener = null;
-      outlineProvider = null;
-      component.putClientProperty(PROPERTY_NAME, null);
+      reset();
     });
     return this;
   }
 
   /**
-   * Convenient wrapper for mostly used scenario.
+   * Convenient wrapper for a mostly used scenario.
    */
   public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
-    textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
+    DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         getInstance(textComponent).ifPresent(ComponentValidator::revalidate); // Don't use 'this' to avoid cyclic references.
       }
+    };
+    textComponent.getDocument().addDocumentListener(listener);
+    Disposer.register(parentDisposable, () -> {
+      textComponent.getDocument().removeDocumentListener(listener);
     });
     return this;
   }
@@ -211,27 +229,54 @@ public class ComponentValidator {
 
     hidePopup(true);
 
+    if (popupAnnouncementAlarm != null) {
+      popupAnnouncementAlarm.cancel();
+    }
+
     popupBuilder = null;
+    tipComponent = null;
     popupLocation = null;
     popupSize = null;
     validationInfo = null;
   }
 
-  @Nullable
-  public ValidationInfo getValidationInfo() {
+  public @Nullable ValidationInfo getValidationInfo() {
     return validationInfo;
+  }
+
+  private boolean needResetForInfo(@Nullable ValidationInfo info) {
+    if (info == null && validationInfo != null) return true;
+    else if (info != null && validationInfo != null) {
+      if (info.warning != validationInfo.warning) return true;
+      if (tipComponent != null && !Objects.equals(info.message, validationInfo.message)) {
+        String message = HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(info.message, tipComponent)).
+                           wrapWith(HtmlChunk.html()).toString();
+        View v = BasicHTML.createHTMLView(tipComponent, message);
+
+        Dimension size = tipComponent.getPreferredSize();
+        JBInsets.removeFrom(size, tipComponent.getInsets());
+
+        if (v.getPreferredSpan(View.Y_AXIS) != size.height) return true;
+      }
+    }
+    return false;
   }
 
   public void updateInfo(@Nullable ValidationInfo info) {
     if (disableValidation) return;
 
-    boolean resetInfo = info == null && validationInfo != null;
-    boolean newInfo = info != null && !info.equals(validationInfo);
-    if (resetInfo || newInfo) {
+    boolean hasNewInfo = info != null && !info.equals(validationInfo);
+    if (needResetForInfo(info)) {
       reset();
+    }
+
+    if (hasNewInfo || (info != null && popup != null && !popup.isVisible())) {
       validationInfo = info;
 
-      if (newInfo) {
+      if (popup != null && popup.isVisible() && tipComponent != null) {
+        popup.pack(true, convertMessage(info.message, tipComponent));
+      }
+      else {
         JComponent component = validationInfo.component;
         if (component != null) {
           outlineProvider.apply(component).putClientProperty("JComponent.outline", validationInfo.warning ? "warning" : "error");
@@ -240,11 +285,13 @@ public class ComponentValidator {
           component.repaint();
         }
 
-        if (StringUtil.isNotEmpty(validationInfo.message)) {
-          popupBuilder = createPopupBuilder(validationInfo, tipComponent -> {
-            tipComponent.addHyperlinkListener(hyperlinkListener);
-            tipComponent.addMouseListener(new TipComponentMouseListener());
-            popupSize = tipComponent.getPreferredSize();
+        if (!StringUtil.isEmptyOrSpaces(info.message)) {
+          // create a popup if there is something to show to user
+          popupBuilder = createPopupBuilder(validationInfo, editorPane -> {
+            tipComponent = editorPane;
+            editorPane.addHyperlinkListener(hyperlinkListener);
+            editorPane.addMouseListener(new TipComponentMouseListener());
+            popupSize = editorPane.getPreferredSize();
           }).setCancelOnMouseOutCallback(e -> e.getID() == MouseEvent.MOUSE_PRESSED && !withinComponent(info, e));
 
           getFocusable(component).ifPresent(fc -> {
@@ -257,28 +304,21 @@ public class ComponentValidator {
     }
   }
 
-  @NotNull
-  public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
+  private static @NotNull ComponentPopupBuilder createPopupBuilder(boolean isWarning, @Nullable Consumer<? super JEditorPane> configurator) {
     JEditorPane tipComponent = new JEditorPane();
-    View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", info.message));
-    HtmlChunk.Element div =  v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get()
-                             ? HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(info.message, tipComponent))
-                             : HtmlChunk.div().addRaw(info.message);
-    String text = div.wrapWith("body").wrapWith("html").toString();
-
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
-    tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    tipComponent.setEditorKit(HTMLEditorKitBuilder.simple());
 
     EditorKit kit = tipComponent.getEditorKit();
     if (kit instanceof HTMLEditorKit) {
       StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
 
-      css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
-      css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}");
-      css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
-      css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");
-      css.addRule("body {background-color:#" + ColorUtil.toHex(info.warning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
+      css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED) + ";}");
+      css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.VISITED) + ";}");
+      css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.HOVERED) + ";}");
+      css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED) + ";}");
+      css.addRule("body {background-color:#" + ColorUtil.toHex(isWarning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
     }
 
     if (tipComponent.getCaret() instanceof DefaultCaret) {
@@ -286,9 +326,8 @@ public class ComponentValidator {
     }
 
     tipComponent.setCaretPosition(0);
-    tipComponent.setText(text);
 
-    tipComponent.setBackground(info.warning ? warningBackgroundColor() : errorBackgroundColor());
+    tipComponent.setBackground(isWarning ? warningBackgroundColor() : errorBackgroundColor());
     tipComponent.setOpaque(true);
     tipComponent.setBorder(getBorder());
 
@@ -297,9 +336,32 @@ public class ComponentValidator {
     }
 
     return JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
-      setBorderColor(info.warning ? warningBorderColor() : errorBorderColor()).
+      setBorderColor(isWarning ? warningBorderColor() : errorBorderColor()).
       setCancelOnClickOutside(false).
-      setShowShadow(true);
+      setShowShadow(true).
+      setFocusable(false);
+  }
+
+  /**
+   * @return true if a message is multiline.
+   */
+  private static @NlsSafe boolean convertMessage(@Nls String message, @NotNull JEditorPane component) {
+    View v = BasicHTML.createHTMLView(component, String.format("<html>%s</html>", message));
+    boolean widerText = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get();
+    HtmlChunk.Element div =  widerText ?
+                             HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(message, component))
+                             : HtmlChunk.div().addRaw(message);
+    component.setText(div.wrapWith("body").wrapWith("html").toString());
+    return widerText;
+  }
+
+  public static @NotNull ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
+    return createPopupBuilder(info.warning, tipComponent -> {
+      convertMessage(info.message, tipComponent);
+      if (configurator != null) {
+        configurator.accept(tipComponent);
+      }
+    });
   }
 
   private static @Nls String trimMessage(@Nls String message, JComponent c) {
@@ -337,6 +399,21 @@ public class ComponentValidator {
       popupLocation = new RelativePoint(validationInfo.component, point);
 
       popup.show(popupLocation);
+
+      if (AccessibleAnnouncerUtil.isAnnouncingAvailable() && validationInfo.component instanceof Accessible a) {
+        if (popupAnnouncementAlarm == null) {
+          popupAnnouncementAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+        }
+        // Announce after a small delay because otherwise, the announcement will be interrupted by reading the focused component.
+        popupAnnouncementAlarm.cancelAndRequest(200, () -> {
+          if (validationInfo != null) {
+            String message =
+              UIBundle.message(validationInfo.warning ? "validation.info.warning.with.prefix" : "validation.info.error.with.prefix",
+                               validationInfo.message);
+            AccessibleAnnouncerUtil.announce(a, message, false);
+          }
+        });
+      }
     }
   }
 
@@ -345,12 +422,13 @@ public class ComponentValidator {
       if (now || hyperlinkListener == null) {
         popup.cancel();
         popup = null;
-      } else {
-        popupAlarm.addRequest(() -> {
+      }
+      else {
+        popupAlarm.request(Registry.intValue("ide.tooltip.initialDelay.highlighter"), () -> {
           if (!isOverPopup || hyperlinkListener == null) {
             hidePopup(true);
           }
-        }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+        });
       }
     }
   }
@@ -361,11 +439,18 @@ public class ComponentValidator {
   }
 
   private static Optional<Component> getFocusable(Component source) {
-    return (source instanceof JComboBox && !((JComboBox)source).isEditable() ||
-            source instanceof JCheckBox ||
-            source instanceof JRadioButton) ?
-           Optional.of(source) :
-           UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst();
+    if (source instanceof JComboBox && !((JComboBox<?>)source).isEditable() ||
+        source instanceof JCheckBox ||
+        source instanceof JRadioButton ||
+        source instanceof TagButton) {
+      return Optional.of(source);
+    }
+    return UIUtil.uiTraverser(source)
+      .filter(c -> (
+        (c instanceof JTextComponent && c.isFocusable())
+        || (c instanceof EditorTextComponent && c instanceof FocusListener)) // EditorTextField
+      )
+      .toList().stream().findFirst();
   }
 
   private class ValidationFocusListener implements FocusListener {

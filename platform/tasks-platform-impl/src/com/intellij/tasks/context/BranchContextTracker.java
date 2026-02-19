@@ -1,6 +1,11 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.TransactionGuard;
@@ -11,14 +16,15 @@ import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class BranchContextTracker implements BranchChangeListener {
 
-  public static final NotificationGroup NOTIFICATION = new NotificationGroup(
-    "Branch Context group", NotificationDisplayType.BALLOON, true);
+  public static final NotificationGroup NOTIFICATION = NotificationGroupManager.getInstance().getNotificationGroup("Branch Context group");
 
   private final Project myProject;
   private String myLastBranch;
@@ -79,7 +85,7 @@ public class BranchContextTracker implements BranchChangeListener {
         new ConfigureBranchContextDialog(myProject).show();
       }
     }).setContextHelpAction(new AnAction(TaskBundle.messagePointer("action.BranchContextTracker.Anonymous.text.what.is.a.workspace"),
-                                         TaskBundle.messagePointer("action.BranchContextTracker.Anonymous.description"), null) {
+                                         TaskBundle.messagePointer("action.BranchContextTracker.Anonymous.description")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
 
@@ -87,8 +93,7 @@ public class BranchContextTracker implements BranchChangeListener {
     }).notify(myProject);
   }
 
-  @NotNull
-  private static String getContextName(String branchName) {
+  private static @NotNull String getContextName(String branchName) {
     return "__branch_context_" + branchName; //NON-NLS
   }
 

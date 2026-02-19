@@ -4,7 +4,14 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -19,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
-/**
- * @author ilyas
- */
 public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements GrDocFieldReference {
 
   public GrDocFieldReferenceImpl(@NotNull ASTNode node) {
@@ -41,8 +45,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final PsiElement resolved = resolve();
-    if (resolved instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) resolved;
+    if (resolved instanceof PsiMethod method) {
       final String oldName = getReferenceName();
       if (!method.getName().equals(oldName)) { //was property reference to accessor
         if (PropertyUtilBase.isSimplePropertyAccessor(method)) {
@@ -52,8 +55,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
           }
         }
       }
-    } else if (resolved instanceof GrField && ((GrField) resolved).isProperty()) {
-      final GrField field = (GrField) resolved;
+    } else if (resolved instanceof GrField field && field.isProperty()) {
       final String oldName = getReferenceName();
       if (oldName != null && oldName.equals(field.getName())) {
         if (oldName.startsWith("get")) {

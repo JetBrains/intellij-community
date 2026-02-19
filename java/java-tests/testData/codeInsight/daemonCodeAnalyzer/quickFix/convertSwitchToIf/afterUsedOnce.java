@@ -1,9 +1,9 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 abstract class Test {
   abstract Object getObject();
 
   void foo() {
-      if (RuntimeException.class.equals(getObject().getClass())) {
+      if (getObject().getClass().equals(RuntimeException.class)) {
           System.out.println("RuntimeException");
       } else {
           System.out.println("Other");

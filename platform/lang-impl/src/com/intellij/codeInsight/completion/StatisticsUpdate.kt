@@ -1,15 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.featureStatistics.FeatureStatisticsUpdateListener
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -19,16 +22,20 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.Alarm
+import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
-/**
- * @author peter
- */
-class StatisticsUpdate
-    private constructor(private val myInfo: StatisticsInfo) : Disposable {
+@ApiStatus.Internal
+class StatisticsUpdate private constructor(
+  private val myInfo: StatisticsInfo
+) : Disposable {
+
   private var mySpared: Int = 0
 
   override fun dispose() {}
 
+  /** reports how many chars the user was able NOT to type manually because of the completion */
   fun addSparedChars(lookup: Lookup, item: LookupElement, context: InsertionContext) {
     val textInserted: String
     if (context.offsetMap.containsOffset(CompletionInitializationContext.START_OFFSET) &&
@@ -47,6 +54,7 @@ class StatisticsUpdate
     }
     if (spared > 0) {
       mySpared += spared
+      application.messageBus.syncPublisher(FeatureStatisticsUpdateListener.TOPIC).completionStatUpdated(spared)
     }
   }
 
@@ -78,7 +86,10 @@ class StatisticsUpdate
 
     ourStatsAlarm.addRequest({
                                if (ourPendingUpdate === this) {
-                                 applyLastCompletionStatisticsUpdate()
+                                 //readaction is not enough
+                                 WriteIntentReadAction.run {
+                                   applyLastCompletionStatisticsUpdate()
+                                 }
                                }
                              }, 20 * 1000)
 
@@ -101,13 +112,29 @@ class StatisticsUpdate
     }
   }
 
-  companion object {
-    private val ourStatsAlarm = Alarm(ApplicationManager.getApplication())
-    private var ourPendingUpdate: StatisticsUpdate? = null
+  @Service(Service.Level.APP)
+  private class StatisticsUpdateState : Disposable {
+    val ourStatsAlarm: Alarm = Alarm(ApplicationManager.getApplication())
+    var ourPendingUpdate: StatisticsUpdate? = null
 
-    init {
-      Disposer.register(ApplicationManager.getApplication(), Disposable { cancelLastCompletionStatisticsUpdate() })
+    override fun dispose() {
+      cancelLastCompletionStatisticsUpdate()
     }
+
+    companion object {
+      fun getInstance(): StatisticsUpdateState = service<StatisticsUpdateState>()
+    }
+  }
+
+  companion object {
+    private val ourStatsAlarm: Alarm
+      get() = StatisticsUpdateState.getInstance().ourStatsAlarm
+
+    private var ourPendingUpdate: StatisticsUpdate?
+      get() = StatisticsUpdateState.getInstance().ourPendingUpdate
+      set(value) {
+        StatisticsUpdateState.getInstance().ourPendingUpdate = value
+      }
 
     @VisibleForTesting
     @JvmStatic

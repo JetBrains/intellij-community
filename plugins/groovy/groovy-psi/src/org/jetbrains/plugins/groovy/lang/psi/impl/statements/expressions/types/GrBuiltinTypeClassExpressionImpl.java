@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuilti
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author ven
- */
 public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implements GrBuiltinTypeClassExpression {
 
   public GrBuiltinTypeClassExpressionImpl(@NotNull ASTNode node) {
@@ -29,9 +26,8 @@ public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implement
     return "builtin type class expression";
   }
 
-  @NotNull
   @Override
-  public PsiPrimitiveType getPrimitiveType() {
+  public @NotNull PsiPrimitiveType getPrimitiveType() {
     return TypesUtil.getPrimitiveTypeByText(getText());
   }
 }

@@ -1,9 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -17,18 +25,17 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
 
-public class FromStringHintProcessor extends SignatureHintProcessor {
+public final class FromStringHintProcessor extends SignatureHintProcessor {
 
   @Override
   public String getHintName() {
     return "groovy.transform.stc.FromString";
   }
 
-  @NotNull
   @Override
-  public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
-                                                 @NotNull final PsiSubstitutor substitutor,
-                                                 String @NotNull [] options) {
+  public @NotNull List<PsiType[]> inferExpectedSignatures(final @NotNull PsiMethod method,
+                                                          final @NotNull PsiSubstitutor substitutor,
+                                                          String @NotNull [] options) {
     PsiElement context = createContext(method);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     return ContainerUtil.map(options, value -> {
@@ -42,12 +49,11 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
       catch (IncorrectOperationException e) {
         //do nothing. Just don't throw an exception
       }
-      return new PsiType[]{PsiType.NULL};
+      return new PsiType[]{PsiTypes.nullType()};
     });
   }
 
-  @NotNull
-  public static PsiElement createContext(@NotNull PsiMethod method) {
+  public static @NotNull PsiElement createContext(@NotNull PsiMethod method) {
     return new FromStringLightElement(method);
   }
 }

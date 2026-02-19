@@ -1,197 +1,223 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
+import sun.awt.AWTAccessor;
 import sun.awt.image.WritableRasterNative;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.*;
+import javax.swing.Icon;
+import java.awt.AlphaComposite;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Window;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DirectColorModel;
+import java.awt.image.SampleModel;
+import java.awt.image.WritableRaster;
+import java.awt.peer.ComponentPeer;
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
-  private static final String ourRegistryKeyTouchbar = "ide.mac.touchbar.use";
-  private static NSTLibrary ourNSTLibrary = null; // NOTE: JNA is stateless (doesn't have any limitations of multi-threaded use)
+  // NOTE: JNA is stateless (doesn't have any limitations of multithreading use)
+  private static NSTLibrary nstLibrary = null;
 
-  private static final String MIN_OS_VERSION = "10.12.2";
-
-  static boolean isSupportedOS() {
-    return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION);
+  @VisibleForTesting
+  public static boolean isSupportedOS() {
+    return SystemInfoRt.isMac;
   }
 
-  static void initialize() {
+  static void loadLibrary() {
     try {
-      if (!isSupportedOS()) {
-        LOG.info("OS doesn't support touchbar, skip nst loading");
-      }
-      else if (GraphicsEnvironment.isHeadless()) {
-        LOG.info("The graphics environment is headless, skip nst loading");
-      }
-      else if (!SystemProperties.getBooleanProperty(ourRegistryKeyTouchbar, true)) {
-        LOG.info("system property '" + ourRegistryKeyTouchbar + "' is set to false, skip nst loading");
-      }
-      else if (!JnaLoader.isLoaded()) {
-        LOG.info("JNA library is unavailable, skip nst loading");
-      }
-      else if (!Utils.isTouchBarServerRunning()) {
-        LOG.info("touchbar-server isn't running, skip nst loading");
-      }
-      else {
-        try {
-          loadLibrary();
-        }
-        catch (Throwable e) {
-          LOG.error("Failed to load nst library for touchbar: ", e);
-        }
-
-        if (ourNSTLibrary != null) {
-          // small check that loaded library works
-          try {
-            final ID test = ourNSTLibrary.createTouchBar("test", (uid) -> ID.NIL, null);
-            if (test == null || test.equals(ID.NIL)) {
-              LOG.error("Failed to create native touchbar object, result is null");
-              ourNSTLibrary = null;
-            }
-            else {
-              ourNSTLibrary.releaseTouchBar(test);
-              LOG.info("nst library works properly, successfully created and released native touchbar object");
-            }
-          }
-          catch (Throwable e) {
-            LOG.error("nst library was loaded, but can't be used: ", e);
-            ourNSTLibrary = null;
-          }
-        }
-        else {
-          LOG.error("nst library wasn't loaded");
-        }
-      }
+      loadLibraryImpl();
     }
     catch (Throwable e) {
-      LOG.error(e);
+      LOG.error("Failed to load nst library for touchbar: ", e);
+    }
+
+    if (nstLibrary != null) {
+      // small check that loaded library works
+      try {
+        final ID test = nstLibrary.createTouchBar("test", (uid) -> ID.NIL, null);
+        if (test == null || test.equals(ID.NIL)) {
+          LOG.error("Failed to create native touchbar object, result is null");
+          nstLibrary = null;
+        }
+        else {
+          nstLibrary.releaseNativePeer(test);
+          LOG.info("nst library works properly, successfully created and released native touchbar object");
+        }
+      }
+      catch (Throwable e) {
+        LOG.error("nst library was loaded, but can't be used: ", e);
+        nstLibrary = null;
+      }
+    }
+    else {
+      LOG.error("nst library wasn't loaded");
     }
   }
 
-  static NSTLibrary loadLibrary() {
-    NativeLibraryLoader.loadPlatformLibrary("nst");
-
-    return ourNSTLibrary = Native.load("nst", NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+  @VisibleForTesting
+  public static NSTLibrary loadLibraryImpl() {
+    Path lib = PathManager.findBinFile("libnst64.dylib");
+    assert lib != null : "NST lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
+    return nstLibrary = Native.load(lib.toString(), NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
   }
 
-  public static boolean isAvailable() {
-    return ourNSTLibrary != null;
+  static boolean isAvailable() {
+    return nstLibrary != null;
   }
 
-  public static ID createTouchBar(String name, NSTLibrary.ItemCreator creator, String escID) {
-    return ourNSTLibrary.createTouchBar(name, creator, escID); // creates autorelease-pool internally
+  static ID createTouchBar(String name, NSTLibrary.ItemCreator creator, String escID) {
+    return nstLibrary.createTouchBar(name, creator, escID); // creates autorelease-pool internally
   }
 
-  public static void releaseTouchBar(ID tbObj) {
-    ourNSTLibrary.releaseTouchBar(tbObj);
+  static void releaseNativePeer(ID nativePeer) {
+    nstLibrary.releaseNativePeer(nativePeer);
   }
 
-  public static void setTouchBar(TouchBar tb) {
-    ourNSTLibrary.setTouchBar(tb == null ? ID.NIL : tb.getNativePeer());
+  @VisibleForTesting
+  public static void setTouchBar(@Nullable Window window, ID touchBarNativePeer) {
+    long nsViewPtr = 0;
+    if (window != null) {
+      final ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(window);
+
+      // sun.lwawt.* isn't available outside of java.desktop => use reflection
+      if (peer != null && peer.getClass().getName().equals("sun.lwawt.LWWindowPeer")) {
+        final Method methodGetPlatformWindow;
+        try {
+          methodGetPlatformWindow = peer.getClass().getMethod("getPlatformWindow");
+          Object platformWindow = methodGetPlatformWindow.invoke(peer);
+          if (platformWindow != null && platformWindow.getClass().getName().equals("sun.lwawt.macosx.CPlatformWindow")) {
+            final Method methodGetContentView = platformWindow.getClass().getMethod("getContentView");
+            Object contentView = methodGetContentView.invoke(platformWindow);
+            final Method methodGetAWTView = contentView.getClass().getMethod("getAWTView");
+            nsViewPtr = (long)methodGetAWTView.invoke(contentView);
+          }
+          else {
+            LOG.debug("platformWindow of frame peer isn't instance of sun.lwawt.macosx.CPlatformWindow, class of platformWindow: %s",
+                      platformWindow != null ? platformWindow.getClass() : "null");
+          }
+        }
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+          LOG.debug(e);
+        }
+      }
+      else {
+        if (peer == null) {
+          LOG.debug("frame peer is null, window: %s", window);
+        }
+        else {
+          LOG.debug("frame peer isn't instance of sun.lwawt.LWWindowPeer, class of peer: %s", peer.getClass());
+        }
+      }
+    }
+    nstLibrary.setTouchBar(new ID(nsViewPtr), touchBarNativePeer);
   }
 
-  public static void selectItemsToShow(ID tbObj, String[] ids, int count) {
-    ourNSTLibrary.selectItemsToShow(tbObj, ids, count); // creates autorelease-pool internally
+  static void selectItemsToShow(ID tbObj, String[] ids, int count) {
+    nstLibrary.selectItemsToShow(tbObj, ids, count); // creates autorelease-pool internally
   }
 
-  public static void setPrincipal(ID tbObj, String uid) {
-    ourNSTLibrary.setPrincipal(tbObj, uid); // creates autorelease-pool internally
+  static void setPrincipal(ID tbObj, String uid) {
+    nstLibrary.setPrincipal(tbObj, uid); // creates autorelease-pool internally
   }
 
-  public static ID createButton(String uid,
-                                int buttWidth,
-                                int buttFlags,
-                                String text,
-                                Icon icon,
-                                NSTLibrary.Action action) {
-    final BufferedImage img = _getImg4ByteRGBA(icon);
-    final Pointer raster4ByteRGBA = _getRaster(img);
-    final int w = _getImgW(img);
-    final int h = _getImgH(img);
-    return ourNSTLibrary.createButton(uid, buttWidth, buttFlags, text, raster4ByteRGBA, w, h, action); // called from AppKit, uses per-event autorelease-pool
+  static ID createButton(String uid,
+                         int buttWidth,
+                         int buttFlags,
+                         String text,
+                         String hint, int isHintDisabled,
+                         @Nullable Pair<Pointer, Dimension> raster,
+                         NSTLibrary.Action action) {
+    return nstLibrary.createButton(
+      uid, buttWidth, buttFlags,
+      text, hint,
+      isHintDisabled,
+      raster == null ? null : raster.getFirst(),
+      raster == null ? 0 : raster.getSecond().width,
+      raster == null ? 0 : raster.getSecond().height,
+      action); // called from AppKit, uses per-event autorelease-pool
   }
 
-  public static ID createPopover(String uid,
-                                 int itemWidth,
-                                 String text,
-                                 Icon icon,
-                                 ID tbObjExpand,
-                                 ID tbObjTapAndHold) {
-    final BufferedImage img = _getImg4ByteRGBA(icon);
-    final Pointer raster4ByteRGBA = _getRaster(img);
-    final int w = _getImgW(img);
-    final int h = _getImgH(img);
-    return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
-  }
-
-  // NOTE: due to optimization scrubber is created without icons
-  // icons must be updated async via updateScrubberItems
+  // NOTE: due to optimization, scrubber is created without an icon, icons must be updated async via updateScrubberItems
   @SuppressWarnings("unused")
-  public static ID createScrubber(
+  static ID createScrubber(
     String uid, int itemWidth, NSTLibrary.ScrubberDelegate delegate, NSTLibrary.ScrubberCacheUpdater updater,
-    List<? extends TBItemScrubber.ItemData> items, int visibleItems, @Nullable TouchBarStats stats
+    @NotNull List<TBItemScrubber.ItemData> items, int visibleItems, @Nullable TouchBarStats stats
   ) {
-    final Pair<Pointer, Integer> mem = items == null ? null : _packItems(items, 0, items.size(), visibleItems, false, true);
-    return ourNSTLibrary.createScrubber(uid, itemWidth, delegate, updater, mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond()); // called from AppKit, uses per-event autorelease-pool
+    final Pair<Pointer, Integer> mem = _packItems(items, visibleItems, false, true);
+    return nstLibrary.createScrubber(uid, itemWidth, delegate, updater, mem == null ? null : mem.getFirst(),
+                                     mem == null ? 0 : mem.getSecond()); // called from AppKit, uses per-event autorelease-pool
   }
 
-  public static ID createGroupItem(String uid, ID[] items) {
-    return ourNSTLibrary.createGroupItem(uid, items == null || items.length == 0 ? null : items, items == null ? 0 : items.length); // called from AppKit, uses per-event autorelease-pool
+  static ID createGroupItem(String uid, ID[] items) {
+    return nstLibrary.createGroupItem(uid, items == null || items.length == 0 ? null : items,
+                                      items == null ? 0 : items.length); // called from AppKit, uses per-event autorelease-pool
   }
 
-  public static void updateButton(ID buttonObj,
-                                  int updateOptions,
-                                  int buttWidth,
-                                  int buttonFlags,
-                                  String text,
-                                  @Nullable Pair<Pointer, Dimension> raster,
-                                  NSTLibrary.Action action) {
-    ourNSTLibrary.updateButton(
+  static void updateButton(ID buttonObj,
+                           int updateOptions,
+                           int buttWidth,
+                           int buttonFlags,
+                           String text,
+                           String hint, int isHintDisabled,
+                           @Nullable Pair<Pointer, Dimension> raster,
+                           NSTLibrary.Action action) {
+    nstLibrary.updateButton(
       buttonObj, updateOptions,
       buttWidth, buttonFlags,
       text,
+      hint, isHintDisabled,
       raster == null ? null : raster.getFirst(),
       raster == null ? 0 : raster.getSecond().width,
       raster == null ? 0 : raster.getSecond().height,
       action); // creates autorelease-pool internally
   }
 
-  public static void setArrowImage(ID buttObj, @Nullable Icon arrow) {
+  static void setArrowImage(ID buttObj, @Nullable Icon arrow) {
     final BufferedImage img = _getImg4ByteRGBA(arrow);
     final Pointer raster4ByteRGBA = _getRaster(img);
     final int w = _getImgW(img);
     final int h = _getImgH(img);
-    ourNSTLibrary.setArrowImage(buttObj, raster4ByteRGBA, w, h); // creates autorelease-pool internally
+    nstLibrary.setArrowImage(buttObj, raster4ByteRGBA, w, h); // creates autorelease-pool internally
   }
 
   private static Pointer _makeIndices(Collection<Integer> indices) {
-    if (indices == null || indices.isEmpty())
+    if (indices == null || indices.isEmpty()) {
       return null;
+    }
     final int step = Native.getNativeSize(Integer.class);
     final Pointer mem = new Pointer(Native.malloc((long)indices.size() * step));
     int offset = 0;
-    for (Integer i: indices) {
+    for (Integer i : indices) {
       mem.setInt(offset, i);
       offset += step;
     }
@@ -199,79 +225,97 @@ public final class NST {
   }
 
   static void updateScrubberItems(
-    ID scrubObj, List<? extends TBItemScrubber.ItemData> items, int fromIndex, int itemsCount,
-    boolean withImages, boolean withText, @Nullable TouchBarStats stats
+    TBItemScrubber scrubber, int fromIndex, int itemsCount,
+    boolean withImages, boolean withText
   ) {
-    final long startNs = withImages && stats != null ? System.nanoTime() : 0;
-    final Pair<Pointer, Integer> mem = items == null ? null : _packItems(items, fromIndex, itemsCount, itemsCount, withImages, withText);
-    ourNSTLibrary.updateScrubberItems(scrubObj, mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond(), fromIndex);
-    if (withImages && stats != null)
-      stats.incrementCounter(StatsCounters.scrubberIconsProcessingDurationNs, System.nanoTime() - startNs);
+    final long startNs = withImages && scrubber.getStats() != null ? System.nanoTime() : 0;
+    @NotNull List<TBItemScrubber.ItemData> items = scrubber.getItems();
+    final Pair<Pointer, Integer> mem = _packItems(items.subList(fromIndex, fromIndex + itemsCount), itemsCount, withImages, withText);
+    synchronized (scrubber) {
+      if (scrubber.myNativePeer.equals(ID.NIL)) {
+        return;
+      }
+      nstLibrary.updateScrubberItems(scrubber.myNativePeer, mem == null ? null : mem.getFirst(), mem == null ? 0 : mem.getSecond(),
+                                     fromIndex);
+    }
+    if (withImages && scrubber.getStats() != null) {
+      scrubber.getStats().incrementCounter(StatsCounters.scrubberIconsProcessingDurationNs, System.nanoTime() - startNs);
+    }
   }
+
+  @VisibleForTesting
   public static void enableScrubberItems(ID scrubObj, Collection<Integer> indices, boolean enabled) {
-    if (indices == null || indices.isEmpty())
+    if (indices == null || indices.isEmpty() || scrubObj == ID.NIL || scrubObj == null) {
       return;
+    }
     final Pointer mem = _makeIndices(indices);
-    ourNSTLibrary.enableScrubberItems(scrubObj, mem, indices.size(), enabled);
+    nstLibrary.enableScrubberItems(scrubObj, mem, indices.size(), enabled);
   }
+
+  @VisibleForTesting
   public static void showScrubberItem(ID scrubObj, Collection<Integer> indices, boolean show, boolean inverseOthers) {
+    if (scrubObj == ID.NIL || scrubObj == null) {
+      return;
+    }
     final Pointer mem = _makeIndices(indices);
-    ourNSTLibrary.showScrubberItems(scrubObj, mem, indices == null ? 0 : indices.size(), show, inverseOthers);
+    nstLibrary.showScrubberItems(scrubObj, mem, indices == null ? 0 : indices.size(), show, inverseOthers);
   }
 
   private static @Nullable Pair<Pointer, Integer> _packItems(
-    List<? extends TBItemScrubber.ItemData> items,
-    int fromIndex, int itemsCount, int visibleItems,
-    boolean withImages, boolean withText
+    @NotNull List<TBItemScrubber.ItemData> items,
+    int visibleItems, boolean withImages, boolean withText
   ) {
-    if (items == null || itemsCount <= 0)
-      return null;
-    if (fromIndex < 0) {
-      LOG.error("_packItems: fromIndex < 0 (" + fromIndex + ")");
+    if (items.isEmpty()) {
       return null;
     }
-    if (fromIndex + itemsCount > items.size()) {
-      LOG.error("_packItems: fromIndex + itemsCount > items.size() (" + fromIndex + ", " + itemsCount + ", " + items.size() + ")");
-      return null;
-    }
+
     long ptr = 0;
     try {
       // 1. calculate size
-      int byteCount = 2;
-      for (int c = 0; c < itemsCount; ++c) {
-        TBItemScrubber.ItemData id = items.get(fromIndex + c);
-        id.offset = byteCount;
-        if (c >= visibleItems) {
+      int byteCount = 2; // first 2 bytes contains count of items
+      int c = 0;
+      for (TBItemScrubber.ItemData id : items) {
+        if (c++ >= visibleItems) {
           byteCount += 6;
           continue;
         }
         final int textSize = 2 + (withText && id.getTextBytes() != null && id.getTextBytes().length > 0 ? id.getTextBytes().length + 1 : 0);
         byteCount += textSize;
 
-        id.darkIcon =
-          withImages && id.getIcon() != null && !(id.getIcon() instanceof EmptyIcon) && id.getIcon().getIconWidth() > 0 && id.getIcon().getIconHeight() > 0 ?
-          IconLoader.getDarkIcon(id.getIcon(), true) : null;
+        if (withImages
+            && id.darkIcon == null
+            && id.getIcon() != null
+            && !(id.getIcon() instanceof EmptyIcon)
+            && id.getIcon().getIconWidth() > 0
+            && id.getIcon().getIconHeight() > 0
+        ) {
+          id.darkIcon = ReadAction.nonBlocking(() -> IconLoader.getDarkIcon(id.getIcon(), true)).executeSynchronously();
+          if (id.darkIcon.getIconWidth() <= 0 || id.darkIcon.getIconHeight() <= 0) {
+            LOG.debug("Can't obtain dark icon for scrubber item '%s', use default icon", id.getText());
+            id.darkIcon = id.getIcon();
+          }
+        }
 
-        if (id.darkIcon != null) {
+        if (withImages && id.darkIcon != null) {
           id.fMulX = getIconScaleForTouchbar(id.darkIcon);
-          id.scaledWidth = Math.round(id.darkIcon.getIconWidth()*id.fMulX);
-          id.scaledHeight = Math.round(id.darkIcon.getIconHeight()*id.fMulX);
+          id.scaledWidth = Math.round(id.darkIcon.getIconWidth() * id.fMulX);
+          id.scaledHeight = Math.round(id.darkIcon.getIconHeight() * id.fMulX);
           final int sizeInBytes = id.scaledWidth * id.scaledHeight * 4;
           final int totalSize = sizeInBytes + 4;
           byteCount += totalSize;
-        } else
+        }
+        else {
           byteCount += 4;
+        }
       }
 
       // 2. write items
       final Pointer result = new Pointer(ptr = Native.malloc(byteCount));
-      result.setShort(0, (short)itemsCount);
+      result.setShort(0, (short)items.size());
       int offset = 2;
-      for (int c = 0; c < itemsCount; ++c) {
-        TBItemScrubber.ItemData id = items.get(fromIndex + c);
-        if (id.offset != offset)
-          throw new Exception("Offset mismatch: scrubber item " + c + ", id.offset=" + id.offset + " offset=" + offset);
-        if (c >= visibleItems) {
+      c = 0;
+      for (TBItemScrubber.ItemData id : items) {
+        if (c++ >= visibleItems) {
           result.setShort(offset, (short)0);
           result.setShort(offset + 2, (short)0);
           result.setShort(offset + 4, (short)0);
@@ -287,43 +331,51 @@ public final class NST {
           offset += txtBytes.length;
           result.setByte(offset, (byte)0);
           offset += 1;
-        } else {
+        }
+        else {
           result.setShort(offset, (short)0);
           offset += 2;
         }
 
         if (withImages && id.darkIcon != null) {
           offset += _writeIconRaster(id.darkIcon, id.fMulX, result, offset, byteCount);
-        } else {
-          final boolean hasIcon = id.getIcon() != null && !(id.getIcon() instanceof EmptyIcon) && id.getIcon().getIconWidth() > 0 && id.getIcon().getIconHeight() > 0;
-          result.setShort(offset, hasIcon ? (short) 1: (short)0);
+        }
+        else {
+          final boolean hasIcon = id.getIcon() != null &&
+                                  !(id.getIcon() instanceof EmptyIcon) &&
+                                  id.getIcon().getIconWidth() > 0 &&
+                                  id.getIcon().getIconHeight() > 0;
+          result.setShort(offset, hasIcon ? (short)1 : (short)0);
           result.setShort(offset + 2, (short)0);
           offset += 4;
         }
       }
 
       return Pair.create(result, byteCount);
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       if (ptr != 0) {
         Native.free(ptr);
       }
-      LOG.error(e);
+      LOG.debug(e);
       return null;
     }
   }
 
-  protected static Pair<Pointer, Dimension> get4ByteRGBARaster(@Nullable Icon icon) {
-    if (icon == null || icon.getIconHeight() <= 0 || icon.getIconWidth() <= 0)
+  static Pair<Pointer, Dimension> get4ByteRGBARaster(@Nullable Icon icon) {
+    if (icon == null || icon.getIconHeight() <= 0 || icon.getIconWidth() <= 0) {
       return null;
+    }
 
-    final float fMulX = getIconScaleForTouchbar(icon);
-    final @NotNull BufferedImage img = _getImg4ByteRGBA(icon, fMulX);
-    return Pair.create(_getRaster(img), new Dimension(img.getWidth(), img.getHeight()));
+    float fMulX = getIconScaleForTouchbar(icon);
+    BufferedImage img = _getImg4ByteRGBA(icon, fMulX);
+    return new Pair<>(_getRaster(img), new Dimension(img.getWidth(), img.getHeight()));
   }
 
   private static Pointer _getRaster(BufferedImage img) {
-    if (img == null)
+    if (img == null) {
       return null;
+    }
 
     final DataBuffer db = img.getRaster().getDataBuffer();
     DirectDataBufferInt dbb = (DirectDataBufferInt)db;
@@ -331,42 +383,50 @@ public final class NST {
   }
 
   private static int _getImgW(BufferedImage img) { return img == null ? 0 : img.getWidth(); }
+
   private static int _getImgH(BufferedImage img) { return img == null ? 0 : img.getHeight(); }
 
   private static BufferedImage _getImg4ByteRGBA(Icon icon, float scale) {
-    if (icon == null || icon.getIconHeight() <= 0 || icon.getIconWidth() <= 0)
+    if (icon == null || icon.getIconHeight() <= 0 || icon.getIconWidth() <= 0) {
       return null;
+    }
 
-    final int w = Math.round(icon.getIconWidth()*scale);
-    final int h = Math.round(icon.getIconHeight()*scale);
+    final int w = Math.round(icon.getIconWidth() * scale);
+    final int h = Math.round(icon.getIconHeight() * scale);
 
-    final int memLength = w*h*4;
+    final int memLength = w * h * 4;
     Pointer memory = new Memory(memLength);
     return _drawIconIntoMemory(icon, scale, memory, 0);
   }
 
   private static float getIconScaleForTouchbar(@NotNull Icon icon) {
     // according to https://developer.apple.com/macos/human-interface-guidelines/touch-bar/touch-bar-icons-and-images/
-    // icons generally should not exceed 44px in height (36px for circular icons)
+    // icons, generally should not exceed 44px in height (36px for circular icons)
     // Ideal icon size	    36px X 36px (18pt X 18pt @2x)
     // Maximum icon size    44px X 44px (22pt X 22pt @2x)
-    return UISettings.getInstance().getPresentationMode() ?
-           40.f/icon.getIconHeight() :
-           (icon.getIconHeight() < 24 ? 40.f/16 : 44.f/icon.getIconHeight());
+    int iconHeight = icon.getIconHeight();
+    if (UISettings.getInstance().getPresentationMode()) {
+      return 40.f / iconHeight;
+    }
+    else {
+      return iconHeight < 24 ? 40.f / 16 : (44.f / iconHeight);
+    }
   }
 
   private static BufferedImage _getImg4ByteRGBA(@Nullable Icon icon) {
-    if (icon == null || icon.getIconHeight() <= 0 || icon.getIconWidth() <= 0)
+    if (icon == null || icon.getIconHeight() <= 0 || icon.getIconWidth() <= 0) {
       return null;
+    }
 
     final float fMulX = getIconScaleForTouchbar(icon);
     return _getImg4ByteRGBA(icon, fMulX);
   }
 
   // returns count of written bytes
-  private static int _writeIconRaster(@NotNull Icon icon, float scale, @NotNull Pointer memory, int offset, int totalMemoryBytes) throws Exception {
-    final int w = Math.round(icon.getIconWidth()*scale);
-    final int h = Math.round(icon.getIconHeight()*scale);
+  private static int _writeIconRaster(@NotNull Icon icon, float scale, @NotNull Pointer memory, int offset, int totalMemoryBytes)
+    throws Exception {
+    final int w = Math.round(icon.getIconWidth() * scale);
+    final int h = Math.round(icon.getIconHeight() * scale);
 
     if (w <= 0 || h <= 0) {
       throw new Exception("Incorrect icon sizes: " + icon.getIconWidth() + "x" + icon.getIconHeight() + ", scale=" + scale);
@@ -376,7 +436,8 @@ public final class NST {
     final int totalSize = rasterSizeInBytes + 4;
 
     if (offset + totalSize > totalMemoryBytes) {
-      throw new Exception("Incorrect memory offset: offset=" + offset + ", rasterSize=" + rasterSizeInBytes + ", totalMemoryBytes=" + totalMemoryBytes);
+      throw new Exception(
+        "Incorrect memory offset: offset=" + offset + ", rasterSize=" + rasterSizeInBytes + ", totalMemoryBytes=" + totalMemoryBytes);
     }
 
     memory.setShort(offset, (short)w);
@@ -391,20 +452,28 @@ public final class NST {
 
   // returns count of written bytes
   private static @NotNull BufferedImage _drawIconIntoMemory(@NotNull Icon icon, float scale, @NotNull Pointer memory, int offset) {
-    final int w = Math.round(icon.getIconWidth()*scale);
-    final int h = Math.round(icon.getIconHeight()*scale);
-    final int rasterSizeInBytes = w * h * 4;
+    int w = Math.round(icon.getIconWidth() * scale);
+    int h = Math.round(icon.getIconHeight() * scale);
+    int rasterSizeInBytes = w * h * 4;
 
     memory.setMemory(offset, rasterSizeInBytes, (byte)0);
 
     DataBuffer dataBuffer = new DirectDataBufferInt(memory, rasterSizeInBytes, offset);
-    final DirectColorModel colorModel = new DirectColorModel(ColorModel.getRGBdefault().getColorSpace(), 32, 0xFF, 0xFF00, 0x00FF0000, 0xff000000/*alpha*/, false, DataBuffer.TYPE_INT);
-    final SampleModel sm = colorModel.createCompatibleSampleModel(w, h);
-    final WritableRaster raster = WritableRasterNative.createNativeRaster(sm, dataBuffer);
-    final BufferedImage image = new BufferedImage(colorModel, raster, false, null);
+    DirectColorModel colorModel =
+      new DirectColorModel(ColorModel.getRGBdefault().getColorSpace(), 32, 0xFF, 0xFF00, 0x00FF0000, 0xff000000/*alpha*/, false,
+                           DataBuffer.TYPE_INT);
+    SampleModel sampleModel = colorModel.createCompatibleSampleModel(w, h);
+    WritableRaster raster = WritableRasterNative.createNativeRaster(sampleModel, dataBuffer);
+    //noinspection UndesirableClassUsage
+    BufferedImage image = new BufferedImage(colorModel, raster, false, null);
 
-    final Graphics2D g = image.createGraphics();
-    g.scale(scale, scale);
+    Graphics2D g = image.createGraphics();
+    if (icon instanceof ScalableIcon scalableIcon) {
+      icon = scalableIcon.scale(scale);
+    }
+    else {
+      g.scale(scale, scale);
+    }
     g.setComposite(AlphaComposite.SrcOver);
     icon.paintIcon(null, g, 0, 0);
     g.dispose();
@@ -413,8 +482,8 @@ public final class NST {
   }
 }
 
-class DirectDataBufferInt extends DataBuffer {
-  protected Pointer myMemory;
+final class DirectDataBufferInt extends DataBuffer {
+  Pointer myMemory;
   private final int myOffset;
 
   DirectDataBufferInt(Pointer memory, int memLength, int offset) {
@@ -422,32 +491,14 @@ class DirectDataBufferInt extends DataBuffer {
     this.myMemory = memory;
     this.myOffset = offset;
   }
+
   @Override
   public int getElem(int bank, int i) {
     return myMemory.getInt(myOffset + i * 4L); // same as: *((jint *)((char *)Pointer + offset))
   }
+
   @Override
   public void setElem(int bank, int i, int val) {
     myMemory.setInt(myOffset + i * 4L, val); // same as: *((jint *)((char *)Pointer + offset)) = value
-  }
-}
-
-@SuppressWarnings("unused")
-class DirectDataBufferByte extends DataBuffer {
-  protected Pointer myMemory;
-  private final int myOffset;
-
-  DirectDataBufferByte(Pointer mem, int memLength, int offset) {
-    super(TYPE_BYTE, memLength);
-    this.myMemory = mem;
-    this.myOffset = offset;
-  }
-  @Override
-  public int getElem(int bank, int i) {
-    return myMemory.getByte(myOffset + i); // same as: *((jbyte *)((char *)Pointer + offset))
-  }
-  @Override
-  public void setElem(int bank, int i, int val) {
-    myMemory.setByte(myOffset + i, (byte)val); // same as: *((jbyte *)((char *)Pointer + offset)) = value
   }
 }

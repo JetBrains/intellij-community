@@ -1,25 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.extensionResources;
 
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtil;
+import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +38,19 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
 /**
  * <p> Extensions root type provide a common interface for plugins to access resources that are modifiable by the user. </p>
@@ -45,6 +65,7 @@ public final class ExtensionsRootType extends RootType {
   static final Logger LOG = Logger.getInstance(ExtensionsRootType.class);
 
   private static final @NonNls String EXTENSIONS_PATH = "extensions";
+  private static final @NonNls String EXTERNAL_EXTENSIONS_PATH = "external-extensions";
   private static final @NonNls String BACKUP_FILE_EXTENSION = "old";
 
   ExtensionsRootType() {
@@ -75,22 +96,32 @@ public final class ExtensionsRootType extends RootType {
 
   public @Nullable PluginId getOwner(@Nullable VirtualFile resource) {
     VirtualFile file = resource == null ? null : getPluginResourcesDirectoryFor(resource);
-    return file == null ? null : PluginId.findId(file.getName());
+    return file == null ? null : PluginId.getId(file.getName());
   }
 
-  @Nullable
-  public File findResource(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
-    extractBundledExtensionsIfNeeded(pluginId);
+  public @Nullable Path findResource(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+    updateBundledResources(pluginId);
     return findExtensionImpl(pluginId, path);
   }
 
   public @NotNull Path findResourceDirectory(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
-    extractBundledExtensionsIfNeeded(pluginId);
+    updateBundledResources(pluginId);
     return findExtensionsDirectoryImpl(pluginId, path, createIfMissing);
   }
 
   public void extractBundledResources(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
-    List<URL> bundledResources = getBundledResourceUrls(pluginId, path);
+    extractBundledResourcesImpl(pluginId, path, getBundledExtensionsResources(pluginId, path));
+    extractBundledExternalResources(pluginId, path);
+  }
+
+  private void extractBundledExternalResources(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+    for (ExternalResourcesUnpackExtensionBean pluginBean : ExternalResourcesUnpackExtensionBean.getPluginBeans(pluginId)) {
+      PluginId dependentPluginId = PluginId.getId(pluginBean.unpackTo);
+      extractBundledResourcesImpl(dependentPluginId, path, getBundledExternalResources(pluginId, dependentPluginId, path));
+    }
+  }
+
+  private void extractBundledResourcesImpl(@NotNull PluginId pluginId, @NotNull String path, @NotNull List<URL> bundledResources) throws IOException {
     if (bundledResources.isEmpty()) {
       return;
     }
@@ -101,13 +132,16 @@ public final class ExtensionsRootType extends RootType {
       if (bundledResourcesDir == null || !bundledResourcesDir.isDirectory()) {
         continue;
       }
+
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(new Throwable("Extract bundled resources " + pluginId.getIdString() + " to " + resourcesDirectory));
+      }
       extractResources(bundledResourcesDir, resourcesDirectory);
     }
   }
 
-  @Nullable
   @Override
-  public String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable String substituteName(@NotNull Project project, @NotNull VirtualFile file) {
     VirtualFile resourcesDir = getPluginResourcesDirectoryFor(file);
     if (file.equals(resourcesDir)) {
       String name = getPluginResourcesRootName(resourcesDir);
@@ -124,27 +158,24 @@ public final class ExtensionsRootType extends RootType {
     return pluginResourcesDir != null && pluginId != null ? VfsUtilCore.getRelativePath(resource, pluginResourcesDir) : null;
   }
 
-  private @Nullable File findExtensionImpl(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
-    Path dir = findExtensionsDirectoryImpl(pluginId, "", false);
-    Path file = dir.resolve(path);
-    return Files.isRegularFile(file) ? file.toFile() : null;
+  private @Nullable Path findExtensionImpl(@NotNull PluginId pluginId, @NotNull String path) {
+    Path file = Path.of(getPath(pluginId, "")).resolve(path);
+    return Files.isRegularFile(file) ? file : null;
   }
 
   private @NotNull Path findExtensionsDirectoryImpl(@NotNull PluginId pluginId, @NotNull String path, boolean createIfMissing) throws IOException {
-    String fullPath = getPath(pluginId, path);
-    Path dir = Paths.get(fullPath);
+    Path dir = Path.of(getPath(pluginId, path));
     if (createIfMissing) {
       Files.createDirectories(dir);
     }
     return dir;
   }
 
-  @Nullable
-  private String getPluginResourcesRootName(VirtualFile resourcesDir) {
+  private @Nullable String getPluginResourcesRootName(VirtualFile resourcesDir) {
     PluginId ownerPluginId = getOwner(resourcesDir);
     if (ownerPluginId == null) return null;
 
-    if (PluginManagerCore.CORE_ID == ownerPluginId) {
+    if (PluginManagerCore.CORE_ID.equals(ownerPluginId)) {
       return PlatformUtils.getPlatformPrefix();
     }
 
@@ -176,19 +207,19 @@ public final class ExtensionsRootType extends RootType {
     return ScratchFileService.getInstance().getRootPath(this) + '/' + pluginId.getIdString() + (Strings.isEmpty(path) ? "" : '/' + path);
   }
 
-  private static @NotNull List<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+  private static @Unmodifiable @NotNull List<URL> getBundledResourceUrls(@NotNull PluginId pluginId, @NotNull String path, @NotNull String resourceRoot) throws IOException {
     // search in enabled plugins only
     IdeaPluginDescriptorImpl plugin = (IdeaPluginDescriptorImpl)PluginManager.getInstance().findEnabledPlugin(pluginId);
     if (plugin == null) {
-      return ContainerUtil.emptyList();
+      return Collections.emptyList();
     }
 
-    ClassLoader pluginClassLoader = plugin.getPluginClassLoader();
-    Enumeration<URL> resources = pluginClassLoader.getResources(EXTENSIONS_PATH + '/' + path);
+    ClassLoader pluginClassLoader = plugin.getClassLoader();
+    Enumeration<URL> resources = pluginClassLoader.getResources(resourceRoot + '/' + path);
     if (resources == null) {
-      return ContainerUtil.emptyList();
+      return Collections.emptyList();
     }
-    else if (plugin.isUseIdeaClassLoader()) {
+    else if (plugin.getUseIdeaClassLoader()) {
       return ContainerUtil.toList(resources);
     }
 
@@ -197,14 +228,14 @@ public final class ExtensionsRootType extends RootType {
       urls.add(resources.nextElement());
     }
     // exclude parent classloader resources from list
-    for (PluginDependency it : plugin.getPluginDependencies()) {
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(it.id);
+    for (var it : plugin.getDependencies()) {
+      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(it.getPluginId());
       if (descriptor == null) {
         continue;
       }
-      ClassLoader loader = descriptor.getPluginClassLoader();
+      ClassLoader loader = descriptor.getClassLoader();
       if (loader != pluginClassLoader) {
-        Enumeration<URL> pluginResources = loader.getResources(EXTENSIONS_PATH + '/' + path);
+        Enumeration<URL> pluginResources = loader.getResources(resourceRoot + '/' + path);
         while (pluginResources.hasMoreElements()) {
           urls.remove(pluginResources.nextElement());
         }
@@ -213,11 +244,18 @@ public final class ExtensionsRootType extends RootType {
     return new ArrayList<>(urls);
   }
 
+  private static @Unmodifiable @NotNull List<URL> getBundledExternalResources(@NotNull PluginId plugin, @NotNull PluginId destinationPlugin, @NotNull String path) throws IOException {
+    return getBundledResourceUrls(plugin, path, EXTERNAL_EXTENSIONS_PATH + '/' + destinationPlugin.getIdString());
+  }
+
+  private static @Unmodifiable @NotNull List<URL> getBundledExtensionsResources(@NotNull PluginId pluginId, @NotNull String path) throws IOException {
+    return getBundledResourceUrls(pluginId, path, EXTENSIONS_PATH);
+  }
+
   private static void extractResources(@NotNull VirtualFile from, @NotNull Path to) throws IOException {
     VfsUtilCore.visitChildrenRecursively(from, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
-      @NotNull
       @Override
-      public Result visitFileEx(@NotNull VirtualFile file) {
+      public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
         try {
           return visitImpl(file);
         }
@@ -238,7 +276,7 @@ public final class ExtensionsRootType extends RootType {
         }
         if (file.isDirectory()) return CONTINUE;
         if (file.getFileType().isBinary()) return CONTINUE;
-        if (file.getLength() > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return CONTINUE;
+        if (VirtualFileUtil.isTooLarge(file)) return CONTINUE;
 
         String newText = FileUtil.loadTextAndClose(file.getInputStream());
         String oldText = child.exists() ? FileUtil.loadFile(child) : "";
@@ -255,8 +293,7 @@ public final class ExtensionsRootType extends RootType {
     }, IOException.class);
   }
 
-  @NotNull
-  private static String hash(@NotNull String s) {
+  private static @NotNull String hash(@NotNull String s) {
     MessageDigest md5 = DigestUtil.md5();
     StringBuilder sb = new StringBuilder();
     byte[] digest = md5.digest(s.getBytes(StandardCharsets.UTF_8));
@@ -277,17 +314,66 @@ public final class ExtensionsRootType extends RootType {
     FileUtil.rename(file, newName);
   }
 
-  private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) throws IOException {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      return;
-    }
+  private final Map<IdeaPluginDescriptor, Job> updatingResources = new ConcurrentHashMap<>();
 
+  public Job updateBundledResources(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
-    if (plugin == null || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) {
+    if (plugin == null) {
+      CompletableJob job = JobKt.Job(null);
+      job.complete();
+      return job;
+    }
+
+    return updatingResources.computeIfAbsent(plugin, (d) -> executeOnPooledIoThread(() -> {
+      try {
+        updateBundledResourcesImpl(d);
+      }
+      finally {
+        updatingResources.remove(d);
+      }
+    }));
+  }
+
+  private void updateBundledResourcesImpl(@NotNull IdeaPluginDescriptor plugin) {
+    for (ExternalResourcesUnpackExtensionBean pluginBean : ExternalResourcesUnpackExtensionBean.getPluginsBeUnpackedTo(plugin.getPluginId())) {
+      updateBundledResourcesWithLock(pluginBean.getPluginDescriptor().getPluginId());
+    }
+
+    try {
+      ResourceVersions versions = ResourceVersions.getInstance();
+      if (versions.shouldUpdateResourcesOf(plugin)) {
+        extractBundledResources(plugin.getPluginId(), "");
+        versions.resourcesUpdated(plugin);
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to extract bundled resources for plugin: " + plugin.getName(), e);
+    }
+  }
+
+  private void updateBundledResourcesWithLock(PluginId pluginId) {
+    IdeaPluginDescriptor ideaDesc = PluginManagerCore.getPlugin(pluginId);
+    if (ideaDesc == null || updatingResources.containsKey(ideaDesc)) {
       return;
     }
 
-    extractBundledResources(pluginId, "");
-    ResourceVersions.getInstance().resourcesUpdated(plugin);
+    CompletableJob job = JobKt.Job(null);
+    if (updatingResources.putIfAbsent(ideaDesc, job) != null) {
+      job.complete();
+      return;
+    }
+
+    try { // updating lock
+      updateBundledResourcesImpl(ideaDesc);
+    }
+    finally {
+      updatingResources.remove(ideaDesc);
+      job.complete();
+    }
+  }
+
+  @TestOnly
+  public void updatePluginResources(@NotNull PluginId pluginId) {
+    updateBundledResourcesWithLock(pluginId);
   }
 }

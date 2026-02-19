@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -9,7 +9,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompiledClass;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -33,7 +37,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
     ExitCode exitCode = ExitCode.NOTHING_DONE;
     for (CompiledClass compiledClass : outputConsumer.getCompiledClasses().values()) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-        LOG.info("checking " + compiledClass + " by " + getClass());
+        LOG.debug("checking " + compiledClass + " by " + getClass());
       }
       final BinaryContent originalContent = compiledClass.getContent();
       final ClassReader reader = new FailSafeClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
@@ -45,7 +49,7 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
       final ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), finder);
       try {
         if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
-          LOG.info("instrumenting " + compiledClass + " by " + getClass());
+          LOG.debug("instrumenting " + compiledClass + " by " + getClass());
         }
         final BinaryContent instrumented = instrument(context, compiledClass, reader, writer, finder);
         if (instrumented != null) {
@@ -74,10 +78,9 @@ public abstract class BaseInstrumentingBuilder extends ClassProcessingBuilder {
 
   protected abstract boolean canInstrument(CompiledClass compiledClass, int classFileVersion);
 
-  @Nullable
-  protected abstract BinaryContent instrument(CompileContext context,
-                                              CompiledClass compiled,
-                                              ClassReader reader,
-                                              ClassWriter writer,
-                                              InstrumentationClassFinder finder);
+  protected abstract @Nullable BinaryContent instrument(CompileContext context,
+                                                        CompiledClass compiled,
+                                                        ClassReader reader,
+                                                        ClassWriter writer,
+                                                        InstrumentationClassFinder finder);
 }

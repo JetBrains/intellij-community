@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
@@ -13,13 +14,16 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EDT;
 import git4idea.repo.GitRepository;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.Future;
 
 import static com.intellij.tasks.vcs.GitTaskBranchesTest.createRepository;
 
@@ -27,7 +31,7 @@ public class VcsContextTest extends FileEditorManagerTestCase {
   private TaskManagerImpl myTaskManager;
 
   @Override
-  public void setUp() throws Exception {
+  public void setUp() {
     super.setUp();
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     WorkingContextManager.getInstance(getProject()).enableUntil(getTestRootDisposable());
@@ -37,16 +41,22 @@ public class VcsContextTest extends FileEditorManagerTestCase {
 
   @Override
   protected void tearDown() {
-    new RunAll()
-      .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).forceStopInTestMode())
-      .append(() -> ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode())
-      .append(() -> ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMappings(Collections.emptyList()))
-      .append(() -> super.tearDown())
-      .run();
+    RunAll.runAll(
+      () -> ChangeListManagerImpl.getInstanceImpl(getProject()).forceStopInTestMode(),
+      () -> ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode(),
+      () -> ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMappings(Collections.emptyList()),
+      () -> EditorTestUtil.releaseAllEditors(),
+      () -> super.tearDown()
+    );
   }
 
-  public void testBranchWorkspace() throws IOException {
-    GitRepository repository = (GitRepository)createRepository("fooBar", getProject());
+  public void testBranchWorkspace() throws Exception {
+    Future<GitRepository> future =
+      ApplicationManager.getApplication().executeOnPooledThread(() -> (GitRepository)createRepository("fooBar", getProject()));
+    while (!future.isDone()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    }
+    GitRepository repository = future.get();
 
     VirtualFile firstFile = createFile(repository, "first.txt");
     VirtualFile secondFile = createFile(repository, "second.txt");
@@ -61,12 +71,12 @@ public class VcsContextTest extends FileEditorManagerTestCase {
       manager.openFile(secondFile, true);
 
       myTaskManager.activateTask(first, true);
-      UIUtil.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
       assertEquals(1, manager.getOpenFiles().length);
       assertEquals("first.txt", manager.getOpenFiles()[0].getName());
 
       myTaskManager.activateTask(second, true);
-      UIUtil.dispatchAllInvocationEvents();
+      EDT.dispatchAllInvocationEvents();
       assertEquals(1, manager.getOpenFiles().length);
       assertEquals("second.txt", manager.getOpenFiles()[0].getName());
     }
@@ -88,7 +98,7 @@ public class VcsContextTest extends FileEditorManagerTestCase {
     LocalTaskImpl task = myTaskManager.createLocalTask(name);
     final LocalTask localTask = myTaskManager.activateTask(task, true);
     myTaskManager.createBranch(localTask, defaultTask, name, null);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     return task;
   }
 }

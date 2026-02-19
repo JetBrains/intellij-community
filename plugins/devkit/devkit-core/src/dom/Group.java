@@ -1,9 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupPresentationProvider;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
@@ -18,9 +22,12 @@ public interface Group extends ActionContainer, ActionOrGroup {
   GenericAttributeValue<Boolean> getCompact();
 
   @NotNull
+  GenericAttributeValue<Boolean> getSearchable();
+
+  @NotNull
   @Attribute("class")
   @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
-    allowAbstract = false, allowInterface = false)
+    allowNonPublic = true, allowAbstract = false, allowInterface = false)
   @Convert(PluginPsiClassConverter.class)
   GenericAttributeValue<PsiClass> getClazz();
 

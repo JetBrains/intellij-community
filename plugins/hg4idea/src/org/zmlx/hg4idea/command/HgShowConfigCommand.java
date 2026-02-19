@@ -20,18 +20,21 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HgShowConfigCommand {
 
-  @NotNull private final Project project;
+  private final @NotNull Project project;
 
   public HgShowConfigCommand(@NotNull Project project) {
     this.project = project;
   }
 
-  @NotNull
-  public Map<String, Map<String, String>> execute(@Nullable VirtualFile repo) {
+  public @NotNull Map<String, Map<String, String>> execute(@Nullable VirtualFile repo) {
     if (repo == null) {
       return Collections.emptyMap();
     }

@@ -1,8 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project.model.impl.module.content;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ContentFolder;
+import com.intellij.openapi.roots.ExcludeFolder;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -14,6 +19,7 @@ import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
@@ -66,9 +72,8 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return myRoot.getFile();
   }
 
-  @NotNull
   @Override
-  public String getUrl() {
+  public @NotNull String getUrl() {
     return myRoot.getUrl();
   }
 
@@ -77,15 +82,13 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return mySourceFolders.toArray(new SourceFolder[0]);
   }
 
-  @NotNull
   @Override
-  public List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType) {
+  public @NotNull List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType) {
     return getSourceFolders(Collections.singleton(rootType));
   }
 
-  @NotNull
   @Override
-  public List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+  public @NotNull List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     List<SourceFolder> folders = new SmartList<>();
     for (JpsSourceFolder folder : mySourceFolders) {
       if (rootTypes.contains(folder.getRootType())) {
@@ -116,9 +119,8 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return myExcludeFolders.toArray(new ExcludeFolder[0]);
   }
 
-  @NotNull
   @Override
-  public List<String> getExcludeFolderUrls() {
+  public @NotNull List<String> getExcludeFolderUrls() {
     List<String> excluded = new ArrayList<>();
     for (JpsExcludeFolder folder : myExcludeFolders) {
       excluded.add(folder.getUrl());
@@ -145,32 +147,28 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return VfsUtilCore.toVirtualFileArray(excluded);
   }
 
-  @NotNull
   @Override
-  public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
+  public @NotNull SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
     return addSourceFolder(file, isTestSource, "");
   }
 
-  @NotNull
   @Override
-  public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
+  public @NotNull SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
     return addSourceFolder(file.getUrl(), isTestSource, packagePrefix);
   }
 
-  @NotNull
   @Override
-  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file,
-                                                             @NotNull JpsModuleSourceRootType<P> type,
-                                                             @NotNull P properties) {
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      @NotNull P properties) {
     final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(file.getUrl(), type, properties);
     final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
     mySourceFolders.add(sourceFolder);
     return sourceFolder;
   }
 
-  @NotNull
   @Override
-  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type) {
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type) {
     return addSourceFolder(file, type, type.createDefaultProperties());
   }
 
@@ -180,25 +178,52 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     return addSourceFolder(url, rootType, properties);
   }
 
-  @NotNull
   @Override
-  public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
+  public @NotNull SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
     return addSourceFolder(url, isTestSource, "");
   }
 
-  @NotNull
   @Override
-  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type) {
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type) {
     return addSourceFolder(url, type, type.createDefaultProperties());
   }
 
   @Override
-  @NotNull
-  public  <P extends JpsElement> SourceFolder addSourceFolder(@NotNull  String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties) {
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      @NotNull ProjectModelExternalSource externalSource) {
+    return addSourceFolder(url, type, type.createDefaultProperties());
+  }
+
+  @Override
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      boolean isAutomaticallyImported) {
+    return addSourceFolder(url, type, type.createDefaultProperties());
+  }
+
+  @Override
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull  String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties) {
     final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, type, properties);
     final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
     mySourceFolders.add(sourceFolder);
     return sourceFolder;
+  }
+
+  @Override
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      @NotNull P properties,
+                                                                      boolean isAutomaticallyImported) {
+    return addSourceFolder(url, type, properties);
+  }
+
+  @Override
+  public @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                                      @NotNull JpsModuleSourceRootType<P> type,
+                                                                      @NotNull P properties,
+                                                                      @Nullable ProjectModelExternalSource externalSource) {
+    return addSourceFolder(url, type, properties);
   }
 
   @Override
@@ -222,19 +247,22 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     }
   }
 
-  @NotNull
   @Override
-  public ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
+  public @NotNull ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
     return addExcludeFolder(file.getUrl());
   }
 
-  @NotNull
   @Override
-  public ExcludeFolder addExcludeFolder(@NotNull String url) {
+  public @NotNull ExcludeFolder addExcludeFolder(@NotNull String url) {
     final JpsExcludeFolder folder = new JpsExcludeFolder(url, this);
     myModule.getExcludeRootsList().addUrl(url);
     myExcludeFolders.add(folder);
     return folder;
+  }
+
+  @Override
+  public @NotNull ExcludeFolder addExcludeFolder(@NotNull String url, boolean isAutomaticallyImported) {
+    return addExcludeFolder(url);
   }
 
   @Override
@@ -271,9 +299,8 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     }
   }
 
-  @NotNull
   @Override
-  public List<String> getExcludePatterns() {
+  public @NotNull List<String> getExcludePatterns() {
     return myExcludePatterns;
   }
 
@@ -300,9 +327,8 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     }
   }
 
-  @NotNull
   @Override
-  public ModuleRootModel getRootModel() {
+  public @NotNull ModuleRootModel getRootModel() {
     return myRootModel;
   }
 

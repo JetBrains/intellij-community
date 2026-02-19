@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -20,11 +23,12 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.VcsBackgroundTask;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
@@ -36,8 +40,14 @@ import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
@@ -49,22 +59,22 @@ import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
 
-public class TreeConflictRefreshablePanel implements Disposable {
+public final class TreeConflictRefreshablePanel implements Disposable {
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
   private SvnRevisionNumber myCommittedRevision;
   private final FilePath myPath;
   private final CompositeDisposable myChildDisposables = new CompositeDisposable();
-  private final TLongArrayList myRightRevisionsList;
-  @NotNull private final JBLoadingPanel myDetailsPanel;
-  @NotNull private final BackgroundTaskQueue myQueue;
+  private final LongArrayList myRightRevisionsList;
+  private final @NotNull JBLoadingPanel myDetailsPanel;
+  private final @NotNull BackgroundTaskQueue myQueue;
   private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
 
   public TreeConflictRefreshablePanel(@NotNull Project project, @NotNull BackgroundTaskQueue queue, @NotNull ConflictedSvnChange change) {
     myVcs = SvnVcs.getInstance(project);
     myChange = change;
     myPath = ChangesUtil.getFilePath(myChange);
-    myRightRevisionsList = new TLongArrayList();
+    myRightRevisionsList = new LongArrayList();
 
     myQueue = queue;
     myDetailsPanel = new JBLoadingPanel(new BorderLayout(), this);
@@ -91,8 +101,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return true;
   }
 
-  @NotNull
-  public JPanel getPanel() {
+  public @NotNull JPanel getPanel() {
     return myDetailsPanel;
   }
 
@@ -126,8 +135,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return new BeforeAfter<>(leftSide, rightSide);
   }
 
-  @Nullable
-  private Revision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
+  private @Nullable Revision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
     Revision result = null;
     if (description.getSourceLeftVersion() != null) {
       long committed = description.getSourceLeftVersion().getPegRevision();
@@ -146,8 +154,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
            !Objects.equals(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
   }
 
-  @NotNull
-  private ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable Revision untilThisOther, boolean isLeft)
+  private @NotNull ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable Revision untilThisOther, boolean isLeft)
     throws VcsException {
     ConflictSidePresentation result = EmptyConflictSide.INSTANCE;
     if (version != null &&
@@ -171,7 +178,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
 
   @RequiresEdt
   public void refresh() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myDetailsPanel.startLoading();
     Loader task = new Loader(myVcs.getProject());
@@ -180,7 +187,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   @RequiresEdt
-  protected JPanel dataToPresentation(BeforeAfter<BeforeAfter<ConflictSidePresentation>> data) {
+  private JPanel dataToPresentation(BeforeAfter<BeforeAfter<ConflictSidePresentation>> data) {
     final JPanel wrapper = new JPanel(new BorderLayout());
     final JPanel main = new JPanel(new GridBagLayout());
 
@@ -256,10 +263,9 @@ public class TreeConflictRefreshablePanel implements Disposable {
         FileDocumentManager.getInstance().saveAllDocuments();
         final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<TreeConflictDescription>(
+          new VcsBackgroundTask<>(
             myVcs.getProject(),
             message("progress.title.accepting.theirs.for.path", filePath(paths.myMainPath)),
-            PerformInBackgroundOption.ALWAYS_BACKGROUND,
             Collections.singletonList(description),
             true
           ) {
@@ -324,10 +330,9 @@ public class TreeConflictRefreshablePanel implements Disposable {
         FileDocumentManager.getInstance().saveAllDocuments();
         final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<TreeConflictDescription>(
+          new VcsBackgroundTask<>(
             myVcs.getProject(),
             message("progress.title.accepting.yours.for.path", filePath(paths.myMainPath)),
-            PerformInBackgroundOption.ALWAYS_BACKGROUND,
             Collections.singletonList(description),
             true
           ) {
@@ -368,8 +373,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return e -> new MergeFromTheirsResolver(myVcs, description, myChange, myCommittedRevision).execute();
   }
 
-  @NotNull
-  public static String filePath(@NotNull FilePath newFilePath) {
+  public static @NotNull String filePath(@NotNull FilePath newFilePath) {
     return newFilePath.getName() + " (" + Objects.requireNonNull(newFilePath.getParentPath()).getPath() + ")";
   }
 

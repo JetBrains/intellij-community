@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -10,7 +11,7 @@ import com.intellij.ui.AppIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-class DumbServiceAppIconProgress extends ProgressIndicatorBase {
+final class DumbServiceAppIconProgress extends ProgressIndicatorBase {
   private final Project myProject;
   private double lastFraction;
 
@@ -20,7 +21,9 @@ class DumbServiceAppIconProgress extends ProgressIndicatorBase {
 
   static void registerForProgress(@NotNull Project project,
                                   @NotNull ProgressIndicatorEx indicator) {
-    indicator.addStateDelegate(new DumbServiceAppIconProgress(project));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      indicator.addStateDelegate(new DumbServiceAppIconProgress(project));
+    }
   }
 
   @Override

@@ -1,23 +1,42 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportModuleStatement;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiResolveHelper;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, ElementClassHint {
@@ -25,8 +44,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
   private static final String[] DEFAULT_PACKAGES = {CommonClassNames.DEFAULT_PACKAGE};
 
   private final String myClassName;
-  @NotNull
-  private final PsiFile myContainingFile;
+  private final @NotNull PsiFile myContainingFile;
   private final PsiElement myPlace;
   private final PsiResolveHelper myResolveHelper;
   private PsiClass myAccessClass;
@@ -65,10 +83,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
     if (myResult != null) return myResult;
     if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
     if (myHasAccessibleCandidate && myHasInaccessibleCandidate) {
-      for (Iterator<ClassCandidateInfo> iterator = myCandidates.iterator(); iterator.hasNext();) {
-        CandidateInfo info = iterator.next();
-        if (!info.isAccessible()) iterator.remove();
-      }
+      myCandidates.removeIf(info -> !info.isAccessible());
       myHasInaccessibleCandidate = false;
     }
 
@@ -107,10 +122,11 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
 
     PsiFile file = myPlace == null ? null : FileContextUtil.getContextFile(myContainingFile);
 
+    //other implicit imports processed as PsiImportStatements
     String[] defaultPackages = file instanceof PsiJavaFile ? ((PsiJavaFile)file).getImplicitlyImportedPackages() : DEFAULT_PACKAGES;
     String packageName = StringUtil.getPackageName(fqn);
-    for (String defaultPackage : defaultPackages) {
-      if (defaultPackage.equals(packageName)) return true;
+    if (ArrayUtil.contains(packageName, defaultPackages)) {
+      return true;
     }
 
     // class from my package imported implicitly
@@ -135,11 +151,9 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
     //A class may inherit two or more type declarations with the same name, either from two interfaces or from its superclass and an interface. 
     //It is a compile-time error to attempt to refer to any ambiguously inherited class or interface by its simple name.
     if (containingClass1 != null && containingClass2 != null && containingClass2.isInheritor(containingClass1, true) &&
-        !isImported(myCurrentFileContext)) {
-      if (!isAmbiguousInherited(containingClass1)) {
-        // shadowing
-        return Domination.DOMINATED_BY;
-      }
+        !isImported(myCurrentFileContext) && !isAmbiguousInherited(containingClass1, containingClass2)) {
+      // shadowing
+      return Domination.DOMINATED_BY;
     }
 
     boolean infoAccessible = info.isAccessible() && isAccessible(otherClass);
@@ -170,7 +184,23 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
       return Domination.DOMINATES;
     }
 
+    // on-demand wins over module import
+    if (PsiUtil.isAvailable(JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS, myPlace)) {
+      boolean myIsModule = isImportedByModule(myCurrentFileContext);
+      boolean otherIsModule = isImportedByModule(info.getCurrentFileResolveScope());
+      if (myIsModule && otherOnDemand && !otherIsModule) {
+        return Domination.DOMINATED_BY;
+      }
+      if (myOnDemand && !myIsModule && otherIsModule) {
+        return Domination.DOMINATES;
+      }
+    }
+
     return Domination.EQUAL;
+  }
+
+  private static boolean isImportedByModule(@Nullable PsiElement context) {
+    return context instanceof PsiImportModuleStatement;
   }
 
   private boolean isAccessible(PsiClass otherClass) {
@@ -188,7 +218,8 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
     return true;
   }
 
-  private boolean isAmbiguousInherited(PsiClass containingClass1) {
+  private boolean isAmbiguousInherited(PsiClass containingClass1, PsiClass containingClass2) {
+    if (!containingClass1.isInterface() && !containingClass2.isInterface()) return false; // definite shadowing because of single inheritance
     PsiClass psiClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class);
     if (psiClass instanceof PsiAnonymousClassImpl && ((PsiAnonymousClassImpl)psiClass).isBaseClassReference(myPlace)) {
       psiClass = PsiTreeUtil.getContextOfType(psiClass, PsiClass.class);
@@ -200,6 +231,21 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
       psiClass = psiClass.getContainingClass();
     }
     return false;
+  }
+
+  @Override
+  public boolean executeForUnresolved() {
+    if (myCurrentFileContext instanceof PsiImportStatementBase) {
+      PsiImportStatementBase importStatement = (PsiImportStatementBase)myCurrentFileContext;
+      PsiJavaCodeReferenceElement importRef = importStatement.getImportReference();
+      if (importRef != null && !importStatement.isOnDemand()) {
+        String name = importRef.getReferenceName();
+        if (myClassName.equals(name)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   @Override

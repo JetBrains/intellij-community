@@ -1,41 +1,53 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
-import com.intellij.util.indexing.*;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
 import com.intellij.util.io.KeyDescriptor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.FieldVisitor;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
-/**
- * @author lambdamix
- */
-public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+  private static final boolean IS_ENABLED = SystemProperties.getBooleanProperty("bytecodeAnalysis.index.enabled", true);
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
-  @NotNull
   @Override
-  public ID<HMember, Void> getName() {
+  public @NotNull ID<HMember, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<HMember, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<HMember, Void, FileContent> getIndexer() {
     return inputData -> {
       try {
         return collectKeys(inputData.getContent());
@@ -52,32 +64,31 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     };
   }
 
-  @NotNull
-  private static Map<HMember, Void> collectKeys(byte[] content) {
+  private static @NotNull Map<HMember, Void> collectKeys(byte[] content) {
     HashMap<HMember, Void> map = new HashMap<>();
     ClassReader reader = new ClassReader(content);
     String className = reader.getClassName();
+    long classHash = HMember.classHash(className);
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
         if ((access & Opcodes.ACC_PRIVATE) == 0) {
-          map.put(new Member(className, name, desc).hashed(), null);
+          map.put(HMember.create(classHash, name, desc), null);
         }
         return null;
       }
 
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        map.put(new Member(className, name, desc).hashed(), null);
+        map.put(HMember.create(classHash, name, desc), null);
         return null;
       }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE);
     return map;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<HMember> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<HMember> getKeyDescriptor() {
     return HKeyDescriptor.INSTANCE;
   }
 
@@ -86,10 +97,11 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     return true;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE);
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return IS_ENABLED
+           ? new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
+           : new DefaultFileTypeSpecificInputFilter();
   }
 
   @Override
@@ -140,6 +152,8 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
    * Externalizer for compressed equations.
    */
   public static class EquationsExternalizer implements DataExternalizer<Map<HMember, Equations>> {
+    public static final EquationsExternalizer INSTANCE = new EquationsExternalizer();
+
     @Override
     public void save(@NotNull DataOutput out, Map<HMember, Equations> value) throws IOException {
       DataInputOutputUtilRt.writeSeq(out, value.entrySet(), entry -> {
@@ -157,17 +171,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     private static void saveEquations(@NotNull DataOutput out, Equations eqs) throws IOException {
       out.writeBoolean(eqs.stable);
       DataInputOutputUtil.writeINT(out, eqs.results.size());
+      int maxFinal = Value.values().length;
       for (DirectionResultPair pair : eqs.results) {
         DataInputOutputUtil.writeINT(out, pair.directionKey);
         Result rhs = pair.result;
-        if (rhs instanceof Value) {
-          Value finalResult = (Value)rhs;
-          out.writeBoolean(true); // final flag
+        if (rhs instanceof Value finalResult) {
           DataInputOutputUtil.writeINT(out, finalResult.ordinal());
         }
-        else if (rhs instanceof Pending) {
-          Pending pendResult = (Pending)rhs;
-          out.writeBoolean(false); // pending flag
+        else if (rhs instanceof Pending pendResult) {
+          DataInputOutputUtil.writeINT(out, maxFinal); // pending flag
           DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
           for (Component component : pendResult.delta) {
@@ -179,21 +191,29 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
             }
           }
         }
-        else if (rhs instanceof Effects) {
-          Effects effects = (Effects)rhs;
+        else if (rhs instanceof Effects effects) {
           DataInputOutputUtil.writeINT(out, effects.effects.size());
           for (EffectQuantum effect : effects.effects) {
             writeEffect(out, effect);
           }
           writeDataValue(out, effects.returnValue);
         }
+        else if (rhs instanceof FieldAccess(String name)) {
+          DataInputOutputUtil.writeINT(out, maxFinal + 1);
+          out.writeUTF(name);
+        }
+        else {
+          throw new UnsupportedOperationException("Unsupported result: " + rhs + " in " + eqs);
+        }
       }
     }
 
     private static Equations readEquations(@NotNull DataInput in) throws IOException {
+      ProgressManager.checkCanceled();
       boolean stable = in.readBoolean();
       int size = DataInputOutputUtil.readINT(in);
       ArrayList<DirectionResultPair> results = new ArrayList<>(size);
+      Value[] values = Value.values();
       for (int k = 0; k < size; k++) {
         int directionKey = DataInputOutputUtil.readINT(in);
         Direction direction = Direction.fromInt(directionKey);
@@ -207,19 +227,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           results.add(new DirectionResultPair(directionKey, new Effects(returnValue, Set.copyOf(effects))));
         }
         else {
-          boolean isFinal = in.readBoolean(); // flag
-          if (isFinal) {
-            int ordinal = DataInputOutputUtil.readINT(in);
-            Value value = Value.values()[ordinal];
-            results.add(new DirectionResultPair(directionKey, value));
-          }
-          else {
+          int resultKind = DataInputOutputUtil.readINT(in);
+          if (resultKind == values.length) {
+            // pending
             int sumLength = DataInputOutputUtil.readINT(in);
             Component[] components = new Component[sumLength];
 
             for (int i = 0; i < sumLength; i++) {
               int ordinal = DataInputOutputUtil.readINT(in);
-              Value value = Value.values()[ordinal];
+              Value value = values[ordinal];
               int componentSize = DataInputOutputUtil.readINT(in);
               EKey[] ids = new EKey[componentSize];
               for (int j = 0; j < componentSize; j++) {
@@ -229,13 +245,19 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
             }
             results.add(new DirectionResultPair(directionKey, new Pending(components)));
           }
+          else if (resultKind == values.length + 1) {
+            results.add(new DirectionResultPair(directionKey, new FieldAccess(in.readUTF())));
+          }
+          else {
+            Value value = values[resultKind];
+            results.add(new DirectionResultPair(directionKey, value));
+          }
         }
       }
       return new Equations(results, stable);
     }
 
-    @NotNull
-    private static EKey readKey(@NotNull DataInput in) throws IOException {
+    private static @NotNull EKey readKey(@NotNull DataInput in) throws IOException {
       byte[] bytes = new byte[HMember.HASH_SIZE];
       in.readFully(bytes);
       int rawDirKey = DataInputOutputUtil.readINT(in);
@@ -256,9 +278,8 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       else if (effect == EffectQuantum.ThisChangeQuantum) {
         DataInputOutputUtil.writeINT(out, -2);
       }
-      else if (effect instanceof EffectQuantum.CallQuantum) {
+      else if (effect instanceof EffectQuantum.CallQuantum callQuantum) {
         DataInputOutputUtil.writeINT(out, -3);
-        EffectQuantum.CallQuantum callQuantum = (EffectQuantum.CallQuantum)effect;
         writeKey(out, callQuantum.key);
         out.writeBoolean(callQuantum.isStatic);
         DataInputOutputUtil.writeINT(out, callQuantum.data.length);
@@ -266,27 +287,25 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           writeDataValue(out, dataValue);
         }
       }
-      else if (effect instanceof EffectQuantum.ReturnChangeQuantum) {
+      else if (effect instanceof EffectQuantum.ReturnChangeQuantum returnChangeQuantum) {
         DataInputOutputUtil.writeINT(out, -4);
-        writeKey(out, ((EffectQuantum.ReturnChangeQuantum)effect).key);
+        writeKey(out, returnChangeQuantum.key);
       }
-      else if (effect instanceof EffectQuantum.FieldReadQuantum) {
+      else if (effect instanceof EffectQuantum.FieldReadQuantum fieldReadQuantum) {
         DataInputOutputUtil.writeINT(out, -5);
-        writeKey(out, ((EffectQuantum.FieldReadQuantum)effect).key);
+        writeKey(out, fieldReadQuantum.key);
       }
-      else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
-        DataInputOutputUtil.writeINT(out, ((EffectQuantum.ParamChangeQuantum)effect).n);
+      else if (effect instanceof EffectQuantum.ParamChangeQuantum paramChangeQuantum) {
+        DataInputOutputUtil.writeINT(out, paramChangeQuantum.n);
       }
     }
 
     private static EffectQuantum readEffect(@NotNull DataInput in) throws IOException {
       int effectMask = DataInputOutputUtil.readINT(in);
-      switch (effectMask) {
-        case -1:
-          return EffectQuantum.TopEffectQuantum;
-        case -2:
-          return EffectQuantum.ThisChangeQuantum;
-        case -3:
+      return switch (effectMask) {
+        case -1 -> EffectQuantum.TopEffectQuantum;
+        case -2 -> EffectQuantum.ThisChangeQuantum;
+        case -3 -> {
           EKey key = readKey(in);
           boolean isStatic = in.readBoolean();
           int dataLength = DataInputOutputUtil.readINT(in);
@@ -294,14 +313,12 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           for (int di = 0; di < dataLength; di++) {
             data[di] = readDataValue(in);
           }
-          return new EffectQuantum.CallQuantum(key, data, isStatic);
-        case -4:
-          return new EffectQuantum.ReturnChangeQuantum(readKey(in));
-        case -5:
-          return new EffectQuantum.FieldReadQuantum(readKey(in));
-        default:
-          return new EffectQuantum.ParamChangeQuantum(effectMask);
-      }
+          yield new EffectQuantum.CallQuantum(key, data, isStatic);
+        }
+        case -4 -> new EffectQuantum.ReturnChangeQuantum(readKey(in));
+        case -5 -> new EffectQuantum.FieldReadQuantum(readKey(in));
+        default -> new EffectQuantum.ParamChangeQuantum(effectMask);
+      };
     }
 
     private static void writeDataValue(@NotNull DataOutput out, DataValue dataValue) throws IOException {
@@ -331,22 +348,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
 
     private static DataValue readDataValue(@NotNull DataInput in) throws IOException {
       int dataI = DataInputOutputUtil.readINT(in);
-      switch (dataI) {
-        case -1:
-          return DataValue.ThisDataValue;
-        case -2:
-          return DataValue.LocalDataValue;
-        case -3:
-          return DataValue.OwnedDataValue;
-        case -4:
-          return DataValue.UnknownDataValue1;
-        case -5:
-          return DataValue.UnknownDataValue2;
-        case -6:
-          return new DataValue.ReturnDataValue(readKey(in));
-        default:
-          return DataValue.ParameterDataValue.create(dataI);
-      }
+      return switch (dataI) {
+        case -1 -> DataValue.ThisDataValue;
+        case -2 -> DataValue.LocalDataValue;
+        case -3 -> DataValue.OwnedDataValue;
+        case -4 -> DataValue.UnknownDataValue1;
+        case -5 -> DataValue.UnknownDataValue2;
+        case -6 -> new DataValue.ReturnDataValue(readKey(in));
+        default -> DataValue.ParameterDataValue.create(dataI);
+      };
     }
   }
 }

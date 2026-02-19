@@ -1,14 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-class VirtualFileWindowImpl extends com.intellij.injected.editor.VirtualFileWindowImpl implements VirtualFileWindow {
+class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFileWindow {
   private static final @NotNull Logger LOG = Logger.getInstance(VirtualFileWindowImpl.class);
 
   private final VirtualFile myDelegate;
@@ -27,15 +29,20 @@ class VirtualFileWindowImpl extends com.intellij.injected.editor.VirtualFileWind
     myDocumentWindow = window;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getDelegate() {
+  public @NotNull String getPresentableName() {
+    var language = getLanguage();
+    return AnalysisBundle.message("virtual.file.window.name",
+                                  language != null && language != Language.ANY ? language.getDisplayName() + " " : "");
+  }
+
+  @Override
+  public @NotNull VirtualFile getDelegate() {
     return myDelegate;
   }
 
-  @NotNull
   @Override
-  public DocumentWindowImpl getDocumentWindow() {
+  public @NotNull DocumentWindowImpl getDocumentWindow() {
     return myDocumentWindow;
   }
 

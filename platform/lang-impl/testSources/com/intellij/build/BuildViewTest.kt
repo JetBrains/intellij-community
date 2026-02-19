@@ -1,8 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build
 
-import com.intellij.build.events.MessageEvent.Kind.*
-import com.intellij.build.progress.BuildProgressDescriptor
+import com.intellij.build.events.BuildEventPresentationData
+import com.intellij.build.events.MessageEvent.Kind.ERROR
+import com.intellij.build.events.MessageEvent.Kind.INFO
+import com.intellij.build.events.MessageEvent.Kind.WARNING
+import com.intellij.build.events.impl.SuccessResultImpl
+import com.intellij.build.progress.BuildProgressDescriptorImpl
+import com.intellij.execution.Platform
+import com.intellij.execution.process.ProcessOutputType
+import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightPlatformTestCase
@@ -12,10 +21,12 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.tree.TreeUtil
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.File
-import java.util.function.Function
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.JComponent
 
 class BuildViewTest : LightPlatformTestCase() {
 
@@ -28,27 +39,22 @@ class BuildViewTest : LightPlatformTestCase() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   @Test
   fun `test successful build`() {
-    val title = "A build"
-    val buildDescriptor = DefaultBuildDescriptor(Object(), title, "", System.currentTimeMillis())
-    val progressDescriptor = object : BuildProgressDescriptor {
-      override fun getBuildDescriptor(): BuildDescriptor = buildDescriptor
-      override fun getTitle(): String = title
-    }
+    val buildDescriptor = DefaultBuildDescriptor(Object(), "A build", "", System.currentTimeMillis())
 
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(progressDescriptor)
+      .start(BuildProgressDescriptorImpl(buildDescriptor))
         .message("Root message", "Tex of the root message console", INFO, null)
-        .progress("Running ...")
+      .progress("Running…")
         .startChildProgress("Inner progress")
           .fileMessage("File message1", "message1 descriptive text", INFO, FilePosition(File("aFile.java"), 0, 0))
           .fileMessage("File message2", "message2 descriptive text", INFO, FilePosition(File("aFile.java"), 0, 0))
@@ -68,40 +74,30 @@ class BuildViewTest : LightPlatformTestCase() {
       """.trimIndent()
     )
 
-    buildViewTestFixture.assertBuildViewSelectedNode("finished", "", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Tex of the root message console\n", false)
-    buildViewTestFixture.assertBuildViewSelectedNode(
+    buildViewTestFixture.assertBuildViewNode("finished", "")
+    buildViewTestFixture.assertBuildViewNode("Root message", "Tex of the root message console\n")
+    buildViewTestFixture.assertBuildViewNode(
       "File message1",
-      "aFile.java\n" +
-      "message1 descriptive text",
-      false
+      "message1 descriptive text"
     )
   }
 
   @Test
   fun `test file messages presentation`() {
-    val title = "A build"
     val tempDirectory = FileUtil.getTempDirectory() + "/project"
-    val buildDescriptor = DefaultBuildDescriptor(Object(), title, tempDirectory, System.currentTimeMillis())
-    val progressDescriptor = object : BuildProgressDescriptor {
-      override fun getBuildDescriptor(): BuildDescriptor = buildDescriptor
-      override fun getTitle(): String = title
-    }
+    val buildDescriptor = DefaultBuildDescriptor(Object(), "A build", tempDirectory, System.currentTimeMillis())
 
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(progressDescriptor)
-      .fileMessage("message 1", "message 1 descriptive text", INFO, FilePosition(File("aFile1.java"), 0, 0))
-      .fileMessage("message 1.1", "message 1.1 descriptive text", WARNING, FilePosition(File("aFile1.java"), 0, 0))
-
-      .fileMessage("message 2", "message 2 descriptive text", WARNING, FilePosition(File(tempDirectory, "project/aFile2.java"), 0, 0))
-      .fileMessage("message 2.1", "message 2.1 descriptive text", WARNING, FilePosition(File(tempDirectory), -1, -1))
-
-      .fileMessage("message 3", "message 3 descriptive text", WARNING, FilePosition(File(tempDirectory, "anotherDir1/aFile3.java"), 0, 0))
-      .fileMessage("message 3.1", "message 3.1 descriptive text", ERROR, FilePosition(File(tempDirectory, "anotherDir2/aFile3.java"), 0, 0))
-
-      .fileMessage("message 4", "message 4 descriptive text", INFO, FilePosition(File(SystemProperties.getUserHome(), "foo/aFile4.java"), 0, 0))
+      .start(BuildProgressDescriptorImpl(buildDescriptor))
+        .fileMessage("message 1", "message 1 descriptive text", INFO, FilePosition(File("aFile1.java"), 0, 0))
+        .fileMessage("message 1.1", "message 1.1 descriptive text", WARNING, FilePosition(File("aFile1.java"), 0, 0))
+        .fileMessage("message 2", "message 2 descriptive text", WARNING, FilePosition(File(tempDirectory, "project/aFile2.java"), 0, 0))
+        .fileMessage("message 2.1", "message 2.1 descriptive text", WARNING, FilePosition(File(tempDirectory), -1, -1))
+        .fileMessage("message 3", "message 3 descriptive text", WARNING, FilePosition(File(tempDirectory, "anotherDir1/aFile3.java"), 0, 0))
+        .fileMessage("message 3.1", "message 3.1 descriptive text", ERROR, FilePosition(File(tempDirectory, "anotherDir2/aFile3.java"), 0, 0))
+        .fileMessage("message 4", "message 4 descriptive text", INFO, FilePosition(File(SystemProperties.getUserHome(), "foo/aFile4.java"), 0, 0))
       .finish()
     // @formatter:on
 
@@ -127,20 +123,12 @@ class BuildViewTest : LightPlatformTestCase() {
     val buildTreeConsoleView = buildView!!.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
     val visitor = runInEdtAndGet {
       val tree = buildTreeConsoleView!!.tree
-      return@runInEdtAndGet CollectingTreeVisitor().also {
+      return@runInEdtAndGet CollectingTreeVisitor(tree).also {
         TreeUtil.visitVisibleRows(tree, it)
       }
     }
-    Assertions.assertThat(visitor.userObjects)
-      .extracting(Function<Any?, String?> { node ->
-        val presentation = (node as ExecutionNode).presentation
-        if (presentation.coloredText.isEmpty()) {
-          presentation.presentableText
-        }
-        else {
-          presentation.coloredText.joinToString(separator = " =>") { it.text }
-        }
-      })
+    assertThat(visitor.presentations)
+      .extracting("completeText")
       .containsOnlyOnce(
         "aFile1.java =>  1 warning",
         "message 1 => :1",
@@ -152,26 +140,21 @@ class BuildViewTest : LightPlatformTestCase() {
         "message 3 => :1",
         "aFile3.java => anotherDir2 1 error",
         "message 3.1 => :1",
-        "aFile4.java => ~/foo",
+        "aFile4.java => ~${Platform.current().fileSeparator}foo",
         "message 4 => :1"
       )
   }
 
   @Test
   fun `test build with errors`() {
-    val title = "A build"
-    val buildDescriptor = DefaultBuildDescriptor(Object(), title, "", System.currentTimeMillis())
-    val progressDescriptor = object : BuildProgressDescriptor {
-      override fun getBuildDescriptor(): BuildDescriptor = buildDescriptor
-      override fun getTitle(): String = title
-    }
+    val buildDescriptor = DefaultBuildDescriptor(Object(), "A build", "", System.currentTimeMillis())
 
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(progressDescriptor)
+      .start(BuildProgressDescriptorImpl(buildDescriptor))
         .message("Root message", "Tex of the root message console", INFO, null)
-        .progress("Running ...")
+      .progress("Running…")
         .startChildProgress("Inner progress")
           .fileMessage("File message1", "message1 descriptive text", ERROR, FilePosition(File("aFile.java"), 0, 0))
           .fileMessage("File message2", "message2 descriptive text", ERROR, FilePosition(File("aFile.java"), 0, 0))
@@ -193,28 +176,22 @@ class BuildViewTest : LightPlatformTestCase() {
 
     buildViewTestFixture.assertBuildViewSelectedNode(
       "File message1",
-      "aFile.java\n" +
       "message1 descriptive text"
     )
-    buildViewTestFixture.assertBuildViewSelectedNode("failed", "", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Tex of the root message console\n", false)
+    buildViewTestFixture.assertBuildViewNode("failed", "")
+    buildViewTestFixture.assertBuildViewNode("Root message", "Tex of the root message console\n")
   }
 
   @Test
   fun `test cancelled build`() {
-    val title = "A build"
-    val buildDescriptor = DefaultBuildDescriptor(Object(), title, "", System.currentTimeMillis())
-    val progressDescriptor = object : BuildProgressDescriptor {
-      override fun getBuildDescriptor(): BuildDescriptor = buildDescriptor
-      override fun getTitle(): String = title
-    }
+    val buildDescriptor = DefaultBuildDescriptor(Object(), "A build", "", System.currentTimeMillis())
 
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(progressDescriptor)
+      .start(BuildProgressDescriptorImpl(buildDescriptor))
         .message("Root message", "Tex of the root message console", INFO, null)
-        .progress("Running ...")
+      .progress("Running…")
         .startChildProgress("Inner progress")
         .cancel()
       .cancel()
@@ -229,19 +206,14 @@ class BuildViewTest : LightPlatformTestCase() {
       """.trimIndent()
     )
 
-    buildViewTestFixture.assertBuildViewSelectedNode("cancelled", "", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Tex of the root message console\n", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Inner progress", "", false)
+    buildViewTestFixture.assertBuildViewNode("cancelled", "")
+    buildViewTestFixture.assertBuildViewNode("Root message", "Tex of the root message console\n")
+    buildViewTestFixture.assertBuildViewNode("Inner progress", "")
   }
 
   @Test
   fun `test build view listeners`() {
-    val title = "A build"
-    val buildDescriptor = DefaultBuildDescriptor(Object(), title, "", System.currentTimeMillis())
-    val progressDescriptor = object : BuildProgressDescriptor {
-      override fun getBuildDescriptor(): BuildDescriptor = buildDescriptor
-      override fun getTitle(): String = title
-    }
+    val buildDescriptor = DefaultBuildDescriptor(Object(), "A build", "", System.currentTimeMillis())
 
     val buildMessages = mutableListOf<String>()
     //BuildViewManager
@@ -253,16 +225,16 @@ class BuildViewTest : LightPlatformTestCase() {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(progressDescriptor)
-        .output("Build greeting\n", true)
+      .start(BuildProgressDescriptorImpl(buildDescriptor))
+        .output("Build greeting\n", ProcessOutputType.STDOUT)
         .message("Root message", "Text of the root message console", INFO, null)
-        .progress("Running ...")
+      .progress("Running…")
         .startChildProgress("Inner progress")
-          .output("inner progress output", true)
+          .output("inner progress output", ProcessOutputType.STDOUT)
           .fileMessage("File message1", "message1 descriptive text", INFO, FilePosition(File("aFile.java"), 0, 0))
           .fileMessage("File message2", "message2 descriptive text", INFO, FilePosition(File("aFile.java"), 0, 0))
         .finish()
-      .output("Build farewell", true)
+      .output("Build farewell", ProcessOutputType.STDOUT)
       .finish()
     // @formatter:on
 
@@ -278,20 +250,16 @@ class BuildViewTest : LightPlatformTestCase() {
       """.trimIndent()
     )
 
-    buildViewTestFixture.assertBuildViewSelectedNode("finished", "Build greeting\n" +
-                                                                 "Build farewell", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Inner progress", "inner progress output", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("Root message", "Text of the root message console\n", false)
-    buildViewTestFixture.assertBuildViewSelectedNode("File message1",
-                                                     "aFile.java\n" +
-                                                     "message1 descriptive text",
-                                                     false
-    )
+    buildViewTestFixture.assertBuildViewNode("finished", "Build greeting\n" +
+                                                         "Build farewell")
+    buildViewTestFixture.assertBuildViewNode("Inner progress", "inner progress output")
+    buildViewTestFixture.assertBuildViewNode("Root message", "Text of the root message console\n")
+    buildViewTestFixture.assertBuildViewNode("File message1", "message1 descriptive text")
 
-    assertEquals("running..." +
+    assertEquals("running…" +
                  "Build greeting\n" +
                  "Root message" +
-                 "Running ..." +
+                 "Running…" +
                  "Inner progress" +
                  "inner progress output" +
                  "File message1" +
@@ -299,5 +267,45 @@ class BuildViewTest : LightPlatformTestCase() {
                  "Inner progress" +
                  "Build farewell" +
                  "finished", buildMessages.joinToString(""))
+  }
+
+  @Test
+  fun `test presentable build event`() {
+    val buildDescriptor = DefaultBuildDescriptor(Object(), "A build", "", System.currentTimeMillis())
+
+    val component = JButton("test button")
+    val presentationData = object : BuildEventPresentationData {
+      override fun getNodeIcon(): Icon = AllIcons.General.Add
+      override fun consoleToolbarActions(): ActionGroup? = null
+      override fun getExecutionConsole(): ExecutionConsole {
+        return object : ExecutionConsole {
+          override fun getComponent(): JComponent = component
+          override fun getPreferredFocusableComponent(): JComponent = component
+          override fun dispose() {}
+        }
+      }
+    }
+
+    // @formatter:off
+    BuildViewManager
+      .createBuildProgress(project)
+      .start("started", BuildProgressDescriptorImpl(buildDescriptor))
+        .presentable("my event", presentationData)
+      .finish("finished", SuccessResultImpl())
+    // @formatter:on
+
+    buildViewTestFixture.assertBuildViewTreeEquals(
+      """
+      -
+       -finished
+        my event
+      """.trimIndent()
+    )
+
+    buildViewTestFixture.assertBuildViewNodeConsole("my event") { executionConsole ->
+      assertThat(executionConsole.component)
+        .isEqualTo(component)
+        .matches { (it as JButton).text == "test button" }
+    }
   }
 }

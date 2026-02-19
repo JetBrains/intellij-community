@@ -5,7 +5,7 @@ PsiJavaFileStub []
     PsiRefListStub[EXTENDS_LIST:]
     PsiRefListStub[IMPLEMENTS_LIST:groovy.lang.GroovyObject]
     PsiClassStub[enum name=Enum fqn=GroovyStuff.Enum]
-      PsiModifierListStub[mask=4120]
+      PsiModifierListStub[mask=26]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:]
       PsiRefListStub[IMPLEMENTS_LIST:groovy.lang.GroovyObject]
@@ -25,8 +25,37 @@ PsiJavaFileStub []
             PsiModifierListStub[mask=0]
               PsiAnnotationStub[@java.lang.Deprecated]
         PsiRefListStub[THROWS_LIST:]
+      PsiMethodStub[next:GroovyStuff.Enum]
+        PsiModifierListStub[mask=1]
+          PsiAnnotationStub[@groovy.transform.Generated]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+        PsiRefListStub[THROWS_LIST:]
+      PsiMethodStub[previous:GroovyStuff.Enum]
+        PsiModifierListStub[mask=1]
+          PsiAnnotationStub[@groovy.transform.Generated]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+        PsiRefListStub[THROWS_LIST:]
+      PsiMethodStub[getMetaClass:groovy.lang.MetaClass]
+        PsiModifierListStub[mask=1]
+          PsiAnnotationStub[@groovy.transform.Generated]
+          PsiAnnotationStub[@groovy.transform.Internal]
+          PsiAnnotationStub[@java.beans.Transient]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+        PsiRefListStub[THROWS_LIST:]
+      PsiMethodStub[setMetaClass:void]
+        PsiModifierListStub[mask=1]
+          PsiAnnotationStub[@groovy.transform.Generated]
+          PsiAnnotationStub[@groovy.transform.Internal]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+          PsiParameterStub[p1:groovy.lang.MetaClass]
+            PsiModifierListStub[mask=0]
+        PsiRefListStub[THROWS_LIST:]
     PsiClassStub[name=Inner fqn=GroovyStuff.Inner]
-      PsiModifierListStub[mask=4096]
+      PsiModifierListStub[mask=2]
       PsiTypeParameterListStub
       PsiRefListStub[EXTENDS_LIST:]
       PsiRefListStub[IMPLEMENTS_LIST:groovy.lang.GroovyObject]
@@ -39,6 +68,23 @@ PsiJavaFileStub []
           PsiParameterStub[s2:java.lang.String]
             PsiModifierListStub[mask=0]
               PsiAnnotationStub[@java.lang.Deprecated]
+        PsiRefListStub[THROWS_LIST:]
+      PsiMethodStub[getMetaClass:groovy.lang.MetaClass]
+        PsiModifierListStub[mask=1]
+          PsiAnnotationStub[@groovy.transform.Generated]
+          PsiAnnotationStub[@groovy.transform.Internal]
+          PsiAnnotationStub[@java.beans.Transient]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+        PsiRefListStub[THROWS_LIST:]
+      PsiMethodStub[setMetaClass:void]
+        PsiModifierListStub[mask=1]
+          PsiAnnotationStub[@groovy.transform.Generated]
+          PsiAnnotationStub[@groovy.transform.Internal]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+          PsiParameterStub[p1:groovy.lang.MetaClass]
+            PsiModifierListStub[mask=0]
         PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[cons GroovyStuff:void]
       PsiModifierListStub[mask=1]
@@ -69,4 +115,21 @@ PsiJavaFileStub []
         PsiParameterStub[intStaticParam:int]
           PsiModifierListStub[mask=0]
             PsiAnnotationStub[@java.lang.Deprecated]
+      PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[getMetaClass:groovy.lang.MetaClass]
+      PsiModifierListStub[mask=1]
+        PsiAnnotationStub[@groovy.transform.Generated]
+        PsiAnnotationStub[@groovy.transform.Internal]
+        PsiAnnotationStub[@java.beans.Transient]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+      PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[setMetaClass:void]
+      PsiModifierListStub[mask=1]
+        PsiAnnotationStub[@groovy.transform.Generated]
+        PsiAnnotationStub[@groovy.transform.Internal]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+        PsiParameterStub[p1:groovy.lang.MetaClass]
+          PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]

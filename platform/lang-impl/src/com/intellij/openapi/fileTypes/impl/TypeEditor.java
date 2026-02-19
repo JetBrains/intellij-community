@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.UserFileType;
@@ -10,17 +10,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 
-class TypeEditor<T extends UserFileType<T>> extends DialogWrapper {
-  private final T myFileType;
-  private final SettingsEditor<T> myEditor;
+final class TypeEditor extends DialogWrapper {
+  private final UserFileType<?> myFileType;
+  private final SettingsEditor<UserFileType<?>> myEditor;
 
-  TypeEditor(@NotNull Component parent, @NotNull T fileType, @NotNull @NlsContexts.DialogTitle String title) {
+  TypeEditor(@NotNull Component parent, @NotNull UserFileType<?> fileType, @NotNull @NlsContexts.DialogTitle String title) {
     super(parent, false);
     myFileType = fileType;
-    myEditor = fileType.getEditor();
+    myEditor = (SettingsEditor<UserFileType<?>>)fileType.getEditor();
     setTitle(title);
     init();
     Disposer.register(myDisposable, myEditor);

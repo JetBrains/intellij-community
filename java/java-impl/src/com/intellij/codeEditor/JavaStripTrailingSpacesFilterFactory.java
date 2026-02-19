@@ -1,17 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter;
-import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
+public final class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
 
   @Override
   protected @NotNull PsiBasedStripTrailingSpacesFilter createFilter(@NotNull Document document) {
@@ -31,10 +32,10 @@ public class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingS
 
     @Override
     protected void process(@NotNull PsiFile psiFile) {
-      if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(psiFile)) return;
-      psiFile.accept(new JavaRecursiveElementVisitor() {
+      if (!PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, psiFile)) return;
+      psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
           if (expression.isTextBlock()) {
             disableRange(expression.getTextRange(), false);
           }

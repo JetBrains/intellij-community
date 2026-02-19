@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,15 +25,15 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.Function;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
@@ -125,7 +124,7 @@ public class JavaExternalDocumentationTest extends LightPlatformTestCase {
     while (System.currentTimeMillis() - start < 300000) {
       //noinspection BusyWait
       Thread.sleep(100);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       if (actionCallback.isProcessed()) return;
     }
     fail("Timed out waiting for documentation to show");

@@ -21,11 +21,13 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,10 +62,66 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
     assertFalse(highlighter.isValid());
   }
 
+  public void testUpdateOfPersistentAndNormalHighlightersIsIndependent() {
+    Document document = new DocumentImpl("\n\n\n\n\n");
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter h = model.addLineHighlighter(2, 0, null);
+    model.addPersistentLineHighlighter(2, 0, null);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(1, 4));
+    assertFalse(h.isValid());
+  }
+
+  public void testCorrectUpdateOfPersistentHighlighterAfterFarAwayChange() {
+    Document document = new DocumentImpl("\n\n\n");
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter h = model.addPersistentLineHighlighter(null, 2, 0);
+    assertTrue(h.isValid());
+    assertEquals(2, h.getStartOffset());
+    assertEquals(2, h.getEndOffset());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(0, 1));
+    assertTrue(h.isValid());
+    assertEquals(1, h.getStartOffset());
+    assertEquals(1, h.getEndOffset());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, 2, " \n\n "));
+    assertTrue(h.isValid());
+    assertEquals(2, h.getStartOffset());
+    assertEquals(2, h.getEndOffset());
+  }
+
+  public void testAnotherIdenticalPersistentHighlighterDoesntChangeUpdate() {
+    Document document = new DocumentImpl("\n\n\n");
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighter h1 = model.addPersistentLineHighlighter(null, 2, 0);
+    RangeHighlighter h2 = model.addPersistentLineHighlighter(null, 2, 0);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(1, 2));
+    assertTrue(h1.isValid());
+    assertEquals(1, h1.getStartOffset());
+    assertEquals(1, h1.getEndOffset());
+    assertTrue(h2.isValid());
+    assertEquals(1, h2.getStartOffset());
+    assertEquals(1, h2.getEndOffset());
+
+    h2.dispose();
+    assertTrue(h1.isValid());
+    assertEquals(1, h1.getStartOffset());
+    assertEquals(1, h1.getEndOffset());
+    assertFalse(h2.isValid());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, 2, " \n\n "));
+    assertTrue(h1.isValid());
+    assertEquals(2, h1.getStartOffset());
+    assertEquals(2, h1.getEndOffset());
+  }
+
   public static class TestAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).create();
+      if (element instanceof PsiFile) {
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).create();
+      }
     }
   }
 }

@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -19,9 +19,11 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +34,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).prepareForTest();
+    new TestDaemonCodeAnalyzerImpl(getProject()).prepareForTest();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
   }
 
@@ -41,10 +43,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     try {
       // return default value to avoid unnecessary save
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-      if (daemonCodeAnalyzer != null) {
-        daemonCodeAnalyzer.cleanupAfterTest();
-      }
+      new TestDaemonCodeAnalyzerImpl(getProject()).cleanupAfterTest();
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -79,12 +78,11 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return new ExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
   }
 
-  @Nullable
-  private String composeLocalPath(@Nullable String filePath) {
+  private @Nullable String composeLocalPath(@Nullable String filePath) {
     return filePath != null ? getTestDataPath() + "/" + filePath : null;
   }
 
-  private void checkHighlighting(ExpectedHighlightingData data, String filePath) {
+  private void checkHighlighting(@NotNull ExpectedHighlightingData data, String filePath) {
     data.init();
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -118,22 +116,19 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     };
   }
 
-  @NotNull
-  protected List<HighlightInfo> highlightErrors() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
-  @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    IntArrayList toIgnoreList = new IntArrayList();
+    IntList toIgnoreList = new IntArrayList();
     if (!doFolding()) {
       toIgnoreList.add(Pass.UPDATE_FOLDING);
     }
     if (!doInspections()) {
       toIgnoreList.add(Pass.LOCAL_INSPECTIONS);
-      toIgnoreList.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
     }
     int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : toIgnoreList.toIntArray();
     Editor editor = getEditor();
@@ -150,7 +145,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
   }
 
-  protected List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
+  protected @Unmodifiable List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
     return DaemonAnalyzerTestCase.filter(doHighlighting(), minSeverity);
   }
 

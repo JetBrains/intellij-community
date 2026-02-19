@@ -5,7 +5,8 @@ import com.intellij.diff.DiffTestCase
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.UIUtil
-import java.util.*
+import java.util.BitSet
+import java.util.Random
 import java.util.concurrent.atomic.AtomicLong
 
 class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
@@ -81,13 +82,13 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
         UIUtil.dispatchAllInvocationEvents()
       }
       catch (e: Throwable) {
-        println("Seed: " + seed)
-        println("TestRuns: " + testRuns)
-        println("Modifications: " + modifications)
-        println("TextLength: " + textLength)
-        println("ChangeLength: " + changeLength)
-        println("I: " + i)
-        println("Current seed: " + currentSeed)
+        println("Seed: $seed")
+        println("TestRuns: $testRuns")
+        println("Modifications: $modifications")
+        println("TextLength: $textLength")
+        println("ChangeLength: $changeLength")
+        println("I: $i")
+        println("Current seed: $currentSeed")
         throw e
       }
 
@@ -109,11 +110,11 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
         UIUtil.dispatchAllInvocationEvents()
       }
       catch (e: Throwable) {
-        println("Seed: " + seed)
-        println("TestRuns: " + testRuns)
-        println("TextLength: " + textLength)
-        println("I: " + i)
-        println("Current seed: " + currentSeed)
+        println("Seed: $seed")
+        println("TestRuns: $testRuns")
+        println("TextLength: $textLength")
+        println("I: $i")
+        println("Current seed: $currentSeed")
         throw e
       }
 
@@ -147,11 +148,11 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
         println("Vcs: " + DiffTestCase.textToReadableFormat(initialVcs))
         println("New Text: " + DiffTestCase.textToReadableFormat(newText))
         println("New Vcs: " + DiffTestCase.textToReadableFormat(newTextVcs))
-        println("Seed: " + seed)
-        println("TestRuns: " + testRuns)
-        println("TextLength: " + textLength)
-        println("I: " + i)
-        println("Current seed: " + currentSeed)
+        println("Seed: $seed")
+        println("TestRuns: $testRuns")
+        println("TextLength: $textLength")
+        println("I: $i")
+        println("Current seed: $currentSeed")
         throw e
       }
 

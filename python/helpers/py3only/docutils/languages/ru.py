@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# $Id: ru.py 7125 2011-09-16 18:36:18Z milde $
+# $Id: ru.py 9030 2022-03-05 23:28:32Z milde $
 # Author: Roman Suzi <rnd@onego.ru>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Russian-language mappings for language-dependent features of Docutils.
@@ -54,6 +53,6 @@ bibliographic_fields = {
       'версия': 'version'}
 """Russian (lowcased) to canonical name mapping for bibliographic fields."""
 
-author_separators =  [';', ',']
+author_separators = [';', ',']
 """List of separator strings for the 'Authors' bibliographic field. Tried in
 order."""

@@ -19,13 +19,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class GroupingWeigher extends CompletionWeigher {
   @Override
   public Integer weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
-    final PrioritizedLookupElement prioritized = element.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
+    PrioritizedLookupElement<?> prioritized = element.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
     if (prioritized != null) {
       return prioritized.getGrouping();
     }

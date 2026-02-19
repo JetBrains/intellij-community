@@ -1,0 +1,4 @@
+<selection>text
+<caret>
+
+2 empty lines and text</selection>

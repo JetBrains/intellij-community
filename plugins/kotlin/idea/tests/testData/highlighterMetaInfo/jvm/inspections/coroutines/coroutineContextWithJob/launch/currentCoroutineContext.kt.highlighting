@@ -1,0 +1,15 @@
+// FIR_IDENTICAL
+// HIGHLIGHT_WARNINGS
+// WITH_COROUTINES
+package test
+
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.currentCoroutineContext
+
+suspend fun CoroutineScope.test() {
+    launch(<!HIGHLIGHTING("severity='WARNING'; descr='Passing 'CoroutineContext' with a 'Job' to 'launch' builder can lead to structured concurrency violations'")!>currentCoroutineContext()<!>) {}
+}
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection

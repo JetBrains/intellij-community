@@ -4,14 +4,23 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class TryStatementPostfixTemplate extends PostfixTemplate {
+public class TryStatementPostfixTemplate extends PostfixTemplate implements DumbAware {
 
   protected TryStatementPostfixTemplate() {
     super("try", "try { exp } catch(Exception e)");
@@ -25,9 +34,9 @@ public class TryStatementPostfixTemplate extends PostfixTemplate {
 
     if (statementParent instanceof PsiDeclarationStatement) return true;
 
-    if (statementParent instanceof PsiExpressionStatement) {
-      PsiExpression expression = ((PsiExpressionStatement)statementParent).getExpression();
-      return null != expression.getType();
+    if (statementParent instanceof PsiExpressionStatement statement) {
+      PsiExpression expression = statement.getExpression();
+      return DumbService.getInstance(context.getProject()).computeWithAlternativeResolveEnabled(expression::getType) != null;
     }
 
     return false;
@@ -49,6 +58,7 @@ public class TryStatementPostfixTemplate extends PostfixTemplate {
       return;
     }
 
+    editor.getSelectionModel().removeSelection();
     PsiElement element = file.findElementAt(range.getStartOffset());
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     assert tryStatement != null;

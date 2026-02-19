@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.serialization.PropertyMapping;
@@ -6,40 +6,53 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
  */
+@SuppressWarnings("IO_FILE_USAGE")
 public class WebResource implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final WarDirectory warDirectory;
-  @NotNull
-  private final String warRelativePath;
-  @NotNull
-  private final File file;
+  private final @NotNull WarDirectory warDirectory;
+  private final @NotNull String warRelativePath;
+  private final @NotNull Path filePath;
 
-  @PropertyMapping({"warDirectory", "warRelativePath", "file"})
+  /**
+   * @deprecated use {@link #WebResource(WarDirectory, String, Path)} instead.
+   */
+  @Deprecated
   public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull File file) {
-    this.warDirectory = warDirectory;
-    this.warRelativePath = getAdjustedPath(warRelativePath);
-    this.file = file;
+    this(warDirectory, warRelativePath, file.toPath());
   }
 
-  @NotNull
-  public WarDirectory getWarDirectory() {
+  @PropertyMapping({"warDirectory", "warRelativePath", "filePath"})
+  public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull Path filePath) {
+    this.warDirectory = warDirectory;
+    this.warRelativePath = getAdjustedPath(warRelativePath);
+    this.filePath = filePath;
+  }
+
+  public @NotNull WarDirectory getWarDirectory() {
     return warDirectory;
   }
 
-  @NotNull
-  public String getWarRelativePath() {
+  public @NotNull String getWarRelativePath() {
     return warRelativePath;
   }
 
-  @NotNull
-  public File getFile() {
-    return file;
+  /**
+   * @deprecated use {@link #getFilePath()} instead.
+   */
+  @Deprecated
+  public @NotNull File getFile() {
+    return filePath.toFile();
+  }
+
+  public @NotNull Path getFilePath() {
+    return filePath;
   }
 
   private static String getAdjustedPath(final @NotNull String path) {
@@ -48,31 +61,24 @@ public class WebResource implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof WebResource)) return false;
-
+    if (o == null || getClass() != o.getClass()) return false;
     WebResource resource = (WebResource)o;
-    if (!file.getPath().equals(resource.file.getPath())) return false;
-    if (warDirectory != resource.warDirectory) return false;
-    if (!warRelativePath.equals(resource.warRelativePath)) return false;
-
-    return true;
+    return Objects.equals(warDirectory, resource.warDirectory) &&
+           Objects.equals(warRelativePath, resource.warRelativePath) &&
+           Objects.equals(filePath, resource.filePath);
   }
 
   @Override
   public int hashCode() {
-    int result = warDirectory.hashCode();
-    result = 31 * result + warRelativePath.hashCode();
-    result = 31 * result + file.getPath().hashCode();
-    return result;
+    return Objects.hash(warDirectory, warRelativePath, filePath);
   }
 
   @Override
   public String toString() {
     return "WebResource{" +
-           "myWarDirectory=" + warDirectory +
+           "warDirectory=" + warDirectory +
            ", warRelativePath='" + warRelativePath + '\'' +
-           ", file=" + file +
+           ", filePath=" + filePath +
            '}';
   }
 }

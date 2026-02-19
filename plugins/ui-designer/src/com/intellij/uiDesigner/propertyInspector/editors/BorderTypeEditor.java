@@ -7,12 +7,9 @@ import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.shared.BorderType;
 
-import javax.swing.*;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComponent;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BorderTypeEditor extends ComboBoxPropertyEditor<BorderType> {
   public BorderTypeEditor(){
     myCbx.setModel(new DefaultComboBoxModel<>(BorderType.getAllTypes()));

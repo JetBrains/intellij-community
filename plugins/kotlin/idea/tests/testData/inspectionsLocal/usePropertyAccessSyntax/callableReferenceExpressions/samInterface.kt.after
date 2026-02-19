@@ -1,0 +1,14 @@
+// FIX: Use property access syntax
+// COMPILER_ARGUMENTS: -XXLanguage:+ReferencesToSyntheticJavaProperties
+fun test(t: Thread) {
+    take { t.name } // works
+
+    take(t::name)
+    take(t::name) // should work, should be no warnings
+}
+
+fun interface MyStringSupplier {
+    fun doStuff(): String
+}
+
+fun take(s: MyStringSupplier) {}

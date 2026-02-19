@@ -155,7 +155,7 @@ class CommunicationThread(threading.Thread):
 
     def __init__(self, tests_queue):
         threading.Thread.__init__(self)
-        self.setDaemon(True)
+        self.daemon = True
         self.queue = tests_queue
         self.finished = False
         from _pydev_bundle.pydev_imports import SimpleXMLRPCServer
@@ -243,7 +243,7 @@ class ClientThread(threading.Thread):
 
     def __init__(self, job_id, port, verbosity, coverage_output_file=None, coverage_include=None):
         threading.Thread.__init__(self)
-        self.setDaemon(True)
+        self.daemon = True
         self.port = port
         self.job_id = job_id
         self.verbosity = verbosity

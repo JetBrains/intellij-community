@@ -1,0 +1,15 @@
+query($pullRequestId: ID!) {
+  node(id: $pullRequestId) {
+    ... on PullRequest {
+      reviews(states: [PENDING], first: 1) {
+        nodes {
+          ...pullRequestPendingReview
+        }
+      }
+    }
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

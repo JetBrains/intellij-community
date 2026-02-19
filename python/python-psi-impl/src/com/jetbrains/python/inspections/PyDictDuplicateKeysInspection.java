@@ -27,9 +27,21 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveDictKeyQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyLiteralExpression;
+import com.jetbrains.python.psi.PyNumericLiteralExpression;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,23 +51,22 @@ import java.util.Map;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect using the same value as dictionary key twice.
  */
-public class PyDictDuplicateKeysInspection extends PyInspection {
+public final class PyDictDuplicateKeysInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -100,28 +111,24 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
       registerProblems(keyValueAndKeys);
     }
 
-    @Nullable
-    private Pair<PsiElement, String> getDictLiteralKey(@NotNull PyKeyValueExpression argument) {
+    private @Nullable Pair<PsiElement, String> getDictLiteralKey(@NotNull PyKeyValueExpression argument) {
       final PyExpression key = argument.getKey();
       final String keyValue = getKeyValue(key);
       return keyValue != null ? Pair.createNonNull(key, keyValue) : null;
     }
 
-    @Nullable
-    private String getKeyValue(@NotNull PsiElement node) {
+    private @Nullable String getKeyValue(@NotNull PsiElement node) {
       if (node instanceof PyStringLiteralExpression) {
         return wrapStringKey(((PyStringLiteralExpression)node).getStringValue());
       }
 
       if (node instanceof PyNumericLiteralExpression) {
         final BigDecimal value = ((PyNumericLiteralExpression)node).getBigDecimalValue();
-        if (value != null) {
-          final String keyValue = value.toPlainString();
-          return !value.equals(BigDecimal.ZERO) &&
-                 myTypeEvalContext.getType((PyNumericLiteralExpression)node) == PyBuiltinCache.getInstance(node).getComplexType()
-                 ? keyValue + "j"
-                 : keyValue;
-        }
+        final String keyValue = value.toPlainString();
+        return !value.equals(BigDecimal.ZERO) &&
+               myTypeEvalContext.getType((PyNumericLiteralExpression)node) == PyBuiltinCache.getInstance(node).getComplexType()
+               ? keyValue + "j"
+               : keyValue;
       }
 
       return node instanceof PyLiteralExpression || node instanceof PyReferenceExpression ? node.getText() : null;
@@ -141,8 +148,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private Pair<PsiElement, String> getDictCallKey(@Nullable PyExpression argument) {
+    private @Nullable Pair<PsiElement, String> getDictCallKey(@Nullable PyExpression argument) {
       if (argument instanceof PyParenthesizedExpression) {
         final PyExpression expression = PyPsiUtils.flattenParens(argument);
         if (expression instanceof PyTupleExpression) {
@@ -170,13 +176,11 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
       return callee != null && "dict".equals(callee.getText());
     }
 
-    @NotNull
-    private static String wrapStringKey(@NotNull String key) {
+    private static @NotNull String wrapStringKey(@NotNull String key) {
       return "'" + key + "'";
     }
 
-    @NotNull
-    private static String unwrapStringKey(@NotNull String key) {
+    private static @NotNull String unwrapStringKey(@NotNull String key) {
       return StringUtil.unquoteString(key, '\'');
     }
   }

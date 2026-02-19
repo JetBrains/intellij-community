@@ -1,13 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.xml;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolvingHint;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -17,23 +22,22 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionTool {
+public final class DeprecatedClassUsageInspection extends XmlSuppressableInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         if (tag.getValue().getTextElements().length > 0) {
           checkReferences(tag, holder);
         }
       }
 
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         checkReferences(value, holder);
       }
     };
@@ -46,7 +50,7 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
       PsiElement resolved = last.resolve();
       if (resolved instanceof PsiModifierListOwner) {
         DeprecationInspectionBase.checkDeprecated((PsiModifierListOwner)resolved, psiElement, last.getRangeInElement(), false, false, true, false,
-                                                  holder, false, ProblemHighlightType.LIKE_DEPRECATED);
+                                                  holder, false);
       }
     }
   }
@@ -56,16 +60,13 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
     return true;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return JavaAnalysisBundle.message("deprecated.class.usage.group.xml");
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "DeprecatedClassUsageInspection";
   }
 }

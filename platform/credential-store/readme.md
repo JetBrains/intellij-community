@@ -1,1 +1,0 @@
-Please refer to [Storing Sensitive Data](http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html)

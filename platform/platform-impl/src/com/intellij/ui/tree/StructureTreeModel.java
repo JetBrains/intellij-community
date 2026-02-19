@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -9,37 +9,57 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
+import org.jspecify.annotations.NonNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.util.Collections.*;
-import static org.jetbrains.concurrency.Promises.rejectedPromise;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.enumeration;
+import static java.util.Collections.unmodifiableList;
+import static org.jetbrains.concurrency.Promises.createError;
 
 public class StructureTreeModel<Structure extends AbstractTreeStructure>
   extends AbstractTreeModel implements Disposable, InvokerSupplier, ChildrenProvider<TreeNode> {
 
-  private static final TreePath ROOT_INVALIDATED = new TreePath(new DefaultMutableTreeNode());
+  private static final TreePath ROOT_INVALIDATED = new CachingTreePath(new DefaultMutableTreeNode());
   private static final Logger LOG = Logger.getInstance(StructureTreeModel.class);
   private final Reference<Node> root = new Reference<>();
   private final String description;
   private final Invoker invoker;
-  private final Structure structure;
+  private final @NotNull Structure structure;
   private volatile Comparator<? super Node> comparator;
+  private final ThreadLocal<Reference<FreshChildrenSet>> freshChildrenSet = ThreadLocal.withInitial(Reference::new);
+  private final ThreadLocal<Reference<TreeModelUpdateRequest>> updateRequest = ThreadLocal.withInitial(Reference::new);
 
   public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent) {
     this(structure, null, parent);
@@ -59,11 +79,15 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     this.description = format(structure.toString());
     this.invoker = invoker;
     this.comparator = comparator == null ? null : wrapToNodeComparator(comparator);
+    Disposer.register(this, invoker);
     Disposer.register(parent, this);
   }
 
-  @NotNull
-  private static Comparator<? super Node> wrapToNodeComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
+  public @NotNull Structure getTreeStructure() {
+    return structure;
+  }
+
+  private static @NotNull Comparator<? super Node> wrapToNodeComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     return (node1, node2) -> comparator.compare(node1.getDescriptor(), node2.getDescriptor());
   }
 
@@ -74,11 +98,11 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     if (disposed) return;
     if (comparator != null) {
       this.comparator = wrapToNodeComparator(comparator);
-      invalidate();
+      invalidateAsync();
     }
     else if (this.comparator != null) {
       this.comparator = null;
-      invalidate();
+      invalidateAsync();
     }
   }
 
@@ -92,9 +116,9 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     super.dispose(); // remove listeners after notification
   }
 
-  @NotNull
   @Override
-  public final Invoker getInvoker() {
+  @ApiStatus.Internal
+  public final @NotNull Invoker getInvoker() {
     return invoker;
   }
 
@@ -106,64 +130,109 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   /**
    * @param function a function to process current structure on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
-  @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
-    AsyncPromise<Result> promise = new AsyncPromise<>();
-    invoker.invoke(() -> {
+  private @NotNull <Result> CompletableFuture<Result> onValidThread(@NotNull Function<? super Structure, ? extends Result> function) {
+    CompletableFuture<Result> future = new CompletableFuture<>();
+    invoker.compute(() -> {
       if (!disposed) {
         Result result = function.apply(structure);
-        if (result != null) promise.setResult(result);
+        if (result != null) {
+          future.complete(result);
+        }
       }
-      if (!promise.isDone()) promise.cancel();
-    }).onError(promise::setError);
-    return promise;
+      if (!future.isDone()) {
+        future.completeExceptionally(AsyncPromise.CANCELED);
+      }
+      return null;
+    }).onError(future::completeExceptionally);
+    return future;
   }
 
   /**
    * @param path     a path to the node
    * @param function a function to process corresponding node on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
-  @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull TreePath path, @NotNull Function<? super Node, ? extends Result> function) {
+  private @NotNull <Result> CompletableFuture<Result> onValidThread(@NotNull TreePath path,
+                                                                    @NotNull Function<? super Node, ? extends Result> function) {
     Object component = path.getLastPathComponent();
-    if (component instanceof Node) {
-      Node node = (Node)component;
-      return onValidThread(structure -> disposed || isNodeRemoved(node) ? null : function.apply(node));
+    if (component instanceof Node node) {
+      return onValidThread(__ -> disposed || isNodeRemoved(node) ? null : function.apply(node));
     }
-    return rejectedPromise("unexpected node: " + component);
+
+    CompletableFuture<Result> cancelledFuture = new CompletableFuture<>();
+    cancelledFuture.completeExceptionally(createError("unexpected node: " + component));
+    return cancelledFuture;
   }
 
   /**
    * @param element  an element of the internal tree structure
    * @param function a function to process corresponding node on a valid thread
-   * @return a promise that will be succeed if the specified function returns non-null value
+   * @return a promise that will succeed when the specified function returns non-null value
    */
-  @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Object element, @NotNull Function<? super Node, ? extends Result> function) {
-    return onValidThread(structure -> {
+  private @NotNull <Result> CompletableFuture<Result> onValidThread(@NotNull Object element,
+                                                                    @NotNull Function<? super Node, ? extends Result> function) {
+    return onValidThread(struct -> {
       Node node = root.get();
-      if (node == null) return null;
-      if (node.matches(element)) return function.apply(node);
+      if (node == null) {
+        return null;
+      }
+      if (node.matches(element)) {
+        return function.apply(node);
+      }
       ArrayDeque<Object> stack = new ArrayDeque<>();
-      for (Object e = element; e != null; e = structure.getParentElement(e)) stack.push(e);
-      if (!node.matches(stack.pop())) return null;
+      for (Object e = element; e != null; e = struct.getParentElement(e)) {
+        stack.push(e);
+      }
+      if (!node.matches(stack.pop())) {
+        return null;
+      }
       while (!stack.isEmpty()) {
         node = node.findChild(stack.pop());
-        if (node == null) return null;
+        if (node == null) {
+          return null;
+        }
       }
       return function.apply(node);
     });
   }
 
   /**
+   * @deprecated Use {@link #invalidateAsync()}
+   */
+  @Deprecated
+  public final @NotNull Promise<?> invalidate() {
+    return Promises.asPromise(invalidateAsync());
+  }
+
+  /**
    * Invalidates all nodes and notifies Swing model that a whole tree hierarchy is changed.
    */
-  @NotNull
-  public final Promise<?> invalidate() {
-    return onValidThread(structure -> invalidateInternal(null, true));
+  public final @NotNull CompletableFuture<?> invalidateAsync() {
+    return onValidThread(__ -> invalidateInternal(null, true));
+  }
+
+  @ApiStatus.Internal
+  public final @NotNull CompletableFuture<?> invalidateAsync(@NotNull TreeModelUpdateRequest request) {
+    var requestHandled = new AtomicBoolean();
+    return onValidThread(__ -> {
+      var requestRef = updateRequest.get();
+      requestRef.set(request);
+      try {
+        requestHandled.set(true); // now it's the responsibility of invalidateInternal
+        return invalidateInternal(null, true);
+      }
+      finally {
+        requestRef.set(null);
+      }
+    }).whenComplete((p, e) -> {
+      if (!requestHandled.get()) {
+        // If the request wasn't handled for whatever reason (e.g., the node was disposed),
+        // close it to avoid "stuck request" false positives.
+        request.finished();
+      }
+    });
   }
 
   /**
@@ -172,12 +241,33 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param path      a path to the node to invalidate
    * @param structure {@code true} means that all child nodes must be invalidated;
    *                  {@code false} means that only the node specified by {@code path} must be updated
-   * @return a promise that will be succeed if path to invalidate is found
+   * @return a promise that will succeed when path is invalidated
    * @see #invalidate(Object, boolean)
    */
-  @NotNull
-  public final Promise<TreePath> invalidate(@NotNull TreePath path, boolean structure) {
-    return onValidThread(path, node -> invalidateInternal(node, structure));
+  public final @NotNull Promise<TreePath> invalidate(@NotNull TreePath path, boolean structure) {
+    return Promises.asPromise(onValidThread(path, node -> invalidateInternal(node, structure)));
+  }
+
+  @ApiStatus.Internal
+  public final @NotNull Promise<TreePath> invalidate(@NotNull TreePath path, boolean structure, @NotNull TreeModelUpdateRequest request) {
+    var requestHandled = new AtomicBoolean();
+    return Promises.asPromise(onValidThread(path, node -> {
+      var requestRef = updateRequest.get();
+      requestRef.set(request);
+      try {
+        requestHandled.set(true); // now it's the responsibility of invalidateInternal
+        return invalidateInternal(node, structure);
+      }
+      finally {
+        requestRef.set(null);
+      }
+    })).onProcessed((p) -> {
+      if (!requestHandled.get()) {
+        // If the request wasn't handled for whatever reason (e.g., the node was disposed),
+        // close it to avoid "stuck request" false positives.
+        request.finished();
+      }
+    });
   }
 
   /**
@@ -187,16 +277,18 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * @param element   an element of the internal tree structure
    * @param structure {@code true} means that all child nodes must be invalidated;
    *                  {@code false} means that only the node specified by {@code path} must be updated
-   * @return a promise that will be succeed if path to invalidate is found
+   * @return a promise that will succeed when the path is invalidated
    * @see #invalidate(TreePath, boolean)
    */
-  @NotNull
-  public final Promise<TreePath> invalidate(@NotNull Object element, boolean structure) {
+  public final @NotNull Promise<TreePath> invalidate(@NotNull Object element, boolean structure) {
+    return Promises.asPromise(invalidateAsync(element, structure));
+  }
+
+  public final @NotNull CompletableFuture<TreePath> invalidateAsync(@NotNull Object element, boolean structure) {
     return onValidThread(element, node -> invalidateInternal(node, structure));
   }
 
-  @Nullable
-  private TreePath invalidateInternal(@Nullable Node node, boolean structure) {
+  private @Nullable TreePath invalidateInternal(@Nullable Node node, boolean structure) {
     assert invoker.isValidThread();
     while (node != null && !isValid(node)) {
       if (LOG.isTraceEnabled()) LOG.debug("invalid element cannot be updated: ", node);
@@ -212,6 +304,11 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return ROOT_INVALIDATED;
     }
     boolean updated = node.update();
+    var request = updateRequest.get().get();
+    if (request != null) {
+      // Updated or not, doesn't matter. We've just spent some time trying to update it anyway. 
+      request.nodesLoaded(1);
+    }
     if (structure) {
       node.invalidate();
       TreePath path = TreePathUtil.pathToTreeNode(node);
@@ -223,7 +320,16 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       treeNodesChanged(path, null, null);
       return path;
     }
+    if (request != null) {
+      request.finished();
+    }
     return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  protected @NonNull TreeModelEvent createTreeModelEvent(@Nullable TreePath path, int @Nullable [] indices, Object @Nullable [] children) {
+    return new RequestedTreeModelUpdateEvent(updateRequest.get().get(), this, path, indices, children);
   }
 
   /**
@@ -263,15 +369,17 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
    * Promises to create default visitor to find the specified element.
    *
    * @param element an element of the internal tree structure
-   * @return a promise that will be succeed if visitor is created
+   * @return a promise that will succeed when the visitor is created
    * @see TreeUtil#promiseExpand(JTree, TreeVisitor)
    * @see TreeUtil#promiseSelect(JTree, TreeVisitor)
    */
-  @NotNull
-  public final Promise<TreeVisitor> promiseVisitor(@NotNull Object element) {
-    return onValidThread(structure -> new TreeVisitor.ByTreePath<>(
-      TreePathUtil.pathToCustomNode(element, structure::getParentElement),
-      node -> node instanceof Node ? ((Node)node).getElement() : null));
+  public final @NotNull Promise<TreeVisitor> promiseVisitor(@NotNull Object element) {
+    return Promises.asPromise(onValidThread(struct -> {
+      return new TreeVisitor.ByTreePath<>(
+        TreePathUtil.pathToCustomNode(element, struct::getParentElement),
+        node -> node instanceof Node ? ((Node)node).getElement() : null
+      );
+    }));
   }
 
   @Override
@@ -286,8 +394,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   }
 
   private Node getNode(Object object, boolean validateChildren) {
-    if (disposed || !(object instanceof Node) || !isValidThread()) return null;
-    Node node = (Node)object;
+    if (disposed || !(object instanceof Node node) || !isValidThread()) return null;
     if (isNodeRemoved(node)) return null;
     if (validateChildren) validateChildren(node);
     return node;
@@ -309,11 +416,23 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @Override
   public final List<TreeNode> getChildren(Object object) {
-    Node node = getNode(object, true);
-    List<Node> list = node == null ? null : node.children.get();
-    if (list == null || list.isEmpty()) return emptyList();
-    list.forEach(Node::update);
-    return unmodifiableList(list);
+    var freshChildren = acquireFreshChildrenSet();
+    try {
+      Node node = getNode(object, true);
+      List<Node> list = node == null ? null : node.children.get();
+      if (list == null || list.isEmpty()) return emptyList();
+      for (Node child : list) {
+        // Freshly created children are updated on creation,
+        // and update may be expensive, so don't update twice.
+        if (!freshChildren.isFresh(child)) {
+          child.update();
+        }
+      }
+      return unmodifiableList(list);
+    }
+    finally {
+      freshChildren.release();
+    }
   }
 
   @Override
@@ -331,7 +450,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Override
   public final boolean isLeaf(Object object) {
     Node node = getNode(object, false);
-    return node == null || node.isLeaf(this::validateChildren);
+    return node == null || node.isModelLeaf(this::validateChildren);
   }
 
   @Override
@@ -345,21 +464,18 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   private static boolean isValid(@NotNull AbstractTreeStructure structure, Object element) {
     if (element == null) return false;
-    if (element instanceof AbstractTreeNode) {
-      AbstractTreeNode<?> node = (AbstractTreeNode<?>)element;
+    if (element instanceof AbstractTreeNode<?> node) {
       if (null == node.getValue()) {
         return false;
       }
     }
-    if (element instanceof ValidateableNode) {
-      ValidateableNode node = (ValidateableNode)element;
+    if (element instanceof ValidateableNode node) {
       if (!node.isValid()) return false;
     }
     return structure.isValid(element);
   }
 
-  @Nullable
-  private Node getValidRoot() {
+  private @Nullable Node getValidRoot() {
     Object element = structure.getRootElement();
     if (!isValid(structure, element)) return null;
 
@@ -371,8 +487,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return newNode;
   }
 
-  @Nullable
-  private List<Node> getValidChildren(@NotNull Node node) {
+  private @Nullable List<Node> getValidChildren(@NotNull Node node) {
     NodeDescriptor<?> descriptor = node.getDescriptor();
     if (descriptor == null) return null;
 
@@ -383,10 +498,15 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     if (elements.length == 0) return null;
 
     List<Node> list = new ArrayList<>(elements.length);
+    var freshChildren = freshChildrenSet.get().get();
     for (Object element : elements) {
       ProgressManager.checkCanceled();
       if (isValid(structure, element)) {
-        list.add(new Node(structure, element, descriptor)); // an exception may be thrown while getting children
+        Node newChild = new Node(structure, element, descriptor);
+        if (freshChildren != null) {
+          freshChildren.add(newChild);
+        }
+        list.add(newChild); // an exception may be thrown while getting children
       }
     }
     Comparator<? super Node> comparator = this.comparator;
@@ -418,20 +538,59 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return list;
   }
 
+  private @NotNull FreshChildrenSet acquireFreshChildrenSet() {
+    var ref = freshChildrenSet.get();
+    var result = ref.get();
+    if (result == null) {
+      result = new FreshChildrenSet();
+      ref.set(result);
+    }
+    else {
+      result.acquire();
+    }
+    return result;
+  }
+
+  private class FreshChildrenSet {
+    private final AtomicInteger depth = new AtomicInteger(1);
+    private final IdentityHashMap<Node, Boolean> set = new IdentityHashMap<>();
+
+    void acquire() {
+      depth.incrementAndGet();
+    }
+
+    void release() {
+      if (depth.decrementAndGet() == 0) {
+        freshChildrenSet.get().set(null);
+      }
+    }
+
+    void add(@NotNull Node child) {
+      set.put(child, Boolean.TRUE);
+    }
+
+    boolean isFresh(@NotNull Node child) {
+      return set.containsKey(child);
+    }
+  }
+
   private static final class Node extends DefaultMutableTreeNode implements LeafState.Supplier {
+    /**
+     * {@link DefaultMutableTreeNode#children} is not used, all methods are overridden.
+     */
+    @SuppressWarnings("FieldNameHidesFieldInSuperclass")
     private final Reference<List<Node>> children = new Reference<>();
-    private final LeafState leafState;
+    private LeafState leafState; // NB!: modify in #canReuse only
     private final int hashCode;
 
-    private Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
+    Node(@NotNull AbstractTreeStructure structure, @NotNull Object element, NodeDescriptor<?> parent) {
       this(structure.createDescriptor(element, parent), structure.getLeafState(element), element.hashCode());
     }
 
-    private Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
+    Node(@NotNull NodeDescriptor descriptor, @NotNull LeafState leafState, int hashCode) {
       super(descriptor, leafState != LeafState.ALWAYS);
-      this.leafState = leafState;
       this.hashCode = hashCode;
-      if (leafState == LeafState.ALWAYS) children.set(null); // validate children for leaf node
+      setLeafState(leafState);
       update(); // an exception may be thrown while updating
     }
 
@@ -442,9 +601,10 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
 
     private boolean canReuse(@NotNull Node node, Object element) {
-      if (leafState != node.leafState || hashCode != node.hashCode) return false;
+      if (allowsChildren != node.allowsChildren || hashCode != node.hashCode) return false;
       if (element != null && !matches(element)) return false;
       userObject = node.userObject; // replace old descriptor
+      setLeafState(leafState);
       return true;
     }
 
@@ -455,9 +615,9 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
     private void invalidate() {
       if (leafState != LeafState.ALWAYS) {
+        getChildren().forEach(Node::invalidate);
         children.invalidate();
         if (LOG.isTraceEnabled()) LOG.debug("node invalidated: ", this);
-        getChildren().forEach(Node::invalidate);
       }
     }
 
@@ -474,8 +634,8 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       if (list != null) {
         if (!list.isEmpty()) {
           int hashCode = element.hashCode();
-          Optional<Node> result = list.stream().filter(node -> node.matches(element, hashCode)).findFirst();
-          if (result.isPresent()) return result.get(); // found child node that matches given element
+          Node result = ContainerUtil.find(list, node -> node.matches(element, hashCode));
+          if (result != null) return result; // found child node that matches given element
         }
         if (LOG.isTraceEnabled()) LOG.debug("node '", getElement(), "' have no child: ", element);
       }
@@ -485,8 +645,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return null;
     }
 
-    @NotNull
-    private List<Node> getChildren() {
+    private @NotNull List<Node> getChildren() {
       List<Node> list = children.get();
       return list != null ? list : emptyList();
     }
@@ -543,12 +702,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return getChildren().size();
     }
 
-    @Override
-    public boolean isLeaf() {
-      return isLeaf(null);
-    }
-
-    private boolean isLeaf(@Nullable Consumer<? super Node> validator) {
+    boolean isModelLeaf(@Nullable Consumer<? super Node> validator) {
       // root node should not be a leaf node when it is not visible in a tree
       // javax.swing.tree.VariableHeightLayoutCache.TreeStateNode.expand(boolean)
       if (null == getParent()) return false;
@@ -558,14 +712,18 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       return children.isValid() && super.isLeaf();
     }
 
+    private void setLeafState(@NotNull LeafState leafState) {
+      this.leafState = leafState;
+      if (leafState == LeafState.ALWAYS) children.set(null); // validate children for leaf node
+    }
+
     @Override
     public int getIndex(@NotNull TreeNode child) {
       return child instanceof Node && isNodeChild(child) ? getChildren().indexOf(child) : -1;
     }
 
-    @NotNull
     @Override
-    public LeafState getLeafState() {
+    public @NotNull LeafState getLeafState() {
       return leafState;
     }
   }
@@ -573,7 +731,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   /**
    * @deprecated do not use
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final TreeNode getRootImmediately() {
     if (!root.isValid()) {
       root.set(getValidRoot());
@@ -590,8 +748,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return description;
   }
 
-  @NotNull
-  private static String format(@NotNull String prefix) {
+  private static @NotNull String format(@NotNull String prefix) {
     for (StackTraceElement element : new Exception().getStackTrace()) {
       if (!StructureTreeModel.class.getName().equals(element.getClassName())) {
         return prefix + " @ " + element.getFileName() + " : " + element.getLineNumber();

@@ -1,19 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.InvokeActionResult;
+import com.intellij.codeInsight.template.Macro;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class ShowParameterInfoMacro extends Macro {
   private static final String NAME = "showParameterInfo";
-  private static final String NAME_WITH_PARS = NAME + "()";
 
   @Override
   public String getName() {
@@ -21,13 +27,7 @@ public class ShowParameterInfoMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return NAME_WITH_PARS;
-  }
-
-  @Nullable
-  @Override
-  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
+  public @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     return new InvokeActionResult(
       () -> finishTemplateAndShowParamInfo(context.getEditor(), context.getProject(), context.getStartOffset())
     );

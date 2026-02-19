@@ -30,8 +30,7 @@ public abstract class XPathFunctionProvider {
   public static final ExtensionPointName<XPathFunctionProvider> EXTENSION_POINT_NAME =
     ExtensionPointName.create("XPathView.xpath.functionProvider");
 
-  @NotNull
-  public abstract Map<QName, ? extends Function> getFunctions(ContextType contextType);
+  public abstract @NotNull Map<QName, ? extends Function> getFunctions(ContextType contextType);
 
   public static List<Pair<QName, ? extends Function>> getAvailableFunctions(ContextType type) {
     final ArrayList<Pair<QName, ? extends Function>> list = new ArrayList<>();

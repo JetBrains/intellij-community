@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.NodeOptions
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
+import kotlin.test.assertNotEquals
 
 class ProjectPaneTest : AbstractProjectViewTest() {
   override fun setUp() {
@@ -34,7 +35,7 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     val defaultUseFileNestingRules = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
     assertEquals(defaultUseFileNestingRules, settings.isUseFileNestingRules)
     state.useFileNestingRules = !defaultUseFileNestingRules
-    assertEquals(defaultUseFileNestingRules, settings.isUseFileNestingRules) // TODO: cannot be changed now
+    assertEquals(!defaultUseFileNestingRules, settings.isUseFileNestingRules)
 
     // ViewSettings
 
@@ -121,7 +122,7 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     val defaultUseFileNestingRules = ProjectViewSettings.Immutable.DEFAULT.isUseFileNestingRules
     assertEquals(defaultUseFileNestingRules, settings.isUseFileNestingRules)
     state.useFileNestingRules = !defaultUseFileNestingRules
-    assertEquals(defaultUseFileNestingRules, settings.isUseFileNestingRules) // TODO: cannot be changed now
+    assertEquals(!defaultUseFileNestingRules, settings.isUseFileNestingRules)
 
     // ViewSettings
 
@@ -179,5 +180,72 @@ class ProjectPaneTest : AbstractProjectViewTest() {
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
     state.showLibraryContents = !defaultShowLibraryContents
     assertEquals(false, settings.isShowLibraryContents) // not supported in the Project view
+  }
+
+  fun `test node collapse on sibling add`() {
+    with(ProjectViewState.getInstance(project)) {
+      hideEmptyMiddlePackages = false
+    }
+    val test = createTreeTest()
+    val temp = getOrCreateModuleDir(module)
+    val root = createChildDirectory(temp, "module")
+    PsiTestUtil.addSourceRoot(module, root)
+
+    val parent = createChildDirectory(root, "parent")
+    val folder = createChildDirectory(parent, "folder")
+
+    selectFile(folder)
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   PsiDirectory: folder\n" +
+                         " +External Libraries\n")
+
+    selectFile(createChildDirectory(folder, "child"))
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   -PsiDirectory: folder\n" +
+                         "    PsiDirectory: child\n" +
+                         " +External Libraries\n")
+
+    selectFile(createChildDirectory(parent, "sibling"))
+    test.assertStructure(" -PsiDirectory: module\n" +
+                         "  -PsiDirectory: parent\n" +
+                         "   -PsiDirectory: folder\n" +
+                         "    PsiDirectory: child\n" +
+                         "   PsiDirectory: sibling\n" +
+                         " +External Libraries\n")
+  }
+
+  fun `test file nesting support`() {
+    val test = createTreeTest()
+    val root = directoryContent {
+      dir("src") {
+        dir("com") {
+          file("test.js")
+          file("test.js.map")
+        }
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addSourceRoot(module, root.findChild("src")!!)
+    val mapFile = root.findFileByRelativePath("src/com/test.js.map")!!
+
+    setFileNestingRules(".js" to ".js.map")
+    selectFile(mapFile)
+    test.assertStructure(" -PsiDirectory: src\n" +
+                         "  -PsiDirectory: com\n" +
+                         "   -test.js\n" +
+                         "    test.js.map\n" +
+                         " +External Libraries\n")
+
+    val structureBefore = test.toString()
+    projectView.setUseFileNestingRules(false)
+    selectFile(mapFile)
+    test.assertStructure(" -PsiDirectory: src\n" +
+                         "  -PsiDirectory: com\n" +
+                         "   test.js\n" +
+                         "   test.js.map\n" +
+                         " +External Libraries\n")
+
+    assertNotEquals(structureBefore, test.toString())
   }
 }

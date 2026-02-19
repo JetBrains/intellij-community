@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -42,8 +43,7 @@ public enum DfaNullability {
     myNullability = nullability;
   }
 
-  @NotNull
-  public String getInternalName() {
+  public @NotNull String getInternalName() {
     return myInternalName;
   }
 
@@ -51,8 +51,7 @@ public enum DfaNullability {
     return myPresentationalName.get();
   }
 
-  @NotNull
-  public DfaNullability unite(@NotNull DfaNullability other) {
+  public @NotNull DfaNullability unite(@NotNull DfaNullability other) {
     if (this == other) {
       return this;
     }
@@ -66,8 +65,7 @@ public enum DfaNullability {
     return UNKNOWN;
   }
 
-  @Nullable
-  public DfaNullability intersect(@NotNull DfaNullability right) {
+  public @Nullable DfaNullability intersect(@NotNull DfaNullability right) {
     if (this == NOT_NULL) {
       return right == NULL ? null : NOT_NULL;
     }
@@ -83,40 +81,29 @@ public enum DfaNullability {
     return equals(right) ? this : null;
   }
 
-  @NotNull
-  public static Nullability toNullability(@Nullable DfaNullability dfaNullability) {
+  public static @NotNull Nullability toNullability(@Nullable DfaNullability dfaNullability) {
     return dfaNullability == null ? Nullability.UNKNOWN : dfaNullability.myNullability;
   }
 
-  @NotNull
-  public static DfaNullability fromNullability(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return NOT_NULL;
-      case NULLABLE:
-        return NULLABLE;
-      case UNKNOWN:
-        return UNKNOWN;
-    }
-    throw new IllegalStateException("Unknown nullability: "+nullability);
+  public static @NotNull DfaNullability fromNullability(@NotNull Nullability nullability) {
+    return switch (nullability) {
+      case NOT_NULL -> NOT_NULL;
+      case NULLABLE -> NULLABLE;
+      case UNKNOWN -> UNKNOWN;
+    };
   }
 
-  @NotNull
-  public DfReferenceType asDfType() {
-    switch (this) {
-      case NULL:
-        return DfTypes.NULL;
-      case NOT_NULL:
-        return DfTypes.NOT_NULL_OBJECT;
-      case UNKNOWN:
-        return DfTypes.OBJECT_OR_NULL;
-      default:
-        return DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfTypes.BOTTOM);
-    }
+  public @NotNull DfReferenceType asDfType() {
+    return switch (this) {
+      case NULL -> DfTypes.NULL;
+      case NOT_NULL -> DfTypes.NOT_NULL_OBJECT;
+      case UNKNOWN -> DfTypes.OBJECT_OR_NULL;
+      default -> DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfType.BOTTOM);
+    };
   }
 
-  @NotNull
-  public static DfaNullability fromDfType(@NotNull DfType type) {
-    return type instanceof DfReferenceType ? ((DfReferenceType)type).getNullability() : UNKNOWN;
+  public static @NotNull DfaNullability fromDfType(@NotNull DfType type) {
+    return type == DfType.FAIL || type instanceof DfPrimitiveType ? NOT_NULL : 
+           type instanceof DfReferenceType ? ((DfReferenceType)type).getNullability() : UNKNOWN;
   }
 }

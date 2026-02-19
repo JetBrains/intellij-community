@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -9,23 +9,28 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiThisExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Danila Ponomarenko
- */
-public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescriptor {
+public final class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
@@ -39,8 +44,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
 
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
-      if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+      if (element instanceof PsiMethodCallExpression methodCall) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement.class, true, PsiMethod.class);
         if (!statements.contains(statement) && isRecursiveMethodCall(methodCall)) {
           statements.add(statement);
@@ -52,7 +56,8 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
 
   public static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall) {
     final PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+    if (qualifier != null && !(qualifier instanceof PsiThisExpression) && 
+        !(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass)) {
       return false;
     }
 
@@ -64,15 +69,13 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
     return Comparing.equal(method, methodCall.resolveMethod());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return JavaBundle.message("line.marker.recursive.call");
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return AllIcons.Gutter.RecursiveMethod;
   }
 

@@ -21,11 +21,15 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyEmptyStatementBodyInspection extends BaseInspection {
+public final class GroovyEmptyStatementBodyInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
@@ -37,9 +41,8 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
     }
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
@@ -92,10 +95,9 @@ public class GroovyEmptyStatementBodyInspection extends BaseInspection {
     }
 
     private static boolean isEmpty(GroovyPsiElement body) {
-      if (!(body instanceof GrBlockStatement)) {
+      if (!(body instanceof GrBlockStatement block)) {
         return false;
       }
-      final GrBlockStatement block = (GrBlockStatement)body;
       final GrOpenBlock openBlock = block.getBlock();
 
       final PsiElement brace = openBlock.getLBrace();

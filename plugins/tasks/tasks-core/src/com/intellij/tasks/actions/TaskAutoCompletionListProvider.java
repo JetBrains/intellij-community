@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -11,18 +11,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.core.TaskSymbol;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
-/**
-* @author Dmitry Avdeev
-*/
 public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionListProvider<Task> {
 
   private final Project myProject;
@@ -37,10 +35,20 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
     return "task description and comments";
   }
 
-  @NotNull
   @Override
-  public List<Task> getItems(final String prefix, final boolean cached, CompletionParameters parameters) {
-    return TaskSearchSupport.getItems(TaskManager.getManager(myProject), prefix, cached, parameters.isAutoPopup());
+  public @NotNull List<Task> getItems(final String prefix, final boolean cached, CompletionParameters parameters) {
+    return TaskSearchSupport.getItems(TaskManager.getManager(myProject), prefix, cached, parameters.isAutoPopup())
+      .stream()
+      .sorted(Comparator.comparingInt(t -> {
+        return switch (t.getState()) {
+          case IN_PROGRESS -> 0;
+          case REOPENED -> 1;
+          case SUBMITTED, OPEN -> 2;
+          case OTHER -> 3;
+          case null, default -> 4;
+        };
+      }))
+      .toList();
   }
 
   @Override
@@ -49,20 +57,22 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
   }
 
   @Override
-  public LookupElementBuilder createLookupBuilder(@NotNull final Task task) {
-    LookupElementBuilder builder = super.createLookupBuilder(task);
-
-    builder = builder.withLookupString(task.getSummary());
+  public @NotNull LookupElementBuilder createLookupBuilder(final @NotNull Task task) {
+    LookupElementBuilder builder =
+      LookupElementBuilder.createWithSymbolPointer(getLookupString(task), new TaskSymbol(task))
+        .withIcon(task.getIcon())
+        .withInsertHandler(createInsertHandler(task))
+        .withTailText(" " + task.getSummary(), true)
+        .withLookupString(task.getSummary());
     if (task.isClosed()) {
       builder = builder.strikeout();
     }
-
     return builder;
   }
 
   @Override
-  protected InsertHandler<LookupElement> createInsertHandler(@NotNull final Task task) {
-    return new InsertHandler<LookupElement>() {
+  protected InsertHandler<LookupElement> createInsertHandler(final @NotNull Task task) {
+    return new InsertHandler<>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
         Document document = context.getEditor().getDocument();
@@ -76,33 +86,17 @@ public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionL
     };
   }
 
-  protected void handleInsert(@NotNull final Task task) {
+  protected void handleInsert(final @NotNull Task task) {
     // Override it for autocompletion insert handler
   }
 
   @Override
-  protected Icon getIcon(@NotNull final Task task) {
-    return task.getIcon();
-  }
-
-  @NotNull
-  @Override
-  protected String getLookupString(@NotNull final Task task) {
+  protected @NotNull String getLookupString(@NotNull Task task) {
     return task.getPresentableId();
   }
 
   @Override
-  protected String getTailText(@NotNull final Task task) {
-    return " " + task.getSummary();
-  }
-
-  @Override
-  protected String getTypeText(@NotNull final Task task) {
-    return null;
-  }
-
-  @Override
-  public int compare(@NotNull final Task task1, @NotNull final Task task2) {
+  public int compare(final @NotNull Task task1, final @NotNull Task task2) {
     // N/A here
     throw new UnsupportedOperationException();
   }

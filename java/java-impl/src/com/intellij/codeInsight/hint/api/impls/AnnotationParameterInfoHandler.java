@@ -1,82 +1,98 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.codeInsight.hint.api.JavaParameterInfo;
+import com.intellij.codeInsight.hint.api.ReadOnlyJavaParameterInfoHandler;
+import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
+import com.intellij.lang.parameterInfo.ParameterInfoUtils;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnnotationMethod;
+import com.intellij.psi.PsiAnnotationParameterList;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Maxim.Mossienko
  */
-public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod>, DumbAware {
+public final class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod>,
+                                                             ReadOnlyJavaParameterInfoHandler, DumbAware {
 
   @Override
-  public PsiAnnotationParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
+  public PsiAnnotationParameterList findElementForParameterInfo(final @NotNull CreateParameterInfoContext context) {
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiAnnotation.class);
+    if (annotation == null) return null;
 
-    if (annotation != null) {
-      PsiClass aClass = annotation.resolveAnnotationType();
-      if (aClass != null) {
-        final PsiMethod[] methods = aClass.getMethods();
+    PsiClass aClass = annotation.resolveAnnotationType();
+    if (aClass == null) return null;
 
-        if (methods.length != 0) {
-          context.setItemsToShow(methods);
+    final PsiMethod[] methods = aClass.getMethods();
+    if (methods.length == 0) return null;
 
-          final PsiAnnotationMethod annotationMethod = findAnnotationMethod(context.getFile(), context.getOffset());
-          if (annotationMethod != null) context.setHighlightedElement(annotationMethod);
+    context.setItemsToShow(methods);
 
-          return annotation.getParameterList();
-        }
-      }
-    }
+    final PsiAnnotationMethod annotationMethod = AnnotationParameterInfoUtil.findAnnotationMethod(context.getFile(), context.getOffset());
+    if (annotationMethod != null) context.setHighlightedElement(annotationMethod);
 
-    return null;
+    return annotation.getParameterList();
   }
 
   @Override
-  public void showParameterInfo(@NotNull final PsiAnnotationParameterList element, @NotNull final CreateParameterInfoContext context) {
+  public void showParameterInfo(final @NotNull PsiAnnotationParameterList element, final @NotNull CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
   @Override
-  public PsiAnnotationParameterList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
+  public PsiAnnotationParameterList findElementForUpdatingParameterInfo(final @NotNull UpdateParameterInfoContext context) {
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiAnnotation.class);
     return annotation != null ? annotation.getParameterList() : null;
   }
 
   @Override
-  public void updateParameterInfo(@NotNull final PsiAnnotationParameterList parameterOwner, @NotNull final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(final @NotNull PsiAnnotationParameterList parameterOwner, final @NotNull UpdateParameterInfoContext context) {
     CharSequence chars = context.getEditor().getDocument().getCharsSequence();
     int offset1 = CharArrayUtil.shiftForward(chars, context.getEditor().getCaretModel().getOffset(), " \t");
     final char c = chars.charAt(offset1);
     if (c == ',' || c == ')') {
       offset1 = CharArrayUtil.shiftBackward(chars, offset1 - 1, " \t");
     }
-    context.setHighlightedParameter(findAnnotationMethod(context.getFile(), offset1));
+    context.setHighlightedParameter(AnnotationParameterInfoUtil.findAnnotationMethod(context.getFile(), offset1));
   }
 
   @Override
-  public void updateUI(final PsiAnnotationMethod p, @NotNull final ParameterInfoUIContext context) {
+  public void updateUI(final PsiAnnotationMethod p, final @NotNull ParameterInfoUIContext context) {
     updateUIText(p, context);
   }
+
+  @Override
+  public @Nullable JavaParameterInfo getParameterInfo(@NotNull PsiFile file, int offset) {
+    final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(file, offset, PsiAnnotation.class);
+    if (annotation == null) return null;
+
+    PsiClass aClass = annotation.resolveAnnotationType();
+    if (aClass == null) return null;
+
+    PsiAnnotationParameterList attributeList = ParameterInfoUtils.findParentOfType(file, offset, PsiAnnotationParameterList.class);
+    if (attributeList == null) return null;
+    PsiNameValuePair[] attributes = attributeList.getAttributes();
+
+    List<PsiAnnotationMethod> methodList = ContainerUtil.filterIsInstance(aClass.getMethods(), PsiAnnotationMethod.class);
+
+    return AnnotationParameterInfoUtil.createLightJavaParameterInfo(file, offset, methodList, attributes);
+  }
+
 
   public static String updateUIText(PsiAnnotationMethod p, ParameterInfoUIContext context) {
     @NonNls StringBuilder buffer = new StringBuilder();
@@ -94,13 +110,5 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
 
     return context.setupUIComponentPresentation(buffer.toString(), highlightStartOffset, highlightEndOffset, false, p.isDeprecated(),
                                                 false, context.getDefaultParameterColor());
-  }
-
-  private static PsiAnnotationMethod findAnnotationMethod(PsiFile file, int offset) {
-    PsiNameValuePair pair = ParameterInfoUtils.findParentOfType(file, offset, PsiNameValuePair.class);
-    if (pair == null) return null;
-    final PsiReference reference = pair.getReference();
-    final PsiElement resolved = reference != null ? reference.resolve():null;
-    return PsiUtil.isAnnotationMethod(resolved) ? (PsiAnnotationMethod)resolved : null;
   }
 }

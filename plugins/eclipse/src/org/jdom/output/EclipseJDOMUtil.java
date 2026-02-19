@@ -8,7 +8,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 
 public final class EclipseJDOMUtil {
@@ -34,7 +38,10 @@ public final class EclipseJDOMUtil {
   }
 
   public static void output(@NotNull Element element, @NotNull @NonNls Writer writer, @NotNull Project project) throws IOException {
-    String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
+    output(element, writer, CodeStyle.getSettings(project).getLineSeparator());
+  }
+
+  public static void output(@NotNull Element element, @NonNls @NotNull Writer writer, String lineSeparator) throws IOException {
     writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     writer.write(lineSeparator);
     createOutputter(lineSeparator).output(element, writer);

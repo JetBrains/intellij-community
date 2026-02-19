@@ -1,0 +1,28 @@
+<html>
+<body>
+<p>
+  Reports public extension functions on Driver/Finder/IdeaFrameUI in test classes within the intellij.driver.tests module.
+</p>
+
+<p>
+  Public extension functions in the intellij.driver.tests module create maintainability issues because they:
+</p>
+<ul>
+  <li>Become visible to all tests across all contexts</li>
+  <li>Can lead to unclear test dependencies and harder maintenance</li>
+</ul>
+
+<p>
+  <b>Recommended solutions:</b>
+</p>
+<ul>
+  <li>Move the function to a private companion object</li>
+  <li>Relocate to an appropriate page object:
+    <ul>
+      <li>Generic page object for widely applicable functions</li>
+      <li>Specific page object for context-dependent functions</li>
+    </ul>
+  </li>
+</ul>
+</body>
+</html>

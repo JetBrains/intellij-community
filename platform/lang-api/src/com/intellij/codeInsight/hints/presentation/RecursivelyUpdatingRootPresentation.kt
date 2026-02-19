@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent
  * This class has some unavoidable problems: update happens on every pass, update is recursive and may be even unnecessary.
  * New classes must not use this implementation!
  */
-class RecursivelyUpdatingRootPresentation(private var current: InlayPresentation) : BasePresentation(), RootInlayPresentation<InlayPresentation> {
+open class RecursivelyUpdatingRootPresentation(private var current: InlayPresentation) : BasePresentation(), RootInlayPresentation<InlayPresentation> {
   private var listener = MyPresentationListener()
   init {
     current.addListener(listener)
@@ -67,6 +67,10 @@ class RecursivelyUpdatingRootPresentation(private var current: InlayPresentation
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
     this.current.mouseClicked(event, translated)
+  }
+
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    this.current.mousePressed(event, translated)
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {

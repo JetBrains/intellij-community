@@ -1,22 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
-import com.intellij.testFramework.rules.TempDirectory;
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.implementation.StubMethod;
-import net.bytebuddy.jar.asm.Opcodes;
+import com.intellij.testFramework.junit5.RunInEdt;
+import com.intellij.testFramework.rules.TempDirectoryExtension;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -26,14 +31,14 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-
+@RunInEdt(writeIntent = true)
 public class ClsResolveTest {
-  @Rule public TempDirectory tempDir = new TempDirectory();
+  @RegisterExtension
+  public TempDirectoryExtension tempDir = new TempDirectoryExtension();
 
   private JavaCodeInsightTestFixture myFixture;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     Path jar = generateMutantJar();
     DefaultLightProjectDescriptor descriptor = new DefaultLightProjectDescriptor() {
@@ -43,7 +48,8 @@ public class ClsResolveTest {
         PsiTestUtil.addLibrary(model, "mutant", jar.getParent().toString(), jar.getFileName().toString());
       }
     };
-    TestFixtureBuilder<IdeaProjectTestFixture> builder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(descriptor);
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(descriptor,
+                                                                                                                              "ClsREsolveTest");
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(builder.getFixture(), new LightTempDirTestFixtureImpl(true));
     myFixture.setUp();
   }
@@ -73,32 +79,47 @@ public class ClsResolveTest {
   }
 
   private static byte[] classBytes(String name, String method) {
-    return new ByteBuddy()
-      .subclass(Object.class).modifiers(Opcodes.ACC_PUBLIC).name(name)
-      .defineMethod(method, void.class, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC).intercept(StubMethod.INSTANCE)
-      .make().getBytes();
+    ClassWriter cw = new ClassWriter(0);
+    cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, name.replace('.', '/'), null, "java/lang/Object", null);
+
+    // Default constructor
+    MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+    mv.visitCode();
+    mv.visitVarInsn(Opcodes.ALOAD, 0);
+    mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+    mv.visitInsn(Opcodes.RETURN);
+    mv.visitMaxs(1, 1);
+    mv.visitEnd();
+
+    // Static void method
+    mv = cw.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, method, "()V", null, null);
+    mv.visitCode();
+    mv.visitInsn(Opcodes.RETURN);
+    mv.visitMaxs(0, 0);
+    mv.visitEnd();
+
+    cw.visitEnd();
+    return cw.toByteArray();
   }
   //</editor-fold>
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
-    JarFileSystemImpl.cleanupForNextTest();
   }
 
   @Test
   public void resolveIntoMutantJar() {
-    runInEdtAndWait(() -> {
-      myFixture.configureByText(
-        "test.java",
-        "class test {{\n" +
-        "  mutant1.aB.m1();\n" +
-        "  mutant1.ab.m2();\n" +
-        "  MUTANT2.C.m3();\n" +
-        "  mutant2.D.m4();\n" +
-        "}}");
-      myFixture.checkHighlighting();
-    });
+    myFixture.configureByText(
+      "test.java",
+      """
+        class test {{
+          mutant1.aB.m1();
+          mutant1.ab.m2();
+          MUTANT2.C.m3();
+          mutant2.D.m4();
+        }}""");
+    myFixture.checkHighlighting();
   }
 }

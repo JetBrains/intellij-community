@@ -1,18 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 
 public class EmptyQuery<R> implements Query<R> {
   private static final EmptyQuery<?> EMPTY_QUERY_INSTANCE = new EmptyQuery<>();
 
   @Override
-  @NotNull
-  public Collection<R> findAll() {
+  public @NotNull @Unmodifiable Collection<R> findAll() {
     return Collections.emptyList();
   }
 
@@ -24,17 +23,6 @@ public class EmptyQuery<R> implements Query<R> {
   @Override
   public boolean forEach(@NotNull Processor<? super R> consumer) {
     return true;
-  }
-
-  @Override
-  public R @NotNull [] toArray(R @NotNull [] a) {
-    return findAll().toArray(a);
-  }
-
-  @NotNull
-  @Override
-  public Iterator<R> iterator() {
-    return findAll().iterator();
   }
 
   public static <T> Query<T> getEmptyQuery() {

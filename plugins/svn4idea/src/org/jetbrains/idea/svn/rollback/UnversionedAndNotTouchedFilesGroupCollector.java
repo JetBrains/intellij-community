@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.util.Couple;
@@ -13,11 +13,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelistBuilder {
   private final List<Couple<File>> myToBeDeleted;
   private final Map<File, ThroughRenameInfo> myFromTo;
@@ -35,11 +38,11 @@ public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelist
     toFromTo(file);
   }
 
-  public void markRename(@NotNull final File beforeFile, @NotNull final File afterFile) {
+  public void markRename(final @NotNull File beforeFile, final @NotNull File afterFile) {
     myToBeDeleted.add(Couple.of(beforeFile, afterFile));
   }
 
-  public ThroughRenameInfo findToFile(@NotNull final FilePath file, @Nullable final File firstTo) {
+  public ThroughRenameInfo findToFile(final @NotNull FilePath file, final @Nullable File firstTo) {
     final String path = FilePathsHelper.convertPath(file);
     if (myAlsoReverted.contains(path)) return null;
     final NavigableMap<String, File> head = myRenames.headMap(path, true);
@@ -75,17 +78,17 @@ public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelist
   }
 
   @Override
-  public void processChange(Change change, VcsKey vcsKey) {
+  public void processChange(@NotNull Change change, VcsKey vcsKey) {
     processChangeImpl(change);
   }
 
   @Override
-  public void processChangeInList(Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, @Nullable ChangeList changeList, VcsKey vcsKey) {
     processChangeImpl(change);
   }
 
   @Override
-  public void processChangeInList(Change change, String changeListName, VcsKey vcsKey) {
+  public void processChangeInList(@NotNull Change change, String changeListName, VcsKey vcsKey) {
     processChangeImpl(change);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,14 +9,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 
-import javax.swing.*;
+import javax.swing.SwingUtilities;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class StatusBarProgress extends ProgressIndicatorBase {
+/**
+ * @deprecated unused in the platform
+ */
+@Deprecated
+public final class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
   private final Map<StatusBar, Pair<@StatusBarText String, @StatusBarText String>> myStatusBar2SavedText = new HashMap<>();
   private boolean myScheduledStatusBarTextSave;

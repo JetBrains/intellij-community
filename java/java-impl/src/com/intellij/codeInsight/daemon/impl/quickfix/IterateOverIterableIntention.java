@@ -1,89 +1,131 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.Objects;
 
-public class IterateOverIterableIntention implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(IterateOverIterableIntention.class);
+public final class IterateOverIterableIntention implements IntentionAction {
+  private final @Nullable PsiExpression myExpression;
+  private @IntentionName String myText;
 
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final TemplateImpl template = file instanceof PsiJavaFile ? getTemplate() : null;
-    if (template != null) {
-      int offset = editor.getCaretModel().getOffset();
-      int startOffset = offset;
-      if (editor.getSelectionModel().hasSelection()) {
-        final int selStart = editor.getSelectionModel().getSelectionStart();
-        final int selEnd = editor.getSelectionModel().getSelectionEnd();
-        startOffset = (offset == selStart) ? selEnd : selStart;
-      }
-      PsiElement element = file.findElementAt(startOffset);
-      while (element instanceof PsiWhiteSpace) {
-        element = element.getPrevSibling();
-      }
-      PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
-      if (psiStatement != null) {
-        startOffset = psiStatement.getTextRange().getStartOffset();
-      }
-      if (!template.isDeactivated() &&
-          (TemplateManagerImpl.isApplicable(file, offset, template) ||
-           (TemplateManagerImpl.isApplicable(file, startOffset, template)))) {
-        return getIterableExpression(editor, file) != null;
-      }
-    }
-    return false;
+  public IterateOverIterableIntention() {
+    this(null);
   }
 
-  @Nullable
-  private static TemplateImpl getTemplate() {
+  public IterateOverIterableIntention(@Nullable PsiExpression expression) {
+    myExpression = expression;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new IterateOverIterableIntention(PsiTreeUtil.findSameElementInCopy(myExpression, target));
+  }
+
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    int offset = editor.getCaretModel().getOffset();
+    int startOffset = offset;
+    if (editor.getSelectionModel().hasSelection()) {
+      final int selStart = editor.getSelectionModel().getSelectionStart();
+      final int selEnd = editor.getSelectionModel().getSelectionEnd();
+      startOffset = (offset == selStart) ? selEnd : selStart;
+    }
+    PsiElement element = psiFile.findElementAt(startOffset);
+    while (element instanceof PsiWhiteSpace) {
+      element = element.getPrevSibling();
+    }
+    PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
+    if (myExpression == null && psiStatement instanceof PsiExpressionStatement &&
+        startOffset == offset && startOffset == psiStatement.getTextRange().getEndOffset() &&
+        psiStatement.getLastChild() instanceof PsiErrorElement) {
+      // At this position, we provide a quick-fix for error
+      return false;
+    }
+    if (psiStatement != null) {
+      startOffset = psiStatement.getTextRange().getStartOffset();
+    }
+    PsiExpression expression = getIterableExpression(editor, psiFile);
+    if (expression == null) return false;
+    if (ConstructionUtils.isEmptyCollectionInitializer(expression)) {
+      // Empty collection: iterating doesn't make much sense
+      return false;
+    }
+    if (expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getArrayDimensions().length > 0) {
+      // new array without initializers: all elements are 0/null/false, so iterating doesn't make much sense
+      return false;
+    }
+
+    TemplateImpl template = psiFile instanceof PsiJavaFile ? getTemplate() : null;
+    if (template == null || template.isDeactivated()) return false;
+
+    // we are checking Template applicability later, because it requires initialization of all (for all languages) template context types
+    if (!TemplateManagerImpl.isApplicable(psiFile, offset, template) &&
+        !TemplateManagerImpl.isApplicable(psiFile, startOffset, template)) {
+      return false;
+    }
+
+    myText = JavaBundle.message("intention.name.iterate.over", Objects.requireNonNull(expression.getType()).getPresentableText());
+    return true;
+  }
+
+  private static @Nullable TemplateImpl getTemplate() {
     return TemplateSettings.getInstance().getTemplate("I", "Java");
   }
 
-
-  @NotNull
   @Override
-  public String getText() {
-    return QuickFixBundle.message("iterate.iterable");
+  public @NotNull String getText() {
+    return myText == null ? getFamilyName() : myText;
   }
 
-  @Nullable
-  private static PsiExpression getIterableExpression(Editor editor, PsiFile file) {
+  private @Nullable PsiExpression getIterableExpression(Editor editor, PsiFile psiFile) {
+    if (myExpression != null) {
+      if (!myExpression.isValid()) return null;
+      final PsiType type = myExpression.getType();
+      if (type instanceof PsiArrayType || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return myExpression;
+      return null;
+    }
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
-      PsiElement elementAtStart = file.findElementAt(selectionModel.getSelectionStart());
-      PsiElement elementAtEnd = file.findElementAt(selectionModel.getSelectionEnd() - 1);
+      PsiElement elementAtStart = psiFile.findElementAt(selectionModel.getSelectionStart());
+      PsiElement elementAtEnd = psiFile.findElementAt(selectionModel.getSelectionEnd() - 1);
       if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
         elementAtStart = PsiTreeUtil.skipWhitespacesAndCommentsForward(elementAtStart);
         if (elementAtStart == null) return null;
@@ -102,7 +144,7 @@ public class IterateOverIterableIntention implements IntentionAction {
       return null;
     }
 
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     while (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }
@@ -120,26 +162,31 @@ public class IterateOverIterableIntention implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     final TemplateImpl template = getTemplate();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
-      final PsiExpression iterableExpression = getIterableExpression(editor, file);
-      LOG.assertTrue(iterableExpression != null);
+      final PsiExpression iterableExpression = getIterableExpression(editor, psiFile);
+      Logger.getInstance(IterateOverIterableIntention.class).assertTrue(iterableExpression != null);
+
+      PsiElement element = PsiTreeUtil.skipSiblingsForward(iterableExpression, PsiWhiteSpace.class, PsiComment.class);
+      if (PsiUtil.isJavaToken(element, JavaTokenType.SEMICOLON)) {
+        element.delete();
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(psiFile.getViewProvider().getDocument());
+      }
       TextRange textRange = iterableExpression.getTextRange();
       selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
     }
-    new InvokeTemplateAction(template, editor, project, new HashSet<>()).perform();
+    new InvokeTemplateAction(template, editor, project, new HashSet<>()).performInCommand();
   }
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return getText();
+  public @NotNull String getFamilyName() {
+    return QuickFixBundle.message("iterate.iterable");
   }
 }

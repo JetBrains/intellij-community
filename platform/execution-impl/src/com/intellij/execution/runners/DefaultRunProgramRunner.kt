@@ -9,7 +9,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import org.jetbrains.concurrency.resolvedPromise
 
-private class DefaultRunProgramRunner : ProgramRunner<RunnerSettings> {
+internal class DefaultRunProgramRunner : ProgramRunner<RunnerSettings> {
   override fun getRunnerId() = "defaultRunRunner"
 
   @Throws(ExecutionException::class)

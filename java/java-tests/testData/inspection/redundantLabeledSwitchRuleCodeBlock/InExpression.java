@@ -9,4 +9,24 @@ class C {
             default -> "b";
         };
     }
+
+    String nestedSwitchStatement(int n) {
+      return switch (n) {
+        case 1 -> {
+          switch (n) {
+            default -> { yield "2"; }
+          }
+        }
+        default -> "b";
+      };
+    }
+
+    String nestedSwitchExpression(int n) {
+      return switch (n) {
+        case 1 -> switch (n) {
+          default -> { <warning descr="Labeled rule's code block is redundant">yield</warning> "2"; }
+        };
+        default -> "b";
+      };
+    }
 }

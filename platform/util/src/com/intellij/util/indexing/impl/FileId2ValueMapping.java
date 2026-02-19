@@ -1,88 +1,69 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
-import com.intellij.util.indexing.ValueContainer;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class FileId2ValueMapping<Value> {
-  private static final Logger LOG = Logger.getInstance(FileId2ValueMapping.class);
+/**
+ * Helper class: optimizes applying many modifications (add/remove inputId) to {@link ValueContainerImpl}.
+ * <br/>
+ * Adding/removing a record from {@link ValueContainerImpl} by inputId is O(size). This is
+ * because even though logically {@link ValueContainerImpl} is a set of (inputId -> Value)
+ * mappings, but implementation stores data as (Value-> Set of inputIds) -- hence to remove
+ * an entry for given inputId one basically has to scan through ~half the container.
+ * <br/>
+ * If the container is big enough, it is much faster to build a kind of 'index' over it, and
+ * apply changes via that index instead. This class is doing exactly this: it wraps around
+ * {@link ValueContainerImpl}, creates an 'index' over its content ({@link #id2ValueMap}),
+ * and uses the index to apply changes faster.
+ */
+@ApiStatus.Internal
+public final class FileId2ValueMapping<Value> {
+  private final @NotNull Int2ObjectMap<Value> id2ValueMap = new Int2ObjectOpenHashMap<>();
+  private final @NotNull ValueContainerImpl<Value> valueContainer;
 
-  private final TIntObjectHashMap<Value> id2ValueMap;
-  private final ValueContainerImpl<Value> valueContainer;
-  private boolean myOnePerFileValidationEnabled = true;
+  FileId2ValueMapping(@NotNull ValueContainerImpl<Value> valueContainer) {
+    this.valueContainer = valueContainer;
 
-  FileId2ValueMapping(ValueContainerImpl<Value> _valueContainer) {
-    id2ValueMap = new TIntObjectHashMap<>();
-    valueContainer = _valueContainer;
+    List<ObjectIntImmutablePair<Value>> cleanupDeletions = new SmartList<>();
 
-    TIntArrayList removedFileIdList = null;
-    List<Value> removedValueList = null;
-
-    for (final ValueContainer.ValueIterator<Value> valueIterator = _valueContainer.getValueIterator(); valueIterator.hasNext();) {
-      final Value value = valueIterator.next();
-
-      for (final ValueContainer.IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
-        int id = intIterator.next();
-        Value previousValue = id2ValueMap.put(id, value);
-        if (previousValue != null) {  // delay removal of duplicated id -> value mapping since it will affect valueIterator we are using
-          if (removedFileIdList == null) {
-            removedFileIdList = new TIntArrayList();
-            removedValueList = new SmartList<>();
-          }
-          removedFileIdList.add(id);
-          removedValueList.add(previousValue);
-        }
+    valueContainer.forEach((id, value) -> {
+      Value previousValue = associateFileIdToValueSkippingContainer(id, value);
+      if (previousValue != null) {
+        cleanupDeletions.add(ObjectIntImmutablePair.of(previousValue, id));
+        //ValueContainerImpl.LOG.error("Duplicated value for id = " + id + " in " + valueContainer.getDebugMessage());
       }
-    }
+      return true;
+    });
 
-    if (removedFileIdList != null) {
-      for(int i = 0, size = removedFileIdList.size(); i < size; ++i) {
-        valueContainer.removeValue(removedFileIdList.get(i), removedValueList.get(i));
-      }
+    for (ObjectIntImmutablePair<Value> deletion : cleanupDeletions) {
+      valueContainer.removeValue(deletion.rightInt(), ValueContainerImpl.unwrap(deletion.left()));
     }
   }
 
   void associateFileIdToValue(int fileId, Value value) {
-    Value previousValue = id2ValueMap.put(fileId, value);
+    Value previousValue = associateFileIdToValueSkippingContainer(fileId, value);
     if (previousValue != null) {
-      valueContainer.removeValue(fileId, previousValue);
+      valueContainer.removeValue(fileId, ValueContainerImpl.unwrap(previousValue));
     }
+    valueContainer.addValue(fileId, value);
+  }
+
+  Value associateFileIdToValueSkippingContainer(int fileId, Value value) {
+    return id2ValueMap.put(fileId, ValueContainerImpl.wrapValue(value));
   }
 
   boolean removeFileId(int inputId) {
     Value mapped = id2ValueMap.remove(inputId);
     if (mapped != null) {
-      valueContainer.removeValue(inputId, mapped);
-    }
-    if (IndexDebugProperties.EXTRA_SANITY_CHECKS && myOnePerFileValidationEnabled) {
-      for (final InvertedIndexValueIterator<Value> valueIterator = valueContainer.getValueIterator(); valueIterator.hasNext();) {
-        valueIterator.next();
-        LOG.assertTrue(!valueIterator.getValueAssociationPredicate().contains(inputId));
-      }
+      valueContainer.removeValue(inputId, ValueContainerImpl.unwrap(mapped));
     }
     return mapped != null;
-  }
-
-  public void disableOneValuePerFileValidation() {
-    myOnePerFileValidationEnabled = false;
   }
 }

@@ -75,4 +75,17 @@ public interface SchemesModel<T extends Scheme> {
   boolean differsFromDefault(@NotNull T scheme);
 
   void removeScheme(@NotNull T scheme);
+
+  /**
+   * Determines if the given scheme is the default scheme.
+   * <p>
+   *   E.g. the default editor color scheme as determined by the current LaF theme.
+   * </p>
+   *
+   * @param scheme The scheme to check.
+   * @return True if the scheme is the default scheme, false otherwise.
+   */
+  default boolean isDefaultScheme(@NotNull T scheme) {
+    return false;
+  }
 }

@@ -1,0 +1,8 @@
+LineBreakpoint created at composeSideEffects.kt:18
+Run Java
+Connected to the target VM
+composeSideEffects.kt:18
+Compile bytecode for counter.value
+Disconnected from the target VM
+
+Process finished with exit code 0

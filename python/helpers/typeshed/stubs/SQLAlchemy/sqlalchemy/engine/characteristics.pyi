@@ -1,0 +1,20 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+import abc
+
+from ..util import ABC
+
+class ConnectionCharacteristic(ABC, metaclass=abc.ABCMeta):
+    transactional: bool
+    @abc.abstractmethod
+    def reset_characteristic(self, dialect, dbapi_conn): ...
+    @abc.abstractmethod
+    def set_characteristic(self, dialect, dbapi_conn, value): ...
+    @abc.abstractmethod
+    def get_characteristic(self, dialect, dbapi_conn): ...
+
+class IsolationLevelCharacteristic(ConnectionCharacteristic):
+    transactional: bool
+    def reset_characteristic(self, dialect, dbapi_conn) -> None: ...
+    def set_characteristic(self, dialect, dbapi_conn, value) -> None: ...
+    def get_characteristic(self, dialect, dbapi_conn): ...

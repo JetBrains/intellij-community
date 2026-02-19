@@ -1,0 +1,3825 @@
+[ {
+  "name" : "1Password SSH Agent Config",
+  "url" : "https://developer.1password.com/schema/ssh-agent-config.json",
+  "fileName" : "ssh-agent-config.json"
+}, {
+  "name" : "Application Accelerator",
+  "url" : "https://json.schemastore.org/accelerator.json",
+  "fileName" : "accelerator.json"
+}, {
+  "name" : "gRPC API Gateway & OpenAPI Config",
+  "url" : "https://json.schemastore.org/grpc-api-gateway.json",
+  "fileName" : "grpc-api-gateway.json"
+}, {
+  "name" : ".NET Aspire 8.0 Manifest",
+  "url" : "https://json.schemastore.org/aspire-8.0.json",
+  "fileName" : "aspire-8.0.json"
+}, {
+  "name" : "AnyWork Automation Configuration",
+  "url" : "https://json.schemastore.org/anywork-ac-1.1.json",
+  "fileName" : "anywork-ac-1.1.json"
+}, {
+  "name" : "@factorial/drupal-breakpoints-css",
+  "url" : "https://json.schemastore.org/factorial-drupal-breakpoints-css-0.2.0.json",
+  "fileName" : "factorial-drupal-breakpoints-css-0.2.0.json"
+}, {
+  "name" : ".adonisrc.json",
+  "url" : "https://raw.githubusercontent.com/adonisjs/application/master/adonisrc.schema.json",
+  "fileName" : "adonisrc.schema.json"
+}, {
+  "name" : "aerleon.yml",
+  "url" : "https://raw.githubusercontent.com/aerleon/aerleon/main/schemas/aerleon-config.schema.json",
+  "fileName" : "aerleon-config.schema.json"
+}, {
+  "name" : "Aerleon Network & Service Definitions",
+  "url" : "https://raw.githubusercontent.com/aerleon/aerleon/main/schemas/aerleon-definitions.schema.json",
+  "fileName" : "aerleon-definitions.schema.json"
+}, {
+  "name" : "Aerleon Policy",
+  "url" : "https://raw.githubusercontent.com/aerleon/aerleon/main/schemas/aerleon-policies.schema.json",
+  "fileName" : "aerleon-policies.schema.json"
+}, {
+  "name" : ".agripparc.json",
+  "url" : "https://json.schemastore.org/agripparc-1.4.json",
+  "fileName" : "agripparc-1.4.json"
+}, {
+  "name" : ".aiproj.json",
+  "url" : "https://json.schemastore.org/aiproj-1.3.json",
+  "fileName" : "aiproj-1.3.json"
+}, {
+  "name" : "ABCInventoryModuleData",
+  "url" : "https://json.schemastore.org/abc-inventory-module-data-3.0.0.json",
+  "fileName" : "abc-inventory-module-data-3.0.0.json"
+}, {
+  "name" : "ABCSupplyPlan",
+  "url" : "https://json.schemastore.org/abc-supply-plan-6.0.0.json",
+  "fileName" : "abc-supply-plan-6.0.0.json"
+}, {
+  "name" : "AIConfig",
+  "url" : "https://json.schemastore.org/aiconfig-1.0.json",
+  "fileName" : "aiconfig-1.0.json"
+}, {
+  "name" : "Airlock Microgateway",
+  "url" : "https://json.schemastore.org/airlock-microgateway-3.2.json",
+  "fileName" : "airlock-microgateway-3.2.json"
+}, {
+  "name" : "angular.json",
+  "url" : "https://raw.githubusercontent.com/angular/angular-cli/master/packages/angular/cli/lib/config/workspace-schema.json",
+  "fileName" : "workspace-schema.json"
+}, {
+  "name" : ".angular-cli.json",
+  "url" : "https://raw.githubusercontent.com/angular/angular-cli/v10.1.6/packages/angular/cli/lib/config/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "apple-app-site-association",
+  "url" : "https://json.schemastore.org/apple-app-site-association.json",
+  "fileName" : "apple-app-site-association.json"
+}, {
+  "name" : "App config Spotify Backstage",
+  "url" : "https://json.schemastore.org/app-config.json",
+  "fileName" : "app-config.json"
+}, {
+  "name" : "app-definition.yaml",
+  "url" : "https://appsemble.app/api.json#/components/schemas/AppDefinition",
+  "fileName" : "app-definition.yaml"
+}, {
+  "name" : ".appsemblerc.yaml",
+  "url" : "https://gitlab.com/appsemble/appsemble/-/raw/HEAD/packages/cli/assets/appsemblerc.schema.json",
+  "fileName" : "appsemblerc.schema.json"
+}, {
+  "name" : "appsscript.json",
+  "url" : "https://json.schemastore.org/appsscript.json",
+  "fileName" : "appsscript.json"
+}, {
+  "name" : "appsettings.json",
+  "url" : "https://json.schemastore.org/appsettings.json",
+  "fileName" : "appsettings.json"
+}, {
+  "name" : "appveyor.yml",
+  "url" : "https://json.schemastore.org/appveyor.json",
+  "fileName" : "appveyor.json"
+}, {
+  "name" : "architect.yml",
+  "url" : "https://raw.githubusercontent.com/architect-team/architect-cli/main/src/dependency-manager/schema/architect.schema.json",
+  "fileName" : "architect.schema.json"
+}, {
+  "name" : "arc.json",
+  "url" : "https://raw.githubusercontent.com/architect/parser/v2.3.0/arc-schema.json",
+  "fileName" : "arc-schema.json"
+}, {
+  "name" : "Argo Events",
+  "url" : "https://raw.githubusercontent.com/argoproj/argo-events/master/api/jsonschema/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Argo Workflows",
+  "url" : "https://raw.githubusercontent.com/argoproj/argo-workflows/master/api/jsonschema/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "artifacthub-repo.yml",
+  "url" : "https://json.schemastore.org/artifacthub-repo.json",
+  "fileName" : "artifacthub-repo.json"
+}, {
+  "name" : "asm-lsp",
+  "url" : "https://raw.githubusercontent.com/bergercookie/asm-lsp/master/asm-lsp_config_schema.json",
+  "fileName" : "asm-lsp_config_schema.json"
+}, {
+  "name" : "AssemblyScript",
+  "url" : "https://json.schemastore.org/asconfig-schema.json",
+  "fileName" : "asconfig-schema.json"
+}, {
+  "name" : "AsyncAPI",
+  "url" : "https://www.asyncapi.com/schema-store/all.schema-store.json",
+  "fileName" : "all.schema-store.json"
+}, {
+  "name" : "AsyncAPI Tool File",
+  "url" : "https://raw.githubusercontent.com/asyncapi/website/master/scripts/tools/tools-schema.json",
+  "fileName" : "tools-schema.json"
+}, {
+  "name" : "Atmos Manifests",
+  "url" : "https://atmos.tools/schemas/atmos/atmos-manifest/1.0/atmos-manifest.json",
+  "fileName" : "atmos-manifest.json"
+}, {
+  "name" : "Aurora Agile Meta-Framework",
+  "url" : "https://json.schemastore.org/aurora-1.1.json",
+  "fileName" : "aurora-1.1.json"
+}, {
+  "name" : "Avro Avsc",
+  "url" : "https://json.schemastore.org/avro-avsc.json",
+  "fileName" : "avro-avsc.json"
+}, {
+  "name" : "AWS AppConfig Feature Flags-v1",
+  "url" : "https://json.schemastore.org/aws-cdk-appconfig-featureflags-1.0.0.json",
+  "fileName" : "aws-cdk-appconfig-featureflags-1.0.0.json"
+}, {
+  "name" : "Azure Container App template for defining an immutable revision",
+  "url" : "https://json.schemastore.org/azure-containerapp-template.json",
+  "fileName" : "azure-containerapp-template.json"
+}, {
+  "name" : "Azure Device Update for IoT Hub import manifest",
+  "url" : "https://json.schemastore.org/azure-deviceupdate-import-manifest-5.0.json",
+  "fileName" : "azure-deviceupdate-import-manifest-5.0.json"
+}, {
+  "name" : "Azure Device Update for IoT Hub update manifest",
+  "url" : "https://json.schemastore.org/azure-deviceupdate-update-manifest-5.json",
+  "fileName" : "azure-deviceupdate-update-manifest-5.json"
+}, {
+  "name" : "Azure DevOps extension manifest",
+  "url" : "https://json.schemastore.org/azure-devops-extension-manifest-1.0.json",
+  "fileName" : "azure-devops-extension-manifest-1.0.json"
+}, {
+  "name" : "Azure IoT EdgeAgent deployment",
+  "url" : "https://json.schemastore.org/azure-iot-edgeagent-deployment-1.1.json",
+  "fileName" : "azure-iot-edgeagent-deployment-1.1.json"
+}, {
+  "name" : "Azure IoT EdgeHub deployment",
+  "url" : "https://json.schemastore.org/azure-iot-edgehub-deployment-1.2.json",
+  "fileName" : "azure-iot-edgehub-deployment-1.2.json"
+}, {
+  "name" : "Azure IoT Edge deployment",
+  "url" : "https://json.schemastore.org/azure-iot-edge-deployment-2.0.json",
+  "fileName" : "azure-iot-edge-deployment-2.0.json"
+}, {
+  "name" : "Azure IoT Edge deployment template",
+  "url" : "https://json.schemastore.org/azure-iot-edge-deployment-template-4.0.json",
+  "fileName" : "azure-iot-edge-deployment-template-4.0.json"
+}, {
+  "name" : "Azure Landing Zones Library metadata",
+  "url" : "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/library_metadata.json",
+  "fileName" : "library_metadata.json"
+}, {
+  "name" : "Azure Landing Zones Library policy default values",
+  "url" : "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/default_policy_values.json",
+  "fileName" : "default_policy_values.json"
+}, {
+  "name" : "Azure Landing Zones Library architecture definition",
+  "url" : "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/architecture_definition.json",
+  "fileName" : "architecture_definition.json"
+}, {
+  "name" : "Azure Landing Zones Library archetype definition",
+  "url" : "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/archetype_definition.json",
+  "fileName" : "archetype_definition.json"
+}, {
+  "name" : "Azure Landing Zones Library archetype override",
+  "url" : "https://raw.githubusercontent.com/Azure/Azure-Landing-Zones-Library/main/schemas/archetype_override.json",
+  "fileName" : "archetype_override.json"
+}, {
+  "name" : "bottom configuration",
+  "url" : "https://raw.githubusercontent.com/ClementTsang/bottom/main/schema/v0.10/bottom.json",
+  "fileName" : "bottom.json"
+}, {
+  "name" : "buf.yaml",
+  "url" : "https://json.schemastore.org/buf.json",
+  "fileName" : "buf.json"
+}, {
+  "name" : "buf.gen.yaml",
+  "url" : "https://json.schemastore.org/buf.gen.json",
+  "fileName" : "buf.gen.json"
+}, {
+  "name" : "buf.plugin.yaml",
+  "url" : "https://json.schemastore.org/buf.plugin.json",
+  "fileName" : "buf.plugin.json"
+}, {
+  "name" : "buf.work.yaml",
+  "url" : "https://json.schemastore.org/buf.work.json",
+  "fileName" : "buf.work.json"
+}, {
+  "name" : "CodeRabbit",
+  "url" : "https://coderabbit.ai/integrations/schema.v2.json",
+  "fileName" : "schema.v2.json"
+}, {
+  "name" : "CodeCV",
+  "url" : "https://raw.githubusercontent.com/hexagonkt/codecv/master/cv.schema.json",
+  "fileName" : "cv.schema.json"
+}, {
+  "name" : "CodifyCLI",
+  "url" : "https://raw.githubusercontent.com/codifyCLI/codify-schemas/main/src/schemastore/codify-schema.json",
+  "fileName" : "codify-schema.json"
+}, {
+  "name" : "CloudCannon Configuration",
+  "url" : "https://github.com/cloudcannon/configuration-types/releases/latest/download/cloudcannon-config.schema.json",
+  "fileName" : "cloudcannon-config.schema.json"
+}, {
+  "name" : "latexindent configuration",
+  "url" : "https://github.com/cmhughes/latexindent.pl/raw/main/documentation/latexindent-yaml-schema.json",
+  "fileName" : "latexindent-yaml-schema.json"
+}, {
+  "name" : "Lobe AI Agent",
+  "url" : "https://chat-agents.lobehub.com/schema/lobeAgentSchema_v1.json",
+  "fileName" : "lobeAgentSchema_v1.json"
+}, {
+  "name" : "Loki",
+  "url" : "https://json.schemastore.org/loki.json",
+  "fileName" : "loki.json"
+}, {
+  "name" : "Azure Pipelines",
+  "url" : "https://raw.githubusercontent.com/microsoft/azure-pipelines-vscode/master/service-schema.json",
+  "fileName" : "service-schema.json"
+}, {
+  "name" : "FasterCI Configuration",
+  "url" : "https://fasterci.com/config.schema.json",
+  "fileName" : "config.schema.json"
+}, {
+  "name" : "Foxx Manifest",
+  "url" : "https://json.schemastore.org/foxx-manifest.json",
+  "fileName" : "foxx-manifest.json"
+}, {
+  "name" : "flagd flag configuration",
+  "url" : "https://flagd.dev/schema/v0/flags.json",
+  "fileName" : "flags.json"
+}, {
+  "name" : "fly.io Configuration",
+  "url" : "https://json.schemastore.org/fly.json",
+  "fileName" : "fly.json"
+}, {
+  "name" : "Freifunk.de Community API",
+  "url" : "https://raw.githubusercontent.com/freifunk/api.freifunk.net/master/specs/0.5.2.json",
+  "fileName" : "0.5.2.json"
+}, {
+  "name" : "Frogbot Config",
+  "url" : "https://raw.githubusercontent.com/jfrog/frogbot/master/schema/frogbot-schema.json",
+  "fileName" : "frogbot-schema.json"
+}, {
+  "name" : ".asmdef",
+  "url" : "https://json.schemastore.org/asmdef.json",
+  "fileName" : "asmdef.json"
+}, {
+  "name" : "babelrc.json",
+  "url" : "https://json.schemastore.org/babelrc.json",
+  "fileName" : "babelrc.json"
+}, {
+  "name" : ".backportrc.json",
+  "url" : "https://json.schemastore.org/backportrc.json",
+  "fileName" : "backportrc.json"
+}, {
+  "name" : "batect.yml",
+  "url" : "https://ide-integration.batect.dev/v1/configSchema.json",
+  "fileName" : "configSchema.json"
+}, {
+  "name" : "bamboo-spec",
+  "url" : "https://json.schemastore.org/bamboo-spec.json",
+  "fileName" : "bamboo-spec.json"
+}, {
+  "name" : "beef-database-codegen",
+  "url" : "https://raw.githubusercontent.com/Avanade/Beef/master/tools/Beef.CodeGen.Core/Schema/database.beef.json",
+  "fileName" : "database.beef.json"
+}, {
+  "name" : "beef-entity-codegen",
+  "url" : "https://raw.githubusercontent.com/Avanade/Beef/master/tools/Beef.CodeGen.Core/Schema/entity.beef.json",
+  "fileName" : "entity.beef.json"
+}, {
+  "name" : "beef-database-v5-codegen",
+  "url" : "https://raw.githubusercontent.com/Avanade/Beef/master/tools/Beef.CodeGen.Core/Schema/database.beef-5.json",
+  "fileName" : "database.beef-5.json"
+}, {
+  "name" : "beef-entity-v5-codegen",
+  "url" : "https://raw.githubusercontent.com/Avanade/Beef/master/tools/Beef.CodeGen.Core/Schema/entity.beef-5.json",
+  "fileName" : "entity.beef-5.json"
+}, {
+  "name" : "bigquery-table",
+  "url" : "https://json.schemastore.org/bigquery-table.json",
+  "fileName" : "bigquery-table.json"
+}, {
+  "name" : "Bigconfig",
+  "url" : "https://json.schemastore.org/bigconfig.json",
+  "fileName" : "bigconfig.json"
+}, {
+  "name" : "bitbucket-pipelines",
+  "url" : "https://bitbucket.org/atlassianlabs/intellij-bitbucket-references-plugin/raw/master/src/main/resources/schemas/bitbucket-pipelines.schema.json",
+  "fileName" : "bitbucket-pipelines.schema.json"
+}, {
+  "name" : "bitrise",
+  "url" : "https://json.schemastore.org/bitrise.json",
+  "fileName" : "bitrise.json"
+}, {
+  "name" : "bitrise-step",
+  "url" : "https://json.schemastore.org/bitrise-step.json",
+  "fileName" : "bitrise-step.json"
+}, {
+  "name" : ".bootstraprc",
+  "url" : "https://json.schemastore.org/bootstraprc.json",
+  "fileName" : "bootstraprc.json"
+}, {
+  "name" : "bower.json",
+  "url" : "https://json.schemastore.org/bower.json",
+  "fileName" : "bower.json"
+}, {
+  "name" : ".bowerrc",
+  "url" : "https://json.schemastore.org/bowerrc.json",
+  "fileName" : "bowerrc.json"
+}, {
+  "name" : "BOSH Deploy Config",
+  "url" : "https://json.schemastore.org/bosh-deploy-config.json",
+  "fileName" : "bosh-deploy-config.json"
+}, {
+  "name" : "Boyka Framework",
+  "url" : "https://json.schemastore.org/boyka-config.json",
+  "fileName" : "boyka-config.json"
+}, {
+  "name" : "behat.yml",
+  "url" : "https://json.schemastore.org/behat.json",
+  "fileName" : "behat.json"
+}, {
+  "name" : "partial-black.json",
+  "url" : "https://json.schemastore.org/partial-black.json",
+  "fileName" : "partial-black.json"
+}, {
+  "name" : "bozr.suite.json",
+  "url" : "https://json.schemastore.org/bozr.json",
+  "fileName" : "bozr.json"
+}, {
+  "name" : "browser.i18n.json",
+  "url" : "https://json.schemastore.org/browser.i18n.json",
+  "fileName" : "browser.i18n.json"
+}, {
+  "name" : "browsh configuration",
+  "url" : "https://raw.githubusercontent.com/browsh-org/browsh/master/webext/assets/browsh-schema.json",
+  "fileName" : "browsh-schema.json"
+}, {
+  "name" : "bucklescript",
+  "url" : "https://raw.githubusercontent.com/rescript-lang/rescript-compiler/master/docs/docson/build-schema.json",
+  "fileName" : "build-schema.json"
+}, {
+  "name" : "Build Info",
+  "url" : "https://raw.githubusercontent.com/jfrog/build-info-go/main/buildinfo-schema.json",
+  "fileName" : "buildinfo-schema.json"
+}, {
+  "name" : "Bukkit plugin.yml",
+  "url" : "https://json.schemastore.org/bukkit-plugin.json",
+  "fileName" : "bukkit-plugin.json"
+}, {
+  "name" : "Buildkite",
+  "url" : "https://raw.githubusercontent.com/buildkite/pipeline-schema/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : ".build.yml",
+  "url" : "https://json.schemastore.org/sourcehut-build-0.65.0.json",
+  "fileName" : "sourcehut-build-0.65.0.json"
+}, {
+  "name" : "bundleconfig.json",
+  "url" : "https://json.schemastore.org/bundleconfig.json",
+  "fileName" : "bundleconfig.json"
+}, {
+  "name" : "bunfig.toml",
+  "url" : "https://json.schemastore.org/bunfig.json",
+  "fileName" : "bunfig.json"
+}, {
+  "name" : "BungeeCord plugin.yml",
+  "url" : "https://json.schemastore.org/bungee-plugin.json",
+  "fileName" : "bungee-plugin.json"
+}, {
+  "name" : "block.json",
+  "url" : "https://schemas.wp.org/trunk/block.json",
+  "fileName" : "block.json"
+}, {
+  "name" : "Block Protocol Metadata",
+  "url" : "https://blockprotocol.org/schemas/block-metadata.json",
+  "fileName" : "block-metadata.json"
+}, {
+  "name" : "BX CI",
+  "url" : "https://json.schemastore.org/bxci.schema-2.x.json",
+  "fileName" : "bxci.schema-2.x.json"
+}, {
+  "name" : "Better Scripts",
+  "url" : "https://raw.githubusercontent.com/iamyoki/better-scripts/main/lib/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Bleep",
+  "url" : "https://raw.githubusercontent.com/oyvindberg/bleep/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "CMake Presets",
+  "url" : "https://raw.githubusercontent.com/Kitware/CMake/master/Help/manual/presets/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Cache Warmup config",
+  "url" : "https://raw.githubusercontent.com/eliashaeussler/cache-warmup/main/res/cache-warmup-config.schema.json",
+  "fileName" : "cache-warmup-config.schema.json"
+}, {
+  "name" : "Calqulus pipeline",
+  "url" : "https://raw.githubusercontent.com/qualisys/qualisys-schemas/master/calqulus-pipeline.schema.json",
+  "fileName" : "calqulus-pipeline.schema.json"
+}, {
+  "name" : "Camel YAML DSL",
+  "url" : "https://raw.githubusercontent.com/apache/camel/main/dsl/camel-yaml-dsl/camel-yaml-dsl/src/generated/resources/schema/camelYamlDsl.json",
+  "fileName" : "camelYamlDsl.json"
+}, {
+  "name" : "Cannon TOML",
+  "url" : "https://raw.githubusercontent.com/usecannon/cannon/main/packages/lsp/src/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Carafe",
+  "url" : "https://carafe.fm/schema/draft-02/bundle.schema.json",
+  "fileName" : "bundle.schema.json"
+}, {
+  "name" : "Cargo Manifest",
+  "url" : "https://json.schemastore.org/cargo.json",
+  "fileName" : "cargo.json"
+}, {
+  "name" : "Cargo Make",
+  "url" : "https://json.schemastore.org/cargo-make.json",
+  "fileName" : "cargo-make.json"
+}, {
+  "name" : "Catalog Info Backstage",
+  "url" : "https://json.schemastore.org/catalog-info.json",
+  "fileName" : "catalog-info.json"
+}, {
+  "name" : "Chromia Model",
+  "url" : "https://gitlab.com/chromaway/core-tools/chromia-cli/-/raw/dev/chromia-build-tools/src/main/resources/chromia-model-schema.json",
+  "fileName" : "chromia-model-schema.json"
+}, {
+  "name" : "cibuildwheel",
+  "url" : "https://json.schemastore.org/cibuildwheel.json",
+  "fileName" : "cibuildwheel.json"
+}, {
+  "name" : "CityJSON",
+  "url" : "https://raw.githubusercontent.com/cityjson/specs/master/schemas/cityjson.min.schema.json",
+  "fileName" : "cityjson.min.schema.json"
+}, {
+  "name" : "CloudEvents specification",
+  "url" : "https://raw.githubusercontent.com/cloudevents/spec/master/cloudevents/formats/cloudevents.json",
+  "fileName" : "cloudevents.json"
+}, {
+  "name" : "conda-forge",
+  "url" : "https://raw.githubusercontent.com/conda-forge/conda-smithy/main/conda_smithy/data/conda-forge.json",
+  "fileName" : "conda-forge.json"
+}, {
+  "name" : "Conjure",
+  "url" : "https://raw.githubusercontent.com/palantir/conjure/master/conjure.schema.json",
+  "fileName" : "conjure.schema.json"
+}, {
+  "name" : "CNC Codes",
+  "url" : "https://appliedengdesign.github.io/cnccodes-json-schema/draft/2022-07/schema",
+  "fileName" : "CNC Codes"
+}, {
+  "name" : "Cog config file",
+  "url" : "https://raw.githubusercontent.com/replicate/cog/main/pkg/config/data/config_schema_v1.0.json",
+  "fileName" : "config_schema_v1.0.json"
+}, {
+  "name" : "Commandbox Box.json",
+  "url" : "https://raw.githubusercontent.com/Ortus-Solutions/vscode-commandbox/master/resources/schemas/box.schema.json",
+  "fileName" : "box.schema.json"
+}, {
+  "name" : "Commandbox Server.json",
+  "url" : "https://raw.githubusercontent.com/Ortus-Solutions/vscode-commandbox/master/resources/schemas/server.schema.json",
+  "fileName" : "server.schema.json"
+}, {
+  "name" : "CumulusCI Config",
+  "url" : "https://raw.githubusercontent.com/SFDO-Tooling/CumulusCI/main/cumulusci/schema/cumulusci.jsonschema.json",
+  "fileName" : "cumulusci.jsonschema.json"
+}, {
+  "name" : "Clawject config",
+  "url" : "https://raw.githubusercontent.com/clawject/clawject/main/packages/core/src/config/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "CVE Record Format",
+  "url" : "https://raw.githubusercontent.com/CVEProject/cve-schema/master/schema/docs/CVE_Record_Format_bundled.json",
+  "fileName" : "CVE_Record_Format_bundled.json"
+}, {
+  "name" : "Cycle Stack File",
+  "url" : "https://raw.githubusercontent.com/cycleplatform/api-spec/main/stackspec/stackspec.json",
+  "fileName" : "stackspec.json"
+}, {
+  "name" : "DataYoga Connections",
+  "url" : "https://raw.githubusercontent.com/datayoga-io/datayoga/main/schemas/connections.schema.json",
+  "fileName" : "connections.schema.json"
+}, {
+  "name" : "DataYoga Job",
+  "url" : "https://raw.githubusercontent.com/datayoga-io/datayoga/main/schemas/job.schema.json",
+  "fileName" : "job.schema.json"
+}, {
+  "name" : "dbt Dependencies",
+  "url" : "https://raw.githubusercontent.com/dbt-labs/dbt-jsonschema/main/schemas/latest/dependencies-latest.json",
+  "fileName" : "dependencies-latest.json"
+}, {
+  "name" : "dbt Project",
+  "url" : "https://raw.githubusercontent.com/dbt-labs/dbt-jsonschema/main/schemas/latest/dbt_project-latest.json",
+  "fileName" : "dbt_project-latest.json"
+}, {
+  "name" : "dbt Packages",
+  "url" : "https://raw.githubusercontent.com/dbt-labs/dbt-jsonschema/main/schemas/latest/packages-latest.json",
+  "fileName" : "packages-latest.json"
+}, {
+  "name" : "dbt Selectors",
+  "url" : "https://raw.githubusercontent.com/dbt-labs/dbt-jsonschema/main/schemas/latest/selectors-latest.json",
+  "fileName" : "selectors-latest.json"
+}, {
+  "name" : "dbt YAML files",
+  "url" : "https://raw.githubusercontent.com/dbt-labs/dbt-jsonschema/main/schemas/latest/dbt_yml_files-latest.json",
+  "fileName" : "dbt_yml_files-latest.json"
+}, {
+  "name" : "Dein Config",
+  "url" : "https://json.schemastore.org/dein.json",
+  "fileName" : "dein.json"
+}, {
+  "name" : "Dependency cruiser",
+  "url" : "https://raw.githubusercontent.com/sverweij/dependency-cruiser/main/src/schema/configuration.schema.json",
+  "fileName" : "configuration.schema.json"
+}, {
+  "name" : "Deta Spacefile",
+  "url" : "https://deta.space/assets/spacefile.schema.json",
+  "fileName" : "spacefile.schema.json"
+}, {
+  "name" : "Devbox Config",
+  "url" : "https://raw.githubusercontent.com/jetify-com/devbox/main/.schema/devbox.schema.json",
+  "fileName" : "devbox.schema.json"
+}, {
+  "name" : "Devbox Plugin",
+  "url" : "https://raw.githubusercontent.com/jetify-com/devbox/main/.schema/devbox-plugin.schema.json",
+  "fileName" : "devbox-plugin.schema.json"
+}, {
+  "name" : "Drupal Breakpoints",
+  "url" : "https://json.schemastore.org/drupal-breakpoints.json",
+  "fileName" : "drupal-breakpoints.json"
+}, {
+  "name" : "Drupal Info",
+  "url" : "https://json.schemastore.org/drupal-info.json",
+  "fileName" : "drupal-info.json"
+}, {
+  "name" : "Drupal Layouts",
+  "url" : "https://json.schemastore.org/drupal-layouts.json",
+  "fileName" : "drupal-layouts.json"
+}, {
+  "name" : "Drupal Libraries",
+  "url" : "https://json.schemastore.org/drupal-libraries.json",
+  "fileName" : "drupal-libraries.json"
+}, {
+  "name" : "Drupal Links Action",
+  "url" : "https://json.schemastore.org/drupal-links-action.json",
+  "fileName" : "drupal-links-action.json"
+}, {
+  "name" : "Drupal Links Contextual",
+  "url" : "https://json.schemastore.org/drupal-links-contextual.json",
+  "fileName" : "drupal-links-contextual.json"
+}, {
+  "name" : "Drupal Links Menu",
+  "url" : "https://json.schemastore.org/drupal-links-menu.json",
+  "fileName" : "drupal-links-menu.json"
+}, {
+  "name" : "Drupal Links Task",
+  "url" : "https://json.schemastore.org/drupal-links-task.json",
+  "fileName" : "drupal-links-task.json"
+}, {
+  "name" : "Drupal Migration",
+  "url" : "https://json.schemastore.org/drupal-migration.json",
+  "fileName" : "drupal-migration.json"
+}, {
+  "name" : "Drupal Permissions",
+  "url" : "https://json.schemastore.org/drupal-permissions.json",
+  "fileName" : "drupal-permissions.json"
+}, {
+  "name" : "Drupal Recipe",
+  "url" : "https://json.schemastore.org/drupal-recipe.json",
+  "fileName" : "drupal-recipe.json"
+}, {
+  "name" : "Drupal Routing",
+  "url" : "https://json.schemastore.org/drupal-routing.json",
+  "fileName" : "drupal-routing.json"
+}, {
+  "name" : "Drupal Config",
+  "url" : "https://json.schemastore.org/drupal-config.json",
+  "fileName" : "drupal-config.json"
+}, {
+  "name" : "Drupal Services",
+  "url" : "https://json.schemastore.org/drupal-services.json",
+  "fileName" : "drupal-services.json"
+}, {
+  "name" : "Helm Chart.yaml",
+  "url" : "https://json.schemastore.org/chart.json",
+  "fileName" : "chart.json"
+}, {
+  "name" : "Helm Chart.lock",
+  "url" : "https://json.schemastore.org/chart-lock.json",
+  "fileName" : "chart-lock.json"
+}, {
+  "name" : "Helm Unittest Test Suite",
+  "url" : "https://raw.githubusercontent.com/helm-unittest/helm-unittest/v0.5.1/schema/helm-testsuite.json",
+  "fileName" : "helm-testsuite.json"
+}, {
+  "name" : "CircleCI config.yml",
+  "url" : "https://json.schemastore.org/circleciconfig.json",
+  "fileName" : "circleciconfig.json"
+}, {
+  "name" : "Code Climate",
+  "url" : "https://json.schemastore.org/codeclimate.json",
+  "fileName" : "codeclimate.json"
+}, {
+  "name" : ".cirrus.yml",
+  "url" : "https://json.schemastore.org/cirrus.json",
+  "fileName" : "cirrus.json"
+}, {
+  "name" : ".clasp.json",
+  "url" : "https://json.schemastore.org/clasp.json",
+  "fileName" : "clasp.json"
+}, {
+  "name" : "clangd",
+  "url" : "https://json.schemastore.org/clangd.json",
+  "fileName" : "clangd.json"
+}, {
+  "name" : "clang-tidy",
+  "url" : "https://json.schemastore.org/clang-tidy.json",
+  "fileName" : "clang-tidy.json"
+}, {
+  "name" : "clib",
+  "url" : "https://json.schemastore.org/clib.json",
+  "fileName" : "clib.json"
+}, {
+  "name" : "cloudify",
+  "url" : "https://json.schemastore.org/cloudify.json",
+  "fileName" : "cloudify.json"
+}, {
+  "name" : "cloud-init: cloud-config userdata",
+  "url" : "https://raw.githubusercontent.com/canonical/cloud-init/main/cloudinit/config/schemas/versions.schema.cloud-config.json",
+  "fileName" : "versions.schema.cloud-config.json"
+}, {
+  "name" : "codemagic",
+  "url" : "https://codemagic.io/codemagic-schema.json",
+  "fileName" : "codemagic-schema.json"
+}, {
+  "name" : "Codux",
+  "url" : "https://wixplosives.github.io/codux-config-schema/codux.config.schema.json",
+  "fileName" : "codux.config.schema.json"
+}, {
+  "name" : "devcontainer.json",
+  "url" : "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "fileName" : "devContainer.schema.json"
+}, {
+  "name" : "Codecov configuration files",
+  "url" : "https://json.schemastore.org/codecov.json",
+  "fileName" : "codecov.json"
+}, {
+  "name" : "CodeShip Pro services configuration files",
+  "url" : "https://json.schemastore.org/codeship-services.json",
+  "fileName" : "codeship-services.json"
+}, {
+  "name" : "CodeShip Pro steps configuration files",
+  "url" : "https://json.schemastore.org/codeship-steps.json",
+  "fileName" : "codeship-steps.json"
+}, {
+  "name" : "vcpkg manifest file",
+  "url" : "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "fileName" : "vcpkg.schema.json"
+}, {
+  "name" : "vcpkg configuration file",
+  "url" : "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg-configuration.schema.json",
+  "fileName" : "vcpkg-configuration.schema.json"
+}, {
+  "name" : "Vercel",
+  "url" : "https://openapi.vercel.sh/vercel.json",
+  "fileName" : "vercel.json"
+}, {
+  "name" : "VSCode Code Snippets",
+  "url" : "https://raw.githubusercontent.com/Yash-Singh1/vscode-snippets-json-schema/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "compilerconfig.json",
+  "url" : "https://json.schemastore.org/compilerconfig.json",
+  "fileName" : "compilerconfig.json"
+}, {
+  "name" : "compile_commands.json",
+  "url" : "https://json.schemastore.org/compile-commands.json",
+  "fileName" : "compile-commands.json"
+}, {
+  "name" : "commands.json",
+  "url" : "https://json.schemastore.org/commands.json",
+  "fileName" : "commands.json"
+}, {
+  "name" : "Common Catalog Data",
+  "url" : "https://raw.githubusercontent.com/howlowck/common-catalog-schema/main/schema-versions.json",
+  "fileName" : "schema-versions.json"
+}, {
+  "name" : "cosmos.config.json",
+  "url" : "https://json.schemastore.org/cosmos-config.json",
+  "fileName" : "cosmos-config.json"
+}, {
+  "name" : "Chrome Extension",
+  "url" : "https://json.schemastore.org/chrome-manifest.json",
+  "fileName" : "chrome-manifest.json"
+}, {
+  "name" : "chrome-extension-locales-messages.json",
+  "url" : "https://json.schemastore.org/chrome-extension-locales-messages.json",
+  "fileName" : "chrome-extension-locales-messages.json"
+}, {
+  "name" : "chutzpah.json",
+  "url" : "https://json.schemastore.org/chutzpah.json",
+  "fileName" : "chutzpah.json"
+}, {
+  "name" : "contentmanifest.json",
+  "url" : "https://json.schemastore.org/vsix-manifestinjection.json",
+  "fileName" : "vsix-manifestinjection.json"
+}, {
+  "name" : "cloud-sdk-pipeline-configuration",
+  "url" : "https://json.schemastore.org/cloud-sdk-pipeline-config-schema.json",
+  "fileName" : "cloud-sdk-pipeline-config-schema.json"
+}, {
+  "name" : "cloudbuild.json",
+  "url" : "https://json.schemastore.org/cloudbuild.json",
+  "fileName" : "cloudbuild.json"
+}, {
+  "name" : "Google Cloud Workflows",
+  "url" : "https://json.schemastore.org/workflows.json",
+  "fileName" : "workflows.json"
+}, {
+  "name" : "AWS CDK cdk.json",
+  "url" : "https://json.schemastore.org/cdk.json",
+  "fileName" : "cdk.json"
+}, {
+  "name" : "AWS CloudFormation",
+  "url" : "https://raw.githubusercontent.com/awslabs/goformation/master/schema/cloudformation.schema.json",
+  "fileName" : "cloudformation.schema.json"
+}, {
+  "name" : "AWS CloudFormation Serverless Application Model (SAM)",
+  "url" : "https://raw.githubusercontent.com/aws/serverless-application-model/main/samtranslator/schema/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "AWS SAM CLI Samconfig",
+  "url" : "https://raw.githubusercontent.com/aws/aws-sam-cli/master/schema/samcli.json",
+  "fileName" : "samcli.json"
+}, {
+  "name" : "Landing Zone Accelerator on AWS - Accounts Config",
+  "url" : "https://raw.githubusercontent.com/awslabs/landing-zone-accelerator-on-aws/main/source/packages/@aws-accelerator/config/lib/schemas/accounts-config.json",
+  "fileName" : "accounts-config.json"
+}, {
+  "name" : "Landing Zone Accelerator on AWS - Customizations Config",
+  "url" : "https://raw.githubusercontent.com/awslabs/landing-zone-accelerator-on-aws/main/source/packages/@aws-accelerator/config/lib/schemas/customizations-config.json",
+  "fileName" : "customizations-config.json"
+}, {
+  "name" : "Landing Zone Accelerator on AWS - Global Config",
+  "url" : "https://raw.githubusercontent.com/awslabs/landing-zone-accelerator-on-aws/main/source/packages/@aws-accelerator/config/lib/schemas/global-config.json",
+  "fileName" : "global-config.json"
+}, {
+  "name" : "Landing Zone Accelerator on AWS - IAM Config",
+  "url" : "https://raw.githubusercontent.com/awslabs/landing-zone-accelerator-on-aws/main/source/packages/@aws-accelerator/config/lib/schemas/iam-config.json",
+  "fileName" : "iam-config.json"
+}, {
+  "name" : "Landing Zone Accelerator on AWS - Network Config",
+  "url" : "https://raw.githubusercontent.com/awslabs/landing-zone-accelerator-on-aws/main/source/packages/@aws-accelerator/config/lib/schemas/network-config.json",
+  "fileName" : "network-config.json"
+}, {
+  "name" : "Landing Zone Accelerator on AWS - Organization Config",
+  "url" : "https://raw.githubusercontent.com/awslabs/landing-zone-accelerator-on-aws/main/source/packages/@aws-accelerator/config/lib/schemas/organization-config.json",
+  "fileName" : "organization-config.json"
+}, {
+  "name" : "Landing Zone Accelerator on AWS - Replacements Config",
+  "url" : "https://raw.githubusercontent.com/awslabs/landing-zone-accelerator-on-aws/main/source/packages/@aws-accelerator/config/lib/schemas/replacements-config.json",
+  "fileName" : "replacements-config.json"
+}, {
+  "name" : "Landing Zone Accelerator on AWS - Security Config",
+  "url" : "https://raw.githubusercontent.com/awslabs/landing-zone-accelerator-on-aws/main/source/packages/@aws-accelerator/config/lib/schemas/security-config.json",
+  "fileName" : "security-config.json"
+}, {
+  "name" : "Changesets",
+  "url" : "https://unpkg.com/@changesets/config/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "chisel-slices.json",
+  "url" : "https://json.schemastore.org/chisel-slices.json",
+  "fileName" : "chisel-slices.json"
+}, {
+  "name" : "Citation File Format",
+  "url" : "https://raw.githubusercontent.com/citation-file-format/citation-file-format/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "coffeelint.json",
+  "url" : "https://json.schemastore.org/coffeelint.json",
+  "fileName" : "coffeelint.json"
+}, {
+  "name" : "composer.json",
+  "url" : "https://getcomposer.org/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "component.json",
+  "url" : "https://json.schemastore.org/component.json",
+  "fileName" : "component.json"
+}, {
+  "name" : "component-detection-manifest.json",
+  "url" : "https://json.schemastore.org/component-detection-manifest.json",
+  "fileName" : "component-detection-manifest.json"
+}, {
+  "name" : "contribute.json",
+  "url" : "https://raw.githubusercontent.com/mozilla/contribute.json/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "crowdin.yml",
+  "url" : "https://json.schemastore.org/crowdin.json",
+  "fileName" : "crowdin.json"
+}, {
+  "name" : "Crowdsec collection config",
+  "url" : "https://raw.githubusercontent.com/crowdsecurity/crowdsec-yaml-schemas/main/collection_schema.yaml",
+  "fileName" : "collection_schema.yaml"
+}, {
+  "name" : "Crowdsec parser config",
+  "url" : "https://raw.githubusercontent.com/crowdsecurity/crowdsec-yaml-schemas/main/parser_schema.yaml",
+  "fileName" : "parser_schema.yaml"
+}, {
+  "name" : "Crowdsec scenario config",
+  "url" : "https://raw.githubusercontent.com/crowdsecurity/crowdsec-yaml-schemas/main/scenario_schema.yaml",
+  "fileName" : "scenario_schema.yaml"
+}, {
+  "name" : "cypress.json",
+  "url" : "https://on.cypress.io/cypress.schema.json",
+  "fileName" : "cypress.schema.json"
+}, {
+  "name" : ".creatomic",
+  "url" : "https://json.schemastore.org/creatomic.json",
+  "fileName" : "creatomic.json"
+}, {
+  "name" : "CSpell (cspell.json)",
+  "url" : "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/packages/cspell-types/cspell.schema.json",
+  "fileName" : "cspell.schema.json"
+}, {
+  "name" : "CSS Comb (.csscomb.json)",
+  "url" : "https://json.schemastore.org/csscomb.json",
+  "fileName" : "csscomb.json"
+}, {
+  "name" : "CSS Lint (.csslintrc)",
+  "url" : "https://json.schemastore.org/csslintrc.json",
+  "fileName" : "csslintrc.json"
+}, {
+  "name" : "Dart Build Config (dart-build.json)",
+  "url" : "https://json.schemastore.org/dart-build.json",
+  "fileName" : "dart-build.json"
+}, {
+  "name" : "Dart Test Config (dart-test.json)",
+  "url" : "https://json.schemastore.org/dart-test.json",
+  "fileName" : "dart-test.json"
+}, {
+  "name" : "DashLord Configuration",
+  "url" : "https://raw.githubusercontent.com/socialgouv/dashlord/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Data Contract Specification",
+  "url" : "https://raw.githubusercontent.com/datacontract/datacontract-specification/main/datacontract.schema.json",
+  "fileName" : "datacontract.schema.json"
+}, {
+  "name" : "Data Product Specification",
+  "url" : "https://raw.githubusercontent.com/datamesh-architecture/dataproduct-specification/main/dataproduct.schema.json",
+  "fileName" : "dataproduct.schema.json"
+}, {
+  "name" : "datalogic-scan2deploy-android",
+  "url" : "https://json.schemastore.org/datalogic-scan2deploy-android.json",
+  "fileName" : "datalogic-scan2deploy-android.json"
+}, {
+  "name" : "datalogic-scan2deploy-ce",
+  "url" : "https://json.schemastore.org/datalogic-scan2deploy-ce.json",
+  "fileName" : "datalogic-scan2deploy-ce.json"
+}, {
+  "name" : "ddev-global",
+  "url" : "https://raw.githubusercontent.com/ddev/ddev/master/pkg/globalconfig/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "ddev-project",
+  "url" : "https://raw.githubusercontent.com/ddev/ddev/master/pkg/ddevapp/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "debugsettings.json",
+  "url" : "https://json.schemastore.org/debugsettings.json",
+  "fileName" : "debugsettings.json"
+}, {
+  "name" : "Deno Config (deno.json)",
+  "url" : "https://raw.githubusercontent.com/denoland/deno/main/cli/schemas/config-file.v1.json",
+  "fileName" : "config-file.v1.json"
+}, {
+  "name" : "dependabot.json",
+  "url" : "https://json.schemastore.org/dependabot.json",
+  "fileName" : "dependabot.json"
+}, {
+  "name" : "dependabot-v2.json",
+  "url" : "https://json.schemastore.org/dependabot-2.0.json",
+  "fileName" : "dependabot-2.0.json"
+}, {
+  "name" : "Deployer Recipe",
+  "url" : "https://raw.githubusercontent.com/deployphp/deployer/master/src/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Detekt Config (detekt.yml)",
+  "url" : "https://json.schemastore.org/detekt-1.22.0.json",
+  "fileName" : "detekt-1.22.0.json"
+}, {
+  "name" : "Discord Webhook",
+  "url" : "https://raw.githubusercontent.com/AxoCode/json-schema/master/discord/webhook.json",
+  "fileName" : "webhook.json"
+}, {
+  "name" : "dockerd.json",
+  "url" : "https://json.schemastore.org/dockerd.json",
+  "fileName" : "dockerd.json"
+}, {
+  "name" : "docker bake",
+  "url" : "https://json.schemastore.org/docker-bake.json",
+  "fileName" : "docker-bake.json"
+}, {
+  "name" : "docker sequencer",
+  "url" : "https://gitlab.com/sbenv/veroxis/docker-seq/-/raw/HEAD/docker-seq.schema.json",
+  "fileName" : "docker-seq.schema.json"
+}, {
+  "name" : "DocFx Config (docfx.json)",
+  "url" : "https://json.schemastore.org/docfx.json",
+  "fileName" : "docfx.json"
+}, {
+  "name" : "Dolittle Artifacts",
+  "url" : "https://raw.githubusercontent.com/dolittle/DotNET.SDK/v5.0.0/Schemas/Artifacts.Configuration/artifacts.json",
+  "fileName" : "artifacts.json"
+}, {
+  "name" : "Dolittle Bounded Context Configuration",
+  "url" : "https://raw.githubusercontent.com/dolittle/Runtime/master/Schemas/Applications.Configuration/bounded-context.json",
+  "fileName" : "bounded-context.json"
+}, {
+  "name" : "Dolittle Event Horizons Configuration",
+  "url" : "https://raw.githubusercontent.com/dolittle/Runtime/master/Schemas/Events/event-horizons.json",
+  "fileName" : "event-horizons.json"
+}, {
+  "name" : "Dolittle Resources Configuration",
+  "url" : "https://raw.githubusercontent.com/dolittle/DotNET.Fundamentals/v5.1.0/Schemas/ResourceTypes.Configuration/resources.json",
+  "fileName" : "resources.json"
+}, {
+  "name" : "Dolittle Server Configuration",
+  "url" : "https://raw.githubusercontent.com/dolittle/Runtime/master/Schemas/Server/server.json",
+  "fileName" : "server.json"
+}, {
+  "name" : "Dolittle Tenants Configuration",
+  "url" : "https://raw.githubusercontent.com/dolittle/Runtime/master/Schemas/Tenancy/tenants.json",
+  "fileName" : "tenants.json"
+}, {
+  "name" : "Dolittle Tenant Map Configuration",
+  "url" : "https://raw.githubusercontent.com/dolittle/DotNET.Fundamentals/master/Schemas/Tenancy.Configuration/tenant-map.json",
+  "fileName" : "tenant-map.json"
+}, {
+  "name" : "Dolittle Topology",
+  "url" : "https://raw.githubusercontent.com/dolittle/DotNET.SDK/master/Schemas/Applications.Configuration/topology.json",
+  "fileName" : "topology.json"
+}, {
+  "name" : "dotnet Release Index manifest",
+  "url" : "https://json.schemastore.org/dotnet-releases-index.json",
+  "fileName" : "dotnet-releases-index.json"
+}, {
+  "name" : "dotnet-tools.json",
+  "url" : "https://json.schemastore.org/dotnet-tools.json",
+  "fileName" : "dotnet-tools.json"
+}, {
+  "name" : "dotnetcli.host.json",
+  "url" : "https://json.schemastore.org/dotnetcli.host.json",
+  "fileName" : "dotnetcli.host.json"
+}, {
+  "name" : "dprint.json",
+  "url" : "https://dprint.dev/schemas/v0.json",
+  "fileName" : "v0.json"
+}, {
+  "name" : "drone.json",
+  "url" : "https://json.schemastore.org/drone.json",
+  "fileName" : "drone.json"
+}, {
+  "name" : "Drush site aliases",
+  "url" : "https://json.schemastore.org/drush.site.yml.json",
+  "fileName" : "drush.site.yml.json"
+}, {
+  "name" : "dss-2.0.0.json",
+  "url" : "https://json.schemastore.org/dss-2.0.0.json",
+  "fileName" : "dss-2.0.0.json"
+}, {
+  "name" : "dstack configuration",
+  "url" : "https://dstack-runner-downloads.s3.eu-west-1.amazonaws.com/latest/schemas/configuration.json",
+  "fileName" : "configuration.json"
+}, {
+  "name" : "dvc.yaml",
+  "url" : "https://raw.githubusercontent.com/iterative/dvcyaml-schema/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Devfile",
+  "url" : "https://raw.githubusercontent.com/devfile/api/v2.2.0/schemas/latest/devfile.json",
+  "fileName" : "devfile.json"
+}, {
+  "name" : "DWP Exchange - gateway",
+  "url" : "https://raw.githubusercontent.com/dwp/schemas/main/exchange/publishing-tools/gateway-config-schema.json",
+  "fileName" : "gateway-config-schema.json"
+}, {
+  "name" : "DWP Exchange - meta",
+  "url" : "https://raw.githubusercontent.com/dwp/schemas/main/exchange/publishing-tools/meta-schema.json",
+  "fileName" : "meta-schema.json"
+}, {
+  "name" : "DWP Exchange - catalogue entry",
+  "url" : "https://raw.githubusercontent.com/dwp/schemas/main/exchange/publishing-tools/catalogue-entry-schema.json",
+  "fileName" : "catalogue-entry-schema.json"
+}, {
+  "name" : "ecosystem.json",
+  "url" : "https://json.schemastore.org/pm2-ecosystem.json",
+  "fileName" : "pm2-ecosystem.json"
+}, {
+  "name" : "eksctl",
+  "url" : "https://raw.githubusercontent.com/weaveworks/eksctl/main/pkg/apis/eksctl.io/v1alpha5/assets/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Elgato Stream Deck",
+  "url" : "https://json.schemastore.org/elgato-stream-deck-plugin.json",
+  "fileName" : "elgato-stream-deck-plugin.json"
+}, {
+  "name" : "Enterprise Contract Policy Spec",
+  "url" : "https://enterprisecontract.dev/enterprise-contract-controller/schema/policy_spec.json",
+  "fileName" : "policy_spec.json"
+}, {
+  "name" : ".esmrc.json",
+  "url" : "https://json.schemastore.org/esmrc.json",
+  "fileName" : "esmrc.json"
+}, {
+  "name" : "Esquio",
+  "url" : "https://json.schemastore.org/esquio.json",
+  "fileName" : "esquio.json"
+}, {
+  "name" : "epr-manifest.json",
+  "url" : "https://json.schemastore.org/epr-manifest.json",
+  "fileName" : "epr-manifest.json"
+}, {
+  "name" : "Error pages",
+  "url" : "https://cdn.jsdelivr.net/gh/tarampampam/error-pages@latest/schemas/config/1.0.schema.json",
+  "fileName" : "1.0.schema.json"
+}, {
+  "name" : "electron-builder configuration file",
+  "url" : "https://json.schemastore.org/electron-builder.json",
+  "fileName" : "electron-builder.json"
+}, {
+  "name" : "evcc.yaml",
+  "url" : "https://raw.githubusercontent.com/andig/evcc/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "EveryVoice TTS Toolkit Aligner Configuration",
+  "url" : "https://raw.githubusercontent.com/EveryVoiceTTS/everyvoice/main/everyvoice/.schema/everyvoice-aligner-0.1.json",
+  "fileName" : "everyvoice-aligner-0.1.json"
+}, {
+  "name" : "EveryVoice TTS Toolkit Data Configuration",
+  "url" : "https://raw.githubusercontent.com/EveryVoiceTTS/everyvoice/main/everyvoice/.schema/everyvoice-shared-data-0.1.json",
+  "fileName" : "everyvoice-shared-data-0.1.json"
+}, {
+  "name" : "EveryVoice TTS Toolkit Text Configuration",
+  "url" : "https://raw.githubusercontent.com/EveryVoiceTTS/everyvoice/main/everyvoice/.schema/everyvoice-shared-text-0.1.json",
+  "fileName" : "everyvoice-shared-text-0.1.json"
+}, {
+  "name" : "EveryVoice TTS Toolkit Vocoder Configuration",
+  "url" : "https://raw.githubusercontent.com/EveryVoiceTTS/everyvoice/main/everyvoice/.schema/everyvoice-spec-to-wav-0.1.json",
+  "fileName" : "everyvoice-spec-to-wav-0.1.json"
+}, {
+  "name" : "EveryVoice TTS Toolkit Feature Prediction Configuration",
+  "url" : "https://raw.githubusercontent.com/EveryVoiceTTS/everyvoice/main/everyvoice/.schema/everyvoice-text-to-spec-0.1.json",
+  "fileName" : "everyvoice-text-to-spec-0.1.json"
+}, {
+  "name" : "EveryVoice TTS Toolkit E2E Configuration",
+  "url" : "https://raw.githubusercontent.com/EveryVoiceTTS/everyvoice/main/everyvoice/.schema/everyvoice-text-to-wav-0.1.json",
+  "fileName" : "everyvoice-text-to-wav-0.1.json"
+}, {
+  "name" : "Expo SDK",
+  "url" : "https://json.schemastore.org/expo-52.0.0.json",
+  "fileName" : "expo-52.0.0.json"
+}, {
+  "name" : "EAS config",
+  "url" : "https://raw.githubusercontent.com/expo/eas-cli/main/packages/eas-json/schema/eas.schema.json",
+  "fileName" : "eas.schema.json"
+}, {
+  "name" : "EasyVCR .NET",
+  "url" : "https://json.schemastore.org/easyvcr-net.json",
+  "fileName" : "easyvcr-net.json"
+}, {
+  "name" : "ezd task runner",
+  "url" : "https://gitlab.com/sbenv/veroxis/ezd-rs/-/raw/HEAD/ezd.schema.json",
+  "fileName" : "ezd.schema.json"
+}, {
+  "name" : ".eslintrc",
+  "url" : "https://json.schemastore.org/eslintrc.json",
+  "fileName" : "eslintrc.json"
+}, {
+  "name" : "fabric.mod.json",
+  "url" : "https://json.schemastore.org/fabric.mod.json",
+  "fileName" : "fabric.mod.json"
+}, {
+  "name" : "F-Droid Data metadata",
+  "url" : "https://gitlab.com/fdroid/fdroiddata/-/raw/master/schemas/metadata.json",
+  "fileName" : "metadata.json"
+}, {
+  "name" : ".ffizer.yaml",
+  "url" : "https://ffizer.github.io/ffizer/ffizer.schema.json",
+  "fileName" : "ffizer.schema.json"
+}, {
+  "name" : "Firebase",
+  "url" : "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json",
+  "fileName" : "firebase-config.json"
+}, {
+  "name" : "Google Chrome Related Website Sets",
+  "url" : "https://raw.githubusercontent.com/GoogleChrome/related-website-sets/main/SCHEMA.json",
+  "fileName" : "SCHEMA.json"
+}, {
+  "name" : "FiQuS",
+  "url" : "https://gitlab.cern.ch/steam/fiqus/-/raw/master/docs/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "first-timers-bot",
+  "url" : "https://json.schemastore.org/first-timers.json",
+  "fileName" : "first-timers.json"
+}, {
+  "name" : "Foundry VTT - Base package Manifest",
+  "url" : "https://json.schemastore.org/foundryvtt-base-package-manifest.json",
+  "fileName" : "foundryvtt-base-package-manifest.json"
+}, {
+  "name" : "Foundry VTT - Module Manifest",
+  "url" : "https://json.schemastore.org/foundryvtt-module-manifest.json",
+  "fileName" : "foundryvtt-module-manifest.json"
+}, {
+  "name" : "Foundry VTT - System Manifest",
+  "url" : "https://json.schemastore.org/foundryvtt-system-manifest.json",
+  "fileName" : "foundryvtt-system-manifest.json"
+}, {
+  "name" : "Foundry VTT - World Manifest",
+  "url" : "https://json.schemastore.org/foundryvtt-world-manifest.json",
+  "fileName" : "foundryvtt-world-manifest.json"
+}, {
+  "name" : "Foundry VTT - System Data Template",
+  "url" : "https://json.schemastore.org/foundryvtt-template.json",
+  "fileName" : "foundryvtt-template.json"
+}, {
+  "name" : "Fossa configuration file",
+  "url" : "https://raw.githubusercontent.com/fossas/fossa-cli/master/docs/references/files/fossa-yml.v3.schema.json",
+  "fileName" : "fossa-yml.v3.schema.json"
+}, {
+  "name" : "Fossa's fossa-deps file",
+  "url" : "https://raw.githubusercontent.com/fossas/fossa-cli/master/docs/references/files/fossa-deps.schema.json",
+  "fileName" : "fossa-deps.schema.json"
+}, {
+  "name" : "Karakum configuration file",
+  "url" : "https://raw.githubusercontent.com/karakum-team/karakum/master/schema/karakum-schema.json",
+  "fileName" : "karakum-schema.json"
+}, {
+  "name" : "Knative Functions - func.yaml",
+  "url" : "https://raw.githubusercontent.com/knative/func/latest-release/schema/func_yaml-schema.json",
+  "fileName" : "func_yaml-schema.json"
+}, {
+  "name" : "function.json",
+  "url" : "https://json.schemastore.org/function.json",
+  "fileName" : "function.json"
+}, {
+  "name" : "G2P Mapping Configuration",
+  "url" : "https://raw.githubusercontent.com/roedoejet/g2p/main/g2p/mappings/.schema/g2p-config-schema-2.0.json",
+  "fileName" : "g2p-config-schema-2.0.json"
+}, {
+  "name" : "Gaspar",
+  "url" : "https://json.schemastore.org/gaspar-3.0.json",
+  "fileName" : "gaspar-3.0.json"
+}, {
+  "name" : "GatewayCore API Gateway",
+  "url" : "https://raw.githubusercontent.com/cloudtoid/gateway-core/master/src/Cloudtoid.GatewayCore/Options/Schema/2021-07.json",
+  "fileName" : "2021-07.json"
+}, {
+  "name" : "GCP Blueprint Metadata",
+  "url" : "https://json.schemastore.org/gcp-blueprint-metadata.json",
+  "fileName" : "gcp-blueprint-metadata.json"
+}, {
+  "name" : "Global Privacy Control",
+  "url" : "https://json.schemastore.org/gpc.json",
+  "fileName" : "gpc.json"
+}, {
+  "name" : "GitVersion",
+  "url" : "https://raw.githubusercontent.com/GitTools/GitVersion/main/schemas/6.0/GitVersion.configuration.json",
+  "fileName" : "GitVersion.configuration.json"
+}, {
+  "name" : "Gitea Issue Template configuration",
+  "url" : "https://json.schemastore.org/gitea-issue-config.json",
+  "fileName" : "gitea-issue-config.json"
+}, {
+  "name" : "Gitea Issue Template forms",
+  "url" : "https://json.schemastore.org/gitea-issue-forms.json",
+  "fileName" : "gitea-issue-forms.json"
+}, {
+  "name" : "GitHub Action",
+  "url" : "https://json.schemastore.org/github-action.json",
+  "fileName" : "github-action.json"
+}, {
+  "name" : "GitHub Discussion",
+  "url" : "https://json.schemastore.org/github-discussion.json",
+  "fileName" : "github-discussion.json"
+}, {
+  "name" : "GitHub Funding",
+  "url" : "https://json.schemastore.org/github-funding.json",
+  "fileName" : "github-funding.json"
+}, {
+  "name" : "GitHub Issue Template forms",
+  "url" : "https://json.schemastore.org/github-issue-forms.json",
+  "fileName" : "github-issue-forms.json"
+}, {
+  "name" : "GitHub Issue Template configuration",
+  "url" : "https://json.schemastore.org/github-issue-config.json",
+  "fileName" : "github-issue-config.json"
+}, {
+  "name" : "GitHub Workflow",
+  "url" : "https://json.schemastore.org/github-workflow.json",
+  "fileName" : "github-workflow.json"
+}, {
+  "name" : "GitHub Workflow Template Properties",
+  "url" : "https://json.schemastore.org/github-workflow-template-properties.json",
+  "fileName" : "github-workflow-template-properties.json"
+}, {
+  "name" : "GitHub automatically generated release notes configuration",
+  "url" : "https://json.schemastore.org/github-release-config.json",
+  "fileName" : "github-release-config.json"
+}, {
+  "name" : "gitlab-ci",
+  "url" : "https://gitlab.com/gitlab-org/gitlab/-/raw/master/app/assets/javascripts/editor/schema/ci.json",
+  "fileName" : "ci.json"
+}, {
+  "name" : "Gitpod Configuration",
+  "url" : "https://gitpod.io/schemas/gitpod-schema.json",
+  "fileName" : "gitpod-schema.json"
+}, {
+  "name" : "Ansible Execution Environment",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/execution-environment.json",
+  "fileName" : "execution-environment.json"
+}, {
+  "name" : "Ansible Meta",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json",
+  "fileName" : "meta.json"
+}, {
+  "name" : "Ansible Meta Runtime",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta-runtime.json",
+  "fileName" : "meta-runtime.json"
+}, {
+  "name" : "Ansible Argument Specs",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/role-arg-spec.json",
+  "fileName" : "role-arg-spec.json"
+}, {
+  "name" : "Ansible Requirements",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/requirements.json",
+  "fileName" : "requirements.json"
+}, {
+  "name" : "Ansible Vars File",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/vars.json",
+  "fileName" : "vars.json"
+}, {
+  "name" : "Ansible Tasks File",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/tasks",
+  "fileName" : "Ansible Tasks File"
+}, {
+  "name" : "Ansible Playbook",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook",
+  "fileName" : "Ansible Playbook"
+}, {
+  "name" : "Ansible Rulebook",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-rulebook/main/ansible_rulebook/schema/ruleset_schema.json",
+  "fileName" : "ruleset_schema.json"
+}, {
+  "name" : "Ansible Inventory",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/inventory.json",
+  "fileName" : "inventory.json"
+}, {
+  "name" : "Ansible Collection Galaxy",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/galaxy.json",
+  "fileName" : "galaxy.json"
+}, {
+  "name" : "Ansible-lint Configuration",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible-lint-config.json",
+  "fileName" : "ansible-lint-config.json"
+}, {
+  "name" : "Ansible Navigator Configuration",
+  "url" : "https://raw.githubusercontent.com/ansible/ansible-navigator/main/src/ansible_navigator/data/ansible-navigator.json",
+  "fileName" : "ansible-navigator.json"
+}, {
+  "name" : "global.json",
+  "url" : "https://json.schemastore.org/global.json",
+  "fileName" : "global.json"
+}, {
+  "name" : "Golangci-lint Configuration",
+  "url" : "https://golangci-lint.run/jsonschema/golangci.jsonschema.json",
+  "fileName" : "golangci.jsonschema.json"
+}, {
+  "name" : "Golangci-lint Custom Plugins Configuration",
+  "url" : "https://golangci-lint.run/jsonschema/custom-gcl.jsonschema.json",
+  "fileName" : "custom-gcl.jsonschema.json"
+}, {
+  "name" : "go-feature-flag Flag Configuration",
+  "url" : "https://raw.githubusercontent.com/thomaspoignant/go-feature-flag/main/.schema/flag-schema.json",
+  "fileName" : "flag-schema.json"
+}, {
+  "name" : "Goreleaser",
+  "url" : "https://goreleaser.com/static/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Goreleaser Pro",
+  "url" : "https://goreleaser.com/static/schema-pro.json",
+  "fileName" : "schema-pro.json"
+}, {
+  "name" : "Goss",
+  "url" : "https://github.com/goss-org/goss/raw/master/docs/schema.yaml",
+  "fileName" : "schema.yaml"
+}, {
+  "name" : "Grafana 5.x Dashboard",
+  "url" : "https://json.schemastore.org/grafana-dashboard-5.x.json",
+  "fileName" : "grafana-dashboard-5.x.json"
+}, {
+  "name" : "tree-sitter grammar.json",
+  "url" : "https://raw.githubusercontent.com/tree-sitter/tree-sitter/master/docs/assets/schemas/config.schema.json",
+  "fileName" : "config.schema.json"
+}, {
+  "name" : "GraphQL Mesh",
+  "url" : "https://unpkg.com/@graphql-mesh/types/esm/config-schema.json",
+  "fileName" : "config-schema.json"
+}, {
+  "name" : "GraphQL Config",
+  "url" : "https://unpkg.com/graphql-config/config-schema.json",
+  "fileName" : "config-schema.json"
+}, {
+  "name" : "GraphQL Code Generator",
+  "url" : "https://www.graphql-code-generator.com/config.schema.json",
+  "fileName" : "config.schema.json"
+}, {
+  "name" : "Grunt copy task",
+  "url" : "https://json.schemastore.org/grunt-copy-task.json",
+  "fileName" : "grunt-copy-task.json"
+}, {
+  "name" : "Grunt clean task",
+  "url" : "https://json.schemastore.org/grunt-clean-task.json",
+  "fileName" : "grunt-clean-task.json"
+}, {
+  "name" : "Grunt cssmin task",
+  "url" : "https://json.schemastore.org/grunt-cssmin-task.json",
+  "fileName" : "grunt-cssmin-task.json"
+}, {
+  "name" : "Grunt JSHint task",
+  "url" : "https://json.schemastore.org/grunt-jshint-task.json",
+  "fileName" : "grunt-jshint-task.json"
+}, {
+  "name" : "Grunt Watch task",
+  "url" : "https://json.schemastore.org/grunt-watch-task.json",
+  "fileName" : "grunt-watch-task.json"
+}, {
+  "name" : "Grunt base task",
+  "url" : "https://json.schemastore.org/grunt-task.json",
+  "fileName" : "grunt-task.json"
+}, {
+  "name" : "haxelib.json",
+  "url" : "https://raw.githubusercontent.com/HaxeFoundation/haxelib/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Hayson",
+  "url" : "https://raw.githubusercontent.com/j2inn/hayson/master/hayson-json-schema.json",
+  "fileName" : "hayson-json-schema.json"
+}, {
+  "name" : "Haystack Pipeline",
+  "url" : "https://raw.githubusercontent.com/deepset-ai/haystack-json-schema/main/json-schema/haystack-pipeline.schema.json",
+  "fileName" : "haystack-pipeline.schema.json"
+}, {
+  "name" : "Hazelcast 5 Configuration",
+  "url" : "https://hazelcast.com/schema/config/hazelcast-config-5.5.json",
+  "fileName" : "hazelcast-config-5.5.json"
+}, {
+  "name" : "host.json",
+  "url" : "https://json.schemastore.org/host.json",
+  "fileName" : "host.json"
+}, {
+  "name" : "host-meta.json",
+  "url" : "https://json.schemastore.org/host-meta.json",
+  "fileName" : "host-meta.json"
+}, {
+  "name" : ".htmlhintrc",
+  "url" : "https://json.schemastore.org/htmlhint.json",
+  "fileName" : "htmlhint.json"
+}, {
+  "name" : ".htmlvalidate",
+  "url" : "https://html-validate.org/schemas/config.json",
+  "fileName" : "config.json"
+}, {
+  "name" : "Ory Hydra configuration",
+  "url" : "https://raw.githubusercontent.com/ory/hydra/master/.schema/version.schema.json",
+  "fileName" : "version.schema.json"
+}, {
+  "name" : "Hyperfoil benchmark configuration",
+  "url" : "https://hyperfoil.io/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "IBM Zapp document",
+  "url" : "https://raw.githubusercontent.com/IBM/zopeneditor-about/main/zapp/zapp-schema-1.3.0.json",
+  "fileName" : "zapp-schema-1.3.0.json"
+}, {
+  "name" : "IBM zCodeFormatSettings",
+  "url" : "https://raw.githubusercontent.com/IBM/zopeneditor-about/main/zcodeformat/zcodeformat-schema-0.0.1.json",
+  "fileName" : "zcodeformat-schema-0.0.1.json"
+}, {
+  "name" : "ide.host.json",
+  "url" : "https://json.schemastore.org/ide.host.json",
+  "fileName" : "ide.host.json"
+}, {
+  "name" : "ifstate.conf",
+  "url" : "https://ifstate.net/schema/1/ifstate.conf.schema.json",
+  "fileName" : "ifstate.conf.schema.json"
+}, {
+  "name" : "imageoptimizer.json",
+  "url" : "https://json.schemastore.org/imageoptimizer.json",
+  "fileName" : "imageoptimizer.json"
+}, {
+  "name" : ".imgbotconfig",
+  "url" : "https://json.schemastore.org/imgbotconfig.json",
+  "fileName" : "imgbotconfig.json"
+}, {
+  "name" : "IMG Catapult PSP",
+  "url" : "https://json.schemastore.org/img-catapult-psp-1.0.0.json",
+  "fileName" : "img-catapult-psp-1.0.0.json"
+}, {
+  "name" : "importmap.json",
+  "url" : "https://json.schemastore.org/importmap.json",
+  "fileName" : "importmap.json"
+}, {
+  "name" : "Infrahub",
+  "url" : "https://schema.infrahub.app/python-sdk/repository-config/latest.json",
+  "fileName" : "latest.json"
+}, {
+  "name" : "ioBroker Configuration",
+  "url" : "https://raw.githubusercontent.com/ioBroker/ioBroker.js-controller/master/schemas/iobroker.json",
+  "fileName" : "iobroker.json"
+}, {
+  "name" : "ioBroker JSON UI",
+  "url" : "https://raw.githubusercontent.com/ioBroker/ioBroker.admin/master/packages/jsonConfig/schemas/jsonConfig.json",
+  "fileName" : "jsonConfig.json"
+}, {
+  "name" : "ioBroker Package manifest",
+  "url" : "https://raw.githubusercontent.com/ioBroker/ioBroker.js-controller/master/schemas/io-package.json",
+  "fileName" : "io-package.json"
+}, {
+  "name" : "Jasmine",
+  "url" : "https://json.schemastore.org/jasmine.json",
+  "fileName" : "jasmine.json"
+}, {
+  "name" : "Jekyll",
+  "url" : "https://json.schemastore.org/jekyll.json",
+  "fileName" : "jekyll.json"
+}, {
+  "name" : "Jenkins X Pipelines",
+  "url" : "https://jenkins-x.io/schemas/jx-schema.json",
+  "fileName" : "jx-schema.json"
+}, {
+  "name" : "Jenkins X Requirements",
+  "url" : "https://jenkins-x.io/schemas/jx-requirements.json",
+  "fileName" : "jx-requirements.json"
+}, {
+  "name" : "JDownloader2 crawler single-rules",
+  "url" : "https://raw.githubusercontent.com/sergxerj/jdownloader2-crawler-rule-json-schema/main/jd2cr.schema.json",
+  "fileName" : "jd2cr.schema.json"
+}, {
+  "name" : "JDownloader2 crawler multi-rules",
+  "url" : "https://raw.githubusercontent.com/sergxerj/jdownloader2-crawler-rule-json-schema/main/jd2mcr.schema.json",
+  "fileName" : "jd2mcr.schema.json"
+}, {
+  "name" : "JFrog Applications Config",
+  "url" : "https://raw.githubusercontent.com/jfrog/jfrog-apps-config/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "JFrog File Spec",
+  "url" : "https://raw.githubusercontent.com/jfrog/jfrog-cli/v2/schema/filespec-schema.json",
+  "fileName" : "filespec-schema.json"
+}, {
+  "name" : "JMeter DSL cli config",
+  "url" : "https://github.com/abstracta/jmeter-java-dsl/releases/latest/download/jmdsl-config-schema.json",
+  "fileName" : "jmdsl-config-schema.json"
+}, {
+  "name" : "Jovo Language Models",
+  "url" : "https://json.schemastore.org/jovo-language-model.json",
+  "fileName" : "jovo-language-model.json"
+}, {
+  "name" : "JReleaser",
+  "url" : "https://json.schemastore.org/jreleaser-1.15.0.json",
+  "fileName" : "jreleaser-1.15.0.json"
+}, {
+  "name" : "JSR Package Config (jsr.json)",
+  "url" : "https://jsr.io/schema/config-file.v1.json",
+  "fileName" : "config-file.v1.json"
+}, {
+  "name" : ".jsbeautifyrc",
+  "url" : "https://json.schemastore.org/jsbeautifyrc.json",
+  "fileName" : "jsbeautifyrc.json"
+}, {
+  "name" : ".jsbeautifyrc-nested",
+  "url" : "https://json.schemastore.org/jsbeautifyrc-nested.json",
+  "fileName" : "jsbeautifyrc-nested.json"
+}, {
+  "name" : ".jscsrc",
+  "url" : "https://json.schemastore.org/jscsrc.json",
+  "fileName" : "jscsrc.json"
+}, {
+  "name" : ".jshintrc",
+  "url" : "https://json.schemastore.org/jshintrc.json",
+  "fileName" : "jshintrc.json"
+}, {
+  "name" : ".jsinspectrc",
+  "url" : "https://json.schemastore.org/jsinspectrc.json",
+  "fileName" : "jsinspectrc.json"
+}, {
+  "name" : "JSON-API",
+  "url" : "https://jsonapi.org/schema",
+  "fileName" : "JSON-API"
+}, {
+  "name" : "JSON Document Transform",
+  "url" : "https://json.schemastore.org/jdt.json",
+  "fileName" : "jdt.json"
+}, {
+  "name" : "JSON Feed",
+  "url" : "https://json.schemastore.org/feed.json",
+  "fileName" : "feed.json"
+}, {
+  "name" : "*.jsonld",
+  "url" : "https://json.schemastore.org/jsonld.json",
+  "fileName" : "jsonld.json"
+}, {
+  "name" : "JSONPatch",
+  "url" : "https://json.schemastore.org/json-patch.json",
+  "fileName" : "json-patch.json"
+}, {
+  "name" : "jsconfig.json",
+  "url" : "https://json.schemastore.org/jsconfig.json",
+  "fileName" : "jsconfig.json"
+}, {
+  "name" : "k3d.yaml",
+  "url" : "https://raw.githubusercontent.com/rancher/k3d/main/pkg/config/config.versions.schema.json",
+  "fileName" : "config.versions.schema.json"
+}, {
+  "name" : "Kas",
+  "url" : "https://raw.githubusercontent.com/siemens/kas/master/kas/schema-kas.json",
+  "fileName" : "schema-kas.json"
+}, {
+  "name" : "k9s aliases.yaml",
+  "url" : "https://raw.githubusercontent.com/derailed/k9s/master/internal/config/json/schemas/aliases.json",
+  "fileName" : "aliases.json"
+}, {
+  "name" : "k9s config.yaml",
+  "url" : "https://raw.githubusercontent.com/derailed/k9s/master/internal/config/json/schemas/k9s.json",
+  "fileName" : "k9s.json"
+}, {
+  "name" : "k9s cluster-config.yaml",
+  "url" : "https://raw.githubusercontent.com/derailed/k9s/master/internal/config/json/schemas/context.json",
+  "fileName" : "context.json"
+}, {
+  "name" : "k9s hotkeys.yaml",
+  "url" : "https://raw.githubusercontent.com/derailed/k9s/master/internal/config/json/schemas/hotkeys.json",
+  "fileName" : "hotkeys.json"
+}, {
+  "name" : "k9s plugins.yaml",
+  "url" : "https://raw.githubusercontent.com/derailed/k9s/master/internal/config/json/schemas/plugins.json",
+  "fileName" : "plugins.json"
+}, {
+  "name" : "k9s skin.yaml",
+  "url" : "https://raw.githubusercontent.com/derailed/k9s/master/internal/config/json/schemas/skin.json",
+  "fileName" : "skin.json"
+}, {
+  "name" : "k9s views.yaml",
+  "url" : "https://raw.githubusercontent.com/derailed/k9s/master/internal/config/json/schemas/views.json",
+  "fileName" : "views.json"
+}, {
+  "name" : "KIMMDY config file",
+  "url" : "https://raw.githubusercontent.com/graeter-group/kimmdy/main/src/kimmdy/kimmdy-yaml-schema.json",
+  "fileName" : "kimmdy-yaml-schema.json"
+}, {
+  "name" : "Kestra flow file",
+  "url" : "https://json.schemastore.org/kestra-0.18.3.json",
+  "fileName" : "kestra-0.18.3.json"
+}, {
+  "name" : "KrakenD",
+  "url" : "https://www.krakend.io/schema/krakend.json",
+  "fileName" : "krakend.json"
+}, {
+  "name" : "Datadog Service Definition",
+  "url" : "https://raw.githubusercontent.com/DataDog/schema/main/service-catalog/service.schema.json",
+  "fileName" : "service.schema.json"
+}, {
+  "name" : "Datadog Software Catalog",
+  "url" : "https://raw.githubusercontent.com/DataDog/schema/main/service-catalog/entity.schema.json",
+  "fileName" : "entity.schema.json"
+}, {
+  "name" : "Ory Keto configuration",
+  "url" : "https://raw.githubusercontent.com/ory/keto/master/.schema/version.schema.json",
+  "fileName" : "version.schema.json"
+}, {
+  "name" : "kontinuous-values.yaml",
+  "url" : "https://raw.githubusercontent.com/socialgouv/kontinuous/v1/docs/values.schema.json",
+  "fileName" : "values.schema.json"
+}, {
+  "name" : "kontinuous-config.yaml",
+  "url" : "https://raw.githubusercontent.com/socialgouv/kontinuous/v1/docs/config.schema.json",
+  "fileName" : "config.schema.json"
+}, {
+  "name" : "Kubri Configuration",
+  "url" : "https://kubri.dev/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "kustomization.yaml",
+  "url" : "https://json.schemastore.org/kustomization.json",
+  "fileName" : "kustomization.json"
+}, {
+  "name" : "label-commenter-config.yml",
+  "url" : "https://json.schemastore.org/label-commenter-config.json",
+  "fileName" : "label-commenter-config.json"
+}, {
+  "name" : "launchsettings.json",
+  "url" : "https://json.schemastore.org/launchsettings.json",
+  "fileName" : "launchsettings.json"
+}, {
+  "name" : "Lefthook",
+  "url" : "https://json.schemastore.org/lefthook.json",
+  "fileName" : "lefthook.json"
+}, {
+  "name" : "lego.json",
+  "url" : "https://json.schemastore.org/lego.json",
+  "fileName" : "lego.json"
+}, {
+  "name" : "lerna.json",
+  "url" : "https://json.schemastore.org/lerna.json",
+  "fileName" : "lerna.json"
+}, {
+  "name" : "lgtm.yml",
+  "url" : "https://json.schemastore.org/lgtm.json",
+  "fileName" : "lgtm.json"
+}, {
+  "name" : "liblab.config.json",
+  "url" : "https://cdn.jsdelivr.net/npm/liblab@latest/liblab.config.schema.json",
+  "fileName" : "liblab.config.schema.json"
+}, {
+  "name" : "libman.json",
+  "url" : "https://json.schemastore.org/libman.json",
+  "fileName" : "libman.json"
+}, {
+  "name" : "license-report-config.json",
+  "url" : "https://json.schemastore.org/license-report-config.json",
+  "fileName" : "license-report-config.json"
+}, {
+  "name" : "Liferay client-extension.yaml",
+  "url" : "https://raw.githubusercontent.com/liferay/liferay-portal/master/modules/sdk/gradle-plugins-workspace/src/main/resources/schemas/client-extension.schema.json",
+  "fileName" : "client-extension.schema.json"
+}, {
+  "name" : "linkinator.config.json",
+  "url" : "https://json.schemastore.org/linkinator-config.json",
+  "fileName" : "linkinator-config.json"
+}, {
+  "name" : "LinkML Metamodel",
+  "url" : "https://w3id.org/linkml/meta.schema.json",
+  "fileName" : "meta.schema.json"
+}, {
+  "name" : "Lively Properties",
+  "url" : "https://raw.githubusercontent.com/rocksdanister/lively/core-separation/schemas/livelyPropertiesSchema.json",
+  "fileName" : "livelyPropertiesSchema.json"
+}, {
+  "name" : "LOOBin",
+  "url" : "https://json.schemastore.org/loobin-1.0.json",
+  "fileName" : "loobin-1.0.json"
+}, {
+  "name" : "lotus.yaml",
+  "url" : "https://grnhse-vpc-assets.s3.amazonaws.com/jsonschemas/lotus.yaml.json",
+  "fileName" : "lotus.yaml.json"
+}, {
+  "name" : "local.settings.json",
+  "url" : "https://json.schemastore.org/local.settings.json",
+  "fileName" : "local.settings.json"
+}, {
+  "name" : "localazy.json",
+  "url" : "https://raw.githubusercontent.com/localazy/cli-schema/master/localazy.json",
+  "fileName" : "localazy.json"
+}, {
+  "name" : "lsdlschema.json",
+  "url" : "https://json.schemastore.org/lsdlschema.json",
+  "fileName" : "lsdlschema.json"
+}, {
+  "name" : "MapEHR Mapping",
+  "url" : "https://json.schemastore.org/mapehr.json",
+  "fileName" : "mapehr.json"
+}, {
+  "name" : "A micro editor config",
+  "url" : "https://json.schemastore.org/micro.json",
+  "fileName" : "micro.json"
+}, {
+  "name" : "MegaLinter configuration",
+  "url" : "https://raw.githubusercontent.com/megalinter/megalinter/main/megalinter/descriptors/schemas/megalinter-configuration.jsonschema.json",
+  "fileName" : "megalinter-configuration.jsonschema.json"
+}, {
+  "name" : "MegaLinter descriptor",
+  "url" : "https://raw.githubusercontent.com/megalinter/megalinter/main/megalinter/descriptors/schemas/megalinter-descriptor.jsonschema.json",
+  "fileName" : "megalinter-descriptor.jsonschema.json"
+}, {
+  "name" : "Meltano project definition",
+  "url" : "https://raw.githubusercontent.com/meltano/meltano/main/src/meltano/schemas/meltano.schema.json",
+  "fileName" : "meltano.schema.json"
+}, {
+  "name" : "Metadata for a Bazel module",
+  "url" : "https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/main/metadata.schema.json",
+  "fileName" : "metadata.schema.json"
+}, {
+  "name" : "MetricsHub Configuration",
+  "url" : "https://json.schemastore.org/metricshub.json",
+  "fileName" : "metricshub.json"
+}, {
+  "name" : "MetricsHub Connector Configuration",
+  "url" : "https://json.schemastore.org/metricshub-connector.json",
+  "fileName" : "metricshub-connector.json"
+}, {
+  "name" : "Microsoft Band Web Tile",
+  "url" : "https://json.schemastore.org/band-manifest.json",
+  "fileName" : "band-manifest.json"
+}, {
+  "name" : "mimetypes.json",
+  "url" : "https://json.schemastore.org/mimetypes.json",
+  "fileName" : "mimetypes.json"
+}, {
+  "name" : "Minecraft Data Pack Advancement",
+  "url" : "https://json.schemastore.org/minecraft-advancement.json",
+  "fileName" : "minecraft-advancement.json"
+}, {
+  "name" : "Minecraft Data Pack Biome",
+  "url" : "https://json.schemastore.org/minecraft-biome.json",
+  "fileName" : "minecraft-biome.json"
+}, {
+  "name" : "Minecraft Data Pack Configured Carver",
+  "url" : "https://json.schemastore.org/minecraft-configured-carver.json",
+  "fileName" : "minecraft-configured-carver.json"
+}, {
+  "name" : "Minecraft Data Pack Damage Type",
+  "url" : "https://json.schemastore.org/minecraft-damage-type.json",
+  "fileName" : "minecraft-damage-type.json"
+}, {
+  "name" : "Minecraft Data Pack Dimension Type",
+  "url" : "https://json.schemastore.org/minecraft-dimension-type.json",
+  "fileName" : "minecraft-dimension-type.json"
+}, {
+  "name" : "Minecraft Data Pack Dimension",
+  "url" : "https://json.schemastore.org/minecraft-dimension.json",
+  "fileName" : "minecraft-dimension.json"
+}, {
+  "name" : "Minecraft Data Pack Item Modifier",
+  "url" : "https://json.schemastore.org/minecraft-item-modifier.json",
+  "fileName" : "minecraft-item-modifier.json"
+}, {
+  "name" : "Minecraft Data Pack Loot Table",
+  "url" : "https://json.schemastore.org/minecraft-loot-table.json",
+  "fileName" : "minecraft-loot-table.json"
+}, {
+  "name" : "Minecraft Data Pack Metadata",
+  "url" : "https://json.schemastore.org/minecraft-pack-mcmeta.json",
+  "fileName" : "minecraft-pack-mcmeta.json"
+}, {
+  "name" : "Minecraft Data Pack Predicate",
+  "url" : "https://json.schemastore.org/minecraft-predicate.json",
+  "fileName" : "minecraft-predicate.json"
+}, {
+  "name" : "Minecraft Data Pack Recipe",
+  "url" : "https://json.schemastore.org/minecraft-recipe.json",
+  "fileName" : "minecraft-recipe.json"
+}, {
+  "name" : "Minecraft Data Pack Tag",
+  "url" : "https://json.schemastore.org/minecraft-tag.json",
+  "fileName" : "minecraft-tag.json"
+}, {
+  "name" : "Minecraft Data Pack Template Pool",
+  "url" : "https://json.schemastore.org/minecraft-template-pool.json",
+  "fileName" : "minecraft-template-pool.json"
+}, {
+  "name" : "Minecraft Resource Pack Lang",
+  "url" : "https://json.schemastore.org/minecraft-lang.json",
+  "fileName" : "minecraft-lang.json"
+}, {
+  "name" : "Minecraft Resource Pack Particle",
+  "url" : "https://json.schemastore.org/minecraft-particle.json",
+  "fileName" : "minecraft-particle.json"
+}, {
+  "name" : "Minecraft Resourcepack Sounds",
+  "url" : "https://raw.githubusercontent.com/AxoCode/json-schema/master/minecraft/sounds.json",
+  "fileName" : "sounds.json"
+}, {
+  "name" : "Minecraft Resource Pack Texture Mcmeta",
+  "url" : "https://json.schemastore.org/minecraft-texture-mcmeta.json",
+  "fileName" : "minecraft-texture-mcmeta.json"
+}, {
+  "name" : "Minecraft Data Pack Trim Material",
+  "url" : "https://json.schemastore.org/minecraft-trim-material.json",
+  "fileName" : "minecraft-trim-material.json"
+}, {
+  "name" : "Minecraft Data Pack Trim Pattern",
+  "url" : "https://json.schemastore.org/minecraft-trim-pattern.json",
+  "fileName" : "minecraft-trim-pattern.json"
+}, {
+  "name" : "mkdocs.yml",
+  "url" : "https://json.schemastore.org/mkdocs-1.6.json",
+  "fileName" : "mkdocs-1.6.json"
+}, {
+  "name" : "MLOS Configs",
+  "url" : "https://raw.githubusercontent.com/microsoft/MLOS/main/mlos_bench/mlos_bench/config/schemas/mlos-bench-config-schema.json",
+  "fileName" : "mlos-bench-config-schema.json"
+}, {
+  "name" : "monospace.yml",
+  "url" : "https://raw.githubusercontent.com/software-t-rex/monospace/main/apps/monospace/schemas/monospace.schema.json",
+  "fileName" : "monospace.schema.json"
+}, {
+  "name" : "Monoweave Configuration",
+  "url" : "https://raw.githubusercontent.com/monoweave/monoweave/main/packages/types/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "MS2Rescore Configuration",
+  "url" : "https://raw.githubusercontent.com/compomics/ms2rescore/main/ms2rescore/package_data/config_schema.json",
+  "fileName" : "config_schema.json"
+}, {
+  "name" : "Mergify Configuration",
+  "url" : "https://raw.githubusercontent.com/Mergifyio/docs/main/public/mergify-configuration-schema.json",
+  "fileName" : "mergify-configuration-schema.json"
+}, {
+  "name" : ".mocharc",
+  "url" : "https://json.schemastore.org/mocharc.json",
+  "fileName" : "mocharc.json"
+}, {
+  "name" : ".modernizrrc",
+  "url" : "https://json.schemastore.org/modernizrrc.json",
+  "fileName" : "modernizrrc.json"
+}, {
+  "name" : "Monade CLI Stack Configuration",
+  "url" : "https://json.schemastore.org/monade-stack-config.json",
+  "fileName" : "monade-stack-config.json"
+}, {
+  "name" : "mycode.json",
+  "url" : "https://json.schemastore.org/mycode.json",
+  "fileName" : "mycode.json"
+}, {
+  "name" : "napari plugin manifest",
+  "url" : "https://github.com/napari/npe2/releases/latest/download/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Netlify config",
+  "url" : "https://json.schemastore.org/netlify.json",
+  "fileName" : "netlify.json"
+}, {
+  "name" : "Network-as-Code Data Model",
+  "url" : "https://raw.githubusercontent.com/netascode/schema/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Nightwatch.js",
+  "url" : "https://json.schemastore.org/nightwatch.json",
+  "fileName" : "nightwatch.json"
+}, {
+  "name" : "ninjs (News in JSON)",
+  "url" : "https://json.schemastore.org/ninjs-2.0.json",
+  "fileName" : "ninjs-2.0.json"
+}, {
+  "name" : "nest-cli",
+  "url" : "https://json.schemastore.org/nest-cli.json",
+  "fileName" : "nest-cli.json"
+}, {
+  "name" : "nlu.json",
+  "url" : "https://raw.githubusercontent.com/oresoftware/npm-link-up/master/assets/nlu.schema.json",
+  "fileName" : "nlu.schema.json"
+}, {
+  "name" : ".nodehawkrc",
+  "url" : "https://json.schemastore.org/nodehawkrc.json",
+  "fileName" : "nodehawkrc.json"
+}, {
+  "name" : "nodemon.json",
+  "url" : "https://json.schemastore.org/nodemon.json",
+  "fileName" : "nodemon.json"
+}, {
+  "name" : "notebook.mod.json",
+  "url" : "https://raw.githubusercontent.com/BookkeepersMC/notebook-schemas/master/notebook.mod.json/schemas/main.json",
+  "fileName" : "main.json"
+}, {
+  "name" : "NOX Framework (Service)",
+  "url" : "https://noxorg.dev/schemas/NoxConfiguration.json",
+  "fileName" : "NoxConfiguration.json"
+}, {
+  "name" : ".npmpackagejsonlintrc",
+  "url" : "https://json.schemastore.org/npmpackagejsonlintrc.json",
+  "fileName" : "npmpackagejsonlintrc.json"
+}, {
+  "name" : "npm-badges",
+  "url" : "https://json.schemastore.org/npm-badges.json",
+  "fileName" : "npm-badges.json"
+}, {
+  "name" : "nuclei-template.yaml",
+  "url" : "https://raw.githubusercontent.com/projectdiscovery/nuclei/master/nuclei-jsonschema.json",
+  "fileName" : "nuclei-jsonschema.json"
+}, {
+  "name" : "nuget-project.json",
+  "url" : "https://json.schemastore.org/nuget-project.json",
+  "fileName" : "nuget-project.json"
+}, {
+  "name" : "nswag.json",
+  "url" : "https://json.schemastore.org/nswag.json",
+  "fileName" : "nswag.json"
+}, {
+  "name" : "Nullstone config",
+  "url" : "https://raw.githubusercontent.com/nullstone-io/iac/master/.schema/config.0.1.json",
+  "fileName" : "config.0.1.json"
+}, {
+  "name" : "ntangle",
+  "url" : "https://raw.githubusercontent.com/Avanade/NTangle/main/schemas/ntangle.json",
+  "fileName" : "ntangle.json"
+}, {
+  "name" : "Ory Oathkeeper configuration",
+  "url" : "https://raw.githubusercontent.com/ory/oathkeeper/master/.schema/version.schema.json",
+  "fileName" : "version.schema.json"
+}, {
+  "name" : "ocelot.json",
+  "url" : "https://json.schemastore.org/ocelot.json",
+  "fileName" : "ocelot.json"
+}, {
+  "name" : "October CMS columns",
+  "url" : "https://raw.githubusercontent.com/inetis-ch/october-schemas/master/columns.json",
+  "fileName" : "columns.json"
+}, {
+  "name" : "October CMS fields",
+  "url" : "https://raw.githubusercontent.com/inetis-ch/october-schemas/master/fields.json",
+  "fileName" : "fields.json"
+}, {
+  "name" : "omnisharp.json",
+  "url" : "https://json.schemastore.org/omnisharp.json",
+  "fileName" : "omnisharp.json"
+}, {
+  "name" : "openapi.json",
+  "url" : "https://spec.openapis.org/oas/3.1/schema/2022-10-07",
+  "fileName" : "openapi.json"
+}, {
+  "name" : "openrpc.json",
+  "url" : "https://meta.open-rpc.org/",
+  "fileName" : "openrpc.json"
+}, {
+  "name" : "OpenUtau character yaml",
+  "url" : "https://json.schemastore.org/openutau-character.json",
+  "fileName" : "openutau-character.json"
+}, {
+  "name" : "OpenUtau ustx",
+  "url" : "https://json.schemastore.org/openutau-ustx.json",
+  "fileName" : "openutau-ustx.json"
+}, {
+  "name" : "ops.yaml",
+  "url" : "https://raw.githubusercontent.com/LeShaunJ/ops-schema/main/ops.schema.json",
+  "fileName" : "ops.schema.json"
+}, {
+  "name" : "ONe's service descriptor",
+  "url" : "https://json.schemastore.org/one-service-descriptor-schema-0.1.json",
+  "fileName" : "one-service-descriptor-schema-0.1.json"
+}, {
+  "name" : "ONe's changelog entry",
+  "url" : "https://json.schemastore.org/one-changelog-schema-0.1.json",
+  "fileName" : "one-changelog-schema-0.1.json"
+}, {
+  "name" : "openfin.json",
+  "url" : "https://json.schemastore.org/openfin.json",
+  "fileName" : "openfin.json"
+}, {
+  "name" : "OpenRewrite Resource",
+  "url" : "https://raw.githubusercontent.com/openrewrite/rewrite/main/rewrite-core/openrewrite.json",
+  "fileName" : "openrewrite.json"
+}, {
+  "name" : "Open Data Contract Standard (ODCS)",
+  "url" : "https://raw.githubusercontent.com/bitol-io/open-data-contract-standard/main/schema/odcs-json-schema-latest.json",
+  "fileName" : "odcs-json-schema-latest.json"
+}, {
+  "name" : "Outblocks project configuration",
+  "url" : "https://raw.githubusercontent.com/outblocks/outblocks-cli/master/schema/schema-project.json",
+  "fileName" : "schema-project.json"
+}, {
+  "name" : "Outblocks App configuration",
+  "url" : "https://raw.githubusercontent.com/outblocks/outblocks-cli/master/schema/schema-app.json",
+  "fileName" : "schema-app.json"
+}, {
+  "name" : "Outblocks database table",
+  "url" : "https://raw.githubusercontent.com/outblocks/outblocks-cli/master/schema/schema-table.json",
+  "fileName" : "schema-table.json"
+}, {
+  "name" : "Ory Kratos configuration",
+  "url" : "https://raw.githubusercontent.com/ory/kratos/master/.schema/version.schema.json",
+  "fileName" : "version.schema.json"
+}, {
+  "name" : "OSCAL Assessment Plan (AP)",
+  "url" : "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_assessment-plan_schema.json",
+  "fileName" : "oscal_assessment-plan_schema.json"
+}, {
+  "name" : "OSCAL Assessment Results (AR)",
+  "url" : "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_assessment-results_schema.json",
+  "fileName" : "oscal_assessment-results_schema.json"
+}, {
+  "name" : "OSCAL Catalog",
+  "url" : "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_catalog_schema.json",
+  "fileName" : "oscal_catalog_schema.json"
+}, {
+  "name" : "OSCAL Component Definition (CDef)",
+  "url" : "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_component_schema.json",
+  "fileName" : "oscal_component_schema.json"
+}, {
+  "name" : "OSCAL Plan of Action and Milestones (POA&M)",
+  "url" : "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_poam_schema.json",
+  "fileName" : "oscal_poam_schema.json"
+}, {
+  "name" : "OSCAL Profile",
+  "url" : "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_profile_schema.json",
+  "fileName" : "oscal_profile_schema.json"
+}, {
+  "name" : "OSCAL System Security Plan (SSP)",
+  "url" : "https://github.com/usnistgov/OSCAL/releases/download/v1.1.2/oscal_ssp_schema.json",
+  "fileName" : "oscal_ssp_schema.json"
+}, {
+  "name" : "OSS Review Toolkit configuration",
+  "url" : "https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/ort-configuration-schema.json",
+  "fileName" : "ort-configuration-schema.json"
+}, {
+  "name" : "OSS Review Toolkit curation",
+  "url" : "https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/curations-schema.json",
+  "fileName" : "curations-schema.json"
+}, {
+  "name" : "OSS Review Toolkit package configuration",
+  "url" : "https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/package-configuration-schema.json",
+  "fileName" : "package-configuration-schema.json"
+}, {
+  "name" : "OSS Review Toolkit repository configuration",
+  "url" : "https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/repository-configuration-schema.json",
+  "fileName" : "repository-configuration-schema.json"
+}, {
+  "name" : "OSS Review Toolkit resolutions",
+  "url" : "https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/resolutions-schema.json",
+  "fileName" : "resolutions-schema.json"
+}, {
+  "name" : "package.json",
+  "url" : "https://json.schemastore.org/package.json",
+  "fileName" : "package.json"
+}, {
+  "name" : "package.manifest",
+  "url" : "https://json.schemastore.org/package.manifest.json",
+  "fileName" : "package.manifest.json"
+}, {
+  "name" : "Packer",
+  "url" : "https://json.schemastore.org/packer.json",
+  "fileName" : "packer.json"
+}, {
+  "name" : "Paper paper-plugin.yml",
+  "url" : "https://json.schemastore.org/paper-plugin.json",
+  "fileName" : "paper-plugin.json"
+}, {
+  "name" : "pathfinder.yml",
+  "url" : "https://raw.githubusercontent.com/transcend-io/cli/main/pathfinder-policy-yml-schema.json",
+  "fileName" : "pathfinder-policy-yml-schema.json"
+}, {
+  "name" : "PDM",
+  "url" : "https://json.schemastore.org/pdm.json",
+  "fileName" : "pdm.json"
+}, {
+  "name" : "pgap_yaml_input_reader",
+  "url" : "https://json.schemastore.org/pgap_yaml_input_reader.json",
+  "fileName" : "pgap_yaml_input_reader.json"
+}, {
+  "name" : "pattern.json",
+  "url" : "https://json.schemastore.org/pattern.json",
+  "fileName" : "pattern.json"
+}, {
+  "name" : "pixi.toml",
+  "url" : "https://raw.githubusercontent.com/prefix-dev/pixi/main/schema/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : ".pmbot.yml",
+  "url" : "https://raw.githubusercontent.com/pmbot-io/config/master/pmbot.yml.schema.json",
+  "fileName" : "pmbot.yml.schema.json"
+}, {
+  "name" : "PocketMine plugin.yml",
+  "url" : "https://json.schemastore.org/pocketmine-plugin.json",
+  "fileName" : "pocketmine-plugin.json"
+}, {
+  "name" : "plagiarize.yaml",
+  "url" : "https://json.schemastore.org/plagiarize.json",
+  "fileName" : "plagiarize.json"
+}, {
+  "name" : "plagiarize-me.yaml",
+  "url" : "https://json.schemastore.org/plagiarize-me.json",
+  "fileName" : "plagiarize-me.json"
+}, {
+  "name" : "Plex Prerolls",
+  "url" : "https://raw.githubusercontent.com/nwithan8/plex-prerolls/main/.schema/config.schema.json",
+  "fileName" : "config.schema.json"
+}, {
+  "name" : "podbard.yaml",
+  "url" : "https://raw.githubusercontent.com/Songmu/podbard/main/schema.yaml",
+  "fileName" : "schema.yaml"
+}, {
+  "name" : "portman.json",
+  "url" : "https://raw.githubusercontent.com/apideck-libraries/portman/main/src/utils/portman-config-schema.json",
+  "fileName" : "portman-config-schema.json"
+}, {
+  "name" : ".postcssrc",
+  "url" : "https://json.schemastore.org/postcssrc.json",
+  "fileName" : "postcssrc.json"
+}, {
+  "name" : "Postman collection",
+  "url" : "https://schema.postman.com/collection/json/v2.1.0/draft-07/collection.json",
+  "fileName" : "collection.json"
+}, {
+  "name" : ".powerpages-web-template-manifest",
+  "url" : "https://json.schemastore.org/powerpages-web-template-manifest.json",
+  "fileName" : "powerpages-web-template-manifest.json"
+}, {
+  "name" : ".pre-commit-config.yml",
+  "url" : "https://json.schemastore.org/pre-commit-config.json",
+  "fileName" : "pre-commit-config.json"
+}, {
+  "name" : ".pre-commit-hooks.yml",
+  "url" : "https://json.schemastore.org/pre-commit-hooks.json",
+  "fileName" : "pre-commit-hooks.json"
+}, {
+  "name" : ".phrase.yml",
+  "url" : "https://json.schemastore.org/phrase.json",
+  "fileName" : "phrase.json"
+}, {
+  "name" : ".phraseapp.yml",
+  "url" : "https://json.schemastore.org/phraseapp.json",
+  "fileName" : "phraseapp.json"
+}, {
+  "name" : "prefect.toml",
+  "url" : "https://raw.githubusercontent.com/PrefectHQ/prefect/refs/heads/main/schemas/settings.schema.json",
+  "fileName" : "settings.schema.json"
+}, {
+  "name" : "prettierrc.json",
+  "url" : "https://json.schemastore.org/prettierrc.json",
+  "fileName" : "prettierrc.json"
+}, {
+  "name" : "prisma.yml",
+  "url" : "https://json.schemastore.org/prisma.json",
+  "fileName" : "prisma.json"
+}, {
+  "name" : "Problem package generators",
+  "url" : "https://raw.githubusercontent.com/RagnarGrootKoerkamp/BAPCtools/refs/heads/master/support/schemas/generators_yaml_schema.json",
+  "fileName" : "generators_yaml_schema.json"
+}, {
+  "name" : "project.json",
+  "url" : "https://json.schemastore.org/project.json",
+  "fileName" : "project.json"
+}, {
+  "name" : "project-1.0.0-beta3.json",
+  "url" : "https://json.schemastore.org/project-1.0.0-beta3.json",
+  "fileName" : "project-1.0.0-beta3.json"
+}, {
+  "name" : "project-1.0.0-beta4.json",
+  "url" : "https://json.schemastore.org/project-1.0.0-beta4.json",
+  "fileName" : "project-1.0.0-beta4.json"
+}, {
+  "name" : "project-1.0.0-beta5.json",
+  "url" : "https://json.schemastore.org/project-1.0.0-beta5.json",
+  "fileName" : "project-1.0.0-beta5.json"
+}, {
+  "name" : "project-1.0.0-beta6.json",
+  "url" : "https://json.schemastore.org/project-1.0.0-beta6.json",
+  "fileName" : "project-1.0.0-beta6.json"
+}, {
+  "name" : "project-1.0.0-beta8.json",
+  "url" : "https://json.schemastore.org/project-1.0.0-beta8.json",
+  "fileName" : "project-1.0.0-beta8.json"
+}, {
+  "name" : "project-1.0.0-rc1.json",
+  "url" : "https://json.schemastore.org/project-1.0.0-rc1.json",
+  "fileName" : "project-1.0.0-rc1.json"
+}, {
+  "name" : "project-1.0.0-rc2.json",
+  "url" : "https://json.schemastore.org/project-1.0.0-rc2.json",
+  "fileName" : "project-1.0.0-rc2.json"
+}, {
+  "name" : "prometheus.json",
+  "url" : "https://json.schemastore.org/prometheus.json",
+  "fileName" : "prometheus.json"
+}, {
+  "name" : "prometheus.rules.json",
+  "url" : "https://json.schemastore.org/prometheus.rules.json",
+  "fileName" : "prometheus.rules.json"
+}, {
+  "name" : "prometheus.rules.test.json",
+  "url" : "https://json.schemastore.org/prometheus.rules.test.json",
+  "fileName" : "prometheus.rules.test.json"
+}, {
+  "name" : "proxies.json",
+  "url" : "https://json.schemastore.org/proxies.json",
+  "fileName" : "proxies.json"
+}, {
+  "name" : "publiccode.yml",
+  "url" : "https://json.schemastore.org/publiccode.json",
+  "fileName" : "publiccode.json"
+}, {
+  "name" : "pubspec.yaml",
+  "url" : "https://json.schemastore.org/pubspec.json",
+  "fileName" : "pubspec.json"
+}, {
+  "name" : "Pull Request Labeler",
+  "url" : "https://json.schemastore.org/pull-request-labeler.json",
+  "fileName" : "pull-request-labeler.json"
+}, {
+  "name" : ".putout.json",
+  "url" : "https://json.schemastore.org/putout.json",
+  "fileName" : "putout.json"
+}, {
+  "name" : "pyrseas-0.8.json",
+  "url" : "https://json.schemastore.org/pyrseas-0.8.json",
+  "fileName" : "pyrseas-0.8.json"
+}, {
+  "name" : "Rancher Fleet",
+  "url" : "https://json.schemastore.org/rancher-fleet-0.8.json",
+  "fileName" : "rancher-fleet-0.8.json"
+}, {
+  "name" : "config.yaml",
+  "url" : "https://json.schemastore.org/projektor.json",
+  "fileName" : "projektor.json"
+}, {
+  "name" : "Read the Docs",
+  "url" : "https://raw.githubusercontent.com/readthedocs/readthedocs.org/master/readthedocs/rtd_tests/fixtures/spec/v2/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Pulumi",
+  "url" : "https://json.schemastore.org/pulumi.json",
+  "fileName" : "pulumi.json"
+}, {
+  "name" : "PyProject",
+  "url" : "https://json.schemastore.org/pyproject.json",
+  "fileName" : "pyproject.json"
+}, {
+  "name" : "Pyright",
+  "url" : "https://raw.githubusercontent.com/microsoft/pyright/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json",
+  "fileName" : "pyrightconfig.schema.json"
+}, {
+  "name" : "Qgoda",
+  "url" : "https://www.qgoda.net/schemas/qgoda.json",
+  "fileName" : "qgoda.json"
+}, {
+  "name" : "Rattler-build",
+  "url" : "https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "rc3 auth",
+  "url" : "https://json.schemastore.org/rc3-auth-0.0.3.json",
+  "fileName" : "rc3-auth-0.0.3.json"
+}, {
+  "name" : "rc3 collection",
+  "url" : "https://json.schemastore.org/rc3-collection-0.0.3.json",
+  "fileName" : "rc3-collection-0.0.3.json"
+}, {
+  "name" : "rc3 environment",
+  "url" : "https://json.schemastore.org/rc3-environment-0.0.3.json",
+  "fileName" : "rc3-environment-0.0.3.json"
+}, {
+  "name" : "rc3 folder",
+  "url" : "https://json.schemastore.org/rc3-folder-0.0.3.json",
+  "fileName" : "rc3-folder-0.0.3.json"
+}, {
+  "name" : "rc3 request",
+  "url" : "https://json.schemastore.org/rc3-request-0.0.3.json",
+  "fileName" : "rc3-request-0.0.3.json"
+}, {
+  "name" : "rc3 settings",
+  "url" : "https://json.schemastore.org/rc3-settings-0.0.3.json",
+  "fileName" : "rc3-settings-0.0.3.json"
+}, {
+  "name" : "Red-DiscordBot Cog",
+  "url" : "https://raw.githubusercontent.com/Cog-Creators/Red-DiscordBot/V3/develop/schema/red_cog.schema.json",
+  "fileName" : "red_cog.schema.json"
+}, {
+  "name" : "Red-DiscordBot Cog Repo",
+  "url" : "https://raw.githubusercontent.com/Cog-Creators/Red-DiscordBot/V3/develop/schema/red_cog_repo.schema.json",
+  "fileName" : "red_cog_repo.schema.json"
+}, {
+  "name" : "Red-DiscordBot Trivia",
+  "url" : "https://raw.githubusercontent.com/Cog-Creators/Red-DiscordBot/V3/develop/schema/trivia.schema.json",
+  "fileName" : "trivia.schema.json"
+}, {
+  "name" : ".rehyperc",
+  "url" : "https://json.schemastore.org/rehyperc.json",
+  "fileName" : "rehyperc.json"
+}, {
+  "name" : "release-plz.toml",
+  "url" : "https://raw.githubusercontent.com/MarcoIeni/release-plz/main/.schema/latest.json",
+  "fileName" : "latest.json"
+}, {
+  "name" : ".remarkrc",
+  "url" : "https://json.schemastore.org/remarkrc.json",
+  "fileName" : "remarkrc.json"
+}, {
+  "name" : "Replit config",
+  "url" : "https://json.schemastore.org/replit.json",
+  "fileName" : "replit.json"
+}, {
+  "name" : "*.resjson",
+  "url" : "https://json.schemastore.org/resjson.json",
+  "fileName" : "resjson.json"
+}, {
+  "name" : "Ruff",
+  "url" : "https://json.schemastore.org/ruff.json",
+  "fileName" : "ruff.json"
+}, {
+  "name" : "Rust Project",
+  "url" : "https://json.schemastore.org/rust-project.json",
+  "fileName" : "rust-project.json"
+}, {
+  "name" : "JSON Resume",
+  "url" : "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Renovate",
+  "url" : "https://docs.renovatebot.com/renovate-schema.json",
+  "fileName" : "renovate-schema.json"
+}, {
+  "name" : "RenderCV",
+  "url" : "https://raw.githubusercontent.com/sinaatalay/rendercv/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "RoadRunner",
+  "url" : "https://cdn.jsdelivr.net/gh/roadrunner-server/roadrunner@latest/schemas/config/3.0.schema.json",
+  "fileName" : "3.0.schema.json"
+}, {
+  "name" : "rockcraft",
+  "url" : "https://raw.githubusercontent.com/canonical/rockcraft/main/schema/rockcraft.json",
+  "fileName" : "rockcraft.json"
+}, {
+  "name" : "runny",
+  "url" : "https://raw.githubusercontent.com/simonwhitaker/runny/main/schema/runny.schema.json",
+  "fileName" : "runny.schema.json"
+}, {
+  "name" : "rustfmt",
+  "url" : "https://json.schemastore.org/rustfmt.json",
+  "fileName" : "rustfmt.json"
+}, {
+  "name" : "Rust toolchain",
+  "url" : "https://json.schemastore.org/rust-toolchain.json",
+  "fileName" : "rust-toolchain.json"
+}, {
+  "name" : "samt",
+  "url" : "https://json.schemastore.org/samt.json",
+  "fileName" : "samt.json"
+}, {
+  "name" : "samtrc",
+  "url" : "https://json.schemastore.org/samtrc.json",
+  "fileName" : "samtrc.json"
+}, {
+  "name" : "Sapphire CLI Config",
+  "url" : "https://raw.githubusercontent.com/sapphiredev/cli/main/templates/schemas/.sapphirerc.scheme.json",
+  "fileName" : ".sapphirerc.scheme.json"
+}, {
+  "name" : "sarif-1.0.0.json",
+  "url" : "https://json.schemastore.org/sarif-1.0.0.json",
+  "fileName" : "sarif-1.0.0.json"
+}, {
+  "name" : "sarif-2.0.0.json",
+  "url" : "https://json.schemastore.org/sarif-2.0.0.json",
+  "fileName" : "sarif-2.0.0.json"
+}, {
+  "name" : "sarif-2.1.0-rtm.2",
+  "url" : "https://json.schemastore.org/sarif-2.1.0-rtm.2.json",
+  "fileName" : "sarif-2.1.0-rtm.2.json"
+}, {
+  "name" : "sarif-external-property-file-2.1.0-rtm.2",
+  "url" : "https://json.schemastore.org/sarif-external-property-file-2.1.0-rtm.2.json",
+  "fileName" : "sarif-external-property-file-2.1.0-rtm.2.json"
+}, {
+  "name" : "sarif-2.1.0-rtm.3",
+  "url" : "https://json.schemastore.org/sarif-2.1.0-rtm.3.json",
+  "fileName" : "sarif-2.1.0-rtm.3.json"
+}, {
+  "name" : "sarif-external-property-file-2.1.0-rtm.3",
+  "url" : "https://json.schemastore.org/sarif-external-property-file-2.1.0-rtm.3.json",
+  "fileName" : "sarif-external-property-file-2.1.0-rtm.3.json"
+}, {
+  "name" : "sarif-2.1.0-rtm.4",
+  "url" : "https://json.schemastore.org/sarif-2.1.0-rtm.4.json",
+  "fileName" : "sarif-2.1.0-rtm.4.json"
+}, {
+  "name" : "sarif-external-property-file-2.1.0-rtm.4",
+  "url" : "https://json.schemastore.org/sarif-external-property-file-2.1.0-rtm.4.json",
+  "fileName" : "sarif-external-property-file-2.1.0-rtm.4.json"
+}, {
+  "name" : "sarif-2.1.0-rtm.5",
+  "url" : "https://json.schemastore.org/sarif-2.1.0-rtm.5.json",
+  "fileName" : "sarif-2.1.0-rtm.5.json"
+}, {
+  "name" : "sarif-2.1.0-rtm.6",
+  "url" : "https://json.schemastore.org/sarif-2.1.0-rtm.6.json",
+  "fileName" : "sarif-2.1.0-rtm.6.json"
+}, {
+  "name" : "sarif-external-property-file-2.1.0-rtm.5",
+  "url" : "https://json.schemastore.org/sarif-external-property-file-2.1.0-rtm.5.json",
+  "fileName" : "sarif-external-property-file-2.1.0-rtm.5.json"
+}, {
+  "name" : "sarif-2.1.0",
+  "url" : "https://json.schemastore.org/sarif-2.1.0.json",
+  "fileName" : "sarif-2.1.0.json"
+}, {
+  "name" : "sarif-external-property-file-2.1.0",
+  "url" : "https://json.schemastore.org/sarif-external-property-file-2.1.0.json",
+  "fileName" : "sarif-external-property-file-2.1.0.json"
+}, {
+  "name" : "Schema Catalog",
+  "url" : "https://json.schemastore.org/schema-catalog.json",
+  "fileName" : "schema-catalog.json"
+}, {
+  "name" : "schema.org - Action",
+  "url" : "https://json.schemastore.org/schema-org-action.json",
+  "fileName" : "schema-org-action.json"
+}, {
+  "name" : "schema.org - ContactPoint",
+  "url" : "https://json.schemastore.org/schema-org-contact-point.json",
+  "fileName" : "schema-org-contact-point.json"
+}, {
+  "name" : "schema.org - Place",
+  "url" : "https://json.schemastore.org/schema-org-place.json",
+  "fileName" : "schema-org-place.json"
+}, {
+  "name" : "schema.org - Thing",
+  "url" : "https://json.schemastore.org/schema-org-thing.json",
+  "fileName" : "schema-org-thing.json"
+}, {
+  "name" : "Scoop manifest",
+  "url" : "https://raw.githubusercontent.com/lukesampson/scoop/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "SDMX structure message",
+  "url" : "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/master/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json",
+  "fileName" : "sdmx-json-structure-schema.json"
+}, {
+  "name" : "SDMX metadata message",
+  "url" : "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/master/metadata-message/tools/schemas/2.0.0/sdmx-json-metadata-schema.json",
+  "fileName" : "sdmx-json-metadata-schema.json"
+}, {
+  "name" : "SDMX data message",
+  "url" : "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/master/data-message/tools/schemas/2.0.0/sdmx-json-data-schema.json",
+  "fileName" : "sdmx-json-data-schema.json"
+}, {
+  "name" : "Semantic Data Fabric (SDF) file",
+  "url" : "https://cdn.sdf.com/schemas/sdf-schema-1.3.json",
+  "fileName" : "sdf-schema-1.3.json"
+}, {
+  "name" : "semantic-release",
+  "url" : "https://json.schemastore.org/semantic-release.json",
+  "fileName" : "semantic-release.json"
+}, {
+  "name" : "Semgrep Rule",
+  "url" : "https://json.schemastore.org/semgrep.json",
+  "fileName" : "semgrep.json"
+}, {
+  "name" : "Serenity Code Generator (Sergen)",
+  "url" : "https://json.schemastore.org/sergen.json",
+  "fileName" : "sergen.json"
+}, {
+  "name" : "settings.job",
+  "url" : "https://json.schemastore.org/settings.job.json",
+  "fileName" : "settings.job.json"
+}, {
+  "name" : "Settings.paf",
+  "url" : "https://raw.githubusercontent.com/qualisys/qualisys-schemas/master/paf-module.schema.json",
+  "fileName" : "paf-module.schema.json"
+}, {
+  "name" : "sfdx-hardis configuration",
+  "url" : "https://raw.githubusercontent.com/hardisgroupcom/sfdx-hardis/main/config/sfdx-hardis.jsonschema.json",
+  "fileName" : "sfdx-hardis.jsonschema.json"
+}, {
+  "name" : "Sigma Detection Rule",
+  "url" : "https://raw.githubusercontent.com/SigmaHQ/sigma-specification/main/json-schema/sigma-detection-rule-schema.json",
+  "fileName" : "sigma-detection-rule-schema.json"
+}, {
+  "name" : "Sigrid scope configuration file",
+  "url" : "https://json.schemastore.org/sigrid-scope-file.schema.json",
+  "fileName" : "sigrid-scope-file.schema.json"
+}, {
+  "name" : "SIL Kit Participant Configuration",
+  "url" : "https://json.schemastore.org/sil-kit-participant-configuration.json",
+  "fileName" : "sil-kit-participant-configuration.json"
+}, {
+  "name" : "SIL Kit Registry Configuration",
+  "url" : "https://json.schemastore.org/sil-kit-registry-configuration.json",
+  "fileName" : "sil-kit-registry-configuration.json"
+}, {
+  "name" : "size-limit configuration",
+  "url" : "https://json.schemastore.org/size-limit.json",
+  "fileName" : "size-limit.json"
+}, {
+  "name" : "Slack app manifest",
+  "url" : "https://json.schemastore.org/slack-app-manifest.json",
+  "fileName" : "slack-app-manifest.json"
+}, {
+  "name" : "skyuxconfig.json",
+  "url" : "https://raw.githubusercontent.com/blackbaud/skyux-config/4.x.x/skyuxconfig-schema.json",
+  "fileName" : "skyuxconfig-schema.json"
+}, {
+  "name" : "snapcraft",
+  "url" : "https://raw.githubusercontent.com/snapcore/snapcraft/master/schema/snapcraft.json",
+  "fileName" : "snapcraft.json"
+}, {
+  "name" : "Solidarity",
+  "url" : "https://json.schemastore.org/solidaritySchema.json",
+  "fileName" : "solidaritySchema.json"
+}, {
+  "name" : "Solution filters",
+  "url" : "https://json.schemastore.org/solution-filter.json",
+  "fileName" : "solution-filter.json"
+}, {
+  "name" : "Source Maps v3",
+  "url" : "https://json.schemastore.org/sourcemap-v3.json",
+  "fileName" : "sourcemap-v3.json"
+}, {
+  "name" : "Sourcery",
+  "url" : "https://json.schemastore.org/sourcery_yaml_schema.json",
+  "fileName" : "sourcery_yaml_schema.json"
+}, {
+  "name" : "Speakeasy Lint Configuration File",
+  "url" : "https://raw.githubusercontent.com/speakeasy-api/sdk-gen-config/main/schemas/lint.schema.json",
+  "fileName" : "lint.schema.json"
+}, {
+  "name" : "Speakeasy Test Generation Configuration File",
+  "url" : "https://raw.githubusercontent.com/speakeasy-api/sdk-gen-config/main/schemas/tests.schema.json",
+  "fileName" : "tests.schema.json"
+}, {
+  "name" : "Speakeasy Workflow File",
+  "url" : "https://raw.githubusercontent.com/speakeasy-api/sdk-gen-config/main/schemas/workflow.schema.json",
+  "fileName" : "workflow.schema.json"
+}, {
+  "name" : "SpecIF",
+  "url" : "https://json.schemastore.org/specif-1.1.json",
+  "fileName" : "specif-1.1.json"
+}, {
+  "name" : "Sponge Mixin configuration",
+  "url" : "https://json.schemastore.org/sponge-mixins.json",
+  "fileName" : "sponge-mixins.json"
+}, {
+  "name" : ".sprite files",
+  "url" : "https://json.schemastore.org/sprite.json",
+  "fileName" : "sprite.json"
+}, {
+  "name" : "sqlc configuration",
+  "url" : "https://json.schemastore.org/sqlc-2.0.json",
+  "fileName" : "sqlc-2.0.json"
+}, {
+  "name" : "Azure Static Web Apps configuration file",
+  "url" : "https://json.schemastore.org/staticwebapp.config.json",
+  "fileName" : "staticwebapp.config.json"
+}, {
+  "name" : "Azure Static Web Apps CLI configuration file",
+  "url" : "https://json.schemastore.org/swa-cli.config.json",
+  "fileName" : "swa-cli.config.json"
+}, {
+  "name" : "StackBlitz",
+  "url" : "https://json.schemastore.org/stackblitzrc.json",
+  "fileName" : "stackblitzrc.json"
+}, {
+  "name" : "Stale",
+  "url" : "https://json.schemastore.org/stale.json",
+  "fileName" : "stale.json"
+}, {
+  "name" : "Starship",
+  "url" : "https://starship.rs/config-schema.json",
+  "fileName" : "config-schema.json"
+}, {
+  "name" : "Statamic Blueprint",
+  "url" : "https://raw.githubusercontent.com/Konafets/statamic-blueprint-validation/main/statamic.blueprint.schema.json",
+  "fileName" : "statamic.blueprint.schema.json"
+}, {
+  "name" : "Stella configuration file",
+  "url" : "https://raw.githubusercontent.com/Shravan-1908/stellapy/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "stripe-app.json",
+  "url" : "https://raw.githubusercontent.com/stripe/stripe-apps/main/schema/stripe-app.schema.json",
+  "fileName" : "stripe-app.schema.json"
+}, {
+  "name" : "stripe-app-local.json",
+  "url" : "https://raw.githubusercontent.com/stripe/stripe-apps/main/schema/stripe-app-local.schema.json",
+  "fileName" : "stripe-app-local.schema.json"
+}, {
+  "name" : "Stryker Mutator",
+  "url" : "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/api/schema/stryker-core.json",
+  "fileName" : "stryker-core.json"
+}, {
+  "name" : "StyleCop Analyzers Configuration",
+  "url" : "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+  "fileName" : "stylecop.schema.json"
+}, {
+  "name" : "Stylelint (.stylelintrc)",
+  "url" : "https://json.schemastore.org/stylelintrc.json",
+  "fileName" : "stylelintrc.json"
+}, {
+  "name" : "SWADL",
+  "url" : "https://raw.githubusercontent.com/SymphonyPlatformSolutions/symphony-wdk/master/workflow-language/src/main/resources/swadl-schema-1.0.json",
+  "fileName" : "swadl-schema-1.0.json"
+}, {
+  "name" : "Swagger API 2.0",
+  "url" : "https://json.schemastore.org/swagger-2.0.json",
+  "fileName" : "swagger-2.0.json"
+}, {
+  "name" : "task.json",
+  "url" : "https://json.schemastore.org/task.json",
+  "fileName" : "task.json"
+}, {
+  "name" : "Talhelper",
+  "url" : "https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json",
+  "fileName" : "talconfig.json"
+}, {
+  "name" : "Talisman configuration",
+  "url" : "https://raw.githubusercontent.com/thoughtworks/talisman/main/examples/schema-store-talismanrc.json",
+  "fileName" : "schema-store-talismanrc.json"
+}, {
+  "name" : "Taurus",
+  "url" : "https://json.schemastore.org/taurus.json",
+  "fileName" : "taurus.json"
+}, {
+  "name" : "Tauticord",
+  "url" : "https://raw.githubusercontent.com/nwithan8/tauticord/master/.schema/config_v2.schema.json",
+  "fileName" : "config_v2.schema.json"
+}, {
+  "name" : "template.json",
+  "url" : "https://json.schemastore.org/template.json",
+  "fileName" : "template.json"
+}, {
+  "name" : "templatsources.json",
+  "url" : "https://json.schemastore.org/templatesources.json",
+  "fileName" : "templatesources.json"
+}, {
+  "name" : "Tier.run pricing.json",
+  "url" : "https://raw.githubusercontent.com/tierrun/tier/main/pricing/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Tikibase",
+  "url" : "https://raw.githubusercontent.com/kevgo/tikibase/main/doc/tikibase.schema.json",
+  "fileName" : "tikibase.schema.json"
+}, {
+  "name" : "theme.json",
+  "url" : "https://schemas.wp.org/trunk/theme.json",
+  "fileName" : "theme.json"
+}, {
+  "name" : "tizen_workspace.json",
+  "url" : "https://json.schemastore.org/tizen_workspace.json",
+  "fileName" : "tizen_workspace.json"
+}, {
+  "name" : "tldr",
+  "url" : "https://json.schemastore.org/tldr.json",
+  "fileName" : "tldr.json"
+}, {
+  "name" : "TextMate Grammar",
+  "url" : "https://json.schemastore.org/tmlanguage.json",
+  "fileName" : "tmlanguage.json"
+}, {
+  "name" : "TestEnvironment.json",
+  "url" : "https://json.schemastore.org/testenvironments.json",
+  "fileName" : "testenvironments.json"
+}, {
+  "name" : "Turborepo",
+  "url" : "https://turborepo.org/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Travis CI (.travis.yml)",
+  "url" : "https://json.schemastore.org/travis.json",
+  "fileName" : "travis.json"
+}, {
+  "name" : "Traefik v2",
+  "url" : "https://json.schemastore.org/traefik-v2.json",
+  "fileName" : "traefik-v2.json"
+}, {
+  "name" : "Traefik v2 File Provider",
+  "url" : "https://json.schemastore.org/traefik-v2-file-provider.json",
+  "fileName" : "traefik-v2-file-provider.json"
+}, {
+  "name" : "transcend.yml",
+  "url" : "https://raw.githubusercontent.com/transcend-io/cli/main/transcend-yml-schema-v4.json",
+  "fileName" : "transcend-yml-schema-v4.json"
+}, {
+  "name" : "trime.yaml",
+  "url" : "https://raw.githubusercontent.com/osfans/trime/develop/doc/trime-schema.json",
+  "fileName" : "trime-schema.json"
+}, {
+  "name" : "TrueScript for *.tscript files",
+  "url" : "https://json.schemastore.org/truescript.json",
+  "fileName" : "truescript.json"
+}, {
+  "name" : "trunk.yaml",
+  "url" : "https://static.trunk.io/pub/trunk-yaml-schema.json",
+  "fileName" : "trunk-yaml-schema.json"
+}, {
+  "name" : "tsconfig.json",
+  "url" : "https://json.schemastore.org/tsconfig.json",
+  "fileName" : "tsconfig.json"
+}, {
+  "name" : "tsd.json",
+  "url" : "https://json.schemastore.org/tsd.json",
+  "fileName" : "tsd.json"
+}, {
+  "name" : "tsdoc.json",
+  "url" : "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+  "fileName" : "tsdoc.schema.json"
+}, {
+  "name" : "tsdrc.json",
+  "url" : "https://json.schemastore.org/tsdrc.json",
+  "fileName" : "tsdrc.json"
+}, {
+  "name" : "ts-force-config.json",
+  "url" : "https://json.schemastore.org/ts-force-config.json",
+  "fileName" : "ts-force-config.json"
+}, {
+  "name" : "tslint.json",
+  "url" : "https://json.schemastore.org/tslint.json",
+  "fileName" : "tslint.json"
+}, {
+  "name" : "TSON",
+  "url" : "https://raw.githubusercontent.com/spectral-discord/TSON/main/schema/tson.json",
+  "fileName" : "tson.json"
+}, {
+  "name" : "TSTyche",
+  "url" : "https://tstyche.org/schemas/config.json",
+  "fileName" : "config.json"
+}, {
+  "name" : "tsup",
+  "url" : "https://cdn.jsdelivr.net/npm/tsup/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "tusk.yml",
+  "url" : "https://raw.githubusercontent.com/rliebz/tusk/main/tusk.schema.json",
+  "fileName" : "tusk.schema.json"
+}, {
+  "name" : "typewiz.json",
+  "url" : "https://json.schemastore.org/typewiz.json",
+  "fileName" : "typewiz.json"
+}, {
+  "name" : "typo3.json",
+  "url" : "https://json.schemastore.org/typo3.json",
+  "fileName" : "typo3.json"
+}, {
+  "name" : "typings.json",
+  "url" : "https://json.schemastore.org/typings.json",
+  "fileName" : "typings.json"
+}, {
+  "name" : "typingsrc.json",
+  "url" : "https://json.schemastore.org/typingsrc.json",
+  "fileName" : "typingsrc.json"
+}, {
+  "name" : "Ubuntu Server Autoinstall",
+  "url" : "https://json.schemastore.org/ubuntu-server-autoinstall.json",
+  "fileName" : "ubuntu-server-autoinstall.json"
+}, {
+  "name" : "up.json",
+  "url" : "https://json.schemastore.org/up.json",
+  "fileName" : "up.json"
+}, {
+  "name" : "UI5 Manifest",
+  "url" : "https://raw.githubusercontent.com/SAP/ui5-manifest/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "ui5.yaml",
+  "url" : "https://sap.github.io/ui5-tooling/schema/ui5.yaml.json",
+  "fileName" : "ui5.yaml.json"
+}, {
+  "name" : "ui5-workspace.yaml",
+  "url" : "https://sap.github.io/ui5-tooling/schema/ui5-workspace.yaml.json",
+  "fileName" : "ui5-workspace.yaml.json"
+}, {
+  "name" : "UTAM Page Object",
+  "url" : "https://json.schemastore.org/utam-page-object.json",
+  "fileName" : "utam-page-object.json"
+}, {
+  "name" : "UNCORS configuration",
+  "url" : "https://raw.githubusercontent.com/evg4b/uncors/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "uv",
+  "url" : "https://json.schemastore.org/uv.json",
+  "fileName" : "uv.json"
+}, {
+  "name" : "vega.json",
+  "url" : "https://json.schemastore.org/vega.json",
+  "fileName" : "vega.json"
+}, {
+  "name" : "vega-lite.json",
+  "url" : "https://json.schemastore.org/vega-lite.json",
+  "fileName" : "vega-lite.json"
+}, {
+  "name" : "Vela Pipeline Configuration",
+  "url" : "https://github.com/go-vela/types/releases/latest/download/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "venvironment.yaml",
+  "url" : "https://json.schemastore.org/venvironment-schema-v3.2.0.json",
+  "fileName" : "venvironment-schema-v3.2.0.json"
+}, {
+  "name" : "venvironment-basic.yaml",
+  "url" : "https://json.schemastore.org/venvironment-basic-schema-v3.2.0.json",
+  "fileName" : "venvironment-basic-schema-v3.2.0.json"
+}, {
+  "name" : "Version Bumper config",
+  "url" : "https://raw.githubusercontent.com/eliashaeussler/version-bumper/refs/heads/main/res/version-bumper.schema.json",
+  "fileName" : "version-bumper.schema.json"
+}, {
+  "name" : "version.json",
+  "url" : "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
+  "fileName" : "version.schema.json"
+}, {
+  "name" : ".versionrc.json",
+  "url" : "https://raw.githubusercontent.com/conventional-changelog/conventional-changelog-config-spec/master/versions/2.2.0/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "vhwdebugger-binding.yaml",
+  "url" : "https://json.schemastore.org/vhwdebugger-binding-schema.json",
+  "fileName" : "vhwdebugger-binding-schema.json"
+}, {
+  "name" : "vim-addon-info",
+  "url" : "https://json.schemastore.org/vim-addon-info.json",
+  "fileName" : "vim-addon-info.json"
+}, {
+  "name" : "vsls.json",
+  "url" : "https://json.schemastore.org/vsls.json",
+  "fileName" : "vsls.json"
+}, {
+  "name" : "vs-2017.3.host.json",
+  "url" : "https://json.schemastore.org/vs-2017.3.host.json",
+  "fileName" : "vs-2017.3.host.json"
+}, {
+  "name" : "vs-nesting.json",
+  "url" : "https://json.schemastore.org/vs-nesting.json",
+  "fileName" : "vs-nesting.json"
+}, {
+  "name" : ".vsconfig",
+  "url" : "https://json.schemastore.org/vsconfig.json",
+  "fileName" : "vsconfig.json"
+}, {
+  "name" : ".vsext",
+  "url" : "https://json.schemastore.org/vsext.json",
+  "fileName" : "vsext.json"
+}, {
+  "name" : "VSIX CLI publishing",
+  "url" : "https://json.schemastore.org/vsix-publish.json",
+  "fileName" : "vsix-publish.json"
+}, {
+  "name" : "vss-extension.json",
+  "url" : "https://json.schemastore.org/vss-extension.json",
+  "fileName" : "vss-extension.json"
+}, {
+  "name" : "vtesttree.yaml",
+  "url" : "https://json.schemastore.org/vtesttree-schema-v2.3.0.json",
+  "fileName" : "vtesttree-schema-v2.3.0.json"
+}, {
+  "name" : "vtestunit.yaml",
+  "url" : "https://json.schemastore.org/vtestunit-schema.json",
+  "fileName" : "vtestunit-schema.json"
+}, {
+  "name" : "v8r",
+  "url" : "https://raw.githubusercontent.com/chris48s/v8r/main/config-schema.json",
+  "fileName" : "config-schema.json"
+}, {
+  "name" : "WebExtensions",
+  "url" : "https://json.schemastore.org/webextension.json",
+  "fileName" : "webextension.json"
+}, {
+  "name" : "Web App Manifest",
+  "url" : "https://json.schemastore.org/web-manifest-combined.json",
+  "fileName" : "web-manifest-combined.json"
+}, {
+  "name" : "webjobs-list.json",
+  "url" : "https://json.schemastore.org/webjobs-list.json",
+  "fileName" : "webjobs-list.json"
+}, {
+  "name" : "webjobpublishsettings.json",
+  "url" : "https://json.schemastore.org/webjob-publish-settings.json",
+  "fileName" : "webjob-publish-settings.json"
+}, {
+  "name" : "Web types",
+  "url" : "https://json.schemastore.org/web-types.json",
+  "fileName" : "web-types.json"
+}, {
+  "name" : "Wrangler CLI",
+  "url" : "https://www.unpkg.com/wrangler/config-schema.json",
+  "fileName" : "config-schema.json"
+}, {
+  "name" : "JSON-stat 2.0",
+  "url" : "https://json-stat.org/format/schema/2.0/",
+  "fileName" : "JSON-stat 2.0"
+}, {
+  "name" : "KSP-AVC",
+  "url" : "https://raw.githubusercontent.com/linuxgurugamer/KSPAddonVersionChecker/master/KSP-AVC.schema.json",
+  "fileName" : "KSP-AVC.schema.json"
+}, {
+  "name" : "KSP-CKAN",
+  "url" : "https://raw.githubusercontent.com/KSP-CKAN/CKAN/master/CKAN.schema",
+  "fileName" : "CKAN.schema"
+}, {
+  "name" : "KSP-NetKAN",
+  "url" : "https://raw.githubusercontent.com/KSP-CKAN/CKAN/master/NetKAN.schema",
+  "fileName" : "NetKAN.schema"
+}, {
+  "name" : "JSON Schema Draft 4",
+  "url" : "https://json-schema.org/draft-04/schema",
+  "fileName" : "JSON Schema Draft 4"
+}, {
+  "name" : "JSON Schema Draft 7",
+  "url" : "https://json-schema.org/draft-07/schema",
+  "fileName" : "JSON Schema Draft 7"
+}, {
+  "name" : "JSON Schema Draft 8 (2019-09)",
+  "url" : "https://json-schema.org/draft/2019-09/schema",
+  "fileName" : "JSON Schema Draft 8 (2019-09)"
+}, {
+  "name" : "JSON Schema Draft 2020-12",
+  "url" : "https://json-schema.org/draft/2020-12/schema",
+  "fileName" : "JSON Schema Draft 2020-12"
+}, {
+  "name" : "xunit.runner.json",
+  "url" : "https://json.schemastore.org/xunit.runner.schema.json",
+  "fileName" : "xunit.runner.schema.json"
+}, {
+  "name" : "servicehub.service.json",
+  "url" : "https://json.schemastore.org/servicehub.service.schema.json",
+  "fileName" : "servicehub.service.schema.json"
+}, {
+  "name" : "servicehub.config.json",
+  "url" : "https://json.schemastore.org/servicehub.config.schema.json",
+  "fileName" : "servicehub.config.schema.json"
+}, {
+  "name" : ".cryproj (generic)",
+  "url" : "https://json.schemastore.org/cryproj.json",
+  "fileName" : "cryproj.json"
+}, {
+  "name" : "typedoc.json",
+  "url" : "https://typedoc.org/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "tmuxinator",
+  "url" : "https://json.schemastore.org/tmuxinator.json",
+  "fileName" : "tmuxinator.json"
+}, {
+  "name" : "huskyrc",
+  "url" : "https://json.schemastore.org/huskyrc.json",
+  "fileName" : "huskyrc.json"
+}, {
+  "name" : "lint-staged (.lintstagedrc)",
+  "url" : "https://json.schemastore.org/lintstagedrc.schema.json",
+  "fileName" : "lintstagedrc.schema.json"
+}, {
+  "name" : "mirrord config",
+  "url" : "https://raw.githubusercontent.com/metalbear-co/mirrord/main/mirrord-schema.json",
+  "fileName" : "mirrord-schema.json"
+}, {
+  "name" : "mise",
+  "url" : "https://mise.jdx.dev/schema/mise.json",
+  "fileName" : "mise.json"
+}, {
+  "name" : "mta.yaml",
+  "url" : "https://json.schemastore.org/mta.json",
+  "fileName" : "mta.json"
+}, {
+  "name" : "mtad.yaml",
+  "url" : "https://json.schemastore.org/mtad.json",
+  "fileName" : "mtad.json"
+}, {
+  "name" : "Motif config",
+  "url" : "https://motif.land/api/motif.schema.json",
+  "fileName" : "motif.schema.json"
+}, {
+  "name" : ".mtaext",
+  "url" : "https://json.schemastore.org/mtaext.json",
+  "fileName" : "mtaext.json"
+}, {
+  "name" : "xs-app.json",
+  "url" : "https://json.schemastore.org/xs-app.json",
+  "fileName" : "xs-app.json"
+}, {
+  "name" : "Opctl",
+  "url" : "https://json.schemastore.org/opspec-io-0.1.7.json",
+  "fileName" : "opspec-io-0.1.7.json"
+}, {
+  "name" : "HEMTT",
+  "url" : "https://json.schemastore.org/hemtt-0.6.2.json",
+  "fileName" : "hemtt-0.6.2.json"
+}, {
+  "name" : "now",
+  "url" : "https://json.schemastore.org/now.json",
+  "fileName" : "now.json"
+}, {
+  "name" : "taskcat",
+  "url" : "https://raw.githubusercontent.com/aws-quickstart/taskcat/master/taskcat/cfg/config_schema.json",
+  "fileName" : "config_schema.json"
+}, {
+  "name" : "BizTalkServerApplicationSchema",
+  "url" : "https://json.schemastore.org/BizTalkServerApplicationSchema.json",
+  "fileName" : "BizTalkServerApplicationSchema.json"
+}, {
+  "name" : "httpmockrc",
+  "url" : "https://json.schemastore.org/httpmockrc.json",
+  "fileName" : "httpmockrc.json"
+}, {
+  "name" : "neoload",
+  "url" : "https://raw.githubusercontent.com/Neotys-Labs/neoload-cli/master/resources/as-code.latest.schema.json",
+  "fileName" : "as-code.latest.schema.json"
+}, {
+  "name" : "release drafter",
+  "url" : "https://raw.githubusercontent.com/release-drafter/release-drafter/master/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "zuul",
+  "url" : "https://json.schemastore.org/zuul.json",
+  "fileName" : "zuul.json"
+}, {
+  "name" : "Briefcase",
+  "url" : "https://raw.githubusercontent.com/microsoft/Briefcase/master/mlbriefcase/briefcase-schema.json",
+  "fileName" : "briefcase-schema.json"
+}, {
+  "name" : "httparchive",
+  "url" : "https://raw.githubusercontent.com/ahmadnassri/har-schema/master/lib/har.json",
+  "fileName" : "har.json"
+}, {
+  "name" : "jsdoc",
+  "url" : "https://json.schemastore.org/jsdoc-1.0.0.json",
+  "fileName" : "jsdoc-1.0.0.json"
+}, {
+  "name" : "Ray",
+  "url" : "https://raw.githubusercontent.com/ray-project/ray/master/python/ray/autoscaler/ray-schema.json",
+  "fileName" : "ray-schema.json"
+}, {
+  "name" : "Hadolint",
+  "url" : "https://raw.githubusercontent.com/hadolint/hadolint/master/contrib/hadolint.json",
+  "fileName" : "hadolint.json"
+}, {
+  "name" : "Hatch",
+  "url" : "https://json.schemastore.org/hatch.json",
+  "fileName" : "hatch.json"
+}, {
+  "name" : "helmfile",
+  "url" : "https://json.schemastore.org/helmfile.json",
+  "fileName" : "helmfile.json"
+}, {
+  "name" : "helmwave",
+  "url" : "https://github.com/helmwave/helmwave/releases/latest/download/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Container Structure Test",
+  "url" : "https://json.schemastore.org/container-structure-test.json",
+  "fileName" : "container-structure-test.json"
+}, {
+  "name" : "Zinoma",
+  "url" : "https://github.com/fbecart/zinoma/releases/latest/download/zinoma-schema.json",
+  "fileName" : "zinoma-schema.json"
+}, {
+  "name" : "Windows Package Manager Singleton Manifest",
+  "url" : "https://json.schemastore.org/winget-pkgs-singleton-1.0.0.json",
+  "fileName" : "winget-pkgs-singleton-1.0.0.json"
+}, {
+  "name" : "Windows Package Manager Installer Manifest",
+  "url" : "https://json.schemastore.org/winget-pkgs-installer-1.0.0.json",
+  "fileName" : "winget-pkgs-installer-1.0.0.json"
+}, {
+  "name" : "Windows Package Manager Locale Manifest",
+  "url" : "https://json.schemastore.org/winget-pkgs-locale-1.0.0.json",
+  "fileName" : "winget-pkgs-locale-1.0.0.json"
+}, {
+  "name" : "commitlint (.commitlintrc)",
+  "url" : "https://json.schemastore.org/commitlintrc.json",
+  "fileName" : "commitlintrc.json"
+}, {
+  "name" : "Uniswap Token List",
+  "url" : "https://uniswap.org/tokenlist.schema.json",
+  "fileName" : "tokenlist.schema.json"
+}, {
+  "name" : "yamllint",
+  "url" : "https://json.schemastore.org/yamllint.json",
+  "fileName" : "yamllint.json"
+}, {
+  "name" : "Yippee-Ki-JSON configuration YML",
+  "url" : "https://raw.githubusercontent.com/nagyesta/yippee-ki-json/main/schema/yippee-ki-json_config_schema.json",
+  "fileName" : "yippee-ki-json_config_schema.json"
+}, {
+  "name" : "docker-compose.yml",
+  "url" : "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json",
+  "fileName" : "compose-spec.json"
+}, {
+  "name" : "devinit",
+  "url" : "https://json.schemastore.org/devinit.schema-6.0.json",
+  "fileName" : "devinit.schema-6.0.json"
+}, {
+  "name" : "djlint",
+  "url" : "https://json.schemastore.org/djlint.json",
+  "fileName" : "djlint.json"
+}, {
+  "name" : "tsoa",
+  "url" : "https://json.schemastore.org/tsoa.json",
+  "fileName" : "tsoa.json"
+}, {
+  "name" : "API Builder",
+  "url" : "https://json.schemastore.org/apibuilder.json",
+  "fileName" : "apibuilder.json"
+}, {
+  "name" : "Gradle Enterprise",
+  "url" : "https://docs.gradle.com/enterprise/admin/schema/gradle-enterprise-config-schema-10.json",
+  "fileName" : "gradle-enterprise-config-schema-10.json"
+}, {
+  "name" : "Gradle Build Cache Node",
+  "url" : "https://docs.gradle.com/build-cache-node/schema/build-cache-node-config-schema-5.json",
+  "fileName" : "build-cache-node-config-schema-5.json"
+}, {
+  "name" : "Yarn Config (.yarnrc.yml)",
+  "url" : "https://yarnpkg.com/configuration/yarnrc.json",
+  "fileName" : "yarnrc.json"
+}, {
+  "name" : "Better Code Hub",
+  "url" : "https://json.schemastore.org/bettercodehub.json",
+  "fileName" : "bettercodehub.json"
+}, {
+  "name" : "Starlake Data Pipeline",
+  "url" : "https://json.schemastore.org/starlake.json",
+  "fileName" : "starlake.json"
+}, {
+  "name" : "swcrc",
+  "url" : "https://json.schemastore.org/swcrc.json",
+  "fileName" : "swcrc.json"
+}, {
+  "name" : "OpenWeather Road Risk API",
+  "url" : "https://json.schemastore.org/openweather.roadrisk.json",
+  "fileName" : "openweather.roadrisk.json"
+}, {
+  "name" : "OpenWeather Current Weather API",
+  "url" : "https://json.schemastore.org/openweather.current.json",
+  "fileName" : "openweather.current.json"
+}, {
+  "name" : "JSON-e templates",
+  "url" : "https://json.schemastore.org/jsone.json",
+  "fileName" : "jsone.json"
+}, {
+  "name" : "Taskfile config",
+  "url" : "https://taskfile.dev/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Hammerkit",
+  "url" : "https://json.schemastore.org/hammerkit.json",
+  "fileName" : "hammerkit.json"
+}, {
+  "name" : "Containerlab",
+  "url" : "https://raw.githubusercontent.com/srl-labs/containerlab/main/schemas/clab.schema.json",
+  "fileName" : "clab.schema.json"
+}, {
+  "name" : "User Journey Map",
+  "url" : "https://raw.githubusercontent.com/arvinxx/components/master/packages/journey-map/schema/journey-map.schema.json",
+  "fileName" : "journey-map.schema.json"
+}, {
+  "name" : "Render Blueprints",
+  "url" : "https://render.com/schema/render.yaml.json",
+  "fileName" : "render.yaml.json"
+}, {
+  "name" : "RKE Cluster Configuration YAML",
+  "url" : "https://raw.githubusercontent.com/dcermak/vscode-rke-cluster-config/main/schemas/cluster.yml.json",
+  "fileName" : "cluster.yml.json"
+}, {
+  "name" : "RKE Cluster Configuration JSON",
+  "url" : "https://raw.githubusercontent.com/dcermak/vscode-rke-cluster-config/main/schemas/cluster.json",
+  "fileName" : "cluster.json"
+}, {
+  "name" : "Liquibase",
+  "url" : "https://json.schemastore.org/liquibase-3.2.json",
+  "fileName" : "liquibase-3.2.json"
+}, {
+  "name" : "Liquibase Flow File",
+  "url" : "https://www.liquibase.org/json/schema/liquibase-flow-file-latest.json",
+  "fileName" : "liquibase-flow-file-latest.json"
+}, {
+  "name" : "Pipeline component",
+  "url" : "https://raw.githubusercontent.com/Cloud-Pipelines/component_spec_schema/stable/component_spec.json_schema.json",
+  "fileName" : "component_spec.json_schema.json"
+}, {
+  "name" : "skaffold.yaml",
+  "url" : "https://raw.githubusercontent.com/GoogleContainerTools/skaffold/main/docs-v2/content/en/schemas/v3.json",
+  "fileName" : "v3.json"
+}, {
+  "name" : "Markdownlint",
+  "url" : "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
+  "fileName" : "markdownlint-config-schema.json"
+}, {
+  "name" : "markdown-link-check",
+  "url" : "https://json.schemastore.org/markdown-link-check.json",
+  "fileName" : "markdown-link-check.json"
+}, {
+  "name" : "Mason Registry",
+  "url" : "https://github.com/mason-org/registry-schema/releases/latest/download/package.schema.json",
+  "fileName" : "package.schema.json"
+}, {
+  "name" : "SauceCTL Configuration",
+  "url" : "https://raw.githubusercontent.com/saucelabs/saucectl/main/api/saucectl.schema.json",
+  "fileName" : "saucectl.schema.json"
+}, {
+  "name" : "fulibWorkflows",
+  "url" : "https://raw.githubusercontent.com/fujaba/fulibWorkflows/main/schemas/fulibWorkflows.schema.json",
+  "fileName" : "fulibWorkflows.schema.json"
+}, {
+  "name" : "Woodpecker pipeline config",
+  "url" : "https://raw.githubusercontent.com/woodpecker-ci/woodpecker/main/pipeline/frontend/yaml/linter/schema/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Netin Diagnostic System Template",
+  "url" : "https://s3.eu-central-1.amazonaws.com/files.netin.io/spider-schemas/template.schema.json",
+  "fileName" : "template.schema.json"
+}, {
+  "name" : "noodl config",
+  "url" : "https://noodl.s3.us-west-1.amazonaws.com/noodl.schema.json",
+  "fileName" : "noodl.schema.json"
+}, {
+  "name" : "mboats",
+  "url" : "https://json.schemastore.org/mboats-config-0.2.json",
+  "fileName" : "mboats-config-0.2.json"
+}, {
+  "name" : "StackHawk Scanner Configuration",
+  "url" : "https://download.stackhawk.com/hawk/jsonschema/hawkconfig.json",
+  "fileName" : "hawkconfig.json"
+}, {
+  "name" : "Serverless Framework Configuration",
+  "url" : "https://raw.githubusercontent.com/lalcebo/json-schema/master/serverless/reference.json",
+  "fileName" : "reference.json"
+}, {
+  "name" : "Alacritty Configuration",
+  "url" : "https://raw.githubusercontent.com/distinction-dev/alacritty-schema/main/alacritty/reference.json",
+  "fileName" : "reference.json"
+}, {
+  "name" : "Serverless Workflow",
+  "url" : "https://raw.githubusercontent.com/serverlessworkflow/specification/main/schema/workflow.yaml",
+  "fileName" : "workflow.yaml"
+}, {
+  "name" : "Shopware 6 Configuration",
+  "url" : "https://raw.githubusercontent.com/shopware/platform/trunk/config-schema.json",
+  "fileName" : "config-schema.json"
+}, {
+  "name" : "Shopware CLI Extension Store Configuration",
+  "url" : "https://raw.githubusercontent.com/FriendsOfShopware/shopware-cli/main/extension/shopware-extension-schema.json",
+  "fileName" : "shopware-extension-schema.json"
+}, {
+  "name" : "Shopware CLI Project Store Configuration",
+  "url" : "https://raw.githubusercontent.com/FriendsOfShopware/shopware-cli/main/shop/shopware-project-schema.json",
+  "fileName" : "shopware-project-schema.json"
+}, {
+  "name" : "Qodana",
+  "url" : "https://json.schemastore.org/qodana-1.0.json",
+  "fileName" : "qodana-1.0.json"
+}, {
+  "name" : "Tye",
+  "url" : "https://raw.githubusercontent.com/dotnet/tye/main/src/schema/tye-schema.json",
+  "fileName" : "tye-schema.json"
+}, {
+  "name" : "unist",
+  "url" : "https://json.schemastore.org/unist.json",
+  "fileName" : "unist.json"
+}, {
+  "name" : "Hugo Theme",
+  "url" : "https://json.schemastore.org/hugo-theme.json",
+  "fileName" : "hugo-theme.json"
+}, {
+  "name" : "Hugo",
+  "url" : "https://json.schemastore.org/hugo.json",
+  "fileName" : "hugo.json"
+}, {
+  "name" : "Cheatsheets",
+  "url" : "https://json.schemastore.org/cheatsheets.json",
+  "fileName" : "cheatsheets.json"
+}, {
+  "name" : "deployed-cli",
+  "url" : "https://json.schemastore.org/deployed.json",
+  "fileName" : "deployed.json"
+}, {
+  "name" : "Xstate Machine",
+  "url" : "https://raw.githubusercontent.com/statelyai/xstate/main/packages/core/src/machine.schema.json",
+  "fileName" : "machine.schema.json"
+}, {
+  "name" : "Butane Config",
+  "url" : "https://raw.githubusercontent.com/Relativ-IT/Butane-Schemas/Release/Butane-Schema.json",
+  "fileName" : "Butane-Schema.json"
+}, {
+  "name" : "Updatecli Compose",
+  "url" : "https://www.updatecli.io/schema/latest/compose/config.json",
+  "fileName" : "config.json"
+}, {
+  "name" : "Updatecli Policy Manifest",
+  "url" : "https://www.updatecli.io/schema/latest/policy/manifest/config.json",
+  "fileName" : "config.json"
+}, {
+  "name" : "Updatecli Policy Metadata",
+  "url" : "https://www.updatecli.io/schema/latest/policy/metadata/config.json",
+  "fileName" : "config.json"
+}, {
+  "name" : "GeoJSON.json latest",
+  "url" : "https://geojson.org/schema/GeoJSON.json",
+  "fileName" : "GeoJSON.json"
+}, {
+  "name" : "clang-format (.clang-format)",
+  "url" : "https://json.schemastore.org/clang-format.json",
+  "fileName" : "clang-format.json"
+}, {
+  "name" : "Estuary Flow Catalog",
+  "url" : "https://raw.githubusercontent.com/estuary/flow/master/flow.schema.json",
+  "fileName" : "flow.schema.json"
+}, {
+  "name" : "V2Ray",
+  "url" : "https://raw.githubusercontent.com/EHfive/v2ray-jsonschema/main/v4-config.schema.json",
+  "fileName" : "v4-config.schema.json"
+}, {
+  "name" : "GherKing",
+  "url" : "https://raw.githubusercontent.com/gherking/gherking/master/schema/gherking.schema.json",
+  "fileName" : "gherking.schema.json"
+}, {
+  "name" : "CICS TS region tagging",
+  "url" : "https://public.dhe.ibm.com/ibmdl/export/pub/software/htp/cics/schemas/json/cicstags.json",
+  "fileName" : "cicstags.json"
+}, {
+  "name" : "CICS TS resource import",
+  "url" : "https://public.dhe.ibm.com/ibmdl/export/pub/software/htp/cics/schemas/json/cicsts-resourceimport.json",
+  "fileName" : "cicsts-resourceimport.json"
+}, {
+  "name" : "CICS TS resource model",
+  "url" : "https://public.dhe.ibm.com/ibmdl/export/pub/software/htp/cics/schemas/json/cicsts-resourcemodel.json",
+  "fileName" : "cicsts-resourcemodel.json"
+}, {
+  "name" : "CICS TS resource overrides",
+  "url" : "https://public.dhe.ibm.com/ibmdl/export/pub/software/htp/cics/schemas/json/resourceoverrides.json",
+  "fileName" : "resourceoverrides.json"
+}, {
+  "name" : "Webman package recipe",
+  "url" : "https://raw.githubusercontent.com/candrewlee14/webman/main/schema/pkg_schema.json",
+  "fileName" : "pkg_schema.json"
+}, {
+  "name" : "webhint.io",
+  "url" : "https://raw.githubusercontent.com/webhintio/hint/main/packages/hint/src/lib/config/config-schema.json",
+  "fileName" : "config-schema.json"
+}, {
+  "name" : "AVA Configuration",
+  "url" : "https://json.schemastore.org/ava.json",
+  "fileName" : "ava.json"
+}, {
+  "name" : "Datahub Ingestion Recipe",
+  "url" : "https://datahubproject.io/schemas/datahub_ingestion_schema.json",
+  "fileName" : "datahub_ingestion_schema.json"
+}, {
+  "name" : "Quali Torque Blueprint Spec 2",
+  "url" : "https://raw.githubusercontent.com/QualiTorque/torque-vs-code-extensions/master/client/schemas/blueprint-spec2-schema.json",
+  "fileName" : "blueprint-spec2-schema.json"
+}, {
+  "name" : "jscpd Configuration",
+  "url" : "https://json.schemastore.org/jscpd.json",
+  "fileName" : "jscpd.json"
+}, {
+  "name" : "Pterodactyl",
+  "url" : "https://json.schemastore.org/pterodactyl.json",
+  "fileName" : "pterodactyl.json"
+}, {
+  "name" : "Hardware Sentry Configuration",
+  "url" : "https://json.schemastore.org/hws-config.json",
+  "fileName" : "hws-config.json"
+}, {
+  "name" : "devspace.yaml",
+  "url" : "https://raw.githubusercontent.com/loft-sh/devspace/main/devspace-schema.json",
+  "fileName" : "devspace-schema.json"
+}, {
+  "name" : "Monika Configuration",
+  "url" : "https://json.schemastore.org/monika-config-schema.json",
+  "fileName" : "monika-config-schema.json"
+}, {
+  "name" : "Istanbul",
+  "url" : "https://json.schemastore.org/nycrc.json",
+  "fileName" : "nycrc.json"
+}, {
+  "name" : "MongoDB Atlas Search Index Definition",
+  "url" : "https://json.schemastore.org/mongodb-atlas-search-index-definition.json",
+  "fileName" : "mongodb-atlas-search-index-definition.json"
+}, {
+  "name" : "KoDE/CI build.yaml",
+  "url" : "https://json.schemastore.org/kode-ci-build-1.0.0.json",
+  "fileName" : "kode-ci-build-1.0.0.json"
+}, {
+  "name" : "Kong DBLess config",
+  "url" : "https://json.schemastore.org/kong_json_schema.json",
+  "fileName" : "kong_json_schema.json"
+}, {
+  "name" : "Embrace Config",
+  "url" : "https://json.schemastore.org/embrace-config-schema-1.0.0.json",
+  "fileName" : "embrace-config-schema-1.0.0.json"
+}, {
+  "name" : "petstore-v1.0",
+  "url" : "https://json.schemastore.org/petstore-v1.0.json",
+  "fileName" : "petstore-v1.0.json"
+}, {
+  "name" : "JFrog Pipelines YML DSL",
+  "url" : "https://json.schemastore.org/jfrog-pipelines.json",
+  "fileName" : "jfrog-pipelines.json"
+}, {
+  "name" : "Safebox Config",
+  "url" : "https://json.schemastore.org/safebox-schema-v1.0.0.json",
+  "fileName" : "safebox-schema-v1.0.0.json"
+}, {
+  "name" : "Sublime Syntax",
+  "url" : "https://json.schemastore.org/sublime-syntax.json",
+  "fileName" : "sublime-syntax.json"
+}, {
+  "name" : "Keycloak REST API",
+  "url" : "https://raw.githubusercontent.com/dahag-ag/keycloak-openapi/main/OpenApiDefinitions/keycloak-19.0.0.json",
+  "fileName" : "keycloak-19.0.0.json"
+}, {
+  "name" : "ize.toml",
+  "url" : "https://raw.githubusercontent.com/hazelops/ize/1.1.5/internal/schema/ize-spec.json",
+  "fileName" : "ize-spec.json"
+}, {
+  "name" : "Uplift",
+  "url" : "https://upliftci.dev/static/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "QueryFirst config file",
+  "url" : "https://json.schemastore.org/qfconfig.json",
+  "fileName" : "qfconfig.json"
+}, {
+  "name" : "UET BuildConfig.json",
+  "url" : "https://raw.githubusercontent.com/RedpointGames/uet-schema/main/root.json",
+  "fileName" : "root.json"
+}, {
+  "name" : "Unreal Engine Uplugin",
+  "url" : "https://json.schemastore.org/uplugin.json",
+  "fileName" : "uplugin.json"
+}, {
+  "name" : "Unreal Engine Uproject",
+  "url" : "https://json.schemastore.org/uproject.json",
+  "fileName" : "uproject.json"
+}, {
+  "name" : "Pantsbuild",
+  "url" : "https://json.schemastore.org/pantsbuild-2.21.0.json",
+  "fileName" : "pantsbuild-2.21.0.json"
+}, {
+  "name" : "All Contributors configuration file",
+  "url" : "https://json.schemastore.org/all-contributors.json",
+  "fileName" : "all-contributors.json"
+}, {
+  "name" : "ES6 Import Sorter (.es6importsorterrc.json)",
+  "url" : "https://json.schemastore.org/es6importsorterrc.json",
+  "fileName" : "es6importsorterrc.json"
+}, {
+  "name" : "completely.yml",
+  "url" : "https://github.com/DannyBen/completely/blob/master/schemas/completely.json",
+  "fileName" : "completely.json"
+}, {
+  "name" : "Madness (madness.yml)",
+  "url" : "https://raw.githubusercontent.com/DannyBen/madness/master/schemas/madness.json",
+  "fileName" : "madness.json"
+}, {
+  "name" : "Bashly (bashly.yml)",
+  "url" : "https://raw.githubusercontent.com/DannyBen/bashly/master/schemas/bashly.json",
+  "fileName" : "bashly.json"
+}, {
+  "name" : "Bashly Settings (bashly-settings.yml)",
+  "url" : "https://raw.githubusercontent.com/DannyBen/bashly/master/schemas/settings.json",
+  "fileName" : "settings.json"
+}, {
+  "name" : "bashly-strings.yml",
+  "url" : "https://raw.githubusercontent.com/DannyBen/bashly/master/schemas/strings.json",
+  "fileName" : "strings.json"
+}, {
+  "name" : "bpkg",
+  "url" : "https://json.schemastore.org/bpkg.json",
+  "fileName" : "bpkg.json"
+}, {
+  "name" : "micro-settings.json",
+  "url" : "https://raw.githubusercontent.com/zyedidia/micro/master/data/micro.json",
+  "fileName" : "micro.json"
+}, {
+  "name" : "quilt.mod.json",
+  "url" : "https://raw.githubusercontent.com/QuiltMC/quilt-json-schemas/main/quilt.mod.json/schemas/main.json",
+  "fileName" : "main.json"
+}, {
+  "name" : "AutoAPICase",
+  "url" : "https://json.schemastore.org/case_schema.json",
+  "fileName" : "case_schema.json"
+}, {
+  "name" : "secrethub.yml",
+  "url" : "https://raw.githubusercontent.com/DannyBen/secret_hub/master/schemas/secrethub.json",
+  "fileName" : "secrethub.json"
+}, {
+  "name" : "Dynamic Bash Aliases (.aliases)",
+  "url" : "https://json.schemastore.org/aliases.json",
+  "fileName" : "aliases.json"
+}, {
+  "name" : "Micro Editor Syntax",
+  "url" : "https://json.schemastore.org/micro-syntax.json",
+  "fileName" : "micro-syntax.json"
+}, {
+  "name" : "lazygit",
+  "url" : "https://raw.githubusercontent.com/jesseduffield/lazygit/master/schema/config.json",
+  "fileName" : "config.json"
+}, {
+  "name" : "lazydocker",
+  "url" : "https://json.schemastore.org/lazydocker.json",
+  "fileName" : "lazydocker.json"
+}, {
+  "name" : "custom-elements.json",
+  "url" : "https://raw.githubusercontent.com/webcomponents/custom-elements-manifest/main/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "warp-keysets.json",
+  "url" : "https://json.schemastore.org/warp-keysets.json",
+  "fileName" : "warp-keysets.json"
+}, {
+  "name" : "warp-themes.json",
+  "url" : "https://json.schemastore.org/warp-themes.json",
+  "fileName" : "warp-themes.json"
+}, {
+  "name" : "warp-workflows.json",
+  "url" : "https://json.schemastore.org/warp-workflows.json",
+  "fileName" : "warp-workflows.json"
+}, {
+  "name" : "Goblet",
+  "url" : "https://raw.githubusercontent.com/goblet/goblet/main/goblet.schema.json",
+  "fileName" : "goblet.schema.json"
+}, {
+  "name" : "Databricks Asset Bundles",
+  "url" : "https://json.schemastore.org/databricks-asset-bundles.json",
+  "fileName" : "databricks-asset-bundles.json"
+}, {
+  "name" : "JSON Schema Draft 4 (unofficial with '$ref' and 'format')",
+  "url" : "https://json.schemastore.org/schema-draft-v4.json",
+  "fileName" : "schema-draft-v4.json"
+}, {
+  "name" : "JSON Schema Draft 7 (unofficial strict)",
+  "url" : "https://json.schemastore.org/metaschema-draft-07-unofficial-strict.json",
+  "fileName" : "metaschema-draft-07-unofficial-strict.json"
+}, {
+  "name" : "Visivo",
+  "url" : "https://docs.visivo.io/assets/visivo_schema.json",
+  "fileName" : "visivo_schema.json"
+}, {
+  "name" : "Endurica",
+  "url" : "https://enduricastorage.blob.core.windows.net/public/endurica-cl-schema.json",
+  "fileName" : "endurica-cl-schema.json"
+}, {
+  "name" : "TunnelHub",
+  "url" : "https://json.schemastore.org/tunnelhub.json",
+  "fileName" : "tunnelhub.json"
+}, {
+  "name" : "Problem object RFC9457",
+  "url" : "https://json.schemastore.org/problem-object-rfc9457.json",
+  "fileName" : "problem-object-rfc9457.json"
+}, {
+  "name" : "apko",
+  "url" : "https://raw.githubusercontent.com/chainguard-dev/apko/main/pkg/build/types/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Melange",
+  "url" : "https://raw.githubusercontent.com/chainguard-dev/melange/main/pkg/config/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "Minecraft Custom Main Menu Mod",
+  "url" : "https://json.schemastore.org/minecraft-custom-main-menu-mod.json",
+  "fileName" : "minecraft-custom-main-menu-mod.json"
+}, {
+  "name" : "rivet.yaml",
+  "url" : "https://rivet.gg/rivet.schema.json",
+  "fileName" : "rivet.schema.json"
+}, {
+  "name" : "nixd configuration",
+  "url" : "https://raw.githubusercontent.com/nix-community/nixd/main/nixd/docs/nixd-schema.json",
+  "fileName" : "nixd-schema.json"
+}, {
+  "name" : "Rudder techniques",
+  "url" : "https://json.schemastore.org/rudder-techniques.json",
+  "fileName" : "rudder-techniques.json"
+}, {
+  "name" : "SkyPilot Task JSON",
+  "url" : "https://json.schemastore.org/skypilot-task.json",
+  "fileName" : "skypilot-task.json"
+}, {
+  "name" : "Adobe UXP Manifest",
+  "url" : "https://json.schemastore.org/uxp-manifest-5.json",
+  "fileName" : "uxp-manifest-5.json"
+}, {
+  "name" : "Subsquid squid manifest",
+  "url" : "https://cdn.subsquid.io/schemas/squid_manifest.json",
+  "fileName" : "squid_manifest.json"
+}, {
+  "name" : "GitLab Agent for Kubernetes configuration",
+  "url" : "https://gitlab.com/gitlab-org/cluster-integration/gitlab-agent/-/raw/master/pkg/agentcfg/agentcfg_schemas/ConfigurationFile.json",
+  "fileName" : "ConfigurationFile.json"
+}, {
+  "name" : "IVMS101 by CODE Protocol",
+  "url" : "https://raw.githubusercontent.com/codevasp-lab/IVMS101/main/json-schema.json",
+  "fileName" : "json-schema.json"
+}, {
+  "name" : "GlazeWM settings",
+  "url" : "https://json.schemastore.org/glazewm.json",
+  "fileName" : "glazewm.json"
+}, {
+  "name" : "CGS Custom Card Game (CardGameDef.json)",
+  "url" : "https://www.cardgamesimulator.com/schema/CardGameDef.json",
+  "fileName" : "CardGameDef.json"
+}, {
+  "name" : "Custom Machinery Machine",
+  "url" : "https://alec016.github.io/Custom-Machinery/Json%20Schema/src/main/resources/schemas/custom_machinery_machine.json",
+  "fileName" : "custom_machinery_machine.json"
+}, {
+  "name" : "Custom Machinery Recipe",
+  "url" : "https://alec016.github.io/Custom-Machinery/Json%20Schema/src/main/resources/schemas/custom_machinery_recipe.json",
+  "fileName" : "custom_machinery_recipe.json"
+}, {
+  "name" : "Nuitka.yaml",
+  "url" : "https://raw.githubusercontent.com/Nuitka/Nuitka/develop/misc/nuitka-package-config-schema.json",
+  "fileName" : "nuitka-package-config-schema.json"
+}, {
+  "name" : "bioimageio resource description",
+  "url" : "https://bioimage-io.github.io/spec-bioimage-io/bioimageio_schema_latest.json",
+  "fileName" : "bioimageio_schema_latest.json"
+}, {
+  "name" : "Flow.json Configurations",
+  "url" : "https://raw.githubusercontent.com/onflow/flow-cli/master/flowkit/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "CWL",
+  "url" : "https://raw.githubusercontent.com/common-workflow-lab/cwl-ts-auto/main/json_schemas/cwl_schema.json",
+  "fileName" : "cwl_schema.json"
+}, {
+  "name" : "shard.yml",
+  "url" : "https://raw.githubusercontent.com/crystal-lang/shards/master/docs/shard.yml.schema.json",
+  "fileName" : "shard.yml.schema.json"
+}, {
+  "name" : "Erda Pipeline",
+  "url" : "https://raw.githubusercontent.com/erda-project/erda/master/.erda/schemas/pipeline.yaml.json",
+  "fileName" : "pipeline.yaml.json"
+}, {
+  "name" : "Erda Runtime",
+  "url" : "https://raw.githubusercontent.com/erda-project/erda/master/.erda/schemas/dice.yaml.json",
+  "fileName" : "dice.yaml.json"
+}, {
+  "name" : "KSY",
+  "url" : "https://raw.githubusercontent.com/kaitai-io/ksy_schema/master/ksy_schema.json",
+  "fileName" : "ksy_schema.json"
+}, {
+  "name" : "JSON-WF",
+  "url" : "https://www.json-wf.org.uk/json-wf-schema-1.0.json",
+  "fileName" : "json-wf-schema-1.0.json"
+}, {
+  "name" : "Cloud Foundry Application Manifest",
+  "url" : "https://json.schemastore.org/cloudfoundry-application-manifest.json",
+  "fileName" : "cloudfoundry-application-manifest.json"
+}, {
+  "name" : ".omletrc",
+  "url" : "https://json.schemastore.org/omletrc.json",
+  "fileName" : "omletrc.json"
+}, {
+  "name" : "vcluster",
+  "url" : "https://raw.githubusercontent.com/loft-sh/vcluster-config/main/vcluster.schema.json",
+  "fileName" : "vcluster.schema.json"
+}, {
+  "name" : "well-known-fursona",
+  "url" : "https://raw.githubusercontent.com/pyrox0/fursona-schema/main/schema-07.json",
+  "fileName" : "schema-07.json"
+}, {
+  "name" : "changelogging",
+  "url" : "https://raw.githubusercontent.com/nekitdev/changelogging/main/changelogging.schema.json",
+  "fileName" : "changelogging.schema.json"
+}, {
+  "name" : "Configu .cfgu files",
+  "url" : "https://raw.githubusercontent.com/configu/configu/main/packages/schema/.cfgu.json",
+  "fileName" : ".cfgu.json"
+}, {
+  "name" : "Configu .configu file",
+  "url" : "https://raw.githubusercontent.com/configu/configu/main/packages/schema/.configu.json",
+  "fileName" : ".configu.json"
+}, {
+  "name" : "Qt Creator workspace file",
+  "url" : "https://download.qt.io/official_releases/qtcreator/latest/installer_source/jsonschemas/project.json",
+  "fileName" : "project.json"
+}, {
+  "name" : "mprocs Configuration file",
+  "url" : "https://json.schemastore.org/mprocs-0.6.4.json",
+  "fileName" : "mprocs-0.6.4.json"
+}, {
+  "name" : "Language configuration",
+  "url" : "https://json.schemastore.org/language-configuration.json",
+  "fileName" : "language-configuration.json"
+}, {
+  "name" : "Any",
+  "url" : "https://json.schemastore.org/any.json",
+  "fileName" : "any.json"
+}, {
+  "name" : "zerops.yml",
+  "url" : "https://api.app-prg1.zerops.io/api/rest/public/settings/zerops-yml-json-schema.json",
+  "fileName" : "zerops-yml-json-schema.json"
+}, {
+  "name" : "zerops.io import file",
+  "url" : "https://api.app-prg1.zerops.io/api/rest/public/settings/import-project-yml-json-schema.json",
+  "fileName" : "import-project-yml-json-schema.json"
+}, {
+  "name" : "Microsoft RulesEngine workflow rules",
+  "url" : "https://raw.githubusercontent.com/microsoft/RulesEngine/main/schema/workflow-schema.json",
+  "fileName" : "workflow-schema.json"
+}, {
+  "name" : "Microsoft RulesEngine workflow rules list",
+  "url" : "https://raw.githubusercontent.com/microsoft/RulesEngine/main/schema/workflow-list-schema.json",
+  "fileName" : "workflow-list-schema.json"
+}, {
+  "name" : "spicepod.yaml",
+  "url" : "https://raw.githubusercontent.com/spiceai/spiceai/trunk/.schema/spicepod.schema.json",
+  "fileName" : "spicepod.schema.json"
+}, {
+  "name" : "Concord",
+  "url" : "https://repo1.maven.org/maven2/com/walmartlabs/concord/runtime/v2/concord-runtime-model-v2/2.14.0/concord-runtime-model-v2-2.14.0-schema.json",
+  "fileName" : "concord-runtime-model-v2-2.14.0-schema.json"
+}, {
+  "name" : "CRS WAF test file",
+  "url" : "https://raw.githubusercontent.com/coreruleset/ftw-tests-schema/main/spec/v2.1.0/waf-tests-schema-v2.1.0.json",
+  "fileName" : "waf-tests-schema-v2.1.0.json"
+}, {
+  "name" : "CRS WAF test platform overrides file",
+  "url" : "https://raw.githubusercontent.com/coreruleset/ftw-tests-schema/master/spec/v2.1.0/waf-platform-overrides-schema-v2.1.0.json",
+  "fileName" : "waf-platform-overrides-schema-v2.1.0.json"
+}, {
+  "name" : "DipDup",
+  "url" : "https://raw.githubusercontent.com/dipdup-io/dipdup/next/schemas/dipdup-3.0.json",
+  "fileName" : "dipdup-3.0.json"
+}, {
+  "name" : "Tycho",
+  "url" : "https://deployments.allegrogroup.com/tycho/schema",
+  "fileName" : "Tycho"
+}, {
+  "name" : "Elm",
+  "url" : "https://json.schemastore.org/elm.json",
+  "fileName" : "elm.json"
+}, {
+  "name" : "Cloud Run Spec v1",
+  "url" : "https://json.schemastore.org/cloud-run-v1.json",
+  "fileName" : "cloud-run-v1.json"
+}, {
+  "name" : "YouTrack App",
+  "url" : "https://json.schemastore.org/youtrack-app.json",
+  "fileName" : "youtrack-app.json"
+}, {
+  "name" : "Settings for a Cinnamon spice",
+  "url" : "https://raw.githubusercontent.com/cinnamon-spice-settings.json",
+  "fileName" : "cinnamon-spice-settings.json"
+}, {
+  "name" : "Metadata for a Cinnamon spice",
+  "url" : "https://raw.githubusercontent.com/cinnamon-spice-metadata.json",
+  "fileName" : "cinnamon-spice-metadata.json"
+}, {
+  "name" : "Yandex Workflow Language",
+  "url" : "https://raw.githubusercontent.com/yandex-cloud/json-schema-store/master/serverless/workflows/yawl.json",
+  "fileName" : "yawl.json"
+}, {
+  "name" : "Application list for a WinUtil",
+  "url" : "https://json.schemastore.org/winutil-applications.json",
+  "fileName" : "winutil-applications.json"
+}, {
+  "name" : "Preset list for a WinUtil",
+  "url" : "https://json.schemastore.org/winutil-preset.json",
+  "fileName" : "winutil-preset.json"
+}, {
+  "name" : "Tab list for a LinUtil",
+  "url" : "https://json.schemastore.org/linutil-tabs.json",
+  "fileName" : "linutil-tabs.json"
+}, {
+  "name" : "Tab data for a LinUtil",
+  "url" : "https://json.schemastore.org/linutil-tab-data.json",
+  "fileName" : "linutil-tab-data.json"
+}, {
+  "name" : "ArchitectFX",
+  "url" : "https://json.schemastore.org/architectfx.json",
+  "fileName" : "architectfx.json"
+}, {
+  "name" : "Eidolon Resource",
+  "url" : "https://www.eidolonai.com/json_schema/v1/resources/overview.json",
+  "fileName" : "overview.json"
+}, {
+  "name" : "Waku Config",
+  "url" : "https://waku.ngjx.org/static/schema.json",
+  "fileName" : "schema.json"
+}, {
+  "name" : "ccmod.json",
+  "url" : "https://raw.githubusercontent.com/CCDirectLink/CCModDB/refs/heads/master/ccmod-json-schema.json",
+  "fileName" : "ccmod-json-schema.json"
+}, {
+  "name" : "moon.yml",
+  "url" : "https://raw.githubusercontent.com/moonrepo/moon/master/website/static/schemas/project.json",
+  "fileName" : "project.json"
+}, {
+  "name" : "WireMock stub mapping",
+  "url" : "https://json.schemastore.org/wiremock-stub-mapping.json",
+  "fileName" : "wiremock-stub-mapping.json"
+}, {
+  "name" : "Bitmovin Encoding Template",
+  "url" : "https://raw.githubusercontent.com/bitmovin/bitmovin-api-sdk-examples/main/bitmovin-encoding-template.json",
+  "fileName" : "bitmovin-encoding-template.json"
+} ]

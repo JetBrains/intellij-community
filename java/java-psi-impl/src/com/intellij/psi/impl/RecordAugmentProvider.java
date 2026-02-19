@@ -1,8 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
@@ -18,8 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
-public class RecordAugmentProvider extends PsiAugmentProvider {
+public final class RecordAugmentProvider extends PsiAugmentProvider implements DumbAware {
   @Override
   protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
                                                                     @NotNull Class<Psi> type,
@@ -29,28 +44,27 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
       if (!aClass.isRecord()) return Collections.emptyList();
       if (type == PsiMethod.class && !(element instanceof PsiCompiledElement)) {
         // We do not remove constructor and accessors in compiled records, so no need to augment
-        return getAccessorsAugments(element, aClass);
+        return getAccessorsAugments(aClass);
       }
       if (type == PsiField.class) {
-        return getFieldAugments(element, aClass);
+        return getFieldAugments(aClass);
       }
     }
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static <Psi extends PsiElement> List<Psi> getAccessorsAugments(@NotNull PsiElement element, PsiExtensibleClass aClass) {
+  private static @NotNull <Psi extends PsiElement> List<Psi> getAccessorsAugments(PsiExtensibleClass aClass) {
     PsiRecordHeader header = aClass.getRecordHeader();
     if (header == null) return Collections.emptyList();
     PsiRecordComponent[] components = aClass.getRecordComponents();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     ArrayList<Psi> methods = new ArrayList<>(components.length);
     List<PsiMethod> ownMethods = aClass.getOwnMethods();
     for (PsiRecordComponent component : components) {
       if (!shouldGenerateMethod(component, ownMethods)) continue;
       PsiMethod recordMethod = createRecordMethod(component, factory);
       if (recordMethod == null) continue;
-      LightMethod method = new LightRecordMethod(element.getManager(), recordMethod, aClass, component);
+      LightMethod method = new LightRecordMethod(aClass.getManager(), recordMethod, aClass, component);
       //noinspection unchecked
       methods.add((Psi)method);
     }
@@ -62,29 +76,54 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     return methods;
   }
 
-  @Nullable
-  private static PsiMethod getCanonicalConstructor(PsiExtensibleClass aClass,
-                                                   List<PsiMethod> ownMethods,
-                                                   @NotNull PsiRecordHeader recordHeader) {
+  private static @Nullable PsiMethod getCanonicalConstructor(@NotNull PsiExtensibleClass aClass,
+                                                             List<PsiMethod> ownMethods,
+                                                             @NotNull PsiRecordHeader recordHeader) {
     String className = aClass.getName();
     if (className == null) return null;
-    for (PsiMethod method : ownMethods) {
-      if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) return null;
-    }
+    if (hasConstructor(aClass, ownMethods)) return null;
+
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(recordHeader.getProject());
     String sb = className + recordHeader.getText() + "{"
                 + StringUtil.join(recordHeader.getRecordComponents(), c -> "this." + c.getName() + "=" + c.getName() + ";", "\n")
                 + "}";
-    PsiMethod nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
+    PsiMethod nonPhysical;
+    try {
+      nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
+    }
+    catch (IncorrectOperationException e) {
+      return null;
+    }
     PsiModifierList classModifierList = aClass.getModifierList();
     AccessModifier modifier = classModifierList == null ? AccessModifier.PUBLIC : AccessModifier.fromModifierList(classModifierList);
     nonPhysical.getModifierList().setModifierProperty(modifier.toPsiModifier(), true);
     return new LightRecordCanonicalConstructor(nonPhysical, aClass);
   }
 
+  private static boolean hasConstructor(@NotNull PsiExtensibleClass aClass, List<PsiMethod> ownMethods) {
+    Supplier<Boolean> hasConstructorFinder = () -> {
+      for (PsiMethod method : ownMethods) {
+        if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) return true;
+      }
+      return false;
+    };
+    DumbService dumbService = DumbService.getInstance(aClass.getProject());
+    AtomicBoolean hasConstructor = new AtomicBoolean(false);
+    if (dumbService.isAlternativeResolveEnabled()) {
+      hasConstructor.set(hasConstructorFinder.get());
+    }
+    else {
+      //it is necessary to check with alternative resolver
+      //because it is necessary to find its super class (in dumb mode)
+      dumbService.runWithAlternativeResolveEnabled(() -> {
+        hasConstructor.set(hasConstructorFinder.get());
+      });
+    }
+    return hasConstructor.get();
+  }
+
   private static boolean shouldGenerateMethod(PsiRecordComponent component, List<PsiMethod> ownMethods) {
     String componentName = component.getName();
-    if (componentName == null) return false;
     for (PsiMethod method : ownMethods) {
       // Return type is not checked to avoid unnecessary warning about clashing signatures in case of different return types
       if (componentName.equals(method.getName()) && method.getParameterList().isEmpty()) return false;
@@ -92,23 +131,21 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     return true;
   }
 
-  @NotNull
-  private static <Psi extends PsiElement> List<Psi> getFieldAugments(@NotNull PsiElement element, PsiClass aClass) {
+  public static @NotNull <Psi extends PsiElement> List<Psi> getFieldAugments(PsiClass aClass) {
     PsiRecordComponent[] components = aClass.getRecordComponents();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     ArrayList<Psi> fields = new ArrayList<>(components.length);
     for (PsiRecordComponent component : components) {
       PsiField recordField = createRecordField(component, factory);
       if (recordField == null) continue;
-      LightRecordField field = new LightRecordField(element.getManager(), recordField, aClass, component);
-      //noinspection unchecked
-      fields.add((Psi)field);
+      @SuppressWarnings("unchecked")
+      Psi field = (Psi)new LightRecordField(aClass.getManager(), recordField, aClass, component);
+      fields.add(field);
     }
     return fields;
   }
 
-  @Nullable
-  private static PsiField createRecordField(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
+  private static @Nullable PsiField createRecordField(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
     if (hasForbiddenType(component)) return null;
     String typeText = getTypeText(component);
@@ -122,10 +159,8 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     }
   }
 
-  @Nullable
-  private static PsiMethod createRecordMethod(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
+  private static @Nullable PsiMethod createRecordMethod(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
-    if (name == null) return null;
     if (hasForbiddenType(component)) return null;
     String typeText = getTypeText(component);
     if (typeText == null) return null;
@@ -140,11 +175,10 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
 
   private static boolean hasForbiddenType(@NotNull PsiRecordComponent component) {
     PsiTypeElement typeElement = component.getTypeElement();
-    return typeElement == null || typeElement.getText().equals(PsiKeyword.RECORD);
+    return typeElement == null || typeElement.getText().equals(JavaKeywords.RECORD);
   }
 
-  @Nullable
-  private static String getTypeText(@NotNull PsiRecordComponent component) {
+  private static @Nullable String getTypeText(@NotNull PsiRecordComponent component) {
     PsiTypeElement typeElement = component.getTypeElement();
     if (typeElement == null) return null;
     String typeText = typeElement.getText();

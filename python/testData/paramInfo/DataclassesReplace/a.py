@@ -29,7 +29,8 @@ replace(C(1), <arg3>)
 
 
 class D:
+    member1: Int
     pass
 
 
-replace(D(), <arg4>)
+replace(D(member1=10), member1=<arg4>)

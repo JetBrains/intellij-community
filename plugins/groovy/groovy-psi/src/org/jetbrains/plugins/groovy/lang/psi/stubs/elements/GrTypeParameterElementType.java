@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.StubElement;
@@ -23,9 +23,8 @@ public class GrTypeParameterElementType extends GrStubElementType<GrTypeParamete
     return new GrTypeParameterImpl(stub);
   }
 
-  @NotNull
   @Override
-  public GrTypeParameterStub createStub(@NotNull GrTypeParameter psi, StubElement parentStub) {
+  public @NotNull GrTypeParameterStub createStub(@NotNull GrTypeParameter psi, StubElement parentStub) {
     return new GrTypeParameterStub(parentStub, StringRef.fromString(psi.getName()));
   }
 
@@ -34,9 +33,8 @@ public class GrTypeParameterElementType extends GrStubElementType<GrTypeParamete
     dataStream.writeName(stub.getName());
   }
 
-  @NotNull
   @Override
-  public GrTypeParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull GrTypeParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrTypeParameterStub(parentStub, dataStream.readName());
   }
 }

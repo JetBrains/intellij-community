@@ -1,28 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import com.intellij.psi.util.PsiEditorUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,79 +35,76 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
+import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_CONTINUATION_INDENT_SIZE;
+import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
+import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
 
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
- *
- * @author Rustam Vishnyakov
  */
-public class CommonCodeStyleSettings {
+public class CommonCodeStyleSettings implements CommentStyleSettings {
   // Dev. notes:
   // - Do not add language-specific options here, use CustomCodeStyleSettings instead.
   // - New options should be added to CodeStyleSettingsCustomizable as well.
   // - Covered by CodeStyleConfigurationsTest.
 
-  @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
+  private static final @NonNls String ARRANGEMENT_ELEMENT_NAME = "arrangement";
 
-  private final Language myLanguage;
+  private final @NotNull String myLangId;
 
   private ArrangementSettings myArrangementSettings;
   private CodeStyleSettings   myRootSettings;
   private @Nullable IndentOptions       myIndentOptions;
-  private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
 
   private final SoftMargins mySoftMargins = new SoftMargins();
 
-  @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
+  private static final @NonNls String INDENT_OPTIONS_TAG = "indentOptions";
 
-  private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
-  public CommonCodeStyleSettings(Language language, FileType fileType) {
-    myLanguage = language;
-    myFileType = fileType;
+  private static final Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
+
+  public CommonCodeStyleSettings(@Nullable Language language) {
+    this(ObjectUtils.notNull(language, Language.ANY).getID());
   }
 
-  public CommonCodeStyleSettings(Language language) {
-    this(language, language == null ? null : language.getAssociatedFileType());
+  private CommonCodeStyleSettings(@NotNull String langId) {
+    myLangId = langId;
   }
 
   void setRootSettings(@NotNull CodeStyleSettings rootSettings) {
     myRootSettings = rootSettings;
   }
 
-  public Language getLanguage() {
-    return myLanguage;
+  public @NotNull Language getLanguage() {
+    Language language = Language.findLanguageByID(myLangId);
+    if (language == null) {
+      LOG.error("Can't find the language with ID " + myLangId);
+      return Language.ANY;
+    }
+    return language;
   }
 
-  @NotNull
-  public IndentOptions initIndentOptions() {
+  public @NotNull IndentOptions initIndentOptions() {
     myIndentOptions = new IndentOptions();
     return myIndentOptions;
   }
 
-  @Nullable
-  public FileType getFileType() {
-    return myFileType;
-  }
-
-  @NotNull
-  public CodeStyleSettings getRootSettings() {
+  public @NotNull CodeStyleSettings getRootSettings() {
     return myRootSettings;
   }
 
-  @Nullable
-  public IndentOptions getIndentOptions() {
+  public @Nullable IndentOptions getIndentOptions() {
     return myIndentOptions;
   }
 
-  @Nullable
-  public ArrangementSettings getArrangementSettings() {
+  public @Nullable ArrangementSettings getArrangementSettings() {
     return myArrangementSettings;
   }
 
@@ -121,7 +121,7 @@ public class CommonCodeStyleSettings {
   }
 
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
-    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
+    CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLangId);
     copyPublicFields(this, commonSettings);
     commonSettings.setRootSettings(rootSettings);
     commonSettings.myForceArrangeMenuAvailable = myForceArrangeMenuAvailable;
@@ -136,7 +136,7 @@ public class CommonCodeStyleSettings {
     return commonSettings;
   }
 
-  static void copyPublicFields(Object from, Object to) {
+  protected static void copyPublicFields(Object from, Object to) {
     assert from != to;
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
   }
@@ -152,13 +152,9 @@ public class CommonCodeStyleSettings {
     setSoftMargins(source.getSoftMargins());
   }
 
-  @Nullable
-  private CommonCodeStyleSettings getDefaultSettings() {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(myLanguage);
-    return provider == null ? null : provider.getDefaultCommonSettings();
-  }
 
   public void readExternal(Element element) {
+    //noinspection deprecation
     DefaultJDOMExternalizer.readExternal(this, element);
     if (myIndentOptions != null) {
       Element indentOptionsElement = element.getChild(INDENT_OPTIONS_TAG);
@@ -168,25 +164,35 @@ public class CommonCodeStyleSettings {
     }
     Element arrangementRulesContainer = element.getChild(ARRANGEMENT_ELEMENT_NAME);
     if (arrangementRulesContainer != null) {
-      myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage);
+      myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, getLanguage());
     }
     mySoftMargins.deserializeFrom(element);
-    LOG.info("Loaded " + myLanguage.getDisplayName() + " common code style settings");
+    LOG.info("Loaded " + getLanguage().getDisplayName() + " common code style settings");
   }
 
+  @ApiStatus.Internal
   public void writeExternal(Element element) {
-    CommonCodeStyleSettings defaultSettings = getDefaultSettings();
-    Set<String> supportedFields = getSupportedFields();
+    LanguageCodeStyleProvider provider = LanguageCodeStyleProvider.forLanguage(getLanguage());
+    if (provider != null) {
+      writeExternal(element, provider);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
+    CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
+    Set<String> supportedFields = provider.getSupportedFields();
     if (supportedFields != null) {
       supportedFields.add("FORCE_REARRANGE_MODE");
     }
     else {
       return;
     }
-    DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
+    //noinspection deprecation
+    DefaultJDOMExternalizer.write(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     mySoftMargins.serializeInto(element);
     if (myIndentOptions != null) {
-      IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
+      IndentOptions defaultIndentOptions = defaultSettings.getIndentOptions();
       Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
       myIndentOptions.serialize(indentOptionsElement, defaultIndentOptions);
       if (!indentOptionsElement.getChildren().isEmpty()) {
@@ -196,23 +202,33 @@ public class CommonCodeStyleSettings {
 
     if (myArrangementSettings != null) {
       Element container = new Element(ARRANGEMENT_ELEMENT_NAME);
-      ArrangementUtil.writeExternal(container, myArrangementSettings, myLanguage);
+      ArrangementUtil.writeExternal(container, myArrangementSettings, provider.getLanguage());
       if (!container.getChildren().isEmpty()) {
         element.addContent(container);
       }
     }
   }
 
-  @Nullable
-  private Set<String> getSupportedFields() {
-    LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(myLanguage);
-    return provider == null ? null : provider.getSupportedFields();
+  @Override
+  public boolean isLineCommentInTheFirstColumn() {
+    return LINE_COMMENT_AT_FIRST_COLUMN;
   }
 
-  private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
+  @Override
+  public boolean isLineCommentFollowedWithSpace() {
+    return LINE_COMMENT_ADD_SPACE;
+  }
+
+  @Override
+  public boolean isBlockCommentIncludesSpace() {
+    return BLOCK_COMMENT_ADD_SPACE;
+  }
+
+
+  public static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
 
-    SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
+    public SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
                                      Set<String> supportedFiledNames,
                                      final CommonCodeStyleSettings parentObject) {
       super(object, parentObject);
@@ -220,10 +236,10 @@ public class CommonCodeStyleSettings {
     }
 
     @Override
-    public boolean isAccept(@NotNull Field field) {
+    public boolean test(@NotNull Field field) {
       if (mySupportedFieldNames != null &&
           mySupportedFieldNames.contains(field.getName())) {
-        return super.isAccept(field);
+        return super.test(field);
       }
       return false;
     }
@@ -240,6 +256,10 @@ public class CommonCodeStyleSettings {
    * Tells if a space is added when commenting/uncommenting lines with a line comment.
    */
   public boolean LINE_COMMENT_ADD_SPACE = false;
+  public boolean BLOCK_COMMENT_ADD_SPACE = false;
+
+  public boolean LINE_COMMENT_ADD_SPACE_ON_REFORMAT = false;
+  public boolean LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION = false;
 
   public boolean KEEP_LINE_BREAKS = true;
 
@@ -571,7 +591,7 @@ public class CommonCodeStyleSettings {
   /**
    * "try( Resource r = r() )"
    * or
-   * "catch(Resource r = r())"
+   * "try(Resource r = r())"
    */
   public boolean SPACE_WITHIN_TRY_PARENTHESES = false;
 
@@ -912,6 +932,9 @@ public class CommonCodeStyleSettings {
 
   @WrapConstant
   public int ASSERT_STATEMENT_WRAP = DO_NOT_WRAP;
+
+  @WrapConstant
+  public int SWITCH_EXPRESSIONS_WRAP = WRAP_AS_NEEDED;
   public boolean ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
 
   // BRACE FORCING
@@ -954,6 +977,31 @@ public class CommonCodeStyleSettings {
   //-------------------------Enums----------------------------------------------------------
   @WrapConstant
   public int ENUM_CONSTANTS_WRAP = DO_NOT_WRAP;
+
+  // region Chained Builder Method Calls
+  //----------------------------------------------------------------------------------------
+
+  @CommaSeparatedValues public @NonNls String BUILDER_METHODS = "";
+  public boolean KEEP_BUILDER_METHODS_INDENTS = false;
+
+  private final @NotNull Set<String> myBuilderMethodsNameCache = new HashSet<>();
+  private @NotNull String myCachedBuilderMethods = "";
+
+  public boolean isBuilderMethod(@NotNull String methodName) {
+    if (!StringUtil.equals(BUILDER_METHODS, myCachedBuilderMethods)) {
+      myCachedBuilderMethods = BUILDER_METHODS;
+      myBuilderMethodsNameCache.clear();
+      Arrays.stream(BUILDER_METHODS.split(","))
+        .filter(chunk -> !StringUtil.isEmptyOrSpaces(chunk))
+        .forEach(chunk -> {
+          myBuilderMethodsNameCache.add(chunk.trim());
+        });
+    }
+    return myBuilderMethodsNameCache.contains(methodName);
+  }
+
+
+  // endregion
 
   //-------------------------Force rearrange settings---------------------------------------
   public static final int REARRANGE_ACCORDIND_TO_DIALOG = 0;
@@ -1051,9 +1099,7 @@ public class CommonCodeStyleSettings {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof IndentOptions)) return false;
-
-      IndentOptions that = (IndentOptions)o;
+      if (!(o instanceof IndentOptions that)) return false;
 
       if (CONTINUATION_INDENT_SIZE != that.CONTINUATION_INDENT_SIZE) return false;
       if (INDENT_SIZE != that.INDENT_SIZE) return false;
@@ -1088,10 +1134,10 @@ public class CommonCodeStyleSettings {
 
     public void copyFrom(IndentOptions other) {
       copyPublicFields(other, this);
+      myOverrideLanguageOptions = other.myOverrideLanguageOptions;
     }
 
-    @Nullable
-    public FileIndentOptionsProvider getFileIndentOptionsProvider() {
+    public @Nullable FileIndentOptionsProvider getFileIndentOptionsProvider() {
       return myFileIndentOptionsProvider;
     }
 
@@ -1103,10 +1149,17 @@ public class CommonCodeStyleSettings {
       document.putUserData(INDENT_OPTIONS_KEY, this);
     }
 
-    @Nullable
-    public static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
+    /**
+     * @deprecated Use {@link #retrieveFromAssociatedDocument(Document)}
+     */
+    @Deprecated
+    public static @Nullable IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
+    }
+
+    public static @Nullable IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
+      return document.getUserData(INDENT_OPTIONS_KEY);
     }
 
     /**
@@ -1148,7 +1201,7 @@ public class CommonCodeStyleSettings {
     ArrangementSettings theseSettings = myArrangementSettings;
     ArrangementSettings otherSettings = obj.getArrangementSettings();
     if (theseSettings == null && otherSettings != null) {
-      Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(myLanguage);
+      Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(getLanguage());
       if (rearranger instanceof ArrangementStandardSettingsAware) {
         theseSettings = ((ArrangementStandardSettingsAware)rearranger).getDefaultSettings();
       }
@@ -1156,18 +1209,11 @@ public class CommonCodeStyleSettings {
     return Comparing.equal(theseSettings, obj.getArrangementSettings());
   }
 
-  @NotNull
-  public List<Integer> getSoftMargins() {
+  public @NotNull List<Integer> getSoftMargins() {
     return mySoftMargins.getValues();
   }
 
-  void setSoftMargins(List<Integer> values) {
+  public void setSoftMargins(@NotNull List<Integer> values) {
     mySoftMargins.setValues(values);
-  }
-
-  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
-    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
-    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
-    return CodeStyle.getLanguageSettings(psiFile, language);
   }
 }

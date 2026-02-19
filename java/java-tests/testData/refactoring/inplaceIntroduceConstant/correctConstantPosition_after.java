@@ -1,6 +1,6 @@
 public class Res {
 
-    public static final Res.R<String, Object> R = new R<>() {
+    public static final R<String, Object> R = new R<>() {
         final String param = "";
 
         @Override

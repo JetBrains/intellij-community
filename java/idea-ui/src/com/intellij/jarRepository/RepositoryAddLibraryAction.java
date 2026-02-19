@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiFile;
@@ -21,22 +22,20 @@ import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibrary
 
 public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
   private final Module module;
-  @NotNull private final RepositoryLibraryDescription libraryDescription;
+  private final @NotNull RepositoryLibraryDescription libraryDescription;
 
   public RepositoryAddLibraryAction(Module module, @NotNull RepositoryLibraryDescription libraryDescription) {
     this.module = module;
     this.libraryDescription = libraryDescription;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return JavaUiBundle.message("intention.text.add.0.library.to.module.dependencies", libraryDescription.getDisplayName());
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaUiBundle.message("intention.family.maven.libraries");
   }
 
@@ -46,22 +45,26 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+  public void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor) {
     addLibraryToModule(libraryDescription, module);
   }
 
-  public static Promise<Void> addLibraryToModule(RepositoryLibraryDescription libraryDescription, Module module) {
-    RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
-      RepositoryLibraryDescription.DefaultVersionId,
-      false,
-      false);
-    RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
-      module.getProject(),
-      model,
-      libraryDescription,
-      false, true);
-    if (!dialog.showAndGet()) {
-      return Promises.rejectedPromise();
+  public static Promise<Void> addLibraryToModule(@NotNull RepositoryLibraryDescription libraryDescription,
+                                                 @NotNull Module module,
+                                                 @NotNull String defaultVersion,
+                                                 @Nullable DependencyScope  scope,
+                                                 boolean downloadSources,
+                                                 boolean downloadJavaDocs) {
+    RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(defaultVersion, downloadSources, downloadJavaDocs);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
+        module.getProject(),
+        model,
+        libraryDescription,
+        false, true, false);
+      if (!dialog.showAndGet()) {
+        return Promises.rejectedPromise();
+      }
     }
     IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
     final ModifiableRootModel modifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
@@ -70,8 +73,13 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
     librarySupport.addSupport(
       module,
       modifiableModel,
-      modifiableModelsProvider);
+      modifiableModelsProvider,
+      scope);
     ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
     return Promises.resolvedPromise(null);
+  }
+
+  public static Promise<Void> addLibraryToModule(@NotNull RepositoryLibraryDescription libraryDescription, @NotNull Module module) {
+    return addLibraryToModule(libraryDescription, module, RepositoryLibraryDescription.DefaultVersionId, null, false, false);
   }
 }

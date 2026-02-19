@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,13 +19,11 @@ import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 
 public class NestedCopiesBuilder implements StatusReceiver {
 
-  @NotNull private final Set<NestedCopyInfo> myCopies;
-  @NotNull private final SvnFileUrlMapping myMapping;
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull Set<NestedCopyInfo> myCopies;
+  private final @NotNull SvnVcs myVcs;
 
-  public NestedCopiesBuilder(@NotNull SvnVcs vcs, @NotNull SvnFileUrlMapping mapping) {
+  public NestedCopiesBuilder(@NotNull SvnVcs vcs) {
     myVcs = vcs;
-    myMapping = mapping;
     myCopies = new HashSet<>();
   }
 
@@ -61,7 +59,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
   @Override
   public void bewareRoot(@NotNull VirtualFile vf, Url url) {
     final File ioFile = VfsUtilCore.virtualToIoFile(vf);
-    final RootUrlInfo info = myMapping.getWcRootForFilePath(getFilePath(vf));
+    final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(vf));
 
     if (info != null && FileUtil.filesEqual(ioFile, info.getIoFile()) && !info.getUrl().equals(url)) {
       myVcs.invokeRefreshSvnRoots();
@@ -72,8 +70,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
   public void finish() {
   }
 
-  @NotNull
-  public Set<NestedCopyInfo> getCopies() {
+  public @NotNull Set<NestedCopyInfo> getCopies() {
     return myCopies;
   }
 }

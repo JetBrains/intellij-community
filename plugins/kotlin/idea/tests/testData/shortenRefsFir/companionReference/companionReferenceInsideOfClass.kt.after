@@ -1,0 +1,11 @@
+package test
+
+class Foo {
+    companion object {
+        fun myFun() {}
+    }
+
+    fun usage() {
+        myFun()
+    }
+}

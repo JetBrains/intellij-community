@@ -20,9 +20,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertSame;
 
-/**
- * @author Denis Zhdanov
- */
 public class StaticTextWhiteSpaceDefinitionStrategyTest {
 
   private StaticTextWhiteSpaceDefinitionStrategy myStrategy;  

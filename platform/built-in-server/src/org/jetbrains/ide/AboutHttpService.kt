@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("HardCodedStringLiteral")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.ide
 
@@ -7,8 +6,6 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.PlatformUtils
@@ -52,12 +49,21 @@ internal class AboutHttpService : RestService() {
 
   override fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
     val originAllowed = super.isOriginAllowed(request)
-    if (originAllowed == OriginCheckResult.FORBID) {
-      val origin = request.origin ?: return OriginCheckResult.FORBID
-      @Suppress("SpellCheckingInspection")
-      return if (origin.matches(Regex("https://([a-z0-9-]+\\.)*hyperskill.org$"))) OriginCheckResult.ALLOW else OriginCheckResult.FORBID
+    if (originAllowed == OriginCheckResult.FORBID && request.isJetBrainsAcademyPluginRelated()) {
+      return OriginCheckResult.ALLOW
     }
     return originAllowed
+  }
+
+  /**
+   * [JetBrains Academy](https://plugins.jetbrains.com/plugin/10081-jetbrains-academy) plugin requires IDE to respond with its version
+   * from hyperskill.org and academy.jetbrains.com sites
+   */
+  private fun HttpRequest.isJetBrainsAcademyPluginRelated(): Boolean {
+    val origin = origin ?: return false
+    val hyperskillRegex = Regex("https://([a-z0-9-]+\\.)*hyperskill\\.org$")
+    val academyJetbrainsRegex = Regex("https://([a-z0-9-.]+)\\.jetbrains\\.com$")
+    return origin.matches(hyperskillRegex) || origin.matches(academyJetbrainsRegex)
   }
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
@@ -89,26 +95,12 @@ fun writeApplicationInfoJson(out: OutputStream, urlDecoder: QueryStringDecoder?,
           }
         }
       }
-
-      if (urlDecoder != null && getBooleanParameter("more", urlDecoder)) {
-        val appInfo = ApplicationInfoEx.getInstanceEx()
-        writer.writeStringField("vendor", appInfo.companyName)
-        writer.writeBooleanField("isEAP", appInfo.isEAP)
-        writer.writeStringField("productCode", appInfo.build.productCode)
-        writer.writeNumberField("buildDate", appInfo.buildDate.time.time)
-        writer.writeBooleanField("isSnapshot", appInfo.build.isSnapshot)
-        writer.writeStringField("configPath", PathManager.getConfigPath())
-        writer.writeStringField("systemPath", PathManager.getSystemPath())
-        writer.writeStringField("binPath", PathManager.getBinPath())
-        writer.writeStringField("logPath", PathManager.getLogPath())
-        writer.writeStringField("homePath", PathManager.getHomePath())
-      }
     }
   }
 }
 
 fun writeAboutJson(writer: JsonGenerator) {
-  var appName = ApplicationInfoEx.getInstanceEx().fullApplicationName
+  var appName = ApplicationInfo.getInstance().fullApplicationName
   if (!PlatformUtils.isIdeaUltimate()) {
     val productName = ApplicationNamesInfo.getInstance().productName
     appName = appName
@@ -117,6 +109,7 @@ fun writeAboutJson(writer: JsonGenerator) {
   }
   writer.writeStringField("name", appName)
   writer.writeStringField("productName", ApplicationNamesInfo.getInstance().productName)
+  writer.writeStringField("edition", ApplicationNamesInfo.getInstance().editionName)
 
   val build = ApplicationInfo.getInstance().build
   writer.writeNumberField("baselineVersion", build.baselineVersion)

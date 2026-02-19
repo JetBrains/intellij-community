@@ -1,0 +1,10 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.gradle"/>
+    <plugin id="org.jetbrains.idea.gradle.dsl"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <externalSystem.dependencyModifier implementation="org.jetbrains.plugins.gradle.dsl.GradleDependencyModificator"/>
+  </extensions>
+</idea-plugin>

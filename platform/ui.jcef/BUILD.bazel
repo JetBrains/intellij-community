@@ -1,0 +1,81 @@
+### auto-generated section `build intellij.platform.ui.jcef` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = [
+    "java.desktop/sun.awt=ALL-UNNAMED",
+    "java.desktop/java.awt.peer=ALL-UNNAMED",
+  ],
+  no_proc = True
+)
+
+resourcegroup(
+  name = "ui.jcef_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ui.jcef",
+  module_name = "intellij.platform.ui.jcef",
+  visibility = ["//visibility:public"],
+  srcs = glob(["jcef/**/*.kt", "jcef/**/*.java", "jcef/**/*.form"], allow_empty = True),
+  resources = [":ui.jcef_resources"],
+  javac_opts = ":custom-javac-options",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//libraries/jcef",
+    "//platform/credential-store",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-ui",
+    "//platform/util-ex",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/concurrency",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//libraries/jbr",
+    "//platform/jbr",
+    "@lib//:jna",
+  ]
+)
+
+jvm_library(
+  name = "ui.jcef_test_lib",
+  module_name = "intellij.platform.ui.jcef",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  javac_opts = ":custom-javac-options",
+  runtime_deps = [
+    ":ui.jcef",
+    "//libraries/jcef:jcef_test_lib",
+    "//platform/credential-store:credential-store_test_lib",
+    "//platform/projectModel-api:projectModel_test_lib",
+    "//platform/util/jdom:jdom_test_lib",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util:util_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-ui:core-ui_test_lib",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/editor-ui-api:editor-ui_test_lib",
+    "//platform/ide-core:ide-core_test_lib",
+    "//platform/platform-util-io:ide-util-io_test_lib",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/platform-api:ide_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//libraries/jbr:jbr_test_lib",
+    "//platform/jbr:jbr_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.ui.jcef` end

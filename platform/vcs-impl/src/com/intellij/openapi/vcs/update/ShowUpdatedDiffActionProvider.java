@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.DiffRequestFactoryImpl;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
@@ -27,7 +13,12 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.history.ByteContent;
 import com.intellij.history.Label;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -36,16 +27,23 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+@ApiStatus.Internal
 public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return isVisible(e.getDataContext());
@@ -62,26 +60,28 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
     presentation.setEnabled(isVisible(dc) && isEnabled(dc));
   }
 
-  private boolean isVisible(final DataContext dc) {
+  private static boolean isVisible(final DataContext dc) {
     final Project project = CommonDataKeys.PROJECT.getData(dc);
-    return (project != null) && (VcsDataKeys.LABEL_BEFORE.getData(dc) != null) && (VcsDataKeys.LABEL_AFTER.getData(dc) != null);
+    return (project != null) && (UpdateInfoTree.LABEL_BEFORE.getData(dc) != null) && (UpdateInfoTree.LABEL_AFTER.getData(dc) != null);
   }
 
-  private boolean isEnabled(final DataContext dc) {
-    final Iterable<Pair<FilePath, FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
+  private static boolean isEnabled(final DataContext dc) {
+    final Iterable<Pair<FilePath, FileStatus>> iterable = UpdateInfoTree.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
     return iterable != null;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dc = e.getDataContext();
+    DataContext dc = e.getDataContext();
     if ((!isVisible(dc)) || (!isEnabled(dc))) return;
 
-    final Project project = CommonDataKeys.PROJECT.getData(dc);
-    final Iterable<Pair<FilePath, FileStatus>> iterable = e.getRequiredData(VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE);
-    final Label before = (Label)e.getRequiredData(VcsDataKeys.LABEL_BEFORE);
-    final Label after = (Label)e.getRequiredData(VcsDataKeys.LABEL_AFTER);
-    final FilePath selectedUrl = VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getData(dc);
+    Project project = CommonDataKeys.PROJECT.getData(dc);
+    Iterable<Pair<FilePath, FileStatus>> iterable = e.getData(UpdateInfoTree.UPDATE_VIEW_FILES_ITERABLE);
+    if (iterable == null) return;
+    Label before = e.getData(UpdateInfoTree.LABEL_BEFORE);
+    Label after = e.getData(UpdateInfoTree.LABEL_AFTER);
+    if (before == null || after == null) return;
+    FilePath selectedUrl = UpdateInfoTree.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
     DiffRequestChain requestChain = createDiffRequestChain(project, before, after, iterable, selectedUrl);
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.FRAME);
@@ -104,18 +104,18 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
   }
 
   private static class MyDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
-    @Nullable private final Project myProject;
-    @NotNull private final Label myBefore;
-    @NotNull private final Label myAfter;
+    private final @Nullable Project myProject;
+    private final @NotNull Label myBefore;
+    private final @NotNull Label myAfter;
 
-    @NotNull private final FileStatus myFileStatus;
-    @NotNull private final FilePath myFilePath;
+    private final @NotNull FileStatus myFileStatus;
+    private final @NotNull FilePath myFilePath;
 
     MyDiffRequestProducer(@Nullable Project project,
-                                 @NotNull Label before,
-                                 @NotNull Label after,
-                                 @NotNull FilePath filePath,
-                                 @NotNull FileStatus fileStatus) {
+                          @NotNull Label before,
+                          @NotNull Label after,
+                          @NotNull FilePath filePath,
+                          @NotNull FileStatus fileStatus) {
       myProject = project;
       myBefore = before;
       myAfter = after;
@@ -123,27 +123,23 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
       myFilePath = filePath;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myFilePath.getPresentableUrl();
     }
 
-    @NotNull
     @Override
-    public FilePath getFilePath() {
+    public @NotNull FilePath getFilePath() {
       return myFilePath;
     }
 
-    @NotNull
     @Override
-    public FileStatus getFileStatus() {
+    public @NotNull FileStatus getFileStatus() {
       return myFileStatus;
     }
 
-    @NotNull
     @Override
-    public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+    public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
       throws DiffRequestProducerException, ProcessCanceledException {
       try {
         DiffContent content1;
@@ -167,7 +163,7 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
           content2 = contentFactory.createFromBytes(myProject, bytes2, myFilePath);
         }
 
-        String title = DiffRequestFactoryImpl.getContentTitle(myFilePath);
+        String title = DiffRequestFactory.getInstance().getTitle(myFilePath);
         return new SimpleDiffRequest(title,
                                      content1,
                                      content2,
@@ -177,6 +173,22 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
       catch (IOException e) {
         throw new DiffRequestProducerException(VcsBundle.message("update.can.t.load.content"), e);
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MyDiffRequestProducer producer = (MyDiffRequestProducer)o;
+      return myBefore.equals(producer.myBefore) &&
+             myAfter.equals(producer.myAfter) &&
+             myFileStatus.equals(producer.myFileStatus) &&
+             myFilePath.equals(producer.myFilePath);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myBefore, myAfter, myFileStatus, myFilePath);
     }
   }
 

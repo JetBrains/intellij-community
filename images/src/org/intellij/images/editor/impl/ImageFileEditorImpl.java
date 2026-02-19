@@ -15,9 +15,6 @@
  */
 package org.intellij.images.editor.impl;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
@@ -28,10 +25,15 @@ import com.intellij.util.EventDispatcher;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
-import org.intellij.images.options.*;
+import org.intellij.images.options.EditorOptions;
+import org.intellij.images.options.GridOptions;
+import org.intellij.images.options.Options;
+import org.intellij.images.options.OptionsManager;
+import org.intellij.images.options.TransparencyChessboardOptions;
+import org.intellij.images.options.ZoomOptions;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -62,8 +64,7 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return imageEditor.getComponent();
   }
 
@@ -73,14 +74,12 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return NAME;
   }
 
   @Override
-  @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     ImageZoomModel zoomModel = imageEditor.getZoomModel();
     return new ImageFileEditorState(
       imageEditor.isTransparencyChessboardVisible(),
@@ -91,11 +90,10 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof ImageFileEditorState) {
+    if (state instanceof ImageFileEditorState editorState) {
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
-      ImageFileEditorState editorState = (ImageFileEditorState)state;
       ImageZoomModel zoomModel = imageEditor.getZoomModel();
       imageEditor.setTransparencyChessboardVisible(editorState.isBackgroundVisible());
       imageEditor.setGridVisible(editorState.isGridVisible());
@@ -117,14 +115,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  public void selectNotify() {
-  }
-
-  @Override
-  public void deselectNotify() {
-  }
-
-  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -141,33 +131,16 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
-  }
-
-  @Override
-  public FileEditorLocation getCurrentLocation() {
-    return null;
-  }
-
-  @Override
-  public StructureViewBuilder getStructureViewBuilder() {
-    return null;
-  }
-
-  @Override
   public void dispose() {
   }
 
   @Override
-  @NotNull
-  public ImageEditor getImageEditor() {
+  public @NotNull ImageEditor getImageEditor() {
     return imageEditor;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return imageEditor.getFile();
   }
 }

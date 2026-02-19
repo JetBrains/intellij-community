@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -25,31 +11,34 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
 */
-public class ModuleDescriptor {
+public non-sealed class ModuleDescriptor implements Dependency {
   private String myName;
   private final MultiMap<File, DetectedSourceRoot> myContentToSourceRoots = new MultiMap<>();
   private final Set<File> myLibraryFiles = new HashSet<>();
   private final Set<ModuleDescriptor> myDependencies = new HashSet<>();
-  private static final Set<String> ourModuleNameStopList = new THashSet<>(
-    Arrays.asList("java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp"),
-    CaseInsensitiveStringHashingStrategy.INSTANCE
+  private static final Set<String> ourModuleNameStopList = CollectionFactory.createCaseInsensitiveStringSet(
+    Arrays.asList("java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp")
   );
 
   private boolean myReuseExistingElement;
   private final List<ModuleBuilder.ModuleConfigurationUpdater> myConfigurationUpdaters = new SmartList<>();
-  private final ModuleType myModuleType;
+  private final ModuleType<?> myModuleType;
 
   public ModuleDescriptor(final File contentRoot, final ModuleType moduleType, final Collection<? extends DetectedSourceRoot> sourceRoots) {
     myName = suggestModuleName(contentRoot);
@@ -80,8 +69,13 @@ public class ModuleDescriptor {
     return myReuseExistingElement;
   }
 
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return myModuleType;
+  }
+
+  @Override
+  public int getWeight() {
+    return 20;
   }
 
   private static String suggestModuleName(final File contentRoot) {
@@ -91,7 +85,7 @@ public class ModuleDescriptor {
         return suggestion;
       }
     }
-    
+
     return contentRoot.getName();
   }
 
@@ -114,27 +108,27 @@ public class ModuleDescriptor {
   public Collection<DetectedSourceRoot> getSourceRoots(File contentRoot) {
     return myContentToSourceRoots.get(contentRoot);
   }
-  
+
   public void addContentRoot(File contentRoot) {
     myContentToSourceRoots.put(contentRoot, new HashSet<>());
   }
-  
+
   public Collection<DetectedSourceRoot> removeContentRoot(File contentRoot) {
     return myContentToSourceRoots.remove(contentRoot);
   }
-  
+
   public void addSourceRoot(final File contentRoot, DetectedSourceRoot sourceRoot) {
     myContentToSourceRoots.putValue(contentRoot, sourceRoot);
   }
-  
+
   public void addDependencyOn(ModuleDescriptor dependence) {
     myDependencies.add(dependence);
   }
-  
+
   public void removeDependencyOn(ModuleDescriptor module) {
     myDependencies.remove(module);
   }
-  
+
   public void addLibraryFile(File libFile) {
     myLibraryFiles.add(libFile);
   }
@@ -150,8 +144,9 @@ public class ModuleDescriptor {
   /**
    * For debug purposes only
    */
+  @Override
   public String toString() {
-    @NonNls final StringBuilder builder = new StringBuilder();
+    final @NonNls StringBuilder builder = new StringBuilder();
     builder.append("[Module: ").append(getContentRoots()).append(" | ");
     for (DetectedProjectRoot sourceRoot : getSourceRoots()) {
       builder.append(sourceRoot.getDirectory().getName()).append(",");
@@ -168,11 +163,10 @@ public class ModuleDescriptor {
     myLibraryFiles.clear();
   }
 
-  @NotNull
-  public String computeModuleFilePath() throws InvalidDataException {
+  public @NotNull String computeModuleFilePath() throws InvalidDataException {
     final String name = getName();
     final Set<File> contentRoots = getContentRoots();
-    if (contentRoots.size() > 0) {
+    if (!contentRoots.isEmpty()) {
       return contentRoots.iterator().next().getPath() + File.separator + name + ModuleFileType.DOT_DEFAULT_EXTENSION;
     }
     else {

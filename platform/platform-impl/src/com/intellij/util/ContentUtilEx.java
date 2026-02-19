@@ -1,16 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.*;
-import com.intellij.ui.content.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabDescriptor;
+import com.intellij.ui.content.TabGroupId;
+import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.content.impl.TabbedContentImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -23,9 +32,9 @@ import java.util.function.Supplier;
 public final class ContentUtilEx extends ContentsUtil {
   /**
    * @deprecated use {@link ContentUtilEx#addTabbedContent(ContentManager, JComponent, String, Supplier, Supplier, boolean, Disposable)}
-   * as it allows to set tab group id separately from display name.
+   * as it allows setting tab group id separately from display name.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupPrefix,
@@ -61,12 +70,11 @@ public final class ContentUtilEx extends ContentsUtil {
                                            @NotNull TabGroupId tabGroupId,
                                            @NotNull TabDescriptor tab,
                                            boolean select) {
-    Content content = ContentFactory.SERVICE.getInstance().createContent(tab.getComponent(), tabGroupId.getDisplayName(tab),
+    Content content = ContentFactory.getInstance().createContent(tab.getComponent(), tabGroupId.getDisplayName(tab),
                                                                          true);
     content.setTabName(tabGroupId.getDisplayName(tab));
     content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
     content.putUserData(Content.TAB_GROUP_ID_KEY, tabGroupId);
-    content.putUserData(Content.TAB_GROUP_NAME_KEY, tabGroupId.getId()); // for backward compatibility
     content.putUserData(Content.TAB_DESCRIPTOR_KEY, tab);
 
     Disposer.register(content, tab);
@@ -104,8 +112,7 @@ public final class ContentUtilEx extends ContentsUtil {
     }
   }
 
-  @Nullable
-  public static TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull @NonNls String id) {
+  public static @Nullable TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull @NonNls String id) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent) {
         if (((TabbedContent)content).getId().getId().equals(id)) {
@@ -116,9 +123,7 @@ public final class ContentUtilEx extends ContentsUtil {
     return null;
   }
 
-  @NotNull
-  @NlsContexts.TabTitle
-  public static String getFullName(@NotNull @NlsContexts.TabTitle String groupPrefix, @NotNull @NlsContexts.TabTitle String tabName) {
+  public static @NotNull @NlsContexts.TabTitle String getFullName(@NotNull @NlsContexts.TabTitle String groupPrefix, @NotNull @NlsContexts.TabTitle String tabName) {
     if (tabName.isEmpty()) return groupPrefix;
     return groupPrefix + ": " + tabName;
   }
@@ -129,7 +134,7 @@ public final class ContentUtilEx extends ContentsUtil {
    *
    * @return true if the necessary content was found (and thus selected) among content components of the given ContentManager.
    */
-  public static boolean selectContent(@NotNull ContentManager manager, @NotNull final JComponent contentComponent, boolean requestFocus) {
+  public static boolean selectContent(@NotNull ContentManager manager, final @NotNull JComponent contentComponent, boolean requestFocus) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContentImpl) {
         boolean found = ((TabbedContentImpl)content).findAndSelectContent(contentComponent);
@@ -150,8 +155,7 @@ public final class ContentUtilEx extends ContentsUtil {
    * Searches through all {@link Content simple} and {@link TabbedContent tabbed} contents of the given ContentManager,
    * trying to find the first one which matches the given condition.
    */
-  @Nullable
-  public static JComponent findContentComponent(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
+  public static @Nullable JComponent findContentComponent(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
       if (content instanceof TabbedContent) {
         JComponent component = findContentComponent((TabbedContent)content, condition);
@@ -164,8 +168,7 @@ public final class ContentUtilEx extends ContentsUtil {
     return null;
   }
 
-  @Nullable
-  private static JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull Condition<? super JComponent> condition) {
+  private static @Nullable JComponent findContentComponent(@NotNull TabbedContent tabbedContent, @NotNull Condition<? super JComponent> condition) {
     for (Pair<String, JComponent> tab : tabbedContent.getTabs()) {
       if (condition.value(tab.second)) {
         return tab.second;
@@ -181,8 +184,7 @@ public final class ContentUtilEx extends ContentsUtil {
    */
   public static boolean closeContentTab(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
-        TabbedContent tabbedContent = (TabbedContent)content;
+      if (content instanceof TabbedContent tabbedContent && tabbedContent.hasMultipleTabs()) {
         JComponent component = findContentComponent(tabbedContent, condition);
         if (component != null) {
           tabbedContent.removeContent(component);

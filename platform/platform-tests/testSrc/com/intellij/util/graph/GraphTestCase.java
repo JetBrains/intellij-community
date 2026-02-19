@@ -18,7 +18,12 @@ package com.intellij.util.graph;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public abstract class GraphTestCase {
   protected static GraphAlgorithms getAlgorithmsInstance() {
@@ -40,7 +45,7 @@ public abstract class GraphTestCase {
         in.get(to).add(from);
       }
     }
-    return new Graph<String>() {
+    return new Graph<>() {
       @NotNull
       @Override
       public Collection<String> getNodes() {

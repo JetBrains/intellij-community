@@ -1,26 +1,16 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.fileTemplates.PluginBundledTemplate;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class BundledFileTemplate extends FileTemplateBase {
+public final class BundledFileTemplate extends FileTemplateBase implements PluginBundledTemplate {
   private final DefaultTemplate myDefaultTemplate;
   private final boolean myInternal;
   private boolean myEnabled = true; // when user 'deletes' bundled plugin, it simply becomes disabled
@@ -28,6 +18,11 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public BundledFileTemplate(@NotNull DefaultTemplate defaultTemplate, boolean internal) {
     myDefaultTemplate = defaultTemplate;
     myInternal = internal;
+  }
+
+  @Override
+  public @NotNull PluginDescriptor getPluginDescriptor() {
+    return myDefaultTemplate.pluginDescriptor;
   }
 
   // these complications are to avoid eager initialization/load of huge files
@@ -40,14 +35,12 @@ public final class BundledFileTemplate extends FileTemplateBase {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myDefaultTemplate.getName();
   }
 
   @Override
-  @NotNull
-  public String getExtension() {
+  public @NotNull String getExtension() {
     return myDefaultTemplate.getExtension();
   }
 
@@ -62,14 +55,12 @@ public final class BundledFileTemplate extends FileTemplateBase {
   }
 
   @Override
-  @NotNull
-  protected String getDefaultText() {
+  protected @NotNull String getDefaultText() {
     return myDefaultTemplate.getText();
   }
 
   @Override
-  @NotNull
-  public final String getDescription() {
+  public @NotNull String getDescription() {
     return myDefaultTemplate.getDescriptionText();
   }
 
@@ -79,9 +70,8 @@ public final class BundledFileTemplate extends FileTemplateBase {
     return getText().equals(getDefaultText());
   }
 
-  @NotNull
   @Override
-  public BundledFileTemplate clone() {
+  public @NotNull BundledFileTemplate clone() {
     return (BundledFileTemplate)super.clone();
   }
 
@@ -98,7 +88,9 @@ public final class BundledFileTemplate extends FileTemplateBase {
     }
   }
 
-  void revertToDefaults() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void revertToDefaults() {
     setText(null);
     setReformatCode(DEFAULT_REFORMAT_CODE_VALUE);
     setLiveTemplateEnabled(isLiveTemplateEnabledByDefault());
@@ -115,6 +107,6 @@ public final class BundledFileTemplate extends FileTemplateBase {
 
   @Override
   public String toString() {
-    return myDefaultTemplate.getTemplateURL().toString();
+    return myDefaultTemplate.toString();
   }
 }

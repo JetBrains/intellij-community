@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.TestOnly
 
@@ -14,22 +16,22 @@ class SuggestedRefactoringProviderImpl(project: Project) : SuggestedRefactoringP
     }
   }
 
-  val availabilityIndicator = SuggestedRefactoringAvailabilityIndicator(project)
+  val availabilityIndicator: SuggestedRefactoringAvailabilityIndicator = SuggestedRefactoringAvailabilityIndicator(project)
   private val changeCollector = SuggestedRefactoringChangeCollector(availabilityIndicator)
-  private val listener: SuggestedRefactoringChangeListener
+  private val listener = SuggestedRefactoringChangeListener(project, changeCollector, project)
 
   val state: SuggestedRefactoringState?
     get() = changeCollector.state
 
-  init {
-    listener = SuggestedRefactoringChangeListener(project, changeCollector, project)
-  }
-
-  internal class Startup : StartupActivity.DumbAware {
-    override fun runActivity(project: Project) {
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        getInstance(project)
+  internal class Startup : ProjectActivity {
+    init {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        throw ExtensionNotApplicableException.create()
       }
+    }
+
+    override suspend fun execute(project: Project) {
+      project.serviceAsync<SuggestedRefactoringProvider>()
     }
   }
 

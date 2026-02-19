@@ -37,13 +37,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class PyImportedModule extends LightElement implements PyTypedElement {
-  @Nullable private final PyImportElement myImportElement;
-  @NotNull private final PyFile myContainingFile;
-  @NotNull private final QualifiedName myImportedPrefix;
+  private final @Nullable PyImportElement myImportElement;
+  private final @NotNull PyFile myContainingFile;
+  private final @NotNull QualifiedName myImportedPrefix;
 
   /**
    * @param importElement  parental import element, may be {@code null} if we're resolving {@code module} part in {@code from module import ...} statement
@@ -58,14 +56,12 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     myImportedPrefix = importedPrefix;
   }
 
-  @NotNull
   @Override
-  public PyFile getContainingFile() {
+  public @NotNull PyFile getContainingFile() {
     return myContainingFile;
   }
 
-  @NotNull
-  public QualifiedName getImportedPrefix() {
+  public @NotNull QualifiedName getImportedPrefix() {
     return myImportedPrefix;
   }
 
@@ -76,7 +72,7 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitElement(this);
+    super.accept(visitor);
   }
 
   @Override
@@ -89,9 +85,8 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     return "PyImportedModule:" + myImportedPrefix;
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     if (myImportElement != null) {
       final PsiElement element = resolve(myImportElement, myImportedPrefix);
       if (element != null) {
@@ -106,8 +101,7 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     return (myImportElement == null || myImportElement.isValid()) && myContainingFile.isValid();
   }
 
-  @Nullable
-  public PyImportElement getImportElement() {
+  public @Nullable PyImportElement getImportElement() {
     return myImportElement;
   }
 
@@ -119,8 +113,7 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     return multiResolve().stream().findFirst().map(res -> res.getElement()).orElse(null);
   }
 
-  @NotNull
-  public List<RatedResolveResult> multiResolve() {
+  public @NotNull List<RatedResolveResult> multiResolve() {
     final List<RatedResolveResult> results;
     if (myImportElement != null) {
       results = ResolveImportUtil.multiResolveImportElement(myImportElement, myImportedPrefix);
@@ -128,7 +121,7 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     else {
       final ResolveResultList resList = new ResolveResultList();
       ResolveImportUtil.multiResolveModuleInRoots(myImportedPrefix, myContainingFile)
-                       .forEach(res -> resList.poke(res, RatedResolveResult.RATE_NORMAL));
+        .forEach(res -> resList.poke(res, RatedResolveResult.RATE_NORMAL));
       results = resList;
     }
     return ContainerUtil.map(results, this::tryReplaceDirWithPackage);
@@ -139,14 +132,12 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     return element instanceof PsiDirectory ? el.replace(PyUtil.getPackageElement((PsiDirectory)element, this)) : el;
   }
 
-  @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return new PyImportedModuleType(this);
   }
 
-  @Nullable
-  private static PsiElement resolve(PyImportElement importElement, @NotNull final QualifiedName prefix) {
+  private static @Nullable PsiElement resolve(PyImportElement importElement, final @NotNull QualifiedName prefix) {
     final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement, prefix);
     final PsiElement packageInit = PyUtil.turnDirIntoInit(resolved);
     return packageInit != null ? packageInit : resolved;

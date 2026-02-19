@@ -1,7 +1,7 @@
-from typing import TextIO
+from io import TextIOWrapper, _WrappedBuffer
 
 
 def func():
-    var: [TextIO]
+    var: [TextIOWrapper[_WrappedBuffer]]
     with open('file.txt') as var:
         var

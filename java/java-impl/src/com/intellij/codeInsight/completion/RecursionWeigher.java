@@ -1,13 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.PsiSuperExpression;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -23,14 +36,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
-* @author peter
-*/
 class RecursionWeigher extends LookupElementWeigher {
   private final ElementFilter myFilter;
   private final PsiElement myPosition;
   private final PsiReferenceExpression myReference;
-  @Nullable private final PsiMethodCallExpression myExpression;
+  private final @Nullable PsiMethodCallExpression myExpression;
   private final PsiMethod myPositionMethod;
   private final ExpectedTypeInfo[] myExpectedInfos;
   private final PsiExpression myCallQualifier;
@@ -58,8 +68,7 @@ class RecursionWeigher extends LookupElementWeigher {
     myDelegate = isDelegatingCall();
   }
 
-  @Nullable
-  private static PsiExpression normalizeQualifier(@Nullable PsiElement qualifier) {
+  private static @Nullable PsiExpression normalizeQualifier(@Nullable PsiElement qualifier) {
     return qualifier instanceof PsiThisExpression || !(qualifier instanceof PsiExpression) ? null : (PsiExpression)qualifier;
   }
 
@@ -78,9 +87,8 @@ class RecursionWeigher extends LookupElementWeigher {
     return true;
   }
 
-  @Nullable
-  static ElementFilter recursionFilter(PsiElement element) {
-    if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
+  static @Nullable ElementFilter recursionFilter(PsiElement element) {
+    if (PsiJavaPatterns.psiElement().afterLeaf(JavaKeywords.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
       return new ExcludeDeclaredFilter(ElementClassFilter.METHOD);
     }
 
@@ -102,9 +110,8 @@ class RecursionWeigher extends LookupElementWeigher {
     recursive,
   }
 
-  @NotNull
   @Override
-  public Result weigh(@NotNull LookupElement element) {
+  public @NotNull Result weigh(@NotNull LookupElement element) {
     final Object object = element.getObject();
     if (!(object instanceof PsiMethod || object instanceof PsiVariable || object instanceof PsiExpression)) return Result.normal;
 
@@ -112,7 +119,7 @@ class RecursionWeigher extends LookupElementWeigher {
       return Result.recursive;
     }
 
-    if (isPassingObjectToItself(object) && myCompletionType == CompletionType.SMART) {
+    if (isPassingObjectToItself(((PsiElement)object)) && myCompletionType == CompletionType.SMART) {
       return Result.passingObjectToItself;
     }
 
@@ -141,22 +148,18 @@ class RecursionWeigher extends LookupElementWeigher {
       return Result.normal;
     }
 
-    if (object instanceof PsiMethod && myPositionMethod != null) {
-      final PsiMethod method = (PsiMethod)object;
-      if (PsiTreeUtil.isAncestor(myReference, myPosition, false) &&
-          Objects.equals(method.getName(), myPositionMethod.getName())) {
-        if (!myDelegate && findDeepestSuper(method).equals(findDeepestSuper(myPositionMethod))) {
-          return Result.recursive;
-        }
-        return Result.delegation;
+    if (object instanceof PsiMethod method && myPositionMethod != null && PsiTreeUtil.isAncestor(myReference, myPosition, false) &&
+        Objects.equals(method.getName(), myPositionMethod.getName())) {
+      if (!myDelegate && findDeepestSuper(method).equals(findDeepestSuper(myPositionMethod))) {
+        return Result.recursive;
       }
+      return Result.delegation;
     }
 
     return Result.normal;
   }
 
-  @Nullable
-  private String getSetterPropertyName(@Nullable PsiMethod calledMethod) {
+  private @Nullable String getSetterPropertyName(@Nullable PsiMethod calledMethod) {
     if (PropertyUtilBase.isSimplePropertySetter(calledMethod)) {
       return PropertyUtilBase.getPropertyName(calledMethod);
     }
@@ -186,16 +189,15 @@ class RecursionWeigher extends LookupElementWeigher {
     return false;
   }
 
-  private boolean isPassingObjectToItself(Object object) {
-    if (object instanceof PsiThisExpression) {
+  private boolean isPassingObjectToItself(PsiElement element) {
+    if (element instanceof PsiThisExpression) {
       return myCallQualifier != null && !myDelegate || myCallQualifier instanceof PsiSuperExpression;
     }
     return myCallQualifier instanceof PsiReferenceExpression &&
-           object.equals(((PsiReferenceExpression)myCallQualifier).advancedResolve(true).getElement());
+           ((PsiReferenceExpression)myCallQualifier).isReferenceTo(element);
   }
 
-  @NotNull
-  public static PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
+  public static @NotNull PsiMethod findDeepestSuper(final @NotNull PsiMethod method) {
     CommonProcessors.FindFirstProcessor<PsiMethod> processor = new CommonProcessors.FindFirstProcessor<>();
     MethodDeepestSuperSearcher.processDeepestSuperMethods(method, processor);
     final PsiMethod first = processor.getFoundValue();

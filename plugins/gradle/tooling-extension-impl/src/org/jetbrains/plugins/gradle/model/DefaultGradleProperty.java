@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.serialization.PropertyMapping;
@@ -9,31 +9,29 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public class DefaultGradleProperty implements GradleProperty {
-  @NotNull
-  private final String name;
-  @NotNull
-  private final String rootTypeFqn;
+  private static final long serialVersionUID = 1L;
+
+  private final @NotNull String name;
+  private final @NotNull String typeFqn;
 
   @PropertyMapping({"name", "typeFqn"})
   public DefaultGradleProperty(@NotNull String name, @Nullable String typeFqn) {
     this.name = name;
-    rootTypeFqn = typeFqn == null ? "Object" : typeFqn;
+    this.typeFqn = typeFqn == null ? "java.lang.Object" : typeFqn;
   }
 
   public DefaultGradleProperty(GradleProperty property) {
     this(property.getName(), property.getTypeFqn());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
-  @NotNull
   @Override
-  public String getTypeFqn() {
-    return rootTypeFqn;
+  public @NotNull String getTypeFqn() {
+    return typeFqn;
   }
 
   @Override
@@ -44,7 +42,7 @@ public class DefaultGradleProperty implements GradleProperty {
     DefaultGradleProperty property = (DefaultGradleProperty)o;
 
     if (!name.equals(property.name)) return false;
-    if (!rootTypeFqn.equals(property.rootTypeFqn)) return false;
+    if (!typeFqn.equals(property.typeFqn)) return false;
 
     return true;
   }
@@ -52,7 +50,7 @@ public class DefaultGradleProperty implements GradleProperty {
   @Override
   public int hashCode() {
     int result = name.hashCode();
-    result = 31 * result + rootTypeFqn.hashCode();
+    result = 31 * result + typeFqn.hashCode();
     return result;
   }
 }

@@ -1,10 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Path
+import java.util.jar.Attributes
+import java.util.jar.JarInputStream
+import kotlin.io.path.inputStream
+import kotlin.io.path.isRegularFile
 import kotlin.test.fail
 
 class DirectoryContentSpecTest {
@@ -75,6 +79,27 @@ class DirectoryContentSpecTest {
     dir.assertNotMatches(directoryContent {
       file("a.txt", "a")
     }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `file content different line separators`() {
+    val dir = directoryContent {
+      file("a.txt", "first\nsecond")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.txt", "first\r\nsecond")
+    }, FileTextMatcher.ignoreLineSeparators())
+
+    try {
+      dir.assertMatches(directoryContent {
+        file("a.txt", "first\r\nsecond")
+      })
+      fail("Must not match")
+    }
+    catch (e: AssertionError) {
+      assertThat(e.message).contains("Different line separators")
+    }
   }
 
   @Test
@@ -202,8 +227,8 @@ class DirectoryContentSpecTest {
     val zip = zipFile {
       file("a.txt", "a")
     }.generateInTempDir()
-    assertTrue(zip.isFile())
-    Assertions.assertThat(zip.fileName.toString()).endsWith(".zip")
+    assertTrue(zip.isRegularFile())
+    assertThat(zip.fileName.toString()).endsWith(".zip")
     zip.assertMatches(zipFile {
       file("a.txt", "a")
     })
@@ -216,6 +241,65 @@ class DirectoryContentSpecTest {
     zip.assertNotMatches(directoryContent {
       file("a.txt", "b")
     }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `jar file without manifest`() {
+    val jar = jarFile {
+      file("a.txt", "a")
+    }.generateInTempDir()
+    assertTrue(jar.isRegularFile())
+    assertThat(jar.fileName.toString()).endsWith(".jar")
+    jar.assertMatches(jarFile {
+      file("a.txt", "a")
+    })
+    jar.assertNotMatches(jarFile {
+      file("b.txt", "a")
+    }, FileTextMatcher.ignoreBlankLines())
+    jar.assertNotMatches(jarFile {
+      file("a.txt", "b")
+    }, FileTextMatcher.ignoreBlankLines())
+    jar.assertNotMatches(directoryContent {
+      file("a.txt", "b")
+    }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `jar file with manifest`() {
+    val jar = jarFile {
+      file("a.txt", "a")
+      dir("META-INF") {
+        file("MANIFEST.MF", """
+          |Manifest-Version: 1.0
+          |Implementation-Version: 1.0
+        """.trimMargin() + "\n")
+      }
+    }.generateInTempDir()
+    val manifest = JarInputStream(jar.inputStream()).use {
+      it.manifest
+    }
+    assertThat(manifest.mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION)).isEqualTo("1.0")
+  }
+
+  @Test
+  fun `ignore xml formatting`() {
+    val dir = directoryContent {
+      file("a.xml", "<root attr=\"value\"></root>")
+      file("b.txt", "foo")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.xml", "  <root   attr = \"value\" >  </root> ")
+      file("b.txt", "foo")
+    }, FileTextMatcher.ignoreXmlFormatting())
+    dir.assertNotMatches(directoryContent {
+      file("a.xml", "<root attr=\"value2\"></root>")
+      file("b.txt", "foo")
+    }, FileTextMatcher.ignoreXmlFormatting())
+    dir.assertNotMatches(directoryContent {
+      file("a.xml", "<root attr=\"value\"></root>")
+      file("b.txt", " foo ")
+    }, FileTextMatcher.ignoreXmlFormatting())
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -9,22 +9,23 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitorBase;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TypeChecker extends GroovyStaticTypeCheckVisitor {
+public class TypeChecker extends GroovyStaticTypeCheckVisitorBase {
+
   List<ProblemFix> toApply = new ArrayList<>();
 
   @Override
   protected void registerError(@NotNull PsiElement location,
                                @InspectionMessage @NotNull String description,
-                               LocalQuickFix @Nullable [] fixes,
+                               @NotNull LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType) {
 
     if (highlightType == ProblemHighlightType.GENERIC_ERROR) {
-      if (fixes != null && fixes.length > 0) {
+      if (fixes != null && fixes.length > 0 && location.isPhysical()) {
         final InspectionManager manager = InspectionManager.getInstance(location.getProject());
         final ProblemDescriptor descriptor =
           manager.createProblemDescriptor(location, description, fixes, highlightType, fixes.length == 1, false);
@@ -56,13 +57,11 @@ public class TypeChecker extends GroovyStaticTypeCheckVisitor {
       this.descriptor = descriptor;
     }
 
-    @NotNull
-    public LocalQuickFix getFix() {
+    public @NotNull LocalQuickFix getFix() {
       return fix;
     }
 
-    @NotNull
-    public ProblemDescriptor getDescriptor() {
+    public @NotNull ProblemDescriptor getDescriptor() {
       return descriptor;
     }
 

@@ -1,22 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -28,27 +18,32 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.RangeBlinker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@ApiStatus.Internal
 public class ActionUsagePanel extends JPanel implements Disposable {
-  @NonNls private static final String SPOT_MARKER = "spot";
-  protected final EditorEx myEditor;
-  protected final RangeBlinker myRangeBlinker;
-
+  private static final @NonNls String SPOT_MARKER = "spot";
+  protected final EditorEx editor;
+  protected final RangeBlinker rangeBlinker;
 
   public ActionUsagePanel() {
-    myEditor = (EditorEx)createEditor("", 10, 3, -1);
+    editor = (EditorEx)createEditor("", 10, 3, -1);
     setLayout(new BorderLayout());
-    add(myEditor.getComponent(), BorderLayout.CENTER);
+    add(editor.getComponent(), BorderLayout.CENTER);
     TextAttributes blinkAttributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
-    myRangeBlinker = new RangeBlinker(myEditor, blinkAttributes, Integer.MAX_VALUE);
+    rangeBlinker = new RangeBlinker(editor, blinkAttributes, Integer.MAX_VALUE, this);
+  }
+
+  public EditorEx getEditor() {
+    return editor;
   }
 
   protected static Editor createEditor(String text, int column, int line, int selectedLine) {
@@ -77,20 +72,20 @@ public class ActionUsagePanel extends JPanel implements Disposable {
     return editor;
   }
 
-  public void reset(final String usageText, final FileType fileType) {
+  public void reset(String usageText, FileType fileType) {
     reinitViews();
     SwingUtilities.invokeLater(() -> {
-      if (myEditor.isDisposed()) return;
+      if (editor.isDisposed()) return;
       DocumentUtil.writeInRunUndoTransparentAction(() -> configureByText(usageText, fileType));
     });
   }
 
-  private void configureByText(final String usageText, FileType fileType) {
-    Document document = myEditor.getDocument();
+  private void configureByText(String usageText, FileType fileType) {
+    Document document = editor.getDocument();
     String text = StringUtil.convertLineSeparators(usageText);
     document.replaceString(0, document.getTextLength(), text);
-    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(fileType, scheme, null));
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(fileType, scheme, null));
     setupSpots(document);
   }
 
@@ -98,9 +93,9 @@ public class ActionUsagePanel extends JPanel implements Disposable {
     List<Segment> markers = new ArrayList<>();
     while (true) {
       String text = document.getText();
-      final int spotStart = text.indexOf("<" + SPOT_MARKER + ">");
+      int spotStart = text.indexOf("<" + SPOT_MARKER + ">");
       if (spotStart < 0) break;
-      final int spotEnd = text.indexOf("</" + SPOT_MARKER + ">", spotStart);
+      int spotEnd = text.indexOf("</" + SPOT_MARKER + ">", spotStart);
       if (spotEnd < 0) break;
 
       document.deleteString(spotEnd, spotEnd + SPOT_MARKER.length() + 3);
@@ -118,21 +113,21 @@ public class ActionUsagePanel extends JPanel implements Disposable {
       };
       markers.add(spotMarker);
     }
-    myRangeBlinker.resetMarkers(markers);
+    rangeBlinker.resetMarkers(markers, false);
     if (!markers.isEmpty()) {
-      myRangeBlinker.startBlinking();
+      rangeBlinker.startBlinking();
     }
   }
 
   @Override
   public void dispose() {
-    myRangeBlinker.stopBlinking();
+    rangeBlinker.stopBlinking();
     EditorFactory editorFactory = EditorFactory.getInstance();
-    editorFactory.releaseEditor(myEditor);
+    editorFactory.releaseEditor(editor);
   }
 
   private void reinitViews() {
-    myEditor.reinitSettings();
-    myEditor.getMarkupModel().removeAllHighlighters();
+    editor.reinitSettings();
+    editor.getMarkupModel().removeAllHighlighters();
   }
 }

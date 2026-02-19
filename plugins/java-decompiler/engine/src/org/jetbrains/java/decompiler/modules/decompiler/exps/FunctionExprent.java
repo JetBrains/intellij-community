@@ -1,20 +1,29 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 public class FunctionExprent extends Exprent {
 
@@ -37,40 +46,40 @@ public class FunctionExprent extends Exprent {
   public static final int FUNCTION_BOOL_NOT = 12;
   public static final int FUNCTION_NEG = 13;
 
-  public final static int FUNCTION_I2L = 14;
-  public final static int FUNCTION_I2F = 15;
-  public final static int FUNCTION_I2D = 16;
-  public final static int FUNCTION_L2I = 17;
-  public final static int FUNCTION_L2F = 18;
-  public final static int FUNCTION_L2D = 19;
-  public final static int FUNCTION_F2I = 20;
-  public final static int FUNCTION_F2L = 21;
-  public final static int FUNCTION_F2D = 22;
-  public final static int FUNCTION_D2I = 23;
-  public final static int FUNCTION_D2L = 24;
-  public final static int FUNCTION_D2F = 25;
-  public final static int FUNCTION_I2B = 26;
-  public final static int FUNCTION_I2C = 27;
-  public final static int FUNCTION_I2S = 28;
+  public static final int FUNCTION_I2L = 14;
+  public static final int FUNCTION_I2F = 15;
+  public static final int FUNCTION_I2D = 16;
+  public static final int FUNCTION_L2I = 17;
+  public static final int FUNCTION_L2F = 18;
+  public static final int FUNCTION_L2D = 19;
+  public static final int FUNCTION_F2I = 20;
+  public static final int FUNCTION_F2L = 21;
+  public static final int FUNCTION_F2D = 22;
+  public static final int FUNCTION_D2I = 23;
+  public static final int FUNCTION_D2L = 24;
+  public static final int FUNCTION_D2F = 25;
+  public static final int FUNCTION_I2B = 26;
+  public static final int FUNCTION_I2C = 27;
+  public static final int FUNCTION_I2S = 28;
 
-  public final static int FUNCTION_CAST = 29;
-  public final static int FUNCTION_INSTANCEOF = 30;
+  public static final int FUNCTION_CAST = 29;
+  public static final int FUNCTION_INSTANCEOF = 30;
 
-  public final static int FUNCTION_ARRAY_LENGTH = 31;
+  public static final int FUNCTION_ARRAY_LENGTH = 31;
 
-  public final static int FUNCTION_IMM = 32;
-  public final static int FUNCTION_MMI = 33;
+  public static final int FUNCTION_IMM = 32;
+  public static final int FUNCTION_MMI = 33;
 
-  public final static int FUNCTION_IPP = 34;
-  public final static int FUNCTION_PPI = 35;
+  public static final int FUNCTION_IPP = 34;
+  public static final int FUNCTION_PPI = 35;
 
-  public final static int FUNCTION_IIF = 36;
+  public static final int FUNCTION_IIF = 36;
 
-  public final static int FUNCTION_LCMP = 37;
-  public final static int FUNCTION_FCMPL = 38;
-  public final static int FUNCTION_FCMPG = 39;
-  public final static int FUNCTION_DCMPL = 40;
-  public final static int FUNCTION_DCMPG = 41;
+  public static final int FUNCTION_LCMP = 37;
+  public static final int FUNCTION_FCMPL = 38;
+  public static final int FUNCTION_FCMPG = 39;
+  public static final int FUNCTION_DCMPL = 40;
+  public static final int FUNCTION_DCMPG = 41;
 
   public static final int FUNCTION_EQ = 42;
   public static final int FUNCTION_NE = 43;
@@ -185,8 +194,10 @@ public class FunctionExprent extends Exprent {
   private int funcType;
   private VarType implicitType;
   private final List<Exprent> lstOperands;
+  private boolean needsCast = true;
+  private @Nullable VarType inferredType;
 
-  public FunctionExprent(int funcType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
+  public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
     this(funcType, new ArrayList<>(), bytecodeOffsets);
 
     if (funcType >= FUNCTION_BIT_NOT && funcType <= FUNCTION_PPI && funcType != FUNCTION_CAST && funcType != FUNCTION_INSTANCEOF) {
@@ -202,7 +213,7 @@ public class FunctionExprent extends Exprent {
     }
   }
 
-  public FunctionExprent(int funcType, List<Exprent> operands, Set<Integer> bytecodeOffsets) {
+  public FunctionExprent(int funcType, List<Exprent> operands, BitSet bytecodeOffsets) {
     super(EXPRENT_FUNCTION);
     this.funcType = funcType;
     this.lstOperands = operands;
@@ -210,16 +221,23 @@ public class FunctionExprent extends Exprent {
     addBytecodeOffsets(bytecodeOffsets);
   }
 
-  public FunctionExprent(int funcType, Exprent operand, Set<Integer> bytecodeOffsets) {
+  public FunctionExprent(int funcType, Exprent operand, BitSet bytecodeOffsets) {
     this(funcType, new ArrayList<>(1), bytecodeOffsets);
     lstOperands.add(operand);
   }
 
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
+    if(inferredType != null) {
+      return inferredType;
+    }
     VarType exprType = null;
 
-    if (funcType <= FUNCTION_NEG || funcType == FUNCTION_IPP || funcType == FUNCTION_PPI || funcType == FUNCTION_IMM || funcType == FUNCTION_MMI) {
+    if (funcType <= FUNCTION_NEG ||
+        funcType == FUNCTION_IPP ||
+        funcType == FUNCTION_PPI ||
+        funcType == FUNCTION_IMM ||
+        funcType == FUNCTION_MMI) {
       VarType type1 = lstOperands.get(0).getExprType();
       VarType type2 = null;
       if (lstOperands.size() > 1) {
@@ -227,38 +245,18 @@ public class FunctionExprent extends Exprent {
       }
 
       switch (funcType) {
-        case FUNCTION_IMM:
-        case FUNCTION_MMI:
-        case FUNCTION_IPP:
-        case FUNCTION_PPI:
-          exprType = implicitType;
-          break;
-        case FUNCTION_BOOL_NOT:
-          exprType = VarType.VARTYPE_BOOLEAN;
-          break;
-        case FUNCTION_SHL:
-        case FUNCTION_SHR:
-        case FUNCTION_USHR:
-        case FUNCTION_BIT_NOT:
-        case FUNCTION_NEG:
-          exprType = getMaxVarType(new VarType[]{type1});
-          break;
-        case FUNCTION_ADD:
-        case FUNCTION_SUB:
-        case FUNCTION_MUL:
-        case FUNCTION_DIV:
-        case FUNCTION_REM:
-          exprType = getMaxVarType(new VarType[]{type1, type2});
-          break;
-        case FUNCTION_AND:
-        case FUNCTION_OR:
-        case FUNCTION_XOR:
-          if (type1.type == CodeConstants.TYPE_BOOLEAN & type2.type == CodeConstants.TYPE_BOOLEAN) {
+        case FUNCTION_IMM, FUNCTION_MMI, FUNCTION_IPP, FUNCTION_PPI -> exprType = implicitType;
+        case FUNCTION_BOOL_NOT -> exprType = VarType.VARTYPE_BOOLEAN;
+        case FUNCTION_SHL, FUNCTION_SHR, FUNCTION_USHR, FUNCTION_BIT_NOT, FUNCTION_NEG -> exprType = getMaxVarType(new VarType[]{type1});
+        case FUNCTION_ADD, FUNCTION_SUB, FUNCTION_MUL, FUNCTION_DIV, FUNCTION_REM -> exprType = getMaxVarType(new VarType[]{type1, type2});
+        case FUNCTION_AND, FUNCTION_OR, FUNCTION_XOR -> {
+          if (type1.getType() == CodeConstants.TYPE_BOOLEAN & type2 != null && type2.getType() == CodeConstants.TYPE_BOOLEAN) {
             exprType = VarType.VARTYPE_BOOLEAN;
           }
           else {
             exprType = getMaxVarType(new VarType[]{type1, type2});
           }
+        }
       }
     }
     else if (funcType == FUNCTION_CAST) {
@@ -269,7 +267,7 @@ public class FunctionExprent extends Exprent {
       Exprent param2 = lstOperands.get(2);
       VarType supertype = VarType.getCommonSupertype(param1.getExprType(), param2.getExprType());
       if (param1.type == Exprent.EXPRENT_CONST && param2.type == Exprent.EXPRENT_CONST &&
-          supertype.type != CodeConstants.TYPE_BOOLEAN && VarType.VARTYPE_INT.isSuperset(supertype)) {
+          supertype != null && supertype.getType() != CodeConstants.TYPE_BOOLEAN && VarType.VARTYPE_INT.isSuperset(supertype)) {
         exprType = VarType.VARTYPE_INT;
       }
       else {
@@ -289,8 +287,61 @@ public class FunctionExprent extends Exprent {
       exprType = TYPES[funcType - FUNCTION_I2L];
     }
 
+    if (exprType == null) {
+      return VarType.VARTYPE_UNKNOWN;
+    }
     return exprType;
   }
+
+  @Override
+  public void inferExprType(VarType upperBound) {
+    if (funcType == FUNCTION_CAST) {
+      this.needsCast = true;
+      lstOperands.get(0).inferExprType(upperBound);
+      VarType right = lstOperands.get(0).getExprType();
+      VarType cast = lstOperands.get(1).getExprType();
+
+      if (upperBound != null && (upperBound.isGeneric() || right.isGeneric())) {
+        Map<VarType, List<VarType>> names = this.getNamedGenerics();
+        int arrayDim = 0;
+
+        if (upperBound.getArrayDim() == right.getArrayDim() && upperBound.getArrayDim() > 0) {
+          arrayDim = upperBound.getArrayDim();
+          upperBound = upperBound.resizeArrayDim(0);
+          right = right.resizeArrayDim(0);
+        }
+
+        List<VarType> types = names.get(right);
+        if (types == null) {
+          types = names.get(upperBound);
+        }
+
+        if (types != null) {
+          boolean anyMatch = false; //TODO: allMatch instead of anyMatch?
+          for (VarType type : types) {
+            anyMatch |= DecompilerContext.getStructContext().instanceOf(type.getValue(), cast.getValue());
+          }
+          if (anyMatch) {
+            this.needsCast = false;
+          }
+        }
+        else {
+            this.needsCast = right.getType() == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.getValue(), upperBound.getValue());
+        }
+        if (!this.needsCast) {
+          if (arrayDim > 0) {
+            right = right.resizeArrayDim(arrayDim);
+          }
+          inferredType = right;
+        }
+      }
+      else { //TODO: Capture generics to make cast better?
+        this.needsCast = (right.getType() == CodeConstants.TYPE_NULL ||
+                         !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue()));
+      }
+    }
+  }
+
 
   @Override
   public int getExprentUse() {
@@ -324,8 +375,8 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_IIF:
         VarType supertype = getExprType();
         result.addMinTypeExprent(param1, VarType.VARTYPE_BOOLEAN);
-        result.addMinTypeExprent(param2, VarType.getMinTypeInFamily(supertype.typeFamily));
-        result.addMinTypeExprent(lstOperands.get(2), VarType.getMinTypeInFamily(supertype.typeFamily));
+        result.addMinTypeExprent(param2, VarType.getMinTypeInFamily(supertype.getTypeFamily()));
+        result.addMinTypeExprent(lstOperands.get(2), VarType.getMinTypeInFamily(supertype.getTypeFamily()));
         break;
       case FUNCTION_I2L:
       case FUNCTION_I2F:
@@ -366,15 +417,16 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_XOR:
       case FUNCTION_EQ:
       case FUNCTION_NE: {
-        if (type1.type == CodeConstants.TYPE_BOOLEAN) {
-          if (type2.isStrictSuperset(type1)) {
+        if (type1.getType() == CodeConstants.TYPE_BOOLEAN) {
+          if (type2 != null && type2.isStrictSuperset(type1)) {
             result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
           }
           else { // both are booleans
             boolean param1_false_boolean =
               type1.isFalseBoolean() || (param1.type == Exprent.EXPRENT_CONST && !((ConstExprent)param1).hasBooleanValue());
             boolean param2_false_boolean =
-              type1.isFalseBoolean() || (param2.type == Exprent.EXPRENT_CONST && !((ConstExprent)param2).hasBooleanValue());
+              type1.isFalseBoolean() ||
+              (param2 != null && param2.type == Exprent.EXPRENT_CONST && !((ConstExprent)param2).hasBooleanValue());
 
             if (param1_false_boolean || param2_false_boolean) {
               result.addMinTypeExprent(param1, VarType.VARTYPE_BYTECHAR);
@@ -382,7 +434,7 @@ public class FunctionExprent extends Exprent {
             }
           }
         }
-        else if (type2.type == CodeConstants.TYPE_BOOLEAN) {
+        else if (type2 != null && type2.getType() == CodeConstants.TYPE_BOOLEAN) {
           if (type1.isStrictSuperset(type2)) {
             result.addMinTypeExprent(param2, VarType.VARTYPE_BYTECHAR);
           }
@@ -394,16 +446,14 @@ public class FunctionExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    return new ArrayList<>(lstOperands);
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
+    lst.addAll(this.lstOperands);
+    return lst;
   }
 
   @Override
   public Exprent copy() {
-    List<Exprent> lst = new ArrayList<>();
-    for (Exprent expr : lstOperands) {
-      lst.add(expr.copy());
-    }
+    List<Exprent> lst = DecHelper.copyExprentList(lstOperands);
     FunctionExprent func = new FunctionExprent(funcType, lst, bytecode);
     func.setImplicitType(implicitType);
 
@@ -413,11 +463,10 @@ public class FunctionExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (!(o instanceof FunctionExprent)) return false;
+    if (!(o instanceof FunctionExprent fe)) return false;
 
-    FunctionExprent fe = (FunctionExprent)o;
-    return funcType == fe.getFuncType() &&
-           InterpreterUtil.equalLists(lstOperands, fe.getLstOperands()); // TODO: order of operands insignificant
+    return funcType == fe.funcType &&
+           Objects.equals(lstOperands, fe.lstOperands); // TODO: order of operands insignificant
   }
 
   @Override
@@ -458,74 +507,67 @@ public class FunctionExprent extends Exprent {
         .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
     }
 
-    switch (funcType) {
-      case FUNCTION_BIT_NOT:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("~");
-      case FUNCTION_BOOL_NOT:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("!");
-      case FUNCTION_NEG:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
-      case FUNCTION_CAST:
-        return lstOperands.get(1).toJava(indent, tracer).enclose("(", ")").append(wrapOperandString(lstOperands.get(0), true, indent, tracer));
-      case FUNCTION_ARRAY_LENGTH:
-        Exprent arr = lstOperands.get(0);
-
-        TextBuffer res = wrapOperandString(arr, false, indent, tracer);
-        if (arr.getExprType().arrayDim == 0) {
-          VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
-          res.enclose("((" + ExprProcessor.getCastTypeName(objArr) + ")", ")");
+    return switch (funcType) {
+      case FUNCTION_BIT_NOT -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("~");
+      case FUNCTION_BOOL_NOT -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("!");
+      case FUNCTION_NEG -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
+      case FUNCTION_CAST -> {
+        if (!needsCast) {
+          yield lstOperands.get(0).toJava(indent, tracer);
         }
-        return res.append(".length");
-      case FUNCTION_IIF:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer)
-          .append(" ? ")
+        yield lstOperands.get(1).toJava(indent, tracer).enclose("(", ")").append(wrapOperandString(lstOperands.get(0), true, indent, tracer));
+      }
+      case FUNCTION_ARRAY_LENGTH -> {
+        Exprent arr = lstOperands.get(0);
+        TextBuffer res = wrapOperandString(arr, false, indent, tracer);
+        if (arr.getExprType().getArrayDim() == 0) {
+          VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
+          res.enclose("((" + ExprProcessor.getCastTypeName(objArr, Collections.emptyList()) + ")", ")");
+        }
+        yield res.append(".length");
+      }
+      case FUNCTION_IIF -> wrapOperandString(lstOperands.get(0), true, indent, tracer)
+        .append(" ? ")
+        .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+        .append(" : ")
+        .append(wrapOperandString(lstOperands.get(2), true, indent, tracer));
+      case FUNCTION_IPP -> wrapOperandString(lstOperands.get(0), true, indent, tracer).append("++");
+      case FUNCTION_PPI -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("++");
+      case FUNCTION_IMM -> wrapOperandString(lstOperands.get(0), true, indent, tracer).append("--");
+      case FUNCTION_MMI -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("--");
+      case FUNCTION_INSTANCEOF -> wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ")
+        .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
+      case FUNCTION_LCMP -> // shouldn't appear in the final code
+        wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__lcmp__(")
+          .append(", ")
           .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
-          .append(" : ")
-          .append(wrapOperandString(lstOperands.get(2), true, indent, tracer));
-      case FUNCTION_IPP:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append("++");
-      case FUNCTION_PPI:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("++");
-      case FUNCTION_IMM:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append("--");
-      case FUNCTION_MMI:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("--");
-      case FUNCTION_INSTANCEOF:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ").append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
-      case FUNCTION_LCMP: // shouldn't appear in the final code
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__lcmp__(")
-                 .append(", ")
-                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
-                 .append(")");
-      case FUNCTION_FCMPL: // shouldn't appear in the final code
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__fcmpl__(")
-                 .append(", ")
-                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
-                 .append(")");
-      case FUNCTION_FCMPG: // shouldn't appear in the final code
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__fcmpg__(")
-                 .append(", ")
-                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
-                 .append(")");
-      case FUNCTION_DCMPL: // shouldn't appear in the final code
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__dcmpl__(")
-                 .append(", ")
-                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
-                 .append(")");
-      case FUNCTION_DCMPG: // shouldn't appear in the final code
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__dcmpg__(")
-                 .append(", ")
-                 .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
-                 .append(")");
-    }
-
-    if (funcType <= FUNCTION_I2S) {
-      return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(
-        TYPES[funcType - FUNCTION_I2L]) + ")");
-    }
-
-    //		return "<unknown function>";
-    throw new RuntimeException("invalid function");
+          .append(")");
+      case FUNCTION_FCMPL -> // shouldn't appear in the final code
+        wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__fcmpl__(")
+          .append(", ")
+          .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+          .append(")");
+      case FUNCTION_FCMPG -> // shouldn't appear in the final code
+        wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__fcmpg__(")
+          .append(", ")
+          .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+          .append(")");
+      case FUNCTION_DCMPL -> // shouldn't appear in the final code
+        wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__dcmpl__(")
+          .append(", ")
+          .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+          .append(")");
+      case FUNCTION_DCMPG -> // shouldn't appear in the final code
+        wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__dcmpg__(")
+          .append(", ")
+          .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
+          .append(")");
+      default -> {
+        assert funcType <= FUNCTION_I2S;
+        yield wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(
+          TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
+      }
+    };
   }
 
   @Override
@@ -571,7 +613,7 @@ public class FunctionExprent extends Exprent {
 
     for (int i = 0; i < types.length; i++) {
       for (VarType anArr : arr) {
-        if (anArr.type == types[i]) {
+        if (anArr.getType() == types[i]) {
           return vartypes[i];
         }
       }
@@ -600,6 +642,12 @@ public class FunctionExprent extends Exprent {
     this.implicitType = implicitType;
   }
 
+  @Override
+  public void fillBytecodeRange(@Nullable BitSet values) {
+    measureBytecode(values, lstOperands);
+    measureBytecode(values);
+  }
+
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
@@ -612,5 +660,9 @@ public class FunctionExprent extends Exprent {
 
     Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
     return type == null || this.funcType == type;
+  }
+
+  public boolean doesCast() {
+    return needsCast;
   }
 }

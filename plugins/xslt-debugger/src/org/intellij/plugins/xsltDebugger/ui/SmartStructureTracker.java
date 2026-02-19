@@ -23,7 +23,7 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JTree;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -62,21 +62,7 @@ public class SmartStructureTracker extends TreeModelAdapter {
           if (last.getChildCount() > 0) {
             DefaultMutableTreeNode next = (DefaultMutableTreeNode)last.getFirstChild();
             while (next != null) {
-              boolean collapse = true;
-//                                final int count = next.getChildCount();
-//                                if (count > 0) {
-//                                    for (int i = 0; i < count; i++) {
-//                                        final DefaultMutableTreeNode child = (DefaultMutableTreeNode)next.getChildAt(i);
-//                                        if (child instanceof GeneratedStructureModel.StructureNode) {
-//                                            if (((GeneratedStructureModel.StructureNode)child).isNew()) {
-//                                                collapse = false;
-//                                            }
-//                                        }
-//                                    }
-//                                }
-              if (collapse) {
-                myEventTree.collapsePath(TreeUtil.getPathFromRoot(next));
-              }
+              myEventTree.collapsePath(TreeUtil.getPathFromRoot(next));
               next = next.getNextSibling();
             }
           }

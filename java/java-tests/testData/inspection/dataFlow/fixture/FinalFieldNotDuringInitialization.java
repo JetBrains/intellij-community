@@ -95,7 +95,7 @@ class Test6 extends BadSuper {
   }
 
   public Integer someLength() {
-    return something.<warning descr="Method invocation 'length' may produce 'NullPointerException'">length</warning>();
+    return something.<warning descr="Method invocation 'length' may produce 'NullPointerException' (unknown nullability)">length</warning>();
   }
 
   protected void overrideableMethod() {
@@ -107,7 +107,7 @@ class Test7 extends BadSuper {
   private final String something = new String("something");
 
   protected void overrideableMethod() {
-    something.<warning descr="Method invocation 'length' may produce 'NullPointerException'">length</warning>();
+    something.<warning descr="Method invocation 'length' may produce 'NullPointerException' (unknown nullability)">length</warning>();
   }
 }
 

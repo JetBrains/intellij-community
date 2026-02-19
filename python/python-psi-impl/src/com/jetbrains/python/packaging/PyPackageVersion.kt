@@ -6,12 +6,15 @@ package com.jetbrains.python.packaging
  *
  * Instances of this class MUST be obtained from [PyPackageVersionNormalizer.normalize].
  */
-data class PyPackageVersion internal constructor(val epoch: String? = null,
-                                                 val release: String,
-                                                 val pre: String? = null,
-                                                 val post: String? = null,
-                                                 val dev: String? = null,
-                                                 val local: String? = null) {
+@ConsistentCopyVisibility
+data class PyPackageVersion internal constructor(
+  val epoch: String? = null,
+  val release: String,
+  val pre: String? = null,
+  val post: String? = null,
+  val dev: String? = null,
+  val local: String? = null,
+) {
 
   /**
    * String representation that follows spelling described in [PEP-440][https://www.python.org/dev/peps/pep-0440/#normalization]
@@ -26,4 +29,6 @@ data class PyPackageVersion internal constructor(val epoch: String? = null,
   private fun postPresentable() = post?.let { ".$it" }
   private fun devPresentable() = dev?.let { ".$it" }
   private fun localPresentable() = local?.let { "+$it" }
+
+  fun withRelease(newRelease: String): PyPackageVersion = PyPackageVersion(epoch, newRelease, pre, post, dev, local)
 }

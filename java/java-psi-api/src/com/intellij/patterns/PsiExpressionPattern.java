@@ -1,24 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.patterns;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaResolveResult;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpressionPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
   protected PsiExpressionPattern(final Class<T> aClass) {
     super(aClass);
   }
 
-  public Self ofType(@NotNull final ElementPattern pattern) {
+  public Self ofType(final @NotNull ElementPattern pattern) {
     return with(new PatternCondition<T>("ofType") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         return pattern.accepts(t.getType(), context);
       }
     });

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
@@ -25,20 +10,58 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
+
 public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
-  @NotNull
-  @Override
-  public String getModuleTypeId() {
-    return ModuleTypeId.JAVA_MODULE;
+  private static final String JETBRAINS_ANNOTATIONS_COORDINATES = "org.jetbrains:annotations-java5:24.0.0";
+  private static final String JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8 = "org.jetbrains:annotations:26.0.2";
+  private @Nullable Supplier<? extends Sdk> customSdk;
+  private final List<RequiredLibrary> mavenLibraries = new ArrayList<>();
+
+  public DefaultLightProjectDescriptor() {
+  }
+
+  public DefaultLightProjectDescriptor(@NotNull Supplier<? extends Sdk> customSdk) {
+    this.customSdk = customSdk;
+  }
+
+  public DefaultLightProjectDescriptor(@NotNull Supplier<? extends Sdk> customSdk, @NotNull List<String> mavenLibraries) {
+    this.customSdk = customSdk;
+    for (String library : mavenLibraries) {
+      withRepositoryLibrary(library);
+    }
   }
 
   @Override
+  public @NotNull String getModuleTypeId() {
+    return JAVA_MODULE_ENTITY_TYPE_ID_NAME;
+  }
+
+  /**
+   * Returns the SDK for tests using this descriptor.
+   *
+   * <p><b>Default:</b> Returns {@link IdeaTestUtil#getMockJdk17()} (Mock JDK 1.7, Java 7).
+   *
+   * <p><b>Important:</b> Mock JDK 1.7 does NOT contain {@code java.nio.file.*} classes.
+   * If your test needs {@code Path}, {@code Paths}, or {@code Files}, create a custom
+   * descriptor with a higher JDK version:
+   * <pre>{@code
+   * private static final LightProjectDescriptor DESCRIPTOR =
+   *     new DefaultLightProjectDescriptor(IdeaTestUtil::getMockJdk11);
+   * }</pre>
+   *
+   * @return the SDK, defaults to Mock JDK 1.7 (Java 7)
+   * @see IdeaTestUtil#getMockJdk(com.intellij.util.lang.JavaVersion) for version mapping details
+   */
+  @Override
   public Sdk getSdk() {
-    return IdeaTestUtil.getMockJdk17();
+    return customSdk == null ? IdeaTestUtil.getMockJdk17() : customSdk.get();
   }
 
   @Override
@@ -46,6 +69,51 @@ public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
     LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
     if (extension != null) {
       extension.setLanguageLevel(LanguageLevel.HIGHEST);
+
+      for (RequiredLibrary library : mavenLibraries) {
+        MavenDependencyUtil.addFromMaven(model, library.mavenCoordinates, library.includeTransitive);
+      }
+    }
+  }
+
+  public DefaultLightProjectDescriptor withRepositoryLibrary(@NotNull String library) {
+    return withRepositoryLibrary(library, true);
+  }
+
+  public DefaultLightProjectDescriptor withRepositoryLibrary(@NotNull String library, boolean includeTransitive) {
+    mavenLibraries.add(new RequiredLibrary(library, includeTransitive));
+    return this;
+  }
+  
+  public DefaultLightProjectDescriptor withJetBrainsAnnotations() {
+    return withRepositoryLibrary(JETBRAINS_ANNOTATIONS_COORDINATES);
+  }
+
+  public DefaultLightProjectDescriptor withJetBrainsAnnotationsWithTypeUse() {
+    return withRepositoryLibrary(JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8);
+  }
+
+  public static void addJetBrainsAnnotationsWithTypeUse(ModifiableRootModel model) {
+    MavenDependencyUtil.addFromMaven(model, JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8);
+  }
+
+  /**
+   * Adds old non-type-use JetBrains annotations as a module dependency.
+   * Currently, many tests assume that this dependency is present.
+   * 
+   * @param model model to modify
+   */
+  public static void addJetBrainsAnnotations(@NotNull ModifiableRootModel model) {
+    MavenDependencyUtil.addFromMaven(model, JETBRAINS_ANNOTATIONS_COORDINATES);
+  }
+
+  public static class RequiredLibrary {
+    public final String mavenCoordinates;
+    public final boolean includeTransitive;
+
+    public RequiredLibrary(String coordinates, boolean transitive) {
+      mavenCoordinates = coordinates;
+      includeTransitive = transitive;
     }
   }
 }

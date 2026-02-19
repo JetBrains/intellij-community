@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -7,7 +7,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.Command;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
+import org.jetbrains.idea.svn.commandLine.CommandRuntime;
+import org.jetbrains.idea.svn.commandLine.LineCommandListener;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
 import java.io.File;
 import java.util.Collection;
@@ -21,9 +26,8 @@ public abstract class BaseSvnClient implements SvnClient {
   protected ClientFactory myFactory;
   protected boolean myIsActive;
 
-  @NotNull
   @Override
-  public SvnVcs getVcs() {
+  public @NotNull SvnVcs getVcs() {
     return myVcs;
   }
 
@@ -32,9 +36,8 @@ public abstract class BaseSvnClient implements SvnClient {
     myVcs = vcs;
   }
 
-  @NotNull
   @Override
-  public ClientFactory getFactory() {
+  public @NotNull ClientFactory getFactory() {
     return myFactory;
   }
 
@@ -74,22 +77,20 @@ public abstract class BaseSvnClient implements SvnClient {
     }
   }
 
-  @NotNull
-  public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull Target target,
-                                 @NotNull SvnCommandName name,
-                                 @NotNull List<String> parameters,
-                                 @Nullable LineCommandListener listener) throws SvnBindException {
+  public @NotNull CommandExecutor execute(@NotNull SvnVcs vcs,
+                                          @NotNull Target target,
+                                          @NotNull SvnCommandName name,
+                                          @NotNull List<String> parameters,
+                                          @Nullable LineCommandListener listener) throws SvnBindException {
     return execute(vcs, target, null, name, parameters, listener);
   }
 
-  @NotNull
-  public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull Target target,
-                                 @Nullable File workingDirectory,
-                                 @NotNull SvnCommandName name,
-                                 @NotNull List<String> parameters,
-                                 @Nullable LineCommandListener listener) throws SvnBindException {
+  public @NotNull CommandExecutor execute(@NotNull SvnVcs vcs,
+                                          @NotNull Target target,
+                                          @Nullable File workingDirectory,
+                                          @NotNull SvnCommandName name,
+                                          @NotNull List<String> parameters,
+                                          @Nullable LineCommandListener listener) throws SvnBindException {
     Command command = newCommand(name);
 
     command.put(parameters);
@@ -97,12 +98,11 @@ public abstract class BaseSvnClient implements SvnClient {
     return execute(vcs, target, workingDirectory, command, listener);
   }
 
-  @NotNull
-  public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull Target target,
-                                 @Nullable File workingDirectory,
-                                 @NotNull Command command,
-                                 @Nullable LineCommandListener listener) throws SvnBindException {
+  public @NotNull CommandExecutor execute(@NotNull SvnVcs vcs,
+                                          @NotNull Target target,
+                                          @Nullable File workingDirectory,
+                                          @NotNull Command command,
+                                          @Nullable LineCommandListener listener) throws SvnBindException {
     command.setTarget(target);
     command.setWorkingDirectory(workingDirectory);
     command.setResultBuilder(listener);
@@ -110,13 +110,11 @@ public abstract class BaseSvnClient implements SvnClient {
     return newRuntime(vcs).runWithAuthenticationAttempt(command);
   }
 
-  @NotNull
-  public Command newCommand(@NotNull SvnCommandName name) {
+  public @NotNull Command newCommand(@NotNull SvnCommandName name) {
     return new Command(name);
   }
 
-  @NotNull
-  public CommandRuntime newRuntime(@NotNull SvnVcs vcs) {
+  public @NotNull CommandRuntime newRuntime(@NotNull SvnVcs vcs) {
     return new CommandRuntime(vcs, new AuthenticationService(vcs, myIsActive));
   }
 
@@ -126,13 +124,11 @@ public abstract class BaseSvnClient implements SvnClient {
     }
   }
 
-  @NotNull
-  protected static ProgressEvent createEvent(@NotNull File path, @Nullable EventAction action) {
+  protected static @NotNull ProgressEvent createEvent(@NotNull File path, @Nullable EventAction action) {
     return new ProgressEvent(path, 0, null, null, action, null, null);
   }
 
-  @NotNull
-  protected static Revision notNullize(@Nullable Revision revision) {
+  protected static @NotNull Revision notNullize(@Nullable Revision revision) {
     return revision != null ? revision : Revision.UNDEFINED;
   }
 }

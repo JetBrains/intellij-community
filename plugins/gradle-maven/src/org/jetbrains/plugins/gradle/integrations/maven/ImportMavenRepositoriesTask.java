@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,15 +11,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
-import org.jetbrains.idea.maven.indices.MavenSearchIndex;
+import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -33,16 +36,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
  */
-class ImportMavenRepositoriesTask {
-
-  @NotNull
-  private final MavenRemoteRepository mavenCentralRemoteRepository;
+final class ImportMavenRepositoriesTask {
+  private final @NotNull MavenRemoteRepository mavenCentralRemoteRepository;
 
   private final Project myProject;
 
@@ -52,11 +56,13 @@ class ImportMavenRepositoriesTask {
   }
 
   void schedule() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     ReadAction.nonBlocking(this::performTask).inSmartMode(myProject).submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void performTask() {
+  void performTask() {
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final List<PsiFile> psiFileList = new ArrayList<>();
 
@@ -84,8 +90,7 @@ class ImportMavenRepositoriesTask {
     final Set<MavenRemoteRepository> mavenRemoteRepositories = ReadAction.compute(() -> {
       Set<MavenRemoteRepository> myRemoteRepositories = new HashSet<>();
       for (PsiFile psiFile : psiFiles) {
-        List<GrClosableBlock> repositoriesBlocks = new ArrayList<>();
-        repositoriesBlocks.addAll(findClosableBlocks(psiFile, "repositories"));
+        List<GrClosableBlock> repositoriesBlocks = new ArrayList<>(findClosableBlocks(psiFile, "repositories"));
 
         for (GrClosableBlock closableBlock : findClosableBlocks(psiFile, "buildscript", "subprojects", "allprojects", "project",
                                                                 "configure")) {
@@ -104,22 +109,11 @@ class ImportMavenRepositoriesTask {
     // register imported maven repository URLs but do not force to download the index
     // the index can be downloaded and/or updated later using Maven Configuration UI (Settings -> Build, Execution, Deployment -> Build tools -> Maven -> Repositories)
     MavenRepositoriesHolder.getInstance(myProject).update(mavenRemoteRepositories);
-    MavenProjectIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(indexes -> {
-      if (myProject.isDisposed()) return;
-
-      List<String> repositoriesWithEmptyIndex = indexes.stream()
-        .filter(index -> index.getUpdateTimestamp() == -1 &&
-                         index.getFailureMessage() == null &&
-                         MavenRepositoriesHolder.getInstance(myProject).contains(index.getRepositoryPathOrUrl()))
-        .map(MavenSearchIndex::getRepositoryPathOrUrl)
-        .collect(Collectors.toList());
-      MavenRepositoriesHolder.getInstance(myProject).updateNotIndexedUrls(repositoriesWithEmptyIndex);
-    });
+    MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList();
   }
 
-  @NotNull
-  private static Collection<? extends GrClosableBlock> findClosableBlocks(@NotNull final PsiElement element,
-                                                                          final String @NotNull ... blockNames) {
+  private static @NotNull Collection<? extends GrClosableBlock> findClosableBlocks(final @NotNull PsiElement element,
+                                                                                   final String @NotNull ... blockNames) {
     List<GrMethodCall> methodCalls = PsiTreeUtil.getChildrenOfTypeAsList(element, GrMethodCall.class);
     return ContainerUtil.mapNotNull(methodCalls, call -> {
       if (call == null || call.getClosureArguments().length != 1) return null;
@@ -129,8 +123,7 @@ class ImportMavenRepositoriesTask {
     });
   }
 
-  @NotNull
-  private Collection<? extends MavenRemoteRepository> findMavenRemoteRepositories(@Nullable GrClosableBlock repositoriesBlock) {
+  private @NotNull Collection<? extends MavenRemoteRepository> findMavenRemoteRepositories(@Nullable GrClosableBlock repositoriesBlock) {
     Set<MavenRemoteRepository> myRemoteRepositories = new HashSet<>();
     for (GrMethodCall repo : PsiTreeUtil
       .getChildrenOfTypeAsList(repositoriesBlock, GrMethodCall.class)) {
@@ -189,8 +182,7 @@ class ImportMavenRepositoriesTask {
     return myRemoteRepositories;
   }
 
-  @Nullable
-  private static URI resolveUriFromSimpleExpression(@Nullable GrExpression expression) {
+  private static @Nullable URI resolveUriFromSimpleExpression(@Nullable GrExpression expression) {
     if (expression == null) return null;
 
     try {

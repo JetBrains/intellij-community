@@ -1,137 +1,133 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileVisitor
-import com.intellij.openapi.vfs.local.FileWatcherTestUtil
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.refresh
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
+import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.TimeoutUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.nio.file.Files
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.TreeSet
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 @SkipSlowTestLocally
+@PerformanceUnitTest
 class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
-  private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
+  private val LOG = logger<WatchRootsManagerPerformanceTest>()
 
-  @Rule
-  @JvmField
-  val tempDir = TempDirectory()
+  @Rule @JvmField val tempDir = TempDirectory()
 
   private lateinit var fs: LocalFileSystem
-  private lateinit var root: VirtualFile
+  private lateinit var vfsTempDir: VirtualFile
   private lateinit var watcher: FileWatcher
 
-  @Before
-  fun setUp() {
+  @Before fun setUp() {
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
     fs = LocalFileSystem.getInstance()
-    root = refresh(tempDir.root)
+    vfsTempDir = refresh(tempDir.rootPath)
 
     runInEdtAndWait { fs.refresh(false) }
     runInEdtAndWait { fs.refresh(false) }
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
-    FileWatcherTestUtil.startup(watcher) {}
+    startup(watcher) { }
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
   }
 
-  @After
-  fun tearDown() {
+  @After fun tearDown() {
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
 
-    if (this::watcher.isInitialized) {
-      FileWatcherTestUtil.shutdown(watcher)
-    }
-
-    runInEdtAndWait {
-      runWriteAction { root.delete(this) }
-      (fs as LocalFileSystemImpl).cleanupForNextTest()
-    }
+    RunAll(
+      { if (this::watcher.isInitialized) shutdown(watcher) },
+      {
+        runInEdtAndWait {
+          if (this::vfsTempDir.isInitialized) runWriteAction { vfsTempDir.delete(this) }
+          if (this::fs.isInitialized) (fs as LocalFileSystemImpl).cleanupForNextTest()
+        }
+      },
+    ).run()
 
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
   }
   //</editor-fold>
 
-  @Test
-  fun testWatchRootsAddOnlyTiming() {
-    val root = tempDir.newDirectory("root")
+  @Test fun testWatchRootsAddOnlyTiming() {
+    val root = tempDir.newDirectoryPath("root")
     val fileCount = 50_000
+    refresh(root)
+
     try {
-      PlatformTestUtil.startPerformanceTest("Adding roots", 9000) {
-        val requests = ArrayList<LocalFileSystem.WatchRequest>(fileCount)
-        for (i in 1..fileCount) {
-          requests.add(fs.addRootToWatch(File(root, "f$i").path, true)!!)
+      val roots = (1..fileCount).map { "${root}/f${it}" }
+      val requests = ArrayList<LocalFileSystem.WatchRequest>(fileCount)
+      Benchmark.newBenchmark("Adding roots") {
+        roots.forEach {
+          requests.add(fs.addRootToWatch(it, true)!!)
         }
         fs.removeWatchedRoots(requests)
-      }.assertTiming()
+      }.start()
     }
     finally {
-      wait { watcher.isSettingRoots }
+      wait(NATIVE_PROCESS_DELAY) { watcher.isSettingRoots }
     }
   }
 
-  @Test
-  fun testWatchRootsBulkAddOnlyTiming() {
-    val root = tempDir.newDirectory("root")
+  @Test fun testWatchRootsBulkAddOnlyTiming() {
+    val root = tempDir.newDirectoryPath("root")
     val fileCount = 100_000
     refresh(root)
+
     try {
-      PlatformTestUtil.startPerformanceTest("Adding roots", 13000) {
-        fs.removeWatchedRoots(fs.addRootsToWatch((1..fileCount).map { File(root, "f$it").path }, true))
-      }.assertTiming()
+      val roots = (1..fileCount).map { "${root}/f${it}" }
+      Benchmark.newBenchmark("Adding roots") {
+        fs.removeWatchedRoots(fs.addRootsToWatch(roots, true))
+      }.start()
     }
     finally {
-      wait { watcher.isSettingRoots }
+      wait(NATIVE_PROCESS_DELAY) { watcher.isSettingRoots }
     }
   }
 
-  @Test
-  fun testAddWatchRootWithManySymbolicLinks() {
-    assumeNioSymLinkCreationIsSupported()
-    val root = tempDir.newDirectory("root")
-
+  @Test fun testAddWatchRootWithManySymbolicLinks() {
+    assumeSymLinkCreationIsSupported()
+    val root = tempDir.newDirectoryPath("root")
     val linkCount = 20_000
-
-    (1..linkCount).forEach {
-      Files.createSymbolicLink(File(root, "l$it").toPath(),
-                               tempDir.newDirectory("targets/d$it").toPath())
-    }
+    (1..linkCount).forEach { Files.createSymbolicLink(root.resolve("l${it}"), tempDir.newDirectoryPath("targets/d${it}")) }
     refresh(root)
+
     try {
-      PlatformTestUtil.startPerformanceTest("Adding roots", 2000) {
-        fs.removeWatchedRoot(fs.addRootToWatch(root.path, true)!!)
-      }.assertTiming()
+      val rootPath = root.toString()
+      Benchmark.newBenchmark("Adding roots") {
+        fs.removeWatchedRoot(fs.addRootToWatch(rootPath, true)!!)
+      }.start()
     }
     finally {
-      wait { watcher.isSettingRoots }
+      wait(NATIVE_PROCESS_DELAY) { watcher.isSettingRoots }
     }
   }
 
-  @Test
-  fun testCreateCanonicalPathMap() {
-    val root = tempDir.newDirectory("root").path.replace('\\', '/')
+  @Test fun testCreateCanonicalPathMap() {
+    val root = tempDir.newDirectoryPath("root").toString().replace('\\', '/')
     val flatWatchRoots = TreeSet<String>()
     val optimizedRecursiveWatchRoots = TreeSet<String>()
     val pathMappings = WatchRootsUtil.createMappingsNavigableSet()
@@ -144,21 +140,20 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
       (1..5).forEach { pathMappings.add(Pair("$root/rec$i/ln$it", "$root/targets/rec$i/ln$it")) }
     }
 
-    PlatformTestUtil.startPerformanceTest("Create canonical path map", 7000) {
+    Benchmark.newBenchmark("Create canonical path map") {
       repeat(18) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
-    }.assertTiming()
+    }.startAsSubtest()
 
-    PlatformTestUtil.startPerformanceTest("Create canonical path map - convert paths", 10000) {
+    Benchmark.newBenchmark("Create canonical path map - convert paths") {
       repeat(18) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }
-    }.assertTiming()
+    }.startAsSubtest()
   }
 
-  @Test
-  fun testCanonicalPathMapWithManySymlinks() {
+  @Test fun testCanonicalPathMapWithManySymlinks() {
     val root = "/users/foo/workspace"
     val flatWatchRoots = TreeSet<String>()
     val optimizedRecursiveWatchRoots = TreeSet<String>()
@@ -174,41 +169,22 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
 
     val map = WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
     map.addMapping((1..filesCount).map { Pair("$root/src/ln$it-3", "$root/src/ln$it-3") })
-    PlatformTestUtil.startPerformanceTest("Test apply mapping from canonical path map", 3000) {
+    Benchmark.newBenchmark("Test apply mapping from canonical path map") {
       repeat(1_000_000) {
         map.mapToOriginalWatchRoots("$root/src/ln${(Math.random() * 200_000).toInt()}", true)
       }
-    }.assertTiming()
+    }.startAsSubtest()
 
-    PlatformTestUtil.startPerformanceTest("Create canonical path map", 3000) {
+    Benchmark.newBenchmark("Create canonical path map") {
       repeat(100) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
-    }.assertTiming()
+    }.startAsSubtest()
 
-    PlatformTestUtil.startPerformanceTest("Create canonical path map - convert paths", 3000) {
+    Benchmark.newBenchmark("Create canonical path map - convert paths") {
       repeat(40) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }
-    }.assertTiming()
-  }
-
-  internal fun wait(timeout: Long = FileWatcherTestUtil.START_STOP_DELAY, condition: () -> Boolean) {
-    val stopAt = System.currentTimeMillis() + timeout
-    while (condition()) {
-      assertTrue(System.currentTimeMillis() < stopAt, "operation timed out")
-      TimeoutUtil.sleep(0)
-    }
-  }
-
-  private fun refresh(file: File): VirtualFile {
-    val vFile = fs.refreshAndFindFileByIoFile(file) ?: throw IllegalStateException("can't get '${file.path}' into VFS")
-    VfsUtilCore.visitChildrenRecursively(vFile, object : VirtualFileVisitor<Any>() {
-      override fun visitFile(file: VirtualFile): Boolean {
-        file.children; return true
-      }
-    })
-    vFile.refresh(false, true)
-    return vFile
+    }.startAsSubtest()
   }
 }

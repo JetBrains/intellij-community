@@ -1,10 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ConfigurationUtil;
+import com.intellij.execution.JUnitBundle;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.junit2.info.NestedClassLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -12,9 +18,15 @@ import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
@@ -34,9 +46,8 @@ public class TestsPattern extends TestPackage {
     return TestClassFilter.create(getSourceScope(), getConfiguration().getConfigurationModule().getModule(), data.getPatternPresentation());
   }
 
-  @NotNull
   @Override
-  protected String getPackageName(JUnitConfiguration.Data data) {
+  protected @NotNull String getPackageName(JUnitConfiguration.Data data) {
     return "";
   }
 
@@ -51,34 +62,34 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) {
-    searchTests(module, classFilter, classes, true);
+  protected void searchTests5(Module module, Set<? super Location<?>> classes) {
+    searchTests(module, null, classes, true);
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super Location<?>> classes) {
     searchTests(module, classFilter, classes, false);
   }
 
-  private void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes, boolean junit5) {
+  private void searchTests(Module module, TestClassFilter classFilter, Set<? super Location<?>> classes, boolean junit5) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
       final PsiClass psiClass = ReadAction.compute(() -> getTestClass(project, className));
       if (psiClass != null) {
         if (ReadAction.compute(() -> JUnitUtil.isTestClass(psiClass))) {
-          if (className.contains(",")) {
-            String methodName = StringUtil.getShortName(className, ',');
-            PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
-            if (methods.length > 0) {
-              classes.add(MethodLocation.elementInClass(methods[0], psiClass));
-            }
-            else {
-              classes.add(PsiLocation.fromPsiElement(psiClass));
-            }
-          }
-          else {
-            classes.add(PsiLocation.fromPsiElement(psiClass));
+          classes.add(findLocation(className, psiClass, PsiLocation.fromPsiElement(psiClass)));
+        }
+      }
+      else if (junit5 && className.contains("$")) { //OuterClass$InnerInSuper
+        String topLevelClassName = StringUtil.getPackageName(className, '$');
+        String nestedClassName = StringUtil.getShortName(className, '$');
+        PsiClass cl = ReadAction.compute(() -> getTestClass(project, topLevelClassName));
+        if (cl != null && ReadAction.compute(() -> JUnitUtil.isJUnit5TestClass(cl, false))) {
+          PsiClass innerClassByName =
+            cl.findInnerClassByName(nestedClassName.contains(",") ? StringUtil.getPackageName(nestedClassName, ',') : nestedClassName, true);
+          if (innerClassByName != null) {
+            classes.add(findLocation(nestedClassName, innerClassByName, NestedClassLocation.elementInClass(innerClassByName, cl)));
           }
         }
       }
@@ -94,8 +105,19 @@ public class TestsPattern extends TestPackage {
     }
   }
 
+  private static Location<?> findLocation(String className, PsiClass psiClass, Location<? extends PsiClass> classLocation) {
+    if (className.contains(",")) {
+      String shortName = StringUtil.getShortName(className, ',');
+      PsiMethod[] methods = psiClass.findMethodsByName(shortName, true);
+      if (methods.length > 0) {
+        return new MethodLocation(psiClass.getProject(), methods[0], classLocation);
+      }
+    }
+    return classLocation;
+  }
+
   @Override
-  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
+  protected String getFilters(Set<? extends Location<?>> foundClasses, String packageName) {
     return foundClasses.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 
@@ -115,17 +137,24 @@ public class TestsPattern extends TestPackage {
     return null;
   }
 
-  @Nullable
   @Override
-  public RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration) {
+  public @Nullable RefactoringElementListener getListener(PsiElement element) {
     final RefactoringElementListenerComposite composite = new RefactoringElementListenerComposite();
-    final JUnitConfiguration.Data data = configuration.getPersistentData();
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();
     for (final String pattern : patterns) {
-      final PsiClass testClass = getTestClass(configuration.getProject(), pattern.trim());
+      String trim = pattern.trim();
+      if (element instanceof PsiNamedElement namedElement) {
+        // do not react on unrelated refactorings
+        String shortName = namedElement.getName();
+        if (shortName == null || !trim.contains(shortName)) {
+          continue;
+        }
+      }
+      final PsiClass testClass = getTestClass(getConfiguration().getProject(), trim);
       if (testClass != null && testClass.equals(element)) {
         final RefactoringElementListener listeners =
-          RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<PsiClass>() {
+          RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<>() {
             private String myOldName = testClass.getQualifiedName();
 
             @Override
@@ -183,6 +212,7 @@ public class TestsPattern extends TestPackage {
     if (patterns.isEmpty()) {
       throw new RuntimeConfigurationWarning(JUnitBundle.message("no.pattern.error.message"));
     }
+    if (DumbService.getInstance(getConfiguration().getProject()).isDumb()) return;
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getConfiguration().getProject());
     for (String pattern : patterns) {
       final String className = pattern.contains(",") ? StringUtil.getPackageName(pattern, ',') : pattern;

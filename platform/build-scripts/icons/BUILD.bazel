@@ -1,0 +1,107 @@
+### auto-generated section `build intellij.platform.images.build` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+jvm_provided_library(
+  name = "platform_util_xmlDom_provided",
+  lib = "//platform/util/xmlDom"
+)
+
+jvm_library(
+  name = "images-build",
+  module_name = "intellij.platform.images.build",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/util/diff",
+    "//platform/util-class-loader:util-classLoader",
+    "//jps/model-serialization",
+    "//platform/build-scripts/downloader",
+    "@lib//:kotlin-stdlib",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:okhttp",
+    "//build/tasks",
+    "//platform/util/rt-java8",
+    "//libraries/gson",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/fastutil",
+    "//platform/util/zip",
+    "@lib//:platform-images-build-pngencoder",
+    "//libraries/hash4j",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+    ":platform_util_xmlDom_provided",
+  ],
+  runtime_deps = ["//libraries/commons/imaging"]
+)
+
+jvm_library(
+  name = "images-build_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  associates = [":images-build"],
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-api:model_test_lib",
+    "//jps/model-impl",
+    "//jps/model-impl:model-impl_test_lib",
+    "//platform/util:util-ui",
+    "//platform/util:util-ui_test_lib",
+    "//platform/util",
+    "//platform/util:util_test_lib",
+    "//platform/util-ex",
+    "//platform/util-ex:util-ex_test_lib",
+    "//platform/util/diff",
+    "//platform/util/diff:diff_test_lib",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util-class-loader:util-classLoader_test_lib",
+    "//jps/model-serialization",
+    "//jps/model-serialization:model-serialization_test_lib",
+    "//platform/build-scripts/downloader",
+    "//platform/build-scripts/downloader:downloader_test_lib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/util/xmlDom",
+    "//platform/util/xmlDom:xmlDom_test_lib",
+    "@lib//:okhttp",
+    "//build/tasks",
+    "//build/tasks:tasks_test_lib",
+    "//platform/util/rt-java8",
+    "//platform/util/rt-java8:rt-java8_test_lib",
+    "//libraries/gson",
+    "//libraries/gson:gson_test_lib",
+    "//libraries/kotlinx/coroutines/core",
+    "//libraries/kotlinx/coroutines/core:core_test_lib",
+    "//libraries/fastutil",
+    "//libraries/fastutil:fastutil_test_lib",
+    "//platform/util/zip",
+    "//platform/util/zip:zip_test_lib",
+    "@lib//:platform-images-build-pngencoder",
+    "//libraries/hash4j",
+    "//libraries/hash4j:hash4j_test_lib",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+    "//images:images-tests",
+    "//images:images-tests_test_lib",
+    "//RegExpSupport:regexp-tests",
+    "//RegExpSupport:regexp-tests_test_lib",
+    "//platform/xdebugger-impl:debugger-impl-tests",
+    "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
+  ],
+  runtime_deps = ["//libraries/commons/imaging:imaging_test_lib"]
+)
+### auto-generated section `build intellij.platform.images.build` end
+
+### auto-generated section `test intellij.platform.images.build` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "images-build_test",
+  runtime_deps = [":images-build_test_lib"]
+)
+### auto-generated section `test intellij.platform.images.build` end

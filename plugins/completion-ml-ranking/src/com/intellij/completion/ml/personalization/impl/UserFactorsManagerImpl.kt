@@ -17,10 +17,10 @@
 package com.intellij.completion.ml.personalization.impl
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.completion.ml.common.PrefixMatchingType
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.completion.ml.personalization.UserFactor
 import com.intellij.completion.ml.personalization.UserFactorsManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.textMatching.PrefixMatchingType
 
 /**
  * @author Vitaliy.Bibaev
@@ -31,9 +31,7 @@ class UserFactorsManagerImpl : UserFactorsManager {
     }
     private val userFactors = mutableMapOf<String, UserFactor>()
     init {
-        if (UserFactorsManager.ENABLE_USER_FACTORS) {
-            registerAllFactors()
-        }
+        registerAllFactors()
     }
 
     private fun registerAllFactors() {
@@ -61,7 +59,9 @@ class UserFactorsManagerImpl : UserFactorsManager {
 
         register(MnemonicsRatio())
 
-        for (type in PrefixMatchingType.values())
+        register(TemplatesRatio())
+
+        for (type in PrefixMatchingType.entries)
             register(PrefixMatchingTypeRatio(type))
     }
 

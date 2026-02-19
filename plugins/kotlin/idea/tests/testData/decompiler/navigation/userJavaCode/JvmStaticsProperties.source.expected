@@ -1,0 +1,4 @@
+JvmStaticsPropertiesConflictingWithClass.class
+public final class <1><3><5>JvmStaticsPropertiesConflictingWithClass public constructor() {
+    public companion object {
+        @kotlin.jvm.JvmStatic public final var <2><4><6>prop: kotlin.Boolean /* compiled code */

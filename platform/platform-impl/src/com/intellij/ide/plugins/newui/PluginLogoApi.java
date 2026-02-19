@@ -5,14 +5,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +26,7 @@ import java.util.zip.ZipFile;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class PluginLogoApi {
   /**
    * Direct load image from local dir or jar based plugin without background task and caches.
@@ -116,8 +117,8 @@ public final class PluginLogoApi {
 
   private @Nullable Icon tryLoadIcon(@NotNull Path dirFile, boolean light, int width, int height) {
     try {
-      Path iconFile = dirFile.resolve(PluginLogo.getIconFileName(light));
-      return Files.size(iconFile) > 0 ? loadFileIcon(Files.newInputStream(iconFile), width, height) : null;
+      Path iconFile = dirFile.resolve(PluginLogoKt.getPluginIconFileName(light));
+      return Files.size(iconFile) > 0 ? loadFileIcon(PluginLogo.toURL(iconFile), Files.newInputStream(iconFile), width, height) : null;
     }
     catch (NoSuchFileException ignore) {
       return null;
@@ -130,29 +131,16 @@ public final class PluginLogoApi {
     }
   }
 
-  private @Nullable static Icon tryLoadIcon(@NotNull ZipFile zipFile, boolean light, int width, int height) throws IOException {
-    ZipEntry iconEntry = zipFile.getEntry(PluginLogo.getIconFileName(light));
-    return iconEntry == null ? null : loadFileIcon(zipFile.getInputStream(iconEntry), width, height);
+  private static @Nullable Icon tryLoadIcon(@NotNull ZipFile zipFile, boolean light, int width, int height) throws IOException {
+    ZipEntry iconEntry = zipFile.getEntry(PluginLogoKt.getPluginIconFileName(light));
+    return iconEntry == null ? null : loadFileIcon(PluginLogo.toURL(zipFile), zipFile.getInputStream(iconEntry), width, height);
   }
 
-  private @NotNull static Icon loadFileIcon(@NotNull InputStream stream, int width, int height) throws IOException {
-    return HiDPIPluginLogoIcon.loadSVG(stream, width, height);
+  private static @NotNull Icon loadFileIcon(@Nullable URL url, @NotNull InputStream stream, int width, int height) throws IOException {
+    return HiDPIPluginLogoIcon.loadSVG(url, stream, width, height);
   }
 
-  private Icon getDefaultIcon(int width, int height) {
-    if (AllIcons.Plugins.PluginLogo instanceof IconLoader.CachedImageIcon) {
-      URL url = ((IconLoader.CachedImageIcon)AllIcons.Plugins.PluginLogo).getURL();
-      if (url != null) {
-        try {
-          return HiDPIPluginLogoIcon.loadSVG(url.openStream(), width, height);
-        }
-        catch (IOException e) {
-          if (myLogger != null) {
-            myLogger.error(e);
-          }
-        }
-      }
-    }
-    return AllIcons.Plugins.PluginLogo;
+  private static @NotNull Icon getDefaultIcon(int width, int height) {
+    return PluginLogoKt.reloadPluginIcon(AllIcons.Plugins.PluginLogo, width, height);
   }
 }

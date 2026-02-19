@@ -1,14 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiPattern;
+import com.intellij.psi.PsiPatternVariable;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeTestPattern;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +42,13 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   }
 
   @Override
-  @NotNull
-  public PsiIdentifier getNameIdentifier() {
-    return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiIdentifier.class));
+  public @NotNull PsiIdentifier getNameIdentifier() {
+    PsiIdentifier identifier = PsiTreeUtil.getChildOfType(this, PsiIdentifier.class);
+    if (identifier == null) {
+      PsiFile file = getContainingFile();
+      Logger.getInstance(PsiPatternVariableImpl.class).error("Pattern without identifier", new Attachment("File content", file.getText()));
+    }
+    return Objects.requireNonNull(identifier);
   }
 
   @Override
@@ -43,67 +61,28 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     }
   }
 
-  @NotNull
   @Override
-  public PsiPattern getPattern() {
+  public @NotNull PsiPattern getPattern() {
     return (PsiPattern)getParent();
-  }
-
-  @Override
-  public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
   }
 
   @Override
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
-  @Nullable
   @Override
-  public Object computeConstantValue() {
+  public @Nullable Object computeConstantValue() {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
   }
 
-  @NotNull
   @Override
-  public PsiElement getDeclarationScope() {
-    PsiElement parent = getPattern().getParent();
-    if (!(parent instanceof PsiInstanceOfExpression)) return parent;
-    boolean negated = false;
-    for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
-      if (nextParent instanceof PsiParenthesizedExpression) continue;
-      if (nextParent instanceof PsiConditionalExpression && parent == ((PsiConditionalExpression)nextParent).getCondition()) {
-        return nextParent;
-      }
-      if (nextParent instanceof PsiPrefixExpression && ((PsiPrefixExpression)nextParent).getOperationTokenType().equals(EXCL)) {
-        negated = !negated;
-        continue;
-      }
-      if (nextParent instanceof PsiPolyadicExpression) {
-        IElementType tokenType = ((PsiPolyadicExpression)nextParent).getOperationTokenType();
-        if (tokenType.equals(ANDAND) && !negated || tokenType.equals(OROR) && negated) continue;
-      }
-      if (nextParent instanceof PsiIfStatement) {
-        while (nextParent.getParent() instanceof PsiLabeledStatement) {
-          nextParent = nextParent.getParent();
-        }
-        return nextParent.getParent();
-      }
-      if (nextParent instanceof PsiConditionalLoopStatement) {
-        if (!negated) return nextParent;
-        while (nextParent.getParent() instanceof PsiLabeledStatement) {
-          nextParent = nextParent.getParent();
-        }
-        return nextParent.getParent();
-      }
-      return parent;
-    }
+  public @NotNull PsiElement getDeclarationScope() {
+    return JavaSharedImplUtil.getPatternVariableDeclarationScope(this);
   }
 
   @Override
@@ -111,15 +90,13 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     return false;
   }
 
-  @NotNull
   @Override
-  public PsiTypeElement getTypeElement() {
+  public @NotNull PsiTypeElement getTypeElement() {
     return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiTypeElement.class));
   }
 
-  @Nullable
   @Override
-  public PsiExpression getInitializer() {
+  public @Nullable PsiExpression getInitializer() {
     return null;
   }
 
@@ -128,9 +105,8 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     return false;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     PsiIdentifier identifier = getNameIdentifier();
     return identifier.getText();
   }
@@ -140,20 +116,19 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     return getNameIdentifier().getTextOffset();
   }
 
-  @Nullable
   @Override
-  public PsiModifierList getModifierList() {
-    return null;
+  public @Nullable PsiModifierList getModifierList() {
+    return (PsiModifierList)findPsiChildByType(JavaElementType.MODIFIER_LIST);
   }
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return false;
+    final PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return new LocalSearchScope(getDeclarationScope());
   }
 
@@ -161,8 +136,10 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   public void delete() throws IncorrectOperationException {
     PsiPattern pattern = getPattern();
     if (pattern instanceof PsiTypeTestPattern) {
-      replace(getTypeElement());
-      return;
+      if (pattern.getParent() instanceof PsiInstanceOfExpression) {
+        pattern.replace(getTypeElement());
+        return;
+      }
     }
     super.delete();
   }

@@ -16,58 +16,62 @@
 package com.intellij.editor;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class XmlEditorTest extends LightJavaCodeInsightTestCase {
   private String getTestFilePath(boolean isOriginal) {
     return "/xml/tests/testData/editor/" + getTestName(true) + (isOriginal ? ".xml" : "_after.xml") ;
   }
 
+  @PerformanceUnitTest
   public void testEnterPerformance() {
     configureByFile(getTestFilePath(true));
     for (int i = 0; i < 3; i++) {
       EditorTestUtil.performTypingAction(getEditor(), '\n');
     }
-    PlatformTestUtil.startPerformanceTest("Xml editor enter", 5000, () -> {
+    Benchmark.newBenchmark("Xml editor enter", () -> {
       for (int i = 0; i < 3; i ++) {
         EditorTestUtil.performTypingAction(getEditor(), '\n');
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).start();
     checkResultByFile(getTestFilePath(false));
   }
 
   public void testHardWrap() {
     configureFromFileText("a.xml",
-                          "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n" +
-                          "<svg version=\"1.1\" id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
-                          "<g>\n" +
-                          "        <path clip-path=\"url(#SVGID_2_)\" fill=\"#ffffff\" stroke=\"<selection>#000000</selection>\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-miterlimit=\"10\" d=\"M19.333,8.333V12c0,1.519-7.333,4-7.333,4s-7.333-2.481-7.333-4V8.333\"/>\n" +
-                          "</g>\n" +
-                          "</svg>");
+                          """
+                            <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+                            <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg">
+                            <g>
+                                    <path clip-path="url(#SVGID_2_)" fill="#ffffff" stroke="<selection>#000000</selection>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="M19.333,8.333V12c0,1.519-7.333,4-7.333,4s-7.333-2.481-7.333-4V8.333"/>
+                            </g>
+                            </svg>""");
 
     CodeStyle.doWithTemporarySettings(
       getProject(),
       CodeStyle.getSettings(getProject()),
       clone -> {
         clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+        CodeStyleSettingsManager.getInstance(getProject()).notifyCodeStyleSettingsChanged();
         EditorTestUtil.performTypingAction(getEditor(), 'x');
       }
     );
-    checkResultByText("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n" +
-                      "<svg version=\"1.1\" id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
-                      "<g>\n" +
-                      "        <path clip-path=\"url(#SVGID_2_)\" fill=\"#ffffff\" stroke=\"x\" stroke-width=\"2\" stroke-linecap=\"round\" \n" +
-                      "              stroke-linejoin=\"round\" stroke-miterlimit=\"10\" d=\"M19.333,8.333V12c0,1.519-7.333,4-7.333,4s-7.333-2.481-7.333-4V8.333\"/>\n" +
-                      "</g>\n" +
-                      "</svg>");
+    checkResultByText("""
+                        <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+                        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg">
+                        <g>
+                                <path clip-path="url(#SVGID_2_)" fill="#ffffff" stroke="x" stroke-width="2" stroke-linecap="round"\s
+                                      stroke-linejoin="round" stroke-miterlimit="10" d="M19.333,8.333V12c0,1.519-7.333,4-7.333,4s-7.333-2.481-7.333-4V8.333"/>
+                        </g>
+                        </svg>""");
   }
 
   public void testHardWrapInComment() {
@@ -79,6 +83,8 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
       CodeStyle.getSettings(getProject()),
       clone -> {
         clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+        CodeStyleSettingsManager.getInstance(getProject()).notifyCodeStyleSettingsChanged();
+
         EditorTestUtil.performTypingAction(getEditor(), '?');
       }
     );

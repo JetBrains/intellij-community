@@ -17,13 +17,23 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiThisExpression, Constants {
@@ -66,9 +76,6 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.QUALIFIER:
         if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE){
           return getFirstChildNode();
@@ -82,6 +89,9 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
 
       case ChildRole.THIS_KEYWORD:
         return getLastChildNode();
+
+      default:
+        return null;
     }
   }
 

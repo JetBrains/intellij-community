@@ -1,31 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
+
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Eugene Zhuravlev
  */
 public interface GlobalOptions {
-  /**
-   * @deprecated The possibility to keep intermediate cache changes in-memory was dropped, so the option has no effect.
-   */
-  @Deprecated
-  String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";
 
-  String GENERATE_CLASSPATH_INDEX_OPTION = "generate.classpath.index";
   String COMPILE_PARALLEL_OPTION = "compile.parallel";
   String ALLOW_PARALLEL_AUTOMAKE_OPTION = "allow.parallel.automake";
   String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";
@@ -34,6 +16,16 @@ public interface GlobalOptions {
   String FALLBACK_JDK_HOME = "jps.fallback.jdk.home";
   String FALLBACK_JDK_VERSION = "jps.fallback.jdk.version";
   String REPORT_BUILD_STATISTICS = "jps.report.build.statistics";
+  String JPS_IN_WSL_OPTION = "jps.in.wsl";
+  String DEPENDENCY_GRAPH_ENABLED = "jps.use.dependency.graph";
+
+  /**
+   * Whether to track changes in binary dependencies (libraries) during incremental analysis
+   * instead of relying on changes in module dependency list and rebuilding whole module on any dependency list change.
+   * This makes the whole incremental analysis much more precise, but requires more data to be parsed from library jars and stored on disk
+   */
+  @ApiStatus.Internal
+  String TRACK_LIBRARY_DEPENDENCIES_ENABLED = "jps.track.library.dependencies";
 
   /**
    * Set this property to 'false' to disable default logging. By default the log is written to build.log file in the directory specified by {@link #LOG_DIR_OPTION}.
@@ -45,6 +37,10 @@ public interface GlobalOptions {
   // notification about the files changed during compilation, but not compiled in current compilation session
   String JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID = "!unprocessed_fs_changes_detected!";
 
+  // notification about necessary fallback SDK setup to enable compilation for older JVM targets
+  @ApiStatus.Internal
+  String JPS_FALLBACK_SDK_SETUP_MESSAGE_ID = "!fallback_sdk_setup_required!";
+
   /**
    * The path to external project config directory (used for external system projects).
    */
@@ -55,4 +51,19 @@ public interface GlobalOptions {
    * This will allow JPS process to access bundle's resources and provide localized error/warning/diagnostic messages
    */
   String LANGUAGE_BUNDLE = "jps.language.bundle";
+
+  /**
+   * Environment variable set to UNIX timestamp, defined as the number of seconds, excluding leap seconds, since 01 Jan 1970 00:00:00 UTC.
+   * Should be used instead of a current time for build process to have deterministic timestamps in artifacts like installer distributions.
+   * See <a href="https://reproducible-builds.org/specs/source-date-epoch/">specification</a>
+   */
+  String BUILD_DATE_IN_SECONDS = "SOURCE_DATE_EPOCH";
+
+  /**
+   * A key to specify if the in-memory logger should be used for failed builds.
+   * When set to true, this flag enables the use of an in-memory mechanism to log
+   * the details only of failed builds on disk.
+   */
+  @ApiStatus.Experimental
+  String USE_IN_MEMORY_FAILED_BUILD_LOGGER = "jps.use.in.memory.failed.build.logger";
 }

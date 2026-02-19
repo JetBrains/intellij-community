@@ -15,21 +15,22 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author maxim
  */
 public class XmlTagFixer implements Fixer {
   @Override
-  public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof XmlTag) {
       final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(psiElement.getNode());
       final ASTNode endTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(psiElement.getNode());

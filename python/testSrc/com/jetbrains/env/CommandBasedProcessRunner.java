@@ -15,11 +15,15 @@
  */
 package com.jetbrains.env;
 
+import com.intellij.commandInterface.command.Command;
+import com.intellij.commandInterface.command.SimpleCommand;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.commandInterface.command.SimpleCommand;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,11 +34,11 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  * @see PyProcessWithConsoleTestTask
- * @see com.jetbrains.commandInterface.command
+ * @see com.intellij.commandInterface.command
  */
 public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
   @NotNull
-  private final SimpleCommand myCommand;
+  private final Command myCommand;
   @NotNull
   private final Module myModule;
   @NotNull
@@ -45,7 +49,7 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
    * @param module     module to run on
    * @param parameters command parameters
    */
-  public CommandBasedProcessRunner(@NotNull final SimpleCommand command,
+  public CommandBasedProcessRunner(@NotNull final Command command,
                                    @NotNull final Module module,
                                    final String @NotNull ... parameters) {
     myCommand = command;
@@ -55,10 +59,12 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
 
   @Override
   void runProcess(@NotNull final String sdkPath,
+                  @Nullable Sdk sdk,
                   @NotNull final Project project,
                   @NotNull final ProcessListener processListener,
                   @NotNull final String tempWorkingPath) {
     myConsole = new SimpleProcessRunnerConsole(project, processListener);
-    myCommand.execute(myCommand.getName(), myModule, myParameters, myConsole);
+    Disposer.register(project, myConsole);
+    myCommand.execute(myCommand.getName(), myModule, myParameters, myConsole, null);
   }
 }

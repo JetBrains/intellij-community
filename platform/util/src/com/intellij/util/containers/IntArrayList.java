@@ -31,13 +31,11 @@ public final class IntArrayList implements Cloneable {
   public void ensureCapacity(int minCapacity) {
     int oldCapacity = myData.length;
     if (minCapacity > oldCapacity){
-      int[] oldData = myData;
       int newCapacity = oldCapacity * 3 / 2 + 1;
       if (newCapacity < minCapacity){
         newCapacity = minCapacity;
       }
-      myData = new int[newCapacity];
-      System.arraycopy(oldData, 0, myData, 0, mySize);
+      myData = ArrayUtil.realloc(myData, newCapacity);
     }
   }
   public void fill(int fromIndex, int toIndex, int value) {
@@ -116,9 +114,7 @@ public final class IntArrayList implements Cloneable {
   }
 
   public int @NotNull [] toArray(int startIndex, int length) {
-    int[] result = new int[length];
-    System.arraycopy(myData, startIndex, result, 0, length);
-    return result;
+    return Arrays.copyOfRange(myData, startIndex, startIndex + length);
   }
 
   public int get(int index) {

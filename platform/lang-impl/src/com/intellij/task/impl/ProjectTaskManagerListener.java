@@ -7,6 +7,10 @@ import com.intellij.task.ProjectTaskManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated use ProjectTaskManagerListenerExtensionPoint
+ */
+@Deprecated
 @ApiStatus.Experimental
 public interface ProjectTaskManagerListener {
   void beforeRun(@NotNull ProjectTaskContext context) throws ExecutionException;

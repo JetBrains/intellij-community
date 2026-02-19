@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -17,9 +17,16 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.VcsAppendableHistoryPartnerAdapter;
+import com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner;
+import com.intellij.openapi.vcs.history.VcsCacheableHistorySessionFactory;
+import com.intellij.openapi.vcs.history.VcsDependentHistoryComponents;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.ToolbarDecorator;
@@ -41,9 +48,16 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Date;
@@ -51,8 +65,13 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
+import static org.jetbrains.idea.svn.SvnUtil.getRepositoryRoot;
 
 public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
   private final SvnVcs myVcs;
@@ -78,7 +97,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   @Override
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
-    final ColumnInfo[] columns;
+    final ColumnInfo<?, ?>[] columns;
     final Consumer<VcsFileRevision> listener;
     final JComponent addComp;
     if (((SvnHistorySession)session).isHaveMergeSources()) {
@@ -100,6 +119,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
         {
           statusText.setText(message("status.text.merge.sources"));
+          setEditable(false);
           setWrapStyleWord(true);
           setLineWrap(true);
         }
@@ -110,9 +130,6 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           statusText.paint(this, g);
         }
       };
-      field.setEditable(false);
-      field.setOpaque(false);
-      field.setWrapStyleWord(true);
       listener = vcsFileRevision -> {
         field.setText(mergeSourceColumn.getText(vcsFileRevision));
         field.setCaretPosition(0);
@@ -125,7 +142,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       JPanel fieldPanel = new ToolbarDecorator() {
         @Override
         protected @NotNull JComponent getComponent() {
-          return field;
+          return createScrollPane(field, true);
         }
 
         @Override
@@ -141,7 +158,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           return false;
         }
       }.initPosition()
-        .addExtraAction(AnActionButton.fromAction(sourceAction))
+        .addExtraAction(sourceAction)
         .createPanel();
       fieldPanel.setBorder(JBUI.Borders.empty());
       addComp = fieldPanel;
@@ -173,8 +190,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   @Override
-  @Nullable
-  public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
+  public @Nullable VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     final VcsAppendableHistoryPartnerAdapter adapter = new VcsAppendableHistoryPartnerAdapter();
     reportAppendableHistory(filePath, adapter);
     adapter.check();
@@ -193,7 +209,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner,
-                                      @Nullable final Revision from, @Nullable final Revision to, final int limit,
+                                      final @Nullable Revision from, final @Nullable Revision to, final int limit,
                                       Revision peg, final boolean forceBackwards) throws VcsException {
     FilePath committedPath = path;
     Change change = ChangeListManager.getInstance(myVcs.getProject()).getChange(path);
@@ -226,7 +242,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     final SvnHistorySession historySession =
-      new SvnHistorySession(myVcs, Collections.emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
+      new SvnHistorySession(myVcs, Collections.emptyList(), committedPath, showMergeSources && logLoader.mySupport15, null, false,
                             ! path.isNonLocal());
 
     final Ref<Boolean> sessionReported = new Ref<>();
@@ -247,7 +263,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     logLoader.check();
   }
 
-  private static abstract class LogLoader {
+  private abstract static class LogLoader {
     protected final boolean myShowMergeSources;
     protected Url myUrl;
     protected boolean mySupport15;
@@ -520,7 +536,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private boolean checkForParentChanges(LogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
       String path = Url.removeTail(lastPathBefore);
-      while (path.length() > 0) {
+      while (!path.isEmpty()) {
         final LogEntryPath entryPath = logEntry.getChangedPaths().get(path);
         // A & D are checked since we are not interested in parent folders property changes, only in structure changes
         // TODO: seems that R (replaced) should also be checked here
@@ -599,14 +615,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   private static final class RevisionMergeSourceInfo {
 
-    @NotNull private final VcsFileRevision revision;
+    private final @NotNull VcsFileRevision revision;
 
     private RevisionMergeSourceInfo(@NotNull VcsFileRevision revision) {
       this.revision = revision;
     }
 
-    @NotNull
-    public SvnFileRevision getRevision() {
+    public @NotNull SvnFileRevision getRevision() {
       return (SvnFileRevision)revision;
     }
 
@@ -688,8 +703,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       return false;
     }
 
-    @Nullable
-    private SvnFileRevision getSelectedRevision(final MouseEvent e) {
+    private static @Nullable SvnFileRevision getSelectedRevision(final MouseEvent e) {
       JTable table = (JTable)e.getSource();
       int row = table.rowAtPoint(e.getPoint());
       int column = table.columnAtPoint(e.getPoint());
@@ -755,16 +769,15 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     private @Nls @NotNull String cutString(@Nls @NotNull String text, double maxWidth) {
       FontMetrics m = getFontMetrics(getFont());
-      Graphics g = getGraphics();
       String suffix = ELLIPSIS;
 
-      if (m.getStringBounds(text, g).getWidth() < maxWidth) return text;
+      if (UIUtil.computeStringWidth(this, m, text) < maxWidth) return text;
 
-      double suffixWidth = m.getStringBounds(suffix, g).getWidth();
+      double suffixWidth = UIUtil.computeStringWidth(this, m, suffix);
       if (suffixWidth >= maxWidth) return suffix;
 
       for (int i = 1; i < text.length(); i++) {
-        if ((m.getStringBounds(text, 0, i, g).getWidth() + suffixWidth) >= maxWidth) {
+        if ((UIUtil.computeStringWidth(this, m, text) + suffixWidth) >= maxWidth) {
           return text.substring(0, i - 1) + suffix;
         }
       }
@@ -782,7 +795,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                            final boolean hasFocus,
                                            final int row,
                                            final int column) {
-        if (value instanceof String && ((String)value).length() > 0) {
+        if (value instanceof String && !((String)value).isEmpty()) {
           setIcon(myIcon);
           setToolTipText(message("copy.column.tooltip", value));
         }

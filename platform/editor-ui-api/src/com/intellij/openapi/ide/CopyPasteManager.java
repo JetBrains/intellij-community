@@ -1,36 +1,42 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ide;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.EventListener;
 
+@ApiStatus.NonExtendable
 public abstract class CopyPasteManager {
+  private static final Logger LOG = Logger.getInstance(CopyPasteManager.class);
+
+  /**
+   * @deprecated use {@link #getCutColor()} instead
+   */
+  @Deprecated
   public static final Color CUT_COLOR = Gray._160;
 
+  public static @NotNull Color getCutColor() {
+    return CUT_COLOR;
+  }
+
   public static CopyPasteManager getInstance() {
-    return ServiceManager.getService(CopyPasteManager.class);
+    return ApplicationManager.getApplication().getService(CopyPasteManager.class);
+  }
+
+  @ApiStatus.Internal
+  protected CopyPasteManager() {
   }
 
   /**
@@ -45,11 +51,9 @@ public abstract class CopyPasteManager {
 
   public abstract boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors);
 
-  @Nullable
-  public abstract Transferable getContents();
+  public abstract @Nullable Transferable getContents();
 
-  @Nullable
-  public abstract <T> T getContents(@NotNull DataFlavor flavor);
+  public abstract @Nullable <T> T getContents(@NotNull DataFlavor flavor);
 
   public abstract Transferable @NotNull [] getAllContents();
 
@@ -68,7 +72,47 @@ public abstract class CopyPasteManager {
    */
   public abstract void stopKillRings();
 
+  /**
+   * Same as {@link #stopKillRings()}, but stops the 'kill rings' only if latest kill ring content came from the provided document.
+   */
+  public abstract void stopKillRings(@NotNull Document document);
+
+  /**
+   * Tells whether {@linkplain Toolkit#getSystemSelection() system selection} is supported in the current system.
+   */
+  public boolean isSystemSelectionSupported() {
+    return false;
+  }
+
+  /**
+   * Returns current system selection contents, or {@code null} if system selection has no contents, or if it's
+   * {@linkplain #isSystemSelectionSupported() not supported}.
+   */
+  public @Nullable Transferable getSystemSelectionContents() {
+    return null;
+  }
+
+  /**
+   * Sets current system selection contents. Does nothing if system selection is {@linkplain #isSystemSelectionSupported() not supported}.
+   */
+  public void setSystemSelectionContents(@NotNull Transferable content) {}
+
   public interface ContentChangedListener extends EventListener {
-    void contentChanged(@Nullable final Transferable oldTransferable, final Transferable newTransferable);
+    void contentChanged(final @Nullable Transferable oldTransferable, final Transferable newTransferable);
+  }
+
+  public static void copyTextToClipboard(@NotNull String text) {
+    try {
+      StringSelection transferable = new StringSelection(text);
+      if (ApplicationManager.getApplication() == null) {
+        //noinspection SSBasedInspection
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, null);
+      }
+      else {
+        getInstance().setContents(transferable);
+      }
+    } catch (Exception e) {
+      LOG.debug(e);
+    }
   }
 }

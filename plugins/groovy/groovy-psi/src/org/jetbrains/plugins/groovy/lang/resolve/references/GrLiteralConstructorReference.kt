@@ -1,11 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
-import com.intellij.psi.CommonClassNames.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN
+import com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER
+import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
+import com.intellij.psi.CommonClassNames.JAVA_LANG_NUMBER
+import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
+import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_LINKED_HASH_SET
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_LINKED_LIST
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_QUEUE
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_SET
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_SORTED_SET
+import com.intellij.psi.CommonClassNames.JAVA_UTIL_STACK
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiClassType.ClassResolveResult
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
@@ -15,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_GROOVY_METHODS
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -156,7 +175,8 @@ private val ignoredFqnsInSafeCast = setOf(
 )
 
 private fun fallsBackToConstructorCS(clazz: PsiClass, literal: GrListOrMap): Boolean {
-  if (clazz.qualifiedName == JAVA_LANG_CLASS) {
+  if (clazz.qualifiedName in ignoredFqnsInTransformation && clazz.qualifiedName != JAVA_LANG_CHARACTER) {
+    // GROOVY-6802, GROOVY-6803
     return false
   }
   val literalClass = (literal.type as? PsiClassType)?.resolve()

@@ -1,27 +1,18 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,20 +22,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public class CoreJavaDirectoryService extends JavaDirectoryService {
   private static final Logger LOG = Logger.getInstance(CoreJavaDirectoryService.class);
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
-    return ServiceManager.getService(dir.getProject(), CoreJavaFileManager.class).getPackage(dir);
+    // TODO IDEA-356815
+    //noinspection IncorrectServiceRetrieving
+    return dir.getProject().getService(CoreJavaFileManager.class).getPackage(dir);
   }
 
-  @Nullable
   @Override
-  public PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
+  public @Nullable PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
     return getPackage(dir);
   }
 
@@ -52,6 +42,12 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   public PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir) {
     LOG.assertTrue(dir.isValid());
     return getPsiClasses(dir, dir.getFiles());
+  }
+
+  @Override
+  public PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir, @NotNull GlobalSearchScope scope) {
+    LOG.assertTrue(dir.isValid());
+    return getPsiClasses(dir, dir.getFiles(scope));
   }
 
   public static PsiClass @NotNull [] getPsiClasses(@NotNull PsiDirectory dir, PsiFile[] psiFiles) {
@@ -64,7 +60,13 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
       if (onlyCompiled && !(file instanceof ClsFileImpl)) {
         continue;
       }
-      if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
+      if (!(file instanceof PsiClassOwner)) {
+        continue;
+      }
+      if (index.isExcludedFile(file.getVirtualFile())) {
+        continue;
+      }
+      if (file.getViewProvider().getLanguages().size() == 1) {
         PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
         if (psiClasses.length == 0) continue;
         if (classes == null) classes = new ArrayList<>();
@@ -74,15 +76,13 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
     return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName)
+  public @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName)
     throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
@@ -99,7 +99,7 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   public PsiClass createClass(@NotNull PsiDirectory dir,
                               @NotNull String name,
                               @NotNull String templateName,
-                              boolean askForUndefinedVariables, @NotNull final Map<String, String> additionalProperties) throws IncorrectOperationException {
+                              boolean askForUndefinedVariables, final @NotNull Map<String, String> additionalProperties) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
@@ -108,27 +108,23 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }
 

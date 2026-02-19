@@ -1,22 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.concurrent.FutureTask;
 
-public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
+public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
 
   private SelectionModel mySelectionModel = null;
+  private InspectionProfileImpl myProfile = null;
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
     super(previousProcessor, CodeInsightBundle.message("command.cleanup.code"), getProgressText());
@@ -27,15 +31,26 @@ public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
     mySelectionModel = selectionModel;
   }
 
+  public CodeCleanupCodeProcessor(@NotNull Project project,
+                                  PsiFile @NotNull [] files,
+                                  @Nullable Runnable postRunnable,
+                                  boolean processChangedTextOnly) {
+    super(project, files, getProgressText(), CodeInsightBundle.message("command.cleanup.code"), postRunnable, processChangedTextOnly);
+  }
 
-  @NotNull
+
   @Override
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly) {
     return new FutureTask<>(() -> {
-      Collection<TextRange> ranges = getRanges(file, processChangedTextOnly);
-      GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), file);
+      if (!psiFile.isValid()) return false;
+      Collection<TextRange> ranges = getRanges(psiFile, processChangedTextOnly);
+      GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), myProfile, psiFile);
       return true;
     });
+  }
+
+  public void setProfile(InspectionProfileImpl profile) {
+    myProfile = profile;
   }
 
   private Collection<TextRange> getRanges(@NotNull PsiFile file, boolean processChangedTextOnly) {

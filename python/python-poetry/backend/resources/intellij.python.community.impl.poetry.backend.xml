@@ -1,0 +1,14 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.toml.core"/>
+    <module name="intellij.python.community"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.common"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
+    <tool implementation="com.intellij.python.community.impl.poetry.backend.PoetryTool"/>
+  </extensions>
+</idea-plugin>

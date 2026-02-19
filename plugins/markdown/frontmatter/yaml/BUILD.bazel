@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.markdown.frontmatter.yaml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "yaml_resources",
+  srcs = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "yaml",
+  module_name = "intellij.markdown.frontmatter.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":yaml_resources"],
+  deps = [
+    "//platform/core-api:core",
+    "//plugins/IntelliLang:langInjection",
+    "//plugins/markdown/core:markdown",
+    "//platform/lang-impl",
+    "//plugins/yaml/backend",
+    "//plugins/yaml",
+    "//platform/core-impl",
+    "//platform/backend",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+
+jvm_library(
+  name = "yaml_test_lib",
+  module_name = "intellij.markdown.frontmatter.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":yaml",
+    "//platform/core-api:core_test_lib",
+    "//plugins/IntelliLang:langInjection_test_lib",
+    "//plugins/markdown/core:markdown_test_lib",
+    "//platform/lang-impl:lang-impl_test_lib",
+    "//plugins/yaml/backend:backend_test_lib",
+    "//plugins/yaml:yaml_test_lib",
+    "//platform/core-impl:core-impl_test_lib",
+    "//platform/backend:backend_test_lib",
+  ]
+)
+### auto-generated section `build intellij.markdown.frontmatter.yaml` end

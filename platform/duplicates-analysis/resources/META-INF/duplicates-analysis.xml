@@ -1,5 +1,0 @@
-<idea-plugin>
-  <extensionPoints>
-    <extensionPoint name="equivalenceDescriptorProvider" interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider" dynamic="true"/>
-  </extensionPoints>
-</idea-plugin>

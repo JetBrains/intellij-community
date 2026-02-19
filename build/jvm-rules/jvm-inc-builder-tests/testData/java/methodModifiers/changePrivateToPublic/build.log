@@ -1,0 +1,25 @@
+================ Step #1 =================
+Cleaning output files:
+  ppp/Service.class
+End of files
+Compiling files:
+  java/methodModifiers/changePrivateToPublic/a/ppp/Service.java
+End of files
+Cleaning output files:
+  ppp/Client.class
+  ppp/ClientDerived.class
+  ppp/DerivedService.class
+  qqq/Client.class
+  qqq/ClientDerived.class
+  qqq/DerivedService.class
+End of files
+Compiling files:
+  java/methodModifiers/changePrivateToPublic/a/ppp/Client.java
+  java/methodModifiers/changePrivateToPublic/a/ppp/ClientDerived.java
+  java/methodModifiers/changePrivateToPublic/a/ppp/DerivedService.java
+  java/methodModifiers/changePrivateToPublic/a/qqq/Client.java
+  java/methodModifiers/changePrivateToPublic/a/qqq/ClientDerived.java
+  java/methodModifiers/changePrivateToPublic/a/qqq/DerivedService.java
+End of files
+------------------------------------------
+Exit code: ERROR

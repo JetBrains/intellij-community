@@ -11,13 +11,6 @@ public interface ProcessOutputConsumer extends Disposable {
   void setProcessor(GeneralTestEventsProcessor processor);
   void process(String text, Key outputType);
 
-  /**
-   * @deprecated use {@link #flushBufferOnProcessTermination(int)}
-   */
-  @Deprecated
-  default void flushBufferBeforeTerminating() {}
-
   default void flushBufferOnProcessTermination(int exitCode) {
-    flushBufferBeforeTerminating();
   }
 }

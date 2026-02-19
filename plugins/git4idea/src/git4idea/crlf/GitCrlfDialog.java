@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.crlf;
 
 import com.intellij.openapi.project.Project;
@@ -27,12 +13,20 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static git4idea.crlf.GitCrlfUtil.*;
+import static git4idea.crlf.GitCrlfUtil.ATTRIBUTE_KEY;
+import static git4idea.crlf.GitCrlfUtil.RECOMMENDED_VALUE;
+import static git4idea.crlf.GitCrlfUtil.SUGGESTED_FIX;
 
 /**
  * Warns the user that CRLF line separators are about to be committed to the repository.
@@ -76,7 +70,6 @@ public class GitCrlfDialog extends DialogWrapper {
 
     JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
     myDontWarn = new JBCheckBox(GitBundle.message("checkbox.dont.warn.again"));
-    myDontWarn.setMnemonic('w');
 
     JPanel rootPanel = new JPanel(new GridBagLayout());
     GridBag g = new GridBag()
@@ -96,9 +89,8 @@ public class GitCrlfDialog extends DialogWrapper {
     return myDontWarn.isSelected();
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.VersionControl.Git.CrlfWarning";
   }
 

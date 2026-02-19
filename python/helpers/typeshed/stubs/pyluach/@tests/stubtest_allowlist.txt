@@ -1,0 +1,2 @@
+# Module with no public API, for internal use only:
+pyluach.gematria

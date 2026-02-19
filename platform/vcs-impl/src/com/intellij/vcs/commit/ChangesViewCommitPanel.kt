@@ -1,432 +1,148 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
-import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.ChangeListChangesSupplier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.ui.IdeBorderFactory.createBorder
-import com.intellij.ui.JBColor
-import com.intellij.ui.SideBorder
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.EventDispatcher
-import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
-import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.JBUI.Borders.emptyLeft
-import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.JBUI.scale
-import com.intellij.util.ui.UIUtil.getTreeBackground
-import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.util.ui.tree.TreeUtil.*
-import com.intellij.vcs.log.VcsUser
-import java.awt.LayoutManager
-import java.awt.Point
-import java.awt.event.ActionEvent
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
-import javax.swing.*
-import javax.swing.KeyStroke.getKeyStroke
-import javax.swing.border.Border
-import javax.swing.border.EmptyBorder
-import kotlin.properties.Delegates.observable
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.VcsDisposable
+import com.intellij.vcs.changes.viewModel.ChangesViewProxy
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
-private val CTRL_ENTER = KeyboardShortcut(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK), null)
-private val META_ENTER = KeyboardShortcut(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK), null)
-private val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
-  if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
-fun getDefaultCommitShortcut() = DEFAULT_COMMIT_ACTION_SHORTCUT
+class ChangesViewCommitPanel internal constructor(
+  project: Project,
+  private val changesView: ChangesViewProxy,
+) : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
+  private var isHideToolWindowOnCommit = false
 
-private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
+  private val progressPanel = CommitProgressPanel(project, this, commitMessage.editorField)
+  private val commitActions = commitActionsPanel.createActions()
+  private var rootComponent: JComponent? = null
 
-fun JBOptionButton.getBottomInset(): Int =
-  border?.getBorderInsets(this)?.bottom
-  ?: (components.firstOrNull() as? JComponent)?.insets?.bottom
-  ?: 0
-
-private fun JBPopup.showAbove(component: JComponent) {
-  val northWest = RelativePoint(component, Point())
-
-  addListener(object : JBPopupListener {
-    override fun beforeShown(event: LightweightWindowEvent) {
-      val popup = event.asPopup()
-      val location = Point(popup.locationOnScreen).apply { y = northWest.screenPoint.y - popup.size.height }
-
-      popup.setLocation(location)
-    }
-  })
-  show(northWest)
-}
-
-internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
-
-class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, private val rootComponent: JComponent) :
-  BorderLayoutPanel(), ChangesViewCommitWorkflowUi, EditorColorsListener, ComponentContainer, DataProvider {
-
-  private val changesView get() = changesViewHost.changesView
-  private val project get() = changesView.project
-
-  private val dataProviders = mutableListOf<DataProvider>()
-
-  private val executorEventDispatcher = EventDispatcher.create(CommitExecutorListener::class.java)
-  private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
-
-  private val centerPanel = simplePanel()
-  private val buttonPanel = simplePanel().apply { isOpaque = false }
-  private val toolbarPanel = simplePanel().apply {
-    isOpaque = false
-    border = emptyLeft(1)
-  }
-  private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
-  private val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, false).apply {
-    setTargetComponent(this@ChangesViewCommitPanel)
-    component.isOpaque = false
-  }
-  private val primaryCommitActionsToolbar =
-    ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.UNKNOWN,
-      ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions") as ActionGroup,
-      true
-    ).apply {
-      setTargetComponent(this@ChangesViewCommitPanel)
-      setReservePlaceAutoPopupIcon(false)
-      layoutPolicy = NOWRAP_LAYOUT_POLICY
-
-      component.isOpaque = false
-      component.border = null
-    }
-
-  private val commitMessage = CommitMessage(project, false, false, true).apply {
-    editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
-    editorField.setPlaceholder(message("commit.message.placeholder"))
-  }
-  private val defaultCommitAction = object : AbstractAction() {
-    override fun actionPerformed(e: ActionEvent) = fireDefaultExecutorCalled()
-  }
-  private val commitButton = object : JBOptionButton(defaultCommitAction, emptyArray()) {
-    init {
-      background = getButtonPanelBackground()
-      optionTooltipText = getDefaultTooltip()
-      isOkToProcessDefaultMnemonics = false
-    }
-
-    override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
-  }
-  private val commitAuthorComponent = CommitAuthorComponent(project)
-  private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
-
-  private var needUpdateCommitOptionsUi = false
-
-  private var isHideToolWindowOnDeactivate = false
-
-  var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->
-    if (oldValue != newValue) {
-      addToolbar(newValue) // this also removes toolbar from previous parent
-    }
-  }
+  @ApiStatus.Internal
+  var postCommitCallback: (() -> Unit)? = null
 
   init {
     Disposer.register(this, commitMessage)
+    setProgressComponent(progressPanel)
 
-    buildLayout()
-    for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
+    for (support in EditChangelistSupport.EP_NAME.getExtensionList(project)) {
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
 
-    with(changesView) {
-      setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
-      isShowCheckboxes = true
-    }
-    changesViewHost.statusComponent =
-      ChangesViewCommitStatusPanel(changesView, this).apply { addToLeft(toolbarPanel) }
+    val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("ChangesViewCommitPanel")
+    Disposer.register(this) { scope.cancel() }
+    changesView.inclusionChanged.onEach { writeIntentReadAction { fireInclusionChanged() } }.launchIn(scope)
 
-    setupShortcuts(rootComponent)
-  }
-
-  private fun buildLayout() {
-    buttonPanel.apply {
-      border = getButtonPanelBorder()
-
-      addToLeft(commitButton)
-      addToCenter(primaryCommitActionsToolbar.component)
-    }
-    centerPanel
-      .addToCenter(commitMessage)
-      .addToBottom(panel(VerticalLayout(0)).apply {
-        background = getButtonPanelBackground()
-
-        add(progressPanel.apply { border = empty(6) })
-        add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-        add(buttonPanel)
-      })
-    addToCenter(centerPanel)
-    addToolbar(isToolbarHorizontal)
-
-    withPreferredHeight(85)
-  }
-
-  private fun addToolbar(isHorizontal: Boolean) {
-    if (isHorizontal) {
-      toolbar.setOrientation(SwingConstants.HORIZONTAL)
-      toolbar.setReservePlaceAutoPopupIcon(false)
-
-      centerPanel.border = null
-      toolbarPanel.addToCenter(toolbar.component)
-    }
-    else {
-      toolbar.setOrientation(SwingConstants.VERTICAL)
-      toolbar.setReservePlaceAutoPopupIcon(true)
-
-      centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
-      addToLeft(toolbar.component)
+    commitActionsPanel.isCommitButtonDefault = {
+      !progressPanel.isDumbMode && UIUtil.isFocusAncestor(rootComponent ?: component)
     }
   }
 
-  private fun getButtonPanelBorder(): Border =
-    EmptyBorder(0, scale(3), (scale(6) - commitButton.getBottomInset()).coerceAtLeast(0), 0)
+  override val isActive: Boolean get() = component.isVisible
 
-  private fun getButtonPanelBackground() =
-    JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
-
-  private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
-
-  private fun setupShortcuts(component: JComponent) {
-    DefaultCommitAction().registerCustomShortcutSet(DEFAULT_COMMIT_ACTION_SHORTCUT, component, this)
-    ShowCustomCommitActions().registerCustomShortcutSet(getDefaultShowPopupShortcut(), component, this)
+  @ApiStatus.Internal
+  fun registerRootComponent(newRootComponent: JComponent) {
+    logger<ChangesViewCommitPanel>().assertTrue(rootComponent == null)
+    rootComponent = newRootComponent
+    commitActions.forEach { it.registerCustomShortcutSet(newRootComponent, this) }
   }
 
-  override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-    needUpdateCommitOptionsUi = true
-    buttonPanel.border = getButtonPanelBorder()
+  override fun expand(item: Any) {
+    changesView.expand(item)
   }
 
-  override val commitMessageUi: CommitMessageUi get() = commitMessage
-
-  // NOTE: getter should return text with mnemonic (if any) to make mnemonics available in dialogs shown by commit handlers.
-  //  See CheckinProjectPanel.getCommitActionName() usages.
-  override var defaultCommitActionName: String
-    get() = (defaultCommitAction.getValue(Action.NAME) as? String).orEmpty()
-    set(value) {
-      defaultCommitAction.putValue(Action.NAME, value)
-      primaryCommitActionsToolbar.updateActionsImmediately()
-    }
-
-  override var isDefaultCommitActionEnabled: Boolean
-    get() = defaultCommitAction.isEnabled
-    set(value) {
-      defaultCommitAction.isEnabled = value
-      primaryCommitActionsToolbar.updateActionsImmediately()
-    }
-
-  override fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)
-
-  override var commitAuthor: VcsUser?
-    get() = commitAuthorComponent.commitAuthor
-    set(value) {
-      commitAuthorComponent.commitAuthor = value
-    }
-
-  override fun addCommitAuthorListener(listener: CommitAuthorListener, parent: Disposable) =
-    commitAuthorComponent.addCommitAuthorListener(listener, parent)
-
-  override var editedCommit by observable<EditedCommitDetails?>(null) { _, _, newValue ->
-    refreshData()
-    newValue?.let { expand(it) }
+  override fun select(item: Any) {
+    changesView.select(item)
   }
 
-  override val isActive: Boolean get() = isVisible
+  override fun selectFirst(items: Collection<Any>) {
+    changesView.selectFirst(items)
+  }
+
+  override fun setCompletionContext(changeLists: List<LocalChangeList>) {
+    commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
+  }
+
+  override fun getDisplayedChanges(): List<Change> = changesView.getDisplayedChanges()
+  override fun getIncludedChanges(): List<Change> = changesView.getIncludedChanges()
+
+  override fun getDisplayedUnversionedFiles(): List<FilePath> =
+    changesView.getDisplayedUnversionedFiles()
+
+  override fun getIncludedUnversionedFiles(): List<FilePath> =
+    changesView.getIncludedUnversionedFiles()
+
+  override fun setInclusionModel(model: InclusionModel?) {
+    changesView.setInclusionModel(model)
+  }
+
+  override val commitProgressUi: CommitProgressUi get() = progressPanel
+
+  override fun endExecution() {
+    postCommitCallback?.invoke()
+  }
 
   override fun activate(): Boolean {
     val toolWindow = getVcsToolWindow() ?: return false
     val contentManager = ChangesViewContentManager.getInstance(project)
 
     saveToolWindowState()
-    changesView.isShowCheckboxes = true
-    isVisible = true
+    component.isVisible = true
+    commitActionsPanel.isActive = true
+
+    toolbar.updateActionsImmediately()
 
     contentManager.selectContent(LOCAL_CHANGES)
     toolWindow.activate({ commitMessage.requestFocusInMessage() }, false)
     return true
   }
 
-  override fun deactivate(isRestoreState: Boolean) {
-    if (isRestoreState) restoreToolWindowState()
+  override fun deactivate(isOnCommit: Boolean) {
+    if (isOnCommit && isHideToolWindowOnCommit) {
+      getVcsToolWindow()?.hide(null)
+    }
+
     clearToolWindowState()
-    changesView.isShowCheckboxes = false
-    isVisible = false
+    component.isVisible = false
+    commitActionsPanel.isActive = false
+
+    toolbar.updateActionsImmediately()
   }
 
   private fun saveToolWindowState() {
     if (!isActive) {
-      isHideToolWindowOnDeactivate = getVcsToolWindow()?.isVisible != true
-    }
-  }
-
-  private fun restoreToolWindowState() {
-    if (isHideToolWindowOnDeactivate) {
-      getVcsToolWindow()?.hide(null)
+      isHideToolWindowOnCommit = getVcsToolWindow()?.isVisible != true
     }
   }
 
   private fun clearToolWindowState() {
-    isHideToolWindowOnDeactivate = false
+    isHideToolWindowOnCommit = false
   }
 
   private fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
 
-  override fun expand(item: Any) {
-    val node = changesView.findNodeInTree(item)
-    node?.let { changesView.expandSafe(it) }
-  }
-
-  override fun select(item: Any) {
-    val path = changesView.findNodePathInTree(item)
-    path?.let { selectPath(changesView, it, false) }
-  }
-
-  override fun selectFirst(items: Collection<Any>) {
-    if (items.isEmpty()) return
-
-    val path = treePathTraverser(changesView).preOrderDfsTraversal().find { getLastUserObject(it) in items }
-    path?.let { selectPath(changesView, it, false) }
-  }
-
-  override fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel { actionName }.apply {
-      focusTraversalPolicy = LayoutFocusTraversalPolicy()
-      isFocusCycleRoot = true
-
-      setOptions(options)
-      border = empty(0, 10)
-
-      // to reflect LaF changes as commit options components are created once per commit
-      if (needUpdateCommitOptionsUi) {
-        needUpdateCommitOptionsUi = false
-        updateComponentTreeUI(this)
-      }
-    }
-    val focusComponent = IdeFocusManager.getInstance(project).getFocusTargetFor(commitOptionsPanel)
-    val commitOptionsPopup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(commitOptionsPanel, focusComponent)
-      .setRequestFocus(true)
-      .createPopup()
-
-    commitOptionsPopup.show(isFromToolbar, dataContext)
-  }
-
-  private fun JBPopup.show(isFromToolbar: Boolean, dataContext: DataContext) =
-    when {
-      isFromToolbar && isToolbarHorizontal -> showAbove(toolbar.component)
-      isFromToolbar && !isToolbarHorizontal -> showAbove(this@ChangesViewCommitPanel)
-      else -> showInBestPositionFor(dataContext)
-    }
-
-  override fun setCompletionContext(changeLists: List<LocalChangeList>) {
-    commitMessage.changeLists = changeLists
-  }
-
-  override fun getComponent(): JComponent = this
-  override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
-
-  override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
-  fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
-
-  override fun addDataProvider(provider: DataProvider) {
-    dataProviders += provider
-  }
-
-  override fun addExecutorListener(listener: CommitExecutorListener, parent: Disposable) =
-    executorEventDispatcher.addListener(listener, parent)
-
-  override fun refreshData() = ChangesViewManager.getInstanceEx(project).refreshImmediately()
-
-  override fun getDisplayedChanges(): List<Change> = all(changesView).userObjects(Change::class.java)
-  override fun getIncludedChanges(): List<Change> = included(changesView).userObjects(Change::class.java)
-
-  override fun getDisplayedUnversionedFiles(): List<FilePath> =
-    allUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java)
-
-  override fun getIncludedUnversionedFiles(): List<FilePath> =
-    includedUnderTag(changesView, UNVERSIONED_FILES_TAG).userObjects(FilePath::class.java)
-
-  override var inclusionModel: InclusionModel?
-    get() = changesView.inclusionModel
-    set(value) {
-      changesView.setInclusionModel(value)
-    }
-
-  override fun includeIntoCommit(items: Collection<*>) = changesView.includeChanges(items)
-
-  override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
-    inclusionEventDispatcher.addListener(listener, parent)
-
-  override val commitProgressUi: CommitProgressUi get() = progressPanel
-
-  override fun startBeforeCommitChecks() = Unit
-  override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
-
-  override fun endExecution() = closeEditorPreviewIfEmpty()
-
-  private fun closeEditorPreviewIfEmpty() {
-    val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    if (!changesViewManager.isEditorPreview) return
-
-    refreshData()
-    changesViewManager.closeEditorPreview(true)
-  }
-
-  override fun dispose() {
-    changesViewHost.statusComponent = null
-    with(changesView) {
-      isShowCheckboxes = false
-      setInclusionListener(null)
-    }
-  }
-
-  inner class DefaultCommitAction : DumbAwareAction() {
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = isActive && defaultCommitAction.isEnabled
-    }
-
-    override fun actionPerformed(e: AnActionEvent) = fireDefaultExecutorCalled()
-  }
-
-  private inner class ShowCustomCommitActions : DumbAwareAction() {
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = isActive && commitButton.isEnabled
-    }
-
-    override fun actionPerformed(e: AnActionEvent) = commitButton.showPopup()
-  }
-
-  companion object {
-    internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
+  override suspend fun refreshChangesViewBeforeCommit() {
+    val deferred = CompletableDeferred<Unit>()
+    changesView.scheduleRefreshNow { deferred.complete(Unit) }
+    deferred.await()
   }
 }
+

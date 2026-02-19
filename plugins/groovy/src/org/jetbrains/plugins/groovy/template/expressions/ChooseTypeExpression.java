@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.template.expressions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -6,10 +6,20 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartTypePointer;
+import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
@@ -22,11 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class ChooseTypeExpression extends Expression {
-  public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
+  public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {
       GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
@@ -63,8 +70,7 @@ public class ChooseTypeExpression extends Expression {
     mySelectDef = selectDef;
   }
 
-  @NotNull
-  private static List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, @NotNull SmartTypePointerManager typePointerManager) {
+  private static @NotNull List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, @NotNull SmartTypePointerManager typePointerManager) {
     List<SmartTypePointer> result = new ArrayList<>();
 
     for (TypeConstraint constraint : constraints) {
@@ -88,15 +94,17 @@ public class ChooseTypeExpression extends Expression {
     }
   }
 
-  @NotNull
-  private static PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
+  private static @NotNull PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
     return PsiType.getJavaLangObject(manager, scope);
   }
 
   @Override
   public Result calculateResult(ExpressionContext context) {
-    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+    PsiFile file = context.getPsiFile();
+    if (file != null) {
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(file.getFileDocument());
+    }
     PsiType type = myTypePointer.getType();
     if (type != null) {
       if (myAddDefType && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || mySelectDef)) {
@@ -144,7 +152,7 @@ public class ChooseTypeExpression extends Expression {
     if (myAddDefType) {
       LookupElementBuilder def = LookupElementBuilder.create(GrModifier.DEF).bold();
       if (mySelectDef) {
-        result.add(0, def);
+        result.addFirst(def);
       }
       else {
         result.add(def);

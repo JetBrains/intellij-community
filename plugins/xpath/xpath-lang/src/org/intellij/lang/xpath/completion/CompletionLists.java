@@ -25,18 +25,9 @@ import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import javax.xml.namespace.QName;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
@@ -55,21 +46,30 @@ import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.namespace.QName;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
 public final class CompletionLists {
   public static final String INTELLIJ_IDEA_RULEZ = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
   private CompletionLists() {
   }
 
-  public static final Set<String> NODE_TYPE_FUNCS = ContainerUtil.set("text", "node", "comment", "processing-instruction");
+  public static final Set<String> NODE_TYPE_FUNCS = Set.of("text", "node", "comment", "processing-instruction");
 
-  public static final Set<String> NODE_TYPE_FUNCS_V2 = ContainerUtil
-    .set("text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute",
+  public static final Set<String> NODE_TYPE_FUNCS_V2 = Set.of("text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute",
          "document-node");
 
-  public static final Set<String> OPERATORS = ContainerUtil.set("mul", "div", "and", "or");
+  public static final Set<String> OPERATORS = Set.of("mul", "div", "and", "or");
 
-  public static final Set<String> AXIS_NAMES = ContainerUtil.set(
+  public static final Set<String> AXIS_NAMES = Set.of(
     "ancestor",
     "ancestor-or-self",
     "attribute",
@@ -133,7 +133,7 @@ public final class CompletionLists {
           continue;
         }
         final String prefixForURI = nsContext.getPrefixForURI(namespaceURI, PsiTreeUtil.getContextOfType(element, XmlElement.class, true));
-        if (prefixForURI == null && namespaceURI.length() > 0) {
+        if (prefixForURI == null && !namespaceURI.isEmpty()) {
           continue;
         }
         p = qn == null || qn.getPrefix() == null ? makePrefix(prefixForURI) : "";
@@ -167,7 +167,7 @@ public final class CompletionLists {
           final String name = ((PsiNamedElement)o).getName();
           lookups.add(new VariableLookup("$" + name, type, ((PsiNamedElement)o).getIcon(0), (PsiElement)o));
         } else {
-          lookups.add(new VariableLookup("$" + o, PlatformIcons.VARIABLE_ICON));
+          lookups.add(new VariableLookup("$" + o, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable)));
         }
       }
       return lookups;
@@ -221,15 +221,16 @@ public final class CompletionLists {
             lp = PsiTreeUtil.getParentOfType(lp == null ? element : lp, XPathLocationPath.class, true);
           } while (lp != null && lp.getPrevSibling() == null);
 
-          check = lp == null || (sibling = lp.getPrevSibling()) != null;
-        }
-        if (check) {
-          if (sibling instanceof XPathToken && XPathTokenTypes.PATH_OPS.contains(((XPathToken)sibling).getTokenType())) {
-            // xx/yy<caret> : prevSibl = /
-          } else {
-            list.addAll(getFunctionCompletions(element));
-            list.addAll(getVariableCompletions(element));
+          if (lp != null) {
+            sibling = lp.getPrevSibling();
           }
+        }
+        if (sibling instanceof XPathToken && XPathTokenTypes.PATH_OPS.contains(((XPathToken)sibling).getTokenType())) {
+          // xx/yy<caret> : prevSibl = /
+        }
+        else {
+          list.addAll(getFunctionCompletions(element));
+          list.addAll(getVariableCompletions(element));
         }
       }
       if (principalType == XPathNodeTest.PrincipalType.ELEMENT && prefixedName.getPrefix() == null) {
@@ -282,14 +283,14 @@ public final class CompletionLists {
   }
 
   private static String makePrefix(String p) {
-    return (p != null && p.length() > 0 ? p + ":" : "");
+    return (p != null && !p.isEmpty() ? p + ":" : "");
   }
 
   private static void addNamespaceCompletions(NamespaceContext namespaceContext, Set<? super LookupElement> list, XmlElement context) {
     if (namespaceContext != null) {
       final Collection<String> knownPrefixes = namespaceContext.getKnownPrefixes(context);
       for (String prefix : knownPrefixes) {
-        if (prefix != null && prefix.length() > 0) {
+        if (prefix != null && !prefix.isEmpty()) {
           list.add(new NamespaceLookup(prefix));
         }
       }
@@ -309,8 +310,7 @@ public final class CompletionLists {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement e) {
-          if (e instanceof XPathNodeTest) {
-            final XPathNodeTest nodeTest = (XPathNodeTest)e;
+          if (e instanceof XPathNodeTest nodeTest) {
 
             final XPathNodeTest.PrincipalType _principalType = nodeTest.getPrincipalType();
             if (_principalType == principalType) {
@@ -342,14 +342,14 @@ public final class CompletionLists {
 
     final String namespaceURI;
     if (prefixedName.getPrefix() != null) {
-      if (uri == null || uri.length() == 0) return false;
+      if (uri == null || uri.isEmpty()) return false;
 
       namespaceURI = namespaceContext.getNamespaceURI(prefixedName.getPrefix(), context);
     } else {
-      if (!allowDefault) return (uri == null || uri.length() == 0);
+      if (!allowDefault) return (uri == null || uri.isEmpty());
 
       if ((namespaceURI = namespaceContext.getDefaultNamespace(context)) == null) {
-        return (uri == null || uri.length() == 0);
+        return (uri == null || uri.isEmpty());
       }
     }
     return uri.equals(namespaceURI);

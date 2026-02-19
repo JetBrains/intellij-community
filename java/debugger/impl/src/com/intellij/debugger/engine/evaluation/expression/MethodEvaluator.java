@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodEvaluator
@@ -6,27 +6,40 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.Patches;
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
-import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.impl.ClassLoadingUtils;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import com.intellij.rt.debugger.DefaultMethodInvoker;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.*;
+import com.jetbrains.jdi.MethodImpl;
+import com.sun.jdi.ArrayReference;
+import com.sun.jdi.ArrayType;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InterfaceType;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.InvocationException;
+import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.PrimitiveType;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MethodEvaluator implements Evaluator {
@@ -36,8 +49,8 @@ public class MethodEvaluator implements Evaluator {
   private final String myMethodName;
   private final Evaluator[] myArgumentEvaluators;
   private final Evaluator myObjectEvaluator;
-  private final boolean myCheckDefaultInterfaceMethod;
   private final boolean myMustBeVararg;
+  private final boolean myLastArgumentIsNotArray;
 
   public MethodEvaluator(Evaluator objectEvaluator,
                          JVMName className,
@@ -52,15 +65,15 @@ public class MethodEvaluator implements Evaluator {
                          String methodName,
                          JVMName signature,
                          Evaluator[] argumentEvaluators,
-                         boolean checkDefaultInterfaceMethod,
-                         boolean mustBeVararg) {
+                         boolean mustBeVararg,
+                         boolean lastArgumentIsNotArray) {
     myObjectEvaluator = DisableGC.create(objectEvaluator);
     myClassName = className;
     myMethodName = methodName;
     myMethodSignature = signature;
     myArgumentEvaluators = argumentEvaluators;
-    myCheckDefaultInterfaceMethod = checkDefaultInterfaceMethod;
     myMustBeVararg = mustBeVararg;
+    myLastArgumentIsNotArray = lastArgumentIsNotArray;
   }
 
   @Override
@@ -116,13 +129,14 @@ public class MethodEvaluator implements Evaluator {
         // we know nothing about expected method's signature, so trying to match my method name and parameter count
         // dummy matching, may be improved with types matching later
         // IMPORTANT! using argumentTypeNames() instead of argumentTypes() to avoid type resolution inside JDI, which may be time-consuming
+        //noinspection SSBasedInspection
         List<Method> matchingMethods =
           StreamEx.of(referenceType.methodsByName(myMethodName)).filter(m -> m.argumentTypeNames().size() == args.size()).toList();
         if (matchingMethods.size() == 1) {
-          jdiMethod = matchingMethods.get(0);
+          jdiMethod = matchingMethods.getFirst();
         }
         else if (matchingMethods.size() > 1) {
-          jdiMethod = matchingMethods.stream().filter(m -> matchArgs(m, args)).findFirst().orElse(null);
+          jdiMethod = ContainerUtil.find(matchingMethods, m -> matchArgs(m, args));
         }
       }
       if (jdiMethod == null) {
@@ -131,11 +145,13 @@ public class MethodEvaluator implements Evaluator {
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.method", myMethodName));
       }
-      if (myMustBeVararg && !jdiMethod.isVarArgs()) {
-        // this is a workaround for jdk bugs when bridge or proxy methods do not have ACC_VARARGS flags
+
+      if (myMustBeVararg || jdiMethod.isVarArgs()) {
+        // we have to call it for bridge or proxy methods that do not have ACC_VARARGS flags
         // see IDEA-129869 and IDEA-202380
-        wrapVarargParams(jdiMethod, args);
+        handleVarargs(jdiMethod, args, context);
       }
+
       if (signature == null) { // runtime conversions
         argsConversions(jdiMethod, args, context);
       }
@@ -162,20 +178,79 @@ public class MethodEvaluator implements Evaluator {
       if (requiresSuperObject) {
         return debugProcess.invokeInstanceMethod(context, objRef, jdiMethod, args, ObjectReference.INVOKE_NONVIRTUAL);
       }
-      // fix for default methods in interfaces, see IDEA-124066
-      if (Patches.JDK_BUG_ID_8042123 && myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
-        try {
-          return invokeDefaultMethod(debugProcess, context, objRef, myMethodName);
-        }
-        catch (EvaluateException e) {
-          LOG.info(e);
-        }
-      }
       return debugProcess.invokeMethod(context, objRef, jdiMethod, args);
     }
     catch (Exception e) {
       LOG.debug(e);
       throw EvaluateExceptionUtil.createEvaluateException(e);
+    }
+  }
+
+  /**
+   * This method is an imroved version of {@link MethodImpl#handleVarArgs(Method, List)}:
+   * <ul>
+   * <li>creation of arrays is done through {@link DebuggerUtilsEx#mirrorOfArray(ArrayType, int, EvaluationContext)} to avoid
+   * an immediate result collection</li>
+   * <li>wrapping of null vararg value into an array depending on the argument type</li>
+   * <li>load vararg parameter type if it is not yet loaded</li>
+   * </ul>
+   */
+  private void handleVarargs(@NotNull Method jdiMethod, @NotNull List<Value> args, @NotNull EvaluationContextImpl context)
+    throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+    int paramCount = jdiMethod.argumentTypeNames().size();
+    ArrayType lastParamType = getLastParameterArrayType(jdiMethod, context);
+    int argCount = args.size();
+    if (argCount < paramCount - 1) {
+      return;
+    }
+    if (argCount == paramCount - 1) {
+      args.add(DebuggerUtilsEx.mirrorOfArray(lastParamType, 0, context));
+      return;
+    }
+    Value nthArgValue = args.get(paramCount - 1);
+    if (nthArgValue == null && argCount == paramCount) {
+      if (myLastArgumentIsNotArray) {
+        args.set(paramCount - 1, DebuggerUtilsEx.mirrorOfArray(lastParamType, 1, context));
+      }
+      return;
+    }
+    Type nthArgType = (nthArgValue == null) ? null : nthArgValue.type();
+    if (nthArgType instanceof ArrayType arrayType) {
+      if (argCount == paramCount && DebuggerUtilsImpl.instanceOf(arrayType, lastParamType)) {
+        return;
+      }
+    }
+
+    int count = argCount - paramCount + 1;
+    ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(lastParamType, count, context);
+
+    argArray.setValues(0, args, paramCount - 1, count);
+    args.set(paramCount - 1, argArray);
+
+    if (argCount > paramCount) {
+      args.subList(paramCount, argCount).clear();
+    }
+  }
+
+  private static ArrayType getLastParameterArrayType(@NotNull Method jdiMethod, @NotNull EvaluationContextImpl context)
+    throws ClassNotLoadedException, EvaluateException, InvalidTypeException {
+    int paramCount = jdiMethod.argumentTypeNames().size();
+    if (jdiMethod instanceof MethodImpl methodImpl) {
+      try {
+        String paramSignature = methodImpl.argumentSignatures().get(paramCount - 1);
+        return (ArrayType)methodImpl.findType(paramSignature);
+      }
+      catch (ClassNotLoadedException e) {
+        try {
+          return (ArrayType)context.getDebugProcess().loadClass(context, e, jdiMethod.declaringType().classLoader());
+        }
+        catch (IncompatibleThreadStateException | InvocationException ex) {
+          throw EvaluateExceptionUtil.createEvaluateException(ex);
+        }
+      }
+    }
+    else {
+      return (ArrayType)jdiMethod.argumentTypes().get(paramCount - 1);
     }
   }
 
@@ -232,40 +307,8 @@ public class MethodEvaluator implements Evaluator {
     return type instanceof ClassType || type instanceof InterfaceType;
   }
 
-  // only methods without arguments for now
-  private static Value invokeDefaultMethod(DebugProcess debugProcess, EvaluationContext evaluationContext,
-                                           Value obj, String name)
-    throws EvaluateException {
-    ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class, evaluationContext);
-
-    if (invokerClass != null) {
-      Method method = DebuggerUtils.findMethod(invokerClass, "invoke", null);
-      if (method != null) {
-        return debugProcess.invokeMethod(evaluationContext, invokerClass, method,
-               Arrays.asList(obj, ((VirtualMachineProxyImpl)debugProcess.getVirtualMachineProxy()).mirrorOf(name)));
-      }
-    }
-    return null;
-  }
-
   @Override
   public String toString() {
     return "call " + myMethodName;
-  }
-
-  private static void wrapVarargParams(Method method, List<Value> args) throws ClassNotLoadedException, InvalidTypeException {
-    int argCount = args.size();
-    List<Type> paramTypes = method.argumentTypes();
-    Type varargType = ContainerUtil.getLastItem(paramTypes);
-    if (varargType instanceof ArrayType) {
-      int paramCount = paramTypes.size();
-      int arraySize = argCount - paramCount + 1;
-      ArrayReference argArray = ((ArrayType)varargType).newInstance(arraySize);
-      argArray.setValues(0, args, paramCount - 1, arraySize);
-      if (paramCount <= argCount) {
-        args.subList(paramCount - 1, argCount).clear();
-      }
-      args.add(argArray);
-    }
   }
 }

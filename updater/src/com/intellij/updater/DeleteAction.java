@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.DataInputStream;
@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 public class DeleteAction extends PatchAction {
   public DeleteAction(Patch patch, String path, long checksum) {
@@ -35,10 +37,16 @@ public class DeleteAction extends PatchAction {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.DELETE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.DELETE, ValidationResult.Option.KEEP};
-      boolean invalid = getChecksum() == Digester.INVALID;
-      ValidationResult.Action action = invalid ? ValidationResult.Action.VALIDATE : ValidationResult.Action.DELETE;
-      String message = invalid ? "Unexpected file" : "Modified";
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, message, options);
+      if (getChecksum() == Digester.INVALID) {
+        ValidationResult.Action action = ValidationResult.Action.VALIDATE;
+        String details = "checksum 0x" + Long.toHexString(myPatch.digestFile(toFile));
+        return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, UpdaterUI.message("file.unexpected"), details, options);
+      }
+      else {
+        ValidationResult.Action action = ValidationResult.Action.DELETE;
+        String details = "expected 0x" + Long.toHexString(getChecksum()) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile));
+        return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(), action, UpdaterUI.message("file.modified"), details, options);
+      }
     }
 
     return null;
@@ -56,22 +64,22 @@ public class DeleteAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    Runner.logger().info("Delete action. File: " + toFile.getAbsolutePath());
+    LOG.info("Delete action. File: " + toFile.getAbsolutePath());
 
     // a directory can be deleted only when it does not contain any user's content
     boolean canDelete = true;
     if (Files.isDirectory(toFile.toPath(), LinkOption.NOFOLLOW_LINKS)) {
       try (Stream<Path> children = Files.list(toFile.toPath())) {
-        canDelete = !children.findAny().isPresent();
+        canDelete = children.findAny().isEmpty();
       }
     }
 
     if (canDelete) {
-      Runner.logger().info("Delete: " + toFile.getAbsolutePath());
+      LOG.info("Delete: " + toFile.getAbsolutePath());
       Utils.delete(toFile);
     }
     else {
-      Runner.logger().info("Preserved: " + toFile.getAbsolutePath());
+      LOG.info("Preserved: " + toFile.getAbsolutePath());
     }
   }
 

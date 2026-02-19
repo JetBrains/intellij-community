@@ -1,0 +1,26 @@
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.libraries.xml.rpc"/>
+    <module name="intellij.platform.tasks.impl"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- JQL support -->
+    <fileType name="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlFileType" fieldName="INSTANCE" language="JQL"
+              extensions="jql"/>
+    <lang.parserDefinition language="JQL"
+                           implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
+    <lang.braceMatcher language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlBraceMatcher"/>
+    <completion.contributor language="JQL"
+                            implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlCompletionContributor"/>
+    <annotator language="JQL" implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlAnnotator"/>
+
+    <registryKey key="tasks.jira.use.rest.api.version" defaultValue="" restartRequired="true"
+                 description="Use &quot;2&quot; for REST API version 2,
+                              &quot;3&quot; for REST API version 3 in Cloud, leave empty for autodetection (legacy non-REST API included)"/>
+
+    <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
+  </extensions>
+</idea-plugin>

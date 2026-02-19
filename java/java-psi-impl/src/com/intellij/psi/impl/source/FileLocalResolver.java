@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.LighterAST;
@@ -30,7 +16,30 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.ANONYMOUS_CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CATCH_SECTION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CLASS;
+import static com.intellij.psi.impl.source.tree.JavaElementType.CODE_BLOCK;
+import static com.intellij.psi.impl.source.tree.JavaElementType.DECLARATION_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FIELD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOREACH_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.FOR_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.JAVA_CODE_REFERENCE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LAMBDA_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.LOCAL_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD;
+import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_CALL_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_COMPONENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RECORD_HEADER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RESOURCE_LIST;
+import static com.intellij.psi.impl.source.tree.JavaElementType.RESOURCE_VARIABLE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TRY_STATEMENT;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER;
+import static com.intellij.psi.impl.source.tree.JavaElementType.TYPE_PARAMETER_LIST;
 
 /**
  * Resolves unambiguous Java identifiers inside a file (if it can), using {@link LighterAST}. Can be used during indexing.
@@ -42,8 +51,7 @@ public class FileLocalResolver {
     myTree = tree;
   }
 
-  @NotNull
-  public LighterAST getLightTree() {
+  public @NotNull LighterAST getLightTree() {
     return myTree;
   }
 
@@ -51,9 +59,8 @@ public class FileLocalResolver {
    * @param ref reference node
    * @return a resolve result corresponding to a local variable, parameter or field that the given reference resolves to.
    */
-  @NotNull
-  public LightResolveResult resolveLocally(@NotNull LighterASTNode ref) {
-    final String refName = JavaLightTreeUtil.getNameIdentifierText(myTree, ref);
+  public @NotNull LightResolveResult resolveLocally(@NotNull LighterASTNode ref) {
+    String refName = JavaLightTreeUtil.getNameIdentifierText(myTree, ref);
     if (refName == null) return LightResolveResult.UNKNOWN;
     if (!canResolveToLocalVariable(myTree, ref)) return LightResolveResult.NON_LOCAL;
 
@@ -88,8 +95,7 @@ public class FileLocalResolver {
     return LightTreeUtil.firstChildOfType(myTree, ref, ElementType.EXPRESSION_BIT_SET) != null;
   }
 
-  @NotNull
-  private Iterable<LighterASTNode> getDeclarations(LighterASTNode scope, @Nullable LighterASTNode lastParent) {
+  private @NotNull Iterable<LighterASTNode> getDeclarations(LighterASTNode scope, @Nullable LighterASTNode lastParent) {
     IElementType type = scope.getTokenType();
     if (type == CODE_BLOCK) {
       return walkChildrenScopes(before(LightTreeUtil.getChildrenOfType(myTree, scope, DECLARATION_STATEMENT), lastParent));
@@ -122,13 +128,11 @@ public class FileLocalResolver {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private JBIterable<LighterASTNode> walkChildrenScopes(JBIterable<LighterASTNode> children) {
+  private @NotNull JBIterable<LighterASTNode> walkChildrenScopes(JBIterable<? extends LighterASTNode> children) {
     return children.flatMap(child -> getDeclarations(child, null));
   }
 
-  @NotNull
-  private static JBIterable<LighterASTNode> before(List<LighterASTNode> children, @Nullable final LighterASTNode lastParent) {
+  private static @NotNull JBIterable<LighterASTNode> before(List<LighterASTNode> children, @Nullable LighterASTNode lastParent) {
     return JBIterable.from(children).filter(node -> lastParent == null || node.getStartOffset() < lastParent.getStartOffset());
   }
 
@@ -139,8 +143,7 @@ public class FileLocalResolver {
    * @return the short name of the class corresponding to the type of the variable, or null if the variable is not of class type or
    * the type is generic
    */
-  @Nullable
-  public String getShortClassTypeName(@NotNull LighterASTNode var) {
+  public @Nullable String getShortClassTypeName(@NotNull LighterASTNode var) {
     return getShortClassTypeName(var, 0);
   }
 
@@ -153,8 +156,7 @@ public class FileLocalResolver {
    * @return the short name of the class corresponding to the type of the variable, or null if the variable is not of class type or
    * the type is generic
    */
-  @Nullable
-  public String getShortClassTypeName(@NotNull LighterASTNode var, int arrayDepth) {
+  public @Nullable String getShortClassTypeName(@NotNull LighterASTNode var, int arrayDepth) {
     LighterASTNode typeNode = LightTreeUtil.firstChildOfType(myTree, var, TYPE);
     while (arrayDepth > 0) {
       LighterASTNode bracket = LightTreeUtil.firstChildOfType(myTree, typeNode, JavaTokenType.LBRACKET);
@@ -211,8 +213,7 @@ public class FileLocalResolver {
     /** The result can't be determined, but it's definitely not a local variable/parameter */
     public static final LightResolveResult NON_LOCAL = new LightResolveResult();
 
-    @NotNull
-    static LightResolveResult resolved(@NotNull final LighterASTNode target) {
+    static @NotNull LightResolveResult resolved(@NotNull LighterASTNode target) {
       return new LightResolveResult() {
         @Override
         public LighterASTNode getTarget() {
@@ -221,8 +222,7 @@ public class FileLocalResolver {
       };
     }
 
-    @Nullable
-    public LighterASTNode getTarget() {
+    public @Nullable LighterASTNode getTarget() {
       return null;
     }
   }

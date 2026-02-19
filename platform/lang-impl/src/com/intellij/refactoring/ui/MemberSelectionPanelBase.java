@@ -7,8 +7,8 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JScrollPane;
+import java.awt.BorderLayout;
 
 /**
  * @author Max Medvedev

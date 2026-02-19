@@ -1,10 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -12,41 +17,62 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParenthesizedExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.InputValidator;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
-import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author Pavel.Dolgov
- */
-public class DuplicateExpressionsInspection extends LocalInspectionTool {
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public final class DuplicateExpressionsInspection extends LocalInspectionTool {
   public int complexityThreshold = 70;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
 
         if (expression instanceof PsiParenthesizedExpression) {
@@ -56,7 +82,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
 
         if (expression.getParent() instanceof PsiCallExpression) {
@@ -82,7 +108,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
 
         PsiCodeBlock body = method.getBody();
@@ -92,14 +118,14 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
 
         registerProblemsForExpressions(initializer.getBody(), session);
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
 
         PsiElement body = expression.getBody();
@@ -112,7 +138,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
         DuplicateExpressionsContext context = DuplicateExpressionsContext.getContext(body, session);
         if (context == null) return;
 
-        Set<PsiExpression> processed = new THashSet<>();
+        Set<PsiExpression> processed = new HashSet<>();
         context.forEach((pattern, occurrences) -> {
           if (!processed.contains(pattern)) {
             processed.addAll(occurrences);
@@ -154,7 +180,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     if (variables == null) return false;
     if (variables.isEmpty()) return true;
 
-    PsiElement anchor = RefactoringUtil.getAnchorElementForMultipleExpressions(occurrences.toArray(PsiExpression.EMPTY_ARRAY), null);
+    PsiElement anchor = CommonJavaRefactoringUtil.getAnchorElementForMultipleExpressions(occurrences.toArray(PsiExpression.EMPTY_ARRAY), null);
     if (anchor == null) return false;
     PsiElement anchorParent = anchor.getParent();
     if (anchorParent == null) return false;
@@ -176,13 +202,12 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
   }
 
-  @Nullable
-  private static Set<PsiVariable> collectVariablesSafeToExtract(@NotNull List<? extends PsiExpression> occurrences) {
-    Set<PsiVariable> variables = new THashSet<>();
+  private static @Nullable Set<PsiVariable> collectVariablesSafeToExtract(@NotNull List<? extends PsiExpression> occurrences) {
+    Set<PsiVariable> variables = new HashSet<>();
     Ref<Boolean> refFailed = new Ref<>(Boolean.FALSE);
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
 
         PsiElement resolved = reference.resolve();
@@ -206,12 +231,11 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     return variables;
   }
 
-  @NotNull
-  private static Map<PsiExpression, List<PsiVariable>> collectReusableVariables(@NotNull List<? extends PsiExpression> occurrences) {
+  private static @NotNull Map<PsiExpression, List<PsiVariable>> collectReusableVariables(@NotNull List<? extends PsiExpression> occurrences) {
     if (occurrences.size() <= 1) {
       return Collections.emptyMap();
     }
-    Map<PsiVariable, PsiExpression> initializers = new THashMap<>();
+    Map<PsiVariable, PsiExpression> initializers = new HashMap<>();
     for (PsiExpression occurrence : occurrences) {
       PsiVariable variable = findVariableByInitializer(occurrence);
       if (variable != null) {
@@ -222,7 +246,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       return Collections.emptyMap();
     }
 
-    Map<PsiExpression, List<PsiVariable>> result = new THashMap<>();
+    Map<PsiExpression, List<PsiVariable>> result = new HashMap<>();
     initializers.forEach((variable, initializer) -> {
       for (PsiExpression occurrence : occurrences) {
         if (occurrence != initializer && canReplaceWith(occurrence, variable)) {
@@ -236,7 +260,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
   private static boolean canReplaceOtherOccurrences(@NotNull PsiExpression originalOccurrence,
                                                     @NotNull List<? extends PsiExpression> occurrences,
                                                     @NotNull PsiVariable variable) {
-    return occurrences.stream().anyMatch(occurrence -> occurrence != originalOccurrence && canReplaceWith(occurrence, variable));
+    return ContainerUtil.exists(occurrences, occurrence -> occurrence != originalOccurrence && canReplaceWith(occurrence, variable));
   }
 
   private static boolean canReplaceWith(@NotNull PsiExpression occurrence, @NotNull PsiVariable variable) {
@@ -255,23 +279,18 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     return refExpr instanceof PsiReferenceExpression && ((PsiReferenceExpression)refExpr).resolve() == variable;
   }
 
-  @Nullable
-  private static PsiVariable findVariableByInitializer(@NotNull PsiExpression expression) {
+  private static @Nullable PsiVariable findVariableByInitializer(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)parent;
-      if (PsiTreeUtil.isAncestor(variable.getInitializer(), expression, false)) {
-        return variable;
-      }
+    if (parent instanceof PsiVariable variable && PsiTreeUtil.isAncestor(variable.getInitializer(), expression, false)) {
+      return variable;
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), this, "complexityThreshold", 3);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("complexityThreshold", JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), 1, 1000));
   }
 
   private static final class IntroduceVariableFix implements LocalQuickFix {
@@ -279,17 +298,13 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
 
     private IntroduceVariableFix(@NotNull PsiExpression expression) {myExpressionText = expression.getText();}
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.duplicate.expressions.introduce.variable.fix.family.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.duplicate.expressions.introduce.variable.fix.name", myExpressionText);
     }
 
@@ -305,27 +320,15 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
         VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
         Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), true);
         if (editor != null) {
-          new MyIntroduceVariableHandler().invoke(project, editor, (PsiExpression)element);
+          JavaIntroduceVariableHandlerBase handler =
+            (JavaIntroduceVariableHandlerBase)JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
+          handler.invoke(project, editor, (PsiExpression)element);
         }
-      }
-    }
-
-    private static class MyIntroduceVariableHandler extends IntroduceVariableHandler {
-      @Override
-      public IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr,
-                                                   PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
-                                                   boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
-                                                   PsiElement anchor, JavaReplaceChoice replaceChoice) {
-        if (replaceChoice == null && ApplicationManager.getApplication().isUnitTestMode()) {
-          replaceChoice = JavaReplaceChoice.ALL;
-        }
-        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager,
-                                 declareFinalIfAll, anyAssignmentLHS, validator, anchor, replaceChoice);
       }
     }
   }
 
-  private static final class ReuseVariableFix implements LocalQuickFix {
+  private static final class ReuseVariableFix extends PsiUpdateModCommandQuickFix {
     private final String myExpressionText;
     private final String myVariableName;
 
@@ -334,30 +337,25 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       myVariableName = variable.getName();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.duplicate.expressions.reuse.variable.fix.family.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.duplicate.expressions.reuse.variable.fix.name", myVariableName, myExpressionText);
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiExpression) {
         new CommentTracker().replaceAndRestoreComments(element, myVariableName);
       }
     }
   }
 
-  private static final class ReplaceOtherOccurrencesFix implements LocalQuickFix {
+  private static final class ReplaceOtherOccurrencesFix extends PsiUpdateModCommandQuickFix {
     private final String myExpressionText;
     private final String myVariableName;
 
@@ -366,33 +364,27 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       myVariableName = variable.getName();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.family.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.duplicate.expressions.replace.other.occurrences.fix.name", myVariableName, myExpressionText);
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiExpression) {
-        List<PsiExpression> occurrences = collectReplaceableOccurrences((PsiExpression)element);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiExpression expr) {
+        List<PsiExpression> occurrences = collectReplaceableOccurrences(expr);
         for (PsiExpression occurrence : occurrences) {
           new CommentTracker().replaceAndRestoreComments(occurrence, myVariableName);
         }
       }
     }
 
-    @NotNull
-    private static List<PsiExpression> collectReplaceableOccurrences(@NotNull PsiExpression originalExpr) {
+    private static @NotNull List<PsiExpression> collectReplaceableOccurrences(@NotNull PsiExpression originalExpr) {
       PsiVariable variable = findVariableByInitializer(originalExpr);
       PsiCodeBlock nearestBody = DuplicateExpressionsContext.findNearestBody(originalExpr);
       if (variable != null && nearestBody != null) {
@@ -401,7 +393,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
           final ExpressionHashingStrategy hashingStrategy = new ExpressionHashingStrategy();
 
           @Override
-          public void visitExpression(PsiExpression occurrence) {
+          public void visitExpression(@NotNull PsiExpression occurrence) {
             super.visitExpression(occurrence);
 
             if (occurrence != originalExpr &&

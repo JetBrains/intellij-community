@@ -1,11 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMirrorElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -28,9 +37,8 @@ import java.util.List;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall;
 
 public final class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
-  @Nullable
   @Override
-  protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {
+  protected @Nullable PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {
     if (!GroovyConfigUtils.getInstance().isVersionAtLeast(expression, GroovyConfigUtils.GROOVY2_3)) return null;
 
     final GrParameter[] parameters = expression.getAllParameters();
@@ -48,8 +56,7 @@ public final class ClosureParamsEnhancer extends AbstractClosureParameterEnhance
     return null;
   }
 
-  @NotNull
-  public static List<PsiType[]> findFittingSignatures(@NotNull GrFunctionalExpression expression) {
+  public static @NotNull @Unmodifiable List<PsiType[]> findFittingSignatures(@NotNull GrFunctionalExpression expression) {
     GrMethodCall call = findCall(expression);
     if (call == null) return Collections.emptyList();
 
@@ -123,9 +130,8 @@ public final class ClosureParamsEnhancer extends AbstractClosureParameterEnhance
     return signatureHintProcessor.inferExpectedSignatures((PsiMethod)element, substitutor, SignatureHintProcessor.buildOptions(anno));
   }
 
-  @NotNull
-  private static PsiSubstitutor computeAnnotationBasedSubstitutor(@NotNull GrCall call,
-                                                                  @NotNull GroovyInferenceSessionBuilder builder) {
+  private static @NotNull PsiSubstitutor computeAnnotationBasedSubstitutor(@NotNull GrCall call,
+                                                                           @NotNull GroovyInferenceSessionBuilder builder) {
     return builder.skipClosureIn(call).resolveMode(false).build().inferSubst();
   }
 

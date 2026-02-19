@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.ui.AATextInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.RenderingHints;
 import java.awt.font.FontRenderContext;
 import java.util.function.Supplier;
 
@@ -19,17 +22,28 @@ public enum AntialiasingType {
   GREYSCALE("Greyscale", () ->  PlatformEditorBundle.message("settings.editor.antialiasing.greyscale"), RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true),
   OFF("No antialiasing", () -> PlatformEditorBundle.message("settings.editor.antialiasing.no.antialiasing"), RenderingHints.VALUE_TEXT_ANTIALIAS_OFF, false);
 
+  /**
+   * @deprecated Use {@link #getAATextInfoForSwingComponent} instead
+   */
+  @Deprecated(forRemoval = true)
   public static Object getAAHintForSwingComponent() {
+    return getAATextInfoForSwingComponent();
+  }
+
+  public static @Nullable AATextInfo getAATextInfoForSwingComponent() {
     UISettings uiSettings = UISettings.getInstanceOrNull();
-    if (uiSettings != null) {
-      AntialiasingType type = uiSettings.getIdeAAType();
-      return type.getTextInfo();
+    if (uiSettings == null) {
+      return GREYSCALE.getTextInfo();
     }
-    return GREYSCALE.getTextInfo();
+    return uiSettings.getIdeAAType().getTextInfo();
   }
 
   public static boolean canUseSubpixelAAForIDE() {
-    return !SystemInfo.isMacOSMojave || Boolean.getBoolean("enable.macos.ide.subpixelAA");
+    return !SystemInfoRt.isMac || Boolean.getBoolean("enable.macos.ide.subpixelAA");
+  }
+
+  public static boolean canUseSubpixelAAForEditor() {
+    return !SystemInfo.isMacOSBigSur || Boolean.getBoolean("enable.macos.editor.subpixelAA");
   }
 
   public static Object getKeyForCurrentScope(boolean inEditor) {
@@ -65,18 +79,16 @@ public enum AntialiasingType {
     isEnabled = enabled;
   }
 
-  public Object getTextInfo() {
+  public @Nullable AATextInfo getTextInfo() {
     return isEnabled || SystemInfo.isJetBrainsJvm ? GraphicsUtil.createAATextInfo(myHint) : null;
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return mySerializationName;
   }
 
-  @Nls(capitalization = Sentence)
-  public String getPresentableName() {
+  public @Nls(capitalization = Sentence) String getPresentableName() {
     return myPresentableName.get();
   }
  }

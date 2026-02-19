@@ -1,15 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 /**
  * @author Alexander Lobas
  */
-public class CountIcon extends CountComponent implements Icon {
+public final class CountIcon extends CountComponent implements Icon {
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     if (isEmpty()) {

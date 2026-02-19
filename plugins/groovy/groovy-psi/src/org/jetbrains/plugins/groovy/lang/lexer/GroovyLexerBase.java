@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.lexer.FlexLexer;
@@ -7,14 +7,28 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.Stack;
 
 import static com.intellij.util.ArrayUtil.indexOf;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDEC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_END;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mIDENT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mINC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_BIG_DECIMAL;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_BIG_INT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_DOUBLE;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_FLOAT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNUM_INT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRCURLY;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mREGEX_END;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.KEYWORDS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.STRING_LITERALS;
 
 public abstract class GroovyLexerBase implements FlexLexer {
 
   // see groovy.g: allowRegexpLiteral()
-  private final static TokenSet DIVISION_IS_EXPECTED_AFTER = TokenSet.orSet(KEYWORDS, STRING_LITERALS, TokenSet.create(
+  private static final TokenSet DIVISION_IS_EXPECTED_AFTER = TokenSet.orSet(KEYWORDS, STRING_LITERALS, TokenSet.create(
     mINC, mDEC,
     mRPAREN, mRBRACK, mRCURLY,
     mGSTRING_END, mREGEX_END, mDOLLAR_SLASH_REGEX_END,

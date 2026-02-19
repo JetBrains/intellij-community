@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.actions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -14,7 +14,11 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class MavenActionUtil {
   private MavenActionUtil() {
@@ -24,21 +28,23 @@ public final class MavenActionUtil {
     return CommonDataKeys.PROJECT.getData(context) != null;
   }
 
-  @Nullable
-  public static Project getProject(DataContext context) {
+  public static @Nullable Project getProject(DataContext context) {
     return CommonDataKeys.PROJECT.getData(context);
   }
 
   public static boolean isMavenizedProject(DataContext context) {
     Project project = CommonDataKeys.PROJECT.getData(context);
-    return project != null && MavenProjectsManager.getInstance(project).isMavenizedProject();
+    if (project == null) return false;
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstanceIfCreated(project);
+    if (mavenProjectsManager == null) return false;
+    return mavenProjectsManager.isMavenizedProject();
   }
 
-  @Nullable
-  public static MavenProject getMavenProject(DataContext context) {
+  public static @Nullable MavenProject getMavenProject(DataContext context) {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
-    if(manager == null) return null;
+    if (manager == null) return null;
+    if (!manager.isInitialized()) return null;
 
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file != null) {
@@ -55,11 +61,10 @@ public final class MavenActionUtil {
     return null;
   }
 
-  @Nullable
-  public static MavenProjectsManager getProjectsManager(DataContext context) {
+  public static @Nullable MavenProjectsManager getProjectsManager(DataContext context) {
     final Project project = getProject(context);
-    if(project == null) return null;
-    return MavenProjectsManager.getInstance(project);
+    if (project == null) return null;
+    return MavenProjectsManager.getInstanceIfCreated(project);
   }
 
   public static boolean isMavenProjectFile(VirtualFile file) {
@@ -75,8 +80,8 @@ public final class MavenActionUtil {
     VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (virtualFiles == null || virtualFiles.length == 0) return Collections.emptyList();
 
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    if (!projectsManager.isMavenizedProject()) return Collections.emptyList();
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstanceIfCreated(project);
+    if (projectsManager == null || !projectsManager.isMavenizedProject()) return Collections.emptyList();
 
     Set<MavenProject> res = new LinkedHashSet<>();
 

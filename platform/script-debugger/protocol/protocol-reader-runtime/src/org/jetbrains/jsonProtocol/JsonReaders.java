@@ -1,27 +1,53 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jsonProtocol;
 
 import com.google.gson.stream.JsonToken;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.TDoubleArrayList;
-import gnu.trove.THashMap;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TLongArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class JsonReaders {
-  public static final ObjectFactory<String> STRING_OBJECT_FACTORY = new ObjectFactory<String>() {
+  public static final ObjectFactory<String> STRING_OBJECT_FACTORY = new ObjectFactory<>() {
     @Override
     public String read(JsonReaderEx reader) {
       return reader.nextString();
     }
   };
+
+  public static <T extends Enum<T>> List<T> readEnumArray(@NotNull JsonReaderEx reader, @NotNull Class<T> enumClass) {
+    return readObjectArray(reader, new EnumFactory<>(enumClass));
+  }
+
+  public static double[] readDoubleArray(JsonReaderEx reader) {
+    checkIsNull(reader);
+    reader.beginArray();
+    if (!reader.hasNext()) {
+      reader.endArray();
+      return new double[0];
+    }
+
+    DoubleArrayList result = new DoubleArrayList();
+    do {
+      result.add(reader.nextDouble());
+    }
+    while (reader.hasNext());
+    reader.endArray();
+    return result.toDoubleArray();
+  }
 
   private JsonReaders() {
   }
@@ -30,10 +56,18 @@ public final class JsonReaders {
     return new MapFactory<>(valueFactory);
   }
 
-  private static void checkIsNull(JsonReaderEx reader, String fieldName) {
+  private static void checkIsNull(JsonReaderEx reader) {
     if (reader.peek() == JsonToken.NULL) {
-      throw new RuntimeException("Field is not nullable" + (fieldName == null ? "" : (": " + fieldName)));
+      throw new RuntimeException("Field is not nullable");
     }
+  }
+
+  public static boolean readsNull(JsonReaderEx reader) {
+    if (reader.peek() == JsonToken.NULL) {
+      reader.skipValue();
+      return true;
+    }
+    else return false;
   }
 
   public static String readRawString(JsonReaderEx reader) {
@@ -91,6 +125,28 @@ public final class JsonReaders {
     }
   }
 
+  public static final class EnumFactory<T extends Enum<T>> extends ObjectFactory<T> {
+    private final Class<T> enumClass;
+
+    public EnumFactory(Class<T> enumClass) {
+      this.enumClass = enumClass;
+    }
+
+    @Override
+    public T read(JsonReaderEx reader) {
+      return readEnum(reader, enumClass);
+    }
+  }
+
+  public static <T> List<T> readObjectArrayOrSingleObject(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<? extends T> factory) {
+    if (reader.peek() == JsonToken.BEGIN_OBJECT) {
+      return Collections.singletonList(factory.read(reader));
+    }
+    else {
+      return readObjectArray(reader, factory);
+    }
+  }
+
   public static <T> List<T> readObjectArray(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<? extends T> factory) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
@@ -124,7 +180,7 @@ public final class JsonReaders {
       return Collections.emptyMap();
     }
 
-    Map<String, T> map = new THashMap<>();
+    Map<String, T> map = new HashMap<>();
     while (reader.hasNext()) {
       if (factory == null) {
         //noinspection unchecked
@@ -139,33 +195,25 @@ public final class JsonReaders {
   }
 
   public static Object read(JsonReaderEx reader) {
-    switch (reader.peek()) {
-      case BEGIN_ARRAY:
-        return nextList(reader);
-
-      case BEGIN_OBJECT:
+    return switch (reader.peek()) {
+      case BEGIN_ARRAY -> nextList(reader);
+      case BEGIN_OBJECT -> {
         reader.beginObject();
-        return nextObject(reader);
-
-      case STRING:
-        return reader.nextString();
-
-      case NUMBER:
-        return reader.nextDouble();
-
-      case BOOLEAN:
-        return reader.nextBoolean();
-
-      case NULL:
+        yield nextObject(reader);
+      }
+      case STRING -> reader.nextString();
+      case NUMBER -> reader.nextDouble();
+      case BOOLEAN -> reader.nextBoolean();
+      case NULL -> {
         reader.nextNull();
-        return null;
-
-      default: throw new IllegalStateException();
-    }
+        yield null;
+      }
+      default -> throw new IllegalStateException();
+    };
   }
 
   public static Map<String, Object> nextObject(JsonReaderEx reader) {
-    Map<String, Object> map = new THashMap<>();
+    Map<String, Object> map = new HashMap<>();
     while (reader.hasNext()) {
       map.put(reader.nextName(), read(reader));
     }
@@ -207,58 +255,52 @@ public final class JsonReaders {
   }
 
   public static long[] readLongArray(JsonReaderEx reader) {
-    checkIsNull(reader, null);
+    checkIsNull(reader);
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();
       return ArrayUtilRt.EMPTY_LONG_ARRAY;
     }
 
-    TLongArrayList result = new TLongArrayList();
+    LongArrayList result = new LongArrayList();
     do {
       result.add(reader.nextLong());
     }
     while (reader.hasNext());
     reader.endArray();
-    return result.toNativeArray();
+    return result.toLongArray();
   }
 
-  public static double[] readDoubleArray(JsonReaderEx reader) {
-    checkIsNull(reader, null);
-    reader.beginArray();
-    if (!reader.hasNext()) {
-      reader.endArray();
-      return new double[]{0};
-    }
+  public static final class WrapperFactory<T> extends ObjectFactory<T> {
+    private final Function1<? super JsonReaderEx, ? extends T> innerReader;
 
-    TDoubleArrayList result = new TDoubleArrayList();
-    do {
-      result.add(reader.nextDouble());
+    public WrapperFactory(Function1<? super JsonReaderEx, ? extends T> reader) { innerReader = reader; }
+
+    @Override
+    public T read(JsonReaderEx reader) {
+      return innerReader.invoke(reader);
     }
-    while (reader.hasNext());
-    reader.endArray();
-    return result.toNativeArray();
   }
 
   public static int[] readIntArray(JsonReaderEx reader) {
-    checkIsNull(reader, null);
+    checkIsNull(reader);
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();
       return ArrayUtilRt.EMPTY_INT_ARRAY;
     }
 
-    TIntArrayList result = new TIntArrayList();
+    IntList result = new IntArrayList();
     do {
       result.add(reader.nextInt());
     }
     while (reader.hasNext());
     reader.endArray();
-    return result.toNativeArray();
+    return result.toIntArray();
   }
 
   public static List<StringIntPair> readIntStringPairs(JsonReaderEx reader) {
-    checkIsNull(reader, null);
+    checkIsNull(reader);
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();

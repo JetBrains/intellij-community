@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.api;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -14,22 +13,24 @@ import com.intellij.util.xml.Required;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomGoal;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * @author Sergey Evdokimov
+ * Extension point - plugin info data.
  */
-public class MavenPluginDescriptor extends AbstractExtensionPointBean {
-
+@ApiStatus.Internal
+public final class MavenPluginDescriptor implements PluginAware {
   public static final ExtensionPointName<MavenPluginDescriptor> EP_NAME =
     new ExtensionPointName<>("org.jetbrains.idea.maven.pluginDescriptor");
 
@@ -53,6 +54,18 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
 
   @Attribute("propertyGenerator")
   public String propertyGenerator;
+  private PluginDescriptor pluginDescriptor;
+
+  @Transient
+  public PluginDescriptor getPluginDescriptor() {
+    return pluginDescriptor;
+  }
+
+  @Override
+  @Transient
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
+  }
 
   @Tag("property")
   public static class ModelProperty {
@@ -128,9 +141,9 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
       for (MavenPluginDescriptor pluginDescriptor : EP_NAME.getExtensions()) {
         Pair<String, String> pluginId = parsePluginId(pluginDescriptor.mavenId);
 
-        Map<String, Map<String, List<MavenPluginDescriptor>>> groupMap = MavenUtil.getOrCreate(res, pluginId.second);// pluginId.second is artifactId
+        Map<String, Map<String, List<MavenPluginDescriptor>>> groupMap = getOrCreate(res, pluginId.second);// pluginId.second is artifactId
 
-        Map<String, List<MavenPluginDescriptor>> goalsMap = MavenUtil.getOrCreate(groupMap, pluginId.first);// pluginId.first is groupId
+        Map<String, List<MavenPluginDescriptor>> goalsMap = getOrCreate(groupMap, pluginId.first);// pluginId.first is groupId
 
         List<MavenPluginDescriptor> descriptorList = goalsMap.get(pluginDescriptor.goal);
         if (descriptorList == null) {
@@ -142,6 +155,17 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
       }
 
       ourDescriptorsMap = res;
+    }
+
+    return res;
+  }
+
+  private static @NotNull <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
+    V res = map.get(key);
+    if (res == null) {
+      //noinspection unchecked
+      res = (V)new HashMap<>();
+      map.put(key, res);
     }
 
     return res;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.psi.PsiElement
@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 import org.jetbrains.plugins.groovy.lang.resolve.impl.argumentMapping
 import org.jetbrains.plugins.groovy.util.recursionAwareLazy
 
@@ -49,13 +50,13 @@ class FunctionalSignature(
 
   override val returnType: PsiType? get() = functionalExpression.returnType
 
-  override fun applyTo(arguments: Arguments, context: PsiElement): ArgumentMapping<CallParameter>? {
+  override fun applyTo(arguments: Arguments, context: PsiElement): ArgumentMapping<CallParameter> {
     return argumentMapping(this, arguments, context)
   }
 
-  private class ClosureParameter(private val parameter: GrParameter) : CallParameter {
-    override val type: PsiType get() = parameter.type
-    override val parameterName: String? get() = parameter.name
+  private class ClosureParameter(override val psi: GrParameter) : PsiCallParameter {
+    override val type: PsiType get() = psi.type
+    override val parameterName: String get() = psi.name
     override val isOptional: Boolean get() = false
   }
 }

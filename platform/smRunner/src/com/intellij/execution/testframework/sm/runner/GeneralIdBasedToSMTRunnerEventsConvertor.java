@@ -1,14 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.events.BaseStartedNodeEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TreeNodeEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +27,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent.NodePropertyKey.PRESENTABLE_NAME;
+
+@ApiStatus.Internal
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
 
   private final Map<String, Node> myNodeByIdMap = new ConcurrentHashMap<>();
-  private final Set<Node> myRunningTestNodes = ContainerUtil.newConcurrentSet();
-  private final Set<Node> myRunningSuiteNodes = ContainerUtil.newConcurrentSet();
+  private final Set<Node> myRunningTestNodes = ConcurrentCollectionFactory.createConcurrentSet();
+  private final Set<Node> myRunningSuiteNodes = ConcurrentCollectionFactory.createConcurrentSet();
   private final Node myTestsRootNode;
 
   private boolean myIsTestingFinished = false;
@@ -118,8 +131,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     if (LOG.isDebugEnabled()) {
       LOG.debug("doStartNode " + startedNodeEvent.getId());
     }
-    Node node = findNode(startedNodeEvent);
+    Node node = findNode(startedNodeEvent, false);
     if (node != null) {
+      SMTestProxy testProxy = node.getProxy();
+      final String metainfo = startedNodeEvent.getMetainfo();
+      if (metainfo != null) {
+        // we change the meta-information if its value is different from the default value `null`
+        testProxy.setMetainfo(metainfo);
+      }
       if (node.getState() == State.NOT_RUNNING && startedNodeEvent.isRunning()) {
         setNodeAndAncestorsRunning(node);
       }
@@ -136,13 +155,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     }
   }
 
-  private Node createNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
+  private @Nullable Node createNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
     Node parentNode = findValidParentNode(startedNodeEvent);
     if (parentNode == null) {
       return null;
     }
 
-    String nodeId = validateAndGetNodeId(startedNodeEvent);
+    String nodeId = validateAndGetNodeId(startedNodeEvent, false);
     if (nodeId == null) {
       return null;
     }
@@ -225,7 +244,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
       // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
       // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
-      fireOnTestFinished(testProxy);
+      if (testProxy.isSuite()) {
+        fireOnSuiteFinished(testProxy, node.getId());
+      }
+      else {
+        fireOnTestFinished(testProxy, node.getId());
+      }
     }
   }
 
@@ -241,13 +265,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       }
       SMTestProxy suiteProxy = node.getProxy();
       suiteProxy.setFinished();
-      fireOnSuiteFinished(suiteProxy);
+      fireOnSuiteFinished(suiteProxy, suiteFinishedEvent.getId());
       terminateNode(node, State.FINISHED);
     }
   }
 
   private @Nullable Node findNodeToTerminate(@NotNull TreeNodeEvent treeNodeEvent) {
-    Node node = findNode(treeNodeEvent);
+    Node node = findNode(treeNodeEvent, false);
     if (node == null) {
       logProblem("Trying to finish nonexistent node: " + treeNodeEvent);
       return null;
@@ -320,13 +344,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
                    + comparisonFailureExpectedText + "\n"
                    + "Actual:\n"
                    + comparisonFailureActualText);
+        testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
       }
       long duration = testFailedEvent.getDurationMillis();
       if (duration >= 0) {
         testProxy.setDuration(duration);
       }
 
-      fireOnTestFailed(testProxy);
+      fireOnTestFailed(testProxy, node.getId());
       fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.FAILED);
@@ -344,7 +369,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       SMTestProxy testProxy = node.getProxy();
       testProxy.setTestIgnored(testIgnoredEvent.getIgnoreComment(), testIgnoredEvent.getStacktrace());
 
-      fireOnTestIgnored(testProxy);
+      fireOnTestIgnored(testProxy, node.getId());
       fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.IGNORED);
@@ -354,7 +379,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   @Override
   public void onTestOutput(final @NotNull TestOutputEvent testOutputEvent) {
     LOG.debug("onTestOutput");
-    Node node = findNode(testOutputEvent);
+    Node node = findNode(testOutputEvent, true);
     if (node == null) {
       logProblem("Test wasn't started! But " + testOutputEvent + "!");
       return;
@@ -370,16 +395,34 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     fireOnTestsCountInSuite(count);
   }
 
-  private @Nullable String validateAndGetNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
+  @Override
+  public void onSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
+    LOG.debug("onSetNodeProperty", " ", event);
+    final Node node = findNode(event, false);
+    if (node == null) {
+      logProblem("Node not found: " + event);
+      return;
+    }
+    final SMTestProxy nodeProxy = node.getProxy();
+    if (event.getPropertyKey() == PRESENTABLE_NAME) {
+      nodeProxy.setPresentableName(event.getPropertyValue());
+    }
+    else {
+      logProblem("Unhandled event: " + event);
+    }
+    myEventPublisher.onSetNodeProperty(nodeProxy, event);
+  }
+
+  private @Nullable String validateAndGetNodeId(@NotNull TreeNodeEvent treeNodeEvent, boolean allowRootNode) {
     String nodeId = treeNodeEvent.getId();
-    if (nodeId == null || nodeId.equals(TreeNodeEvent.ROOT_NODE_ID)) {
+    if (nodeId == null || (!allowRootNode && nodeId.equals(TreeNodeEvent.ROOT_NODE_ID))) {
       logProblem((nodeId == null ? "Missing" : "Illegal") + " nodeId: " + treeNodeEvent, true);
     }
     return nodeId;
   }
 
-  private @Nullable Node findNode(@NotNull TreeNodeEvent treeNodeEvent) {
-    String nodeId = validateAndGetNodeId(treeNodeEvent);
+  private @Nullable Node findNode(@NotNull TreeNodeEvent treeNodeEvent, boolean allowRootNode) {
+    String nodeId = validateAndGetNodeId(treeNodeEvent, allowRootNode);
     return nodeId != null ? myNodeByIdMap.get(nodeId) : null;
   }
 
@@ -412,12 +455,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       node.setState(State.RUNNING, this);
       SMTestProxy proxy = node.getProxy();
       proxy.setStarted();
+      Node parentNode = node.getParentNode();
       if (proxy.isSuite()) {
         myRunningSuiteNodes.add(node);
-        fireOnSuiteStarted(proxy);
+        fireOnSuiteStarted(proxy, node.getId(), parentNode != null ? parentNode.getId() : null);
       } else {
         myRunningTestNodes.add(lowestNode);
-        fireOnTestStarted(proxy);
+        fireOnTestStarted(proxy, node.getId(), parentNode != null ? parentNode.getId() : null);
       }
       node = node.getParentNode();
     }
@@ -500,7 +544,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
       Node node = (Node)o;
 
-      return myId == node.myId;
+      return myId.equals(node.myId);
     }
 
     @Override

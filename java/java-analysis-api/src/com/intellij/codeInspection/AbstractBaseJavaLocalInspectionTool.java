@@ -1,11 +1,60 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.psi.*;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectionTool {
+
+  /**
+   * @return set of the features required for a given inspection. The inspection will not be launched on the files where
+   * the corresponding features are not available.
+   */
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of();
+  }
+
+  @Override
+  public boolean isAvailableForFile(@NotNull PsiFile file) {
+    for (JavaFeature feature : requiredFeatures()) {
+      if (!PsiUtil.isAvailable(feature, file)) return false;
+    }
+    return true;
+  }
+
+  @Override
+  public HtmlChunk getDescriptionAddendum() {
+    Set<JavaFeature> features = requiredFeatures();
+    JavaFeature feature = ContainerUtil.getOnlyItem(features);
+    if (feature != null) {
+      return HtmlChunk.text(JavaAnalysisBundle.message("inspection.depends.on.the.java.feature", 
+                                                       feature.getFeatureName(), feature.getMinimumLevel().getShortText()))
+        .wrapWith("p");
+    }
+    else if (features.size() > 1) {
+      int minimalVersion = features.stream().mapToInt(f -> f.getMinimumLevel().feature()).max().getAsInt();
+      return HtmlChunk.p().children(
+        HtmlChunk.text(JavaAnalysisBundle.message("inspection.depends.on.the.java.features")),
+        HtmlChunk.ul().children(features.stream().map(JavaFeature::getFeatureName).sorted()
+                                  .map((@Nls String name) -> HtmlChunk.li().addText(name)).toList()),
+        HtmlChunk.text(JavaAnalysisBundle.message("inspection.depends.on.the.java.features.minimal.version", minimalVersion)));
+    }
+    return HtmlChunk.empty();
+  }
 
   /**
    * Override this to report problems at method level.
@@ -44,27 +93,30 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
+        super.visitMethod(method);
         addDescriptors(checkMethod(method, holder.getManager(), isOnTheFly));
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
+        super.visitClass(aClass);
         addDescriptors(checkClass(aClass, holder.getManager(), isOnTheFly));
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
+        super.visitField(field);
         addDescriptors(checkField(field, holder.getManager(), isOnTheFly));
       }
 
       @Override
-      public void visitFile(@NotNull PsiFile file) {
-        addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
+      public void visitFile(@NotNull PsiFile psiFile) {
+        super.visitFile(psiFile);
+        addDescriptors(checkFile(psiFile, holder.getManager(), isOnTheFly));
       }
 
       private void addDescriptors(final ProblemDescriptor[] descriptors) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messager;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,9 +6,18 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.FlowLayout;
+import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -36,7 +45,7 @@ public final class Callout {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     JLabel label = new JLabel(text);
-    label.setHorizontalAlignment(JLabel.CENTER);
+    label.setHorizontalAlignment(SwingConstants.CENTER);
 
     final CalloutComponent callout = new CalloutComponent(label);
     callout.show(direction, aPoint);

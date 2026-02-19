@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.libraries.ktor.client.cio` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-ktor-client-cio_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-ktor-client-cio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-ktor-client-cio_resources"],
+  exports = [
+    "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
+    "//libraries/ktor/client",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+  ],
+  runtime_deps = [
+    "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
+    "//libraries/ktor/client",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+  ]
+)
+
+jvm_library(
+  name = "libraries-ktor-client-cio_test_lib",
+  module_name = "intellij.libraries.ktor.client.cio",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  exports = [
+    "@lib//:libraries-ktor-client-cio-ktor-client-cio-internal",
+    "//libraries/ktor/client",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls_test_lib",
+  ],
+  runtime_deps = [
+    ":libraries-ktor-client-cio",
+    "//libraries/ktor/client:client_test_lib",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls_test_lib",
+  ]
+)
+### auto-generated section `build intellij.libraries.ktor.client.cio` end

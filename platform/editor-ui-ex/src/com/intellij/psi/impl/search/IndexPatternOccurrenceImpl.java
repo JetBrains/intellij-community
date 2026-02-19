@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.search;
 
@@ -10,19 +10,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author yole
- */
-class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
-  private final PsiFile myFile;
+
+final class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
+  private final PsiFile myPsiFile;
   private final int myStartOffset;
   private final int myEndOffset;
   private final IndexPattern myPattern;
   private final List<TextRange> myAdditionalRanges;
 
-  IndexPatternOccurrenceImpl(@NotNull PsiFile file, int startOffset, int endOffset,
-                                    @NotNull IndexPattern pattern, @NotNull List<TextRange> additionalRanges) {
-    myFile = file;
+  IndexPatternOccurrenceImpl(@NotNull PsiFile psiFile, int startOffset, int endOffset,
+                             @NotNull IndexPattern pattern, @NotNull List<TextRange> additionalRanges) {
+    myPsiFile = psiFile;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPattern = pattern;
@@ -30,39 +28,36 @@ class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
   }
 
   @Override
-  @NotNull
-  public PsiFile getFile() {
-    return myFile;
+  public @NotNull PsiFile getFile() {
+    return myPsiFile;
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return new TextRange(myStartOffset, myEndOffset);
   }
 
-  @NotNull
   @Override
-  public List<TextRange> getAdditionalTextRanges() {
+  public @NotNull List<TextRange> getAdditionalTextRanges() {
     return myAdditionalRanges;
   }
 
   @Override
-  @NotNull
-  public IndexPattern getPattern() {
+  public @NotNull IndexPattern getPattern() {
     return myPattern;
   }
 
+  @Override
   public int hashCode(){
-    return myFile.hashCode()+myStartOffset+myEndOffset+myPattern.hashCode();
+    return myPsiFile.hashCode() + myStartOffset + myEndOffset + myPattern.hashCode();
   }
 
+  @Override
   public boolean equals(Object obj){
-    if(!(obj instanceof IndexPatternOccurrenceImpl)){
+    if(!(obj instanceof IndexPatternOccurrenceImpl todoItem)){
       return false;
     }
-    IndexPatternOccurrenceImpl todoItem=(IndexPatternOccurrenceImpl)obj;
-    return myFile.equals(todoItem.myFile) &&
+    return myPsiFile.equals(todoItem.myPsiFile) &&
            myStartOffset == todoItem.myStartOffset &&
            myEndOffset == todoItem.myEndOffset &&
            myPattern.equals(todoItem.myPattern);

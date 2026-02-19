@@ -57,9 +57,8 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
     super(contextElement);
   }
 
-  @NotNull
   @Override
-  public ContextType getContextType() {
+  public @NotNull ContextType getContextType() {
     return TYPE;
   }
 
@@ -89,37 +88,36 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
   }
 
   private static final UserDataCache<FunctionContext, XmlFile, Void> functionContextCache =
-          new UserDataCache<FunctionContext, XmlFile, Void>("xslt2FunctionContext") {
+    new UserDataCache<>("xslt2FunctionContext") {
 
-    @Override
-    protected FunctionContext compute(final XmlFile xmlFile, Void p) {
-      final FunctionContext base = Xslt2FunctionContext.getInstance();
-      return new FunctionContext() {
-        @Override
-        public Map<Pair<QName, Integer>, Function> getFunctions() {
-          return ContainerUtil.union(base.getFunctions(), getCustomFunctions(xmlFile));
-        }
-
-        @Override
-        public boolean allowsExtensions() {
-          return base.allowsExtensions();
-        }
-
-        @Override
-        public Function resolve(QName name, int argCount) {
-          final Function f = base.resolve(name, argCount);
-          if (f == null) {
-            return resolveCustomFunction(xmlFile, name, argCount);
+      @Override
+      protected FunctionContext compute(final XmlFile xmlFile, Void p) {
+        final FunctionContext base = Xslt2FunctionContext.getInstance();
+        return new FunctionContext() {
+          @Override
+          public Map<Pair<QName, Integer>, Function> getFunctions() {
+            return ContainerUtil.union(base.getFunctions(), getCustomFunctions(xmlFile));
           }
-          return f;
-        }
-      };
-    }
-  };
+
+          @Override
+          public boolean allowsExtensions() {
+            return base.allowsExtensions();
+          }
+
+          @Override
+          public Function resolve(QName name, int argCount) {
+            final Function f = base.resolve(name, argCount);
+            if (f == null) {
+              return resolveCustomFunction(xmlFile, name, argCount);
+            }
+            return f;
+          }
+        };
+      }
+    };
 
   @Override
-  @NotNull
-  public FunctionContext createFunctionContext() {
+  public @NotNull FunctionContext createFunctionContext() {
     final XmlElement contextElement = getContextElement();
     return contextElement != null && contextElement.isValid() ?
             functionContextCache.get((XmlFile)contextElement.getContainingFile(), null) :
@@ -127,12 +125,12 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
   }
 
   private static final UserDataCache<ParameterizedCachedValue<Map<Pair<QName,Integer>,Function>,XmlFile>, XmlFile, Void> ourFunctionCacheProvider =
-    new UserDataCache<ParameterizedCachedValue<Map<Pair<QName,Integer>,Function>,XmlFile>, XmlFile, Void>() {
-    @Override
-    protected ParameterizedCachedValue<Map<Pair<QName,Integer>,Function>,XmlFile> compute(XmlFile file, Void p) {
-      return CachedValuesManager.getManager(file.getProject()).createParameterizedCachedValue(MyFunctionProvider.INSTANCE, false);
-    }
-  };
+    new UserDataCache<>() {
+      @Override
+      protected ParameterizedCachedValue<Map<Pair<QName, Integer>, Function>, XmlFile> compute(XmlFile file, Void p) {
+        return CachedValuesManager.getManager(file.getProject()).createParameterizedCachedValue(MyFunctionProvider.INSTANCE, false);
+      }
+    };
 
   private static Map<Pair<QName, Integer>, Function> getCustomFunctions(XmlFile file) {
     final XmlTag rootTag = file.getRootTag();
@@ -143,8 +141,7 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
     return Collections.emptyMap();
   }
 
-  @Nullable
-  private static Function resolveCustomFunction(final XmlFile file, final QName name, int argCount) {
+  private static @Nullable Function resolveCustomFunction(final XmlFile file, final QName name, int argCount) {
     final Map<Pair<QName, Integer>, Function> functions = getCustomFunctions(file);
     final Function exactMatch = functions.get(Pair.create(name, argCount));
     if (exactMatch != null) {
@@ -176,7 +173,7 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
 
       final Collection<XmlFile> data = ResolveUtil.getDependencies(param);
       final Object[] dependencies;
-      if (data == null || data.size() == 0) {
+      if (data == null || data.isEmpty()) {
         dependencies = new Object[]{ param };
       } else {
         data.add(param);

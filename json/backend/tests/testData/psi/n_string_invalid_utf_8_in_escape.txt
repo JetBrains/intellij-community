@@ -1,0 +1,6 @@
+JsonFile: n_string_invalid_utf_8_in_escape.json
+  JsonArray
+    PsiElement([)('[')
+    JsonStringLiteral
+      PsiElement(DOUBLE_QUOTED_STRING)('"\u�"')
+    PsiElement(])(']')

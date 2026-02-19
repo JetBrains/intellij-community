@@ -1,8 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.api
 
-enum class ReplaceTextTargetContext {
-  IN_PLAIN_TEXT,
-  IN_COMMENTS_AND_STRINGS,
+import com.intellij.model.search.SearchContext
+import com.intellij.model.search.SearchContext.inComments
+import com.intellij.model.search.SearchContext.inStrings
+
+enum class ReplaceTextTargetContext(
+  internal val searchContexts: Set<SearchContext>
+) {
+  IN_COMMENTS_AND_STRINGS(setOf(inComments(), inStrings())),
+  IN_PLAIN_TEXT(setOf(SearchContext.inPlainText())),
   ;
 }

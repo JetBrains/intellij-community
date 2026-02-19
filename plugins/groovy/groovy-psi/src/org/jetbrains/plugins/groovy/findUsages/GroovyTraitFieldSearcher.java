@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.RequestResultProcessor;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -13,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-public class GroovyTraitFieldSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class GroovyTraitFieldSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public GroovyTraitFieldSearcher() {
     super(true);
   }

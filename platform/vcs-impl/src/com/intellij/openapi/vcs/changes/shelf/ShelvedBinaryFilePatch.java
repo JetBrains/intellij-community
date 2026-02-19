@@ -1,38 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ShelvedBinaryFilePatch extends FilePatch {
   private final ShelvedBinaryFile myShelvedBinaryFile;
 
-  public ShelvedBinaryFilePatch(@NotNull final ShelvedBinaryFile shelvedBinaryFile) {
+  @ApiStatus.Internal
+  public ShelvedBinaryFilePatch(final @NotNull ShelvedBinaryFile shelvedBinaryFile) {
     myShelvedBinaryFile = shelvedBinaryFile;
     setBeforeName(myShelvedBinaryFile.BEFORE_PATH);
     setAfterName(myShelvedBinaryFile.AFTER_PATH);
   }
 
-  public static ShelvedBinaryFilePatch patchCopy(@NotNull final ShelvedBinaryFilePatch patch) {
+  public static ShelvedBinaryFilePatch patchCopy(final @NotNull ShelvedBinaryFilePatch patch) {
     return new ShelvedBinaryFilePatch(patch.getShelvedBinaryFile());
   }
 
   @Override
-  @Nullable
-  public String getBeforeFileName() {
+  public @Nullable String getBeforeFileName() {
     return getFileName(myShelvedBinaryFile.BEFORE_PATH);
   }
 
   @Override
-  @Nullable
-  public String getAfterFileName() {
+  public @Nullable String getAfterFileName() {
     return getFileName(myShelvedBinaryFile.AFTER_PATH);
   }
 
-  @Nullable
-  private static String getFileName(String filePath) {
+  private static @Nullable String getFileName(String filePath) {
     return filePath != null ? PathUtil.getFileName(filePath) : null;
   }
 
@@ -46,8 +45,8 @@ public final class ShelvedBinaryFilePatch extends FilePatch {
     return myShelvedBinaryFile.AFTER_PATH == null;
   }
 
-  @NotNull
-  public ShelvedBinaryFile getShelvedBinaryFile() {
+  @ApiStatus.Internal
+  public @NotNull ShelvedBinaryFile getShelvedBinaryFile() {
     return myShelvedBinaryFile;
   }
 }

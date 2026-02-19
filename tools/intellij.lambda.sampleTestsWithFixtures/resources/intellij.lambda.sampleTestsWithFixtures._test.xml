@@ -1,0 +1,34 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.java.rt"/>
+
+    <module name="intellij.tools.testsBootstrap" />
+
+    <module name="intellij.libraries.hamcrest"/>
+    <module name="intellij.libraries.junit4"/>
+    <module name="intellij.libraries.junit5.vintage"/>
+    <module name="intellij.libraries.junit5.launcher"/>
+
+    <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.testFramework.junit5.codeInsight"/>
+    <module name="intellij.platform.testFramework.impl"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.platform.testFramework.core"/>
+    <module name="intellij.platform.testFramework.common"/>
+
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
+                        testServiceImplementation="com.intellij.project.TestProjectManager"
+                        overrides="true"/>
+
+    <applicationService serviceInterface="com.intellij.ide.DataManager"
+                        testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"
+                        overrides="true"/>
+
+    <applicationService serviceInterface="com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider"
+                        testServiceImplementation="com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProviderImpl"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>

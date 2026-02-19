@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.ui;
 
@@ -15,7 +15,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import java.util.List;
 
 public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember, MemberInfo> {
@@ -28,13 +28,11 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
     super(memberInfos, memberInfoModel, abstractColumnHeader);
   }
 
-  @Nullable
   @Override
-  protected Object getAbstractColumnValue(MemberInfo memberInfo) {
-    if (!(memberInfo.getMember() instanceof PsiMethod)) return null;
+  protected @Nullable Object getAbstractColumnValue(MemberInfo memberInfo) {
+    if (!(memberInfo.getMember() instanceof PsiMethod method)) return null;
     if (memberInfo.isStatic()) return null;
 
-    PsiMethod method = (PsiMethod)memberInfo.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final Boolean fixedAbstract = myMemberInfoModel.isFixedAbstract(memberInfo);
       if (fixedAbstract != null) return fixedAbstract;
@@ -51,10 +49,9 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
   @Override
   protected boolean isAbstractColumnEditable(int rowIndex) {
     MemberInfo info = myMemberInfos.get(rowIndex);
-    if (!(info.getMember() instanceof PsiMethod)) return false;
+    if (!(info.getMember() instanceof PsiMethod method)) return false;
     if (info.isStatic()) return false;
 
-    PsiMethod method = (PsiMethod)info.getMember();
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       if (myMemberInfoModel.isFixedAbstract(info) != null) {
         return false;
@@ -84,7 +81,7 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
   @Override
   protected Icon getOverrideIcon(MemberInfo memberInfo) {
     PsiMember member = memberInfo.getMember();
-    Icon overrideIcon = MemberSelectionTable.EMPTY_OVERRIDE_ICON;
+    Icon overrideIcon = AbstractMemberSelectionTable.EMPTY_OVERRIDE_ICON;
     if (member instanceof PsiMethod) {
       if (Boolean.TRUE.equals(memberInfo.getOverrides())) {
         overrideIcon = AllIcons.General.OverridingMethod;
@@ -93,7 +90,7 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
         overrideIcon = AllIcons.General.ImplementingMethod;
       }
       else {
-        overrideIcon = MemberSelectionTable.EMPTY_OVERRIDE_ICON;
+        overrideIcon = AbstractMemberSelectionTable.EMPTY_OVERRIDE_ICON;
       }
     }
     return overrideIcon;

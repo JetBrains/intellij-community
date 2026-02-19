@@ -1,0 +1,26 @@
+- name: lib/modules/intellij.textmate.backend.jar
+  contentModules:
+  - name: intellij.textmate.backend
+- name: lib/modules/intellij.textmate.common.jar
+  contentModules:
+  - name: intellij.textmate.common
+- name: lib/modules/intellij.textmate.core.jar
+  contentModules:
+  - name: intellij.textmate.core
+- name: lib/modules/intellij.textmate.frontend.split.jar
+  contentModules:
+  - name: intellij.textmate.frontend.split
+- name: lib/modules/intellij.textmate.jar
+  contentModules:
+  - name: intellij.textmate
+- name: lib/modules/intellij.textmate.joni.jar
+  contentModules:
+  - name: intellij.textmate.joni
+  library: joni
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
+  - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar
+  reason: <- intellij.textmate.joni
+- name: lib/textmate-plugin.jar
+  modules:
+  - name: intellij.textmate.plugin

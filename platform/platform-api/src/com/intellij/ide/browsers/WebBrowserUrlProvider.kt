@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 
-abstract class WebBrowserUrlProvider {
+abstract class WebBrowserUrlProvider : PossiblyDumbAware {
   /**
-   * Browser exceptions are printed in Error Dialog when user presses any browser button
+   * Browser exceptions are printed in the Error Dialog when a user presses any browser button.
    */
   class BrowserException(message: String) : Exception(message)
 
@@ -14,7 +15,7 @@ abstract class WebBrowserUrlProvider {
     val urls = try {
       getUrls(request)
     }
-    catch (ignored: BrowserException) {
+    catch (_: BrowserException) {
       return false
     }
 
@@ -22,6 +23,7 @@ abstract class WebBrowserUrlProvider {
       request.result = urls
       return true
     }
+
     return false
   }
 
@@ -29,7 +31,6 @@ abstract class WebBrowserUrlProvider {
   protected open fun getUrl(request: OpenInBrowserRequest, file: VirtualFile): Url? = null
 
   @Throws(BrowserException::class)
-  open fun getUrls(request: OpenInBrowserRequest): Collection<Url> {
-    return listOfNotNull(request.virtualFile?.let { getUrl(request, it) })
-  }
+  open fun getUrls(request: OpenInBrowserRequest): Collection<Url> =
+    listOfNotNull(request.virtualFile?.let { getUrl(request, it) })
 }

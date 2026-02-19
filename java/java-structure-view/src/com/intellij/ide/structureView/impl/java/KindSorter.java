@@ -1,29 +1,19 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.ide.util.treeView.smartTree.TreeActionWithDefaultState;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public class KindSorter implements Sorter {
+public class KindSorter implements Sorter, TreeActionWithDefaultState {
   public static final Sorter INSTANCE = new KindSorter(false);
   public static final Sorter POPUP_INSTANCE = new KindSorter(true);
 
@@ -31,7 +21,7 @@ public class KindSorter implements Sorter {
     this.isPopup = isPopup;
   }
 
-  @NonNls public static final String ID = "KIND";
+  public static final @NonNls String ID = "KIND";
   private final boolean isPopup;
 
   private final Comparator COMPARATOR = new Comparator() {
@@ -53,8 +43,7 @@ public class KindSorter implements Sorter {
       if (value instanceof SuperTypeGroup) {
         return 20;
       }
-      if (value instanceof PsiMethodTreeElement) {
-        final PsiMethodTreeElement methodTreeElement = (PsiMethodTreeElement)value;
+      if (value instanceof PsiMethodTreeElement methodTreeElement) {
         final PsiMethod method = methodTreeElement.getMethod();
 
         return method != null && method.isConstructor() ? 30 : 35;
@@ -70,25 +59,28 @@ public class KindSorter implements Sorter {
   };
 
   @Override
-  @NotNull
-  public Comparator getComparator() {
+  public @NotNull Comparator getComparator() {
     return COMPARATOR;
   }
 
   @Override
   public boolean isVisible() {
-    return false;
+    return true;
   }
 
   @Override
-  @NotNull
-  public ActionPresentation getPresentation() {
-    throw new IllegalStateException();
+  public boolean isEnabledByDefault() {
+    return true;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull ActionPresentation getPresentation() {
+    return new ActionPresentationData(
+      StructureViewBundle.message("action.structureview.sort.by.kind"), null, AllIcons.ObjectBrowser.SortByType);
+  }
+
+  @Override
+  public @NotNull String getName() {
     return ID;
   }
 }

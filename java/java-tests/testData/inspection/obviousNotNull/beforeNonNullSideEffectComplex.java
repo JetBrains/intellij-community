@@ -3,6 +3,7 @@ import java.util.Objects;
 
 public class Test {
   Test(int i) {
+    System.out.println(i);
   }
 
   public static void testTernaryLeft() {

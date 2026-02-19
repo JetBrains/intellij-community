@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiClass;
@@ -17,15 +17,13 @@ import static org.jetbrains.plugins.groovy.builder.JsonDelegateContributor.DELEG
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_TYPE_KEY;
 
-public class JsonBuilderContributor extends BuilderMethodsContributor {
+public final class JsonBuilderContributor extends BuilderMethodsContributor {
 
   private static final String FQN = "groovy.json.JsonBuilder";
-  @NonNls
-  static final String ORIGIN_INFO = "via JsonBuilder";
+  static final @NonNls String ORIGIN_INFO = "via JsonBuilder";
 
-  @Nullable
   @Override
-  protected String getParentClassName() {
+  protected @Nullable String getParentClassName() {
     return FQN;
   }
 

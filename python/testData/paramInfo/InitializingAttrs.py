@@ -1,4 +1,5 @@
 import attr
+import attrs
 
 @attr.s
 class A1:
@@ -61,3 +62,12 @@ class F1:
         return 1
 
 F1(<arg7>)
+
+
+@attrs.define
+class B2:
+    x = attrs.field()
+    y = attrs.field()
+    z = attrs.field(default=attrs.Factory(list))
+
+B2(<arg8>)

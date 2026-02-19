@@ -1,7 +1,7 @@
 <idea-plugin>
   <project-components>
     <component>
-      <warning descr="Redundant tag 'interfaceClass'"><interface-class>java.lang.String</interface-class></warning>
+      <warning descr="Redundant tag 'interface-class'"><interface-class>java.lang.String</interface-class></warning>
       <implementation-class>java.lang.String</implementation-class>
     </component>
 
@@ -12,8 +12,8 @@
     </component>
 
     <component>
-      <warning descr="Redundant tag 'interfaceClass'"><interface-class>java.lang.String</interface-class></warning>
-      <implementation-class>java.lang.String</implementation-class>
+      <warning descr="Redundant tag 'interface-class'"><interface-class>java.lang.Boolean</interface-class></warning>
+      <implementation-class>java.lang.Boolean</implementation-class>
       <headless-implementation-class/>
     </component>
 

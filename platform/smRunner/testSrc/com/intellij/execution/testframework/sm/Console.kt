@@ -2,7 +2,6 @@
 package com.intellij.execution.testframework.sm
 
 import com.intellij.openapi.util.Key
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import java.text.ParseException
 
 /**
@@ -29,7 +28,7 @@ internal class Console {
 
 private fun asTcMessage(text: String): String? {
   return try {
-    if (ServiceMessage.parse(text.trim()) != null) text else null
+    if (ServiceMessageUtil.parse(text.trim(), false) != null) text else null
   }
   catch (_: ParseException) {
     null

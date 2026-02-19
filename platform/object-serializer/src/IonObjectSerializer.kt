@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.serialization
 
 import com.amazon.ion.IonException
@@ -7,8 +9,11 @@ import com.amazon.ion.IonWriter
 import com.amazon.ion.impl.bin._Private_IonManagedBinaryWriterBuilder
 import com.amazon.ion.system.IonReaderBuilder
 import com.amazon.ion.system.IonTextWriterBuilder
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -21,8 +26,8 @@ private const val FORMAT_VERSION = 3
 internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
 
-  // by default only fields (including private)
-  private val propertyCollector = ClearablePropertyCollector(PropertyCollector.COLLECT_PRIVATE_FIELDS or PropertyCollector.COLLECT_FINAL_FIELDS)
+  // by default, only fields (including private)
+  private val propertyCollector = PropertyCollector(PropertyCollector.COLLECT_PRIVATE_FIELDS or PropertyCollector.COLLECT_FINAL_FIELDS)
 
   internal val bindingProducer = IonBindingProducer(propertyCollector)
 
@@ -47,7 +52,6 @@ internal class IonObjectSerializer {
   @Throws(IOException::class)
   fun <T : Any> readVersioned(objectClass: Class<T>, input: InputStream, inputName: Path, expectedVersion: Int, configuration: ReadConfiguration, originalType: Type? = null): T? {
     readerBuilder.build(input).use { reader ->
-      @Suppress("UNUSED_VARIABLE")
       var isVersionChecked = 0
 
       fun logVersionMismatch(prefix: String, currentVersion: Int) {
@@ -72,7 +76,6 @@ internal class IonObjectSerializer {
               logVersionMismatch("App", currentVersion)
               return null
             }
-            @Suppress("UNUSED_CHANGED_VALUE")
             isVersionChecked++
           }
           "formatVersion" -> {
@@ -81,12 +84,11 @@ internal class IonObjectSerializer {
               logVersionMismatch("Format", currentVersion)
               return null
             }
-            @Suppress("UNUSED_CHANGED_VALUE")
             isVersionChecked++
           }
           "data" -> {
             if (isVersionChecked != 2) {
-              // if version was not specified - consider data as invalid
+              // if a version was not specified - consider data as invalid
               return null
             }
 
@@ -115,7 +117,6 @@ internal class IonObjectSerializer {
 
   fun clearBindingCache() {
     bindingProducer.clearBindingCache()
-    propertyCollector.clearSerializationCaches()
   }
 
   private fun doWrite(obj: Any, writer: IonWriter, configuration: WriteConfiguration, originalType: Type?) {
@@ -137,7 +138,7 @@ internal class IonObjectSerializer {
     }
   }
 
-  // reader cursor must be already pointed to struct
+  // reader cursor must be already pointed to the struct
   private fun <T> doRead(objectClass: Class<T>, originalType: Type?, context: ReadContext): T {
     when (context.reader.type) {
       IonType.NULL -> throw SerializationException("root value is null")
@@ -152,7 +153,12 @@ internal class IonObjectSerializer {
 
   fun <T> readList(itemClass: Class<T>, reader: ValueReader, configuration: ReadConfiguration): List<T> {
     @Suppress("UNCHECKED_CAST")
-    return read(List::class.java, reader, configuration, ParameterizedTypeImpl(List::class.java, itemClass)) as List<T>
+    return read(
+      objectClass = List::class.java,
+      reader = reader,
+      configuration = configuration,
+      originalType = ParameterizedTypeImpl(List::class.java, itemClass),
+    ) as List<T>
   }
 
   private fun createReadContext(reader: ValueReader, configuration: ReadConfiguration): ReadContext {
@@ -164,11 +170,19 @@ private val DEFAULT_FILTER = object : SerializationFilter {
   override fun isSkipped(value: Any?) = false
 }
 
-private data class ReadContextImpl(override val reader: ValueReader,
-                                   override val objectIdReader: ObjectIdReader,
-                                   override val bindingProducer: BindingProducer,
-                                   override val configuration: ReadConfiguration) : ReadContext {
+private data class ReadContextImpl(
+  override val reader: ValueReader,
+  override val objectIdReader: ObjectIdReader,
+  override val bindingProducer: BindingProducer,
+  override val configuration: ReadConfiguration,
+) : ReadContext {
   private var byteArrayOutputStream: BufferExposingByteArrayOutputStream? = null
+
+  private val job = currentThreadContext().get(Job)
+
+  override fun checkCancelled() {
+    job?.ensureActive()
+  }
 
   override val errors = ReadErrors()
 
@@ -189,7 +203,7 @@ private data class ReadContextImpl(override val reader: ValueReader,
 
 internal val binaryWriterBuilder by lazy {
   val binaryWriterBuilder = _Private_IonManagedBinaryWriterBuilder
-    .create(PooledBlockAllocatorProvider())
+    .create(_Private_IonManagedBinaryWriterBuilder.AllocatorMode.POOLED)
     .withPaddedLengthPreallocation(0)
     .withLocalSymbolTableAppendEnabled()
     .withStreamCopyOptimization(true)
@@ -205,11 +219,5 @@ private fun createIonWriterBuilder(binary: Boolean, out: OutputStream): IonWrite
   return when {
     binary -> binaryWriterBuilder.newWriter(out)
     else -> textWriterBuilder.build(out)
-  }
-}
-
-internal class ClearablePropertyCollector(flags: Byte) : PropertyCollector(flags) {
-  public override fun clearSerializationCaches() {
-    super.clearSerializationCaches()
   }
 }

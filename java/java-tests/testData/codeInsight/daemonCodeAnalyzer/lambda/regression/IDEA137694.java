@@ -1,6 +1,6 @@
 class Test {
   Test() {
-    foo(<error descr="Unhandled exception: java.lang.Exception">this::fs</error>);
+    foo(this::<error descr="Unhandled exception: java.lang.Exception">fs</error>);
     foo((s) -> <error descr="Unhandled exception: java.lang.Exception">fs</error>(s));
   }
 

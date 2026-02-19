@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.psi.AccessDirection;
@@ -28,25 +15,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author vlan
- */
 public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInstantiableType<PyClassLikeType> {
 
   @Nullable
+  @NlsSafe
   String getClassQName();
 
   @NotNull
-  List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
+  List<@Nullable PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
 
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
+  List<? extends RatedResolveResult> resolveMember(final @NotNull String name,
                                                    @Nullable PyExpression location,
                                                    @NotNull AccessDirection direction,
                                                    @NotNull PyResolveContext resolveContext,
                                                    boolean inherited);
 
   // TODO: Pull to PyType at next iteration
+
   /**
    * Visits all class members. This method is better then bare class since it uses type info and supports not only classes but
    * class-like structures as well. Consider using user-friendly wrapper {@link PyTypeUtil#getMembersOfType(PyClassLikeType, Class, boolean, TypeEvalContext)}
@@ -65,4 +51,9 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInst
 
   @Nullable
   PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited);
+
+  @Override
+  default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyClassLikeType(this);
+  }
 }

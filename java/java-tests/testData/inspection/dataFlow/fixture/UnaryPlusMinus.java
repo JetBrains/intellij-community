@@ -31,13 +31,12 @@ public class UnaryPlusMinus {
   }
 
   void testDouble() {
-    // Not supported
     double x = 0;
     x++;
-    if (x == 1) {}
+    if (<warning descr="Condition 'x == 1' is always 'true'">x == 1</warning>) {}
     x = 1e15;
     x++;
-    if (x == 1e15) {}
+    if (<warning descr="Condition 'x == 1e15' is always 'false'">x == 1e15</warning>) {}
   }
 
   void testArray() {

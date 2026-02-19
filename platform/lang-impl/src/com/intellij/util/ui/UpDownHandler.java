@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -12,7 +13,9 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JList;
 
 /**
  * @author Konstantin Bulenkov
@@ -86,7 +89,7 @@ public final class UpDownHandler {
     }
   }
 
-  static class UpDownAction extends AnAction {
+  static final class UpDownAction extends AnAction {
     private final int myDirection;
     private final SelectionMover myMover;
     private final JComponent myInput;
@@ -118,6 +121,11 @@ public final class UpDownHandler {
       boolean popupMenuVisible = comboBox != null && comboBox.isPopupVisible();
 
       e.getPresentation().setEnabled(lookup == null && !popupMenuVisible);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

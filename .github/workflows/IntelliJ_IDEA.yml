@@ -1,0 +1,17 @@
+name: IntelliJ IDEA
+on:
+  schedule:
+    # daily at 4AM for the master branch
+    - cron: '0 4 * * *'
+  push:
+    # for each release
+    tags:
+      - 'idea/20*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/ide_build_and_upload.yml
+    with:
+      artifacts_dir: out/idea-ce/artifacts
+      product: intellij_idea

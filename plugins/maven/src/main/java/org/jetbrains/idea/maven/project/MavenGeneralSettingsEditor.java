@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -8,7 +8,9 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
 
@@ -35,10 +37,10 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
 
     if (s.getGeneralSettings() == null) {
       MavenGeneralSettings settings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-      myPanel.getData(settings);
+      myPanel.initializeFormData(settings, myProject);
     }
     else {
-      myPanel.getData(s.getGeneralSettings());
+      myPanel.initializeFormData(s.getGeneralSettings(), myProject);
     }
   }
 
@@ -49,6 +51,9 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
     myUseProjectSettings.setEnabled(localTarget);
     if (!localTarget) {
       myUseProjectSettings.setSelected(false);
+      myUseProjectSettings.setToolTipText(MavenConfigurableBundle.message("maven.settings.on.targets.general.use.project.settings.tooltip"));
+    } else {
+      myUseProjectSettings.setToolTipText(MavenConfigurableBundle.message("maven.settings.general.use.project.settings.tooltip"));
     }
 
     if (myUseProjectSettings.isSelected()) {
@@ -56,7 +61,7 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
     }
     else {
       MavenGeneralSettings generalSettings = runConfiguration.getGeneralSettings();
-      myPanel.applyTargetEnvironmentConfiguration(targetName);
+      myPanel.applyTargetEnvironmentConfiguration(runConfiguration.getProject(), targetName);
       if (generalSettings != null) {
         myPanel.setData(generalSettings);
       }
@@ -68,9 +73,8 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
     }
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     Pair<JPanel,JCheckBox> pair = MavenDisablePanelCheckbox.createPanel(myPanel.createComponent(),
                                                                         MavenProjectBundle.message("label.use.project.settings"));
 

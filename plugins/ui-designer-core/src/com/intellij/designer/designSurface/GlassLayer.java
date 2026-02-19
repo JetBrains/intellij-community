@@ -18,19 +18,19 @@ package com.intellij.designer.designSurface;
 import com.intellij.designer.componentTree.TreeDropListener;
 import com.intellij.designer.designSurface.tools.ToolProvider;
 import com.intellij.designer.palette.PaletteItem;
-import com.intellij.openapi.actionSystem.DataProvider;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.AWTEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 /**
  * @author Alexander Lobas
  */
-public class GlassLayer extends JComponent implements DataProvider {
+public class GlassLayer extends JComponent implements UiDataProvider {
   private static final long EVENT_FLAGS = AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK;
 
   private final ToolProvider myToolProvider;
@@ -40,7 +40,7 @@ public class GlassLayer extends JComponent implements DataProvider {
     myToolProvider = provider;
     myArea = area;
     enableEvents(EVENT_FLAGS);
-    new TreeDropListener(this, area, provider, PaletteItem.class);
+    TreeDropListener.installOn(this, area, provider, PaletteItem.class);
   }
 
   @Override
@@ -78,7 +78,7 @@ public class GlassLayer extends JComponent implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    return EditableArea.DATA_KEY.is(dataId) ? myArea : null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(EditableArea.DATA_KEY, myArea);
   }
 }

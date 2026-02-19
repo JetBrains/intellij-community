@@ -9,11 +9,11 @@ import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jdom.Element;
@@ -59,7 +59,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
   @NotNull
   protected CodeStyleSettings importSettings() throws SchemeImportException {
     final CodeStyleScheme targetScheme = new CodeStyleSchemeImpl("Test", false, null);
-    SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<CodeStyleScheme>() {
+    SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<>() {
       @NotNull
       @Override
       public CodeStyleScheme createNewScheme(@Nullable String name) {
@@ -77,7 +77,7 @@ public abstract class CodeStyleTestCase extends LightPlatformTestCase {
     String filePath = getBasePath() + File.separator + getTestDir() + File.separator + getTestName(true) + "." + fileName;
     String expected = FileUtilRt.loadFile(new File(filePath), true);
     if (!expected.equals(actual)) {
-      throw new FileComparisonFailure("Settings don't match", expected, actual, filePath);
+      throw new FileComparisonFailedError("Settings don't match", expected, actual, filePath);
     }
   }
 

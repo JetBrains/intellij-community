@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.validation;
 
 import com.intellij.lang.ant.AntBundle;
@@ -24,25 +24,32 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class AntHectorConfigurable extends HectorComponentPanel {
-  @NonNls
-  public static final String CONTEXTS_COMBO_KEY = "AntContextsComboBox";
+  public static final @NonNls String CONTEXTS_COMBO_KEY = "AntContextsComboBox";
 
   private final XmlFile myFile;
   private final @NlsSafe String myLocalPath;
   private final Map<@NlsSafe String, XmlFile> myPathToFileMap = new HashMap<>();
-  private final @Nls String myNoneText = AntBundle.message("combobox.hector.configurable.none.text");
+  @SuppressWarnings("FieldMayBeStatic") private final @Nls String myNoneText = AntBundle.message("combobox.hector.configurable.none.text");
   private @NlsSafe String myOriginalContext = myNoneText;
 
-  private JComboBox myCombo;
+  private JComboBox<String> myCombo;
   private final GlobalSearchScope myFileFilter;
   private final Project myProject;
 
@@ -64,7 +71,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(UIUtil.getToolTipActionBackground());
     panel.setBorder(IdeBorderFactory.createTitledBorder(AntBundle.message("configurable.hector.border.title.file.context"), false));
-    myCombo = new ComboBox();
+    myCombo = new ComboBox<>();
     myCombo.putClientProperty(CONTEXTS_COMBO_KEY, Boolean.TRUE);
     GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
                                                             GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.create(5, 0), 0, 0);
@@ -79,10 +86,9 @@ public class AntHectorConfigurable extends HectorComponentPanel {
 
     for (VirtualFile file : antFiles) {
       final PsiFile psiFile = psiManager.findFile(file);
-      if (!(psiFile instanceof XmlFile)) {
+      if (!(psiFile instanceof XmlFile xmlFile)) {
         continue;
       }
-      final XmlFile xmlFile = (XmlFile)psiFile;
       if (!xmlFile.equals(myFile) && AntDomFileDescription.isAntFile(xmlFile)) {
         final String path = PathUtil.getLocalPath(file);
         final XmlFile previous = myPathToFileMap.put(path, xmlFile);
@@ -130,7 +136,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     applyItem(myOriginalContext);
   }
 
-  private void applyItem(final String contextStr) {
+  private void applyItem(final @NlsSafe String contextStr) {
     XmlFile context = null;
     if (!myNoneText.equals(contextStr)) {
       context = myPathToFileMap.get(contextStr);

@@ -1,18 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiCall;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceRegistrar;
+import com.intellij.psi.PsiStatement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,6 +35,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.inspection.DependsOnGroupsInspection;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
@@ -29,41 +45,58 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.theoryinpractice.testng.TestNGCommonClassNames.LIFE_CYCLE_CLASSES;
+import static com.theoryinpractice.testng.TestNGCommonClassNames.ORG_TESTNG_ANNOTATIONS_FACTORY;
+import static com.theoryinpractice.testng.TestNGCommonClassNames.ORG_TESTNG_ANNOTATIONS_TEST;
+
 public class TestNGReferenceContributor extends PsiReferenceContributor {
-  private static PsiElementPattern.Capture<PsiLiteral> getElementPattern(String annotation) {
-    return PlatformPatterns.psiElement(PsiLiteral.class).and(new FilterPattern(new TestAnnotationFilter(annotation)));
+  private static PsiElementPattern.Capture<PsiLiteral> getElementPattern(
+    @NotNull Iterable<@NotNull String> annotationFqns,
+    @NotNull @NlsSafe String annotation
+  ) {
+    return PlatformPatterns.psiElement(PsiLiteral.class).and(new FilterPattern(new TestAnnotationFilter(annotationFqns, annotation)));
   }
+
+  private static final Iterable<String> GROUP_CLASSES = ContainerUtil.concat(LIFE_CYCLE_CLASSES, List.of(ORG_TESTNG_ANNOTATIONS_TEST));
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(getElementPattern("dependsOnMethods"), new PsiReferenceProvider() {
-      @Override
-      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new MethodReference[]{new MethodReference((PsiLiteral)element)};
-      }
-    });
+    registrar.registerReferenceProvider(
+      getElementPattern(GROUP_CLASSES, "groups"),
+      new PsiReferenceProvider() {
+        @Override
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
+          return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
+        }
+      });
+    registrar.registerReferenceProvider(
+      getElementPattern(GROUP_CLASSES, "dependsOnMethods"),
+      new PsiReferenceProvider() {
+        @Override
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
+          return new MethodReference[]{new MethodReference((PsiLiteral)element)};
+        }
+      });
+    registrar.registerReferenceProvider(
+      getElementPattern(GROUP_CLASSES, "dependsOnGroups"),
+      new PsiReferenceProvider() {
+        @Override
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
+          return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
+        }
+      });
 
-    registrar.registerReferenceProvider(getElementPattern("dataProvider"), new PsiReferenceProvider() {
-      @Override
-      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new DataProviderReference[]{new DataProviderReference((PsiLiteral)element)};
-      }
-    });
-    registrar.registerReferenceProvider(getElementPattern("groups"), new PsiReferenceProvider() {
-      @Override
-      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
-      }
-    });
-    registrar.registerReferenceProvider(getElementPattern("dependsOnGroups"), new PsiReferenceProvider() {
-      @Override
-      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new GroupReference[]{new GroupReference(element.getProject(), (PsiLiteral)element)};
-      }
-    });
+    registrar.registerReferenceProvider(
+      getElementPattern(List.of(ORG_TESTNG_ANNOTATIONS_TEST, ORG_TESTNG_ANNOTATIONS_FACTORY), "dataProvider"),
+      new PsiReferenceProvider() {
+        @Override
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
+          return new DataProviderReference[]{new DataProviderReference((PsiLiteral)element)};
+        }
+      });
   }
 
-  private static class MethodReference extends PsiReferenceBase<PsiLiteral> {
+  private static class MethodReference extends PsiReferenceBase<PsiLiteral> implements PsiMemberReference {
 
     MethodReference(PsiLiteral element) {
       super(element, false);
@@ -78,8 +111,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       @NonNls String val = getValue();
       final String methodName = StringUtil.getShortName(val);
       PsiClass cls = getDependsClass(val);
@@ -94,8 +126,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
-    @Nullable
-    private PsiClass getDependsClass(String val) {
+    private @Nullable PsiClass getDependsClass(String val) {
       final String className = StringUtil.getPackageName(val);
       final PsiLiteral element = getElement();
       return StringUtil.isEmpty(className) ? PsiUtil.getTopLevelClass(element)
@@ -139,47 +170,44 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return null;
     }
 
     @Override
     public Object @NotNull [] getVariants() {
-      List<Object> list = new ArrayList<>();
-
       InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-      DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)inspectionProfile.getUnwrappedTool(
-        DependsOnGroupsInspection.SHORT_NAME, myElement);
-
+      DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)inspectionProfile
+        .getUnwrappedTool(DependsOnGroupsInspection.SHORT_NAME, myElement);
+      if (inspection == null) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+      List<Object> list = new ArrayList<>();
       for (String groupName : inspection.groups) {
-        list.add(LookupValueFactory.createLookupValue(groupName, null));
+        list.add(LookupElementBuilder.create(groupName));
       }
-
-      if (!list.isEmpty()) {
-        return list.toArray();
-      }
+      if (!list.isEmpty()) return list.toArray();
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
   }
 
   private static class TestAnnotationFilter implements ElementFilter {
+    private final @NotNull Iterable<@NotNull String> myAnnotationFqns;
 
-    private final String myParameterName;
+    private final @NotNull @NlsSafe String myParameterName;
 
-    TestAnnotationFilter(@NotNull @NonNls String parameterName) {
+    TestAnnotationFilter(@NotNull Iterable<@NotNull String> annotationFqns, @NotNull @NlsSafe String parameterName) {
+      myAnnotationFqns = annotationFqns;
       myParameterName = parameterName;
     }
 
     @Override
     public boolean isAcceptable(Object element, PsiElement context) {
-      PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class, PsiCall.class);
+      PsiNameValuePair pair =
+        PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class, PsiCall.class);
       if (null == pair) return false;
       if (!myParameterName.equals(pair.getName())) return false;
       PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
       if (annotation == null) return false;
-      if (!TestNGUtil.isTestNGAnnotation(annotation)) return false;
-      return true;
+      return ContainerUtil.find(myAnnotationFqns, fqn -> annotation.hasQualifiedName(fqn)) != null;
     }
 
     @Override

@@ -11,4 +11,9 @@ public final class CommonUiProperties {
   public static final VcsLogUiProperty<List<String>> COLUMN_ID_ORDER = new VcsLogUiProperty<>("Table.ColumnIdOrder");
   public static final VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>("Table.ShowRootNames");
   public static final VcsLogUiProperty<Boolean> PREFER_COMMIT_DATE = new VcsLogUiProperty<>("Table.PreferCommitDate");
+  public static final VcsLogUiProperty<Boolean> COMPACT_REFERENCES_VIEW = new VcsLogUiProperty<>("Table.CompactReferencesView");
+  public static final VcsLogUiProperty<Boolean> SHOW_TAG_NAMES = new VcsLogUiProperty<>("Table.ShowTagNames");
+  public static final VcsLogUiProperty<Boolean> LABELS_LEFT_ALIGNED = new VcsLogUiProperty<>("Table.LabelsLeftAligned");
+  public static final VcsLogUiProperty<Boolean> SHOW_ISSUE_PREVIEW_ON_HOVER = new VcsLogUiProperty<>("Table.ShowIssuePreviewOnHover");
+  public static final VcsLogUiProperty<Integer> SHOW_ISSUE_PREVIEW_ON_HOVER_DELAY = new VcsLogUiProperty<>("Table.ShowIssuePreviewOnHoverDelay");
 }

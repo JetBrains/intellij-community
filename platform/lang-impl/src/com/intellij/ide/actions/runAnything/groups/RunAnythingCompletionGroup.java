@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
@@ -9,39 +9,36 @@ import com.intellij.util.text.Matcher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> extends RunAnythingGroupBase {
-  @NotNull private final P myProvider;
+public final class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> extends RunAnythingGroupBase {
+  private final @NotNull P myProvider;
 
   public RunAnythingCompletionGroup(@NotNull P provider) {
     myProvider = provider;
   }
 
-  @NotNull
-  public P getProvider() {
+  public @NotNull P getProvider() {
     return myProvider;
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return Objects.requireNonNull(getProvider().getCompletionGroupTitle());
   }
 
-  @NotNull
   @Override
-  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @Unmodifiable @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     P provider = getProvider();
     return ContainerUtil.map(provider.getValues(dataContext, pattern), value -> provider.getMainListItem(dataContext, value));
   }
 
-  @Nullable
   @Override
-  protected Matcher getMatcher(@NotNull DataContext dataContext, @NotNull String pattern) {
+  protected @Nullable Matcher getMatcher(@NotNull DataContext dataContext, @NotNull String pattern) {
     return getProvider().getMatcher(dataContext, pattern);
   }
 
@@ -53,8 +50,7 @@ public class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> ext
                    .collect(Collectors.toList());
   }
 
-  @Nullable
-  public static RunAnythingGroup createCompletionGroup(@NotNull RunAnythingProvider provider) {
+  public static @Nullable RunAnythingGroup createCompletionGroup(@NotNull RunAnythingProvider provider) {
     String title = provider.getCompletionGroupTitle();
     if (title == null) {
       return null;

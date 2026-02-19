@@ -1,16 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.util.elementType
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.annotator.inspections.WrapWithParensQuickFix
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TDQ
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TSQ
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 import org.jetbrains.plugins.groovy.transformations.immutable.isImmutable
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.collectAllParamsFromNamedVariantMethod
@@ -51,8 +65,23 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
     super.visitCallExpression(callExpression)
   }
 
+  override fun visitArgumentLabel(argument: GrArgumentLabel) {
+    val element = argument.nameElement
+    if (element !is GrExpression) return
+
+    if (isGroovyStringLiteral(element)) return
+
+    if (element is GrLiteral || element is GrListOrMap || element is GrLambdaExpression || element is GrClosableBlock) return
+
+    if (element is GrParenthesizedExpression) return
+
+
+    holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("groovy.complex.argument.label.annotator.message")).range(argument)
+      .withFix(WrapWithParensQuickFix(element)).create()
+  }
+
   private fun checkRequiredNamedArguments(callExpression: GrCallExpression) {
-    if (!PsiUtil.isCompileStatic(callExpression)) return
+    if (!isCompileStatic(callExpression)) return
     val namedArguments = callExpression.namedArguments.mapNotNull { it.labelName }.toSet()
     if (namedArguments.isEmpty()) return
 
@@ -70,5 +99,9 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
         holder.newAnnotation(HighlightSeverity.ERROR, message).create()
       }
     }
+  }
+
+  private fun isGroovyStringLiteral(element: PsiElement): Boolean = element.elementType.let {
+    it == STRING_SQ || it == STRING_DQ || it == STRING_TSQ || it == STRING_TDQ
   }
 }

@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -27,46 +12,53 @@ import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class BuildTargetRegistryImpl implements BuildTargetRegistry {
-  private final List<BuildTarget<?>> myAllTargets;
-  private final Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> myTargets;
-  private final Map<JpsModule, List<ModuleBasedTarget>> myModuleBasedTargets;
+@ApiStatus.Internal
+public final class BuildTargetRegistryImpl implements BuildTargetRegistry {
+  private final @Unmodifiable List<BuildTarget<?>> allTargets;
+  private final @Unmodifiable Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> targets;
+  private final @Unmodifiable Map<JpsModule, List<ModuleBasedTarget<?>>> moduleBasedTargets;
 
   public BuildTargetRegistryImpl(JpsModel model) {
-    myTargets = new THashMap<>();
-    myModuleBasedTargets = new THashMap<>();
-    List<List<? extends BuildTarget<?>>> targetsByType = new ArrayList<>();
+    Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> targets = new HashMap<>();
+    Map<JpsModule, List<ModuleBasedTarget<?>>> moduleBasedTargets = new HashMap<>();
+    List<BuildTarget<?>> allTargets = new ArrayList<>();
     for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
-      List<? extends BuildTarget<?>> targets = type.computeAllTargets(model);
-      myTargets.put(type, targets);
-      targetsByType.add(targets);
-      for (BuildTarget<?> target : targets) {
+      List<? extends BuildTarget<?>> targetsPerType = type.computeAllTargets(model);
+      targets.put(type, targetsPerType);
+      allTargets.addAll(targetsPerType);
+      for (BuildTarget<?> target : targetsPerType) {
         if (target instanceof ModuleBasedTarget) {
-          final ModuleBasedTarget t = (ModuleBasedTarget)target;
-          final JpsModule module = t.getModule();
-          List<ModuleBasedTarget> list = myModuleBasedTargets.get(module);
+          ModuleBasedTarget<?> t = (ModuleBasedTarget<?>)target;
+          JpsModule module = t.getModule();
+          List<ModuleBasedTarget<?>> list = moduleBasedTargets.get(module);
           if (list == null) {
             list = new ArrayList<>();
-            myModuleBasedTargets.put(module, list);
+            moduleBasedTargets.put(module, list);
           }
           list.add(t);
         }
       }
     }
-    myAllTargets = Collections.unmodifiableList(ContainerUtil.concat(targetsByType));
+    this.targets = Map.copyOf(targets);
+    this.moduleBasedTargets = Map.copyOf(moduleBasedTargets);
+    this.allTargets = List.copyOf(allTargets);
   }
 
-  @NotNull
   @Override
-  public Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull BuildTargetRegistry.ModuleTargetSelector selector) {
-    final List<ModuleBasedTarget> targets = myModuleBasedTargets.get(module);
+  public @NotNull Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull BuildTargetRegistry.ModuleTargetSelector selector) {
+    final List<ModuleBasedTarget<?>> targets = moduleBasedTargets.get(module);
     if (targets == null || targets.isEmpty()) {
-      return Collections.emptyList();
+      return List.of();
     }
-    final List<ModuleBasedTarget<?>> result = new SmartList<>();
-    for (ModuleBasedTarget target : targets) {
+
+    List<ModuleBasedTarget<?>> result = new ArrayList<>();
+    for (ModuleBasedTarget<?> target : targets) {
       switch (selector) {
         case ALL:
           result.add(target);
@@ -86,15 +78,13 @@ public class BuildTargetRegistryImpl implements BuildTargetRegistry {
   }
 
   @Override
-  @NotNull
-  public <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
+  public @NotNull <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
     //noinspection unchecked
-    return (List<T>)myTargets.get(type);
+    return (List<T>)targets.getOrDefault(type, List.of());
   }
 
-  @NotNull
   @Override
-  public List<BuildTarget<?>> getAllTargets() {
-    return myAllTargets;
+  public @NotNull List<BuildTarget<?>> getAllTargets() {
+    return allTargets;
   }
 }

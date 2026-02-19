@@ -1,48 +1,59 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ModuleConfigurableEP;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootManagerEx;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.impl.ModuleConfigurationEditorProviderEp;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EventListener;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
  */
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
-  private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
-  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
+  private static final ExtensionPointName<ModuleConfigurationEditorProviderEp> EP_NAME =
+    new ExtensionPointName<>("com.intellij.moduleConfigurationEditorProvider");
+
   public static final String SELECTED_EDITOR_NAME = "selectedEditor";
 
   private final Project myProject;
@@ -50,7 +61,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
 
-  private final ModulesProvider myModulesProvider;
+  private final ModulesConfigurator myModulesProvider;
   private String myName;
   private final Module myModule;
 
@@ -58,13 +69,12 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private ModifiableRootModel myModifiableRootModelProxy;
 
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
-  @NonNls private static final String METHOD_COMMIT = "commit";
+  private static final @NonNls String METHOD_COMMIT = "commit";
   private boolean myEditorsInitialized;
 
   protected History myHistory;
 
-  public ModuleEditor(Project project, ModulesProvider modulesProvider,
-                      @NotNull Module module) {
+  public ModuleEditor(@NotNull Project project, @NotNull ModulesConfigurator modulesProvider, @NotNull Module module) {
     myProject = project;
     myModulesProvider = modulesProvider;
     myModule = module;
@@ -73,13 +83,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   public void init(History history) {
     myHistory = history;
-
-    for (ModuleConfigurationEditor each : myEditors) {
-      if (each instanceof ModuleElementsEditor) {
-        ((ModuleElementsEditor)each).setHistory(myHistory);
-      }
-    }
-
     restoreSelectedEditor();
   }
 
@@ -87,15 +90,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   protected abstract JComponent createCenterPanel();
 
-  @Nullable
-  public abstract ModuleConfigurationEditor getSelectedEditor();
+  public abstract @Nullable ModuleConfigurationEditor getSelectedEditor();
 
   public abstract void selectEditor(String displayName);
 
   protected abstract void restoreSelectedEditor();
 
-  @Nullable
-  public abstract ModuleConfigurationEditor getEditor(@NotNull String displayName);
+  public abstract @Nullable ModuleConfigurationEditor getEditor(@NotNull String displayName);
 
   protected abstract void disposeCenterPanel();
 
@@ -103,21 +104,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
+  /**
+   * Listeners are automatically unsubscribed on dispose
+   */
   public void addChangeListener(ChangeListener listener) {
     myEventDispatcher.addListener(listener);
   }
 
-  public void removeChangeListener(ChangeListener listener) {
-    myEventDispatcher.removeListener(listener);
-  }
-
-  @Nullable
-  public Module getModule() {
-    final Module[] all = myModulesProvider.getModules();
-    for (Module each : all) {
-      if (each == myModule) return myModule;
-    }
-
+  public @Nullable Module getModule() {
     return myModulesProvider.getModule(myName);
   }
 
@@ -125,7 +119,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (myModifiableRootModel == null) {
       final Module module = getModule();
       if (module != null) {
-        myModifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(new UIRootConfigurationAccessor(myProject));
+        MutableEntityStorage builder = myModulesProvider.getWorkspaceEntityStorageBuilder();
+        myModifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(new UIRootConfigurationAccessor(myProject, builder));
       }
     }
     return myModifiableRootModel;
@@ -142,8 +137,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (myModifiableRootModelProxy == null) {
       final ModifiableRootModel rootModel = getModifiableRootModel();
       if (rootModel != null) {
-        myModifiableRootModelProxy = (ModifiableRootModel)Proxy.newProxyInstance(
-          getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(rootModel)
+        myModifiableRootModelProxy = ReflectionUtil.proxy(
+          getClass().getClassLoader(), ModifiableRootModel.class, new ModifiableRootModelInvocationHandler(rootModel)
         );
       }
     }
@@ -169,11 +164,10 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return false;
   }
 
-  private void createEditors(@Nullable Module module) {
-    if (module == null) return;
-
+  private void createEditors(@NotNull Module module) {
     ModuleConfigurationState state = createModuleConfigurationState();
-    for (ModuleConfigurationEditorProvider provider : collectProviders(module)) {
+    for (ModuleConfigurationEditorProviderEp providerEp : EP_NAME.getExtensionList()) {
+      ModuleConfigurationEditorProvider provider = providerEp.getOrCreateInstance(module);
       ModuleConfigurationEditor[] editors = provider.createEditors(state);
       if (editors.length > 0 && provider instanceof ModuleConfigurationEditorProviderEx &&
           ((ModuleConfigurationEditorProviderEx)provider).isCompleteEditorSet()) {
@@ -186,19 +180,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
-    for (Configurable moduleConfigurable : module.getComponentInstancesOfType(Configurable.class)) {
-      reportDeprecatedModuleEditor(moduleConfigurable.getClass());
-      myEditors.add(new ModuleConfigurableWrapper(moduleConfigurable));
-    }
-    for(ModuleConfigurableEP extension : MODULE_CONFIGURABLES.getExtensionList(module)) {
-      if (extension.canCreateConfigurable()) {
-        Configurable configurable = extension.createConfigurable();
-        if (configurable != null) {
-          reportDeprecatedModuleEditor(configurable.getClass());
-          myEditors.add(new ModuleConfigurableWrapper(configurable));
-        }
-      }
-    }
     for (ModuleConfigurationEditor editor : myEditors) {
       if (editor instanceof ModuleElementsEditor) {
         ((ModuleElementsEditor)editor).addListener(this::updateImportedModelWarning);
@@ -206,28 +187,16 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  private static final Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
-  private static void reportDeprecatedModuleEditor(@NotNull Class<?> aClass) {
-    if (ourReportedDeprecatedClasses.add(aClass)) {
-      LOG.warn(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
-    }
-  }
-
-  private static ModuleConfigurationEditorProvider @NotNull [] collectProviders(@NotNull Module module) {
-    List<ModuleConfigurationEditorProvider> result = new ArrayList<>(module.getComponentInstancesOfType(ModuleConfigurationEditorProvider.class));
-    for (ModuleConfigurationEditorProvider component : result) {
-      reportDeprecatedModuleEditor(component.getClass());
-    }
-    ContainerUtil.addAll(result, ModuleConfigurationEditorProvider.EP_NAME.getExtensions(module));
-    return result.toArray(new ModuleConfigurationEditorProvider[0]);
-  }
-
-  @NotNull
-  public ModuleConfigurationState createModuleConfigurationState() {
+  public @NotNull ModuleConfigurationState createModuleConfigurationState() {
     return new ModuleConfigurationStateImpl(myProject, myModulesProvider) {
       @Override
-      public ModifiableRootModel getRootModel() {
+      public ModifiableRootModel getModifiableRootModel() {
         return getModifiableRootModelProxy();
+      }
+
+      @Override
+      public ModuleRootModel getCurrentRootModel() {
+        return ModuleEditor.this.getRootModel();
       }
 
       @Override
@@ -237,14 +206,17 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     };
   }
 
-  @NotNull
-  private JPanel createPanel() {
-    getModifiableRootModel(); //initialize model if needed
+  private @NotNull JPanel createPanel() {
+    // initialize model if needed
+    getModifiableRootModel();
     getModifiableRootModelProxy();
 
     myGenericSettingsPanel = new ModuleEditorPanel();
 
-    createEditors(getModule());
+    Module module = getModule();
+    if (module  != null) {
+      createEditors(module);
+    }
 
     final JComponent component = createCenterPanel();
     myGenericSettingsPanel.add(component, BorderLayout.CENTER);
@@ -255,8 +227,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return myGenericSettingsPanel;
   }
 
-  @NotNull
-  public JPanel getPanel() {
+  public @NotNull JPanel getPanel() {
     if (myGenericSettingsPanel == null) {
       myGenericSettingsPanel = createPanel();
     }
@@ -306,6 +277,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   @Override
   public void dispose() {
     try {
+      myEventDispatcher.getListeners().clear();
       for (final ModuleConfigurationEditor myEditor : myEditors) {
         myEditor.disposeUIResources();
       }
@@ -346,16 +318,15 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final ModifiableRootModel myDelegateModel;
-    @NonNls private final Set<String> myCheckedNames = ContainerUtil
-      .set("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry", "removeOrderEntry",
-           "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries");
+    private static final @NonNls Set<String> myCheckedNames = Set.of(
+      "addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry", "removeOrderEntry",
+      "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries");
 
     ModifiableRootModelInvocationHandler(@NotNull ModifiableRootModel model) {
       myDelegateModel = model;
@@ -366,9 +337,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       final boolean needUpdate = myCheckedNames.contains(method.getName());
       try {
         final Object result = method.invoke(myDelegateModel, unwrapParams(params));
-        if (result instanceof LibraryTable) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTable.class},
-                                        new LibraryTableInvocationHandler((LibraryTable)result));
+        if (result instanceof LibraryTable table) {
+          return ReflectionUtil.proxy(getClass().getClassLoader(), LibraryTable.class,
+                                      new LibraryTableInvocationHandler(table));
         }
         return result;
       }
@@ -390,7 +361,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class LibraryTableInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable myDelegateTable;
-    @NonNls private final Set<String> myCheckedNames = new THashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
+    private final @NonNls Set<String> myCheckedNames = new HashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
 
     LibraryTableInvocationHandler(@NotNull LibraryTable table) {
       myDelegateTable = table;
@@ -401,21 +372,20 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       final boolean needUpdate = myCheckedNames.contains(method.getName());
       try {
         final Object result = method.invoke(myDelegateTable, unwrapParams(params));
-        if (result instanceof Library) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{result instanceof LibraryEx ? LibraryEx.class : Library.class},
-                                        new LibraryInvocationHandler((Library)result));
+        if (result instanceof Library library) {
+          return ReflectionUtil.proxy(getClass().getClassLoader(), result instanceof LibraryEx ? LibraryEx.class : Library.class,
+                                      new LibraryInvocationHandler(library));
         }
-        if (result instanceof LibraryTable.ModifiableModel) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryTable.ModifiableModel.class},
-                                        new LibraryTableModelInvocationHandler((LibraryTable.ModifiableModel)result));
+        if (result instanceof LibraryTable.ModifiableModel model) {
+          return ReflectionUtil.proxy(getClass().getClassLoader(), LibraryTable.ModifiableModel.class,
+                                      new LibraryTableModelInvocationHandler(model));
         }
-        if (result instanceof Library[]) {
-          Library[] libraries = (Library[])result;
+        if (result instanceof Library[] libraries) {
           for (int idx = 0; idx < libraries.length; idx++) {
             Library library = libraries[idx];
             libraries[idx] =
-            (Library)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{library instanceof LibraryEx ? LibraryEx.class : Library.class},
-                                            new LibraryInvocationHandler(library));
+              ReflectionUtil.proxy(getClass().getClassLoader(), library instanceof LibraryEx ? LibraryEx.class : Library.class,
+                                   new LibraryInvocationHandler(library));
           }
         }
         return result;
@@ -447,9 +417,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
       try {
         final Object result = method.invoke(myDelegateLibrary, unwrapParams(params));
-        if (result instanceof LibraryEx.ModifiableModelEx) {
-          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.ModifiableModelEx.class},
-                                        new LibraryModifiableModelInvocationHandler((LibraryEx.ModifiableModelEx)result));
+        if (result instanceof LibraryEx.ModifiableModelEx model) {
+          return ReflectionUtil.proxy(getClass().getClassLoader(), LibraryEx.ModifiableModelEx.class,
+                                      new LibraryModifiableModelInvocationHandler(model));
         }
         return result;
       }
@@ -505,19 +475,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       final boolean needUpdate = METHOD_COMMIT.equals(method.getName());
       try {
         Object result = method.invoke(myDelegateModel, unwrapParams(params));
-        if (result instanceof Library[]) {
-          Library[] libraries = (Library[])result;
+        if (result instanceof Library[] libraries) {
           for (int idx = 0; idx < libraries.length; idx++) {
             Library library = libraries[idx];
-            libraries[idx] =
-            (Library)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.class},
-                                            new LibraryInvocationHandler(library));
+            libraries[idx] = ReflectionUtil.proxy(getClass().getClassLoader(), LibraryEx.class, new LibraryInvocationHandler(library));
           }
         }
-        if (result instanceof Library) {
-          result =
-          Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{LibraryEx.class},
-                                 new LibraryInvocationHandler((Library)result));
+        if (result instanceof Library library) {
+          result = ReflectionUtil.proxy(getClass().getClassLoader(), LibraryEx.class, new LibraryInvocationHandler(library));
         }
         return result;
       }
@@ -559,8 +524,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return unwrappedParams;
   }
 
-  @Nullable
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     if (myEditors.isEmpty()) {
       return null;
     }
@@ -573,17 +537,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     updateImportedModelWarning();
   }
 
-  private class ModuleEditorPanel extends JPanel implements DataProvider{
+  private class ModuleEditorPanel extends JPanel implements UiDataProvider {
     ModuleEditorPanel() {
       super(new BorderLayout());
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        return getModule();
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(LangDataKeys.MODULE_CONTEXT, getModule());
     }
   }
 }

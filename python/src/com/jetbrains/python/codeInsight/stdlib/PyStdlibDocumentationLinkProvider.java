@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -30,7 +16,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
@@ -39,10 +25,8 @@ import org.jsoup.nodes.Element;
 import java.util.Map;
 import java.util.function.Function;
 
-/**
- * @author yole
- */
-public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
+
+public final class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
   // use tools/stdlib-modindex.py to regenerate the map when new Python versions are released
   private static final Map<String, String> py2LibraryModulesToWebpageName = new MyBuilder()
     .put("BaseHTTPServer", "basehttpserver")
@@ -332,22 +316,18 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
   private static final Map<String, String> py3LibraryModulesToWebpageName = new MyBuilder()
     .put("__future__")
     .put("__main__")
-    .put("_dummy_thread")
     .put("_thread")
     .put("abc")
     .put("aifc")
     .put("argparse")
     .put("array")
     .put("ast")
-    .put("asynchat")
     .put("asyncio")
-    .put("asyncore")
     .put("atexit")
     .put("audioop")
     .put("base64")
     .put("bdb")
     .put("binascii")
-    .put("binhex")
     .put("bisect")
     .put("builtins")
     .put("bz2")
@@ -376,14 +356,13 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("curses")
     .put("curses.ascii")
     .put("curses.panel")
+    .put("dataclasses")
     .put("datetime")
     .put("dbm")
     .put("decimal")
     .put("difflib")
     .put("dis")
-    .put("distutils")
     .put("doctest")
-    .put("dummy_threading")
     .put("email")
     .put("email.charset")
     .put("email.contentmanager")
@@ -398,7 +377,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("email.mime")
     .put("email.parser")
     .put("email.policy")
-    .put("email.utils", "email.util")
+    .put("email.utils")
     .put("ensurepip")
     .put("enum")
     .put("errno")
@@ -407,7 +386,6 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("filecmp")
     .put("fileinput")
     .put("fnmatch")
-    .put("formatter")
     .put("fractions")
     .put("ftplib")
     .put("functools")
@@ -416,6 +394,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("getpass")
     .put("gettext")
     .put("glob")
+    .put("graphlib")
     .put("grp")
     .put("gzip")
     .put("hashlib")
@@ -431,8 +410,9 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("http.server")
     .put("imaplib")
     .put("imghdr")
-    .put("imp")
     .put("importlib")
+    .put("importlib.resources")
+    .put("importlib.resources.abc")
     .put("inspect")
     .put("io")
     .put("ipaddress")
@@ -445,7 +425,6 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("logging.config")
     .put("logging.handlers")
     .put("lzma")
-    .put("macpath")
     .put("mailbox")
     .put("mailcap")
     .put("marshal")
@@ -456,6 +435,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("msilib")
     .put("msvcrt")
     .put("multiprocessing")
+    .put("multiprocessing.shared_memory")
     .put("netrc")
     .put("nis")
     .put("nntplib")
@@ -465,7 +445,6 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("os")
     .put("os.path")
     .put("ossaudiodev")
-    .put("parser")
     .put("pathlib")
     .put("pdb")
     .put("pickle")
@@ -500,7 +479,6 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("shutil")
     .put("signal")
     .put("site")
-    .put("smtpd")
     .put("smtplib")
     .put("sndhdr")
     .put("socket")
@@ -515,7 +493,6 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("struct")
     .put("subprocess")
     .put("sunau")
-    .put("symbol")
     .put("symtable")
     .put("sys")
     .put("sysconfig")
@@ -531,11 +508,17 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("time")
     .put("timeit")
     .put("tkinter")
+    .put("tkinter.colorchooser")
+    .put("tkinter.dnd")
+    .put("tkinter.font")
+    .put("tkinter.messagebox")
     .put("tkinter.scrolledtext")
+    .put("tkinter.simpledialog", "dialog")
     .put("tkinter.tix")
     .put("tkinter.ttk")
     .put("token")
     .put("tokenize")
+    .put("tomllib")
     .put("trace")
     .put("traceback")
     .put("tracemalloc")
@@ -578,6 +561,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("zipfile")
     .put("zipimport")
     .put("zlib")
+    .put("zoneinfo")
     .build();
 
   private static final Map<String, String> stdlibObjectsToWebpage = ImmutableMap.<String, String>builder()
@@ -585,8 +569,16 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("AssertionError", "exceptions")
     .put("AttributeError", "exceptions")
     .put("BaseException", "exceptions")
+    .put("BaseException.__notes__", "exceptions")
+    .put("BaseException.add_note", "exceptions")
     .put("BaseException.args", "exceptions")
     .put("BaseException.with_traceback", "exceptions")
+    .put("BaseExceptionGroup", "exceptions")
+    .put("BaseExceptionGroup.derive", "exceptions")
+    .put("BaseExceptionGroup.exceptions", "exceptions")
+    .put("BaseExceptionGroup.message", "exceptions")
+    .put("BaseExceptionGroup.split", "exceptions")
+    .put("BaseExceptionGroup.subgroup", "exceptions")
     .put("BlockingIOError", "exceptions")
     .put("BlockingIOError.characters_written", "exceptions")
     .put("BrokenPipeError", "exceptions")
@@ -600,8 +592,10 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("DeprecationWarning", "exceptions")
     .put("EOFError", "exceptions")
     .put("Ellipsis", "constants")
+    .put("EncodingWarning", "exceptions")
     .put("EnvironmentError", "exceptions")
     .put("Exception", "exceptions")
+    .put("ExceptionGroup", "exceptions")
     .put("False", "constants")
     .put("FileExistsError", "exceptions")
     .put("FileNotFoundError", "exceptions")
@@ -643,6 +637,12 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("StopAsyncIteration", "exceptions")
     .put("StopIteration", "exceptions")
     .put("SyntaxError", "exceptions")
+    .put("SyntaxError.end_lineno", "exceptions")
+    .put("SyntaxError.end_offset", "exceptions")
+    .put("SyntaxError.filename", "exceptions")
+    .put("SyntaxError.lineno", "exceptions")
+    .put("SyntaxError.offset", "exceptions")
+    .put("SyntaxError.text", "exceptions")
     .put("SyntaxWarning", "exceptions")
     .put("SystemError", "exceptions")
     .put("SystemExit", "exceptions")
@@ -670,7 +670,9 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("__debug__", "constants")
     .put("__import__", "functions")
     .put("abs", "functions")
+    .put("aiter", "functions")
     .put("all", "functions")
+    .put("anext", "functions")
     .put("any", "functions")
     .put("ascii", "functions")
     .put("bin", "functions")
@@ -703,6 +705,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("bytearray.lstrip", "stdtypes")
     .put("bytearray.maketrans", "stdtypes")
     .put("bytearray.partition", "stdtypes")
+    .put("bytearray.removeprefix", "stdtypes")
+    .put("bytearray.removesuffix", "stdtypes")
     .put("bytearray.replace", "stdtypes")
     .put("bytearray.rfind", "stdtypes")
     .put("bytearray.rindex", "stdtypes")
@@ -744,6 +748,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("bytes.lstrip", "stdtypes")
     .put("bytes.maketrans", "stdtypes")
     .put("bytes.partition", "stdtypes")
+    .put("bytes.removeprefix", "stdtypes")
+    .put("bytes.removesuffix", "stdtypes")
     .put("bytes.replace", "stdtypes")
     .put("bytes.rfind", "stdtypes")
     .put("bytes.rindex", "stdtypes")
@@ -796,6 +802,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("eval", "functions")
     .put("exec", "functions")
     .put("exit", "constants")
+    .put("filemodes", "functions")
     .put("filter", "functions")
     .put("float", "functions")
     .put("float.as_integer_ratio", "stdtypes")
@@ -822,6 +829,10 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("frozenset.union", "stdtypes")
     .put("frozenset.update", "stdtypes")
     .put("functions", "stdtypes")
+    .put("genericalias.__args__", "stdtypes")
+    .put("genericalias.__origin__", "stdtypes")
+    .put("genericalias.__parameters__", "stdtypes")
+    .put("genericalias.__unpacked__", "stdtypes")
     .put("getattr", "functions")
     .put("globals", "functions")
     .put("hasattr", "functions")
@@ -831,8 +842,11 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("input", "functions")
     .put("instance.__class__", "stdtypes")
     .put("int", "functions")
+    .put("int.as_integer_ratio", "stdtypes")
+    .put("int.bit_count", "stdtypes")
     .put("int.bit_length", "stdtypes")
     .put("int.from_bytes", "stdtypes")
+    .put("int.is_integer", "stdtypes")
     .put("int.to_bytes", "stdtypes")
     .put("isinstance", "functions")
     .put("issubclass", "functions")
@@ -866,6 +880,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("memoryview.suboffsets", "stdtypes")
     .put("memoryview.tobytes", "stdtypes")
     .put("memoryview.tolist", "stdtypes")
+    .put("memoryview.toreadonly", "stdtypes")
     .put("methods", "stdtypes")
     .put("min", "functions")
     .put("modules", "stdtypes")
@@ -924,6 +939,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     .put("str.lstrip", "stdtypes")
     .put("str.maketrans", "stdtypes")
     .put("str.partition", "stdtypes")
+    .put("str.removeprefix", "stdtypes")
+    .put("str.removesuffix", "stdtypes")
     .put("str.replace", "stdtypes")
     .put("str.rfind", "stdtypes")
     .put("str.rindex", "stdtypes")
@@ -961,19 +978,15 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     }
     Sdk sdk = PyBuiltinCache.findSdkForFile(file);
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null && sdk != null && PythonSdkUtil.isStdLib(vFile, sdk)) {
+    if (vFile != null && sdk != null && PySkeletonUtil.isStdLib(vFile, sdk)) {
       QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
       return getStdlibUrlFor(element, qName, sdk);
     }
     return null;
   }
 
-  @NotNull
-  private static String getExternalDocumentationRoot(@NotNull Sdk sdk) {
+  private static @NotNull String getExternalDocumentationRoot(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
-    if (versionString != null && StringUtil.startsWithIgnoreCase(versionString, "jython")) {
-      return "http://jython.org/docs/library/";
-    }
     final String pyVersion = PythonDocumentationProvider.pyVersion(versionString);
     StringBuilder urlBuilder = new StringBuilder("https://docs.python.org/");
     if (pyVersion != null) {
@@ -988,9 +1001,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return urlBuilder.toString();
   }
 
-  @Nullable
   @Override
-  public Function<Document, String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
+  public @Nullable Function<Document, @NlsSafe String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return document -> {
       final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
 
@@ -1022,7 +1034,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
                              ((PyFunction)element).getContainingClass().getName() : "";
     final String name = element instanceof PsiNamedElement && !(element instanceof PyFile) ? ((PsiNamedElement)element).getName() : null;
     final String name2 = "__init__".equals(name) ? "" : name;
-    final String qName = name == null ? null : className + (!"".equals(className) && !"".equals(name2) ? "." : "") + name2;
+    final String qName = name == null ? null : className + (!"".equals(className) && !name2.isEmpty() ? "." : "") + name2;
     final String webpageName2 = isBuiltin ? stdlibObjectsToWebpage.get(qName) : webpageName;
 
     if (webpageName2 != null) {

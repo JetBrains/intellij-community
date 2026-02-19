@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
-import java.io.File
-import java.util.stream.Collectors
-import kotlin.streams.toList
+import org.jetbrains.intellij.build.images.generateIconClasses
+import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
+import java.nio.file.Path
 
 internal fun report(context: Context, skipped: Int): String {
   val (devIcons, icons) = context.devIcons.size to context.icons.size
@@ -38,93 +38,79 @@ internal fun report(context: Context, skipped: Int): String {
 
 internal fun findCommitsToSync(context: Context) {
   if (context.doSyncDevRepo && context.devSyncRequired()) {
-    context.iconsCommitsToSync = findCommitsByRepo(context, context.iconsRepoDir, context.byDesigners)
+    context.iconsCommitsToSync = findCommitsByRepo(context, context.iconRepoDir, context.byDesigners)
   }
   if (context.doSyncIconsRepo && context.iconsSyncRequired()) {
     context.devCommitsToSync = findCommitsByRepo(context, context.devRepoDir, context.byDev)
   }
 }
 
-internal fun Map<File, Collection<CommitInfo>>.commitMessage() =
-  entries.joinToString("\n\n") { entry ->
-    entry.value.joinToString("\n") {
-      "'${it.subject}' from ${it.hash.substring(0..8)}"
-    } + " from ${getOriginUrl(entry.key)}"
+internal fun Map<Path, Collection<CommitInfo>>.commitMessage(): String =
+  values.flatten().joinToString(separator = "\n\n") {
+    it.subject + "\n" + "Origin commit: ${it.hash}"
   }
 
-internal fun commitAndPush(context: Context) {
-  if (context.iconsCommitsToSync.isEmpty()) return
-  val repos = context.iconsChanges().map {
-    findRepo(context.devRepoRoot.resolve(it))
-  }.distinct()
-  verifyDevIcons(context, repos)
-  if (repos.all { gitStage(it).isEmpty() }) {
+internal fun generateIconClassesAndCommit(context: Context) {
+  if (context.iconsCommitsToSync.isEmpty()) {
+    return
+  }
+
+  stageFiles(gitStatus(context.devRepoRoot).all(), context.devRepoRoot)
+  if (gitStage(context.devRepoRoot).isEmpty()) {
     log("Nothing to commit")
     context.byDesigners.clear()
   }
-  else {
+  else try {
     val user = triggeredBy()
-    val branch = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
-    commitAndPush(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), repos)
+    val branch = head(context.devRepoRoot)
+    log("Generating classes..")
+    generateIconClasses()
+    val classes = gitStatus(context.devRepoRoot, includeUntracked = true).all().filter { it.endsWith(".java") }
+    stageFiles(classes, context.devRepoRoot)
+    commit(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), context.devRepoRoot)
+  }
+  finally {
+    shutdownAppScheduledExecutorService()
   }
 }
 
-private fun verifyDevIcons(context: Context, repos: Collection<File>) {
-  context.verifyDevIcons(repos)
-  repos.forEach { repo ->
-    stageFiles(gitStatus(repo).all(), repo)
-  }
-}
-
-internal fun pushToIconsRepo(context: Context): Collection<CommitInfo> {
-  val repos = listOf(context.iconsRepo)
-  val master = head(context.iconsRepo)
-  return context.devCommitsToSync.values.flatten()
+internal fun pushToIconsRepo(branch: String, context: Context): List<CommitInfo> =
+  context.devCommitsToSync.values.flatten()
     .groupBy(CommitInfo::committer)
-    .flatMap { (committer, commits) ->
-      repos.parallelStream().forEach { checkout(it, master) }
+    .mapNotNull { (committer, commits) ->
+      checkout(context.iconRepo, branch)
       commits.forEach { commit ->
         val change = context.byCommit[commit.hash] ?: error("Unable to find changes for commit ${commit.hash} by $committer")
         log("$committer syncing ${commit.hash} in ${context.iconsRepoName}")
         syncIconsRepo(context, change)
       }
-      if (gitStage(context.iconsRepo).isEmpty()) {
+      if (gitStage(context.iconRepo).isEmpty()) {
         log("Nothing to commit")
         context.byDev.clear()
-        emptyList()
+        null
       }
       else {
-        commitAndPush(master, committer.name, committer.email,
-                      commits.groupBy(CommitInfo::repo).commitMessage(), repos)
+        commitAndPush(branch, committer.name, committer.email,
+                      commits.groupBy(CommitInfo::repo).commitMessage(), context.iconRepo)
       }
     }
-}
 
-private fun findCommitsByRepo(context: Context, root: File, changes: Changes
-): Map<File, Collection<CommitInfo>> {
+private fun findCommitsByRepo(context: Context, root: Path, changes: Changes): Map<Path, Collection<CommitInfo>> {
   val commits = findCommits(context, root, changes)
-  if (commits.isEmpty()) return emptyMap()
+  if (commits.isEmpty()) {
+    return emptyMap()
+  }
   log("${commits.size} commits found")
   return commits.map { it.key }.groupBy(CommitInfo::repo)
 }
 
-@Volatile
-private var reposMap = emptyMap<File, File>()
-private val reposMapGuard = Any()
-internal fun findRepo(file: File): File {
-  if (!reposMap.containsKey(file)) synchronized(reposMapGuard) {
-    if (!reposMap.containsKey(file)) {
-      reposMap = reposMap + (file to findGitRepoRoot(file, silent = true))
-    }
-  }
-  return reposMap.getValue(file)
-}
+internal fun findRepo(file: Path) = findGitRepoRoot(file, silent = true)
 
-private fun findCommits(context: Context, root: File, changes: Changes) = changes.all()
+private fun findCommits(context: Context, root: Path, changes: Changes) = changes.all()
   .mapNotNull { change ->
     val absoluteFile = root.resolve(change)
     val repo = findRepo(absoluteFile)
-    val commit = latestChangeCommit(absoluteFile.toRelativeString(repo), repo)
+    val commit = latestChangeCommit(repo.relativize(absoluteFile).toString(), repo)
     if (commit != null) commit to change else null
   }.onEach {
     val commit = it.first.hash
@@ -140,10 +126,17 @@ private fun findCommits(context: Context, root: File, changes: Changes) = change
 
 private fun commitAndPush(branch: String, user: String,
                           email: String, message: String,
-                          repos: Collection<File>) = repos.parallelStream().map {
-  execute(it, GIT, "checkout", "-B", branch)
-  commitAndPush(it, branch, message, user, email)
-}.toList()
+                          repo: Path): CommitInfo = run {
+  execute(repo, GIT, "checkout", "-B", branch)
+  commitAndPush(repo, branch, message, user, email)
+}
+
+private fun commit(branch: String, user: String,
+                   email: String, message: String,
+                   repo: Path) {
+  execute(repo, GIT, "checkout", "-B", branch)
+  commit(repo, message, user, email)
+}
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 
@@ -161,8 +154,9 @@ internal fun notifySlackChannel(message: String, context: Context, success: Bool
   val text = "*${context.devRepoName}* $reaction\n${message.replace("\"", "\\\"")}\n$build"
   val body = """{ "text": "$text" }"""
   val response = try {
-    post(CHANNEL_WEB_HOOK, body)
-  } catch (e: Exception) {
+    post(CHANNEL_WEB_HOOK, body, mediaType = null)
+  }
+  catch (e: Exception) {
     log("Post of '$body' has failed")
     throw e
   }

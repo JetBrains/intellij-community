@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.color.scheme.twilight` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "color-scheme-twilight_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "color-scheme-twilight",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":color-scheme-twilight_resources"]
+)
+
+jvm_library(
+  name = "color-scheme-twilight_test_lib",
+  module_name = "intellij.color.scheme.twilight",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [":color-scheme-twilight"]
+)
+### auto-generated section `build intellij.color.scheme.twilight` end

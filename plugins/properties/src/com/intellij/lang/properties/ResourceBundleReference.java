@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -10,7 +8,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolvingHint;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
@@ -23,9 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   implements PsiPolyVariantReference, BundleNameEvaluator, ResolvingHint {
   private static final Function<PropertiesFile, PsiElement> PROPERTIES_FILE_PSI_ELEMENT_FUNCTION =
@@ -47,13 +49,12 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   }
 
   @Override
-  public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
+  public boolean canResolveTo(@NotNull Class<? extends PsiElement> elementClass) {
     return ReflectionUtil.isAssignable(PsiFile.class, elementClass);
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
@@ -66,8 +67,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myBundleName;
   }
 
@@ -92,7 +92,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   }
 
   @Override
-  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(final @NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PropertiesFile)) {
       throw new IncorrectOperationException();
     }
@@ -114,7 +114,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
 
   @Override
   public Object @NotNull [] getVariants() {
-    final ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(getElement().getProject());
+    final ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(getElement().getProject());
     final PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(getElement().getProject());
 
     final Set<String> bundleNames = new HashSet<>();

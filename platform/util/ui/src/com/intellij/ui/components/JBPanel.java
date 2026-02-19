@@ -3,12 +3,16 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.components.JBComponent;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.LayoutManager;
 
 /**
  * @author Konstantin Bulenkov
@@ -39,67 +43,83 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
   }
 
   @Override
-  public T withBorder(Border border) {
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
+  public final T withBorder(Border border) {
     setBorder(border);
     return (T)this;
   }
 
   @Override
-  public T withFont(JBFont font) {
+  public final T withFont(JBFont font) {
     setFont(font);
     return (T)this;
   }
 
   @Override
-  public T andTransparent() {
+  public final T andTransparent() {
     setOpaque(false);
     return (T)this;
   }
 
   @Override
-  public T andOpaque() {
+  public final T andOpaque() {
     setOpaque(true);
     return (T)this;
   }
 
-  public T withBackground(@Nullable Color background) {
+  public final T withBackground(@Nullable Color background) {
     setBackground(background);
     return (T)this;
   }
 
-  public T withPreferredWidth(int width) {
-    myPreferredWidth = width;
+  public final T withPreferredWidth(int unscaledWidth) {
+    myPreferredWidth = unscaledWidth;
     return (T)this;
   }
 
-  public T withPreferredHeight(int height) {
-    myPreferredHeight = height;
+  public final T withPreferredHeight(int unscaledHeight) {
+    myPreferredHeight = unscaledHeight;
     return (T)this;
   }
 
-  public T withPreferredSize(int width, int height) {
-    myPreferredWidth = width;
-    myPreferredHeight = height;
+  public final T resetPreferredHeight() {
+    myPreferredHeight = null;
     return (T)this;
   }
 
-  public T withMaximumWidth(int width) {
-    myMaximumWidth = width;
+  public final T withPreferredSize(int unscaledWidth, int unscaledHeight) {
+    myPreferredWidth = unscaledWidth;
+    myPreferredHeight = unscaledHeight;
     return (T)this;
   }
 
-  public T withMaximumHeight(int height) {
-    myMaximumHeight = height;
+  public final T withMaximumWidth(int unscaledWidth) {
+    myMaximumWidth = unscaledWidth;
     return (T)this;
   }
 
-  public T withMinimumWidth(int width) {
-    myMinimumWidth = width;
+  public final T withMaximumHeight(int unscaledHeight) {
+    myMaximumHeight = unscaledHeight;
     return (T)this;
   }
 
-  public T withMinimumHeight(int height) {
-    myMinimumHeight = height;
+  public final T withMaximumSize(int unscaledWidth, int unscaledHeight) {
+    myMaximumWidth = unscaledWidth;
+    myMaximumHeight = unscaledHeight;
+    return (T)this;
+  }
+
+  public final T withMinimumWidth(int unscaledWidth) {
+    myMinimumWidth = unscaledWidth;
+    return (T)this;
+  }
+
+  public final T withMinimumHeight(int unscaledHeight) {
+    myMinimumHeight = unscaledHeight;
     return (T)this;
   }
 
@@ -118,10 +138,10 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
     return getSize(super.getMinimumSize(), myMinimumWidth, myMinimumHeight, isMinimumSizeSet());
   }
 
-  private static Dimension getSize(Dimension size, Integer width, Integer height, boolean isSet) {
+  private static Dimension getSize(Dimension size, Integer unscaledWidth, Integer unscaledHeight, boolean isSet) {
     if (!isSet && size != null) {
-      if (width != null) size.width = JBUIScale.scale(width);
-      if (height != null) size.height = JBUIScale.scale(height);
+      if (unscaledWidth != null) size.width = JBUIScale.scale(unscaledWidth);
+      if (unscaledHeight != null) size.height = JBUIScale.scale(unscaledHeight);
     }
     return size;
   }

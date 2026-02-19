@@ -1,0 +1,16 @@
+// BIND_TO AImpl.minus
+interface A {
+    operator fun plus(i: A)
+
+    operator fun minus(i: A)
+}
+
+class AImpl : A {
+    override fun plus(i: A) { return this }
+
+    override fun minus(i: A) { return this }
+
+    fun m() {
+        this <caret>+ this
+    }
+}

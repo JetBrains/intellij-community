@@ -1,9 +1,0 @@
-<idea-plugin>
-  <actions>
-    <!-- todo: this is a temporary workaround to avoid duplicating actions in Build menu until IDEA-209728 is fixed -->
-    <action id="CompileDirty" class="com.intellij.openapi.actionSystem.EmptyAction" overrides="true"/>
-    <action id="MakeModule" class="com.intellij.openapi.actionSystem.EmptyAction" overrides="true"/>
-    <action id="Compile" class="com.intellij.openapi.actionSystem.EmptyAction" overrides="true"/>
-    <action id="CompileProject" class="com.intellij.openapi.actionSystem.EmptyAction" overrides="true"/>
-  </actions>
-</idea-plugin>

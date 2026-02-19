@@ -5,8 +5,6 @@ import com.intellij.lang.LanguageExtension;
 
 /**
  * Exposes pre-configured {@link WhiteSpaceFormattingStrategy} objects to use in a per-language manner.
- *
- * @author Denis Zhdanov
  */
 public final class LanguageWhiteSpaceFormattingStrategy extends LanguageExtension<WhiteSpaceFormattingStrategy> {
 

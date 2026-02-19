@@ -10,11 +10,14 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
@@ -57,7 +60,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     checkEditorState("barfootest", 6, 0, 0);
 
     executeCommand(
-      (Runnable)() -> ApplicationManager.getApplication().runWriteAction(() -> getFirstEditor().getDocument().insertString(0, "___")),
+      () -> ApplicationManager.getApplication().runWriteAction(() -> getFirstEditor().getDocument().insertString(0, "___")),
       "Dummy");
     checkEditorState("___barfootest", 9, 0, 0);
 
@@ -104,7 +107,15 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     checkEditorText(initial, getFirstEditor());
   }
 
+  public void testTransparentBackspaceBeforeRedo() {
+    doTestTransparentActionBeforeRedo(() -> backspace(getFirstEditor()));
+  }
+
   public void testTransparentActionBeforeRedo() {
+    doTestTransparentActionBeforeRedo(() -> typeInText("1"));
+  }
+
+  private void doTestTransparentActionBeforeRedo(@NotNull Command command) {
     Editor editor = getFirstEditor();
 
     executeCommand(() -> typeInText("a"));
@@ -116,7 +127,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     undo(editor);
     checkEditorText(afterType1, editor);
 
-    executeTransparently(() -> typeInText("1"));
+    executeTransparently(command);
 
     assertUndoIsAvailable(editor);
     assertRedoIsAvailable(editor);
@@ -182,13 +193,17 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     }
     typeInChar('a');
 
-    CurrentEditorProvider savedProvider = myManager.getEditorProvider();
     try {
-      myManager.setEditorProvider(() -> null);
+      myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+        @Override
+        public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+          return null;
+        }
+      });
       executeTransparentlyInWriteAction(() -> getFirstEditor().getDocument().insertString(0, " "));
     }
     finally {
-      myManager.setEditorProvider(savedProvider);
+      myManager.setOverriddenEditorProvider(null);
     }
     executeEditorAction(getFirstEditor(), IdeActions.ACTION_EDITOR_TEXT_START);
 
@@ -237,7 +252,7 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
     checkEditorText("test");
   }
 
-  private <T extends Exception> void executeTransparentlyInWriteAction(@NotNull ThrowableRunnable<T> action) {
+  private static <T extends Exception> void executeTransparentlyInWriteAction(@NotNull ThrowableRunnable<T> action) {
     executeTransparently(() -> WriteAction.run(action));
   }
 }

@@ -8,8 +8,10 @@ import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SideBorder;
 import icons.AntIcons;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import java.awt.Color;
 
 final class MessageTreeRenderer extends MultilineTreeCellRenderer {
 
@@ -31,8 +33,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
 
   @Override
   protected void initComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    if(value instanceof MessageNode) {
-      MessageNode messageNode = (MessageNode)value;
+    if(value instanceof MessageNode messageNode) {
       setText(messageNode.getText(), messageNode.getTypeString() + messageNode.getPositionString());
     }
     else {
@@ -48,8 +49,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
     if (foreground == null) {
       myDefaultForeground = foreground = getForeground();
     }
-    if (value instanceof MessageNode) {
-      MessageNode node = (MessageNode)value;
+    if (value instanceof MessageNode node) {
       AntBuildMessageView.MessageType type = node.getType();
       if (type == AntBuildMessageView.MessageType.BUILD) {
         icon = AntIcons.Build;
@@ -58,7 +58,7 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
         icon = AllIcons.Nodes.Target;
       }
       else if (type == AntBuildMessageView.MessageType.TASK) {
-        icon = AntIcons.Task;
+        icon = AntIcons.AntTask;
       }
       else if (type == AntBuildMessageView.MessageType.MESSAGE) {
         if (node.getPriority() == AntBuildMessageView.PRIORITY_WARN) {

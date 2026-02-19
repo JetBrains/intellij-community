@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -15,9 +15,11 @@ interface UFile : UElement, UAnnotated {
   /**
    * Returns the original [PsiFile].
    */
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiFile
 
-  @JvmDefault
   @Suppress("DEPRECATION")
   override val sourcePsi: PsiFile
     get() = psi
@@ -32,6 +34,10 @@ interface UFile : UElement, UAnnotated {
    * Returns the import statements for this file.
    */
   val imports: List<UImportStatement>
+
+  @Suppress("DEPRECATION")
+  val implicitImports: List<String>
+    get() = emptyList()
 
   /**
    * Returns the list of top-level classes declared in this file.
@@ -56,17 +62,17 @@ interface UFile : UElement, UAnnotated {
     }
 
     val packageName = this@UFile.packageName
-    if (packageName.isNotEmpty()) appendln("package $packageName").appendln()
+    if (packageName.isNotEmpty()) appendLine("package $packageName").appendLine()
 
     val imports = this@UFile.imports
     if (imports.isNotEmpty()) {
-      imports.forEach { appendln(it.asRenderString()) }
-      appendln()
+      imports.forEach { appendLine(it.asRenderString()) }
+      appendLine()
     }
 
     classes.forEachIndexed { index, clazz ->
-      if (index > 0) appendln()
-      appendln(clazz.asRenderString())
+      if (index > 0) appendLine()
+      appendLine(clazz.asRenderString())
     }
   }
 

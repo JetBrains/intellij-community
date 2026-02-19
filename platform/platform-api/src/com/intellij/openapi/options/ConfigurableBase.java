@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public abstract class ConfigurableBase<UI extends ConfigurableUi<S>, S> implements SearchableConfigurable, Configurable.NoScroll {
   private final String id;
@@ -23,9 +23,8 @@ public abstract class ConfigurableBase<UI extends ConfigurableUi<S>, S> implemen
     this.helpTopic = helpTopic;
   }
 
-  @NotNull
   @Override
-  public final String getId() {
+  public final @NotNull String getId() {
     return id;
   }
 
@@ -34,14 +33,12 @@ public abstract class ConfigurableBase<UI extends ConfigurableUi<S>, S> implemen
     return displayName;
   }
 
-  @Nullable
   @Override
-  public final String getHelpTopic() {
+  public final @Nullable String getHelpTopic() {
     return helpTopic;
   }
 
-  @NotNull
-  protected abstract S getSettings();
+  protected abstract @NotNull S getSettings();
 
   @Override
   public void reset() {
@@ -50,9 +47,8 @@ public abstract class ConfigurableBase<UI extends ConfigurableUi<S>, S> implemen
     }
   }
 
-  @NotNull
   @Override
-  public final JComponent createComponent() {
+  public final @NotNull JComponent createComponent() {
     if (ui == null) {
       ui = createUi();
     }
@@ -79,7 +75,7 @@ public abstract class ConfigurableBase<UI extends ConfigurableUi<S>, S> implemen
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return ui != null ? ui.getPreferredFocusedComponent() : null;
   }
 

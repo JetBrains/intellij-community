@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -6,6 +6,8 @@ import com.intellij.codeInsight.completion.EmptyCompletionNotifier;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
+import com.intellij.idea.AppMode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,10 +15,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -26,47 +29,56 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
+@ApiStatus.Internal
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
   private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
 
   static final Key<String> CREATION_MESSAGE = Key.create("light.edit.file.creation.message");
 
-  private final static Logger LOG = Logger.getInstance(LightEditUtil.class);
+  private static final Logger LOG = Logger.getInstance(LightEditUtil.class);
 
-  private static boolean ourForceOpenInExistingProjectFlag;
+  private static final ThreadLocal<LightEditCommandLineOptions> ourCommandLineOptions = new ThreadLocal<>();
+
+  public static final Key<Boolean> SUGGEST_SWITCH_TO_PROJECT = Key.create("light.edit.suggest.project.switch");
+
+  public static final String PROJECT_NAME = "LightEditProject";
 
   private LightEditUtil() {
   }
 
-  @Nullable
-  public static Project openFile(@NotNull Path path) {
+  public static @Nullable Project openFile(@NotNull Path path, boolean suggestSwitchToProject) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
-      Project project = LightEditService.getInstance().openFile(virtualFile, false);
-      if (project != null) {
-        LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
-        return project;
+      if (virtualFile.isDirectory()){
+        return null; // directories cannot be opened in LightEditMode at the moment
       }
+      if (suggestSwitchToProject) {
+        virtualFile.putUserData(SUGGEST_SWITCH_TO_PROJECT, true);
+      }
+      Project project = LightEditService.getInstance().openFile(virtualFile);
+      LightEditFeatureUsagesUtil.logFileOpen(project, CommandLine);
+      return project;
     }
     else {
       return handleNonExisting(path);
     }
-    return null;
   }
 
   private static @Nullable Project handleNonExisting(@NotNull Path path) {
@@ -95,13 +107,24 @@ public final class LightEditUtil {
     return null;
   }
 
-  public static boolean isOpenInExistingProject() {
-    return ourForceOpenInExistingProjectFlag &&
-           ProjectManager.getInstance().getOpenProjects().length > 0;
+  /**
+   * @param file file opened in the editor
+   * @return target path of non-existent file that was opened in IDE
+   */
+  public static @Nullable Path getPreferredSavePathForNonExistentFile(@NotNull VirtualFile file) {
+    if (file instanceof LightVirtualFile) {
+      LightEditorInfo editorInfo = ContainerUtil.getFirstItem(LightEditService.getInstance().getEditorManager().getEditors(file));
+      return editorInfo != null ? editorInfo.getPreferredSavePath() : null;
+    }
+    return null;
   }
 
-  @Nullable
-  public static Project getProjectIfCreated() {
+  public static boolean isForceOpenInLightEditMode() {
+    LightEditCommandLineOptions options = getCommandLineOptions();
+    return options != null && options.myLightEditMode;
+  }
+
+  public static @Nullable Project getProjectIfCreated() {
     return LightEditService.getInstance().getProject();
   }
 
@@ -157,13 +180,16 @@ public final class LightEditUtil {
     }
   }
 
-  static boolean isLightEditEnabled() {
-    return Registry.is(ENABLED_FILE_OPEN_KEY) && !PlatformUtils.isDataGrip();
+  public static boolean isLightEditEnabled() {
+    return Registry.is(ENABLED_FILE_OPEN_KEY) &&
+           !PlatformUtils.isDataGrip() &&
+           !PlatformUtils.isGoIde() &&
+           !PlatformUtils.isJetBrainsClient() &&
+           !AppMode.isRemoteDevHost();
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static EmptyCompletionNotifier createEmptyCompletionNotifier() {
+  public static @NotNull EmptyCompletionNotifier createEmptyCompletionNotifier() {
     return new EmptyCompletionNotifier() {
       @Override
       public void showIncompleteHint(@NotNull Editor editor, @NotNull @NlsContexts.HintText String text, boolean isDumbMode) {
@@ -183,17 +209,11 @@ public final class LightEditUtil {
     };
   }
 
-  @Nullable
-  public static EditorWithProviderComposite findEditorComposite(@NotNull VirtualFile virtualFile) {
-    return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(virtualFile);
+  public static @Nullable EditorComposite findEditorComposite(@NotNull FileEditor fileEditor) {
+    return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(fileEditor);
   }
 
-  public static void setForceOpenInExistingProject(boolean openInExistingProject) {
-    ourForceOpenInExistingProjectFlag = openInExistingProject;
-  }
-
-  @Nullable
-  public static VirtualFile getPreferredSaveTarget(@NotNull LightEditorInfo editorInfo) {
+  public static @Nullable VirtualFile getPreferredSaveTarget(@NotNull LightEditorInfo editorInfo) {
     if (editorInfo.isNew()) {
       Path preferredPath = editorInfo.getPreferredSavePath();
       if (preferredPath != null) {
@@ -206,8 +226,7 @@ public final class LightEditUtil {
     return null;
   }
 
-  @NotNull
-  public static Project requireLightEditProject(@Nullable Project project) {
+  public static @NotNull Project requireLightEditProject(@Nullable Project project) {
     if (project == null || !LightEdit.owns(project)) {
       LOG.error("LightEdit project is expected while " + (project != null ? project.getName() : "no project") + " is used instead");
       throw new IllegalStateException("Missing LightEdit project");
@@ -215,8 +234,49 @@ public final class LightEditUtil {
     return project;
   }
 
-  @NotNull
-  static Project requireProject() {
+  public static void forbidServiceInLightEditMode(@Nullable Project project, @NotNull Class<?> serviceClass) {
+    if (LightEdit.owns(project)) {
+      LOG.error("LightEdit mode lacks tool windows, so " + serviceClass.getName() + " shouldn't be instantiated there. " +
+                "Please change the caller to avoid loading the service in LightEdit mode!");
+    }
+  }
+
+  public static @NotNull Project requireProject() {
     return requireLightEditProject(LightEditService.getInstance().getProject());
+  }
+
+  public static @NotNull AutoCloseable computeWithCommandLineOptions(boolean shouldWait, boolean lightEditMode) {
+    ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait, lightEditMode));
+    return () -> ourCommandLineOptions.remove();
+  }
+
+  public static void useCommandLineOptions(boolean shouldWait,
+                                           boolean lightEditMode,
+                                           @NotNull Disposable disposable) {
+    ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait, lightEditMode));
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ourCommandLineOptions.remove();
+      }
+    });
+  }
+
+  static @Nullable LightEditCommandLineOptions getCommandLineOptions() {
+    return ourCommandLineOptions.get();
+  }
+
+  static final class LightEditCommandLineOptions {
+    private final boolean myShouldWait;
+    private final boolean myLightEditMode;
+
+    LightEditCommandLineOptions(boolean shouldWait, boolean lightEditMode) {
+      myShouldWait = shouldWait;
+      myLightEditMode = lightEditMode;
+    }
+
+    public boolean shouldWait() {
+      return myShouldWait;
+    }
   }
 }

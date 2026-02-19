@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.inspections;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -26,14 +25,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
-import org.intellij.plugins.relaxNG.compact.psi.*;
+import org.intellij.plugins.relaxNG.compact.psi.RncDefine;
+import org.intellij.plugins.relaxNG.compact.psi.RncElement;
+import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
+import org.intellij.plugins.relaxNG.compact.psi.RncFile;
+import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 public abstract class BaseInspection extends XmlSuppressableInspectionTool {
-
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {
@@ -100,9 +106,8 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
 
   private SuppressQuickFix[] getXmlOnlySuppressions(PsiElement element) {
     return ContainerUtil.map(super.getBatchSuppressActions(element), action -> new SuppressQuickFix() {
-      @NotNull
       @Override
-      public String getName() {
+      public @NotNull String getName() {
         return action.getName();
       }
 
@@ -120,8 +125,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return action.getFamilyName();
       }
 
@@ -167,8 +171,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  @NotNull
-  public abstract RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
+  public abstract @NotNull RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
 
   private abstract class SuppressAction implements SuppressQuickFix {
     private final String myLocation;
@@ -177,15 +180,13 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
       myLocation = location;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return RelaxngBundle.message("relaxng.suppress.action.name", myLocation);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getDisplayName();
     }
 

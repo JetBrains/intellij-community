@@ -10,7 +10,7 @@ class Target private constructor(val url: Url?, val file: File?, pegRevision: Re
   fun isFile(): Boolean = file != null
   fun isUrl(): Boolean = url != null
 
-  override fun toString(): String = path + '@' + pegRevision
+  override fun toString(): String = "$path@$pegRevision"
 
   companion object {
     @JvmStatic

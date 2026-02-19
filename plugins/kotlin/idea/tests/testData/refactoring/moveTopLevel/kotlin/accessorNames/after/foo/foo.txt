@@ -1,0 +1,9 @@
+bar.topVar
+bar.BarKt.getTopVar
+bar.BarKt.setTopVar
+bar.topFun
+bar.BarKt.topFun
+bar.BarKt.isTrue
+bar.BarKt.setTrue
+foo.FooKt.setIsTrue // Does not exist and should not be changed
+foo.FooKt.getIsTrue // Does not exist and should not be changed

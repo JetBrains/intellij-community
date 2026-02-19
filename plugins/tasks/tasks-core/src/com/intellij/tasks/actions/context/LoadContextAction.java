@@ -2,9 +2,13 @@
 
 package com.intellij.tasks.actions.context;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
@@ -17,7 +21,6 @@ import com.intellij.tasks.context.LoadContextUndoableAction;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -25,7 +28,9 @@ import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -47,7 +52,7 @@ public class LoadContextAction extends BaseTaskAction {
     final WorkingContextManager manager = WorkingContextManager.getInstance(project);
     List<ContextInfo> history = manager.getContextHistory();
     List<ContextHolder> infos =
-      new ArrayList<>(ContainerUtil.map2List(history, (Function<ContextInfo, ContextHolder>)info -> new ContextHolder() {
+      new ArrayList<>(ContainerUtil.map(history, info -> new ContextHolder() {
         @Override
         void load(final boolean clear) {
           LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
@@ -127,29 +132,33 @@ public class LoadContextAction extends BaseTaskAction {
       group.add(createItem(info, shiftPressed));
     }
 
-    final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance()
+    ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(TaskBundle.message("popup.title.load.context"), group, e.getDataContext(), false, null, MAX_ROW_COUNT);
-    popup.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"));
-    popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        shiftPressed.set(true);
-        popup.setCaption(TaskBundle.message("popup.title.merge.with.current.context"));
-      }
-    });
-    popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        shiftPressed.set(false);
-        popup.setCaption(TaskBundle.message("popup.title.load.context"));
-      }
-    });
-    popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        popup.handleSelect(true);
-      }
-    });
+    var popupImpl = (popup instanceof ListPopupImpl) ? (ListPopupImpl)popup : null;
+    if (popupImpl != null) {
+      //todo: RDCT-627
+      popupImpl.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"));
+      popupImpl.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          shiftPressed.set(true);
+          popup.setCaption(TaskBundle.message("popup.title.merge.with.current.context"));
+        }
+      });
+      popupImpl.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          shiftPressed.set(false);
+          popup.setCaption(TaskBundle.message("popup.title.load.context"));
+        }
+      });
+      popupImpl.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          popup.handleSelect(true);
+        }
+      });
+    }
     popup.showCenteredInCurrentWindow(project);
   }
 
@@ -190,14 +199,9 @@ public class LoadContextAction extends BaseTaskAction {
             }
           }};
       }
-
-      @Override
-      public boolean canBePerformed(@NotNull DataContext context) {
-        return true;
-      }
-
     };
     contextGroup.setPopup(true);
+    contextGroup.getTemplatePresentation().setPerformGroup(true);
     return contextGroup;
   }
 }

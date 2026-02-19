@@ -1,30 +1,63 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import junit.framework.TestCase;
-import one.util.streamex.IntStreamEx;
-import org.junit.Assert;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
 
-public class ContainerUtilTest extends TestCase {
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+@SuppressWarnings("SSBasedInspection")
+public class ContainerUtilTest {
   private static final Logger LOG = Logger.getInstance(ContainerUtilTest.class);
-  public void testFindInstanceOf() {
+
+  @Test
+  public void testFindInstanceWorks() {
     Iterator<Object> iterator = Arrays.<Object>asList(1, new ArrayList<>(), "1").iterator();
     String string = ContainerUtil.findInstance(iterator, String.class);
     assertEquals("1", string);
   }
 
-  public void testConcatTwo() {
+  @Test
+  public void testConcatTwoListsMustSupportListContracts() {
     Iterable<Object> concat = ContainerUtil.concat(Collections.emptySet(), Collections.emptySet());
     assertFalse(concat.iterator().hasNext());
     Iterable<Object> foo = ContainerUtil.concat(Collections.emptySet(), Collections.singletonList("foo"));
@@ -46,7 +79,8 @@ public class ContainerUtilTest extends TestCase {
     assertFalse(iterator.hasNext());
   }
 
-  public void testConcatMulti() {
+  @Test
+  public void testConcatMultipleListsWorks() {
     List<Integer> l = ContainerUtil.concat(Arrays.asList(1, 2), Collections.emptyList(), Arrays.asList(3, 4));
     assertEquals(4, l.size());
     assertEquals(1, (int)l.get(0));
@@ -55,6 +89,7 @@ public class ContainerUtilTest extends TestCase {
     assertEquals(4, (int)l.get(3));
 
     try {
+      //noinspection ResultOfMethodCallIgnored
       l.get(-1);
       fail();
     }
@@ -62,6 +97,7 @@ public class ContainerUtilTest extends TestCase {
     }
 
     try {
+      //noinspection ResultOfMethodCallIgnored
       l.get(4);
       fail();
     }
@@ -69,7 +105,8 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
-  public void testConcatCME() {
+  @Test
+  public void testConcatenatedListsAfterModificationMustThrowCME() {
     List<Integer> a1 = new ArrayList<>(Arrays.asList(0, 1));
     List<Integer> l = ContainerUtil.concat(a1, Arrays.asList(2, 3), ContainerUtil.emptyList());
     assertEquals(4, l.size());
@@ -80,6 +117,7 @@ public class ContainerUtilTest extends TestCase {
 
     try {
       a1.clear();
+      //noinspection ResultOfMethodCallIgnored
       l.get(3);
       fail();
     }
@@ -87,6 +125,57 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
+  private static Future<?> modifyListUntilStopped(List<Integer> list, AtomicBoolean stopped) {
+    return AppExecutorUtil.getAppExecutorService().submit(()-> {
+       // simple random generator (may overflow)
+       for (int seed = 13; !stopped.get(); seed += 907) {
+         // random [0-31] (sign clipped)
+         int rand = (seed^(seed>>5)) & 0x1f;
+
+         // grow or shrink the list randomly.
+         if (rand < list.size()) {
+           list.remove(rand);
+         }
+         else {
+           list.add(seed);
+         }
+       }
+     });
+  }
+
+  private static List<Integer> createSequentialList(@SuppressWarnings("SameParameterValue") int size) {
+    return ContainerUtil.createLockFreeCopyOnWriteList(IntStream.range(0, size).boxed().toList());
+  }
+
+  @Test
+  public void testConcatenatedDynamicListsAreIterableEvenWhenTheyAreChangingDuringIteration() throws Exception {
+    List<Integer> list1 = createSequentialList(32);
+    List<Integer> list2 = createSequentialList(32);
+    List<Integer> concat = ContainerUtil.concat(list1, list2);
+
+    AtomicBoolean stop = new AtomicBoolean(false);
+    Future<?> future1 = modifyListUntilStopped(list1, stop);
+    Future<?> future2 = modifyListUntilStopped(list2, stop);
+    try {
+      long count = 0;
+      long until = System.currentTimeMillis() + 1000;
+      while (System.currentTimeMillis() < until) {
+        for (Integer value : concat) {
+           count += value;
+        }
+        // must work on streams (even parallel), too.
+        count += concat.parallelStream().count();
+      }
+      System.out.println("count: " + count);
+    }
+    finally {
+      stop.set(true); // finally stop even in case of an error
+      future1.get();
+      future2.get();
+    }
+  }
+
+  @Test
   public void testIterateWithCondition() {
     Condition<Integer> cond = integer -> integer > 2;
 
@@ -97,10 +186,11 @@ public class ContainerUtilTest extends TestCase {
   }
 
   private static void assertIterating(List<Integer> collection, Condition<? super Integer> condition, Integer... expected) {
-    List<Integer> actual = ContainerUtil.newArrayList(ContainerUtil.iterate(collection, condition));
+    List<Integer> actual = ContainerUtil.filter(collection, condition);
     assertEquals(Arrays.asList(expected), actual);
   }
 
+  @Test
   public void testIteratingBackward() {
     List<String> ss = new ArrayList<>();
     ss.add("a");
@@ -116,13 +206,16 @@ public class ContainerUtilTest extends TestCase {
       log.append(s);
     }
 
+    //noinspection SpellCheckingInspection
     assertEquals("abccba", log.toString());
   }
 
+  @PerformanceUnitTest
+  @Test
   public void testLockFreeSingleThreadPerformance() {
-    final List<Object> stock = new CopyOnWriteArrayList<>();
+    List<Object> stock = new CopyOnWriteArrayList<>();
     measure(stock);
-    final List<Object> my = new LockFreeCopyOnWriteArrayList<>();
+    List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
     measure(my);
     measure(stock);
     measure(my); // warm up
@@ -141,6 +234,7 @@ public class ContainerUtilTest extends TestCase {
       list.add(this);
       list.remove(this);
       list.add(this);
+      //noinspection SequencedCollectionMethodCanBeUsed
       list.remove(0);
     }
     long finish = System.currentTimeMillis();
@@ -148,17 +242,19 @@ public class ContainerUtilTest extends TestCase {
     return finish - start;
   }
 
+  @Test
   public void testLockFreeCOWDoesNotCreateEmptyArrays() {
-    LockFreeCopyOnWriteArrayList<Object> my = (LockFreeCopyOnWriteArrayList<Object>)ContainerUtil.createLockFreeCopyOnWriteList();
+    List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
 
     for (int i = 0; i < 2; i++) {
-      Object[] array = my.getArray();
-      assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, array);
+      Object[] array = ReflectionUtil.getField(my.getClass(), my, Object[].class, "array");
+      assertSame(ArrayUtil.EMPTY_OBJECT_ARRAY, array);
       assertReallyEmpty(my);
       my.add(this);
       my.remove(this);
       assertReallyEmpty(my);
       my.add(this);
+      //noinspection SequencedCollectionMethodCanBeUsed
       my.remove(0);
       assertReallyEmpty(my);
       my.add(this);
@@ -167,33 +263,36 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
+  @PerformanceUnitTest
+  @Test
   public void testCOWListPerformanceAdd() {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();
     int count = 15000;
-    List<Integer> ints = IntStreamEx.range(0, count).boxed().toList();
-    PlatformTestUtil.startPerformanceTest("COWList add", 4500, () -> {
+    List<Integer> ints = IntStream.range(0, count).boxed().toList();
+    Benchmark.newBenchmark("COWList add", () -> {
       for (int it = 0; it < 10; it++) {
         list.clear();
         for (int i = 0; i < count; i++) {
           list.add(ints.get(i));
         }
       }
-    }).reattemptUntilJitSettlesDown().assertTiming();
+    }).start();
     for (int i = 0; i < list.size(); i++) {
       assertEquals(i, list.get(i));
     }
   }
 
-  private static void assertReallyEmpty(List<Object> my) {
+  private static void assertReallyEmpty(List<?> my) {
     assertEquals(0, my.size());
 
     Object[] objects = my.toArray();
-    assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, objects);
+    assertSame(ArrayUtil.EMPTY_OBJECT_ARRAY, objects);
 
-    Iterator<Object> iterator = my.iterator();
+    Iterator<?> iterator = my.iterator();
     assertSame(Collections.emptyIterator(), iterator);
   }
 
+  @Test
   public void testIdenticalItemsInLockFreeCOW() {
     List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("a", "b"));
     list.add("a");
@@ -204,9 +303,10 @@ public class ContainerUtilTest extends TestCase {
     assertEquals(1, list.size());
   }
 
+  @Test
   public void testLockFreeCOWIteratorRemove() {
     List<String> seq = Arrays.asList("0", "1", "2", "3", "4");
-    LockFreeCopyOnWriteArrayList<String> my = (LockFreeCopyOnWriteArrayList<String>)ContainerUtil.createLockFreeCopyOnWriteList(seq);
+    List<String> my = ContainerUtil.createLockFreeCopyOnWriteList(seq);
     {
       Iterator<String> iterator = my.iterator();
       try {
@@ -241,13 +341,40 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
+  @Test
+  public void testLockFreeCOWReplaceAll_Stress() {
+    int N = 500 * ForkJoinPool.getCommonPoolParallelism();
+    List<Integer> list = ContainerUtil.createLockFreeCopyOnWriteList(IntStream.range(0, N).mapToObj(__->0).toList());
+    list.stream().parallel().forEach(__->list.replaceAll(i-> i + 1));
+    assertEquals(N*N, list.stream().mapToInt(i -> i).sum());
+  }
+
+  @Test
+  public void testLockFreeListStreamMustNotCMEOnParallelModifications() throws Exception {
+    List<String> list = ContainerUtil.createLockFreeCopyOnWriteList();
+    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(
+      () -> {
+        for (int i = 0; i < 100_000_000; i++) {
+          list.add("");
+          list.remove("");
+        }
+      });
+    for (int i = 0; i < 100_000_000; i++) {
+      assertNotNull(list.stream().findFirst());
+    }
+    future.get();
+    assertReallyEmpty(list);
+  }
+
+  @Test
   public void testImmutableListEquals() {
     String value = "stringValue";
-    List<String> expected = ContainerUtil.immutableList(value);
-    List<String> actual = ContainerUtil.newArrayList(value);
+    List<String> expected = Collections.singletonList(value);
+    List<String> actual = List.of(value);
     assertEquals(expected, actual);
   }
 
+  @Test
   public void testMergeSortedLists() {
     List<Segment> target = new ArrayList<>(Arrays.asList(
       range(0, 0),
@@ -279,14 +406,14 @@ public class ContainerUtilTest extends TestCase {
       range(6, 6)
     ), target);
     target = mergeSegmentLists(target, Arrays.asList(
-      range(-1, -1),
+      range(-2, -3),
       range(-1, -2),
-      range(-2, -3)
+      range(-1, -1)
     ));
     assertEquals(Arrays.asList(
-      range(-1, -1),
-      range(-1, -2),
       range(-2, -3),
+      range(-1, -2),
+      range(-1, -1),
       range(0, 0),
       range(1, 1),
       range(2, 2),
@@ -300,10 +427,11 @@ public class ContainerUtilTest extends TestCase {
     return new UnfairTextRange(start, end);
   }
 
-  private static List<Segment> mergeSegmentLists(List<Segment> list1, List<Segment> list2) {
+  private static List<Segment> mergeSegmentLists(List<? extends Segment> list1, List<? extends Segment> list2) {
     return ContainerUtil.mergeSortedLists(list1, list2, Segment.BY_START_OFFSET_THEN_END_OFFSET, true);
   }
 
+  @Test
   public void testMergeSortedArrays() {
     List<Integer> list1 = Collections.singletonList(0);
     List<Integer> list2 = Collections.singletonList(4);
@@ -312,22 +440,212 @@ public class ContainerUtilTest extends TestCase {
     m = ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true);
     assertEquals(Arrays.asList(0, 4), m);
   }
+  @Test
+  public void testWhenMergeSortedArraysButTheyAreActuallyUnsortedTheExceptionMustBeThrown() {
+    List<Integer> list1 = Arrays.asList(5, 4);
+    List<Integer> list2 = Arrays.asList(4, 5);
+    assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list1, list2, Comparator.naturalOrder(), true));
+    assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true));
+    assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list1, List.of(), Comparator.naturalOrder(), true));
+    assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(List.of(), list1, Comparator.naturalOrder(), true));
+  }
 
+  @Test
   public void testMergeSortedArrays2() {
     int[] a1 = {0, 4};
     int[] a2 = {4};
     int[] m = ArrayUtil.mergeSortedArrays(a1, a2, true);
-    Assert.assertArrayEquals(new int[]{0, 4}, m);
+    assertArrayEquals(new int[]{0, 4}, m);
     m = ArrayUtil.mergeSortedArrays(a2, a1, true);
-    Assert.assertArrayEquals(new int[]{0, 4}, m);
+    assertArrayEquals(new int[]{0, 4}, m);
   }
 
-  public void testImmutableListSubList() {
-    List<Integer> list = ContainerUtil.immutableList(0, 1, 2, 3, 4);
-    List<Integer> subList = list.subList(1, 4);
-    UsefulTestCase.assertOrderedEquals(subList, 1, 2, 3);
-    List<Integer> subSubList = subList.subList(1, 2);
-    UsefulTestCase.assertOrderedEquals(subSubList, 2);
-    assertEquals(new ArrayList<>(subSubList), subSubList);
+  @Test
+  public void testFlatMap() {
+    List<Integer> list = ContainerUtil.flatMap(List.of(0, 1), i->List.of(i,i));
+    assertEquals(List.of(0,0,1,1), list);
+  }
+
+  @Test
+  public void testCOWRemoveIf() {
+    {
+      List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("a", "b"));
+      assertTrue(list.removeIf(e -> e.length() == 1));
+      assertReallyEmpty(list);
+    }
+
+    {
+      List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("a", "bb"));
+      assertTrue(list.removeIf(e -> e.length() == 1));
+      Assertions.assertThat(list).containsExactly("bb");
+    }
+    {
+      List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("aa", "b"));
+      assertTrue(list.removeIf(e -> e.length() == 1));
+      Assertions.assertThat(list).containsExactly("aa");
+    }
+    {
+      List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("aa", "bb"));
+      assertFalse(list.removeIf(e -> e.length() == 1));
+      assertEquals(2, list.size());
+    }
+  }
+
+  @Test
+  public void testAggregateFunctionsReturnReallyUnmodifiableCollections() {
+    ContainerUtil.Options.RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE = true; // in case the test was started without ApplicationImpl init
+    assertUnmodifiable(ContainerUtil.append(new ArrayList<>(Arrays.asList(1, 2)), 3));
+    assertUnmodifiable(ContainerUtil.append(new ArrayList<>(Arrays.asList(1, 2)), 3, 4));
+    assertUnmodifiable(ContainerUtil.classify(List.of("a", "b").iterator(), s-> s));
+    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator()));
+    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator(), Conditions.alwaysTrue()));
+    assertUnmodifiable(ContainerUtil.collect(new ArrayList<>(Arrays.asList("a", "b")).iterator(), new FilteringIterator.InstanceOf<>(String.class)));
+    assertUnmodifiable(ContainerUtil.concat(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2))));
+    assertUnmodifiable(ContainerUtil.concat(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2))));
+    assertUnmodifiable(ContainerUtil.concat(List.of(new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)), new ArrayList<>(Arrays.asList(1, 2)))));
+    assertUnmodifiable(ContainerUtil.concat(new String[]{"a","b"}, s->List.of(s, s)));
+    assertUnmodifiable(ContainerUtil.copyList(new ArrayList<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.diff(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("f", "c"))));
+    assertUnmodifiable(ContainerUtil.emptyList());
+    assertUnmodifiable(ContainerUtil.findAll(new String[]{"a","b"}, s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.findAll(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.findAll(new ArrayList<>(Arrays.asList("a", "b")), String.class));
+    assertUnmodifiable(ContainerUtil.findAll(new String[]{"a","b"}, String.class));
+    assertUnmodifiable(ContainerUtil.filter(new String[]{"a","b"}, s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.filter(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.filter(new HashMap<>(Map.of("a", "b")), s-> s != null));
+    assertUnmodifiable(ContainerUtil.filterIsInstance(new String[]{"a","b"}, String.class));
+    assertUnmodifiable(ContainerUtil.filterIsInstance(new ArrayList<>(Arrays.asList("a", "b")), String.class));
+    assertUnmodifiable(ContainerUtil.flatMap(List.of(1, 2, 3 ), t->List.of(t, t)));
+    //noinspection unchecked
+    assertUnmodifiable(ContainerUtil.flatten(new Collection[]{new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))}));
+    assertUnmodifiable(ContainerUtil.flatten(List.of(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b")))));
+    assertUnmodifiable(ContainerUtil.intersection(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.intersection(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("a", "b"))));
+    assertUnmodifiable(ContainerUtil.mergeSortedLists(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b")), String::compareTo, true));
+    assertUnmodifiable(ContainerUtil.map(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.map((Iterable<String>)new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.map(new ArrayList<>(Arrays.asList("a", "b")).iterator(), s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.map(new String[]{"a","b"}, s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.map2LinkedSet(new ArrayList<>(Arrays.asList("a", "b")), t->t));
+    assertUnmodifiable(ContainerUtil.map2Map(List.of("a", "b"), s-> Pair.create(s, s)));
+    assertUnmodifiable(ContainerUtil.map2Map(List.of(Pair.create("a", "b"), Pair.create("c", "e"))));
+    assertUnmodifiable(ContainerUtil.map2Map(new String[]{"a", "b"}, s-> Pair.create(s, s)));
+    assertUnmodifiable(ContainerUtil.map2MapNotNull(List.of("a", "b"), s-> Pair.create(s, s)));
+    assertUnmodifiable(ContainerUtil.map2MapNotNull(new String[]{"a", "b"}, s-> Pair.create(s, s)));
+    assertUnmodifiable(ContainerUtil.map2Set(new ArrayList<>(Arrays.asList("a", "b")), t->t));
+    assertUnmodifiable(ContainerUtil.map2Set(new String[]{"a","b"}, t->t));
+    assertUnmodifiable(ContainerUtil.map2SetNotNull(new ArrayList<>(Arrays.asList("a", "b")), t->t));
+    assertUnmodifiable(ContainerUtil.mapNotNull(new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.mapNotNull((Iterable<String>)new ArrayList<>(Arrays.asList("a", "b")), s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.mapNotNull(new String[]{"a","b"}, s->!s.isEmpty()));
+    assertUnmodifiable(ContainerUtil.newMapFromKeys(Arrays.asList("a", "b").iterator(), k->k));
+    assertUnmodifiable(ContainerUtil.newMapFromValues(Arrays.asList("a", "b").iterator(), k->k));
+    assertUnmodifiable(ContainerUtil.notNullize(new HashSet<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.notNullize(new ArrayList<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.notNullize(new HashMap<>(Map.of("a", "b"))));
+    assertUnmodifiable(ContainerUtil.packNullables("a", "b"));
+    assertUnmodifiable(ContainerUtil.prepend(new ArrayList<>(Arrays.asList("a", "b")), "c"));
+    assertUnmodifiable(ContainerUtil.reverse(new ArrayList<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.skipNulls(new ArrayList<>(Arrays.asList(1, 2))));
+    assertUnmodifiable(ContainerUtil.skipNulls(new ArrayList<>(Arrays.asList(1, 2, null))));
+    assertUnmodifiable(ContainerUtil.sorted(new ArrayList<>(Arrays.asList(1, 2))));
+    assertUnmodifiable(ContainerUtil.sorted(new ArrayList<>(Arrays.asList(1, 2)), Comparator.comparingInt(t -> t.hashCode())));
+    assertUnmodifiable(ContainerUtil.sorted((Iterable<Integer>)new ArrayList<>(Arrays.asList(1, 2)), Comparator.comparingInt(t -> t.hashCode())));
+    assertUnmodifiable(ContainerUtil.subArrayAsList(new String[]{"a","b"}, 0, 1));
+    assertUnmodifiable(ContainerUtil.toList(new StringTokenizer("xxx")));
+    assertUnmodifiable(ContainerUtil.union(new HashSet<>(Arrays.asList("a", "b")), new HashSet<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.union(new ArrayList<>(Arrays.asList("a", "b")), new ArrayList<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.union(new HashMap<>(Map.of("a", "b")), new HashMap<>(Map.of("a", "b"))));
+    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptyList(new ArrayList<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptySet(new HashSet<>(Arrays.asList("a", "b"))));
+    assertUnmodifiable(ContainerUtil.unmodifiableOrEmptyMap(new HashMap<>(Map.of("a", "b"))));
+  }
+
+  private static <K, V> void assertUnmodifiable(Map<K, V> map) {
+    assertFalse(map.isEmpty());
+    assertThrowsUOE(map, () -> map.clear());
+    assertThrowsUOE(map, ()->map.put(null, null));
+    assertThrowsUOE(map, ()->map.putIfAbsent(null, null));
+    assertThrowsUOE(map, ()->map.putAll(new HashMap<>(map)));
+    assertThrowsUOE(map, ()->map.remove(null));
+    assertThrowsUOE(map, ()->map.remove(null, null));
+    assertThrowsUOE(map, ()->map.computeIfAbsent(null, __->null));
+    assertThrowsUOE(map, ()->map.compute(null, (__, ___)->null));
+    assertThrowsUOE(map, ()->map.computeIfPresent(null, (__, ___)->null));
+    assertThrowsUOE(map, ()->map.computeIfAbsent(null, __->null));
+    assertThrowsUOE(map, ()->map.replaceAll((__, ___)->null));
+    assertThrowsUOE(map, ()->map.replace(null, null));
+    assertThrowsUOE(map, ()->map.replace(null, null, null));
+    //noinspection DataFlowIssue
+    assertThrowsUOE(map, ()->map.merge(null, null, (__, ___)->null));
+    assertThrowsUOE(map, ()->map.merge(null, map.values().iterator().next(), (__, ___)->null));
+    assertThrowsUOE(map, ()->map.merge(map.keySet().iterator().next(), map.values().iterator().next(), (__, ___)->null));
+    //noinspection RedundantCollectionOperation
+    assertThrowsUOE(map, ()-> map.keySet().clear());
+    //noinspection RedundantCollectionOperation
+    assertThrowsUOE(map, ()-> map.keySet().remove(map.keySet().iterator().next()));
+    //noinspection RedundantCollectionOperation
+    assertThrowsUOE(map, ()-> map.values().clear());
+    assertThrowsUOE(map, ()-> map.values().remove(map.values().iterator().next()));
+    assertThrowsUOE(map, ()-> {
+      Iterator<Map.Entry<K, V>> iterator = map.entrySet().iterator();
+      iterator.next();
+      iterator.remove();
+    });
+    //noinspection RedundantCollectionOperation
+    assertThrowsUOE(map, ()-> map.entrySet().clear());
+  }
+
+  private static void assertThrowsUOE(Collection<?> collection, ThrowingRunnable runnable) {
+    int sizeBefore = collection.size();
+    assertThrows(UnsupportedOperationException.class, runnable);
+    assertEquals(sizeBefore, collection.size());
+  }
+
+  private static void assertThrowsUOE(Map<?, ?> collection, ThrowingRunnable runnable) {
+    int sizeBefore = collection.size();
+    assertThrows(UnsupportedOperationException.class, runnable);
+    assertEquals(sizeBefore, collection.size());
+  }
+
+  private static <T> void assertUnmodifiable(Collection<T> collection) {
+    //noinspection SizeReplaceableByIsEmpty
+    assertEquals(collection.size() ==0, collection.isEmpty());
+    assertThrowsUOE(collection, ()->collection.add(null));
+    assertThrowsUOE(collection, ()->collection.add(collection.isEmpty() ? null : collection.iterator().next()));
+    assertThrowsUOE(collection, ()->collection.addAll(Arrays.asList(null, null)));
+    assertThrowsUOE(collection, ()->collection.clear());
+    if (!collection.isEmpty()) {
+      assertThrowsUOE(collection, () -> {
+        Iterator<T> iterator = collection.iterator();
+        iterator.next();
+        iterator.remove();
+      });
+    }
+    assertThrowsUOE(collection, ()->collection.remove(collection.isEmpty() ? null : collection.iterator().next()));
+    assertThrowsUOE(collection, ()->collection.removeAll(new ArrayList<>(collection)));
+    assertThrowsUOE(collection, ()->collection.removeIf(__->true));
+    assertThrowsUOE(collection, ()->collection.retainAll(Collections.<T>emptyList()));
+    assertThrowsUOE(collection, ()->collection.retainAll(Arrays.<T>asList(null, null)));
+    if (collection instanceof List<T> list) {
+      //noinspection SequencedCollectionMethodCanBeUsed
+      assertThrowsUOE(collection, ()->list.add(0, null));
+      assertThrowsUOE(collection, ()->list.addAll(0, new ArrayList<>(collection)));
+      if (!list.isEmpty()) {
+        assertThrowsUOE(collection, ()->{
+          ListIterator<T> iterator = list.listIterator();
+          iterator.next();
+          iterator.remove();
+          iterator.add(collection.isEmpty() ? null : collection.iterator().next());
+          iterator.set(collection.isEmpty() ? null : collection.iterator().next());
+        });
+      }
+      if (list.getClass() != Collections.singletonList(1).getClass()) { //Collections.singletonList() does not throw for some reason
+        assertThrowsUOE(collection, ()->list.sort(null));
+      }
+      assertThrowsUOE(collection, ()->list.replaceAll(t->t));
+      assertThrowsUOE(collection, ()->list.set(0, null));
+    }
   }
 }

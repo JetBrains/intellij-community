@@ -1,203 +1,168 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.dvcs.branch.isGroupingEnabled
-import com.intellij.dvcs.branch.setGrouping
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import git4idea.GitDisposable
+import git4idea.GitLocalBranch
+import git4idea.GitNotificationIdsHolder.Companion.BRANCHES_UPDATE_SUCCESSFUL
+import git4idea.GitReference
 import git4idea.GitUtil
-import git4idea.GitVcs
-import git4idea.branch.GitBrancher
+import git4idea.branch.GitBranchPair
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitNewBranchDialog
-import git4idea.branch.GitNewBranchOptions
 import git4idea.config.GitVcsSettings
+import git4idea.fetch.GitFetchResult
+import git4idea.fetch.GitFetchSpec
 import git4idea.fetch.GitFetchSupport
-import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.update.GitUpdateExecutionProcess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.Icon
 
-object L {
-  val LOG: Logger = Logger.getInstance(L::class.java)
-}
-
-internal fun checkCommitsUnderProgress(project: Project,
-                                       repositories: List<GitRepository>,
-                                       startRef: String,
-                                       branchName: String): Boolean =
-  ProgressManager.getInstance().runProcessWithProgressSynchronously<Boolean, RuntimeException>({
-                                                                                                 checkCommitsBetweenRefAndBranchName(
-                                                                                                   project, repositories, startRef,
-                                                                                                   branchName)
-                                                                                               }, GitBundle.message(
-    "branches.checking.existing.commits.process"), true, project)
-
-private fun checkCommitsBetweenRefAndBranchName(project: Project,
-                                                repositories: List<GitRepository>,
-                                                startRef: String,
-                                                branchName: String): Boolean {
-  return repositories.any {
-    val existingBranch = it.branches.findLocalBranch(branchName)
-    existingBranch != null && hasCommits(project, it, startRef, existingBranch.name)
-  }
-}
-
-private fun hasCommits(project: Project, repository: GitRepository, startRef: String, endRef: String): Boolean {
-  try {
-    return GitHistoryUtils.collectTimedCommits(project, repository.root, "$startRef..$endRef").isNotEmpty()
-  }
-  catch (ex: VcsException) {
-    L.LOG.warn("Couldn't collect commits in ${repository.presentableUrl} for $startRef..$endRef") // NON-NLS
-    return true
-  }
-}
-
-internal fun checkout(project: Project, repositories: List<GitRepository>, startPoint: String, name: String, withRebase: Boolean) {
-  val brancher = GitBrancher.getInstance(project)
-  val (reposWithLocalBranch, reposWithoutLocalBranch) = repositories.partition { it.branches.findLocalBranch(name) != null }
-  //checkout/rebase existing branch
-  if (reposWithLocalBranch.isNotEmpty()) {
-    if (withRebase) brancher.rebase(reposWithLocalBranch, startPoint, name)
-    else brancher.checkout(name, false, reposWithLocalBranch, null)
-  }
-  //checkout new
-  if (reposWithoutLocalBranch.isNotEmpty()) brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null)
-}
-
-internal fun checkoutOrReset(project: Project,
-                             repositories: List<GitRepository>,
-                             startPoint: String,
-                             newBranchOptions: GitNewBranchOptions) {
-  if (repositories.isEmpty()) return
-  val name = newBranchOptions.name
-  if (!newBranchOptions.reset) {
-    checkout(project, repositories, startPoint, name, false)
-  }
-  else {
-    val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
-    if (hasCommits) {
-      VcsNotifier.getInstance(project)
-        .notifyError("git.branch.checkout.failed",
-                     GitBundle.message("branches.checkout.failed.title"),
-                     GitBundle.message("branches.checkout.failed.description", name))
-      return
-    }
-    val brancher = GitBrancher.getInstance(project)
-    brancher.checkoutNewBranchStartingFrom(name, startPoint, true, repositories, null)
-  }
-}
-
-internal fun createNewBranch(project: Project, repositories: List<GitRepository>, startPoint: String, options: GitNewBranchOptions) {
-  val brancher = GitBrancher.getInstance(project)
-  val name = options.name
-  if (options.reset) {
-    val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
-    if (hasCommits) {
-      VcsNotifier.getInstance(project).notifyError("git.branch.creation.failed",
-                                                   GitBundle.message("branches.creation.failed.title"),
-                                                   GitBundle.message("branches.checkout.failed.description", name))
-      return
-    }
-
-    val (currentBranchOfSameName, currentBranchOfDifferentName) = repositories.partition { it.currentBranchName == name }
-    //git checkout -B for current branch conflict and execute git branch -f for others
-    if (currentBranchOfSameName.isNotEmpty()) {
-      brancher.checkoutNewBranchStartingFrom(name, startPoint, true, currentBranchOfSameName, null)
-    }
-    if (currentBranchOfDifferentName.isNotEmpty()) {
-      brancher.createBranch(name, currentBranchOfDifferentName.associateWith { startPoint }, true)
-    }
-  }
-  else {
-    // create branch for other repos
-    brancher.createBranch(name, repositories.filter { it.branches.findLocalBranch(name) == null }.associateWith { startPoint })
-  }
-}
-
 @JvmOverloads
-internal fun createOrCheckoutNewBranch(project: Project,
-                                       repositories: List<GitRepository>,
-                                       startPoint: String,
-                                       @Nls(capitalization = Nls.Capitalization.Title)
-                                       title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
-                                       initialName: String? = null) {
-  val options = GitNewBranchDialog(project, repositories, title, initialName, true, true, false, true).showAndGetOptions() ?: return
-  if (options.checkout) {
-    checkoutOrReset(project, repositories, startPoint, options)
-  }
-  else {
-    createNewBranch(project, repositories, startPoint, options)
+internal fun createOrCheckoutNewBranch(
+  project: Project,
+  repositories: Collection<GitRepository>,
+  startPoint: String,
+  @Nls(capitalization = Nls.Capitalization.Title)
+  title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
+  initialName: String? = null,
+) {
+  val options = GitNewBranchDialog(project, repositories, title, initialName, showResetOption = true, localConflictsAllowed = true).showAndGetOptions()
+                ?: return
+  GitBranchCheckoutOperation(project, options.repositories).perform(startPoint, options)
+}
+
+internal fun updateBranches(project: Project, repositories: Collection<GitRepository>, localBranchNames: List<String>): Job {
+  return GitDisposable.getInstance(project).coroutineScope.launch {
+    withBackgroundProgress(project, GitBundle.message("branches.updating.process")) {
+      val (fetchTargets, updateProcessTargets) = prepareUpdateTargets(repositories, localBranchNames)
+
+      if (fetchTargets.isNotEmpty()) {
+        fetchBranches(project, fetchTargets, updateHeadOk = false)
+      }
+
+      if (updateProcessTargets.isNotEmpty()) {
+        GitUpdateExecutionProcess.update(project,
+                                         repositories,
+                                         updateProcessTargets,
+                                         GitVcsSettings.getInstance(project).updateMethod,
+                                         false)
+      }
+    }
   }
 }
 
-internal fun updateBranches(project: Project, repositories: List<GitRepository>, localBranchNames: List<String>) {
+@VisibleForTesting
+internal fun prepareUpdateTargets(
+  repositories: Collection<GitRepository>, localBranchNames: List<String>,
+): UpdateTargets {
   val repoToTrackingInfos =
     repositories.associateWith { it.branchTrackInfos.filter { info -> localBranchNames.contains(info.localBranch.name) } }
-  if (repoToTrackingInfos.isEmpty()) return
 
-  GitVcs.runInBackground(object : Task.Backgroundable(project, GitBundle.message("branches.updating.process"), true) {
-    private val successfullyUpdated = arrayListOf<String>()
+  // If a branch is checked out, do update via GitUpdateExecutionProcess
+  val updateProcessTargets = HashMap<GitRepository, GitBranchPair>()
+  // Otherwise, perform fetch using remote:local refspec
+  val fetchTargets = mutableListOf<GitFetchSpec>()
 
-    override fun run(indicator: ProgressIndicator) {
-      val fetchSupport = GitFetchSupport.fetchSupport(project)
-      for ((repo, trackingInfos) in repoToTrackingInfos) {
-        for (trackingInfo in trackingInfos) {
-          val localBranchName = trackingInfo.localBranch.name
-          val remoteBranchName = trackingInfo.remoteBranch.nameForRemoteOperations
-          val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName")
-          try {
-            fetchResult.throwExceptionIfFailed()
-            successfullyUpdated.add(localBranchName)
-          }
-          catch (ignored: VcsException) {
-            fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
-          }
-        }
+  for ((repo, trackingInfos) in repoToTrackingInfos) {
+    val currentBranch = repo.currentBranch
+    for (trackingInfo in trackingInfos) {
+      val localBranch = trackingInfo.localBranch
+      val remoteBranch = trackingInfo.remoteBranch
+      if (localBranch == currentBranch) {
+        updateProcessTargets[repo] = GitBranchPair(currentBranch, remoteBranch)
+      }
+      else {
+        // Fast-forward all non-current branches in the selection
+        val localBranchName = localBranch.name
+        val remoteBranchName = remoteBranch.nameForRemoteOperations
+        fetchTargets.add(GitFetchSpec(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName"))
       }
     }
+  }
 
-    override fun onSuccess() {
-      if (successfullyUpdated.isNotEmpty()) {
-        VcsNotifier.getInstance(myProject).notifySuccess("git.branches.update.successful", "",
-                                                         GitBundle.message("branches.selected.branches.updated.title",
-                                                                                                                            successfullyUpdated.size,
-                                                                           successfullyUpdated.joinToString("\n")))
-      }
-    }
-  })
+  return UpdateTargets(fetchTargets, updateProcessTargets)
 }
 
-internal fun isTrackingInfosExist(branchNames: List<String>, repositories: List<GitRepository>) =
+internal suspend fun fetchBranches(
+  project: Project,
+  fetchTargets: List<GitFetchSpec>,
+  updateHeadOk: Boolean,
+): GitFetchResult {
+  return withContext(Dispatchers.Default) {
+    val specsToFetch = if (updateHeadOk) {
+      fetchTargets.map { it.copy(updateHeadOk = true) }
+    }
+    else {
+      fetchTargets
+    }
+    val result = coroutineToIndicator {
+      GitFetchSupport.fetchSupport(project).fetch(specsToFetch)
+    }
+    val fetchSuccessful = result.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
+    if (fetchSuccessful) {
+      VcsNotifier.getInstance(project).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "", GitBundle.message("branches.fetch.finished", specsToFetch.size))
+    }
+    result
+  }
+}
+
+internal fun isTrackingInfosExist(branchNames: List<String>, repositories: Collection<GitRepository>) =
   repositories
     .flatMap(GitRepository::getBranchTrackInfos)
     .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
 
 internal fun hasRemotes(project: Project): Boolean {
-  return GitUtil.getRepositories(project).any { repository -> !repository.remotes.isEmpty() }
+  return hasAnyRemotes(GitUtil.getRepositories(project))
 }
 
-internal abstract class BranchGroupingAction(private val key: GroupingKey,
-                                             icon: Icon? = null) : ToggleAction(key.text, key.description, icon), DumbAware {
+internal fun hasAnyRemotes(repositories: Collection<GitRepository>): Boolean = repositories.any { it.remotes.isNotEmpty() }
 
-  abstract fun setSelected(key: GroupingKey, state: Boolean)
+internal fun hasTrackingConflicts(
+  conflictingLocalBranches: Map<GitRepository, GitLocalBranch>,
+  remoteBranchName: String,
+): Boolean =
+  conflictingLocalBranches.any { (repo, branch) ->
+    val trackInfo = GitBranchUtil.getTrackInfoForBranch(repo, branch)
+    trackInfo != null && !GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, trackInfo.remoteBranch.name)
+  }
 
-  override fun isSelected(e: AnActionEvent) =
-    e.project?.let { GitVcsSettings.getInstance(it).branchSettings.isGroupingEnabled(key) } ?: false
+internal abstract class BranchGroupingAction(
+  private val key: GroupingKey,
+  icon: Icon? = null,
+) : ToggleAction(key.text, key.description, icon), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val project = e.project ?: return false
+    return GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(key)
+  }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
-    val branchSettings = GitVcsSettings.getInstance(project).branchSettings
-    branchSettings.setGrouping(key, state)
-    setSelected(key, state)
+    GitVcsSettings.getInstance(project).setBranchGroupingSettings(key, state)
   }
 }
+
+@VisibleForTesting
+internal data class UpdateTargets(
+  val fetchTargets: List<GitFetchSpec>,
+  val updateProcessTargets: Map<GitRepository, GitBranchPair>,
+)

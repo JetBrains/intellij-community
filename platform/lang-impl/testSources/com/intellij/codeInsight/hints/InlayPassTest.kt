@@ -1,22 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import java.util.concurrent.atomic.AtomicBoolean
 
 class InlayPassTest : BasePlatformTestCase() {
   private val noSettings = SettingsKey<NoSettings>("no")
-
+  private lateinit var sharedSink: InlayHintsSinkImpl
   override fun setUp() {
     super.setUp()
     myFixture.configureByText("file.java", "class A{ }")
+    sharedSink = InlayHintsSinkImpl(myFixture.editor)
   }
 
   fun testTurnedOffHintsDisappear() {
@@ -52,6 +56,40 @@ class InlayPassTest : BasePlatformTestCase() {
     assertEquals(2, inlays.size)
     assertEquals(1, extractContent(inlays, 0))
     assertEquals(2, extractContent(inlays, 1))
+  }
+
+  fun testInlaysRespectHorizontalConstraints() {
+    createPass(listOf(createOneOffCollector {
+      it.addInlineElement(1, true, TestRootPresentation(1), true)
+      it.addInlineElement(2, true, TestRootPresentation(2), false)
+      it.addInlineElement(3, false, TestRootPresentation(3), false)
+    })).collectAndApply()
+    var inlays = inlineElements
+    assertEquals(2, inlays.size)
+    assertTrue(inlays[0].isRelatedToPrecedingText)
+    assertFalse(inlays[1].isRelatedToPrecedingText)
+    inlays = afterLineEndElements
+    assertEquals(1, inlays.size)
+  }
+
+  fun testInlaysAtSameOffsetWithMatchingRelatesToPrecedingText() {
+    createPass(listOf(createOneOffCollector {
+      it.addInlineElement(1, true, TestRootPresentation(1), false)
+      it.addInlineElement(1, true, TestRootPresentation(2), false)
+    })).collectAndApply()
+    val inlays = inlineElements
+    assertEquals(1, inlays.size)
+    assertTrue(inlays[0].isRelatedToPrecedingText)
+  }
+
+  fun testInlaysAtSameOffsetWithDifferentRelatesToPrecedingTextDefaultToFalse() {
+    createPass(listOf(createOneOffCollector {
+      it.addInlineElement(1, true, TestRootPresentation(1), false)
+      it.addInlineElement(1, false, TestRootPresentation(2), false)
+    })).collectAndApply()
+    val inlays = inlineElements
+    assertEquals(1, inlays.size)
+    assertFalse(inlays[0].isRelatedToPrecedingText)
   }
 
   fun testPresentationUpdated() {
@@ -123,11 +161,10 @@ class InlayPassTest : BasePlatformTestCase() {
   }
 
   private fun createOneOffCollector(collector: (InlayHintsSink) -> Unit): CollectorWithSettings<NoSettings> {
-    var firstTime = true
+    val firstTime = AtomicBoolean(true)
     val collectorLambda: (PsiElement, Editor, InlayHintsSink) -> Boolean = { _, _, sink ->
-      if (firstTime) {
+      if (firstTime.compareAndSet(true, false)) {
         collector(sink)
-        firstTime = false
       }
       false
     }
@@ -139,17 +176,23 @@ class InlayPassTest : BasePlatformTestCase() {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         return collector(element, editor, sink)
       }
-    }, noSettings, Language.ANY, InlayHintsSinkImpl(myFixture.editor))
+    }, noSettings, Language.ANY, sharedSink)
   }
 
   private fun createPass(collectors: List<CollectorWithSettings<*>>): InlayHintsPass {
-    return InlayHintsPass(myFixture.file, collectors, myFixture.editor)
+    val visibleRange = myFixture.editor.calculateVisibleRange()
+    return ActionUtil.underModalProgress(project, "") {
+      val pass = InlayHintsPass(myFixture.file, collectors, myFixture.editor, visibleRange, sharedSink)
+      pass.setContext(myFixture.file.codeInsightContext)
+      pass
+    }
   }
 
   private fun InlayHintsPass.collectAndApply() {
     val dumbProgressIndicator = DumbProgressIndicator()
     doCollectInformation(dumbProgressIndicator)
     applyInformationToEditor()
+    sharedSink.reset()
   }
 
   private val inlayModel
@@ -160,6 +203,9 @@ class InlayPassTest : BasePlatformTestCase() {
 
   private val inlineElements: List<Inlay<*>>
     get() = inlayModel.getInlineElementsInRange(0, myFixture.file.textRange.endOffset)
+
+  private val afterLineEndElements: List<Inlay<*>>
+    get() = inlayModel.getAfterLineEndElementsInRange(0, myFixture.file.textRange.endOffset)
 
   private val allHintsCount: Int
     get() = inlineElements.size + blockElements.size

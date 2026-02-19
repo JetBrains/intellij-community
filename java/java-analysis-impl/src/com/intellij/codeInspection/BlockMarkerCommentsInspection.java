@@ -1,15 +1,36 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBlockStatement;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiLoopStatement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -20,12 +41,12 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author Dmitry Batkovich
  */
-public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final PsiJavaElementPattern.Capture<PsiElement> ANONYMOUS_CLASS_MARKER_PATTERN = psiElement().
     withParent(psiElement(PsiDeclarationStatement.class, PsiExpressionStatement.class))
     .afterSiblingSkipping(or(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<>(null) {
                             @Override
-                            public boolean accepts(@NotNull final PsiJavaToken psiJavaToken, final ProcessingContext context) {
+                            public boolean accepts(final @NotNull PsiJavaToken psiJavaToken, final ProcessingContext context) {
                               return psiJavaToken.getTokenType().equals(JavaTokenType.SEMICOLON);
                             }
                           })),
@@ -35,7 +56,7 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
     withParent(PsiClass.class).
     afterSiblingSkipping(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<>(null) {
       @Override
-      public boolean accepts(@NotNull final PsiJavaToken token, final ProcessingContext context) {
+      public boolean accepts(final @NotNull PsiJavaToken token, final ProcessingContext context) {
         return JavaTokenType.RBRACE.equals(token.getTokenType());
       }
     }));
@@ -56,12 +77,11 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
 
   private static final String END_WORD = "end";
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitComment(@NotNull final PsiComment element) {
+      public void visitComment(final @NotNull PsiComment element) {
         final IElementType tokenType = element.getTokenType();
         if (!(tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT))) {
           return;
@@ -77,20 +97,21 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
           return;
         }
         if (MARKER_PATTERN.accepts(element)) {
-          holder.registerProblem(element, JavaAnalysisBundle.message("redundant.block.marker"), new LocalQuickFix() {
-            @NotNull
-            @Override
-            public String getFamilyName() {
-              return JavaAnalysisBundle.message("remove.block.marker.comments");
-            }
-
-            @Override
-            public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-              descriptor.getPsiElement().delete();
-            }
-          });
+          holder.registerProblem(element, JavaAnalysisBundle.message("redundant.block.marker"), new DeleteBlockMarkerCommentFix());
         }
       }
     };
+  }
+
+  private static class DeleteBlockMarkerCommentFix extends PsiUpdateModCommandQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaAnalysisBundle.message("remove.block.marker.comments");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      element.delete();
+    }
   }
 }

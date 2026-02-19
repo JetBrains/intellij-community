@@ -1,24 +1,32 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.AnnotationRequest
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.annotationRequest
+import com.intellij.lang.jvm.actions.createMethodActions
+import com.intellij.lang.jvm.actions.expectedParameter
+import com.intellij.lang.jvm.actions.expectedType
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.codeStyle.SuggestedNameInfo
-import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil
+import java.util.Locale
 
-class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
+internal class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
 
   override fun getReferenceClass(): Class<JavaFxEventHandlerReference> = JavaFxEventHandlerReference::class.java
 
@@ -35,7 +43,7 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
 
   private val myProject = element.project
   private val myVisibility = getVisibility(element)
-  private val myPointer = element.createSmartPointer(myProject)
+  private val myPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element)
 
   override fun isValid(): Boolean = myPointer.element.let {
     it != null && it.value.let { value ->
@@ -47,15 +55,13 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
 
   override fun getMethodName(): String = myElement.value!!.substring(1)
 
-  override fun getReturnType(): List<ExpectedType> = listOf(expectedType(PsiType.VOID, ExpectedType.Kind.EXACT))
+  override fun getReturnType(): List<ExpectedType> = listOf(expectedType(PsiTypes.voidType(), ExpectedType.Kind.EXACT))
 
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val eventType = expectedType(getEventType(myElement), ExpectedType.Kind.EXACT)
     val parameter = expectedParameter(eventType)
     return listOf(parameter)
   }
-
-  override fun getParameters(): List<Pair<SuggestedNameInfo, List<ExpectedType>>> = getParameters(expectedParameters, myProject)
 
   override fun getModifiers(): Set<JvmModifier> = setOf(myVisibility)
 
@@ -73,7 +79,7 @@ private fun getVisibility(element: XmlAttributeValue): JvmModifier {
   val visibility = JavaCodeStyleSettings.getInstance(element.containingFile).VISIBILITY
   if (VisibilityUtil.ESCALATE_VISIBILITY == visibility) return JvmModifier.PRIVATE
   if (visibility == PsiModifier.PACKAGE_LOCAL) return JvmModifier.PACKAGE_LOCAL
-  return JvmModifier.valueOf(visibility.toUpperCase())
+  return JvmModifier.valueOf(visibility.uppercase(Locale.getDefault()))
 }
 
 private fun getEventType(element: XmlAttributeValue): PsiType {

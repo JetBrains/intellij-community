@@ -94,7 +94,7 @@ class MockVirtualFile extends VirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() {
-    return null;
+  public @NotNull InputStream getInputStream() {
+    throw new UnsupportedOperationException();
   }
 }

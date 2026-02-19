@@ -18,7 +18,7 @@ package com.intellij.openapi.compiler;
 /**
  * @deprecated Use {@link CompilationStatusListener} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class CompilationStatusAdapter implements CompilationStatusListener {
 
 }

@@ -4,7 +4,8 @@ package com.jetbrains.python.debugger.dataframe;
 import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
 import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import java.awt.Color;
 
 
 class DataFrameTableCellRenderer extends DataViewCellRenderer implements ColoredCellRenderer {
@@ -25,22 +26,24 @@ class DataFrameTableCellRenderer extends DataViewCellRenderer implements Colored
 
   @Override
   protected void colorize(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    if (!(value instanceof TableValueDescriptor)) {
+    if (!(value instanceof TableValueDescriptor descriptor)) {
+      this.setBackground(null);
       return;
     }
 
-    TableValueDescriptor descriptor = (TableValueDescriptor)value;
+    Color background = null;
 
     if (myColored) {
       try {
         double rangedValue = descriptor.getRangedValue();
         if (!Double.isNaN(rangedValue)) {
-          this.setBackground(PyNumericViewUtil.rangedValueToColor(rangedValue));
+          background = PyNumericViewUtil.rangedValueToColor(rangedValue);
         }
       }
       catch (NumberFormatException ignored) {
 
       }
     }
+    this.setBackground(background);
   }
 }

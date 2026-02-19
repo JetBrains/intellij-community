@@ -1,8 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -19,27 +25,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActionMacro {
+public final class ActionMacro {
   private String myName;
 
   private final ArrayList<ActionDescriptor> myActions = new ArrayList<>();
-  @NonNls
-  public static final String MACRO_ACTION_PREFIX = "Macro.";
-  @NonNls
-  private static final String ATTRIBUTE_NAME = "name";
-  @NonNls
-  private static final String ELEMENT_TYPING = "typing";
+  public static final @NonNls String MACRO_ACTION_PREFIX = "Macro.";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ELEMENT_TYPING = "typing";
 
-  @NonNls
-  private static final String ELEMENT_SHORTCUT = "shortuct";
-  @NonNls
-  private static final String ATTRIBUTE_TEXT = "text";
-  @NonNls
-  private static final String ATTRIBUTE_KEY_CODES = "text-keycode";
-  @NonNls
-  private static final String ELEMENT_ACTION = "action";
-  @NonNls
-  private static final String ATTRIBUTE_ID = "id";
+  private static final @NonNls String ELEMENT_SHORTCUT = "shortuct";
+  private static final @NonNls String ATTRIBUTE_TEXT = "text";
+  private static final @NonNls String ATTRIBUTE_KEY_CODES = "text-keycode";
+  private static final @NonNls String ELEMENT_ACTION = "action";
+  private static final @NonNls String ATTRIBUTE_ID = "id";
 
 
   public ActionMacro() {
@@ -49,8 +47,7 @@ public class ActionMacro {
     myName = name;
   }
 
-  @NlsSafe
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -64,14 +61,12 @@ public class ActionMacro {
 
   public void readExternal(Element macro) {
     setName(macro.getAttributeValue(ATTRIBUTE_NAME));
-    List actions = macro.getChildren();
-    for (final Object o : actions) {
-      Element action = (Element)o;
+    for (Element action : macro.getChildren()) {
       if (ELEMENT_TYPING.equals(action.getName())) {
         Couple<List<Integer>> codes = parseKeyCodes(action.getAttributeValue(ATTRIBUTE_KEY_CODES));
 
         String text = action.getText();
-        if (text == null || text.length() == 0) {
+        if (text == null || text.isEmpty()) {
           text = action.getAttributeValue(ATTRIBUTE_TEXT);
         }
         text = text.replaceAll("&#x20;", " ");
@@ -84,7 +79,7 @@ public class ActionMacro {
         myActions.add(new IdActionDescriptor(action.getAttributeValue(ATTRIBUTE_ID)));
       }
       else if (ELEMENT_SHORTCUT.equals(action.getName())) {
-        myActions.add(new ShortcutActionDesciption(action.getAttributeValue(ATTRIBUTE_TEXT)));
+        myActions.add(new ShortcutActionDescription(action.getAttributeValue(ATTRIBUTE_TEXT)));
       }
     }
   }
@@ -102,9 +97,8 @@ public class ActionMacro {
     final ActionDescriptor[] actions = getActions();
     for (ActionDescriptor action : actions) {
       Element actionNode = null;
-      if (action instanceof TypedDescriptor) {
+      if (action instanceof TypedDescriptor typedDescriptor) {
         actionNode = new Element(ELEMENT_TYPING);
-        TypedDescriptor typedDescriptor = (TypedDescriptor)action;
         actionNode.setText(typedDescriptor.getText().replaceAll(" ", "&#x20;"));
         actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(
           Couple.of(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
@@ -113,9 +107,9 @@ public class ActionMacro {
         actionNode = new Element(ELEMENT_ACTION);
         actionNode.setAttribute(ATTRIBUTE_ID, ((IdActionDescriptor)action).getActionId());
       }
-      else if (action instanceof ShortcutActionDesciption) {
+      else if (action instanceof ShortcutActionDescription) {
         actionNode = new Element(ELEMENT_SHORTCUT);
-        actionNode.setAttribute(ATTRIBUTE_TEXT, ((ShortcutActionDesciption)action).getText());
+        actionNode.setAttribute(ATTRIBUTE_TEXT, ((ShortcutActionDescription)action).getText());
       }
 
 
@@ -131,11 +125,11 @@ public class ActionMacro {
   }
 
   @Override
-  protected Object clone() {
+  protected ActionMacro clone() {
     ActionMacro copy = new ActionMacro(myName);
     for (int i = 0; i < myActions.size(); i++) {
       ActionDescriptor action = myActions.get(i);
-      copy.myActions.add((ActionDescriptor)action.clone());
+      copy.myActions.add(action.clone());
     }
 
     return copy;
@@ -144,9 +138,7 @@ public class ActionMacro {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ActionMacro)) return false;
-
-    final ActionMacro actionMacro = (ActionMacro)o;
+    if (!(o instanceof ActionMacro actionMacro)) return false;
 
     if (!myActions.equals(actionMacro.myActions)) return false;
     if (!myName.equals(actionMacro.myName)) return false;
@@ -171,11 +163,11 @@ public class ActionMacro {
   }
 
   public void appendShortcut(String text) {
-    myActions.add(new ShortcutActionDesciption(text));
+    myActions.add(new ShortcutActionDescription(text));
   }
 
-  public void appendKeytyped(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
-    ActionDescriptor lastAction = myActions.size() > 0 ? myActions.get(myActions.size() - 1) : null;
+  public void appendKeyPressed(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
+    ActionDescriptor lastAction = !myActions.isEmpty() ? myActions.get(myActions.size() - 1) : null;
     if (lastAction instanceof TypedDescriptor) {
       ((TypedDescriptor)lastAction).addChar(c, keyCode, modifiers);
     }
@@ -189,14 +181,14 @@ public class ActionMacro {
   }
 
   public interface ActionDescriptor {
-    Object clone();
+    ActionDescriptor clone();
 
     void playBack(DataContext context);
 
     void generateTo(StringBuffer script);
   }
 
-  public static class TypedDescriptor implements ActionDescriptor {
+  public static final class TypedDescriptor implements ActionDescriptor {
 
     private String myText;
 
@@ -208,7 +200,7 @@ public class ActionMacro {
       myKeyCodes.addAll(keyCodes);
       myModifiers.addAll(modifiers);
 
-      assert myKeyCodes.size() == myModifiers.size() : "codes=" + myKeyCodes.toString() + " modifiers=" + myModifiers.toString();
+      assert myKeyCodes.size() == myModifiers.size() : "codes=" + myKeyCodes + " modifiers=" + myModifiers;
     }
 
     public TypedDescriptor(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
@@ -228,7 +220,7 @@ public class ActionMacro {
     }
 
     @Override
-    public Object clone() {
+    public TypedDescriptor clone() {
       return new TypedDescriptor(myText, myKeyCodes, myModifiers);
     }
 
@@ -274,10 +266,12 @@ public class ActionMacro {
     @Override
     public void playBack(DataContext context) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);
-      EditorActionManager.getInstance();
-      final TypedAction typedAction = TypedAction.getInstance();
-      for (final char aChar : myText.toCharArray()) {
-        typedAction.actionPerformed(editor, aChar, context);
+      if (editor != null) {
+        EditorActionManager.getInstance();
+        final TypedAction typedAction = TypedAction.getInstance();
+        for (final char aChar : myText.toCharArray()) {
+          typedAction.actionPerformed(editor, aChar, context);
+        }
       }
     }
 
@@ -290,17 +284,17 @@ public class ActionMacro {
     }
   }
 
-  public static class ShortcutActionDesciption implements ActionDescriptor {
+  public static final class ShortcutActionDescription implements ActionDescriptor {
 
     private final String myKeyStroke;
 
-    public ShortcutActionDesciption(String stroke) {
+    public ShortcutActionDescription(String stroke) {
       myKeyStroke = stroke;
     }
 
     @Override
-    public Object clone() {
-      return new ShortcutActionDesciption(myKeyStroke);
+    public ShortcutActionDescription clone() {
+      return new ShortcutActionDescription(myKeyStroke);
     }
 
     @Override
@@ -322,7 +316,7 @@ public class ActionMacro {
     }
   }
 
-  public static class IdActionDescriptor implements ActionDescriptor {
+  public static final class IdActionDescriptor implements ActionDescriptor {
     private final String actionId;
 
     public IdActionDescriptor(String id) {
@@ -339,7 +333,7 @@ public class ActionMacro {
     }
 
     @Override
-    public Object clone() {
+    public IdActionDescriptor clone() {
       return new IdActionDescriptor(actionId);
     }
 
@@ -361,11 +355,7 @@ public class ActionMacro {
       if (action == null) return;
       Presentation presentation = action.getTemplatePresentation().clone();
       AnActionEvent event = new AnActionEvent(null, context, "MACRO_PLAYBACK", presentation, ActionManager.getInstance(), 0);
-      action.beforeActionPerformedUpdate(event);
-      if (!presentation.isEnabled()) {
-        return;
-      }
-      action.actionPerformed(event);
+      ActionUtil.performAction(action, event);
     }
 
     @Override

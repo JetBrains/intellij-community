@@ -16,7 +16,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor {
 
@@ -41,8 +45,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
 
     if (expr.length == 1 && expr[0] instanceof GrLiteral) {
       Object value = ((GrLiteral)expr[0]).getValue();
-      if (value instanceof String) {
-        String s = (String)value;
+      if (value instanceof String s) {
         if (StringUtil.isJavaIdentifier(s)) {
           add((String)value);
         }
@@ -59,8 +62,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
     if (myFirstArgumentName.equals(referenceExpression.getReferenceName()) && !referenceExpression.isQualified()) {
       PsiElement parent = referenceExpression.getParent();
 
-      if (parent instanceof GrReferenceExpression) {
-        GrReferenceExpression parentRef = (GrReferenceExpression)parent;
+      if (parent instanceof GrReferenceExpression parentRef) {
 
         PsiElement parentParent = parentRef.getParent();
 
@@ -73,8 +75,7 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
           add(parentRef.getReferenceName());
         }
       }
-      else if (parent instanceof GrIndexProperty) {
-        GrIndexProperty indexProperty = (GrIndexProperty)parent;
+      else if (parent instanceof GrIndexProperty indexProperty) {
         extractArguments(indexProperty.getArgumentList());
       }
     }
@@ -85,11 +86,10 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
   public static Map<String, NamedArgumentDescriptor> find(GrVariable variable) {
     final GrExpression initializerGroovy = variable.getInitializerGroovy();
 
-    if (!(initializerGroovy instanceof GrFunctionalExpression)) {
+    if (!(initializerGroovy instanceof GrFunctionalExpression expression)) {
       return Collections.emptyMap();
     }
 
-    final GrFunctionalExpression expression = (GrFunctionalExpression)initializerGroovy;
     final GrParameter[] parameters = expression.getAllParameters();
     if (parameters.length == 0) return Collections.emptyMap();
 

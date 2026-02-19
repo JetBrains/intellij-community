@@ -16,10 +16,14 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/advHighlighting8";
@@ -36,10 +40,11 @@ public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testProtectedVariable() {
-    myFixture.addClass("package p1;\n" +
-                       "public class A {\n" +
-                       "  protected String myFoo = \"A\";\n" +
-                       "}");
+    myFixture.addClass("""
+                         package p1;
+                         public class A {
+                           protected String myFoo = "A";
+                         }""");
     doTest();
   }
 
@@ -48,41 +53,55 @@ public class AdvHighlighting8Test extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testUnrelatedConcreteInConstructors() {
-    myFixture.addClass("package p;\n" +
-                       "import java.util.List;\n" +
-                       "\n" +
-                       "public class A {\n" +
-                       "  public A(List l) {\n" +
-                       "  }\n" +
-                       "}");
-    myFixture.addClass("import java.util.List;\n" +
-                       "public class A<T> extends p.A {\n" +
-                       "  public A(List<T> l) {\n" +
-                       "    super(l);\n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package p;
+                         import java.util.List;
+
+                         public class A {
+                           public A(List l) {
+                           }
+                         }""");
+    myFixture.addClass("""
+                         import java.util.List;
+                         public class A<T> extends p.A {
+                           public A(List<T> l) {
+                             super(l);
+                           }
+                         }""");
     doTest();
   }
 
   public void testPackageLocalMethod() {
-    myFixture.addClass("package foo;\n" +
-                       "public abstract class A {\n" +
-                       "  abstract void foo();\n" +
-                       "}");
-    myFixture.addClass("package foo.bar;\n" +
-                       "import foo.A;\n" +
-                       "abstract class B extends A {}");
+    myFixture.addClass("""
+                         package foo;
+                         public abstract class A {
+                           abstract void foo();
+                         }""");
+    myFixture.addClass("""
+                         package foo.bar;
+                         import foo.A;
+                         abstract class B extends A {}""");
     doTest();
   }
 
   public void testPackagePrivateAndSuperMethodReference() {
-    myFixture.addClass("package a;\n" +
-                       "public class A {\n" +
-                       "    protected void foo(int a) {\n" +
-                       "        System.out.println(a);\n" +
-                       "    }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package a;
+                         public class A {
+                             protected void foo(int a) {
+                                 System.out.println(a);
+                             }
+                         }""");
     doTest();
+  }
+  
+  public void testTooltipProperlyEscaped() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.ERROR);
+    assertEquals(1, infos.size());
+    assertEquals(
+      "<html>'unmodifiableSet(java.util.Set&lt;? extends java.lang.String&gt;)' in 'java.util.Collections' cannot be applied to '(java.util.TreeSet&lt;java.lang.String&gt;)'</html>",
+      infos.get(0).getToolTip());
   }
 
   private void doTest() {

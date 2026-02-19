@@ -1,0 +1,1 @@
+fooba<caret>_var = 42

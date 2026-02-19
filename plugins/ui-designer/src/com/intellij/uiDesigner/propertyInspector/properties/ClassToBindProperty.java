@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -15,7 +15,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -30,14 +35,11 @@ import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ClassToBindProperty extends Property<RadRootContainer, String> {
   private final ClassToBindRenderer myRenderer;
   private final MyEditor myEditor;
@@ -54,8 +56,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
   }
 
   @Override
-  @NotNull
-  public PropertyRenderer<String> getRenderer(){
+  public @NotNull PropertyRenderer<String> getRenderer(){
     return myRenderer;
   }
 
@@ -68,7 +69,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
   protected void setValueImpl(final RadRootContainer component, final String value) {
     String className = value;
 
-    if (className != null && className.length() == 0) {
+    if (className != null && className.isEmpty()) {
       className = null;
     }
 
@@ -109,7 +110,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     @Override
     public String getValue() {
       final String value = myDocument.getText();
-      if (value.length() == 0 && myInitialValue == null) {
+      if (value.isEmpty() && myInitialValue == null) {
         return null;
       }
       return value.replace('$', '.'); // PSI works only with dots
@@ -153,21 +154,21 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createWithInnerClassesScopeChooser(
           UIDesignerBundle.message("title.choose.class.to.bind"),
           GlobalSearchScope.projectScope(project),
-          new ClassFilter() { // we need show classes from the sources roots only
-            @Override
-            public boolean isAccepted(final PsiClass aClass) {
-              final VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
-              return vFile != null && fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES);
-            }
+          cls -> {
+            // we need show classes from the sources roots only
+            final VirtualFile vFile = cls.getContainingFile().getVirtualFile();
+            return vFile != null && fileIndex.isUnderSourceRootOfType(vFile, JavaModuleSourceRootTypes.SOURCES);
           },
           aClass
         );
         chooser.showDialog();
 
-        final PsiClass result = chooser.getSelected();
-        if (result != null) {
-          setEditorText(result.getQualifiedName());
-        }
+        WriteIntentReadAction.run(() -> {
+          final PsiClass result = chooser.getSelected();
+          if (result != null) {
+            setEditorText(result.getQualifiedName());
+          }
+        });
 
         // todo[anton] make it via providing proper parent
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditorTextField, true));
@@ -176,7 +177,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
 
     private final class MyCancelEditingAction extends AnAction{
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         fireEditingCancelled();
       }
     }

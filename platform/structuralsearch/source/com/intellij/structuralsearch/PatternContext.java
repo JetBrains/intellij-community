@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import org.jetbrains.annotations.Nls;
@@ -11,22 +11,12 @@ import java.util.function.Supplier;
  * @author Bas Leijdekkers
  */
 public final class PatternContext {
-  @NotNull
-  public final String myID;
-  @NotNull
-  private final Supplier<String> myDisplayName;
+  public final @NotNull String myID;
+  private final @NotNull Supplier<String> myDisplayName;
 
   public PatternContext(@NonNls @NotNull String ID, @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) @NotNull String> displayName) {
     myID = ID;
     myDisplayName = displayName;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.structuralsearch.PatternContext#PatternContext(java.lang.String, java.util.function.Supplier)} instead.
-   */
-  @Deprecated
-  public PatternContext(@NonNls @NotNull String ID, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String displayName) {
-    this(ID, () -> displayName);
   }
 
   @Override
@@ -43,8 +33,7 @@ public final class PatternContext {
     return myID.hashCode();
   }
 
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myID;
   }
 

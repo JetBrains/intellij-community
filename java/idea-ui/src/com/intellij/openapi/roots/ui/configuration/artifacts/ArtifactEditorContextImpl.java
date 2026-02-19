@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.facet.Facet;
@@ -30,7 +16,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
@@ -58,8 +43,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  @NotNull
-  public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
+  public @NotNull ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
     return myParent.getOrCreateModifiableArtifactModel();
   }
 
@@ -69,8 +53,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  @NotNull
-  public ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
+  public @NotNull ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
     return myParent.getOrCreateModifiableRootModel(module);
   }
 
@@ -80,8 +63,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myParent.getProject();
   }
 
@@ -107,24 +89,24 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
   @Override
   public void selectArtifact(@NotNull Artifact artifact) {
-    ProjectStructureConfigurable.getInstance(getProject()).select(artifact, true);
+    myParent.getProjectStructureConfigurable().select(artifact, true);
   }
 
   @Override
   public void selectFacet(@NotNull Facet<?> facet) {
-    ProjectStructureConfigurable.getInstance(getProject()).select(facet, true);
+    myParent.getProjectStructureConfigurable().select(facet, true);
   }
 
   @Override
   public void selectModule(@NotNull Module module) {
-    ProjectStructureConfigurable.getInstance(getProject()).select(module.getName(), null, true);
+    myParent.getProjectStructureConfigurable().select(module.getName(), null, true);
   }
 
   @Override
   public void selectLibrary(@NotNull Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
-      ProjectStructureConfigurable.getInstance(getProject()).selectProjectOrGlobalLibrary(library, true);
+      myParent.getProjectStructureConfigurable().selectProjectOrGlobalLibrary(library, true);
     }
     else {
       final Module module = ((LibraryEx)library).getModule();
@@ -132,11 +114,10 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
         final ModuleRootModel rootModel = myParent.getModulesProvider().getRootModel(module);
         final String libraryName = library.getName();
         for (OrderEntry entry : rootModel.getOrderEntries()) {
-          if (entry instanceof LibraryOrderEntry && OrderEntryUtil.isModuleLibraryOrderEntry(entry)) {
-            final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+          if (entry instanceof LibraryOrderEntry libraryEntry && OrderEntryUtil.isModuleLibraryOrderEntry(entry)) {
             if (libraryName != null && libraryName.equals(libraryEntry.getLibraryName())
                || libraryName == null && library.equals(libraryEntry.getLibrary())) {
-              ProjectStructureConfigurable.getInstance(getProject()).selectOrderEntry(module, libraryEntry);
+              myParent.getProjectStructureConfigurable().selectOrderEntry(module, libraryEntry);
               return;
             }
           }
@@ -153,20 +134,17 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
 
   @Override
-  @NotNull
-  public ArtifactModel getArtifactModel() {
+  public @NotNull ArtifactModel getArtifactModel() {
     return myParent.getArtifactModel();
   }
 
   @Override
-  @NotNull
-  public ModulesProvider getModulesProvider() {
+  public @NotNull ModulesProvider getModulesProvider() {
     return myParent.getModulesProvider();
   }
 
   @Override
-  @NotNull
-  public FacetsProvider getFacetsProvider() {
+  public @NotNull FacetsProvider getFacetsProvider() {
     return myParent.getFacetsProvider();
   }
 
@@ -175,9 +153,8 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.findLibrary(level, libraryName);
   }
 
-  @NotNull
   @Override
-  public ManifestFileProvider getManifestFileProvider() {
+  public @NotNull ManifestFileProvider getManifestFileProvider() {
     return myParent.getManifestFileProvider();
   }
 
@@ -187,8 +164,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  @NotNull
-  public ArtifactType getArtifactType() {
+  public @NotNull ArtifactType getArtifactType() {
     return myEditor.getArtifact().getArtifactType();
   }
 

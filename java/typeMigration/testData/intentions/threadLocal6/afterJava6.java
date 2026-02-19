@@ -1,4 +1,4 @@
-// "Convert to ThreadLocal" "true"
+// "Convert to 'ThreadLocal'" "true"
 class Main {
     private final ThreadLocal<Boolean> property = new ThreadLocal<Boolean>() {
         @Override

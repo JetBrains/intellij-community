@@ -1,12 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
+import org.eclipse.aether.repository.Authentication;
+import org.eclipse.aether.repository.AuthenticationContext;
+import org.eclipse.aether.repository.AuthenticationDigest;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.ProxySelector;
-import org.eclipse.aether.repository.*;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.*;
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.SocketAddress;
+import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,8 +32,7 @@ final class JreProxySelector implements ProxySelector {
     return getProxy(repository.getUrl());
   }
 
-  @Nullable
-  public Proxy getProxy(final String url) {
+  public @Nullable Proxy getProxy(final String url) {
     try {
       final java.net.ProxySelector systemSelector = java.net.ProxySelector.getDefault();
       if (systemSelector == null) {
@@ -41,7 +48,7 @@ final class JreProxySelector implements ProxySelector {
           final String proxyType = chooseProxyType(uri.getScheme());
           if (proxyType != null) {
             final InetSocketAddress addr = (InetSocketAddress)proxy.address();
-            return new Proxy(proxyType, addr.getHostName(), addr.getPort(), JreProxyAuthentication.INSTANCE);
+            return new Proxy(proxyType, addr.getHostString(), addr.getPort(), JreProxyAuthentication.INSTANCE);
           }
         }
       }
@@ -69,7 +76,8 @@ final class JreProxySelector implements ProxySelector {
        * objects with empty host and port 0.
        */
       final InetSocketAddress addr = (InetSocketAddress)address;
-      return addr.getPort() > 0 && addr.getHostName() != null && !addr.getHostName().isEmpty();
+      String hostString = addr.getHostString();
+      return addr.getPort() > 0 && hostString != null && !hostString.isEmpty();
     }
     return false;
   }

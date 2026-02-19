@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationScript
 
+import com.intellij.configurationScript.ConfigurationScriptBundle.message
 import com.intellij.configurationScript.inspection.InspectionJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
@@ -22,6 +22,7 @@ import com.jetbrains.jsonSchema.extension.SchemaType
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
 import org.jetbrains.io.JsonObjectBuilder
 import org.jetbrains.io.json
+import java.lang.ref.SoftReference
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 
@@ -58,9 +59,9 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
       }
     }
 
-    override fun getName() = "IntelliJ Configuration"
+    override fun getName() = message("intellij.configuration.name")
 
-    override fun getSchemaFile(): VirtualFile? {
+    override fun getSchemaFile(): VirtualFile {
       if (!SystemProperties.getBooleanProperty("configuration.schema.cache", true) && schemeFile.isInitialized()) {
         // simplify development - ability to apply changes on hotswap
         val newData = generateConfigurationSchema()

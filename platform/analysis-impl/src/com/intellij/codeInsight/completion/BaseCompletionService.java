@@ -1,7 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.impl.*;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.completion.impl.LiftShorterItemsClassifier;
+import com.intellij.codeInsight.completion.impl.PreferStartMatching;
+import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -23,25 +27,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * @author peter
- */
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_CONTRIBUTOR;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.FusCompletionKeys.LOOKUP_ELEMENT_RESULT_SET_ORDER;
+
 public class BaseCompletionService extends CompletionService {
   private static final Logger LOG = Logger.getInstance(BaseCompletionService.class);
 
-  @Nullable protected CompletionProcess myApiCompletionProcess;
+  protected @Nullable CompletionProcess apiCompletionProcess;
 
-  @ApiStatus.Internal
-  public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
+  public static final Key<Boolean> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 
   @Override
-  public void performCompletion(CompletionParameters parameters, Consumer<? super CompletionResult> consumer) {
-    myApiCompletionProcess = parameters.getProcess();
+  public void performCompletion(@NotNull CompletionParameters parameters, @NotNull Consumer<? super CompletionResult> consumer) {
+    apiCompletionProcess = parameters.getProcess();
     try {
       super.performCompletion(parameters, consumer);
     }
     finally {
-      myApiCompletionProcess = null;
+      apiCompletionProcess = null;
     }
   }
 
@@ -49,13 +53,13 @@ public class BaseCompletionService extends CompletionService {
   public void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text) {
     if (text == null) return;
 
-    if (myApiCompletionProcess instanceof CompletionProcessEx) {
-      ((CompletionProcessEx)myApiCompletionProcess).addAdvertisement(text, null);
+    if (apiCompletionProcess instanceof CompletionProcessEx processEx) {
+      processEx.addAdvertisement(text, null);
     }
   }
 
   @Override
-  protected String suggestPrefix(CompletionParameters parameters) {
+  protected @NotNull String suggestPrefix(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     final int offset = parameters.getOffset();
     TextRange range = position.getTextRange();
@@ -65,40 +69,43 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  @NotNull
-  protected PrefixMatcher createMatcher(String prefix, boolean typoTolerant) {
+  protected @NotNull PrefixMatcher createMatcher(String prefix, boolean typoTolerant) {
     return createMatcher(prefix, true, typoTolerant);
   }
 
-  @NotNull
-  private static CamelHumpMatcher createMatcher(String prefix, boolean caseSensitive, boolean typoTolerant) {
+  private static @NotNull CamelHumpMatcher createMatcher(String prefix, boolean caseSensitive, boolean typoTolerant) {
     return new CamelHumpMatcher(prefix, caseSensitive, typoTolerant);
   }
 
   @Override
-  protected CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
-                                                @NotNull CompletionContributor contributor, PrefixMatcher matcher) {
+  @ApiStatus.Internal
+  public @NotNull CompletionResultSet createResultSet(@NotNull CompletionParameters parameters,
+                                                      @NotNull Consumer<? super CompletionResult> consumer,
+                                                      @NotNull CompletionContributor contributor,
+                                                      @NotNull PrefixMatcher matcher) {
     return new BaseCompletionResultSet(consumer, matcher, contributor, parameters, null, null);
   }
 
   @Override
-  @Nullable
-  public CompletionProcess getCurrentCompletion() {
-    return myApiCompletionProcess;
+  public @Nullable CompletionProcess getCurrentCompletion() {
+    return apiCompletionProcess;
   }
 
   protected static class BaseCompletionResultSet extends CompletionResultSet {
-    protected final CompletionParameters myParameters;
-    protected CompletionSorter mySorter;
-    @Nullable
-    protected final BaseCompletionService.BaseCompletionResultSet myOriginal;
+    protected final CompletionParameters parameters;
+    protected CompletionSorter sorter;
+    protected final @Nullable BaseCompletionService.BaseCompletionResultSet myOriginal;
+    private int itemCounter = 0;
 
-    protected BaseCompletionResultSet(Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
-                                      CompletionContributor contributor, CompletionParameters parameters,
-                                      @Nullable CompletionSorter sorter, @Nullable BaseCompletionService.BaseCompletionResultSet original) {
+    protected BaseCompletionResultSet(@NotNull java.util.function.Consumer<? super CompletionResult> consumer,
+                                      @NotNull PrefixMatcher prefixMatcher,
+                                      @Nullable CompletionContributor contributor,
+                                      @NotNull CompletionParameters parameters,
+                                      @Nullable CompletionSorter sorter,
+                                      @Nullable BaseCompletionService.BaseCompletionResultSet original) {
       super(prefixMatcher, consumer, contributor);
-      myParameters = parameters;
-      mySorter = sorter;
+      this.parameters = parameters;
+      this.sorter = sorter;
       myOriginal = original;
     }
 
@@ -107,17 +114,26 @@ public class BaseCompletionService extends CompletionService {
       ProgressManager.checkCanceled();
       if (!element.isValid()) {
         LOG.error("Invalid lookup element: " + element + " of " + element.getClass() +
-                  " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());
+                  " in " + parameters.getOriginalFile() + " of " + parameters.getOriginalFile().getClass());
         return;
       }
 
-      mySorter = mySorter == null ? getCompletionService().defaultSorter(myParameters, getPrefixMatcher()) : mySorter;
+      sorter = sorter == null ? getCompletionService().defaultSorter(parameters, getPrefixMatcher()) : sorter;
 
-      CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), mySorter);
+      CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), sorter);
       if (matched != null) {
-        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor);
         passResult(matched);
       }
+    }
+
+    @Override
+    public void passResult(@NotNull CompletionResult result) {
+      LookupElement element = result.getLookupElement();
+      element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
+      element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
+      element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
+      itemCounter += 1;
+      super.passResult(result);
     }
 
     @Override
@@ -125,7 +141,7 @@ public class BaseCompletionService extends CompletionService {
       if (matcher.equals(getPrefixMatcher())) {
         return this;
       }
-      return new BaseCompletionResultSet(getConsumer(), matcher, myContributor, myParameters, mySorter, this);
+      return new BaseCompletionResultSet(getConsumer(), matcher, contributor, parameters, sorter, this);
     }
 
     @Override
@@ -146,7 +162,7 @@ public class BaseCompletionService extends CompletionService {
 
     @Override
     public @NotNull CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new BaseCompletionResultSet(getConsumer(), getPrefixMatcher(), myContributor, myParameters, sorter, this);
+      return new BaseCompletionResultSet(getConsumer(), getPrefixMatcher(), contributor, parameters, sorter, this);
     }
 
     @Override
@@ -157,12 +173,12 @@ public class BaseCompletionService extends CompletionService {
     @Override
     public @NotNull CompletionResultSet caseInsensitive() {
       PrefixMatcher matcher = getPrefixMatcher();
-      boolean typoTolerant = matcher instanceof CamelHumpMatcher && ((CamelHumpMatcher)matcher).isTypoTolerant();
+      boolean typoTolerant = matcher instanceof CamelHumpMatcher camelHumpMatcher && camelHumpMatcher.isTypoTolerant();
       return withPrefixMatcher(createMatcher(matcher.getPrefix(), false, typoTolerant));
     }
 
     @Override
-    public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
+    public void restartCompletionOnPrefixChange(@NotNull ElementPattern<String> prefixCondition) {
     }
 
     @Override
@@ -170,20 +186,18 @@ public class BaseCompletionService extends CompletionService {
     }
   }
 
-  @NotNull
-  protected CompletionSorterImpl addWeighersBefore(@NotNull CompletionSorterImpl sorter) {
+  protected @NotNull CompletionSorterImpl addWeighersBefore(@NotNull CompletionSorterImpl sorter) {
     return sorter;
   }
 
-  @NotNull
-  protected CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
-                                                     @NotNull Weigher weigher,
-                                                     @NotNull CompletionLocation location) {
+  protected @NotNull CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
+                                                              @NotNull Weigher weigher,
+                                                              @NotNull CompletionLocation location) {
     return sorter;
   }
 
   @Override
-  public CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher) {
+  public @NotNull CompletionSorter defaultSorter(@NotNull BaseCompletionParameters parameters, @NotNull PrefixMatcher matcher) {
 
     CompletionLocation location = new CompletionLocation(parameters);
     CompletionSorterImpl sorter = emptySorter();
@@ -209,16 +223,16 @@ public class BaseCompletionService extends CompletionService {
         });
       }
     }
-    return sorter.withClassifier("priority", true, new ClassifierFactory<LookupElement>("liftShorter") {
+    return sorter.withClassifier("priority", true, new ClassifierFactory<>("liftShorter") {
       @Override
-      public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+      public @NotNull Classifier<LookupElement> createClassifier(@NotNull Classifier<LookupElement> next) {
         return new LiftShorterItemsClassifier("liftShorter", next, new LiftShorterItemsClassifier.LiftingCondition(), false);
       }
     });
   }
 
   @Override
-  public CompletionSorterImpl emptySorter() {
+  public @NotNull CompletionSorterImpl emptySorter() {
     return new CompletionSorterImpl(new ArrayList<>());
   }
 }

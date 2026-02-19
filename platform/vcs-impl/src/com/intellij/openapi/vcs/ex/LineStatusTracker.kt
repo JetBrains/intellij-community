@@ -1,30 +1,39 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
+import com.intellij.openapi.vcs.ex.RollbackLineStatusAction.rollback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Point
-import java.util.*
+import javax.swing.JComponent
 
 interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   override val project: Project
   override val virtualFile: VirtualFile
 
+  /**
+   * Whether tracker gutter markers are visible in a given [Editor].
+   */
   @RequiresEdt
   fun isAvailableAt(editor: Editor): Boolean {
     return editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
@@ -37,6 +46,19 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   fun showHint(range: Range, editor: Editor)
 }
 
+/**
+ * Trackers tracked by [com.intellij.openapi.vcs.impl.LineStatusTrackerManager].
+ *
+ * The trackers are frozen by [com.intellij.openapi.vcs.changes.VcsFreezingProcess].
+ *
+ * There's a lock order:
+ * [com.intellij.openapi.application.Application.runReadAction] ->
+ * [com.intellij.openapi.vcs.changes.ChangeListManagerImpl.executeUnderDataLock] ->
+ * [LineStatusTracker.readLock].
+ * Which means implementations CAN NOT access CLM during most operations, including [DocumentTracker.Handler].
+ *
+ * @see com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider
+ */
 interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
   fun release()
 
@@ -58,14 +80,16 @@ interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
   }
 }
 
+@ApiStatus.Internal
 abstract class LocalLineStatusTrackerImpl<R : Range>(
   final override val project: Project,
   document: Document,
   final override val virtualFile: VirtualFile
 ) : LineStatusTrackerBase<R>(project, document), LocalLineStatusTracker<R> {
-  abstract override val renderer: LocalLineStatusMarkerRenderer
+  protected abstract val renderer: LocalLineStatusMarkerRenderer
 
   private val innerRangesHandler = MyInnerRangesDocumentTrackerHandler()
+  private val clientIdsHandler = MyClientIdsDocumentTrackerHandler()
 
   override var mode: LocalLineStatusTracker.Mode = LocalLineStatusTracker.Mode(true, true, false)
     set(value) {
@@ -78,6 +102,14 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   init {
     documentTracker.addHandler(LocalDocumentTrackerHandler())
     documentTracker.addHandler(innerRangesHandler)
+    if (showClientIdGutterIconRenderer(project)) {
+      documentTracker.addHandler(clientIdsHandler)
+    }
+    listeners.addListener(object : LineStatusTrackerListener {
+      override fun onRangesChanged() {
+        renderer.scheduleUpdate()
+      }
+    })
   }
 
   @RequiresEdt
@@ -85,11 +117,18 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   override fun isClearLineModificationFlagOnRollback(): Boolean = true
 
-  protected abstract var Block.innerRanges: List<Range.InnerRange>?
+  abstract override val Block.ourData: LocalBlockData
 
   @RequiresEdt
   abstract fun setBaseRevision(vcsContent: CharSequence)
 
+  override fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
+    super.setBaseRevisionContent(vcsContent, beforeUnfreeze)
+
+    if (blocks.isEmpty() && isOperational()) {
+      saveDocumentWhenUnchanged(project, document)
+    }
+  }
 
   override fun scrollAndShowHint(range: Range, editor: Editor) {
     renderer.scrollAndShow(editor, range)
@@ -99,9 +138,9 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     renderer.showAfterScroll(editor, range)
   }
 
-  protected open class LocalLineStatusMarkerRenderer(open val tracker: LocalLineStatusTrackerImpl<*>)
-    : LineStatusMarkerPopupRenderer(tracker) {
-    override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
+  protected open class LocalLineStatusMarkerRenderer(
+    protected open val tracker: LocalLineStatusTrackerImpl<*>
+  ) : LineStatusTrackerMarkerRenderer(tracker, MarkupEditorFilterFactory.createIsNotDiffFilter()) {
 
     override fun shouldPaintGutter(): Boolean {
       return tracker.mode.isVisible
@@ -113,39 +152,43 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
       val actions = ArrayList<AnAction>()
-      actions.add(ShowPrevChangeMarkerAction(editor, range))
-      actions.add(ShowNextChangeMarkerAction(editor, range))
+      actions.add(LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, tracker, range, this))
+      actions.add(LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, tracker, range, this))
       actions.add(RollbackLineStatusRangeAction(editor, range))
-      actions.add(ShowLineStatusRangeDiffAction(editor, range))
-      actions.add(CopyLineStatusRangeAction(editor, range))
-      actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
+      actions.add(LineStatusMarkerPopupActions.ShowLineStatusRangeDiffAction(editor, tracker, range))
+      actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
       return actions
     }
 
+    override fun createEditorContextMenuActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = listOf(
+      LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range),
+      Separator.getInstance(),
+      LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this).apply {
+        templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
+      },
+    )
+
+    override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?, disposable: Disposable): JComponent? {
+      val clientIds = (range as? LstLocalRange)?.clientIds ?: return null
+      return createClientIdGutterPopupPanel(tracker.project, clientIds)
+    }
+
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {
-        RollbackLineStatusAction.rollback(tracker, range, editor)
+        rollback(tracker, range, editor)
       }
     }
+
+    override fun toString(): String = "LocalLineStatusMarkerRenderer(tracker=$tracker)"
   }
 
   private inner class LocalDocumentTrackerHandler : DocumentTracker.Handler {
     override fun afterBulkRangeChange(isDirty: Boolean) {
-      if (blocks.isEmpty()) {
-        fireFileUnchanged()
-      }
-    }
-
-    @RequiresEdt
-    private fun fireFileUnchanged() {
-      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-        // later to avoid saving inside document change event processing and deadlock with CLM.
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          FileDocumentManager.getInstance().saveDocument(document)
-        }, project.disposed)
+      if (blocks.isEmpty() && isOperational()) {
+        saveDocumentWhenUnchanged(project, document)
       }
     }
   }
@@ -155,19 +198,25 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
     override var Block.innerRanges: List<Range.InnerRange>?
       get() {
-        val block = this
-        with(this@LocalLineStatusTrackerImpl) {
-          return block.innerRanges
-        }
+        return ourData.innerRanges
       }
       set(value) {
-        val block = this
-        with(this@LocalLineStatusTrackerImpl) {
-          block.innerRanges = value
-        }
+        ourData.innerRanges = value
       }
   }
 
+  private inner class MyClientIdsDocumentTrackerHandler : ClientIdsDocumentTrackerHandler(project) {
+    /**
+     * Sorted by [ClientId.value]
+     */
+    override var Block.clientIds: List<ClientId>
+      get() {
+        return ourData.clientIds
+      }
+      set(value) {
+        ourData.clientIds = value
+      }
+  }
 
   @CalledInAny
   override fun freeze() {
@@ -179,5 +228,20 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   override fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)
+  }
+
+  protected interface LocalBlockData : DocumentTracker.BlockData {
+    var innerRanges: List<Range.InnerRange>?
+    var clientIds: List<ClientId>
+  }
+
+}
+
+fun saveDocumentWhenUnchanged(project: Project, document: Document) {
+  if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
+    // Use 'invokeLater' to avoid saving inside document change event processing and deadlock with CLM.
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      FileDocumentManager.getInstance().saveDocument(document)
+    }, ModalityState.nonModal(), project.disposed)
   }
 }

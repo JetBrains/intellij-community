@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.util.SingleAlarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class DnDActivateOnHoldTarget implements DnDTarget {
   private final SingleAlarm myAlarm;
 
@@ -18,9 +20,7 @@ public abstract class DnDActivateOnHoldTarget implements DnDTarget {
     boolean isDropPossible = isDropPossible(event);
     event.setDropPossible(isDropPossible);
     if (isDropPossible) {
-      if (myAlarm.isEmpty()) {
-        myAlarm.request();
-      }
+      myAlarm.request();
     }
     else {
       myAlarm.cancelAllRequests();

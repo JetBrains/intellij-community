@@ -1,0 +1,11 @@
+{
+  "mainFile": "B/src/test.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "",
+  "targetSourceRoot": "A/src",
+  "withRuntime": "true",
+  "modulesWithRuntime": ["A", "B"],
+  "modulesWithCommonRuntime": ["A", "B"],
+  "enabledInK1": "true",
+  "enabledInK2": "true"
+}

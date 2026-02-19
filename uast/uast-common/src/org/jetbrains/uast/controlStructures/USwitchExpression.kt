@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -50,8 +51,8 @@ interface USwitchExpression : UExpression {
 
   override fun asRenderString(): String = buildString {
     val expr = expression?.let { "(" + it.asRenderString() + ") " } ?: ""
-    appendln("switch $expr")
-    appendln(body.asRenderString())
+    appendLine("switch $expr")
+    appendLine(body.asRenderString())
   }
 }
 
@@ -62,15 +63,24 @@ interface USwitchExpression : UExpression {
  */
 interface USwitchClauseExpression : UExpression {
   /**
-   * Returns the list of values for this clause, or null if the are no values for this close
+   * Returns the list of values for this clause, or null if there are no values for this close
    *     (for example, for the `else` clause).
    */
   val caseValues: List<UExpression>
+
+  /**
+   * Represents the guard expressions for this switch clause or null if there is no guard.
+   *     (for example, expression after `when` in java `switch` statement).
+   */
+  val guard: UExpression?
+    @Experimental
+    get() = null
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitSwitchClauseExpression(this)) return
     uAnnotations.acceptList(visitor)
     caseValues.acceptList(visitor)
+    guard?.accept(visitor)
     visitor.afterVisitSwitchClauseExpression(this)
   }
 
@@ -98,6 +108,7 @@ interface USwitchClauseExpressionWithBody : USwitchClauseExpression {
     if (visitor.visitSwitchClauseExpression(this)) return
     uAnnotations.acceptList(visitor)
     caseValues.acceptList(visitor)
+    guard?.accept(visitor)
     body.accept(visitor)
     visitor.afterVisitSwitchClauseExpression(this)
   }

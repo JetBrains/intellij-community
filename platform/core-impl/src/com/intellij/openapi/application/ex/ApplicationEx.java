@@ -1,39 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadActionListener;
+import com.intellij.openapi.application.WriteActionListener;
+import com.intellij.openapi.application.WriteIntentReadActionListener;
+import com.intellij.openapi.application.WriteLockReacquisitionListener;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.nio.file.Path;
+import javax.swing.JComponent;
+import java.util.function.Consumer;
 
 public interface ApplicationEx extends Application {
   String LOCATOR_FILE_NAME = ".home";
+  String PRODUCT_INFO_FILE_NAME = "product-info.json";
+  String PRODUCT_INFO_FILE_NAME_MAC = "Resources/" + PRODUCT_INFO_FILE_NAME;
 
   int FORCE_EXIT = 0x01;
   int EXIT_CONFIRMED = 0x02;
   int SAVE = 0x04;
   int ELEVATE = 0x08;
-
-  /**
-   * Loads the application configuration.
-   */
-  void load();
-
-  /**
-   * @return true if this thread is inside read action.
-   * @see #runReadAction(Runnable)
-   */
-  boolean holdsReadLock();
 
   /**
    * @return true if the EDT is performing write action right now.
@@ -48,60 +46,36 @@ public interface ApplicationEx extends Application {
   boolean isWriteActionPending();
 
   /**
-   * Acquires IW lock if it's not acquired by the current thread.
-   *
-   * @param invokedClassFqn fully qualified name of the class requiring the write intent lock.
+   * @return true if a background thread running or wants to run a write action.
+   * This is needed for low-level optimizations and assertions
    */
   @ApiStatus.Internal
-  default void acquireWriteIntentLock(@NotNull String invokedClassFqn) { }
-
-  /**
-   * Releases IW lock.
-   */
-  @ApiStatus.Internal
-  default void releaseWriteIntentLock() {}
-
-  boolean isSaveAllowed();
+  default boolean isBackgroundWriteActionRunningOrPending() {
+    return false;
+  }
 
   void setSaveAllowed(boolean value);
 
-  /**
-   * @deprecated use {@link #setSaveAllowed(boolean)} with {@code false}
-   */
-  @Deprecated
-  default void doNotSave() {
-    setSaveAllowed(false);
+  default void exit(int flags) {
+    exit();
   }
 
-  /**
-   * Executes {@code process} in a separate thread in the application thread pool (see {@link #executeOnPooledThread(Runnable)}).
-   * The process is run inside read action (see {@link #runReadAction(Runnable)})
-   * If run from EDT, it is guaranteed that no other read or write action is run before the process start running.
-   * If the process is running for too long, a progress window shown with {@code progressTitle} and a button with {@code cancelText}.
-   * @return true if process run successfully and was not canceled.
-   */
-  boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,
-                                                          @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                          boolean canBeCanceled,
-                                                          @NlsContexts.Button String cancelText,
-                                                          JComponent parentComponent,
-                                                          @NotNull Runnable process);
-
-  default void exit(@SuppressWarnings("unused") int flags) {
+  default void exit(int flags, int exitCode) {
     exit();
   }
 
   @Override
   default void exit() {
-    exit(SAVE);
+    exit(isSaveAllowed() ? SAVE : 0);
   }
 
   /**
-   * @param force if true, no additional confirmations will be shown. The application is guaranteed to exit
-   * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
+   * @param force         when {@code true}, no additional confirmations will be shown. The application is guaranteed to exit
+   * @param exitConfirmed when {@code true}, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
    *                      a corresponding confirmation will be shown with the possibility to cancel the operation
+   * @param exitCode      set when you want exitCode to be different from default 0
    */
-  default void exit(boolean force, boolean exitConfirmed) {
+  default void exit(boolean force, boolean exitConfirmed, int exitCode) {
     int flags = SAVE;
     if (force) {
       flags |= FORCE_EXIT;
@@ -109,11 +83,15 @@ public interface ApplicationEx extends Application {
     if (exitConfirmed) {
       flags |= EXIT_CONFIRMED;
     }
-    exit(flags);
+    exit(flags, exitCode);
+  }
+
+  default void exit(boolean force, boolean exitConfirmed) {
+    exit(force, exitConfirmed, 0);
   }
 
   /**
-   * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
+   * @param exitConfirmed when {@code true}, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
    *                      a corresponding confirmation will be shown with the possibility to cancel the operation
    */
   void restart(boolean exitConfirmed);
@@ -129,40 +107,52 @@ public interface ApplicationEx extends Application {
    * @param exitConfirmed if true, the IDE does not ask for exit confirmation.
    * @param elevate       if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
    */
-  void restart(boolean exitConfirmed, boolean elevate);
+  default void restart(boolean exitConfirmed, boolean elevate) {
+    restart();
+  }
+
+  @ApiStatus.Internal
+  default void restart(int flags, String @NotNull [] beforeRestart) {
+    restart();
+  }
 
   /**
-   * Runs modal process. For internal use only, see {@link Task}
+   * Runs a modal process.
+   * For internal use only, see {@link Task}.
+   * Consider also {@link ProgressManager#runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
-  default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                      @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                      boolean canBeCanceled,
-                                                      Project project) {
+  default boolean runProcessWithProgressSynchronously(
+    @NotNull Runnable process,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    boolean canBeCanceled,
+    Project project
+  ) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, true, project, null, null);
   }
 
   /**
-   * Runs modal or non-modal process.
-   * For internal use only, see {@link Task}
+   * Runs a modal or non-modal process.
+   * For internal use only, see {@link Task}.
+   * Consider also {@link ProgressManager#runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
-  boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                              @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                              boolean canBeCanceled,
-                                              boolean shouldShowModalWindow,
-                                              @Nullable Project project,
-                                              JComponent parentComponent,
-                                              @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText);
+  boolean runProcessWithProgressSynchronously(
+    @NotNull Runnable process,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    boolean canBeCanceled,
+    boolean shouldShowModalWindow,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText
+  );
 
   void assertIsDispatchThread(@Nullable JComponent component);
 
-  void assertTimeConsuming();
-
   /**
-   * Tries to acquire the read lock and run the {@code action}
+   * Tries to acquire the read lock and run the {@code action}.
    *
-   * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
+   * @return true if the action was run while holding the lock, false if was unable to get the lock and the action was not run
    */
   boolean tryRunReadAction(@NotNull Runnable action);
 
@@ -173,18 +163,22 @@ public interface ApplicationEx extends Application {
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
-                                                                        @Nullable Project project,
-                                                                        @Nullable JComponent parentComponent,
-                                                                        @NotNull Consumer<? super ProgressIndicator> action) {
+  default boolean runWriteActionWithCancellableProgressInDispatchThread(
+    @NotNull @NlsContexts.ProgressTitle String title,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @NotNull Consumer<? super ProgressIndicator> action
+  ) {
     throw new UnsupportedOperationException();
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
-                                                                           @Nullable Project project,
-                                                                           @Nullable JComponent parentComponent,
-                                                                           @NotNull Consumer<? super ProgressIndicator> action) {
+  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(
+    @NotNull @NlsContexts.ModalProgressTitle String title,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @NotNull Consumer<? super ProgressIndicator> action
+  ) {
     throw new UnsupportedOperationException();
   }
 
@@ -197,22 +191,12 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * Runs the specified action, releasing Write Intent lock if it is acquired at the moment of the call.
+   * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
+   * if no write-intent action is currently running or blocked until the currently running write-intent action completes.
    * <p>
-   * This method is used to implement higher-level API, please do not use it directly.
-   */
-  @ApiStatus.Internal
-  default <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
-    return action.compute();
-  }
-
-  /**
-   * Runs the specified action under Write Intent lock. Can be called from any thread. The action is executed immediately
-   * if no write intent action is currently running, or blocked until the currently running write intent action completes.
-   * <p>
-   * This method is used to implement higher-level API, please do not use it directly.
-   * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or {@link com.intellij.openapi.application.AppUIExecutor#onWriteThread()} to
-   * run code under Write Intent lock asynchronously.
+   * This method is used to implement higher-level API. Please do not use it directly.
+   * Use {@link #invokeLaterOnWriteThread} or {@link com.intellij.openapi.application.WriteThread}
+   * to run code under the write-intent lock asynchronously.
    *
    * @param action the action to run
    */
@@ -221,8 +205,49 @@ public interface ApplicationEx extends Application {
     action.run();
   }
 
-  @ApiStatus.Internal
-  default boolean isExitInProgress() {
+  default boolean isLightEditMode() {
     return false;
+  }
+
+  default boolean isComponentCreated() {
+    return true;
+  }
+
+  /** @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()} */
+  @ApiStatus.Internal
+  @Deprecated
+  default void flushNativeEventQueue() {}
+
+  @ApiStatus.Internal
+  default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state, boolean acquireWriteIntentLockInNonBlockingWay) {
+    invokeLater(runnable, state, Conditions.alwaysFalse());
+  }
+
+  @ApiStatus.Internal
+  default void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Experimental
+  default void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  default void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, @NlsSafe String advice) {
+    runnable.run();
+  }
+
+  /**
+   * Similar to {@link #invokeAndWait(Runnable, ModalityState)}, but does not take the Write-Intent lock inside.
+   * This is useful when you still need to schedule a computation with the required modality state, but don't want to acquire the WI lock inside.
+   * In the future, this method may go public
+   */
+  @ApiStatus.Internal
+  default void invokeAndWaitRelaxed(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    invokeAndWait(runnable, modalityState);
   }
 }

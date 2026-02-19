@@ -6,15 +6,12 @@ import com.intellij.psi.stubs.StubIndexKey;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public class PySuperClassIndex extends StringStubIndexExtension<PyClass> {
+
+public final class PySuperClassIndex extends StringStubIndexExtension<PyClass> {
   public static final StubIndexKey<String, PyClass> KEY = StubIndexKey.createIndexKey("Py.class.super");
 
   @Override
-  @NotNull
-  public StubIndexKey<String, PyClass> getKey() {
+  public @NotNull StubIndexKey<String, PyClass> getKey() {
     return KEY;
   }
 }

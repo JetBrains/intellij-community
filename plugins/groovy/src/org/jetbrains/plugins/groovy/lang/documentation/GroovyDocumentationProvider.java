@@ -1,29 +1,55 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
+import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiCompiledFile;
+import com.intellij.psi.PsiDocCommentBase;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.PsiTypes;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.dsl.GdslNamedParameter;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.GrPropertyForCompletion;
@@ -47,19 +73,34 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-/**
- * @author ven
- */
-public class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledSignatureFragment;
+
+
+public final class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
 
-  @NonNls private static final String RETURN_TAG = "@return";
-  @NonNls private static final String THROWS_TAG = "@throws";
+  private static final @NonNls String RETURN_TAG = "@return";
+  private static final @NonNls String THROWS_TAG = "@throws";
   private static final String BODY_HTML = "</body></html>";
+
+  private static void appendStyledSpan(
+    @NotNull StringBuilder buffer,
+    @Nullable String value,
+    String @NotNull ... properties
+  ) {
+    if (DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled()) {
+      HtmlSyntaxInfoUtil.appendStyledSpan(buffer, value, properties);
+    }
+    else {
+      buffer.append(value);
+    }
+  }
 
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -69,16 +110,14 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return substitutor;
   }
 
-
   @Override
-  @Nullable
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrVariable || element instanceof GrImplicitVariable) {
-      StringBuilder buffer = new StringBuilder();
+      @Nls StringBuilder buffer = new StringBuilder();
       PsiVariable variable = (PsiVariable)element;
 
       if (originalElement instanceof GrVariableDeclaration && ((GrVariableDeclaration)originalElement).getVariables().length > 1) {
-        for (GrVariable var :((GrVariableDeclaration)originalElement).getVariables()) {
+        for (GrVariable var : ((GrVariableDeclaration)originalElement).getVariables()) {
           generateVariableInfo(originalElement, buffer, var);
           buffer.append("\n\n");
         }
@@ -88,18 +127,18 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       }
       return buffer.toString();
     }
-    else if (element instanceof PsiMethod) {
-      StringBuilder buffer = new StringBuilder();
-      PsiMethod method = (PsiMethod)element;
+    else if (element instanceof PsiMethod method) {
+      @Nls StringBuilder buffer = new StringBuilder();
       if (method instanceof GrGdkMethod) {
-        buffer.append("[GDK] ");
+        appendStyledSpan(buffer, "[" + GroovyBundle.message("documentation.gdk.label") + "]", "color: #909090");
       }
       else {
         PsiClass hisClass = method.getContainingClass();
         if (hisClass != null) {
           String qName = hisClass.getQualifiedName();
           if (qName != null) {
-            buffer.append(qName).append("\n");
+            appendStyledSignatureFragment(buffer, qName, GroovyDocHighlightingManager.getInstance().getClassDeclarationAttributes(hisClass));
+            buffer.append("\n");
           }
         }
       }
@@ -107,57 +146,82 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       PsiSubstitutor substitutor = calcSubstitutor(originalElement);
       if (!method.isConstructor()) {
         final PsiType substituted = substitutor.substitute(PsiUtil.getSmartReturnType(method));
-        PsiImplUtil.appendTypeString(buffer, substituted, originalElement);
+        appendTypeString(buffer, substituted, originalElement, false);
         buffer.append(" ");
       }
-      buffer.append(method.getName()).append(" ");
-      buffer.append("(");
+      appendStyledSignatureFragment(buffer, method.getName(),
+                                    GroovyDocHighlightingManager.getInstance().getMethodDeclarationAttributes(method));
+      appendStyledSignatureFragment(buffer, "(", GroovyDocHighlightingManager.getInstance().getParenthesesAttributes());
       PsiParameter[] parameters = method.getParameterList().getParameters();
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
-        if (i > 0) buffer.append(", ");
+        if (i > 0) appendStyledSignatureFragment(buffer, ", ", GroovyDocHighlightingManager.getInstance().getCommaAttributes());
         if (parameter instanceof GrParameter) {
-          GroovyPresentationUtil.appendParameterPresentation((GrParameter)parameter, substitutor, TypePresentation.LINK, buffer);
+          GroovyPresentationUtil.appendParameterPresentation(
+            (GrParameter)parameter, substitutor, TypePresentation.LINK, buffer,
+            DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled());
         }
         else {
           PsiType type = parameter.getType();
-          PsiImplUtil.appendTypeString(buffer, substitutor.substitute(type), originalElement);
+          appendTypeString(buffer, substitutor.substitute(type), originalElement, false);
           buffer.append(" ");
-          buffer.append(parameter.getName());
+          appendStyledSignatureFragment(buffer, parameter.getName(), GroovyDocHighlightingManager.getInstance().getParameterAttributes());
         }
       }
-      buffer.append(")");
+      appendStyledSignatureFragment(buffer, ")", GroovyDocHighlightingManager.getInstance().getParenthesesAttributes());
       final PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
       if (referencedTypes.length > 0) {
-        buffer.append("\nthrows ");
-        for (PsiClassType referencedType : referencedTypes) {
-          PsiImplUtil.appendTypeString(buffer, referencedType, originalElement);
-          buffer.append(", ");
+        appendStyledSignatureFragment(buffer, "\nthrows ", GroovyDocHighlightingManager.getInstance().getKeywordAttributes());
+        for (int i = 0; i < referencedTypes.length; i++) {
+          PsiClassType referencedType = referencedTypes[i];
+          appendTypeString(buffer, referencedType, originalElement, false);
+          if (i != referencedTypes.length - 1) {
+            appendStyledSignatureFragment(buffer, ", ", GroovyDocHighlightingManager.getInstance().getCommaAttributes());
+          }
         }
-        buffer.delete(buffer.length() - 2, buffer.length());
       }
       return buffer.toString();
     }
     else if (element instanceof GrTypeDefinition) {
       return generateClassInfo((GrTypeDefinition)element);
     }
+    else if (element instanceof GroovyMapProperty mapProperty) {
+      @Nls StringBuilder buffer = new StringBuilder();
+      appendStyledSpan(buffer, "Map property\n");
+      PsiType inferredType = mapProperty.getPropertyType();
+      String typeLabel = inferredType != null
+                         ? GroovyBundle.message("documentation.inferred.type.label")
+                         : GroovyBundle.message("documentation.cannot.infer.type.label");
+      appendStyledSpan(buffer, "[" + typeLabel + "]", "color: #909090");
+      if (inferredType != null) {
+        buffer.append(" ");
+        appendTypeString(buffer, inferredType, originalElement, false);
+      }
+      buffer.append(" ");
+      appendStyledSignatureFragment(buffer, mapProperty.getName(), GroovyDocHighlightingManager.getInstance().getClassNameAttributes());
+      return buffer.toString();
+    }
 
     return null;
   }
 
-  private static void generateVariableInfo(PsiElement originalElement, StringBuilder buffer, PsiVariable variable) {
+  private static void generateVariableInfo(PsiElement originalElement, @Nls StringBuilder buffer, PsiVariable variable) {
     if (variable instanceof PsiField) {
       final PsiClass parentClass = ((PsiField)variable).getContainingClass();
       if (parentClass != null) {
-        buffer.append(JavaDocUtil.getShortestClassName(parentClass, variable));
+        appendElementLink(buffer, parentClass, JavaDocUtil.getShortestClassName(parentClass, variable));
         newLine(buffer);
       }
       generateModifiers(buffer, variable);
     }
     final PsiType type = variable instanceof GrVariable ? ((GrVariable)variable).getDeclaredType() : variable.getType();
-    PsiImplUtil.appendTypeString(buffer, calcSubstitutor(originalElement).substitute(type), originalElement);
+    appendTypeString(buffer, calcSubstitutor(originalElement).substitute(type), originalElement, false);
     buffer.append(" ");
-    buffer.append(variable.getName());
+    TextAttributes varAttributes =
+      variable instanceof PsiField
+      ? GroovyDocHighlightingManager.getInstance().getFieldDeclarationAttributes((PsiField)variable)
+      : GroovyDocHighlightingManager.getInstance().getLocalVariableAttributes();
+    appendStyledSignatureFragment(buffer, variable.getName(), varAttributes);
 
     if (variable instanceof GrVariable) {
       newLine(buffer);
@@ -170,12 +234,12 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       }
 
       if (originalElement != null) {
-        appendInferredType(originalElement, (GrVariable)variable, buffer);
+        appendInferredType(originalElement, (GrVariable)variable, buffer, false);
       }
     }
   }
 
-  private static void appendInferredType(PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
+  private static void appendInferredType(PsiElement originalElement, GrVariable variable, @Nls StringBuilder buffer, boolean isRendered) {
     PsiType inferredType = null;
     if (PsiImplUtil.isWhiteSpaceOrNls(originalElement)) {
       originalElement = PsiTreeUtil.prevLeaf(originalElement);
@@ -193,19 +257,20 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       inferredType = ((GrVariable)originalElement).getTypeGroovy();
     }
 
+    String typeLabel = inferredType != null
+                       ? GroovyBundle.message("documentation.inferred.type.label")
+                       : GroovyBundle.message("documentation.cannot.infer.type.label");
+    appendStyledSpan(buffer, "[" + typeLabel + "]", "color: #909090");
     if (inferredType != null) {
-      buffer.append("[inferred type] ");
-      appendTypeString(buffer, inferredType, originalElement);
-    }
-    else {
-      buffer.append("[cannot infer type]");
+      buffer.append(" ");
+      appendTypeString(buffer, inferredType, originalElement, isRendered);
     }
   }
 
-  private static void generateModifiers(StringBuilder buffer, PsiModifierListOwner element) {
+  private static void generateModifiers(@Nls StringBuilder buffer, PsiModifierListOwner element) {
     String modifiers = PsiFormatUtil.formatModifiers(element, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
-      buffer.append(modifiers);
+      appendStyledSignatureFragment(buffer, modifiers, GroovyDocHighlightingManager.getInstance().getKeywordAttributes());
       buffer.append(" ");
     }
   }
@@ -214,52 +279,68 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     buffer.append(LINE_SEPARATOR);
   }
 
-  private static String generateClassInfo(PsiClass aClass) {
-    StringBuilder buffer = new StringBuilder();
+  private static @Nls @NotNull String generateClassInfo(@NotNull PsiClass aClass) {
+    @Nls StringBuilder buffer = new StringBuilder();
     GroovyFile file = (GroovyFile)aClass.getContainingFile();
+
+    GroovyDocHighlightingManager highlightingManager = GroovyDocHighlightingManager.getInstance();
 
     String packageName = file.getPackageName();
     if (!packageName.isEmpty()) {
-      buffer.append(packageName).append("\n");
+      appendStyledSignatureFragment(buffer, packageName, highlightingManager.getClassNameAttributes());
+      buffer.append("\n");
     }
 
-    final String classString =
-      aClass.isInterface() ? "interface" : aClass instanceof PsiTypeParameter ? "type parameter" : aClass.isEnum() ? "enum" : "class";
-    buffer.append(classString).append(" ").append(aClass.getName());
+    final String classString = aClass.isInterface()
+                               ? GroovyBundle.message("groovy.term.interface")
+                               : aClass instanceof PsiTypeParameter
+                                 ? GroovyBundle.message("groovy.term.type.parameter")
+                                 : aClass.isEnum()
+                                   ? GroovyBundle.message("groovy.term.enum")
+                                   : GroovyBundle.message("groovy.term.class");
+    appendStyledSignatureFragment(buffer, classString, highlightingManager.getKeywordAttributes());
+    buffer.append(" ");
+    appendStyledSignatureFragment(buffer, aClass.getName(), highlightingManager.getClassDeclarationAttributes(aClass));
 
-    JavaDocumentationProvider.generateTypeParameters(aClass, buffer);
+    JavaDocumentationProvider.generateTypeParameters(aClass, buffer, highlightingManager);
 
-    JavaDocumentationProvider.writeExtends(aClass, buffer, aClass.getExtendsListTypes());
-    JavaDocumentationProvider.writeImplements(aClass, buffer, aClass.getImplementsListTypes());
+    JavaDocumentationProvider.writeExtends(aClass, buffer, aClass.getExtendsListTypes(), highlightingManager);
+    JavaDocumentationProvider.writeImplements(aClass, buffer, aClass.getImplementsListTypes(), highlightingManager);
 
     return buffer.toString();
   }
 
-  public static void appendTypeString(@NotNull StringBuilder buffer, @Nullable PsiType type, PsiElement context) {
+  public static void appendTypeString(@Nls @NotNull StringBuilder buffer, @Nullable PsiType type, PsiElement context, boolean isRendered) {
     if (type instanceof GrTraitType) {
-      generateTraitType(buffer, ((GrTraitType)type), context);
+      generateTraitType(buffer, ((GrTraitType)type), context, isRendered);
     }
     else if (type != null) {
-      JavaDocInfoGenerator.generateType(buffer, type, context);
+      JavaDocInfoGeneratorFactory.getBuilder(context.getProject())
+        .setHighlightingManager(GroovyDocHighlightingManager.getInstance())
+        .setIsGenerationForRenderedDoc(isRendered)
+        .create()
+        .generateType(buffer, type, context);
     }
     else {
-      buffer.append(GrModifier.DEF);
+      appendStyledSignatureFragment(buffer, GrModifier.DEF, GroovyDocHighlightingManager.getInstance().getKeywordAttributes());
     }
   }
 
-  private static void generateTraitType(@NotNull StringBuilder buffer, @NotNull GrTraitType type, PsiElement context) {
-    appendTypeString(buffer, type.getExprType(), context);
-    buffer.append(" as ");
-    for (PsiType traitType : type.getTraitTypes()) {
-      appendTypeString(buffer, traitType, context);
-      buffer.append(", ");
+  private static void generateTraitType(@NotNull StringBuilder buffer, @NotNull GrTraitType type, PsiElement context, boolean isRendered) {
+    appendTypeString(buffer, type.getExprType(), context, isRendered);
+    appendStyledSignatureFragment(buffer, " as ", GroovyDocHighlightingManager.getInstance().getKeywordAttributes()); // <- Groovy keyword
+    @NotNull List<PsiType> types = type.getTraitTypes();
+    for (int i = 0; i < types.size(); i++) {
+      PsiType traitType = types.get(i);
+      appendTypeString(buffer, traitType, context, isRendered);
+      if (i != types.size() - 1) {
+        appendStyledSignatureFragment(buffer, ", ", GroovyDocHighlightingManager.getInstance().getCommaAttributes());
+      }
     }
-    buffer.delete(buffer.length() - 2, buffer.length());
   }
 
   @Override
-  @Nullable
-  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+  public @Nullable List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     List<String> result = new ArrayList<>();
     PsiElement docElement = getDocumentationElement(element, originalElement);
     if (docElement != null) {
@@ -273,19 +354,28 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   @Override
-  @Nullable
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
-    if (element instanceof CustomMembersGenerator.GdslNamedParameter) {
-      CustomMembersGenerator.GdslNamedParameter parameter = (CustomMembersGenerator.GdslNamedParameter)element;
-      String result = "<pre><b>" + parameter.getName() + "</b>";
-      if (parameter.myParameterTypeText != null) {
-        result += ": " + parameter.myParameterTypeText;
+  public @Nullable @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
+    GroovyDocHighlightingManager highlightingManager = GroovyDocHighlightingManager.getInstance();
+
+    if (element instanceof GdslNamedParameter) {
+      String name = ((GdslNamedParameter)element).getName();
+      if (name == null) {
+        return null;
       }
-      result += "</pre>";
-      if (parameter.docString != null) {
-        result += "<p>" + parameter.docString;
+      StringBuilder buffer = new StringBuilder("<pre>");
+      String parameterTypeText = ((GdslNamedParameter)element).myParameterTypeText;
+      appendStyledSignatureFragment(buffer, name, highlightingManager.getParameterAttributes());
+      if (parameterTypeText != null) {
+        appendStyledSignatureFragment(buffer, ":", highlightingManager.getOperationSignAttributes());
+        buffer.append(" ");
+        appendStyledSignatureFragment(buffer, parameterTypeText, highlightingManager.getClassNameAttributes());
       }
-      return result;
+      buffer.append("</pre>");
+      String docString = ((GdslNamedParameter)element).docString;
+      if (docString != null) {
+        buffer.append("<p>").append(HtmlChunk.text(docString)).append("</p>");
+      }
+      return buffer.toString(); //NON-NLS
     }
 
     if (element instanceof GrReferenceExpression) {
@@ -303,13 +393,13 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         standard != null) {
       final String truncated = StringUtil.trimEnd(standard, BODY_HTML);
 
-      StringBuilder buffer = new StringBuilder(truncated);
-      buffer.append("<p>");
+      @Nls StringBuilder buffer = new StringBuilder(truncated);
+      buffer.append("<p style='padding-left:8px;'>");
       if (originalElement != null) {
-        appendInferredType(originalElement, (GrVariable)element, buffer);
+        appendInferredType(originalElement, (GrVariable)element, buffer, false);
       }
       else if (element.getParent() instanceof GrVariableDeclaration) {
-        appendInferredType(element.getParent(), (GrVariable)element, buffer);
+        appendInferredType(element.getParent(), (GrVariable)element, buffer, false);
       }
 
       if (!truncated.equals(standard)) {
@@ -322,7 +412,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (gdslDoc != null) {
       if (standard != null) {
         String truncated = StringUtil.trimEnd(standard, BODY_HTML);
-        String appended = truncated + "<p>" + gdslDoc;
+        String appended = truncated + "<p>" + gdslDoc; //NON-NLS
         if (truncated.equals(standard)) {
           return appended;
         }
@@ -334,15 +424,25 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return standard;
   }
 
-  @Nullable
-  protected static String generateExternalJavaDoc(@NotNull PsiElement element) {
-    JavaDocInfoGenerator generator = new GroovyDocInfoGenerator(element);
+  private static GroovyDocInfoGenerator getDocInfoGenerator(@NotNull PsiElement element, boolean isGenerationForRenderedDoc) {
+    return new GroovyDocInfoGenerator(
+      element,
+      isGenerationForRenderedDoc,
+      DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(),
+      DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
+      DocumentationSettings.getInlineCodeHighlightingMode(),
+      DocumentationSettings.isSemanticHighlightingOfLinksEnabled(),
+      DocumentationSettings.getHighlightingSaturation(isGenerationForRenderedDoc));
+  }
+
+  private static @Nls @Nullable String generateExternalJavaDoc(@NotNull PsiElement element) {
+    JavaDocInfoGenerator generator = getDocInfoGenerator(element, false);
     return JavaDocumentationProvider.generateExternalJavadoc(element, generator);
   }
 
   private static PsiElement getDocumentationElement(PsiElement element, PsiElement originalElement) {
-    if (element instanceof GrGdkMethod) {
-      element = ((GrGdkMethod)element).getStaticMethod();
+    if (element instanceof GrGdkMethod method) {
+      element = method.getStaticMethod();
     }
 
     final GrDocComment doc = PsiTreeUtil.getParentOfType(originalElement, GrDocComment.class);
@@ -350,34 +450,32 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       element = GrDocCommentUtil.findDocOwner(doc);
     }
 
-    if (element instanceof GrLightVariable) {
-      PsiElement navigationElement = element.getNavigationElement();
+    if (element instanceof GrLightVariable var) {
+      PsiElement navigationElement = var.getNavigationElement();
 
-      if (navigationElement != null) {
-        element = navigationElement;
+      element = navigationElement;
 
-        if (element.getContainingFile() instanceof PsiCompiledFile) {
-          navigationElement = element.getNavigationElement();
-          if (navigationElement != null) {
-            element = navigationElement;
-          }
+      if (element.getContainingFile() instanceof PsiCompiledFile) {
+        navigationElement = element.getNavigationElement();
+        if (navigationElement != null) {
+          element = navigationElement;
         }
+      }
 
-        if (element instanceof GrAccessorMethod) {
-          element = ((GrAccessorMethod)element).getProperty();
-        }
+      if (element instanceof GrAccessorMethod method) {
+        element = method.getProperty();
       }
     }
 
-    if (element instanceof GrPropertyForCompletion) {
-      element = ((GrPropertyForCompletion)element).getOriginalAccessor();
+    if (element instanceof GrPropertyForCompletion property) {
+      element = property.getOriginalAccessor();
     }
 
     return element;
   }
 
   @Override
-  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls, boolean onHover) {
+  public @Nls String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls, boolean onHover) {
     return JavaDocumentationProvider.fetchExternalJavadoc(element, project, docUrls);
   }
 
@@ -395,11 +493,11 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   public void promptToConfigureDocumentation(PsiElement element) {
   }
 
-  private static String getMethodCandidateInfo(GrReferenceExpression expr) {
+  private static @Nls String getMethodCandidateInfo(GrReferenceExpression expr) {
     final GroovyResolveResult[] candidates = expr.multiResolve(false);
     final String text = expr.getText();
     if (candidates.length > 0) {
-      @NonNls final StringBuilder sb = new StringBuilder();
+      final @NonNls StringBuilder sb = new StringBuilder();
       for (final GroovyResolveResult candidate : candidates) {
         final PsiElement element = candidate.getElement();
         if (!(element instanceof PsiMethod)) {
@@ -409,25 +507,22 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
           .formatMethod((PsiMethod)element, candidate.getSubstitutor(),
                         PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_PARAMETERS,
                         PsiFormatUtilBase.SHOW_TYPE);
-        createElementLink(sb, element, str);
+        sb.append("&nbsp;&nbsp;");
+        appendElementLink(sb, element, str);
+        sb.append("<br>");
       }
       return CodeInsightBundle.message("javadoc.candidates", text, sb);
     }
     return JavaBundle.message("javadoc.candidates.not.found", text);
   }
 
-  private static void createElementLink(@NonNls final StringBuilder sb, final PsiElement element, final String str) {
-    sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
-    sb.append(JavaDocUtil.getReferenceText(element.getProject(), element));
-    sb.append("\">");
-    sb.append(str);
-    sb.append("</a>");
-    sb.append("<br>");
+  private static void appendElementLink(@NonNls StringBuilder sb, PsiElement element, String label) {
+    getDocInfoGenerator(element, false)
+      .appendMaybeUnresolvedLink(sb, element, label, element.getProject(), false);
   }
 
   @Override
-  @Nullable
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public @Nullable PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     if (object instanceof GroovyResolveResult) {
       return ((GroovyResolveResult)object).getElement();
     }
@@ -441,8 +536,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   @Override
-  @Nullable
-  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+  public @Nullable PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
@@ -457,9 +551,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return null;
   }
 
-  @Nullable
   @Override
-  public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
+  public @Nullable Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
     for (PsiElement e = startPoint; e != null; e = e.getParent()) {
       if (e instanceof GrDocCommentOwner) {
         return Pair.create(e, ((GrDocCommentOwner)e).getDocComment());
@@ -482,12 +575,11 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
 
     StringBuilder builder = new StringBuilder();
-    if (owner instanceof GrMethod) {
-      final GrMethod method = (GrMethod)owner;
+    if (owner instanceof GrMethod method) {
       JavaDocumentationProvider.generateParametersTakingDocFromSuperMethods(builder, commenter, method);
 
       final PsiType returnType = method.getInferredReturnType();
-      if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) && !PsiType.VOID.equals(returnType)) {
+      if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) && !PsiTypes.voidType().equals(returnType)) {
         builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, contextComment.getContainingFile(), commenter));
         builder.append(LINE_SEPARATOR);
       }
@@ -505,6 +597,48 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         JavaDocumentationProvider.createTypeParamsListComment(builder, commenter, typeParameterList);
       }
     }
-    return builder.length() > 0 ? builder.toString() : null;
+    return !builder.isEmpty() ? builder.toString() : null;
+  }
+
+  @Override
+  public void collectDocComments(@NotNull PsiFile file,
+                                 @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
+    if (!(file instanceof GroovyFile groovyFile)) {
+      return;
+    }
+    List<GrDocCommentOwner> owners = PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocCommentOwner.class);
+    List<GrDocComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(groovyFile, GrDocComment.class);
+    processDocComments(owners, comments, sink);
+  }
+
+  private static void processDocComments(@NotNull List<GrDocCommentOwner> owners,
+                                         @NonNls List<GrDocComment> danglingDocComments,
+                                         @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
+    for (var docComment : danglingDocComments) {
+      if (docComment != null) {
+        sink.accept(docComment);
+      }
+    }
+    for (var owner : owners) {
+      if (owner == null) {
+        continue;
+      }
+      GrDocComment comment = owner.getDocComment();
+      if (comment != null) {
+        sink.accept(comment);
+      }
+      if (owner instanceof GrTypeDefinition) {
+        var nestedComments = PsiTreeUtil.getChildrenOfTypeAsList(((GrTypeDefinition)owner).getBody(), GrDocComment.class);
+        var nestedOwners = PsiTreeUtil.getChildrenOfTypeAsList(((GrTypeDefinition)owner).getBody(), GrDocCommentOwner.class);
+        processDocComments(nestedOwners, nestedComments, sink);
+      }
+    }
+  }
+
+  @Override
+  public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+    PsiElement owner = comment.getOwner();
+    String html = getDocInfoGenerator(owner == null ? comment : owner, true).generateRenderedDocInfo();
+    return JavaDocExternalFilter.filterInternalDocInfo(html);
   }
 }

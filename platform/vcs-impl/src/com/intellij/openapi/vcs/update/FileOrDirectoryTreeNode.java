@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
@@ -29,10 +16,11 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,11 +28,11 @@ import java.util.Map;
 /**
  * author: lesya
  */
+@ApiStatus.Internal
 public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implements VirtualFilePointerListener, Disposable {
   private static final Map<FileStatus, SimpleTextAttributes> myFileStatusToAttributeMap = new HashMap<>();
   private final SimpleTextAttributes myInvalidAttributes;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   protected final File myFile;
   private final @NlsSafe String myName;
 
@@ -61,9 +49,8 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     myName = parentPath == null ? myFile.getAbsolutePath() : myFile.getName();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -73,17 +60,19 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
 
   @Override
   public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
-    if (!getFilePointer().isValid()) {
-      AbstractTreeNode parent = (AbstractTreeNode)getParent();
-      if (parent != null && parent.getSupportsDeletion()) {
-        getTreeModel().removeNodeFromParent(this);
-      }
-      else {
-        if (getTree() != null) {
-          getTree().repaint();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!getFilePointer().isValid()) {
+        AbstractTreeNode parent = (AbstractTreeNode)getParent();
+        if (parent != null && parent.getSupportsDeletion()) {
+          getTreeModel().removeNodeFromParent(this);
+        }
+        else {
+          if (getTree() != null) {
+            getTree().repaint();
+          }
         }
       }
-    }
+    });
   }
 
   @Override
@@ -93,8 +82,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
       super.setUserObject(userObject);
     }
     finally {
-      if (oldObject instanceof VirtualFilePointer) {
-        VirtualFilePointer pointer = (VirtualFilePointer)oldObject;
+      if (oldObject instanceof VirtualFilePointer pointer) {
         Disposer.dispose((Disposable)pointer);
       }
     }
@@ -104,9 +92,8 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     return (VirtualFilePointer)getUserObject();
   }
 
-  @NotNull
   @Override
-  public SimpleTextAttributes getAttributes() {
+  public @NotNull SimpleTextAttributes getAttributes() {
     if (!getFilePointer().isValid()) {
       return myInvalidAttributes;
     }
@@ -117,8 +104,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     return myFilterAttributes == null ? attributes : SimpleTextAttributes.merge(myFilterAttributes, attributes);
   }
 
-  @NotNull
-  private static SimpleTextAttributes getAttributesFor(@NotNull FileStatus status) {
+  private static @NotNull SimpleTextAttributes getAttributesFor(@NotNull FileStatus status) {
     Color color = status.getColor();
     if (color == null) color = UIUtil.getListForeground();
 
@@ -138,8 +124,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   public void dispose() {
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 }

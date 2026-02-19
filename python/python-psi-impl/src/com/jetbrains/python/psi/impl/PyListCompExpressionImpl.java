@@ -28,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-/**
- * @author yole
- */
+
 public class PyListCompExpressionImpl extends PyComprehensionElementImpl implements PyListCompExpression {
   public PyListCompExpressionImpl(ASTNode astNode) {
     super(astNode);
@@ -41,9 +39,8 @@ public class PyListCompExpressionImpl extends PyComprehensionElementImpl impleme
     pyVisitor.visitPyListCompExpression(this);
   }
 
-  @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression resultExpr = getResultExpression();
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyClass list = cache.getClass("list");

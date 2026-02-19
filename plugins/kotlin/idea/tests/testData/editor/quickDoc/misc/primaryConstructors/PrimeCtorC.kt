@@ -1,0 +1,5 @@
+class PrimeCtorC<caret>(val fa: AuxFaceA, var fb: AuxFaceB)
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">PrimeCtorC</span>(
+//INFO:     <span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">val</span> <span style="color:#660e7a;font-weight:bold;">fa</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://AuxFaceA">AuxFaceA</a></span>,
+//INFO:     <span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">var</span> <span style="color:#660e7a;font-weight:bold;">fb</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://AuxFaceB">AuxFaceB</a></span>
+//INFO: )</pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://PrimeCtorC"><code><span style="color:#000000;">PrimeCtorC</span></code></a><br/></div>

@@ -22,7 +22,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.*;
+import org.intellij.lang.xpath.psi.Axis;
+import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFilterExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.psi.XPathLocationPath;
+import org.intellij.lang.xpath.psi.XPathNumber;
+import org.intellij.lang.xpath.psi.XPathStep;
+import org.intellij.lang.xpath.psi.XPathString;
+import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.context.Xslt2ContextProvider;
 import org.intellij.plugins.xpathView.XPathBundle;
 
@@ -46,8 +56,7 @@ class XsltPatternValidator {
   }
 
   private static boolean checkPattern(XPathExpression element) {
-    if (element instanceof XPathBinaryExpression) {
-      final XPathBinaryExpression expression = (XPathBinaryExpression)element;
+    if (element instanceof XPathBinaryExpression expression) {
       if (expression.getOperator() == XPathTokenTypes.UNION) {
         if (checkPattern(expression.getLOperand()) && checkPattern(expression.getROperand())) {
           return true;
@@ -101,8 +110,7 @@ class XsltPatternValidator {
   }
 
   private static boolean checkIdKeyPattern(PsiElement child) {
-    if (child instanceof XPathFunctionCall) {
-      final XPathFunctionCall call = (XPathFunctionCall)child;
+    if (child instanceof XPathFunctionCall call) {
       final XPathExpression[] arguments = call.getArgumentList();
       if ("id".equals(call.getFunctionName())) {
         if (arguments.length != 1) return false;

@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionConfidence;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -12,20 +12,10 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
-import static org.jetbrains.plugins.groovy.shell.GroovyShellRunnerImpl.GROOVY_SHELL_FILE;
+public final class GroovyCompletionConfidence extends CompletionConfidence {
 
-/**
- * @author peter
- */
-public class GroovyCompletionConfidence extends CompletionConfidence {
-
-  @NotNull
   @Override
-  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars() && psiFile.getUserData(GROOVY_SHELL_FILE) == Boolean.TRUE) {
-      return ThreeState.YES;
-    }
-
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull Editor editor, @NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (PsiImplUtil.isLeafElementOfType(contextElement, TokenSets.STRING_LITERALS)) {
       PsiElement parent = contextElement.getParent();
       if (parent != null) {

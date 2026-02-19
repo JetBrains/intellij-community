@@ -15,11 +15,16 @@
  */
 package com.intellij.uiDesigner.core;
 
-import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.CurrentJavaVersion;
 import junit.framework.TestCase;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
+import java.awt.Dimension;
+import java.awt.Insets;
 
 import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
 
@@ -50,7 +55,7 @@ public final class TextAreasTest extends TestCase {
 
     panel.doLayout();
 
-    int textAreaWidth = JavaVersion.current().feature >= 9 ? 101 : 100;
+    int textAreaWidth = CurrentJavaVersion.currentJavaVersion().feature >= 9 ? 101 : 100;
 
     assertFalse(UIManager.getLookAndFeel().getName().equals("Windows"));
     // This check fails for Windows LaF due to its default TextArea settings, so it's not expected here. By default it's Metal on Windows.

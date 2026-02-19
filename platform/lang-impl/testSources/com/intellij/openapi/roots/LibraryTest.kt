@@ -29,6 +29,7 @@ class LibraryTest {
   fun `empty library`() {
     val library = projectModel.addProjectLevelLibrary("a")
     assertThat(library.name).isEqualTo("a")
+    assertThat(library.presentableName).isEqualTo("a")
     assertThat(library.getUrls(OrderRootType.CLASSES)).isEmpty()
     assertThat(library.table).isEqualTo(projectModel.projectLibraryTable)
     assertThat(library.excludedRoots).isEmpty()
@@ -205,6 +206,7 @@ class LibraryTest {
       assertThat(it.name).isEqualTo("b")
     }
     assertThat(library.name).isEqualTo("b")
+    assertThat(library.presentableName).isEqualTo("b")
   }
 
   @Test

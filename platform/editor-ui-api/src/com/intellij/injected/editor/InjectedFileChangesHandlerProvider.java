@@ -18,10 +18,12 @@ import java.util.List;
  * then {@link com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler} will be used by default
  */
 public interface InjectedFileChangesHandlerProvider {
+
+  @ApiStatus.Internal
   LanguageExtension<InjectedFileChangesHandlerProvider> EP =
     new LanguageExtension<>("com.intellij.editor.injectedFileChangesHandlerProvider");
 
-  InjectedFileChangesHandler createFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds,
+  InjectedFileChangesHandler createFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,
                                                       Editor hostEditor,
                                                       Document newDocument,
                                                       PsiFile injectedFile);

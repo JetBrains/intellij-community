@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,7 +72,7 @@ import java.util.regex.Pattern;
  *     For a failed ref, the reason for failure is described.
  * </pre>
  */
-public class GitPushNativeResultParser {
+public final class GitPushNativeResultParser {
 
   private static final Logger LOG = Logger.getInstance(GitPushNativeResultParser.class);
   private static final Pattern PATTERN = Pattern.compile("^.*([ +\\-\\*!=])\t" +   // flag
@@ -81,8 +81,7 @@ public class GitPushNativeResultParser {
                                                          "(?:\\((.+)\\))?.*$");    // reason
   private static final Pattern RANGE = Pattern.compile("[0-9a-f]+[\\.]{2,3}[0-9a-f]+");
 
-  @NotNull
-  public static List<GitPushNativeResult> parse(@NotNull List<String> output) {
+  public static @NotNull List<GitPushNativeResult> parse(@NotNull List<String> output) {
     List<GitPushNativeResult> results = new ArrayList<>();
     for (String line : output) {
       Matcher matcher = PATTERN.matcher(line);
@@ -93,8 +92,7 @@ public class GitPushNativeResultParser {
     return results;
   }
 
-  @Nullable
-  private static GitPushNativeResult parseRefResult(Matcher matcher, String line) {
+  private static @Nullable GitPushNativeResult parseRefResult(Matcher matcher, String line) {
     String flag = matcher.group(1);
     String from = matcher.group(2);
     String to = matcher.group(3);
@@ -114,14 +112,14 @@ public class GitPushNativeResultParser {
   }
 
   private static GitPushNativeResult.Type parseType(String flag) {
-    switch(flag.charAt(0)) {
-      case ' ' : return GitPushNativeResult.Type.SUCCESS;
-      case '+' : return GitPushNativeResult.Type.FORCED_UPDATE;
-      case '-' : return GitPushNativeResult.Type.DELETED;
-      case '*' : return GitPushNativeResult.Type.NEW_REF;
-      case '!' : return GitPushNativeResult.Type.REJECTED;
-      case '=' : return GitPushNativeResult.Type.UP_TO_DATE;
-    }
-    return null;
+    return switch (flag.charAt(0)) {
+      case ' ' -> GitPushNativeResult.Type.SUCCESS;
+      case '+' -> GitPushNativeResult.Type.FORCED_UPDATE;
+      case '-' -> GitPushNativeResult.Type.DELETED;
+      case '*' -> GitPushNativeResult.Type.NEW_REF;
+      case '!' -> GitPushNativeResult.Type.REJECTED;
+      case '=' -> GitPushNativeResult.Type.UP_TO_DATE;
+      default -> null;
+    };
   }
 }

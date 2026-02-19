@@ -1,18 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -68,8 +71,7 @@ public final class SelectWordUtil {
     }
   }
 
-  @Nullable
-  private static TextRange getCamelSelectionRange(CharSequence editorText, int cursorOffset, CharCondition isWordPartCondition) {
+  private static @Nullable TextRange getCamelSelectionRange(CharSequence editorText, int cursorOffset, CharCondition isWordPartCondition) {
     if (cursorOffset < 0 || cursorOffset >= editorText.length()) {
       return null;
     }
@@ -99,21 +101,18 @@ public final class SelectWordUtil {
     return null;
   }
 
-  @Nullable
-  public static TextRange getWordOrLexemeSelectionRange(@NotNull Editor editor, int cursorOffset,
-                                                         @NotNull CharCondition isWordPartCondition) {
+  public static @Nullable TextRange getWordOrLexemeSelectionRange(@NotNull Editor editor, int cursorOffset,
+                                                                  @NotNull CharCondition isWordPartCondition) {
     return getWordOrLexemeSelectionRange(editor, editor.getDocument().getImmutableCharSequence(), cursorOffset, isWordPartCondition);
   }
 
-  @Nullable
-  public static TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset,
-                                                @NotNull CharCondition isWordPartCondition) {
+  public static @Nullable TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset,
+                                                          @NotNull CharCondition isWordPartCondition) {
     return getWordOrLexemeSelectionRange(null, editorText, cursorOffset, isWordPartCondition);
   }
 
-  @Nullable
-  private static TextRange getWordOrLexemeSelectionRange(@Nullable Editor editor, @NotNull CharSequence editorText, int cursorOffset,
-                                                         @NotNull CharCondition isWordPartCondition) {
+  private static @Nullable TextRange getWordOrLexemeSelectionRange(@Nullable Editor editor, @NotNull CharSequence editorText, int cursorOffset,
+                                                                   @NotNull CharCondition isWordPartCondition) {
     int length = editorText.length();
     if (length == 0) return null;
     if (cursorOffset == length ||
@@ -178,7 +177,7 @@ public final class SelectWordUtil {
     }
   }
 
-  private static void processInFile(@NotNull final PsiElement element,
+  private static void processInFile(final @NotNull PsiElement element,
                                     @NotNull Processor<? super TextRange> consumer,
                                     @NotNull CharSequence text,
                                     final int cursorOffset,
@@ -224,12 +223,11 @@ public final class SelectWordUtil {
     return stop;
   }
 
-  @Nullable
-  private static List<TextRange> askSelectioner(@NotNull PsiElement element,
-                                                @NotNull CharSequence text,
-                                                int cursorOffset,
-                                                @NotNull Editor editor,
-                                                @NotNull ExtendWordSelectionHandler selectioner) {
+  private static @Nullable List<TextRange> askSelectioner(@NotNull PsiElement element,
+                                                          @NotNull CharSequence text,
+                                                          int cursorOffset,
+                                                          @NotNull Editor editor,
+                                                          @NotNull ExtendWordSelectionHandler selectioner) {
     try {
       long stamp = editor.getDocument().getModificationStamp();
       List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
@@ -266,6 +264,64 @@ public final class SelectWordUtil {
       }
       lexer.advance();
     }
+  }
+
+  /**
+   * Returns if there is any expandable whitespace belonging to the given psiWhiteSpace
+   * by any side of a caret at specified cursorPosition
+   */
+  public static boolean canWhiteSpaceBeExpanded(@NotNull PsiWhiteSpace psiWhiteSpace, int cursorPosition, @Nullable Caret caret, @NotNull Editor editor) {
+    if (!AdvancedSettings.getBoolean("editor.selection.expand-whitespaces")) return false;
+    
+    TextRange selectionRange = caret != null && caret.hasSelection() ? caret.getSelectionRange() : null;
+    if (selectionRange != null && !psiWhiteSpace.getTextRange().contains(selectionRange)) return false;
+    
+    int startOffset = selectionRange == null ? cursorPosition : selectionRange.getStartOffset();
+    Character charBeforeStartOffset = getCharBeforeCursorInPsiElement(psiWhiteSpace, startOffset);
+    if (charBeforeStartOffset != null && isExpandableWhiteSpace(charBeforeStartOffset)) return true;
+
+    int endOffset = selectionRange == null ? cursorPosition : selectionRange.getEndOffset();
+    Character charBeforeEndOffset = getCharBeforeCursorInPsiElement(psiWhiteSpace, endOffset);
+    Character charAfterEndOffset = getCharAfterCursorInPsiElement(psiWhiteSpace, endOffset);
+    if (charAfterEndOffset != null && isExpandableWhiteSpace(charAfterEndOffset)) return true;
+    if (charBeforeEndOffset != null && isExpandableWhiteSpace(charBeforeEndOffset) 
+        && charAfterEndOffset != null && Character.isWhitespace(charAfterEndOffset)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Gets character in psiElement before specified caret position
+   * @param psiElement element at caret
+   * @param cursorPosition caret offset
+   * @return char before caret
+   *         null if char is outside the psiElement
+   */
+  public static @Nullable Character getCharBeforeCursorInPsiElement(PsiElement psiElement, int cursorPosition) {
+    TextRange elementRange = psiElement.getTextRange();
+    int index = cursorPosition - elementRange.getStartOffset() - 1;
+    String elementText = psiElement.getText();
+    if (index < 0 || index >= elementText.length()) return null;
+    return elementText.charAt(index);
+  }
+
+  /**
+   * Gets character in psiElement after (at) specified caret position
+   * @param psiElement element at caret
+   * @param cursorPosition caret offset
+   * @return char before caret
+   *         null if char is outside the psiElement
+   */
+  public static @Nullable Character getCharAfterCursorInPsiElement(PsiElement psiElement, int cursorPosition) {
+    return getCharBeforeCursorInPsiElement(psiElement, cursorPosition + 1);
+  }
+
+  // IDEA-110607
+  // whitespace characters that should be selected as one word on double-click
+  public static boolean isExpandableWhiteSpace(char ch) {
+    return ch == ' ' || ch == '\t';
   }
 
   @FunctionalInterface

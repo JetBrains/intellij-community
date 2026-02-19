@@ -1,21 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
@@ -24,7 +28,15 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletion
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import javax.swing.*;
+import javax.accessibility.AccessibleContext;
+import javax.swing.Icon;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.JTree;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -32,12 +44,18 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -88,6 +106,7 @@ public class MavenArtifactSearchPanel extends JPanel {
                                                   : new MyArtifactCellRenderer(myResultList);
     myResultList.setCellRenderer(renderer);
     myResultList.setRowHeight(renderer.getPreferredSize().height);
+    myResultList.getAccessibleContext().setAccessibleName(MavenDomBundle.message("maven.search.results.list.accessible.name"));
 
     mySearchField = new JTextField(initialText);
     mySearchField.addKeyListener(new KeyAdapter() {
@@ -112,11 +131,12 @@ public class MavenArtifactSearchPanel extends JPanel {
         }
       }
     });
+    mySearchField.getAccessibleContext().setAccessibleName(MavenDomBundle.message("maven.search.text.field.accessible.name"));
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myResultList);
-    pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS); // Don't remove this line.
                                                                                     // Without VERTICAL_SCROLLBAR_ALWAYS policy our custom layout
                                                                                     // works incorrectly, see https://youtrack.jetbrains.com/issue/IDEA-72986
@@ -208,11 +228,13 @@ public class MavenArtifactSearchPanel extends JPanel {
     });
   }
 
-  @NotNull
-  public List<MavenId> getResult() {
+  public @NotNull List<MavenId> getResult() {
+    TreePath[] selectionPaths = myResultList.getSelectionPaths();
+    if (selectionPaths == null) {
+      return Collections.emptyList();
+    }
     List<MavenId> result = new ArrayList<>();
-
-    for (TreePath each : myResultList.getSelectionPaths()) {
+    for (TreePath each : selectionPaths) {
       Object sel = each.getLastPathComponent();
       MavenDependencyCompletionItem info;
       if (sel instanceof MavenDependencyCompletionItem) {
@@ -294,7 +316,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       add(myLeftComponent);
       add(myRightComponent);
 
-      Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+      Font font = EditorFontType.getGlobalPlainFont();
       myLeftComponent.setFont(font);
       myRightComponent.setFont(font);
 
@@ -325,7 +347,7 @@ public class MavenArtifactSearchPanel extends JPanel {
           Insets insets = tree.getInsets();
           w -= insets.left + insets.right;
 
-          JScrollPane scrollPane = JBScrollPane.findScrollPane(tree);
+          JScrollPane scrollPane = ComponentUtil.getScrollPane(tree);
           if (scrollPane != null) {
             JScrollBar sb = scrollPane.getVerticalScrollBar();
             if (sb != null) {
@@ -335,6 +357,21 @@ public class MavenArtifactSearchPanel extends JPanel {
           return w;
         }
       });
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleJPanel() {
+          @Override
+          public String getAccessibleName() {
+            return AccessibleContextUtil.combineAccessibleStrings(
+              myLeftComponent.getAccessibleContext().getAccessibleName(),
+              myRightComponent.getAccessibleContext().getAccessibleName());
+          }
+        };
+      }
+      return accessibleContext;
     }
 
     @Override
@@ -354,8 +391,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       else if (value instanceof MavenArtifactSearchResult) {
         formatSearchResult(tree, (MavenArtifactSearchResult)value, selected);
       }
-      else if (value instanceof MavenDependencyCompletionItem) {
-        MavenDependencyCompletionItem info = (MavenDependencyCompletionItem)value;
+      else if (value instanceof MavenDependencyCompletionItem info) {
         String version = info.getVersion();
         Icon icon = MavenDependencyCompletionUtil.getIcon(info.getType());
 

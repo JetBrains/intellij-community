@@ -1,19 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ListWithSelection;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Collections;
 import java.util.EnumSet;
+
+import static com.intellij.util.ObjectUtils.objectInfo;
 
 public final class ComboBoxTableCellRenderer extends JPanel implements TableCellRenderer {
   public static final TableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
@@ -39,24 +45,22 @@ public final class ComboBoxTableCellRenderer extends JPanel implements TableCell
   private ComboBoxTableCellRenderer() {
     super(new GridBagLayout());
     add(myCombo,
-        new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
+        new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0));
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public JComponent getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    if (value instanceof ListWithSelection) {
-      ListWithSelection tags = (ListWithSelection)value;
+    if (value instanceof ListWithSelection tags) {
       if (tags.getSelection() == null) tags.selectFirst();
       updateCombobox(tags, tags.getSelection());
     }
-    else if (value instanceof Enum) {
-      Enum selectedValue = (Enum)value;
+    else if (value instanceof Enum selectedValue) {
       updateCombobox(EnumSet.allOf(selectedValue.getDeclaringClass()), selectedValue);
     }
     else {
       if (value != null) {
-        LOG.error("value " + LogUtil.objectAndClass(value) + ", at " + row + ":" + column + ", in " + table.getModel());
+        LOG.error("value " + objectInfo(value) + ", at " + row + ":" + column + ", in " + table.getModel());
       }
       myCombo.removeAllItems();
       myCombo.setSelectedIndex(-1);

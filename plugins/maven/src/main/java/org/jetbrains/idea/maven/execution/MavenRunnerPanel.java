@@ -9,8 +9,12 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.ui.JBFont;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,11 +22,19 @@ import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.stream.IntStream;
 
 public class MavenRunnerPanel {
@@ -30,7 +42,6 @@ public class MavenRunnerPanel {
   private final boolean myRunConfigurationMode;
 
   private JCheckBox myDelegateToMavenCheckbox;
-  private JCheckBox myRunInBackgroundCheckbox;
   private RawCommandLineEditor myVMParametersEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
   private JLabel myJdkLabel;
@@ -57,10 +68,7 @@ public class MavenRunnerPanel {
     c.insets.bottom = 5;
 
     myDelegateToMavenCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.delegate"));
-    myDelegateToMavenCheckbox.setMnemonic('d');
 
-    myRunInBackgroundCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.run.in.background"));
-    myRunInBackgroundCheckbox.setMnemonic('b');
     if (!myRunConfigurationMode) {
       c.gridx = 0;
       c.gridy++;
@@ -68,14 +76,10 @@ public class MavenRunnerPanel {
       c.gridwidth = GridBagConstraints.REMAINDER;
 
       panel.add(myDelegateToMavenCheckbox, c);
-
-      c.gridy++;
-      panel.add(myRunInBackgroundCheckbox, c);
     }
     c.gridwidth = 1;
 
     JLabel labelVMParameters = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.vm.options"));
-    labelVMParameters.setDisplayedMnemonic('v');
     labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
     myVMParametersEditor.setDialogCaption(labelVMParameters.getText());
 
@@ -88,10 +92,17 @@ public class MavenRunnerPanel {
     c.weightx = 1;
     c.insets.left = 10;
     panel.add(myVMParametersEditor, c);
+
+    JLabel labelOverrideJvmConfig = new JLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
+    labelOverrideJvmConfig.setFont(JBFont.small());
+    c.gridx = 1;
+    c.gridy++;
+    c.weightx = 1;
+    c.insets.left = 20;
+    panel.add(labelOverrideJvmConfig, c);
     c.insets.left = 0;
 
     myJdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
-    myJdkLabel.setDisplayedMnemonic('j');
     myJdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
     c.gridx = 0;
     c.gridy++;
@@ -103,6 +114,7 @@ public class MavenRunnerPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     panel.add(myJdkCombo, c);
     myTargetJdkCombo = new ComboBox<>();
+    ComponentUtil.putClientProperty(myTargetJdkCombo, UserActivityWatcher.DO_NOT_WATCH, true);
     myTargetJdkCombo.setVisible(false);
     panel.add(myTargetJdkCombo, c);
     c.insets.left = 0;
@@ -118,13 +130,15 @@ public class MavenRunnerPanel {
     c.gridwidth = 1;
 
     JPanel propertiesPanel = new JPanel(new BorderLayout());
-    propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
+    propertiesPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
 
-    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")), BorderLayout.NORTH);
-    mySkipTestsCheckBox.setMnemonic('t');
+    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")),
+                        BorderLayout.NORTH);
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
+    myPropertiesPanel.getTable().setShowGrid(false);
     myPropertiesPanel.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.runner.properties.not.defined"));
 
     c.gridx = 0;
@@ -138,12 +152,14 @@ public class MavenRunnerPanel {
   }
 
   private void collectProperties() {
-    MavenProjectsManager s = MavenProjectsManager.getInstance(myProject);
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(myProject);
     Map<String, String> result = new LinkedHashMap<>();
 
-    for (MavenProject each : s.getProjects()) {
-      Properties properties = each.getProperties();
-      result.putAll((Map)properties);
+    if (manager.isMavenizedProject()) {
+      for (MavenProject each : manager.getProjects()) {
+        Properties properties = each.getProperties();
+        result.putAll((Map)properties);
+      }
     }
 
     myProperties = result;
@@ -151,7 +167,6 @@ public class MavenRunnerPanel {
 
   protected void getData(MavenRunnerSettings data) {
     myDelegateToMavenCheckbox.setSelected(data.isDelegateBuildToMaven());
-    myRunInBackgroundCheckbox.setSelected(data.isRunMavenInBackground());
     myVMParametersEditor.setText(data.getVmOptions());
     mySkipTestsCheckBox.setSelected(data.isSkipTests());
 
@@ -167,13 +182,13 @@ public class MavenRunnerPanel {
 
   protected void setData(MavenRunnerSettings data) {
     data.setDelegateBuildToMaven(myDelegateToMavenCheckbox.isSelected());
-    data.setRunMavenInBackground(myRunInBackgroundCheckbox.isSelected());
     data.setVmOptions(myVMParametersEditor.getText().trim());
     data.setSkipTests(mySkipTestsCheckBox.isSelected());
     if (myTargetName == null) {
       data.setJreName(myJdkCombo.getSelectedValue());
-    } else {
-      data.setJreName(myTargetJdkCombo.getItem());
+    }
+    else {
+      data.setJreName(StringUtil.notNullize(myTargetJdkCombo.getItem(), MavenRunnerSettings.USE_PROJECT_JDK));
     }
     data.setMavenProperties(myPropertiesPanel.getDataAsMap());
     data.setEnvironmentProperties(myEnvVariablesComponent.getEnvs());
@@ -207,10 +222,11 @@ public class MavenRunnerPanel {
     if (!localTarget) {
       List<String> items = IntStream.range(0, myTargetJdkCombo.getItemCount())
         .mapToObj(i -> myTargetJdkCombo.getItemAt(i))
-        .collect(Collectors.toList());
+        .toList();
 
       List<String> targetItems = new ArrayList<>();
-      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
+      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance(myProject)
+        .getTargets().findByName(targetName);
       if (targetEnvironmentConfiguration != null) {
         for (LanguageRuntimeConfiguration runtimeConfiguration : targetEnvironmentConfiguration.getRuntimes().resolvedConfigs()) {
           if (runtimeConfiguration instanceof JavaLanguageRuntimeConfiguration) {
@@ -225,7 +241,8 @@ public class MavenRunnerPanel {
         targetItems.forEach(myTargetJdkCombo::addItem);
       }
       myJdkLabel.setLabelFor(myTargetJdkCombo);
-    } else {
+    }
+    else {
       myJdkLabel.setLabelFor(myJdkCombo);
     }
   }

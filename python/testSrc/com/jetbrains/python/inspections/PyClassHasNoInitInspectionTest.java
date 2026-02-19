@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
 
   public void testClass() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   public void testTrueNegative() {
@@ -30,7 +30,7 @@ public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
   }
 
   public void testParentClass() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   public void testInitInParentClass() {
@@ -55,12 +55,12 @@ public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
 
   // PY-24436
   public void testAInheritsBAndBInheritsImportedAWithDunderInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doMultiFileTest);
+    doMultiFileTest();
   }
 
   // PY-36008
   public void testTypedDict() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, () -> doTest());
+    doTest();
   }
 
   @NotNull

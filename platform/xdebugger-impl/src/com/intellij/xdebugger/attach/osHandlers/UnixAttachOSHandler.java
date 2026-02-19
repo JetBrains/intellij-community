@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach.osHandlers;
 
 import com.intellij.execution.ExecutionException;
@@ -15,7 +15,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 public abstract class UnixAttachOSHandler extends AttachOSHandler {
   private static final String PTRACE_SCOPE_PATH = "/proc/sys/kernel/yama/ptrace_scope";
@@ -41,7 +45,7 @@ public abstract class UnixAttachOSHandler extends AttachOSHandler {
       String uid = myHost.getProcessOutput(commandLine).getStdout().trim();
 
       try {
-        return Integer.valueOf(uid);
+        return Integer.parseInt(uid);
       }
       catch (NumberFormatException e) {
         LOGGER.warn("Error while parsing user id from " + uid, e);
@@ -83,8 +87,7 @@ public abstract class UnixAttachOSHandler extends AttachOSHandler {
     return 1; // default PTRACE_SCOPE value
   }
 
-  @Nullable
-  protected String getenv(String name) throws Exception {
+  protected @Nullable String getenv(String name) throws Exception {
     if (myHost instanceof LocalAttachHost) {
       return EnvironmentUtil.getValue(name);
     }

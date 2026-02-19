@@ -1,15 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeTask extends BaseMergeTask {
 
-  @NotNull private final Runnable myCallback;
+  private final @NotNull Runnable myCallback;
 
   public MergeTask(@NotNull QuickMerge mergeProcess, @NotNull Runnable callback) {
     super(mergeProcess);
@@ -21,8 +19,7 @@ public class MergeTask extends BaseMergeTask {
     boolean needRefresh = setupDefaultEmptyChangeListForMerge();
 
     if (needRefresh) {
-      ChangeListManager.getInstance(myMergeContext.getProject())
-        .invokeAfterUpdate(myCallback, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.NON_MODAL);
+      ChangeListManager.getInstance(myMergeContext.getProject()).invokeAfterUpdateWithProgress(false, null, myCallback);
     }
     else {
       myCallback.run();

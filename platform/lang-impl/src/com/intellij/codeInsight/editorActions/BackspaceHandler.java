@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -13,12 +13,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileWithOneLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -36,24 +38,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class BackspaceHandler extends EditorWriteActionHandler {
+public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
   private static final Logger LOGGER = Logger.getInstance(BackspaceHandler.class);
 
   protected final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (!handleBackspace(editor, caret, dataContext, false)) {
       myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
 
-  protected boolean handleBackspace(Editor editor, Caret caret, DataContext dataContext, boolean toWordStart) {
+  boolean handleBackspace(@NotNull Editor editor, @NotNull Caret caret, @NotNull DataContext dataContext, boolean toWordStart) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
@@ -89,16 +90,21 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     FileType fileType = file.getFileType();
     final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file, editor);
 
-    HighlighterIterator hiterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator hiterator = editor.getHighlighter().createIterator(offset);
     boolean wasClosingQuote = quoteHandler != null && quoteHandler.isClosingQuote(hiterator, offset);
 
     myOriginalHandler.execute(originalEditor, caret, dataContext);
 
     if (!toWordStart && Character.isBmpCodePoint(c)) {
-      for(BackspaceHandlerDelegate delegate: delegates) {
-        if (delegate.charDeleted((char)c, file, editor)) {
-          return true;
+      try {
+        for(BackspaceHandlerDelegate delegate: delegates) {
+          if (delegate.charDeleted((char)c, file, editor)) {
+            return true;
+          }
         }
+      }
+      finally {
+        deleteCustomFoldRegionIfNeeded(caret);
       }
     }
 
@@ -109,7 +115,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       char c1 = chars.charAt(offset);
       if (c1 != getRightChar((char)c)) return true;
 
-      HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
       BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
       if (!braceMatcher.isLBraceToken(iterator, chars, fileType) &&
           !braceMatcher.isRBraceToken(iterator, chars, fileType)
@@ -119,7 +125,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
       int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, iterator.getTokenType(), chars, fileType);
       if (rparenOffset >= 0){
-        iterator = ((EditorEx)editor).getHighlighter().createIterator(rparenOffset);
+        iterator = editor.getHighlighter().createIterator(rparenOffset);
         boolean matched = BraceMatchingUtil.matchBrace(chars, fileType, iterator, false, true);
         if (matched) return true;
       }
@@ -131,13 +137,22 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       if (c1 != c) return true;
       if (wasClosingQuote) return true;
 
-      HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
       if (quoteHandler == null || !quoteHandler.isOpeningQuote(iterator,offset)) return true;
 
       editor.getDocument().deleteString(offset, offset + 1);
     }
 
     return true;
+  }
+
+  private static void deleteCustomFoldRegionIfNeeded(@NotNull Caret caret) {
+    int caretOffset = caret.getOffset();
+    Editor editor = caret.getEditor();
+    FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(caretOffset - 1);
+    if (foldRegion instanceof CustomFoldRegion && foldRegion.getEndOffset() == caretOffset) {
+      editor.getDocument().deleteString(foldRegion.getStartOffset(), foldRegion.getEndOffset());
+    }
   }
 
   public static char getRightChar(final char c) {
@@ -161,6 +176,10 @@ public class BackspaceHandler extends EditorWriteActionHandler {
   }
 
   static @NotNull Language getLanguageAtCursorPosition(final PsiFile file, final Editor editor) {
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file.getLanguage();
+    }
+
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     Language language = element != null ? PsiUtilCore.findLanguageFromElement(element) : Language.ANY;
     if (language != Language.ANY) {
@@ -169,8 +188,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     return file.getLanguage();
   }
 
-  @Nullable
-  public static LogicalPosition getBackspaceUnindentPosition(final PsiFile file, final Editor editor) {
+  public static @Nullable LogicalPosition getBackspaceUnindentPosition(final PsiFile file, final Editor editor) {
     if (editor.getSelectionModel().hasSelection()) return null;
 
     final LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
@@ -205,11 +223,11 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       int targetOffset = editor.logicalPositionToOffset(pos);
       int offset = editor.getCaretModel().getOffset();
       editor.getCaretModel().getCurrentCaret().setSelection(targetOffset, offset, false);
-      EditorModificationUtil.deleteSelectedText(editor);
+      EditorModificationUtilEx.deleteSelectedText(editor);
       editor.getCaretModel().moveToLogicalPosition(pos);
     }
     else if (pos.column > logicalPosition.column) {
-      EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', pos.column - logicalPosition.column));
+      EditorModificationUtilEx.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', pos.column - logicalPosition.column));
     }
   }
 

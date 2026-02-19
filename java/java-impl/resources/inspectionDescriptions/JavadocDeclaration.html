@@ -1,0 +1,30 @@
+<html>
+<body>
+Reports Javadoc comments and tags with the following problems:
+<ul>
+  <li>invalid tag names</li>
+  <li>incomplete tag descriptions</li>
+  <li>duplicated tags</li>
+  <li>missing Javadoc descriptions</li>
+</ul>
+<p>Example:</p>
+<pre><code>
+  /**
+   * Invalid tag name
+   * @poram param description
+   */
+  public void sample(int param){
+  }
+</code></pre>
+<p>Example:</p>
+<pre><code>
+  /**
+   * Pointing to itself {@link #sample(int)}
+   */
+  public void sample(int param){
+  }
+</code></pre>
+<p>Quick-fix adds the unknown Javadoc tag to the list of user defined additional tags.</p>
+<!-- tooltip end -->
+</body>
+</html>

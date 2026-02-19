@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.kotlin.i18n` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "i18n_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "i18n",
+  module_name = "intellij.kotlin.i18n",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":i18n_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/java-i18n",
+    "//plugins/properties/properties-psi-impl:backend-psi",
+    "//plugins/kotlin/code-insight/api",
+    "@lib//:kotlinc-analysis-api",
+  ]
+)
+
+jvm_library(
+  name = "i18n_test_lib",
+  module_name = "intellij.kotlin.i18n",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  runtime_deps = [
+    ":i18n",
+    "//platform/analysis-api:analysis_test_lib",
+    "//platform/core-api:core_test_lib",
+    "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+    "//plugins/java-i18n:java-i18n_test_lib",
+    "//plugins/properties/properties-psi-impl:backend-psi_test_lib",
+    "//plugins/kotlin/code-insight/api:api_test_lib",
+  ]
+)
+### auto-generated section `build intellij.kotlin.i18n` end

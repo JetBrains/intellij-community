@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.actions;
 
@@ -18,9 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class FlattenAction extends AbstractGuiEditorAction {
   public FlattenAction() {
     super(true);
@@ -104,13 +102,12 @@ public class FlattenAction extends AbstractGuiEditorAction {
   }
 
   private static boolean canFlatten(final RadComponent c) {
-    if (!(c instanceof RadContainer)) {
+    if (!(c instanceof RadContainer container)) {
       return false;
     }
     if (c.getParent() instanceof RadRootContainer) {
       return false;
     }
-    RadContainer container = (RadContainer) c;
     if (container.getLayoutManager().isGrid() && container.getParent().getLayoutManager().isGrid()) {
       return true;
     }
@@ -120,8 +117,8 @@ public class FlattenAction extends AbstractGuiEditorAction {
     return false;
   }
 
-  @Override @Nullable
-  protected String getCommandName() {
+  @Override
+  protected @Nullable String getCommandName() {
     return UIDesignerBundle.message("command.flatten");
   }
 }

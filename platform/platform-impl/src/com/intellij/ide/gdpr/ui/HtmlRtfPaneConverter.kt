@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr.ui
 
 import org.jsoup.Jsoup
@@ -11,6 +11,7 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.awt.event.MouseMotionListener
 import java.net.URI
+import java.util.Locale
 import javax.swing.JTextPane
 import javax.swing.text.DefaultStyledDocument
 
@@ -32,16 +33,17 @@ class HtmlRtfPane {
 
     fun replaceText(newText: String): JTextPane {
         resultPane.document.remove(0, resultPane.document.length)
-        clearMouseListeners()
+        clearLinks()
         process(newText)
         return resultPane
     }
 
-    private fun clearMouseListeners() {
+    private fun clearLinks() {
         mouseListenersList.forEach { resultPane.removeMouseListener(it) }
         mouseListenersList.clear()
         mouseMotionListenersList.forEach { resultPane.removeMouseMotionListener(it) }
         mouseMotionListenersList.clear()
+        linkMap.clear()
     }
 
     private fun process(htmlContent: String): DefaultStyledDocument {
@@ -51,7 +53,7 @@ class HtmlRtfPane {
 
         val styledDocument = resultPane.document as DefaultStyledDocument
         licenseContentNode.children().forEach {
-            val style = when (it.tagName().toUpperCase()) {
+            val style = when (it.tagName().uppercase(Locale.getDefault())) {
                 "H1" -> Styles.H1
                 "H2" -> Styles.H2
                 "P" -> Styles.PARAGRAPH
@@ -60,7 +62,7 @@ class HtmlRtfPane {
             val start = styledDocument.length
             styledDocument.insertString(styledDocument.length, it.text() + "\n", style)
             styledDocument.setParagraphAttributes(start, it.text().length + 1, style, false)
-            if (it.tagName().toUpperCase() == "P") styleNodes(it, styledDocument, start, linkMap)
+            if (it.tagName().uppercase(Locale.getDefault()) == "P") styleNodes(it, styledDocument, start, linkMap)
         }
         addHyperlinksListeners()
         return styledDocument
@@ -99,7 +101,7 @@ class HtmlRtfPane {
                            offsetInDocument: Int,
                            linkMap: MutableMap<IntRange, String>) {
         var currentOffset = offsetInDocument
-        val style = when (nodeElement.tagName().toUpperCase()) {
+        val style = when (nodeElement.tagName().uppercase(Locale.getDefault())) {
             "STRONG" -> Styles.BOLD
             "A" -> {
                 val linkUrl = nodeElement.attr("href")
@@ -125,7 +127,10 @@ class HtmlRtfPane {
                 }
                 currentOffset += length
             }
-            if (it is Element) styleNodes(it, styledDocument, currentOffset, linkMap)
+            if (it is Element) {
+              styleNodes(it, styledDocument, currentOffset, linkMap)
+              currentOffset += it.text().length
+            }
         }
     }
 

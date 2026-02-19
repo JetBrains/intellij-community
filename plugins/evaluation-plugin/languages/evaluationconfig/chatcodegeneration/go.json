@@ -1,0 +1,33 @@
+{
+  "language": "Go",
+  "projectPath": "../ml-eval/beego",
+  "repository": "https://github.com/beego/beego",
+  "outputDir": "bin/ml-eval-chat-code-generation-go-output",
+  "strategy": {
+    "behaviour": "REMOVE_METHOD_BODY_ASK_TO_GENERATE",
+    "collectContextOnly": false,
+    "minimumInternalApiCallsToConsider": 1,
+    "enableRAG": true
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 100,
+    "filesLimit": 1,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

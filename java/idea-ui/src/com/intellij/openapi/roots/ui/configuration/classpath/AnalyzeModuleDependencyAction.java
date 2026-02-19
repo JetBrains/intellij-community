@@ -1,16 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JavaProjectDependenciesAnalyzer;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
@@ -18,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.DependencyAnalysisResult;
 import com.intellij.packageDependencies.DependencyVisitorFactory;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetHandler;
 import com.intellij.psi.PsiFile;
@@ -26,7 +33,14 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 class AnalyzeModuleDependencyAction extends AnAction {
@@ -48,9 +62,9 @@ class AnalyzeModuleDependencyAction extends AnAction {
     if (selectedEntry instanceof ModuleOrderEntry) {
       Module depModule = ((ModuleOrderEntry)selectedEntry).getModule();
       LOG.assertTrue(depModule != null);
-      Map<OrderEntry, OrderEntry> additionalDependencies = JavaProjectRootsUtil
-        .findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
-                                                                depModule, modulesProvider);
+      Map<OrderEntry, OrderEntry> additionalDependencies =
+        JavaProjectDependenciesAnalyzer.findExportedDependenciesReachableViaThisDependencyOnly(myPanel.getRootModel().getModule(),
+                                                                                               depModule, modulesProvider);
       additionalScopes = new LinkedHashMap<>();
       for (Map.Entry<OrderEntry, OrderEntry> entry : additionalDependencies.entrySet()) {
         additionalScopes.put(getScopeForOrderEntry(entry.getKey()), entry.getValue());
@@ -62,15 +76,15 @@ class AnalyzeModuleDependencyAction extends AnAction {
 
     List<GlobalSearchScope> scopes = new ArrayList<>(additionalScopes.keySet());
     scopes.add(mainScope);
-    new AnalyzeDependenciesOnSpecifiedTargetHandler(myPanel.getProject(), new AnalysisScope(myPanel.getModuleConfigurationState().getRootModel().getModule()),
+    new AnalyzeDependenciesOnSpecifiedTargetHandler(myPanel.getProject(), new AnalysisScope(myPanel.getModuleConfigurationState().getCurrentRootModel().getModule()),
                                                     GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY))) {
       @Override
-      protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
-        Set<GlobalSearchScope> usedScopes = findUsedScopes(builders, scopes);
+      protected boolean shouldShowDependenciesPanel(@NotNull DependencyAnalysisResult result) {
+        Set<GlobalSearchScope> usedScopes = ((MyAnalyzeResult)result).usedScopes;
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
                                    JavaUiBundle
-                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.DEPENDENCIES),
+                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.ANALYZE_DEPENDENCIES),
                                    getTemplateText());
           return true;
         }
@@ -114,15 +128,25 @@ class AnalyzeModuleDependencyAction extends AnAction {
                                                     );
 
         String[] options = {JavaUiBundle.message("button.text.replace"), JavaUiBundle.message("show.dependencies"), Messages.getCancelButton()};
-        switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
-          case 0:
+        return switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
+          case 0 -> {
             InlineModuleDependencyAction.inlineEntry(myPanel, selectedEntry, usedEntries::contains);
-            return false;
-          case 1:
-            return true;
-          default:
-            return false;
-        }
+            yield false;
+          }
+          case 1 -> true;
+          default -> false;
+        };
+      }
+
+      @Override
+      protected @NotNull DependencyAnalysisResult createAnalysisResult() {
+        return new MyAnalyzeResult();
+      }
+
+      @Override
+      protected void bgtPostAnalyze(DependencyAnalysisResult result) {
+        super.bgtPostAnalyze(result);
+        ((MyAnalyzeResult)result).usedScopes = ReadAction.compute(() -> findUsedScopes(result.getBuilders(), scopes));
       }
 
       @Override
@@ -177,7 +201,16 @@ class AnalyzeModuleDependencyAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final OrderEntry entry = myPanel.getSelectedEntry();
-    e.getPresentation().setVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
-                                 || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
+    e.getPresentation().setEnabledAndVisible(entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getModule() != null
+                                             || entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  private static class MyAnalyzeResult extends DependencyAnalysisResult {
+    Set<GlobalSearchScope> usedScopes;
   }
 }

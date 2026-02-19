@@ -1,0 +1,26 @@
+<component name="libraryTable">
+  <library name="google.protobuf.java.util" type="repository">
+    <properties maven-id="com.google.protobuf:protobuf-java-util:3.25.5">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5.jar">
+          <sha256sum>dacc58b2c3d2fa8d4bddc1acb881e78d6cf7c137dd78bc1d67f6aca732436a8d</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="com.google.protobuf:protobuf-java" />
+        <dependency maven-id="com.google.guava:guava" />
+        <dependency maven-id="com.google.j2objc:j2objc-annotations" />
+        <dependency maven-id="com.google.code.gson:gson" />
+        <dependency maven-id="com.google.code.findbugs:jsr305" />
+        <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.25.5/protobuf-java-util-3.25.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

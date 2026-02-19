@@ -1,0 +1,12 @@
+// "Insert 'this()' call" "true"
+
+open class B(val x: Int)
+
+class A : B {
+    constructor(x: String)<caret> : this()
+
+    constructor() : super(1)
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InsertDelegationCallQuickfix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InsertDelegationCallFixFactory$InsertDelegationCallFix

@@ -1,20 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -24,41 +25,87 @@ import java.util.Set;
 public interface LanguageCompilerRefAdapter {
   ExtensionPointName<LanguageCompilerRefAdapter> EP_NAME = ExtensionPointName.create("com.intellij.languageCompilerRefAdapter");
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull VirtualFile file) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
     return findAdapter(fileType);
   }
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType) {
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull VirtualFile file, boolean includeExternalLanguageHelper) {
+    final FileType fileType = file.getFileType();
+    return findAdapter(fileType, includeExternalLanguageHelper);
+  }
+
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull PsiFile file, boolean includeExternalLanguageHelper) {
+    final FileType fileType = file.getFileType();
+    return findAdapter(fileType, includeExternalLanguageHelper);
+  }
+
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType) {
+    return findAdapter(fileType, false);
+  }
+
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType, boolean includeExternalLanguageHelper) {
     for (LanguageCompilerRefAdapter adapter : EP_NAME.getExtensionList()) {
-      if (adapter.getFileTypes().contains(fileType)) {
+      if (adapter.getFileTypes().contains(fileType) ||
+          includeExternalLanguageHelper && adapter instanceof ExternalLanguageHelper && adapter.getAffectedFileTypes().contains(fileType)) {
         return adapter;
       }
     }
     return null;
   }
 
-  @Nullable
-  static LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element) {
-    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
-    return file == null ? null : findAdapter(file);
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element) {
+    return findAdapter(element, false);
+  }
+
+  static @Nullable LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element, boolean includeExternalLanguageHelper) {
+    final PsiFile file = element.getContainingFile();
+    return file == null ? null : findAdapter(file, includeExternalLanguageHelper);
   }
 
   @NotNull
   Set<FileType> getFileTypes();
 
   /**
+   * @return file types that are involved in dirty scope computation
+   */
+  default @NotNull Set<FileType> getAffectedFileTypes() {
+    return getFileTypes();
+  }
+
+  /**
    * @param element PSI element written in corresponding language
    * @param names enumerator to encode string names
-   * @return
    */
   @Nullable
   CompilerRef asCompilerRef(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException;
 
   /**
+   * @param element PSI element written in corresponding language
+   * @param names enumerator to encode string names
+   */
+  default @Nullable List<@NotNull CompilerRef> asCompilerRefs(@NotNull PsiElement element, @NotNull NameEnumerator names)
+    throws IOException {
+    CompilerRef compilerRef = asCompilerRef(element, names);
+    if (compilerRef == null) {
+      return null;
+    }
+
+    return Collections.singletonList(compilerRef);
+  }
+
+  /**
+   * @return true if {@link #getHierarchyRestrictedToLibraryScope(CompilerRef, PsiElement, NameEnumerator, GlobalSearchScope)} can
+   * process the element
+   * @see LanguageCompilerRefAdapter#getHierarchyRestrictedToLibraryScope(CompilerRef, PsiElement, NameEnumerator, GlobalSearchScope)
+   */
+  default boolean isTooCommonLibraryElement(@NotNull PsiElement element) {
+    return false;
+  }
+
+  /**
    * @return "hierarchy" of given element inside the libraries scope.
+   * @see LanguageCompilerRefAdapter#isTooCommonLibraryElement(PsiElement)
    */
   @NotNull
   List<CompilerRef> getHierarchyRestrictedToLibraryScope(@NotNull CompilerRef baseRef,
@@ -102,4 +149,58 @@ public interface LanguageCompilerRefAdapter {
   PsiElement @NotNull [] getInstantiableConstructors(@NotNull PsiElement aClass);
 
   boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass);
+
+  /**
+   * A class to extend existing {@link LanguageCompilerRefAdapter} to support other languages within existing compact internal
+   * representation of indexed elements, e.g.: find Kotlin usages in Java files
+   *
+   * @see CompilerReferenceServiceBase
+   */
+  abstract class ExternalLanguageHelper implements LanguageCompilerRefAdapter {
+
+    @Override
+    public final @NotNull Set<FileType> getFileTypes() {
+      return Collections.emptySet();
+    }
+
+    @Override
+    public abstract @NotNull Set<FileType> getAffectedFileTypes();
+
+    @Override
+    public final @NotNull Class<? extends CompilerRef.CompilerClassHierarchyElementDef> getHierarchyObjectClass() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final @NotNull Class<? extends CompilerRef> getFunExprClass() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final PsiElement @NotNull [] findDirectInheritorCandidatesInFile(SearchId @NotNull [] internalNames,
+                                                                            @NotNull PsiFileWithStubSupport file) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final PsiElement @NotNull [] findFunExpressionsInFile(SearchId @NotNull [] indices,
+                                                                 @NotNull PsiFileWithStubSupport file) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final boolean isClass(@NotNull PsiElement element) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final PsiElement @NotNull [] getInstantiableConstructors(@NotNull PsiElement aClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass) {
+      throw new UnsupportedOperationException();
+    }
+  }
 }

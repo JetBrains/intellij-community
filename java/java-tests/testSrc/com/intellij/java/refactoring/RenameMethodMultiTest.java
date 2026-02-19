@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -14,9 +14,6 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import org.junit.Assert;
 
-/**
- * @author dsl
- */
 public class RenameMethodMultiTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
@@ -52,9 +49,8 @@ public class RenameMethodMultiTest extends LightMultiFileTestCase {
       doTest("p.B", "void method()", "finalMethod");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("Method finalMethod() will override \n" +
-                          "a method of the base class <b><code>p.A</code></b>\n" +
-                          "Renaming method will override final \"method <b><code>A.finalMethod()</code></b>\"", e.getMessage());
+      Assert.assertEquals("Method will override final method <b><code>finalMethod()</code></b> of super class <b><code>p.A</code></b>",
+                          e.getMessage());
       return;
     }
     fail("Conflicts were not found");
@@ -83,11 +79,11 @@ public class RenameMethodMultiTest extends LightMultiFileTestCase {
     doTest("bar.Bar", "void createBar()", "bar");
   }
 
-  private void doTest(final String methodSignature, final String newName) {
+  private void doTest(String methodSignature, String newName) {
     doTest(getTestName(false), methodSignature, newName);
   }
 
-  private void doTest(final String className, final String methodSignature, final String newName) {
+  private void doTest(String className, String methodSignature, String newName) {
     doTest(() -> {
       final PsiClass aClass = myFixture.findClass(className);
       assertNotNull(aClass);
@@ -99,7 +95,7 @@ public class RenameMethodMultiTest extends LightMultiFileTestCase {
     });
   }
 
-  private void doAutomaticRenameMethod(final String className, final String methodSignature, final String newName) {
+  private void doAutomaticRenameMethod(String className, String methodSignature, String newName) {
     doTest(() -> {
       final PsiClass aClass = myFixture.getJavaFacade().findClass(className, GlobalSearchScope.moduleScope(getModule()));
       assertNotNull(aClass);
@@ -114,6 +110,4 @@ public class RenameMethodMultiTest extends LightMultiFileTestCase {
       processor.run();
     });
   }
-
-
 }

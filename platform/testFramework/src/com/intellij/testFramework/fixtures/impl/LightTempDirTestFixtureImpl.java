@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -18,9 +23,7 @@ import org.junit.Assert;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public final class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
   private final Lazy<VirtualFile> mySourceRoot;
 
@@ -63,7 +66,9 @@ public final class LightTempDirTestFixtureImpl extends BaseFixture implements Te
   public @NotNull VirtualFile findOrCreateDir(@NotNull String path) {
     return WriteAction.computeAndWait(() -> {
       try {
-        return findOrCreateChildDir(getSourceRoot(), path);
+        VirtualFile childDir = findOrCreateChildDir(getSourceRoot(), path);
+        IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+        return childDir;
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -78,7 +83,7 @@ public final class LightTempDirTestFixtureImpl extends BaseFixture implements Te
 
   @Override
   public @NotNull VirtualFile copyAll(@NotNull String dataDir, @NotNull String targetDir, @NotNull VirtualFileFilter filter) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<>() {
       @Override
       public VirtualFile compute() {
         VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
@@ -87,7 +92,7 @@ public final class LightTempDirTestFixtureImpl extends BaseFixture implements Te
           UsefulTestCase.refreshRecursively(from);
 
           VirtualFile tempDir = getSourceRoot();
-          if (targetDir.length() > 0) {
+          if (!targetDir.isEmpty()) {
             tempDir = findOrCreateChildDir(tempDir, targetDir);
           }
 
@@ -102,7 +107,7 @@ public final class LightTempDirTestFixtureImpl extends BaseFixture implements Te
   }
 
   private VirtualFile findOrCreateChildDir(VirtualFile root, String relativePath) throws IOException {
-    if (relativePath.length() == 0) return root;
+    if (relativePath.isEmpty()) return root;
 
     List<String> dirs = StringUtil.split(StringUtil.trimStart(relativePath, "/"), "/");
     for (String dirName : dirs) {

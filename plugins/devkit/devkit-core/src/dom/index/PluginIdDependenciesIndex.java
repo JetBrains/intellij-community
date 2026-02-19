@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
@@ -17,35 +19,43 @@ import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.ContentDescriptor;
 import org.jetbrains.idea.devkit.dom.Dependency;
+import org.jetbrains.idea.devkit.dom.DependencyDescriptor;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * Plugin dependency declarations (old and new model).
+ */
 public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, Void> {
   private static final ID<String, Void> NAME = ID.create("PluginIdDependenciesIndex");
 
-  @NonNls
-  private static final String FILENAME_KEY_PREFIX = "___FILENAME___";
+  private static final @NonNls String FILENAME_KEY_PREFIX = "___FILENAME___";
 
-  @NonNls
-  private static final String PLUGIN_ID_KEY_PREFIX = "___PLUGIN_ID___";
+  private static final @NonNls String PLUGIN_ID_KEY_PREFIX = "___PLUGIN_ID___";
 
-  @NotNull
+  private static final @NonNls String CONTENT_KEY_PREFIX = "___CONTENT_ID___";
+
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Void> getValueExternalizer() {
+  public @NotNull DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
 
@@ -57,9 +67,7 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       ids.add(PLUGIN_ID_KEY_PREFIX + pluginId);
     }
 
-    //noinspection unchecked
-    final List<Dependency> dependencies = (List<Dependency>)getChildrenWithoutIncludes(plugin, "depends");
-    for (Dependency dependency : dependencies) {
+    for (Dependency dependency : plugin.getDepends()) {
       ContainerUtil.addIfNotNull(ids, dependency.getStringValue());
 
       final String configFile = dependency.getConfigFile().getStringValue();
@@ -69,12 +77,32 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
       }
     }
 
+    // new model: dependencies
+    final DependencyDescriptor dependencyDescriptor = plugin.getDependencies();
+    for (DependencyDescriptor.PluginDescriptor pluginDescriptor : dependencyDescriptor.getPlugin()) {
+      ContainerUtil.addIfNotNull(ids, pluginDescriptor.getId().getStringValue());
+    }
+    for (DependencyDescriptor.ModuleDescriptor moduleDescriptor : dependencyDescriptor.getModuleEntry()) {
+      ContainerUtil.addIfNotNull(ids, moduleDescriptor.getName().getStringValue());
+    }
+
+    // new model: content
+    for (ContentDescriptor content : plugin.getContent()) {
+      for (ContentDescriptor.ModuleDescriptor module : content.getModuleEntry()) {
+        final String value = module.getName().getStringValue();
+        if (StringUtil.isNotEmpty(value)) {
+          final String escapeSubDescriptorValue = value.replace('/', '.');
+          ids.add(getContentIndexingKey(escapeSubDescriptorValue));
+        }
+      }
+    }
+
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
 
   @Override
   public int getVersion() {
-    return 2;
+    return BASE_INDEX_VERSION + 6;
   }
 
   public static Set<String> getPluginAndDependsIds(Project project, Set<VirtualFile> files) {
@@ -91,24 +119,45 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
     return ids;
   }
 
-  @Nullable
-  public static String getPluginId(Project project, VirtualFile file) {
+  public static @Nullable @NlsSafe String getPluginId(Project project, VirtualFile file) {
     final Set<String> keys = FileBasedIndex.getInstance().getFileData(NAME, file, project).keySet();
     return findPluginId(keys);
   }
 
-  @Nullable
-  private static String findPluginId(Set<String> data) {
+  private static @Nullable String findPluginId(Set<String> data) {
     final String pluginIdEntry = ContainerUtil.find(data, s -> StringUtil.startsWith(s, PLUGIN_ID_KEY_PREFIX));
     return pluginIdEntry == null ? null : StringUtil.trimStart(pluginIdEntry, PLUGIN_ID_KEY_PREFIX);
   }
 
   public static Collection<VirtualFile> findDependsTo(Project project, VirtualFile file) {
-    return FileBasedIndex.getInstance().getContainingFiles(NAME, getDependsIndexingKey(file.getName()),
-                                                           GlobalSearchScopesCore.projectProductionScope(project));
+    final Collection<VirtualFile> dependsFiles =
+      FileBasedIndex.getInstance().getContainingFiles(NAME, getDependsIndexingKey(file.getName()),
+                                                      GlobalSearchScopesCore.projectProductionScope(project));
+
+    final Collection<VirtualFile> contentFiles = findFilesIncludingContentModule(project, file);
+
+    Collection<VirtualFile> allFiles = new ArrayList<>(dependsFiles);
+    allFiles.addAll(contentFiles);
+    return allFiles;
+  }
+
+  public static Collection<VirtualFile> findDescriptorsWithReferenceInDependenciesTag(GlobalSearchScope scope, String moduleNameOrPluginId) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, moduleNameOrPluginId, scope);
+  }
+
+  public static Collection<VirtualFile> findFilesIncludingContentModule(Project project, VirtualFile file) {
+    return findFilesIncludingContentModule(file, GlobalSearchScopesCore.projectProductionScope(project));
+  }
+
+  public static Collection<VirtualFile> findFilesIncludingContentModule(VirtualFile file, GlobalSearchScope scope) {
+    return FileBasedIndex.getInstance().getContainingFiles(NAME, getContentIndexingKey(file.getNameWithoutExtension()), scope);
   }
 
   private static String getDependsIndexingKey(@NotNull String filename) {
     return FILENAME_KEY_PREFIX + filename;
+  }
+
+  private static String getContentIndexingKey(@NotNull String value) {
+    return CONTENT_KEY_PREFIX + value;
   }
 }
